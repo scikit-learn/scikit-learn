@@ -22,7 +22,12 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Feature|, |Enhancement| :class:`decomposition.KernelPCA` now offers a new
+  `'randomized'` solver for faster fit. This solver is enabled by default when
+  the number of components requested is less than 80% of the number of samples.
 
+- |Feature| :class:`manifold.Isomap` now offers a new `'randomized'` solver for
+  faster fit.
 
 Details are listed in the changelog below.
 
@@ -58,6 +63,17 @@ Changelog
 
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  significantly accelerates computation when the number of samples is much
+  larger than the desired number of components. This method is now
+  automatically selected when `eigen_solver='auto'` (default), when the number
+  of components to extract is less than 80% of the number of samples.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -100,6 +116,14 @@ Changelog
   make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Feature| :class:`manifold.Isomap` can now use the new
+  `eigen_solver='randomized'` option from :class:`decomposition.KernelPCA` to
+  get faster results.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
 
 :mod:`sklearn.metrics`
 ......................
