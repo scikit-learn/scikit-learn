@@ -1266,7 +1266,7 @@ def test_grid_search_correct_score_results():
                 assert_almost_equal(correct_score, cv_scores[i])
 
 
-# FIXME remove test_fit_grid_point as the function will be removed on 0.25
+# FIXME remove test_fit_grid_point as the function will be removed on 1.0
 @ignore_warnings(category=FutureWarning)
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
@@ -1297,13 +1297,13 @@ def test_fit_grid_point():
 
 
 # FIXME remove test_fit_grid_point_deprecated as
-# fit_grid_point will be removed on 0.25
+# fit_grid_point will be removed on 1.0
 def test_fit_grid_point_deprecated():
     X, y = make_classification(random_state=0)
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
     msg = ("fit_grid_point is deprecated in version 0.23 "
-           "and will be removed in version 0.25")
+           "and will be removed in version 1.0")
     params = {'C': 0.1}
     train, test = next(StratifiedKFold().split(X, y))
 
@@ -1963,7 +1963,7 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     assert pairwise == cv._get_tags()['pairwise'], attr_message
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @ignore_warnings(category=FutureWarning)
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """
