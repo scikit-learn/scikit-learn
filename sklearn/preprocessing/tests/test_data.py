@@ -28,26 +28,27 @@ from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.preprocessing import Binarizer
+from sklearn.preprocessing import KernelCenterer
+from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import normalize
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import scale
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import quantile_transform
+from sklearn.preprocessing import MaxAbsScaler
+from sklearn.preprocessing import maxabs_scale
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import robust_scale
+from sklearn.preprocessing import add_dummy_feature
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import PowerTransformer
+from sklearn.preprocessing import power_transform
 from sklearn.preprocessing._data import _handle_zeros_in_scale
-from sklearn.preprocessing._data import Binarizer
-from sklearn.preprocessing._data import KernelCenterer
-from sklearn.preprocessing._data import Normalizer
-from sklearn.preprocessing._data import normalize
-from sklearn.preprocessing._data import StandardScaler
-from sklearn.preprocessing._data import scale
-from sklearn.preprocessing._data import MinMaxScaler
-from sklearn.preprocessing._data import minmax_scale
-from sklearn.preprocessing._data import QuantileTransformer
-from sklearn.preprocessing._data import quantile_transform
-from sklearn.preprocessing._data import MaxAbsScaler
-from sklearn.preprocessing._data import maxabs_scale
-from sklearn.preprocessing._data import RobustScaler
-from sklearn.preprocessing._data import robust_scale
-from sklearn.preprocessing._data import add_dummy_feature
-from sklearn.preprocessing._data import PolynomialFeatures
-from sklearn.preprocessing._data import PowerTransformer
-from sklearn.preprocessing._data import power_transform
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
+
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
@@ -57,6 +58,7 @@ from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
 from sklearn import datasets
+
 
 iris = datasets.load_iris()
 
@@ -148,6 +150,7 @@ def test_polynomial_feature_names():
 
 
 def test_polynomial_feature_array_order():
+    """Test that output array has the given order."""
     X = np.arange(10).reshape(5, 2)
 
     def is_c_contiguous(a):
@@ -1591,15 +1594,13 @@ def test_quantile_transform_bounds():
     transformer = QuantileTransformer()
     transformer.fit(X)
     assert (transformer.transform([[-10]]) ==
-                 transformer.transform([[np.min(X)]]))
+            transformer.transform([[np.min(X)]]))
     assert (transformer.transform([[10]]) ==
-                 transformer.transform([[np.max(X)]]))
+            transformer.transform([[np.max(X)]]))
     assert (transformer.inverse_transform([[-10]]) ==
-                 transformer.inverse_transform(
-                     [[np.min(transformer.references_)]]))
+            transformer.inverse_transform([[np.min(transformer.references_)]]))
     assert (transformer.inverse_transform([[10]]) ==
-                 transformer.inverse_transform(
-                     [[np.max(transformer.references_)]]))
+            transformer.inverse_transform([[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():
@@ -1904,9 +1905,9 @@ def test_maxabs_scaler_partial_fit():
                                   scaler_incr_csc.max_abs_)
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert (scaler_batch.n_samples_seen_ ==
-                     scaler_incr_csr.n_samples_seen_)
+                scaler_incr_csr.n_samples_seen_)
         assert (scaler_batch.n_samples_seen_ ==
-                     scaler_incr_csc.n_samples_seen_)
+                scaler_incr_csc.n_samples_seen_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csc.scale_)
