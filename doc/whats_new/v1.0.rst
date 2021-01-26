@@ -112,6 +112,14 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
+- |API| :class:`metrics.DetCurveDisplay` exposes two class methods
+  :func:`~metrics.DetCurveDisplay.from_estimator` and
+  :func:`~metrics.DetCurveDisplay.from_predictions` allowing to create
+  a confusion matrix plot using an estimator or the predictions.
+  :func:`metrics.plot_det_curve` is deprecated in favor of these two
+  class methods and will be removed in 1.2.
+  :pr:`19278` by `Guillaume Lemaitre`_.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 

@@ -18,7 +18,7 @@ from sklearn.metrics import DetCurveDisplay
 )
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
-def test_plot_det_curve(
+def test_det_curve_display(
     pyplot, constructor_name, response_method, with_sample_weight, with_strings
 ):
     X, y = load_iris(return_X_y=True)
@@ -85,3 +85,30 @@ def test_plot_det_curve(
     )
     assert disp.ax_.get_ylabel() == expected_ylabel
     assert disp.ax_.get_xlabel() == expected_xlabel
+
+
+@pytest.mark.parametrize(
+    "constructor_name, expected_clf_name",
+    [
+        ("from_estimator", "LogisticRegression"),
+        ("from_predictions", "Classifier"),
+    ],
+)
+def test_det_curve_display_default_name(
+    pyplot, constructor_name, expected_clf_name,
+):
+    # Check the default name display in the figure when `name` is not provided
+    X, y = load_iris(return_X_y=True)
+    # Binarize the data with only the two first classes
+    X, y = X[y < 2], y[y < 2]
+
+    lr = LogisticRegression().fit(X, y)
+    y_pred = lr.predict_proba(X)[:, 1]
+
+    if constructor_name == "from_estimator":
+        disp = DetCurveDisplay.from_estimator(lr, X, y)
+    else:
+        disp = DetCurveDisplay.from_predictions(y, y_pred)
+
+    assert disp.estimator_name == expected_clf_name
+    assert disp.line_.get_label() == expected_clf_name

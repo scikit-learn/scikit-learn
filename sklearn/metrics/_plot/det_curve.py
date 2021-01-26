@@ -210,8 +210,8 @@ class DetCurveDisplay:
             Sample weights.
 
         name : str, default=None
-            Name of DET curve for labeling. If `None`, use the name of the
-            estimator.
+            Name of DET curve for labeling. If `None`, name will be set to
+            `"Classifier"`.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -248,7 +248,7 @@ class DetCurveDisplay:
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
-        >>> y_pred = clf.decision_function(X_test, y_test)
+        >>> y_pred = clf.decision_function(X_test)
         >>> metrics.DetCurveDisplay.from_predictions(
         ...    y_test, y_pred)  # doctest: +SKIP
         >>> plt.show()  # doctest: +SKIP
@@ -264,6 +264,7 @@ class DetCurveDisplay:
         # If pos_label is still None, the positive class has been set to 1 in
         # the det_curve computation and we can safely set it for the display.
         pos_label = 1 if pos_label is None else pos_label
+        name = "Classifier" if name is None else name
 
         viz = DetCurveDisplay(
             fpr=fpr,
