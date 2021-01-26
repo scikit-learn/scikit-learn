@@ -24,8 +24,7 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin, is_classifier)
 
 from .metrics._plot.base import _check_classifier_response_method
-from .preprocessing import label_binarize, LabelBinarizer
-from .utils._docstring import inject_docstring
+from .preprocessing import label_binarize
 from .utils import (
     check_array,
     column_or_1d,
@@ -895,12 +894,17 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
 
 
 class CalibrationDisplay:
-    """Calibration visualization.
+    """Calibration curve (also known as reliability diagram) visualization.
 
-    It is recommend to use :func:`~sklearn.calibration.plot_calibration_curve`
-    to create a visualizer. All parameters are stored as attributes.
+    It is recommended to use
+    :func:`~sklearn.calibration.CalibrationDisplay.from_estimator` or
+    :func:`~sklearn.calibration.CalibrationDisplay.from_predictions`
+    to create a `CalibrationDisplay`. All parameters are stored as attributes.
 
-    Read more in the :ref:`User Guide <calibration>`.
+    Read more about calibration in the :ref:`User Guide <calibration>` and
+    more about the scikit-learn visualization API in :ref:`visualizations`.
+
+    .. versionadded:: 1.0
 
     Parameters
     -----------
@@ -988,7 +992,39 @@ class CalibrationDisplay:
         self.figure_ = ax.figure
         return self
 
-    _common_docstring_from_methods = """n_bins : int, default=5
+    @classmethod
+    def from_estimator(cls, estimator, X, y, *,
+                       n_bins=5, strategy='uniform', name=None,
+                       ref_line=True, ax=None, **kwargs):
+        """Plot calibration curve, also known as reliability diagrams, for
+        binary classifiers, using an estimator and data.
+
+        The average predicted probability for each bin is plotted on the x-axis
+        and the fraction of positive classes in each bin is plotted on the
+        y-axis.
+
+        Extra keyword arguments will be passed to
+        :func:`matplotlib.pyplot.plot`.
+
+        Read more about calibration in the :ref:`User Guide <calibration>` and
+        more about the scikit-learn visualization API in :ref:`visualizations`.
+
+        .. versionadded:: 1.0
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+            in which the last estimator is a classifier. The classifier must
+            have a :term:`predict_proba` method.
+
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values.
+
+        y : array-like of shape (n_samples,)
+            Binary target values.
+
+        n_bins : int, default=5
             Number of bins to discretize the [0, 1] interval into when calculating
             the calibration curve. A bigger number requires more data.
 
@@ -1016,41 +1052,6 @@ class CalibrationDisplay:
         -------
         display : :class:`~sklearn.calibration.CalibrationDisplay`.
             Object that stores computed values.
-    """.rstrip()
-
-    @classmethod
-    @inject_docstring(common_docstring=_common_docstring_from_methods)
-    def from_estimator(cls, estimator, X, y, *,
-                       n_bins=5, strategy='uniform', name=None,
-                       ref_line=True, ax=None, **kwargs):
-        """Plot calibration curve, also known as reliability diagrams, for
-        binary classifiers, using an estimator and data.
-
-        The average predicted probability for each bin is plotted on the x-axis
-        and the fraction of positive classes in each bin is plotted on the
-        y-axis.
-
-        Extra keyword arguments will be passed to
-        :func:`matplotlib.pyplot.plot`.
-
-        Read more in the :ref:`User Guide <calibration>`.
-
-        .. versionadded:: 0.24
-
-        Parameters
-        ----------
-        estimator : estimator instance
-            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
-            in which the last estimator is a classifier. The classifier must
-            have a :term:`predict_proba` method.
-
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Input values.
-
-        y : array-like of shape (n_samples,)
-            Binary target values.
-
-        {common_docstring}
 
         See Also
         --------
@@ -1103,7 +1104,6 @@ class CalibrationDisplay:
         )
 
     @classmethod
-    @inject_docstring(common_docstring=_common_docstring_from_methods)
     def from_predictions(cls, y_true, y_prob, *,
                          n_bins=5, strategy='uniform', name=None,
                          ref_line=True, ax=None, **kwargs):
@@ -1117,9 +1117,10 @@ class CalibrationDisplay:
         Extra keyword arguments will be passed to
         :func:`matplotlib.pyplot.plot`.
 
-        Read more in the :ref:`User Guide <calibration>`.
+        Read more about calibration in the :ref:`User Guide <calibration>` and
+        more about the scikit-learn visualization API in :ref:`visualizations`.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
         Parameters
         ----------
@@ -1129,7 +1130,34 @@ class CalibrationDisplay:
         y_prob : array-like of shape (n_samples,)
             The predicted probabilities of the positive class.
 
-        {common_docstring}
+        n_bins : int, default=5
+            Number of bins to discretize the [0, 1] interval into when calculating
+            the calibration curve. A bigger number requires more data.
+
+        strategy : {'uniform', 'quantile'}, default='uniform'
+            Strategy used to define the widths of the bins.
+
+            - `'uniform'`: The bins have identical widths.
+            - `'quantile'`: The bins have the same number of samples and depend on
+            predicted probabilities.
+
+        name : str, default=None
+            Name for labeling curve. If `None`, the name of the estimator is used.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly calibrated
+            classifier.
+
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is created.
+
+        **kwargs : dict
+            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+
+        Returns
+        -------
+        display : :class:`~sklearn.calibration.CalibrationDisplay`.
+            Object that stores computed values.
 
         See Also
         --------
