@@ -627,14 +627,16 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
 
 @pytest.mark.parametrize("n_bins", [5, 10])
 @pytest.mark.parametrize("strategy", ["uniform", "quantile"])
-def test_plot_calibration_curve(pyplot, iris_data_binary, n_bins, strategy):
-    # Ensure `plot_calibration_curve` and `calibration_curve` compute the same
-    # results. Also checks attributes of the CalibrationDisplay object.
+def test_CalibrationDisplay_compute(pyplot, iris_data_binary, n_bins,
+                                    strategy):
+    # Ensure `CalibrationDisplay.from_predictor` and `calibration_curve`
+    # compute the same results. Also checks attributes of the
+    # CalibrationDisplay object.
     X, y = iris_data_binary
 
     lr = LogisticRegression().fit(X, y)
 
-    viz = plot_calibration_curve(
+    viz = CalibrationDisplay.from_predictor(
         lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
     )
 
@@ -662,11 +664,11 @@ def test_plot_calibration_curve(pyplot, iris_data_binary, n_bins, strategy):
 
 
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
-    # Ensure pipelines are supported by plot_calibration_curve
+    # Ensure pipelines are supported by CalibrationDisplay.from_estimator
     X, y = iris_data_binary
     clf = make_pipeline(StandardScaler(), LogisticRegression())
     clf.fit(X, y)
-    viz = plot_calibration_curve(clf, X, y)
+    viz = CalibrationDisplay.from_estimator(clf, X, y)
     assert clf.__class__.__name__ in viz.line_.get_label()
     assert viz.estimator_name == clf.__class__.__name__
 
@@ -689,15 +691,28 @@ def test_calibration_display_default_labels(pyplot, estimator_name,
     assert viz.line_.get_label() == expected_label
 
 
-def test_plot_calibration_curve_estimator_name_multiple_calls(
-    pyplot, iris_data_binary
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
+def test_calibration_display_estimator_name_multiple_calls(
+    constructor_name, pyplot, iris_data_binary
 ):
-    # Check that the `name` used when calling `plot_calibration_curve` is
-    # used when multiple `viz.plot()` calls are made.
+    # Check that the `name` used when calling
+    # `CalibrationDisplay.from_predictor` or
+    # `CalibrationDisplay.from_estimator` is used when multiple
+    # `CalibrationDisplay.viz.plot()` calls are made.
     X, y = iris_data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
-    viz = plot_calibration_curve(clf, X, y, name=clf_name)
+
+    constructor = getattr(CalibrationDisplay, constructor_name)
+    params = (
+        (clf, X, y, name=clf_name)
+        if constructor_name == "from_estimator"
+        else (y, y_prob, name=clf_name)
+    )
+
+    viz = constructor(*params)
     assert viz.estimator_name == clf_name
     pyplot.close("all")
     viz.plot()
@@ -708,14 +723,14 @@ def test_plot_calibration_curve_estimator_name_multiple_calls(
     assert clf_name == viz.line_.get_label()
 
 
-def test_plot_calibration_curve_ref_line(pyplot, iris_data_binary):
+def test_calibration_display_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
     X, y = iris_data_binary
     lr = LogisticRegression().fit(X, y)
     dt = DecisionTreeClassifier().fit(X, y)
 
-    viz = plot_calibration_curve(lr, X, y)
-    viz2 = plot_calibration_curve(dt, X, y, ax=viz.ax_)
+    viz = CalibrationDisplay.from_estimator(lr, X, y)
+    viz2 = CalibrationDisplay.from_estimator(dt, X, y, ax=viz.ax_)
 
     labels = viz2.ax_.get_legend_handles_labels()[1]
     assert labels.count('Perfectly calibrated') == 1
