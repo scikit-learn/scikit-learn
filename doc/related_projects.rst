@@ -307,11 +307,11 @@ Translations of scikit-learn documentation
 ------------------------------------------
 
 The only official documentation for scikit-learn is the current English
-version at https://scikit-learn.org. However, some translations are available aiming to improve scikit-learn
-dissemination among non-native English speakers. Those efforts are community
-initiatives and we have no control on them. If you want to contribute or
-report an issue with the translation, please contact the authors
-of the translation.
+version at https://scikit-learn.org. However, some translations are available
+aiming to improve scikit-learn dissemination among non-native English speakers.
+Those efforts are community initiatives and we have no control on them.
+If you want to contribute or report an issue with the translation, please
+contact the authors of the translation.
 Some available translations are linked here to improve their dissemination
 and promote community efforts.
 
