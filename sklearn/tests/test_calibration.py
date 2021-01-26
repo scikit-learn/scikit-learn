@@ -690,16 +690,29 @@ def test_calibration_display_default_labels(pyplot, estimator_name,
     assert viz.line_.get_label() == expected_label
 
 
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
 def test_calibration_display_estimator_name_multiple_calls(
     constructor_name, pyplot, iris_data_binary
 ):
     # Check that the `name` used when calling
+    # `CalibrationDisplay.from_predictor` or
     # `CalibrationDisplay.from_estimator` is used when multiple
     # `CalibrationDisplay.viz.plot()` calls are made.
     X, y = iris_data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
-    viz = CalibrationDisplay.from_estimator(clf, X, y, name=clf_name)
+    y_prob = clf.predict_proba(X)
+
+    constructor = getattr(CalibrationDisplay, constructor_name)
+    params = (
+        (clf, X, y)
+        if constructor_name == "from_estimator"
+        else (y, y_prob)
+    )
+
+    viz = constructor(*params, name=clf_name)
     assert viz.estimator_name == clf_name
     pyplot.close("all")
     viz.plot()
