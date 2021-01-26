@@ -25,6 +25,7 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_error_non_binary(pyplot, data, plot_func):
     X, y = data
@@ -36,6 +37,7 @@ def test_plot_curve_error_non_binary(pyplot, data, plot_func):
         plot_func(clf, X, y)
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "response_method, msg",
     [("predict_proba", "response method predict_proba is not defined in "
@@ -64,6 +66,7 @@ def test_plot_curve_error_no_response(
         plot_func(clf, X, y, response_method=response_method)
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_estimator_name_multiple_calls(
     pyplot, data_binary, plot_func
@@ -84,6 +87,7 @@ def test_plot_curve_estimator_name_multiple_calls(
     assert clf_name in disp.line_.get_label()
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "clf", [LogisticRegression(),
             make_pipeline(StandardScaler(), LogisticRegression()),

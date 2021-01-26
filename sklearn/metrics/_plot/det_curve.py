@@ -146,14 +146,14 @@ class DetCurveDisplay:
         --------
         >>> import matplotlib.pyplot as plt  # doctest: +SKIP
         >>> from sklearn.datasets import make_classification
-        >>> from sklearn.metrics import DetCurveDisplayDetCurveDisplay
+        >>> from sklearn.metrics import DetCurveDisplay
         >>> from sklearn.model_selection import train_test_split
         >>> from sklearn.svm import SVC
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
-        >>> metrics.DetCurveDisplayDetCurveDisplay.from_estimator(
+        >>> metrics.DetCurveDisplay.from_estimator(
         ...    clf, X_test, y_test)  # doctest: +SKIP
         >>> plt.show()  # doctest: +SKIP
         """
@@ -241,7 +241,7 @@ class DetCurveDisplay:
         --------
         >>> import matplotlib.pyplot as plt  # doctest: +SKIP
         >>> from sklearn.datasets import make_classification
-        >>> from sklearn.metrics import DetCurveDisplayDetCurveDisplay
+        >>> from sklearn.metrics import DetCurveDisplay
         >>> from sklearn.model_selection import train_test_split
         >>> from sklearn.svm import SVC
         >>> X, y = make_classification(random_state=0)
@@ -249,7 +249,7 @@ class DetCurveDisplay:
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
         >>> y_pred = clf.decision_function(X_test, y_test)
-        >>> metrics.DetCurveDisplayDetCurveDisplay.from_predictions(
+        >>> metrics.DetCurveDisplay.from_predictions(
         ...    y_test, y_pred)  # doctest: +SKIP
         >>> plt.show()  # doctest: +SKIP
         """

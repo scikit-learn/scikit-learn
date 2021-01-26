@@ -8,7 +8,7 @@ detection error tradeoff (DET) curves for different classification algorithms
 for the same classification task.
 
 DET curves are commonly plotted in normal deviate scale.
-To achieve this `plot_det_curve` transforms the error rates as returned by the
+To achieve this the DET display transforms the error rates as returned by the
 :func:`~sklearn.metrics.det_curve` and the axis scale using
 :func:`scipy.stats.norm`.
 
@@ -51,7 +51,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import plot_det_curve
+from sklearn.metrics import DetCurveDisplay
 from sklearn.metrics import plot_roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
@@ -81,7 +81,7 @@ for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
 
     plot_roc_curve(clf, X_test, y_test, ax=ax_roc, name=name)
-    plot_det_curve(clf, X_test, y_test, ax=ax_det, name=name)
+    DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
 
 ax_roc.set_title('Receiver Operating Characteristic (ROC) curves')
 ax_det.set_title('Detection Error Tradeoff (DET) curves')

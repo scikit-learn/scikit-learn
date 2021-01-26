@@ -21,9 +21,7 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.filterwarnings(
-    "ignore: Function plot_det_curve is deprecated"
-)
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "decision_function"]
 )
