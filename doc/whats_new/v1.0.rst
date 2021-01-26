@@ -62,9 +62,10 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Enhancement| :meth:`compose.ColumnTransformer.transform` now only requires
-  non-dropped columns to appear, regardless of the order. :pr:`19263` by
-  `Thomas Fan`_
+- |Enhancement| :class:`compose.ColumnTransformer` now allows DataFrame input to
+  have its columns appear in a changed order in `transform`. Further, columns that
+  are dropped will not be required in transform, and additional columns will be
+  ignored if `remainder='drop'`. :pr:`19263` by `Thomas Fan`_
 
 :mod:`sklearn.ensemble`
 .......................
