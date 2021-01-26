@@ -462,7 +462,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
     def _fit(self, X):
         has_root = getattr(self, 'root_', None)
-        first_call = self.fit_ or self.partial_fit and not has_root
+        first_call = self.fit_ or (self.partial_fit_ and not has_root)
 
         X = self._validate_data(X, accept_sparse='csr', copy=self.copy,
                                 reset=first_call)
