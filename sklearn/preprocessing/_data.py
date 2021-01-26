@@ -1620,6 +1620,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         features is computed by iterating over all suitably sized combinations
         of input features.
 
+    See Also
+    --------
+    SplineTransformer : Transformer that generates univariate B-spline bases
+        for features
+
     Notes
     -----
     Be aware that the number of features in the output array scales
@@ -1711,7 +1716,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Transform data to polynomial features
+        """Transform data to polynomial features.
 
         Parameters
         ----------
