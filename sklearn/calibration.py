@@ -945,7 +945,7 @@ class CalibrationDisplay:
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.linear_model import LogisticRegression
-    >>> from sklearn.calibration import CalibrationDisplay
+    >>> from sklearn.calibration import calibration_curve, CalibrationDisplay
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=0)
@@ -953,15 +953,17 @@ class CalibrationDisplay:
     >>> clf.fit(X_train, y_train)
     LogisticRegression(random_state=0)
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
-    >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
+    >>> prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=10)
+    >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
     >>> disp.plot() # doctest: +SKIP
     """
-    def __init__(self, prob_true, prob_pred, y_prob):
+    def __init__(self, prob_true, prob_pred, y_prob, *, name=None):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
+        self.name = name
 
-    def plot(self, ax=None, *, name=None, ref_line=True, **kwargs):
+    def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
         """Plot visualization.
 
         Extra keyword arguments will be passed to
@@ -993,6 +995,8 @@ class CalibrationDisplay:
 
         if ax is None:
             fig, ax = plt.subplots()
+
+        name = self.name if name is None else name
 
         line_kwargs = {}
         if name is not None:
@@ -1217,5 +1221,6 @@ class CalibrationDisplay:
             y_true, y_prob, n_bins=n_bins, strategy=strategy
         )
 
-        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob)
-        return disp.plot(ax=ax, name=name, ref_line=ref_line, **kwargs)
+        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob,
+                   name=name)
+        return disp.plot(ax=ax, ref_line=ref_line, **kwargs)

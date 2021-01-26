@@ -568,8 +568,8 @@ def iris_data():
 
 
 @pytest.fixture(scope="module")
-def iris_data_binary(data):
-    X, y = data
+def iris_data_binary(iris_data):
+    X, y = iris_data
     return X[y < 2], y[y < 2]
 
 
@@ -618,7 +618,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     msg = (
         "Only binary classification is supported."
         if constructor_name == "from_estimator"
-        else "A column-vector y was passed when a 1d array was"
+        else "y should be a 1d array, got an array of shape"
     )
     with pytest.raises(ValueError, match=msg):
         constructor(*params)
@@ -626,16 +626,16 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
 
 @pytest.mark.parametrize("n_bins", [5, 10])
 @pytest.mark.parametrize("strategy", ["uniform", "quantile"])
-def test_CalibrationDisplay_compute(pyplot, iris_data_binary, n_bins,
+def test_calibration_display_compute(pyplot, iris_data_binary, n_bins,
                                     strategy):
-    # Ensure `CalibrationDisplay.from_predictor` and `calibration_curve`
+    # Ensure `CalibrationDisplay.from_predictions` and `calibration_curve`
     # compute the same results. Also checks attributes of the
     # CalibrationDisplay object.
     X, y = iris_data_binary
 
     lr = LogisticRegression().fit(X, y)
 
-    viz = CalibrationDisplay.from_predictor(
+    viz = CalibrationDisplay.from_estimator(
         lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
     )
 
@@ -648,7 +648,7 @@ def test_CalibrationDisplay_compute(pyplot, iris_data_binary, n_bins,
     assert_allclose(viz.prob_pred, prob_pred)
     assert_allclose(viz.y_prob, y_prob)
 
-    assert viz.estimator_name == "LogisticRegression"
+    assert viz.name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
     import matplotlib as mpl  # noqa
@@ -669,23 +669,22 @@ def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     clf.fit(X, y)
     viz = CalibrationDisplay.from_estimator(clf, X, y)
     assert clf.__class__.__name__ in viz.line_.get_label()
-    assert viz.estimator_name == clf.__class__.__name__
+    assert viz.name == clf.__class__.__name__
 
 
 @pytest.mark.parametrize(
-    "estimator_name, expected_label",
+    "name, expected_label",
     [(None, "_line1"),
      ("my_est", "my_est"),
      ("my_est2", "my_est2")]
 )
-def test_calibration_display_default_labels(pyplot, estimator_name,
+def test_calibration_display_default_labels(pyplot, name,
                                             expected_label):
     prob_true = np.array([0, 1, 1, 0])
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
 
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob,
-                             estimator_name=estimator_name)
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, name=name)
     viz.plot()
     assert viz.line_.get_label() == expected_label
 
@@ -693,17 +692,17 @@ def test_calibration_display_default_labels(pyplot, estimator_name,
 @pytest.mark.parametrize(
     "constructor_name", ["from_estimator", "from_predictions"]
 )
-def test_calibration_display_estimator_name_multiple_calls(
+def test_calibration_display_name_multiple_calls(
     constructor_name, pyplot, iris_data_binary
 ):
     # Check that the `name` used when calling
-    # `CalibrationDisplay.from_predictor` or
+    # `CalibrationDisplay.from_predictions` or
     # `CalibrationDisplay.from_estimator` is used when multiple
     # `CalibrationDisplay.viz.plot()` calls are made.
     X, y = iris_data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
-    y_prob = clf.predict_proba(X)
+    y_prob = clf.predict_proba(X)[:, 1]
 
     constructor = getattr(CalibrationDisplay, constructor_name)
     params = (
@@ -713,7 +712,7 @@ def test_calibration_display_estimator_name_multiple_calls(
     )
 
     viz = constructor(*params, name=clf_name)
-    assert viz.estimator_name == clf_name
+    assert viz.name == clf_name
     pyplot.close("all")
     viz.plot()
     assert clf_name == viz.line_.get_label()
