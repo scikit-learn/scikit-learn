@@ -436,24 +436,37 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """Get out-of-bag performance for a single tree"""
         random_state = check_random_state(estimator.random_state)
 
+        scores = np.zeros(X.shape[1])
+
         unsampled_indices = _generate_unsampled_indices(
             estimator.random_state, n_samples, n_samples_bootstrap
         )
 
-        from ..inspection._permutation_importance \
-            import permutation_importance
+        shuffling_idx = np.arange(X.shape[0])
 
-        result = permutation_importance(
-            estimator, X[unsampled_indices, :], y[unsampled_indices, :],
-            n_repeats=1, n_jobs=self.n_jobs, random_state=random_state,
-            sample_weight=sample_weight[unsampled_indices]
-        )
+        baseline = estimator.score(X[unsampled_indices, :],
+                                   y[unsampled_indices])
 
-        return result.importances_mean
+        for col_idx in range(X.shape[1]):
+            X_permuted = X.copy()
+            random_state.shuffle(shuffling_idx)
+            if hasattr(X_permuted, "iloc"):
+                col = X_permuted.iloc[shuffling_idx, col_idx]
+                col.index = X_permuted.index
+                X_permuted.iloc[:, col_idx] = col
+            else:
+                X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
+
+            scores[col_idx] = estimator.score(
+                X_permuted[unsampled_indices, :], y[unsampled_indices],
+                sample_weight[unsampled_indices]
+            )
+
+        return baseline - scores
 
     def _set_oob_permutation_importance(self, X, y, sample_weight):
         """Compute feature importances from the out-of-bag samples."""
-        X = check_array(X, dtype=DTYPE, accept_sparse=False)
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_samples = y.shape[0]
 
@@ -474,13 +487,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             importances_std=np.std(all_imp, axis=0),
             importances=all_imp
         )
-
-        # if (n_predictions == 0).any():
-        #     warn(
-        #         "Some inputs do not have OOB scores. "
-        #         "This probably means too few trees were used "
-        #         "to compute any reliable oob estimates."
-        #     )
 
     @abstractmethod
     def _set_oob_score_and_attributes(self, X, y):
