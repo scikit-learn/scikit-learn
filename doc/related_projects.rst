@@ -148,8 +148,8 @@ and tasks.
 - `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
   abstractions around existing neural network libraries
 
-- `keras <https://github.com/fchollet/keras>`_ Deep Learning library capable of
-  running on top of either TensorFlow or Theano.
+- `Keras <https://www.tensorflow.org/api_docs/python/tf/keras>`_ High-level API for
+  TensorFlow with a scikit-learn inspired API.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
