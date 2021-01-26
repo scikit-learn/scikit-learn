@@ -929,6 +929,9 @@ class CalibrationDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
 
+        name : str, default=None
+            Name for labeling curve.
+
     See Also
     --------
     calibration_curve : Compute true and predicted probabilities for a
@@ -976,7 +979,7 @@ class CalibrationDisplay:
             created.
 
         name : str, default=None
-            Name of calibration curve for labeling.
+            Name for labeling curve.
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
