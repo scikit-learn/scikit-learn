@@ -914,14 +914,12 @@ class _BaseSparseCoding(TransformerMixin):
 
         # transform_alpha has to be changed in _transform
         # this is done for consistency with the value of alpha
-        if hasattr(self, "alpha") and self.alpha != 1.:
-            if self.transform_alpha is None:
-                warnings.warn("By default transform_alpha will be equal to"
-                              "alpha instead of 1.0 starting from 1.2",
-                              FutureWarning)
-                transform_alpha = 1.  # TODO change to self.alpha in 1.2
-            else:
-                transform_alpha = self.transform_alpha
+        if (hasattr(self, "alpha") and self.alpha != 1. and
+                self.transform_alpha is None):
+            warnings.warn("By default transform_alpha will be equal to"
+                          "alpha instead of 1.0 starting from 1.2",
+                          FutureWarning)
+            transform_alpha = 1.  # TODO change to self.alpha in 1.2
         else:
             transform_alpha = self.transform_alpha
 
