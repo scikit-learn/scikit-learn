@@ -30,8 +30,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
-from sklearn.calibration import (calibration_curve, plot_calibration_curve,
-                                 CalibrationDisplay)
+from sklearn.calibration import calibration_curve, CalibrationDisplay
 
 
 @pytest.fixture(scope="module")
