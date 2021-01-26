@@ -3124,6 +3124,7 @@ def check_n_features_in_after_fitting(name, estimator_orig):
 
     n_samples = 150
     X = rng.normal(size=(n_samples, 8))
+    X = _enforce_estimator_tags_x(estimator, X)
     X = _pairwise_estimator_convert_X(X, estimator)
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
