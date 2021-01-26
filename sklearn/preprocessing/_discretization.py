@@ -244,7 +244,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """
         if self.n_bins == 'auto':
             # calculcate number of bins depending on number of samples in X
-            orig_bins = np.ceil(np.log2(n_samples) + 1.)
+            orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
         else:
             orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
