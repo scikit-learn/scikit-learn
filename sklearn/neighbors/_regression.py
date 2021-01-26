@@ -160,10 +160,10 @@ class KNeighborsRegressor(KNeighborsMixin,
         # For cross-validation routines to split data correctly
         return {'pairwise': self.metric == 'precomputed'}
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly

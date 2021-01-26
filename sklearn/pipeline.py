@@ -240,7 +240,7 @@ class Pipeline(_BaseComposition):
     def _log_message(self, step_idx):
         if not self.verbose:
             return None
-        name, step = self.steps[step_idx]
+        name, _ = self.steps[step_idx]
 
         return '(step %d of %d) Processing %s' % (step_idx + 1,
                                                   len(self.steps),
@@ -629,10 +629,10 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return {'pairwise': _safe_tags(self.steps[0][1], "pairwise")}
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
