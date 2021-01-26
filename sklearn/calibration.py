@@ -974,8 +974,7 @@ class CalibrationDisplay:
             created.
 
         name : str, default=None
-            Name of calibration curve for labeling. If `None`, use the
-            name of the estimator.
+            Name of calibration curve for labeling.
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
@@ -994,8 +993,6 @@ class CalibrationDisplay:
 
         if ax is None:
             fig, ax = plt.subplots()
-
-        name = self.estimator_name if name is None else name
 
         line_kwargs = {}
         if name is not None:
@@ -1173,8 +1170,7 @@ class CalibrationDisplay:
               on predicted probabilities.
 
         name : str, default=None
-            Name for labeling curve. If `None`, the name of the estimator is
-            used.
+            Name for labeling curve.
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
