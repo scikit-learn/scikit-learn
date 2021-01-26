@@ -707,12 +707,12 @@ def test_calibration_display_estimator_name_multiple_calls(
 
     constructor = getattr(CalibrationDisplay, constructor_name)
     params = (
-        (clf, X, y, name=clf_name)
+        (clf, X, y)
         if constructor_name == "from_estimator"
-        else (y, y_prob, name=clf_name)
+        else (y, y_prob)
     )
 
-    viz = constructor(*params)
+    viz = constructor(*params, name=clf_name)
     assert viz.estimator_name == clf_name
     pyplot.close("all")
     viz.plot()
