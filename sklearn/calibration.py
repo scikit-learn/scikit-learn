@@ -24,7 +24,7 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin, is_classifier)
 
 from .metrics._plot.base import _check_classifier_response_method
-from .preprocessing import label_binarize
+from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
     check_array,
     column_or_1d,
