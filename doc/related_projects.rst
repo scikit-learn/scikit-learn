@@ -310,10 +310,14 @@ Domain specific packages
 Translations of scikit-learn documentation
 ------------------------------------------
 
-The only official documentation for scikit-learn is the current English
-version at https://scikit-learn.org. However, some translations are available
-aiming to improve scikit-learn dissemination among non-native English.
-Those efforts are community initiatives and we have no control on them.
+Translation’s purpose is to ease reading and understanding in languages
+other than English. Its aim is to help people who do not understand English
+or have doubts about its interpretation. Additionally, some people prefer
+to read documentation in their native language, but please bear in mind that
+the only official documentation is the English one [#f1]_.
+
+Those translation efforts are community initiatives and we have no control
+on them.
 If you want to contribute or report an issue with the translation, please
 contact the authors of the translation.
 Some available translations are linked here to improve their dissemination
@@ -323,3 +327,9 @@ and promote community efforts.
   (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
 - `Persian translation <https://sklearn.ir/>`_
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
+
+.. rubric:: Footnotes
+
+.. [#f1] following `linux documentation Disclaimer
+   <https://www.kernel.org/doc/html/latest/translations/index.html#disclaimer>`__
+
