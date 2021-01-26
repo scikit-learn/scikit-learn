@@ -148,14 +148,18 @@ and tasks.
 - `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
   abstractions around existing neural network libraries
 
-- `keras <https://github.com/fchollet/keras>`_ Deep Learning library capable of
-  running on top of either TensorFlow or Theano.
+- `Keras <https://www.tensorflow.org/api_docs/python/tf/keras>`_ High-level API for
+  TensorFlow with a scikit-learn inspired API.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
 
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
+
+- `scikeras <https://github.com/adriangb/scikeras>`_ provides a wrapper around
+  Keras to interface it with scikit-learn. SciKeras is the successor
+  of `tf.keras.wrappers.scikit_learn`.
 
 **Broad scope**
 

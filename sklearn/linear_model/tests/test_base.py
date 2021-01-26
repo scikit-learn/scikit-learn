@@ -17,6 +17,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.fixes import parse_version
 
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model._base import _deprecate_normalize
 from sklearn.linear_model._base import _preprocess_data
 from sklearn.linear_model._base import _rescale_data
 from sklearn.linear_model._base import make_dataset
@@ -106,6 +107,7 @@ def test_raises_value_error_if_positive_and_sparse():
     with pytest.raises(TypeError, match=error_msg):
         reg.fit(X, y)
 
+
 def test_raises_value_error_if_sample_weights_greater_than_1d():
     # Sample weights must be either scalar or 1D
 
@@ -149,6 +151,59 @@ def test_fit_intercept():
             lr3_without_intercept.coef_.ndim)
 
 
+def test_error_on_wrong_normalize():
+    normalize = 'wrong'
+    default = True
+    error_msg = "Leave 'normalize' to its default"
+    with pytest.raises(ValueError, match=error_msg):
+        _deprecate_normalize(normalize, default, 'estimator')
+    ValueError
+
+
+@pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
+@pytest.mark.parametrize('default', [True, False])
+# FIXME update test in 1.2 for new versions
+def test_deprecate_normalize(normalize, default):
+    # test all possible case of the normalize parameter deprecation
+    if not default:
+        if normalize == 'deprecated':
+            # no warning
+            output = default
+            expected = None
+            warning_msg = []
+        else:
+            output = normalize
+            expected = FutureWarning
+            warning_msg = ['1.2']
+            if not normalize:
+                warning_msg.append('default value')
+            else:
+                warning_msg.append('StandardScaler(')
+    elif default:
+        if normalize == 'deprecated':
+            # warning to pass False and use StandardScaler
+            output = default
+            expected = FutureWarning
+            warning_msg = ['False', '1.2', 'StandardScaler(']
+        else:
+            # no warning
+            output = normalize
+            expected = None
+            warning_msg = []
+
+    with pytest.warns(expected) as record:
+        _normalize = _deprecate_normalize(normalize, default, 'estimator')
+    assert _normalize == output
+
+    n_warnings = 0 if expected is None else 1
+    assert len(record) == n_warnings
+    if n_warnings:
+        assert all([
+            warning in str(record[0].message)
+            for warning in warning_msg
+        ])
+
+
 def test_linear_regression_sparse(random_state=0):
     # Test that linear regression also works with sparse data
     random_state = check_random_state(random_state)
@@ -165,6 +220,35 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
+@pytest.mark.parametrize(
+    'normalize, n_warnings, warning',
+    [(True, 1, FutureWarning),
+     (False, 1, FutureWarning),
+     ("deprecated", 0, None)]
+)
+# FIXME remove test in 1.4
+def test_linear_regression_normalize_deprecation(
+     normalize, n_warnings, warning
+):
+    # check that we issue a FutureWarning when normalize was set in
+    # LinearRegression
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.0
+    y = rng.rand(n_samples)
+
+    model = LinearRegression(normalize=normalize)
+    with pytest.warns(warning) as record:
+        model.fit(X, y)
+    assert len(record) == n_warnings
+    if n_warnings:
+        assert "'normalize' was deprecated" in str(record[0].message)
+
+
+# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
@@ -303,8 +387,9 @@ def test_linear_regression_pd_sparse_dataframe_warning():
         df[str(col)] = arr
 
     msg = "pandas.DataFrame with sparse columns found."
+
+    reg = LinearRegression()
     with pytest.warns(UserWarning, match=msg):
-        reg = LinearRegression()
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
     # does not warn when the whole dataframe is sparse

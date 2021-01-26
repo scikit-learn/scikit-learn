@@ -578,7 +578,7 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=20)
         # NMF
         if estimator.__class__.__name__ == 'NMF':
-            # FIXME : init should be removed in 0.26
+            # FIXME : init should be removed in 1.1
             estimator.set_params(max_iter=500, init='nndsvda')
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
@@ -2907,16 +2907,19 @@ def check_decision_proba_consistency(name, estimator_orig):
     centers = [(2, 2), (4, 4)]
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
                       centers=centers, cluster_std=1.0, shuffle=True)
-    X_test = np.random.randn(20, 2) + 4
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
+                                                        random_state=0)
     estimator = clone(estimator_orig)
 
     if (hasattr(estimator, "decision_function") and
             hasattr(estimator, "predict_proba")):
 
-        estimator.fit(X, y)
+        estimator.fit(X_train, y_train)
         # Since the link function from decision_function() to predict_proba()
         # is sometimes not precise enough (typically expit), we round to the
-        # 10th decimal to avoid numerical issues.
+        # 10th decimal to avoid numerical issues: we compare the rank
+        # with deterministic ties rather than get platform specific rank
+        # inversions in case of machine level differences.
         a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
         b = estimator.decision_function(X_test).round(decimals=10)
         assert_array_equal(rankdata(a), rankdata(b))
@@ -3065,8 +3068,8 @@ def check_n_features_in(name, estimator_orig):
             "n_features_in_ attribute, unless the 'no_validation' tag is "
             "True. This attribute should be equal to the number of features "
             "passed to the fit method. "
-            "An error will be raised from version 0.25 when calling "
-            "check_estimator(). "
+            "An error will be raised from version 1.0 (renaming of 0.25) "
+            "when calling check_estimator(). "
             "See SLEP010: "
             "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
             FutureWarning
@@ -3089,7 +3092,7 @@ def check_requires_y_none(name, estimator_orig):
     warning_msg = ("As of scikit-learn 0.23, estimators should have a "
                    "'requires_y' tag set to the appropriate value. "
                    "The default value of the tag is False. "
-                   "An error will be raised from version 0.25 when calling "
+                   "An error will be raised from version 1.0 when calling "
                    "check_estimator() if the tag isn't properly set.")
 
     expected_err_msgs = (

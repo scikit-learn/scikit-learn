@@ -433,7 +433,7 @@ based on the following assumptions:
   training points
 * ``leaf_size`` is close to its default value of ``30``
 * when :math:`D > 15`, the intrinsic dimensionality of the data is generally
-  to high for tree-based methods
+  too high for tree-based methods
 
 Effect of ``leaf_size``
 -----------------------
