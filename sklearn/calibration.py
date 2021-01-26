@@ -953,7 +953,7 @@ class CalibrationDisplay:
     >>> clf.fit(X_train, y_train)
     LogisticRegression(random_state=0)
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
-    >>> prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=10)
+    >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
     >>> disp.plot() # doctest: +SKIP
     """
