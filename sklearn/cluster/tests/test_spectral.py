@@ -268,7 +268,7 @@ def test_verbose(assign_labels, capsys):
         assert re.search(r"Iteration [0-9]+, inertia", captured.out)
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @pytest.mark.parametrize("affinity", ["precomputed",
                                       "precomputed_nearest_neighbors"])
 def test_pairwise_is_deprecated(affinity):

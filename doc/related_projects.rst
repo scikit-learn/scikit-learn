@@ -36,6 +36,10 @@ enhance the functionality of scikit-learn's estimators.
   An automated machine learning toolkit and a drop-in replacement for a
   scikit-learn estimator
 
+- `autoviml <https://github.com/AutoViML/Auto_ViML/>`_
+  Automatically Build Multiple Machine Learning Models with a Single Line of Code.
+  Designed as a faster way to use scikit-learn models without having to preprocess data.
+
 - `TPOT <https://github.com/rhiever/tpot>`_
   An automated machine learning toolkit that optimizes a series of scikit-learn
   operators to design a machine learning pipeline, including data and feature
@@ -152,6 +156,10 @@ and tasks.
 
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
+
+- `scikeras <https://github.com/adriangb/scikeras>`_ provides a wrapper around
+  Keras to interface it with scikit-learn. SciKeras is the successor
+  of `tf.keras.wrappers.scikit_learn`.
 
 **Broad scope**
 

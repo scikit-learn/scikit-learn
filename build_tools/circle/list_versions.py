@@ -8,6 +8,7 @@ import sys
 from distutils.version import LooseVersion
 from urllib.request import urlopen
 
+
 def json_urlread(url):
     try:
         return json.loads(urlopen(url).read().decode('utf8'))
@@ -32,10 +33,23 @@ def human_readable_data_quantity(quantity, multiple=1024):
             quantity /= multiple
 
 
-def get_pdf_size(version):
+def get_file_extension(version):
+    if 'dev' in version:
+        # The 'dev' branch should be explictly handled
+        return 'zip'
+
+    current_version = LooseVersion(version)
+    min_zip_version = LooseVersion('0.24')
+
+    return 'zip' if current_version >= min_zip_version else 'pdf'
+
+
+def get_file_size(version):
     api_url = ROOT_URL + '%s/_downloads' % version
     for path_details in json_urlread(api_url):
-        if path_details['name'] == 'scikit-learn-docs.pdf':
+        file_extension = get_file_extension(version)
+        file_path = f'scikit-learn-docs.{file_extension}'
+        if path_details['name'] == file_path:
             return human_readable_data_quantity(path_details['size'], 1000)
 
 
@@ -64,8 +78,8 @@ for path_details in root_listing:
     if path_details['type'] == 'dir':
         html = urlopen(RAW_FMT % name).read().decode('utf8')
         version_num = VERSION_RE.search(html).group(1)
-        pdf_size = get_pdf_size(name)
-        dirs[name] = (version_num, pdf_size)
+        file_size = get_file_size(name)
+        dirs[name] = (version_num, file_size)
 
     if path_details['type'] == 'symlink':
         symlinks[name] = json_urlread(path_details['_links']['self'])['target']
@@ -81,7 +95,7 @@ seen = set()
 for name in (NAMED_DIRS +
              sorted((k for k in dirs if k[:1].isdigit()),
                     key=LooseVersion, reverse=True)):
-    version_num, pdf_size = dirs[name]
+    version_num, file_size = dirs[name]
     if version_num in seen:
         # symlink came first
         continue
@@ -91,7 +105,8 @@ for name in (NAMED_DIRS +
     path = 'https://scikit-learn.org/%s/' % name
     out = ('* `Scikit-learn %s%s documentation <%s>`_'
            % (version_num, name_display, path))
-    if pdf_size is not None:
-        out += (' (`PDF %s <%s/_downloads/scikit-learn-docs.pdf>`_)'
-                % (pdf_size, path))
+    if file_size is not None:
+        file_extension = get_file_extension(version_num)
+        out += (f' (`{file_extension.upper()} {file_size} <{path}/'
+                f'_downloads/scikit-learn-docs.{file_extension}>`_)')
     print(out)

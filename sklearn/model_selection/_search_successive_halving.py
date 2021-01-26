@@ -394,7 +394,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
                problem
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-               regression problem
+               classification problem
             - ``1`` when ``resource != 'n_samples'``
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -448,7 +448,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
+        ``HalvingGridSearchCV`` instance.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -681,7 +681,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
                problem
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-               regression problem
+               classification problem
             - ``1`` when ``resource != 'n_samples'``
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -735,7 +735,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
+        ``HalvingRandomSearchCV`` instance.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.

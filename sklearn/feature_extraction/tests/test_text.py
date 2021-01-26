@@ -341,6 +341,43 @@ def test_fit_countvectorizer_twice():
     assert X1.shape[1] != X2.shape[1]
 
 
+def test_countvectorizer_custom_token_pattern():
+    """Check `get_feature_names()` when a custom token pattern is passed.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12971
+    """
+    corpus = [
+        'This is the 1st document in my corpus.',
+        'This document is the 2nd sample.',
+        'And this is the 3rd one.',
+        'Is this the 4th document?',
+    ]
+    token_pattern = r"[0-9]{1,3}(?:st|nd|rd|th)\s\b(\w{2,})\b"
+    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    vectorizer.fit_transform(corpus)
+    expected = ['document', 'one', 'sample']
+    assert vectorizer.get_feature_names() == expected
+
+
+def test_countvectorizer_custom_token_pattern_with_several_group():
+    """Check that we raise an error if token pattern capture several groups.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12971
+    """
+    corpus = [
+        'This is the 1st document in my corpus.',
+        'This document is the 2nd sample.',
+        'And this is the 3rd one.',
+        'Is this the 4th document?',
+    ]
+
+    token_pattern = r"([0-9]{1,3}(?:st|nd|rd|th))\s\b(\w{2,})\b"
+    err_msg = "More than 1 capturing group in token pattern"
+    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    with pytest.raises(ValueError, match=err_msg):
+        vectorizer.fit(corpus)
+
+
 def test_tf_idf_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],
@@ -1348,3 +1385,11 @@ def test_tie_breaking_sample_order_invariance():
     vocab1 = vec.fit(['hello', 'world']).vocabulary_
     vocab2 = vec.fit(['world', 'hello']).vocabulary_
     assert vocab1 == vocab2
+
+
+@fails_if_pypy
+def test_nonnegative_hashing_vectorizer_result_indices():
+    # add test for pr 19035
+    hashing = HashingVectorizer(n_features=1000000, ngram_range=(2, 3))
+    indices = hashing.transform(['22pcs efuture']).indices
+    assert indices[0] >= 0
