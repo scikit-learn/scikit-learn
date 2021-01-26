@@ -700,7 +700,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # Filter out zero-weighted samples, as they should not impact the result
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
-        _check_sample_weight(sample_weight, y_true)
+        sample_weight = _check_sample_weight(sample_weight, y_true)
         nonzero_weight_mask = sample_weight != 0
         y_true = y_true[nonzero_weight_mask]
         y_score = y_score[nonzero_weight_mask]
