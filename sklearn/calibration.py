@@ -1061,7 +1061,7 @@ class CalibrationDisplay:
 
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
-            on predicted probabilities.
+              on predicted probabilities.
 
         name : str, default=None
             Name for labeling curve. If `None`, the name of the estimator is
@@ -1170,7 +1170,7 @@ class CalibrationDisplay:
 
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
-            on predicted probabilities.
+              on predicted probabilities.
 
         name : str, default=None
             Name for labeling curve. If `None`, the name of the estimator is
