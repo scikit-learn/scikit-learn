@@ -627,7 +627,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
 @pytest.mark.parametrize("n_bins", [5, 10])
 @pytest.mark.parametrize("strategy", ["uniform", "quantile"])
 def test_calibration_display_compute(pyplot, iris_data_binary, n_bins,
-                                    strategy):
+                                     strategy):
     # Ensure `CalibrationDisplay.from_predictions` and `calibration_curve`
     # compute the same results. Also checks attributes of the
     # CalibrationDisplay object.
