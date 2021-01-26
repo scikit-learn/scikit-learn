@@ -1052,25 +1052,28 @@ class CalibrationDisplay:
             Binary target values.
 
         n_bins : int, default=5
-            Number of bins to discretize the [0, 1] interval into when calculating
-            the calibration curve. A bigger number requires more data.
+            Number of bins to discretize the [0, 1] interval into when
+            calculating the calibration curve. A bigger number requires more
+            data.
 
         strategy : {'uniform', 'quantile'}, default='uniform'
             Strategy used to define the widths of the bins.
 
             - `'uniform'`: The bins have identical widths.
-            - `'quantile'`: The bins have the same number of samples and depend on
-            predicted probabilities.
+            - `'quantile'`: The bins have the same number of samples and depend
+            on predicted probabilities.
 
         name : str, default=None
-            Name for labeling curve. If `None`, the name of the estimator is used.
+            Name for labeling curve. If `None`, the name of the estimator is
+            used.
 
         ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly calibrated
-            classifier.
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         ax : matplotlib axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is created.
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1158,25 +1161,28 @@ class CalibrationDisplay:
             The predicted probabilities of the positive class.
 
         n_bins : int, default=5
-            Number of bins to discretize the [0, 1] interval into when calculating
-            the calibration curve. A bigger number requires more data.
+            Number of bins to discretize the [0, 1] interval into when
+            calculating the calibration curve. A bigger number requires more
+            data.
 
         strategy : {'uniform', 'quantile'}, default='uniform'
             Strategy used to define the widths of the bins.
 
             - `'uniform'`: The bins have identical widths.
-            - `'quantile'`: The bins have the same number of samples and depend on
-            predicted probabilities.
+            - `'quantile'`: The bins have the same number of samples and depend
+            on predicted probabilities.
 
         name : str, default=None
-            Name for labeling curve. If `None`, the name of the estimator is used.
+            Name for labeling curve. If `None`, the name of the estimator is
+            used.
 
         ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly calibrated
-            classifier.
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         ax : matplotlib axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is created.
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.

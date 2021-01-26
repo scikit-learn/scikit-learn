@@ -564,26 +564,26 @@ def test_calibrated_classifier_cv_deprecation(data):
 
 
 @pytest.fixture(scope="module")
-def data():
+def iris_data():
     return load_iris(return_X_y=True)
 
 
 @pytest.fixture(scope="module")
-def data_binary(data):
+def iris_data_binary(data):
     X, y = data
     return X[y < 2], y[y < 2]
 
 
-def test_calibration_display_reg(data):
+def test_calibration_display_reg(iris_data):
     X, y = data
     reg = LinearRegression().fit(X, y)
 
     msg = "'estimator' should be a fitted classifier"
     with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(clf, X, y)
+        CalibrationDisplay.from_estimator(reg, X, y)
 
 
-def test_calibration_display_no_predict_proba(pyplot, data_binary):
+def test_calibration_display_no_predict_proba(pyplot, iris_data_binary):
     X, y = data_binary
     clf = LinearSVC().fit(X, y)
 
@@ -592,7 +592,7 @@ def test_calibration_display_no_predict_proba(pyplot, data_binary):
         CalibrationDisplay.from_estimator(clf, X, y)
 
 
-def test_calibration_display_not_fitted(pyplot, data_binary):
+def test_calibration_display_not_fitted(pyplot, iris_data_binary):
     X, y = data_binary
     clf = LogisticRegression()
 
@@ -603,7 +603,7 @@ def test_calibration_display_not_fitted(pyplot, data_binary):
 @pytest.mark.parametrize(
     "constructor_name", ["from_estimator", "from_predictions"]
 )
-def test_calibration_display_non_binary(pyplot, data, constructor_name):
+def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     X, y = data
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
@@ -627,7 +627,7 @@ def test_calibration_display_non_binary(pyplot, data, constructor_name):
 
 @pytest.mark.parametrize("n_bins", [5, 10])
 @pytest.mark.parametrize("strategy", ["uniform", "quantile"])
-def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy):
+def test_plot_calibration_curve(pyplot, iris_data_binary, n_bins, strategy):
     # Ensure `plot_calibration_curve` and `calibration_curve` compute the same
     # results. Also checks attributes of the CalibrationDisplay object.
     X, y = data_binary
@@ -661,7 +661,7 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy):
     assert viz.line_.get_label() == "LogisticRegression"
 
 
-def test_plot_calibration_curve_pipeline(pyplot, data_binary):
+def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     # Ensure pipelines are supported by plot_calibration_curve
     X, y = data_binary
     clf = make_pipeline(StandardScaler(), LogisticRegression())
@@ -689,8 +689,9 @@ def test_calibration_display_default_labels(pyplot, estimator_name,
     assert viz.line_.get_label() == expected_label
 
 
-def test_plot_calibration_curve_estimator_name_multiple_calls(pyplot,
-                                                              data_binary):
+def test_plot_calibration_curve_estimator_name_multiple_calls(
+    pyplot, iris_data_binary
+):
     # Check that the `name` used when calling `plot_calibration_curve` is
     # used when multiple `viz.plot()` calls are made.
     X, y = data_binary
@@ -707,7 +708,7 @@ def test_plot_calibration_curve_estimator_name_multiple_calls(pyplot,
     assert clf_name == viz.line_.get_label()
 
 
-def test_plot_calibration_curve_ref_line(pyplot, data_binary):
+def test_plot_calibration_curve_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
     X, y = data_binary
     lr = LogisticRegression().fit(X, y)
