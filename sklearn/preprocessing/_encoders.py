@@ -765,7 +765,7 @@ class OrdinalEncoder(_BaseEncoder):
                             f"handle_unknown is 'use_encoded_value', "
                             f"got {self.unknown_value}.")
 
-        self._fit(X)
+        self._fit(X, handle_unknown=self.handle_unknown)
 
         if self.handle_unknown == 'use_encoded_value':
             for feature_cats in self.categories_:
