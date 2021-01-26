@@ -575,7 +575,7 @@ def iris_data_binary(data):
 
 
 def test_calibration_display_reg(iris_data):
-    X, y = data
+    X, y = iris_data
     reg = LinearRegression().fit(X, y)
 
     msg = "'estimator' should be a fitted classifier"
@@ -584,7 +584,7 @@ def test_calibration_display_reg(iris_data):
 
 
 def test_calibration_display_no_predict_proba(pyplot, iris_data_binary):
-    X, y = data_binary
+    X, y = iris_data_binary
     clf = LinearSVC().fit(X, y)
 
     msg = "response method predict_proba is not defined in"
@@ -593,7 +593,7 @@ def test_calibration_display_no_predict_proba(pyplot, iris_data_binary):
 
 
 def test_calibration_display_not_fitted(pyplot, iris_data_binary):
-    X, y = data_binary
+    X, y = iris_data_binary
     clf = LogisticRegression()
 
     with pytest.raises(NotFittedError):
@@ -604,7 +604,7 @@ def test_calibration_display_not_fitted(pyplot, iris_data_binary):
     "constructor_name", ["from_estimator", "from_predictions"]
 )
 def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
-    X, y = data
+    X, y = iris_data
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
     y_prob = clf.predict_proba(X)
@@ -630,7 +630,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
 def test_plot_calibration_curve(pyplot, iris_data_binary, n_bins, strategy):
     # Ensure `plot_calibration_curve` and `calibration_curve` compute the same
     # results. Also checks attributes of the CalibrationDisplay object.
-    X, y = data_binary
+    X, y = iris_data_binary
 
     lr = LogisticRegression().fit(X, y)
 
@@ -663,7 +663,7 @@ def test_plot_calibration_curve(pyplot, iris_data_binary, n_bins, strategy):
 
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     # Ensure pipelines are supported by plot_calibration_curve
-    X, y = data_binary
+    X, y = iris_data_binary
     clf = make_pipeline(StandardScaler(), LogisticRegression())
     clf.fit(X, y)
     viz = plot_calibration_curve(clf, X, y)
@@ -694,7 +694,7 @@ def test_plot_calibration_curve_estimator_name_multiple_calls(
 ):
     # Check that the `name` used when calling `plot_calibration_curve` is
     # used when multiple `viz.plot()` calls are made.
-    X, y = data_binary
+    X, y = iris_data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
     viz = plot_calibration_curve(clf, X, y, name=clf_name)
