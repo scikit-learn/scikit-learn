@@ -35,10 +35,11 @@ def inplace_csr_column_scale(X, scale):
 
     Parameters
     ----------
-    X : CSR matrix with shape (n_samples, n_features)
+    X : sparse matrix of shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
+        It should be of CSR format.
 
-    scale : float array with shape (n_features,)
+    scale : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Array of precomputed feature-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[1]
@@ -53,10 +54,10 @@ def inplace_csr_row_scale(X, scale):
 
     Parameters
     ----------
-    X : CSR sparse matrix, shape (n_samples, n_features)
-        Matrix to be scaled.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix to be scaled. It should be of CSR format.
 
-    scale : float array with shape (n_samples,)
+    scale : ndarray of float of shape (n_samples,)
         Array of precomputed sample-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[0]
@@ -64,14 +65,14 @@ def inplace_csr_row_scale(X, scale):
 
 
 def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
-    """Compute mean and variance along an axix on a CSR or CSC matrix
+    """Compute mean and variance along an axis on a CSR or CSC matrix.
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
-        Input data.
+    X : sparse matrix of shape (n_samples, n_features)
+        Input data. It can be of CSR or CSC format.
 
-    axis : int (either 0 or 1)
+    axis : {0, 1}
         Axis along which the axis should be computed.
 
     weights : ndarray of shape (n_samples,) or (n_features,), default=None
@@ -91,10 +92,10 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
     -------
 
     means : ndarray of shape (n_features,), dtype=floating
-        Feature-wise means
+        Feature-wise means.
 
     variances : ndarray of shape (n_features,), dtype=floating
-        Feature-wise variances
+        Feature-wise variances.
 
     sum_weights : ndarray of shape (n_features,), dtype=floating
         Returned if `return_sum_weights` is `True`.
@@ -122,7 +123,7 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
 @_deprecate_positional_args
 def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
                             weights=None):
-    """Compute incremental mean and variance along an axix on a CSR or
+    """Compute incremental mean and variance along an axis on a CSR or
     CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
@@ -132,10 +133,10 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix of shape (n_samples, n_features)
         Input data.
 
-    axis : int (either 0 or 1)
+    axis : {0, 1}
         Axis along which the axis should be computed.
 
     last_mean : ndarray of shape (n_features,) or (n_samples,), dtype=floating
@@ -226,10 +227,11 @@ def inplace_column_scale(X, scale):
 
     Parameters
     ----------
-    X : CSC or CSR matrix with shape (n_samples, n_features)
-        Matrix to normalize using the variance of the features.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix to normalize using the variance of the features. It should be
+        of CSC or CSR format.
 
-    scale : float array with shape (n_features,)
+    scale : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Array of precomputed feature-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
@@ -248,10 +250,10 @@ def inplace_row_scale(X, scale):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
-        Matrix to be scaled.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix to be scaled. It should be of CSR or CSC format.
 
-    scale : float array with shape (n_features,)
+    scale : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Array of precomputed sample-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
@@ -268,8 +270,9 @@ def inplace_swap_row_csc(X, m, n):
 
     Parameters
     ----------
-    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
-        Matrix whose two rows are to be swapped.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix whose two rows are to be swapped. It should be of
+        CSC format.
 
     m : int
         Index of the row of X to be swapped.
@@ -297,8 +300,9 @@ def inplace_swap_row_csr(X, m, n):
 
     Parameters
     ----------
-    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
-        Matrix whose two rows are to be swapped.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix whose two rows are to be swapped. It should be of
+        CSR format.
 
     m : int
         Index of the row of X to be swapped.
@@ -352,8 +356,9 @@ def inplace_swap_row(X, m, n):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
-        Matrix whose two rows are to be swapped.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix whose two rows are to be swapped. It should be of CSR or
+        CSC format.
 
     m : int
         Index of the row of X to be swapped.
@@ -375,8 +380,9 @@ def inplace_swap_column(X, m, n):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
-        Matrix whose two columns are to be swapped.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix whose two columns are to be swapped. It should be of
+        CSR or CSC format.
 
     m : int
         Index of the column of X to be swapped.
@@ -465,10 +471,10 @@ def min_max_axis(X, axis, ignore_nan=False):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
-        Input data.
+    X : sparse matrix of shape (n_samples, n_features)
+        Input data. It should be of CSR or CSC format.
 
-    axis : int (either 0 or 1)
+    axis : {0, 1}
         Axis along which the axis should be computed.
 
     ignore_nan : bool, default=False
@@ -479,11 +485,11 @@ def min_max_axis(X, axis, ignore_nan=False):
     Returns
     -------
 
-    mins : float array with shape (n_features,)
-        Feature-wise minima
+    mins : ndarray of shape (n_features,), dtype={np.float32, np.float64}
+        Feature-wise minima.
 
-    maxs : float array with shape (n_features,)
-        Feature-wise maxima
+    maxs : ndarray of shape (n_features,), dtype={np.float32, np.float64}
+        Feature-wise maxima.
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
         if ignore_nan:
@@ -501,10 +507,10 @@ def count_nonzero(X, axis=None, sample_weight=None):
 
     Parameters
     ----------
-    X : CSR sparse matrix of shape (n_samples, n_labels)
-        Input data.
+    X : sparse matrix of shape (n_samples, n_labels)
+        Input data. It should be of CSR format.
 
-    axis : None, 0 or 1
+    axis : {0, 1}, default=None
         The axis on which the data is aggregated.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -546,7 +552,8 @@ def count_nonzero(X, axis=None, sample_weight=None):
 def _get_median(data, n_zeros):
     """Compute the median of data with n_zeros additional zeros.
 
-    This function is used to support sparse matrices; it modifies data in-place
+    This function is used to support sparse matrices; it modifies data
+    in-place.
     """
     n_elems = len(data) + n_zeros
     if not n_elems:
@@ -577,12 +584,12 @@ def csc_median_axis_0(X):
 
     Parameters
     ----------
-    X : CSC sparse matrix, shape (n_samples, n_features)
-        Input data.
+    X : sparse matrix of shape (n_samples, n_features)
+        Input data. It should be of CSC format.
 
     Returns
     -------
-    median : ndarray, shape (n_features,)
+    median : ndarray of shape (n_features,)
         Median.
 
     """

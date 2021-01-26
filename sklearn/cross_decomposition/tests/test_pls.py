@@ -315,7 +315,7 @@ def test_convergence_fail():
         pls_nipals.fit(X, Y)
 
 
-@pytest.mark.filterwarnings('ignore:.*scores_ was deprecated')  # 0.26
+@pytest.mark.filterwarnings('ignore:.*scores_ was deprecated')  # 1.1
 @pytest.mark.parametrize('Est', (PLSSVD, PLSRegression, PLSCanonical))
 def test_attibutes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
@@ -439,7 +439,7 @@ def test_scale_and_stability(Est, X, Y):
 @pytest.mark.parametrize('n_components', (0, 4))
 def test_n_components_bounds(Est, n_components):
     # n_components should be in [1, min(n_samples, n_features, n_targets)]
-    # TODO: catch error instead of warning in 0.26
+    # TODO: catch error instead of warning in 1.1
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
@@ -454,7 +454,7 @@ def test_n_components_bounds(Est, n_components):
 @pytest.mark.parametrize('n_components', (0, 6))
 def test_n_components_bounds_pls_regression(n_components):
     # For PLSRegression, the upper bound for n_components is n_features
-    # TODO: catch error instead of warning in 0.26
+    # TODO: catch error instead of warning in 1.1
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
@@ -471,7 +471,7 @@ def test_scores_deprecations(Est):
     # Make sure x_scores_ and y_scores_ are deprecated.
     # It's not deprecated for PLSRegression because y_score_ is different from
     # transform(Y_train)
-    # TODO: remove attributes and test in 0.26
+    # TODO: remove attributes and test in 1.1
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
@@ -492,7 +492,7 @@ def test_norm_y_weights_deprecation(Est):
         est.norm_y_weights
 
 
-# TODO: Remove test in 0.26
+# TODO: Remove test in 1.1
 @pytest.mark.parametrize('Estimator',
                          (PLSRegression, PLSCanonical, CCA, PLSSVD))
 @pytest.mark.parametrize('attribute',

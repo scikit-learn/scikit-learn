@@ -23,8 +23,11 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_array, gen_even_slices
-from ..utils import _to_object_array
+from ..utils import (
+    check_array,
+    gen_even_slices,
+    _to_object_array,
+)
 from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -525,10 +528,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # For cross-validation routines to split data correctly
         return {'pairwise': self.metric == 'precomputed'}
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly
