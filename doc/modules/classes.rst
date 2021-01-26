@@ -78,19 +78,6 @@ Functions
 
    calibration.calibration_curve
 
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   calibration.CalibrationDisplay
-
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   calibration.plot_calibration_curve
-
 .. _cluster_ref:
 
 :mod:`sklearn.cluster`: Clustering
@@ -1132,7 +1119,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
-
+   calibration.CalibrationDisplay
 
 .. _mixture_ref:
 

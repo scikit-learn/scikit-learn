@@ -29,7 +29,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
-from sklearn.calibration import plot_calibration_curve
+from sklearn.calibration import CalibrationDisplay
 
 # %%
 # Dataset
@@ -139,7 +139,7 @@ ax1 = fig.add_subplot(gs[:2, :2])
 viz_objects = {}
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
-    viz = plot_calibration_curve(
+    viz = CalibrationDisplay.from_estimator(
         clf, X_test, y_test, n_bins=10, name=name, ax=ax1, color=colors(i)
     )
     viz_objects[name] = viz

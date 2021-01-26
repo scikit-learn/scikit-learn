@@ -29,7 +29,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (precision_score, recall_score, f1_score,
                              brier_score_loss, log_loss, roc_auc_score)
-from sklearn.calibration import CalibratedClassifierCV, plot_calibration_curve
+from sklearn.calibration import CalibratedClassifierCV, CalibrationDisplay
 
 # %%
 # Dataset
@@ -83,7 +83,7 @@ ax1 = fig.add_subplot(gs[:2, :2])
 viz_objects = {}
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
-    viz = plot_calibration_curve(
+    viz = CalibrationDisplay.from_estimator(
         clf, X_test, y_test, n_bins=10, name=name, ax=ax1, color=colors(i)
     )
     viz_objects[name] = viz
@@ -214,7 +214,7 @@ ax1 = fig.add_subplot(gs[:2, :2])
 viz_objects = {}
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
-    viz = plot_calibration_curve(
+    viz = CalibrationDisplay.from_estimator(
         clf, X_test, y_test, n_bins=10, name=name, ax=ax1, color=colors(i)
     )
     viz_objects[name] = viz
