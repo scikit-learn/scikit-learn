@@ -710,7 +710,7 @@ def test_plot_calibration_curve_estimator_name_multiple_calls(
 
 def test_plot_calibration_curve_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
-    X, y = data_binary
+    X, y = iris_data_binary
     lr = LogisticRegression().fit(X, y)
     dt = DecisionTreeClassifier().fit(X, y)
 

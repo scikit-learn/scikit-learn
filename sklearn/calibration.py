@@ -1117,7 +1117,7 @@ class CalibrationDisplay:
 
         binary_error = "Only binary classification is supported."
         if not len(estimator.classes_) == 2:
-            raise ValueError(binar_error)
+            raise ValueError(binary_error)
         if y_prob.ndim == 1:
             raise ValueError("'estimator.predict_proba' needs to return a 2d "
                              "array.")
