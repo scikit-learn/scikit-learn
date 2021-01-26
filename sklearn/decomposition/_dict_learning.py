@@ -1572,12 +1572,24 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    max_no_improvement : int, default=10
-        Control early stopping based on the consecutive number of mini batches
-        that does not yield an improvement on the smoothed cost function. To
-        disable early stopping set `max_no_improvement` to None.
+    tol : float, default=1e-3
+        Control early stopping based on the norm of the differences in the
+        dictionary between 2 steps.
+
+        To disable early stopping based on changes in the dictionary, set
+        `tol` to 0.0.
 
         .. versionadded:: 1.0
+
+    max_no_improvement : int, default=10
+        Control early stopping based on the consecutive number of mini batches
+        that does not yield an improvement on the smoothed cost function.
+
+        To disable convergence detection based on cost function, set
+        `max_no_improvement` to None.
+
+        .. versionadded:: 1.0
+
 
     Attributes
     ----------
@@ -1748,11 +1760,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 f"max_no_improvement should be >= 0, got "
                 f"{self.max_no_improvement} instead.")
 
-        # tol
-        self._tol = self.tol
-
-        # TODO sparse coding checks
-
     def _initialize_dict(self, X, random_state):
         """Initialization of the dictionary"""
         if self.dict_init is not None:
@@ -1770,7 +1777,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                                np.zeros((self._n_components - r,
                                          dictionary.shape[1]))]
 
-        dictionary = check_array(dictionary, order='C', dtype=np.float64,
+        dictionary = check_array(dictionary, order='F', dtype=np.float64,
                                  copy=False)
         dictionary = np.require(dictionary, requirements='W')
 
@@ -1795,22 +1802,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Update dictionary
         A, B = self._inner_stats
-
         _update_dict(dictionary, X, code, A, B, verbose=self.verbose,
                      random_state=random_state, positive=self.positive_dict)
-
-        batch_cost2 = (0.5 * ((X - code @ dictionary)**2).sum()
-                       + self.alpha * np.sum(np.abs(code))) / batch_size
-
-        # from functools import partial
-        # se = partial(sparse_encode, dictionary=dictionary, algorithm=self._fit_algorithm,
-        #              alpha=self.alpha, n_jobs=self.n_jobs, check_input=False,
-        #              positive=self.positive_code, max_iter=self.transform_max_iter,
-        #              verbose=self.verbose)
-
-        # if self.callback is not None:
-        #     self.callback(cost1=cost1, cost2=cost2, se=se, dictionary=dictionary, alpha=self.alpha)
-        #     #self.callback(locals())
 
         return batch_cost
 
@@ -1844,49 +1837,40 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # Compute an Exponentially Weighted Average of the cost function to
         # monitor the convergence while discarding minibatch-local stochastic
         # variability: https://en.wikipedia.org/wiki/Moving_average
-        ewa_cost = self._ewa_cost
-        if ewa_cost is None:
-            ewa_cost = batch_cost
+        if self._ewa_cost is None:
+            self._ewa_cost = batch_cost
         else:
             alpha = batch_size / (n_samples + 1)
             alpha = min(alpha, 1)
-            ewa_cost = ewa_cost * (1 - alpha) + batch_cost * alpha
+            self._ewa_cost = self._ewa_cost * (1 - alpha) + batch_cost * alpha
 
         # Log progress to be able to monitor convergence
         if self.verbose:
             print(f"Minibatch iteration {step}: "
-                  f"mean batch cost: {batch_cost}, ewa cost: {ewa_cost}")
+                  f"mean batch cost: {batch_cost}, ewa cost: {self._ewa_cost}")
 
-        max_diff = ((dictionary - dict_buffer)**2).sum()
-        max_diff /= (dict_buffer**2).sum()
-        if self._tol > 0 and np.sqrt(max_diff) <= self._tol:
+        # Early stopping based on change of dictionary
+        dict_diff = linalg.norm(dictionary - dict_buffer) / self._n_components
+        if self.tol > 0 and dict_diff <= self.tol:
             if self.verbose:
-                print(f"Converged (small dictionary change) at iteration "
-                      f"{step}")
-            # return True
+                print(f"Converged (small dictionary change) at step {step}")
+            return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
         # cost function
-        # ewa_cost_min = self._ewa_cost_min
-        # no_improvement = self._no_improvement
-        # if ewa_cost_min is None or ewa_cost < ewa_cost_min:
-        #     no_improvement = 0
-        #     ewa_cost_min = ewa_cost
-        # else:
-        #     no_improvement += 1
+        if self._ewa_cost_min is None or self._ewa_cost < self._ewa_cost_min:
+            self._no_improvement = 0
+            self._ewa_cost_min = self._ewa_cost
+        else:
+            self._no_improvement += 1
 
-        # if (self.max_no_improvement is not None
-        #         and no_improvement >= self.max_no_improvement):
-        #     if self.verbose:
-        #         print(f"Converged (lack of improvement in cost function) at "
-        #               f"iteration {step}")
-        #     return True
+        if (self.max_no_improvement is not None
+                and self._no_improvement >= self.max_no_improvement):
+            if self.verbose:
+                print(f"Converged (lack of improvement in objective function) "
+                      f"at step {step}")
+            return True
 
-        # update the convergence context to maintain state across successive
-        # calls:
-        self._ewa_cost = ewa_cost
-        # self._ewa_cost_min = ewa_cost_min
-        # self._no_improvement = no_improvement
         return False
 
     def fit(self, X, y=None):
@@ -1929,37 +1913,23 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             np.zeros((self._n_components, self._n_components)),
             np.zeros((n_features, self._n_components)))
 
-        import time
-        from ..metrics.pairwise import paired_cosine_distances
-
         if self.max_iter is not None:
 
             # Attributes to monitor the convergence
             self._ewa_cost = None
             self._ewa_cost_min = None
             self._no_improvement = 0
-            self._cost_window = []
-            self._n_iter_since_last_min = 0
 
             self.n_steps_ = 0
 
             batches = gen_batches(n_samples, self._batch_size)
             batches = itertools.cycle(batches)
             n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
-            n_iter = self.max_iter * n_steps_per_epoch
+            n_steps = self.max_iter * n_steps_per_epoch
 
-            from functools import partial
-            se = partial(sparse_encode, algorithm=self._fit_algorithm,
-                         alpha=self.alpha, n_jobs=self.n_jobs, check_input=False,
-                         positive=self.positive_code, max_iter=self.transform_max_iter,
-                         verbose=self.verbose)
-
-            for i, batch in zip(range(n_iter), batches):
-                if i % n_steps_per_epoch == 0:
+            for i, batch in zip(range(n_steps), batches):
+                if i % n_steps_per_epoch == 0 and self.shuffle:
                     self._random_state.shuffle(X_train)
-                    print(i / n_steps_per_epoch)
-
-                t = time.time()
 
                 this_X = X_train[batch]
 
@@ -1970,23 +1940,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                                                dict_buffer, n_samples, i):
                     break
 
-                max_diff = linalg.norm(dictionary - dict_buffer)
-                max_diff /= self._n_components
-
-                max_diff2 = paired_cosine_distances(dictionary, dict_buffer).mean()
-
                 dict_buffer[:] = dictionary
 
-                delta_t = time.time() - t
-
                 if self.callback is not None:
-                    self.callback(cost=batch_cost, ewa=self._ewa_cost, max_diff=max_diff,
-                    max_diff2=max_diff2,
-                    t=delta_t, se=se, dictionary=dictionary, alpha=self.alpha)
-                    #self.callback(locals())
-            
-            self.n_steps_ = i + 1
-            self.n_iter_ = self.n_steps_ // n_steps_per_epoch
+                    self.callback(locals())
+
+            self.n_steps_ = n_steps
+            self.n_iter_ = n_steps // n_steps_per_epoch
         else:
             if self.n_iter != "deprecated":
                 warnings.warn(
@@ -2056,7 +2016,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_steps_ = getattr(self, "n_steps_", 0)
 
         if not has_components:
-            # this is the first call to partial_fit on this object
+            # This instance has not been fitted yet (fit or partial_fit)
             self._check_params(X)
 
             dictionary = self._initialize_dict(X, self._random_state)

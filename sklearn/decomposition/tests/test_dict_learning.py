@@ -388,7 +388,7 @@ def test_dict_learning_online_partial_fit():
     dict1 = MiniBatchDictionaryLearning(n_components, max_iter=10,
                                         batch_size=1, alpha=1, shuffle=False,
                                         dict_init=V, max_no_improvement=None,
-                                        random_state=0).fit(X)
+                                        tol=0., random_state=0).fit(X)
     dict2 = MiniBatchDictionaryLearning(n_components, alpha=1, dict_init=V,
                                         random_state=0)
     for i in range(10):
