@@ -37,7 +37,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 
-##############################################################################
+# %%
 # Data Loading and Feature Engineering
 # ------------------------------------
 # Let's use pandas to load a copy of the titanic dataset. The following shows
@@ -63,16 +63,13 @@ X = X[categorical_columns + numerical_columns]
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, random_state=42)
 
-categorical_pipe = Pipeline([
-    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))
-])
+categorical_encoder = OneHotEncoder(handle_unknown='ignore')
 numerical_pipe = Pipeline([
     ('imputer', SimpleImputer(strategy='mean'))
 ])
 
 preprocessing = ColumnTransformer(
-    [('cat', categorical_pipe, categorical_columns),
+    [('cat', categorical_encoder, categorical_columns),
      ('num', numerical_pipe, numerical_columns)])
 
 rf = Pipeline([
@@ -81,7 +78,7 @@ rf = Pipeline([
 ])
 rf.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Accuracy of the Model
 # ---------------------
 # Prior to inspecting the feature importances, it is important to check that
@@ -106,7 +103,7 @@ print("RF train accuracy: %0.3f" % rf.score(X_train, y_train))
 print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 
 
-##############################################################################
+# %%
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
 # The impurity-based feature importance ranks the numerical features to be the
@@ -122,8 +119,7 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 #   predictions that generalize to the test set (when the model has enough
 #   capacity).
 ohe = (rf.named_steps['preprocess']
-         .named_transformers_['cat']
-         .named_steps['onehot'])
+         .named_transformers_['cat'])
 feature_names = ohe.get_feature_names(input_features=categorical_columns)
 feature_names = np.r_[feature_names, numerical_columns]
 
@@ -141,7 +137,7 @@ fig.tight_layout()
 plt.show()
 
 
-##############################################################################
+# %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
 # held out test set. This shows that the low cardinality categorical feature,
 # ``sex`` is the most important feature.
@@ -159,7 +155,7 @@ ax.set_title("Permutation Importances (test set)")
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # It is also possible to compute the permutation importances on the training
 # set. This reveals that ``random_num`` gets a significantly higher importance
 # ranking than when computed on the test set. The difference between those two

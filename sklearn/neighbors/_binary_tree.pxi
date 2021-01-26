@@ -241,9 +241,12 @@ cdef NodeData_t[::1] get_memview_NodeData_1D(
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
 CLASS_DOC = \
-"""{BinaryTree} for fast generalized N-point problems
+"""
+{BinaryTree}(X, leaf_size=40, metric='minkowski', **kwargs)
 
-{BinaryTree}(X, leaf_size=40, metric='minkowski', \\**kwargs)
+{BinaryTree} for fast generalized N-point problems
+
+Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
 Parameters
 ----------
@@ -981,17 +984,17 @@ cdef class BinaryTree:
     def __init__(self, data,
                  leaf_size=40, metric='minkowski', sample_weight=None, **kwargs):
         # validate data
-        if data.size == 0:
+        self.data_arr = check_array(data, dtype=DTYPE, order='C')
+        if self.data_arr.size == 0:
             raise ValueError("X is an empty array")
+
+        n_samples = self.data_arr.shape[0]
+        n_features = self.data_arr.shape[1]
 
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
-
-        n_samples = data.shape[0]
-        n_features = data.shape[1]
-
-        self.data_arr = np.asarray(data, dtype=DTYPE, order='C')
         self.leaf_size = leaf_size
+
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
@@ -1001,11 +1004,13 @@ cdef class BinaryTree:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
+        self.dist_metric._validate_data(self.data_arr)
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes
         # with numbers of points between leaf_size and 2 * leaf_size
-        self.n_levels = np.log2(fmax(1, (n_samples - 1) / self.leaf_size)) + 1
+        self.n_levels = int(
+            np.log2(fmax(1, (n_samples - 1) / self.leaf_size)) + 1)
         self.n_nodes = (2 ** self.n_levels) - 1
 
         # allocate arrays for storage
@@ -1094,15 +1099,50 @@ cdef class BinaryTree:
         self._update_memviews()
 
     def get_tree_stats(self):
+        """
+        get_tree_stats(self)
+
+        Get tree status.
+
+        Returns
+        -------
+        tree_stats: tuple of int
+            (number of trims, number of leaves, number of splits)
+        """
         return (self.n_trims, self.n_leaves, self.n_splits)
 
     def reset_n_calls(self):
+        """
+        reset_n_calls(self)
+
+        Reset number of calls to 0.
+        """
         self.n_calls = 0
 
     def get_n_calls(self):
+        """
+        get_n_calls(self)
+
+        Get number of calls.
+
+        Returns
+        -------
+        n_calls: int
+            number of distance computation calls
+        """
         return self.n_calls
 
     def get_arrays(self):
+        """
+        get_arrays(self)
+
+        Get data and node arrays.
+
+        Returns
+        -------
+        arrays: tuple of array
+            Arrays for storing tree data, index, node data and node bounds.
+        """
         return (self.data_arr, self.idx_array_arr,
                 self.node_data_arr, self.node_bounds_arr)
 
@@ -1218,11 +1258,11 @@ cdef class BinaryTree:
         i    : if return_distance == False
         (d,i) : if return_distance == True
 
-        d : ndarray of shape X.shape[:-1] + k, dtype=double
+        d : ndarray of shape X.shape[:-1] + (k,), dtype=double
             Each entry gives the list of distances to the neighbors of the
             corresponding point.
 
-        i : ndarray of shape X.shape[:-1] + k, dtype=int
+        i : ndarray of shape X.shape[:-1] + (k,), dtype=int
             Each entry gives the list of indices of neighbors of the
             corresponding point.
         """
@@ -1297,7 +1337,8 @@ cdef class BinaryTree:
     def query_radius(self, X, r, int return_distance=False,
                      int count_only=False, int sort_results=False):
         """
-        query_radius(self, X, r, count_only = False):
+        query_radius(X, r, return_distance=False,
+        count_only=False, sort_results=False)
 
         query the tree for neighbors within a radius r
 
@@ -1629,7 +1670,10 @@ cdef class BinaryTree:
             return np.exp(log_density_arr)
 
     def two_point_correlation(self, X, r, dualtree=False):
-        """Compute the two-point correlation function
+        """
+        two_point_correlation(X, r, dualtree=False)
+
+        Compute the two-point correlation function
 
         Parameters
         ----------

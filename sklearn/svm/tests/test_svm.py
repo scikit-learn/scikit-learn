@@ -28,7 +28,8 @@ from sklearn.utils import shuffle
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.svm import _libsvm
+# mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
+from sklearn.svm import _libsvm  # type: ignore
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -348,7 +349,7 @@ def test_decision_function():
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.classes_[(clf.decision_function(X) > 0).astype(np.int)])
+        clf.classes_[(clf.decision_function(X) > 0).astype(int)])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
@@ -361,12 +362,13 @@ def test_decision_function():
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
 
 
-def test_decision_function_shape():
-    # check that decision_function_shape='ovr' gives
+@pytest.mark.parametrize('SVM', (svm.SVC, svm.NuSVC))
+def test_decision_function_shape(SVM):
+    # check that decision_function_shape='ovr' or 'ovo' gives
     # correct shape and is consistent with predict
 
-    clf = svm.SVC(kernel='linear', C=0.1,
-                  decision_function_shape='ovr').fit(iris.data, iris.target)
+    clf = SVM(kernel='linear',
+              decision_function_shape='ovr').fit(iris.data, iris.target)
     dec = clf.decision_function(iris.data)
     assert dec.shape == (len(iris.data), 3)
     assert_array_equal(clf.predict(iris.data), np.argmax(dec, axis=1))
@@ -375,17 +377,20 @@ def test_decision_function_shape():
     X, y = make_blobs(n_samples=80, centers=5, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    clf = svm.SVC(kernel='linear', C=0.1,
-                  decision_function_shape='ovr').fit(X_train, y_train)
+    clf = SVM(kernel='linear',
+              decision_function_shape='ovr').fit(X_train, y_train)
     dec = clf.decision_function(X_test)
     assert dec.shape == (len(X_test), 5)
     assert_array_equal(clf.predict(X_test), np.argmax(dec, axis=1))
 
     # check shape of ovo_decition_function=True
-    clf = svm.SVC(kernel='linear', C=0.1,
-                  decision_function_shape='ovo').fit(X_train, y_train)
+    clf = SVM(kernel='linear',
+              decision_function_shape='ovo').fit(X_train, y_train)
     dec = clf.decision_function(X_train)
     assert dec.shape == (len(X_train), 10)
+
+    with pytest.raises(ValueError, match="must be either 'ovr' or 'ovo'"):
+        SVM(decision_function_shape='bad').fit(X_train, y_train)
 
 
 def test_svr_predict():
@@ -594,7 +599,8 @@ def test_auto_weight():
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
     classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight('balanced', classes, y[unbalanced])
+    class_weights = compute_class_weight('balanced', classes=classes,
+                                         y=y[unbalanced])
     assert np.argmax(class_weights) == 2
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
@@ -770,7 +776,7 @@ def test_linearsvc():
 
     # test also decision function
     dec = clf.decision_function(T)
-    res = (dec > 0).astype(np.int) + 1
+    res = (dec > 0).astype(int) + 1
     assert_array_equal(res, true_result)
 
 
@@ -1229,7 +1235,7 @@ def test_n_support_oneclass_svr():
     assert reg.n_support_ == 4
 
 
-# TODO: Remove in 0.25 when probA_ and probB_ are deprecated
+# TODO: Remove in 1.0 when probA_ and probB_ are deprecated
 @pytest.mark.parametrize("SVMClass, data", [
     (svm.OneClassSVM, (X, )),
     (svm.SVR, (X, Y))
@@ -1239,7 +1245,7 @@ def test_svm_probA_proB_deprecated(SVMClass, data, deprecated_prob):
     clf = SVMClass().fit(*data)
 
     msg = ("The {} attribute is deprecated in version 0.23 and will be "
-           "removed in version 0.25.").format(deprecated_prob)
+           "removed in version 1.0").format(deprecated_prob)
     with pytest.warns(FutureWarning, match=msg):
         getattr(clf, deprecated_prob)
 

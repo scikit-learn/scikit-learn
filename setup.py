@@ -8,7 +8,12 @@ import sys
 import os
 import platform
 import shutil
+
+# We need to import setuptools before because it monkey-patches distutils
+import setuptools  # noqa
 from distutils.command.clean import clean as Clean
+from distutils.command.sdist import sdist
+
 from pkg_resources import parse_version
 import traceback
 import importlib
@@ -45,22 +50,12 @@ PROJECT_URLS = {
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
 import sklearn
+import sklearn._min_dependencies as min_deps  # noqa
+
 
 VERSION = sklearn.__version__
 
-if platform.python_implementation() == 'PyPy':
-    SCIPY_MIN_VERSION = '1.1.0'
-    NUMPY_MIN_VERSION = '1.14.0'
-else:
-    SCIPY_MIN_VERSION = '0.19.1'
-    NUMPY_MIN_VERSION = '1.13.3'
 
-JOBLIB_MIN_VERSION = '0.11'
-THREADPOOLCTL_MIN_VERSION = '2.0.0'
-
-# Optional setuptools features
-# We need to import setuptools early, if we want setuptools features,
-# as it monkey-patches the 'setup' function
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
@@ -69,16 +64,12 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
-
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
         extras_require={
-            'alldeps': (
-                'numpy >= {}'.format(NUMPY_MIN_VERSION),
-                'scipy >= {}'.format(SCIPY_MIN_VERSION),
-            ),
+            key: min_deps.tag_to_packages[key] for
+            key in ['examples', 'docs', 'tests', 'benchmark']
         },
     )
 else:
@@ -115,15 +106,29 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+cmdclass = {'clean': CleanCommand, 'sdist': sdist}
 
-# custom build_ext command to set OpenMP compile flags depending on os and
-# compiler
+# Custom build_ext command to set OpenMP compile flags depending on os and
+# compiler. Also makes it possible to set the parallelism level via
+# and environment variable (useful for the wheel building CI).
 # build_ext has to be imported after setuptools
 try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
     class build_ext_subclass(build_ext):
+
+        def finalize_options(self):
+            super().finalize_options()
+            if self.parallel is None:
+                # Do not override self.parallel if already defined by
+                # command-line flag (--parallel or -j)
+
+                parallel = os.environ.get("SKLEARN_BUILD_PARALLEL")
+                if parallel:
+                    self.parallel = int(parallel)
+            if self.parallel:
+                print("setting parallel=%d " % self.parallel)
+
         def build_extensions(self):
             from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
@@ -240,6 +245,7 @@ def setup_package():
                                  'Programming Language :: Python',
                                  'Topic :: Software Development',
                                  'Topic :: Scientific/Engineering',
+                                 'Development Status :: 5 - Production/Stable',
                                  'Operating System :: Microsoft :: Windows',
                                  'Operating System :: POSIX',
                                  'Operating System :: Unix',
@@ -248,6 +254,7 @@ def setup_package():
                                  'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
                                  'Programming Language :: Python :: 3.8',
+                                 'Programming Language :: Python :: 3.9',
                                  ('Programming Language :: Python :: '
                                   'Implementation :: CPython'),
                                  ('Programming Language :: Python :: '
@@ -255,12 +262,7 @@ def setup_package():
                                  ],
                     cmdclass=cmdclass,
                     python_requires=">=3.6",
-                    install_requires=[
-                        'numpy>={}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={}'.format(SCIPY_MIN_VERSION),
-                        'joblib>={}'.format(JOBLIB_MIN_VERSION),
-                        'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
-                    ],
+                    install_requires=min_deps.tag_to_packages['install'],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
@@ -270,16 +272,14 @@ def setup_package():
                                                     'egg_info',
                                                     'dist_info',
                                                     '--version',
-                                                    'clean'))):
-        # For these actions, NumPy is not required
-        #
-        # They are required to succeed without Numpy for example when
+                                                    'clean',
+                                                    'check'))):
+        # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.
-        try:
-            from setuptools import setup
-        except ImportError:
-            from distutils.core import setup
+
+        # These commands use setup from setuptools
+        from setuptools import setup
 
         metadata['version'] = VERSION
     else:
@@ -289,10 +289,12 @@ def setup_package():
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
-        check_package_status('numpy', NUMPY_MIN_VERSION)
+        check_package_status('numpy', min_deps.NUMPY_MIN_VERSION)
 
-        check_package_status('scipy', SCIPY_MIN_VERSION)
+        check_package_status('scipy', min_deps.SCIPY_MIN_VERSION)
 
+        # These commands require the setup from numpy.distutils because they
+        # may use numpy.distutils compiler classes.
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration

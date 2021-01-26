@@ -12,7 +12,6 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
@@ -78,7 +77,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         return precision
 
     @abstractmethod
-    def fit(X, y=None):
+    def fit(self, X, y=None):
         """Placeholder for fit. Subclasses should implement this method!
 
         Fit the model with X.
@@ -124,7 +123,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
         if self.mean_ is not None:
             X = X - self.mean_
         X_transformed = np.dot(X, self.components_.T)

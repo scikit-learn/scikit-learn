@@ -3,15 +3,18 @@ import scipy.sparse as sp
 import warnings
 from abc import ABCMeta, abstractmethod
 
-from . import _libsvm as libsvm
-from .import _liblinear as liblinear
-from . import _libsvm_sparse as libsvm_sparse
+# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
+# (and same for other imports)
+from . import _libsvm as libsvm  # type: ignore
+from .import _liblinear as liblinear  # type: ignore
+from . import _libsvm_sparse as libsvm_sparse  # type: ignore
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
 from ..utils import column_or_1d
 from ..utils import compute_class_weight
+from ..utils.deprecation import deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
@@ -58,7 +61,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
 
 
 class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
-    """Base class for estimators that use libsvm as backing library
+    """Base class for estimators that use libsvm as backing library.
 
     This implements support vector machine classification and regression.
 
@@ -100,6 +103,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.random_state = random_state
 
+    def _more_tags(self):
+        # Used by cross_val_score.
+        return {'pairwise': self.kernel == 'precomputed'}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # Used by cross_val_score.
@@ -110,7 +121,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) \
+                or (n_samples, n_samples)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
             For kernel="precomputed", the expected shape of X is
@@ -118,7 +130,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         y : array-like of shape (n_samples,)
             Target values (class labels in classification, real numbers in
-            regression)
+            regression).
 
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
@@ -143,6 +155,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
+
+        if hasattr(self, 'decision_function_shape'):
+            if self.decision_function_shape not in ('ovr', 'ovo'):
+                raise ValueError(
+                    f"decision_function_shape must be either 'ovr' or 'ovo', "
+                    f"got {self.decision_function_shape}."
+                )
 
         if callable(self.kernel):
             check_consistent_length(X, y)
@@ -452,8 +471,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if not callable(self.kernel):
-            X = check_array(X, accept_sparse='csr', dtype=np.float64,
-                            order="C", accept_large_sparse=False)
+            X = self._validate_data(X, accept_sparse='csr', dtype=np.float64,
+                                    order="C", accept_large_sparse=False,
+                                    reset=False)
 
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
@@ -470,10 +490,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
-        elif not callable(self.kernel) and X.shape[1] != self.shape_fit_[1]:
-            raise ValueError("X.shape[1] = %d should be equal to %d, "
-                             "the number of features at training time" %
-                             (X.shape[1], self.shape_fit_[1]))
         return X
 
     @property
@@ -533,7 +549,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         y_ = column_or_1d(y, warn=True)
         check_classification_targets(y)
         cls, y = np.unique(y_, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  classes=cls, y=y_)
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
@@ -627,7 +644,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         ----------
         X : array-like of shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train]
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
@@ -869,7 +886,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     tol : float
         Stopping condition.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -916,7 +933,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                              " in the data, but the data contains only one"
                              " class: %r" % classes_[0])
 
-        class_weight_ = compute_class_weight(class_weight, classes_, y)
+        class_weight_ = compute_class_weight(class_weight, classes=classes_,
+                                             y=y)
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y

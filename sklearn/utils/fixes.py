@@ -10,43 +10,38 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
+from functools import update_wrapper
 from distutils.version import LooseVersion
+import functools
 
 import numpy as np
 import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
+from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 1.0
+from .._config import config_context, get_config
+
+from .deprecation import deprecated
+
+try:
+    from pkg_resources import parse_version  # type: ignore
+except ImportError:
+    # setuptools not installed
+    parse_version = LooseVersion  # type: ignore
 
 
-def _parse_version(version_string):
-    version = []
-    for x in version_string.split('.'):
-        try:
-            version.append(int(x))
-        except ValueError:
-            # x may be of the form dev-1ea1592
-            version.append(x)
-    return tuple(version)
+np_version = parse_version(np.__version__)
+sp_version = parse_version(scipy.__version__)
 
 
-np_version = _parse_version(np.__version__)
-sp_version = _parse_version(scipy.__version__)
-
-
-if sp_version >= (1, 4):
+if sp_version >= parse_version('1.4'):
     from scipy.sparse.linalg import lobpcg
 else:
     # Backport of lobpcg functionality from scipy 1.4.0, can be removed
-    # once support for sp_version < (1, 4) is dropped
-    from ..externals._lobpcg import lobpcg  # noqa
-
-if sp_version >= (1, 3):
-    # Preserves earlier default choice of pinvh cutoff `cond` value.
-    # Can be removed once issue #14055 is fully addressed.
-    from ..externals._scipy_linalg import pinvh
-else:
-    from scipy.linalg import pinvh # noqa
+    # once support for sp_version < parse_version('1.4') is dropped
+    # mypy error: Name 'lobpcg' already defined (possibly by an import)
+    from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
 
 def _object_dtype_isnan(X):
@@ -59,7 +54,7 @@ def _astype_copy_false(X):
     {ndarray, csr_matrix, csc_matrix}.astype when possible,
     otherwise don't specify
     """
-    if sp_version >= (1, 1) or not sp.issparse(X):
+    if sp_version >= parse_version('1.1') or not sp.issparse(X):
         return {'copy': False}
     else:
         return {}
@@ -88,7 +83,7 @@ def _joblib_parallel_args(**kwargs):
     """
     import joblib
 
-    if joblib.__version__ >= LooseVersion('0.12'):
+    if parse_version(joblib.__version__) >= parse_version('0.12'):
         return kwargs
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
@@ -143,7 +138,7 @@ class loguniform(scipy.stats.reciprocal):
 
     The logarithmic probability density function (PDF) is uniform. When
     ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
-    are random variales that are equally likely to be returned.
+    are random variables that are equally likely to be returned.
 
     This class is an alias to ``scipy.stats.reciprocal``, which uses the
     reciprocal distribution:
@@ -160,3 +155,116 @@ class loguniform(scipy.stats.reciprocal):
     >>> rvs.max()  # doctest: +SKIP
     9.97403052786026
     """
+
+
+@deprecated(
+    'MaskedArray is deprecated in version 0.23 and will be removed in version '
+    '1.0 (renaming of 0.25). Use numpy.ma.MaskedArray instead.'
+)
+class MaskedArray(_MaskedArray):
+    pass  # TODO: remove in 1.0
+
+
+def _take_along_axis(arr, indices, axis):
+    """Implements a simplified version of np.take_along_axis if numpy
+    version < 1.15"""
+    if np_version >= parse_version('1.15'):
+        return np.take_along_axis(arr=arr, indices=indices, axis=axis)
+    else:
+        if axis is None:
+            arr = arr.flatten()
+
+        if not np.issubdtype(indices.dtype, np.intp):
+            raise IndexError('`indices` must be an integer array')
+        if arr.ndim != indices.ndim:
+            raise ValueError(
+                "`indices` and `arr` must have the same number of dimensions")
+
+        shape_ones = (1,) * indices.ndim
+        dest_dims = (
+            list(range(axis)) +
+            [None] +
+            list(range(axis+1, indices.ndim))
+        )
+
+        # build a fancy index, consisting of orthogonal aranges, with the
+        # requested index inserted at the right location
+        fancy_index = []
+        for dim, n in zip(dest_dims, arr.shape):
+            if dim is None:
+                fancy_index.append(indices)
+            else:
+                ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim+1:]
+                fancy_index.append(np.arange(n).reshape(ind_shape))
+
+        fancy_index = tuple(fancy_index)
+        return arr[fancy_index]
+
+
+# remove when https://github.com/joblib/joblib/issues/1071 is fixed
+def delayed(function):
+    """Decorator used to capture the arguments of a function."""
+    @functools.wraps(function)
+    def delayed_function(*args, **kwargs):
+        return _FuncWrapper(function), args, kwargs
+    return delayed_function
+
+
+class _FuncWrapper:
+    """"Load the global configuration before calling the function."""
+    def __init__(self, function):
+        self.function = function
+        self.config = get_config()
+        update_wrapper(self, self.function)
+
+    def __call__(self, *args, **kwargs):
+        with config_context(**self.config):
+            return self.function(*args, **kwargs)
+
+
+def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
+             axis=0):
+    """Implements a simplified linspace function as of numpy verion >= 1.16.
+
+    As of numpy 1.16, the arguments start and stop can be array-like and
+    there is an optional argument `axis`.
+    For simplicity, we only allow 1d array-like to be passed to start and stop.
+    See: https://github.com/numpy/numpy/pull/12388 and numpy 1.16 release
+    notes about start and stop arrays for linspace logspace and geomspace.
+
+    Returns
+    -------
+    out : ndarray of shape (num, n_start) or (num,)
+        The output array with `n_start=start.shape[0]` columns.
+    """
+    if np_version < parse_version('1.16'):
+        start = np.asanyarray(start) * 1.0
+        stop = np.asanyarray(stop) * 1.0
+        dt = np.result_type(start, stop, float(num))
+        if dtype is None:
+            dtype = dt
+
+        if start.ndim == 0 == stop.ndim:
+            return np.linspace(start=start, stop=stop, num=num,
+                               endpoint=endpoint, retstep=retstep, dtype=dtype)
+
+        if start.ndim != 1 or stop.ndim != 1 or start.shape != stop.shape:
+            raise ValueError("start and stop must be 1d array-like of same"
+                             " shape.")
+        n_start = start.shape[0]
+        out = np.empty((num, n_start), dtype=dtype)
+        step = np.empty(n_start, dtype=np.float)
+        for i in range(n_start):
+            out[:, i], step[i] = np.linspace(start=start[i], stop=stop[i],
+                                             num=num, endpoint=endpoint,
+                                             retstep=True, dtype=dtype)
+        if axis != 0:
+            out = np.moveaxis(out, 0, axis)
+
+        if retstep:
+            return out, step
+        else:
+            return out
+    else:
+        return np.linspace(start=start, stop=stop, num=num, endpoint=endpoint,
+                           retstep=retstep, dtype=dtype, axis=axis)

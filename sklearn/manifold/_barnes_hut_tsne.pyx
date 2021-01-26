@@ -18,6 +18,8 @@ from cython.parallel cimport prange, parallel
 
 from ..neighbors._quad_tree cimport _QuadTree
 
+np.import_array()
+
 
 cdef char* EMPTY_STRING = ""
 
