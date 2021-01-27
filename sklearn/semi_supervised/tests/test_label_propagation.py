@@ -157,15 +157,19 @@ def test_convergence_warning():
     assert_no_warnings(mdl.fit, X, y)
 
 
-def test_label_propagation_non_zero_normalizer():
+@pytest.mark.parametrize("label_propagation_class",
+                         [label_propagation.LabelSpreading,
+                          label_propagation.LabelPropagation])
+def test_label_propagation_non_zero_normalizer(label_propagation_class):
     # check that we don't divide by zero in case of null normalizer
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/15946
+    # https://github.com/scikit-learn/scikit-learn/pull/19271
     X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
     y = np.array([0, 1, -1, -1])
-    mdl = label_propagation.LabelSpreading(kernel='knn',
-                                           max_iter=100,
-                                           n_neighbors=1)
+    mdl = label_propagation_class(kernel='knn',
+                                  max_iter=100,
+                                  n_neighbors=1)
     assert_no_warnings(mdl.fit, X, y)
 
 
@@ -203,13 +207,3 @@ def test_predict_sparse_callable_kernel():
     model = label_propagation.LabelPropagation(kernel=topk_rbf)
     model.fit(X_train, y_train)
     assert model.score(X_test, y_test) >= 0.9
-
-
-def test_label_propagation_non_zero_normalizer_during_iter():
-    # https://github.com/scikit-learn/scikit-learn/pull/19271
-    X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
-    y = np.array([0, 1, -1, -1])
-    mdl = label_propagation.LabelPropagation(kernel='knn',
-                                             max_iter=100,
-                                             n_neighbors=1)
-    assert_no_warnings(mdl.fit, X, y)
