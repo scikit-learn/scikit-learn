@@ -204,11 +204,12 @@ def test_predict_sparse_callable_kernel():
     model.fit(X_train, y_train)
     assert model.score(X_test, y_test) >= 0.9
 
+
 def test_label_propagation_non_zero_normalizer_during_iter():
     # https://github.com/scikit-learn/scikit-learn/pull/19271
     X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
     y = np.array([0, 1, -1, -1])
     mdl = label_propagation.LabelPropagation(kernel='knn',
-                                           max_iter=100,
-                                           n_neighbors=1)
+                                             max_iter=100,
+                                             n_neighbors=1)
     assert_no_warnings(mdl.fit, X, y)
