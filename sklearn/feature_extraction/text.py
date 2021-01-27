@@ -552,16 +552,16 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     Parameters
     ----------
 
-    input : string {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+    input : {'filename', 'file', 'content'}, default='content'
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -597,7 +597,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    stop_words : string {'english'}, list, default=None
+    stop_words : {'english'}, list, default=None
         If 'english', a built-in stop word list for English is used.
         There are several known issues with 'english' and you should
         consider an alternative (see :ref:`stop_words`).
@@ -633,10 +633,9 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
-        first read from the file and then passed to the given callable
-        analyzer.
+            Since v0.21, if ``input`` is ``'filename'`` or ``'file'``, the data
+            is first read from the file and then passed to the given callable
+            analyzer.
 
     n_features : int, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
@@ -819,16 +818,16 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     Parameters
     ----------
-    input : string {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+    input : {'filename', 'file', 'content'}, default='content'
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -864,7 +863,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    stop_words : string {'english'}, list, default=None
+    stop_words : {'english'}, list, default=None
         If 'english', a built-in stop word list for English is used.
         There are several known issues with 'english' and you should
         consider an alternative (see :ref:`stop_words`).
@@ -1532,15 +1531,15 @@ class TfidfVectorizer(CountVectorizer):
     Parameters
     ----------
     input : {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : str, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -1585,10 +1584,9 @@ class TfidfVectorizer(CountVectorizer):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
-        first read from the file and then passed to the given callable
-        analyzer.
+            Since v0.21, if ``input`` is ``'filename'`` or ``'file'``, the data
+            is first read from the file and then passed to the given callable
+            analyzer.
 
     stop_words : {'english'}, list, default=None
         If a string, it is passed to _check_stop_list and the appropriate stop
