@@ -1686,7 +1686,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                  transform_alpha=None, verbose=False, split_sign=False,
                  random_state=None, positive_code=False, positive_dict=False,
                  transform_max_iter=1000, callback=None,
-                 max_no_improvement=10, tol=0):
+                 max_no_improvement=10, tol=1e-3):
 
         super().__init__(
             transform_algorithm, transform_n_nonzero_coefs, transform_alpha,
@@ -1833,9 +1833,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # Ignore first iteration because dictionary is not projected on the
         # constraint set yet.
         if step == 0:
-            if self.verbose:
-                print(f"Minibatch iteration {step}: "
-                      f"mean batch cost: {batch_cost}")
             return False
 
         # Compute an Exponentially Weighted Average of the cost function to
@@ -1850,8 +1847,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Log progress to be able to monitor convergence
         if self.verbose:
-            print(f"Minibatch iteration {step}: "
-                  f"mean batch cost: {batch_cost}, ewa cost: {self._ewa_cost}")
+            print(f"Minibatch step {step}: mean batch cost: {batch_cost:.7f}, "
+                  f"ewa cost: {self._ewa_cost:.7f}")
 
         # Early stopping based on change of dictionary
         dict_diff = linalg.norm(dictionary - dict_buffer) / self._n_components
@@ -1944,10 +1941,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                                                dict_buffer, n_samples, i):
                     break
 
-                dict_buffer[:] = dictionary
-
                 if self.callback is not None:
                     self.callback(locals())
+
+                dict_buffer[:] = dictionary
 
             self.n_steps_ = n_steps
             self.n_iter_ = n_steps // n_steps_per_epoch
