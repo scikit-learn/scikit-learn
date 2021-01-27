@@ -3126,11 +3126,16 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     X = rng.normal(size=(n_samples, 8))
     X = _enforce_estimator_tags_x(estimator, X)
     X = _pairwise_estimator_convert_X(X, estimator)
+
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
+
+    if name in CROSS_DECOMPOSITION:
+        y = np.c_[y, y]
+        y[::2, 1] *= 2
 
     estimator.fit(X, y)
     assert estimator.n_features_in_ == X.shape[1]
