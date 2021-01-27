@@ -1871,7 +1871,7 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
         clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-15)
 
 
-@pytest.mark.parametrize("multi_class", {'ovr', 'multinomial', 'auto'})
+@pytest.mark.parametrize("multi_class", ['ovr', 'multinomial', 'auto'])
 @pytest.mark.parametrize("class_weight", [
     {0: 1.0, 1: 10.0, 2: 1.0}, 'balanced'
 ])
