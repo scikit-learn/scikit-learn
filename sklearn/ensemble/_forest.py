@@ -503,11 +503,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight : ndarray of shape (n_samples,)
             Sample weights.
-
-        Returns
-        -------
-        oob_importance : ndarray of shape (n_features, n_estimators)
-            Feature importances using OOB samples.
         """
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
@@ -556,7 +551,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
                 (n_samples, 1, n_outputs)
             The OOB predictions.
-      """
+        """
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_samples = X.shape[0]
