@@ -1927,12 +1927,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self._ewa_cost_min = None
             self._no_improvement = 0
 
-            self.n_steps_ = 0
-
             batches = gen_batches(n_samples, self._batch_size)
             batches = itertools.cycle(batches)
             n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
             n_steps = self.max_iter * n_steps_per_epoch
+
+            # allow max_iter = 0
+            i = 0
 
             for i, batch in zip(range(n_steps), batches):
                 if i % n_steps_per_epoch == 0 and self.shuffle:
