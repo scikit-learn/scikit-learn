@@ -32,6 +32,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
 from sklearn.utils.fixes import parse_version
@@ -46,6 +47,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
+from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
@@ -371,72 +373,156 @@ def test_unfitted_feature_importances(name):
         getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
 
 
-def check_oob_score(name, X, y, n_estimators=20):
-    # Check that oob prediction is a good estimation of the generalization
-    # error.
+@pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
+@pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize(
+    "X, y, lower_bound_accuracy",
+    [
+        (
+            *datasets.make_classification(
+                n_samples=300, n_classes=2, random_state=0
+            ),
+            0.9,
+        ),
+        (
+            *datasets.make_classification(
+                n_samples=1000, n_classes=3, n_informative=6, random_state=0
+            ),
+            0.65,
+        ),
+        (
+            iris.data, iris.target * 2 + 1, 0.65,
+        ),
+        (
+            *datasets.make_multilabel_classification(
+                n_samples=300, random_state=0
+            ),
+            0.18,
+        ),
+    ],
+)
+def test_forest_classifier_oob(
+    ForestClassifier, X, y, X_type, lower_bound_accuracy
+):
+    """Check that OOB score is close to score on a test set."""
+    X = _convert_container(X, constructor_name=X_type)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.5, random_state=0,
+    )
+    classifier = ForestClassifier(
+        n_estimators=40, bootstrap=True, oob_score=True, random_state=0,
+    )
 
-    # Proper behavior
-    est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                  n_estimators=n_estimators, bootstrap=True)
-    n_samples = X.shape[0]
-    est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
-    test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
-    oob_score = est.oob_score_
+    assert not hasattr(classifier, "oob_score_")
+    assert not hasattr(classifier, "oob_decision_function_")
 
-    assert abs(test_score - oob_score) < 0.1 and oob_score > 0.7
+    classifier.fit(X_train, y_train)
+    test_score = classifier.score(X_test, y_test)
 
-    # Check warning if not enough estimators
-    with np.errstate(divide="ignore", invalid="ignore"):
-        est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                      n_estimators=1, bootstrap=True)
-        assert_warns(UserWarning, est.fit, X, y)
+    assert abs(test_score - classifier.oob_score_) <= 0.1
+    assert classifier.oob_score_ >= lower_bound_accuracy
 
+    assert hasattr(classifier, "oob_score_")
+    assert not hasattr(classifier, "oob_prediction_")
+    assert hasattr(classifier, "oob_decision_function_")
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-def test_oob_score_classifiers(name):
-    check_oob_score(name, iris.data, iris.target)
-
-    # csc matrix
-    check_oob_score(name, csc_matrix(iris.data), iris.target)
-
-    # non-contiguous targets in classification
-    check_oob_score(name, iris.data, iris.target * 2 + 1)
-
-
-@pytest.mark.parametrize('name', FOREST_REGRESSORS)
-def test_oob_score_regressors(name):
-    check_oob_score(name, X_reg, y_reg, 50)
-
-    # csc matrix
-    check_oob_score(name, csc_matrix(X_reg), y_reg, 50)
-
-
-def check_oob_score_raise_error(name):
-    ForestEstimator = FOREST_ESTIMATORS[name]
-
-    if name in FOREST_TRANSFORMERS:
-        for oob_score in [True, False]:
-            assert_raises(TypeError, ForestEstimator, oob_score=oob_score)
-
-        assert_raises(NotImplementedError, ForestEstimator()._set_oob_score,
-                      X, y)
-
+    if y.ndim == 1:
+        expected_shape = (X_train.shape[0], len(set(y)))
     else:
-        # Unfitted /  no bootstrap / no oob_score
-        for oob_score, bootstrap in [(True, False), (False, True),
-                                     (False, False)]:
-            est = ForestEstimator(oob_score=oob_score, bootstrap=bootstrap,
-                                  random_state=0)
-            assert not hasattr(est, "oob_score_")
-
-        # No bootstrap
-        assert_raises(ValueError, ForestEstimator(oob_score=True,
-                                                  bootstrap=False).fit, X, y)
+        expected_shape = (X_train.shape[0], len(set(y[:, 0])), y.shape[1])
+    assert classifier.oob_decision_function_.shape == expected_shape
 
 
-@pytest.mark.parametrize('name', FOREST_ESTIMATORS)
-def test_oob_score_raise_error(name):
-    check_oob_score_raise_error(name)
+@pytest.mark.parametrize("ForestRegressor", FOREST_REGRESSORS.values())
+@pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize(
+    "X, y, lower_bound_r2",
+    [
+        (
+            *datasets.make_regression(
+                n_samples=500, n_features=10, n_targets=1, random_state=0
+            ),
+            0.7,
+        ),
+        (
+            *datasets.make_regression(
+                n_samples=500, n_features=10, n_targets=2, random_state=0
+            ),
+            0.55,
+        ),
+    ],
+)
+def test_forest_regressor_oob(
+    ForestRegressor, X, y, X_type, lower_bound_r2
+):
+    """Check that forest-based regressor provide an OOB score close to the
+    score on a test set."""
+    X = _convert_container(X, constructor_name=X_type)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.5, random_state=0,
+    )
+    regressor = ForestRegressor(
+        n_estimators=50, bootstrap=True, oob_score=True, random_state=0,
+    )
+
+    assert not hasattr(regressor, "oob_score_")
+    assert not hasattr(regressor, "oob_prediction_")
+
+    regressor.fit(X_train, y_train)
+    test_score = regressor.score(X_test, y_test)
+
+    assert abs(test_score - regressor.oob_score_) <= 0.1
+    assert regressor.oob_score_ >= lower_bound_r2
+
+    assert hasattr(regressor, "oob_score_")
+    assert hasattr(regressor, "oob_prediction_")
+    assert not hasattr(regressor, "oob_decision_function_")
+
+    if y.ndim == 1:
+        expected_shape = (X_train.shape[0],)
+    else:
+        expected_shape = (X_train.shape[0], y.ndim)
+    assert regressor.oob_prediction_.shape == expected_shape
+
+
+@pytest.mark.parametrize(
+    "ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values()
+)
+def test_forest_oob_warning(ForestEstimator):
+    """Check that a warning is raised when not enough estimator and the OOB
+    estimates will be inacurrate."""
+    estimator = ForestEstimator(
+        n_estimators=1, oob_score=True, bootstrap=True, random_state=0,
+    )
+    with pytest.warns(UserWarning, match="Some inputs do not have OOB scores"):
+        estimator.fit(iris.data, iris.target)
+
+
+@pytest.mark.parametrize(
+    "ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values()
+)
+@pytest.mark.parametrize(
+    "X, y, params, err_msg",
+    [
+        (iris.data, iris.target, {"oob_score": True, "bootstrap": False},
+         "Out of bag estimation only available if bootstrap=True"),
+        (iris.data, rng.randint(low=0, high=5, size=(iris.data.shape[0], 2)),
+         {"oob_score": True, "bootstrap": True},
+         "The type of target cannot be used to compute OOB estimates")
+    ]
+)
+def test_forest_oob_error(ForestEstimator, X, y, params, err_msg):
+    estimator = ForestEstimator(**params)
+    with pytest.raises(ValueError, match=err_msg):
+        estimator.fit(X, y)
+
+
+@pytest.mark.parametrize("oob_score", [True, False])
+def test_random_trees_embedding_raise_error_oob(oob_score):
+    with pytest.raises(TypeError, match="got an unexpected keyword argument"):
+        RandomTreesEmbedding(oob_score=oob_score)
+    with pytest.raises(NotImplementedError, match="OOB score not supported"):
+        RandomTreesEmbedding()._set_oob_score_and_attributes(X, y)
 
 
 def check_gridsearch(name):
