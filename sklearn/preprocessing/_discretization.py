@@ -208,7 +208,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
-                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1, algorithm='full')
+                km = KMeans(n_clusters=n_bins[jj], init=init,
+                            n_init=1, algorithm='full')
                 centers = km.fit(column[:, None]).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
@@ -220,9 +221,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 mask = np.ediff1d(bin_edges[jj], to_begin=np.inf) > 1e-8
                 bin_edges[jj] = bin_edges[jj][mask]
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
-                    warnings.warn(f"Bins whose width are too small (i.e., <= "
-                                  f"1e-8) in feature {jj} are removed. Consider "
-                                  f"decreasing the number of bins.")
+                    warnings.warn(f"Bins whose width are too small "
+                                  f"(i.e., <= 1e-8) in feature {jj} "
+                                  f"are removed. Consider decreasing "
+                                  f"the number of bins.")
                     n_bins[jj] = len(bin_edges[jj]) - 1
 
         self.bin_edges_ = bin_edges
@@ -250,13 +252,15 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
             else:
                 raise ValueError(
-                    f"{KBinsDiscretizer.__name__} received an invalid n_bins value "
+                    f"{KBinsDiscretizer.__name__} received "
+                    f"an invalid n_bins value "
                     f"{orig_bins!r}, while only 'auto' is supported."
                 )
         if isinstance(orig_bins, numbers.Number):
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError(
-                    f"{KBinsDiscretizer.__name__} received an invalid n_bins type. "
+                    f"{KBinsDiscretizer.__name__} received "
+                    f"an invalid n_bins type. "
                     f"Received {type(orig_bins).__name__}, expected int."
                 )
             if orig_bins < 2:
