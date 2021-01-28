@@ -89,13 +89,13 @@ cat_selector(X)
 num_selector(X)
 
 # %%
-# Then, we will need to design preprocessing pipelines which depends of the
+# Then, we will need to design preprocessing pipelines which depends on the
 # ending regressor. If the ending regressor is a linear model, one needs to
 # one-hot encode the categories. If the ending regressor is a tree-based model
 # an ordinal encoder will be sufficient. Besides, numerical values needs to be
 # standardize for a linear model while the raw numerical data can be treated
-# as is by a tree-based model. However, both models are note natively treating
-# missing values.
+# as is by a tree-based model. However, both models need an imputer to
+handle missing values.
 #
 # We will first design the pipeline required for the tree-based models.
 
