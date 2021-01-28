@@ -69,6 +69,10 @@ Changelog
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Fixed inaccurate anomaly score in
+  :class:`ensemble.IsolationForest`.
+  :pr:`19087` by :user:`Konrad <Konrad0>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
