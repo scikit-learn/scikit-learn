@@ -8,7 +8,7 @@ a machine learning pipeline.
 
 We also show that you can easily introspect part of the pipeline.
 """
-# %%
+
 print(__doc__)
 from sklearn import set_config
 set_config(display='diagram')
@@ -17,7 +17,6 @@ set_config(display='diagram')
 # We will start by generating a binary classification dataset. Subsequently, we
 # will divide the dataset into two subsets.
 
-# %%
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
@@ -40,7 +39,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 # will subsequently reduce the number of feature and pass this subset to the
 # classifier which will be trained.
 
-# %%
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
@@ -58,7 +56,6 @@ anova_svm.fit(X_train, y_train)
 #
 # Here, we report the final metrics via a classification report.
 
-# %%
 from sklearn.metrics import classification_report
 
 y_pred = anova_svm.predict(X_test)
@@ -69,7 +66,6 @@ print(classification_report(y_test, y_pred))
 # be interested about the parameters of the classifier. Since we selected
 # three features, we expect to have three coefficients.
 
-# %%
 anova_svm[-1].coef_
 
 # %%
@@ -78,7 +74,6 @@ anova_svm[-1].coef_
 # transformation of these coefficients to get information about the original
 # space.
 
-# %%
 anova_svm[:-1].inverse_transform(anova_svm[-1].coef_)
 
 # %%
