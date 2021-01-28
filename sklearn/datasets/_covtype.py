@@ -120,7 +120,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
             Each value corresponds to one of
             the 7 forest covertypes with values
             ranging between 1 to 7.
-        frame : dataframe of shape (581012, 53)
+        frame : dataframe of shape (581012, 55)
             Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             Description of the forest covertype dataset.

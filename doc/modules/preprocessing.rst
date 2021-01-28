@@ -624,7 +624,9 @@ of continuous attributes to one with only nominal attributes.
 
 One-hot encoded discretized features can make a model more expressive, while
 maintaining interpretability. For instance, pre-processing with a discretizer
-can introduce nonlinearity to linear models.
+can introduce nonlinearity to linear models. For more advanced possibilities,
+in particular smooth ones, see :ref:`generating_polynomial_features` further
+below.
 
 K-bins discretization
 ---------------------
@@ -756,12 +758,24 @@ Imputation of missing values
 
 Tools for imputing missing values are discussed at :ref:`impute`.
 
-.. _polynomial_features:
+.. _generating_polynomial_features:
 
 Generating polynomial features
 ==============================
 
-Often it's useful to add complexity to the model by considering nonlinear features of the input data. A simple and common method to use is polynomial features, which can get features' high-order and interaction terms. It is implemented in :class:`PolynomialFeatures`::
+Often it's useful to add complexity to a model by considering nonlinear
+features of the input data. We show two possibilities that are both based on
+polynomials: The first one uses pure polynomials, the second one uses splines,
+i.e. piecewise polynomials.
+
+.. _polynomial_features:
+
+Polynomial features
+-------------------
+
+A simple and common method to use is polynomial features, which can get
+features' high-order and interaction terms. It is implemented in
+:class:`PolynomialFeatures`::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import PolynomialFeatures
@@ -776,9 +790,11 @@ Often it's useful to add complexity to the model by considering nonlinear featur
            [ 1.,  2.,  3.,  4.,  6.,  9.],
            [ 1.,  4.,  5., 16., 20., 25.]])
 
-The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
+The features of X have been transformed from :math:`(X_1, X_2)` to
+:math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
-In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
+In some cases, only interaction terms among features are required, and it can
+be gotten with the setting ``interaction_only=True``::
 
     >>> X = np.arange(9).reshape(3, 3)
     >>> X
@@ -791,11 +807,94 @@ In some cases, only interaction terms among features are required, and it can be
            [  1.,   3.,   4.,   5.,  12.,  15.,  20.,  60.],
            [  1.,   6.,   7.,   8.,  42.,  48.,  56., 336.]])
 
-The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
+The features of X have been transformed from :math:`(X_1, X_2, X_3)` to
+:math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`, :class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+Note that polynomial features are used implicitly in `kernel methods
+<https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`,
+:class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+for Ridge regression using created polynomial features.
+
+.. _spline_transformer:
+
+Spline transformer
+------------------
+
+Another way to add nonlinear terms instead of pure polynomials of features is
+to generate spline basis functions for each feature with the
+:class:`SplineTransformer`. Splines are piecewise polynomials, parametrized by
+their polynomial degree and the positions of the knots. The
+:class:`SplineTransformer` implements a B-spline basis, cf. the references
+below.
+
+.. note::
+
+    The :class:`SplineTransformer` treats each feature separately, i.e. it
+    won't give you interaction terms.
+
+Some of the advantages of splines over polynomials are:
+
+    - B-splines are very flexible and robust if you keep a fixed low degree,
+      usually 3, and parsimoniously adapt the number of knots. Polynomials
+      would need a higher degree, which leads to the next point.
+    - B-splines do not have oscillatory behaviour at the boundaries as have
+      polynomials (the higher the degree, the worse). This is known as `Runge's
+      phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
+    - B-splines provide good options for extrapolation beyond the boundaries,
+      i.e. beyond the range of fitted values. Have a look at the option
+      ``extrapolation``.
+    - B-splines generate a feature matrix with a banded structure. For a single
+      feature, every row contains only ``degree + 1`` non-zero elements, which
+      occur consecutively and are even positive. This results in a matrix with
+      good numerical properties, e.g. a low condition number, in sharp contrast
+      to a matrix of polynomials, which goes under the name
+      `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
+      A low condition number is important for stable algorithms of linear
+      models.
+
+The following code snippet shows splines in action::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import SplineTransformer
+    >>> X = np.arange(5).reshape(5, 1)
+    >>> X
+    array([[0],
+           [1],
+           [2],
+           [3],
+           [4]])
+    >>> spline = SplineTransformer(degree=2, n_knots=3)
+    >>> spline.fit_transform(X)
+    array([[0.5  , 0.5  , 0.   , 0.   ],
+           [0.125, 0.75 , 0.125, 0.   ],
+           [0.   , 0.5  , 0.5  , 0.   ],
+           [0.   , 0.125, 0.75 , 0.125],
+           [0.   , 0.   , 0.5  , 0.5  ]])
+
+As the ``X`` is sorted, one can easily see the banded matrix output. Only the
+three middle diagonals are non-zero for ``degree=2``. The higher the degree,
+the more overlapping of the splines.
+
+Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
+:class:`~sklearn.preprocessing.KBinsDiscretizer` with ``encode='onehot-dense``
+and ``n_bins = n_knots - 1`` if ``knots = strategy``.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+
+.. topic:: References:
+
+    * Eilers, P., & Marx, B. (1996). Flexible Smoothing with B-splines and
+      Penalties. Statist. Sci. 11 (1996), no. 2, 89--121.
+      `doi:10.1214/ss/1038425655 <https://doi.org/10.1214/ss/1038425655>`_
+
+    * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. A review of
+      spline function procedures in R. BMC Med Res Methodol 19, 46 (2019).
+      `doi:10.1186/s12874-019-0666-3
+      <https://doi.org/10.1186/s12874-019-0666-3>`_
 
 .. _function_transformer:
 

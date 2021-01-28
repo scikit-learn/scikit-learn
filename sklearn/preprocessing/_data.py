@@ -617,8 +617,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     scale_ : ndarray of shape (n_features,) or None
-        Per feature relative scaling of the data. This is calculated using
-        `np.sqrt(var_)`. Equal to ``None`` when ``with_std=False``.
+        Per feature relative scaling of the data to achieve zero mean and unit
+        variance. Generally this is calculated using `np.sqrt(var_)`. If a
+        variance is zero, we can't achieve unit variance, and the data is left
+        as-is, giving a scaling factor of 1. `scale_` is equal to `None`
+        when `with_std=False`.
 
         .. versionadded:: 0.17
            *scale_*
@@ -1617,6 +1620,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         features is computed by iterating over all suitably sized combinations
         of input features.
 
+    See Also
+    --------
+    SplineTransformer : Transformer that generates univariate B-spline bases
+        for features
+
     Notes
     -----
     Be aware that the number of features in the output array scales
@@ -1708,7 +1716,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Transform data to polynomial features
+        """Transform data to polynomial features.
 
         Parameters
         ----------
