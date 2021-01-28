@@ -19,6 +19,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns_div0
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_warns_message
@@ -44,6 +45,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import calibration_error
 
 from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -2335,6 +2337,94 @@ def test_brier_score_loss():
         brier_score_loss(['foo'], [0.4], pos_label='bar'), 0.16)
     assert_almost_equal(
         brier_score_loss(['foo'], [0.4], pos_label='foo'), 0.36)
+
+
+@pytest.mark.parametrize('norm', ["l1", "l2", "max"])
+@pytest.mark.parametrize('strategy', ["uniform", "quantile"])
+def test_calibration_error_calibrated_predictions(norm, strategy):
+    ratio = 2
+    y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, n_bins=ratio, norm=norm,
+                          strategy=strategy, reduce_bias=False),
+        0.)
+
+
+@pytest.mark.parametrize('norm', ["l1", "l2", "max"])
+@pytest.mark.parametrize('strategy', ["uniform", "quantile"])
+def test_calibration_error_uncalibrated_predictions(norm, strategy):
+    ratio = 2
+    y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, n_bins=ratio, norm=norm,
+                          strategy=strategy, reduce_bias=False),
+        0.25)
+
+
+def test_calibration_error_sample_weights():
+    ratio = 2
+    y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
+    y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    sample_weight = np.array([1, 1, 1, 1] + [3, 3, 3, 3])
+
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, sample_weight=sample_weight,
+                          n_bins=ratio, norm="l1"),
+        0.1875)
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, sample_weight=sample_weight,
+                          n_bins=ratio, norm="max"),
+        0.25)
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, sample_weight=sample_weight,
+                          n_bins=ratio, norm="l2", reduce_bias=False),
+        0.2165063)
+
+
+def test_calibration_error_raises():
+    y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
+    y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    assert_raises(ValueError, calibration_error, y_true, y_pred[1:])
+    assert_raises(ValueError, calibration_error, y_true, y_pred + 1.)
+    assert_raises(ValueError, calibration_error, y_true, y_pred - 1.)
+    assert_raises(ValueError, calibration_error, y_true, y_pred, pos_label=2)
+    assert_raises(ValueError, calibration_error, y_true, y_pred, norm="foo")
+    assert_raises(ValueError, calibration_error, y_true, y_pred,
+                  strategy="foo")
+
+    y_true[0] = 2
+    assert_raises(ValueError, calibration_error, y_true, y_pred)
+
+
+def test_calibration_error_one_element_per_bin():
+    ratio = 4
+    y_true = np.array([0, 1, 0, 1])
+    y_pred = np.array([0., 0.25, 0.5, 0.75])
+
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, n_bins=ratio, norm="max"),
+        0.75)
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, n_bins=ratio, norm="l1"),
+        0.375)
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, n_bins=ratio, norm="l2",
+                          reduce_bias=False), 0.4677071)
+
+
+@pytest.mark.parametrize('norm', ["l1", "l2", "max"])
+@pytest.mark.parametrize('strategy', ["uniform", "quantile"])
+def test_calibration_error_one_bin(norm, strategy):
+    ratio = 1
+    y_true = np.array([1, 0, 0, 1])
+    y_pred = np.array([0.25, 0.25, 0.75, 0.75])
+
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, n_bins=ratio, norm=norm,
+                          strategy=strategy, reduce_bias=False),
+        0.)
 
 
 def test_balanced_accuracy_score_unseen():

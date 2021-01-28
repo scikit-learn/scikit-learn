@@ -10,8 +10,9 @@ classifiers provide well-calibrated probabilities, some being over-confident
 while others being under-confident. Thus, a separate calibration of predicted
 probabilities is often desirable as a postprocessing. This example illustrates
 two different methods for this calibration and evaluates the quality of the
-returned probabilities using Brier's score
-(see https://en.wikipedia.org/wiki/Brier_score).
+returned probabilities using a calibration error defined as the average
+absolute deviation between the calibration curve and the diagonal (perfectly
+calibrated classifier).
 
 Compared are the estimated probability using a Gaussian naive Bayes classifier
 without calibration, with a sigmoid calibration, and with a non-parametric
@@ -19,7 +20,7 @@ isotonic calibration. One can observe that only the non-parametric model is
 able to provide a probability calibration that returns probabilities close
 to the expected 0.5 for most of the samples belonging to the middle
 cluster with heterogeneous labels. This results in a significantly improved
-Brier score.
+calibration error.
 """
 print(__doc__)
 
@@ -35,7 +36,7 @@ from matplotlib import cm
 
 from sklearn.datasets import make_blobs
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import brier_score_loss
+from sklearn.metrics import calibration_error
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import train_test_split
 
@@ -73,17 +74,18 @@ clf_sigmoid = CalibratedClassifierCV(clf, cv=2, method='sigmoid')
 clf_sigmoid.fit(X_train, y_train, sample_weight=sw_train)
 prob_pos_sigmoid = clf_sigmoid.predict_proba(X_test)[:, 1]
 
-print("Brier score losses: (the smaller the better)")
+print("Calibration errors: (the smaller the better)")
 
-clf_score = brier_score_loss(y_test, prob_pos_clf, sample_weight=sw_test)
+clf_score = calibration_error(y_test, prob_pos_clf, sw_test)
 print("No calibration: %1.3f" % clf_score)
 
-clf_isotonic_score = brier_score_loss(y_test, prob_pos_isotonic,
-                                      sample_weight=sw_test)
+clf_isotonic_score = calibration_error(y_test, prob_pos_isotonic,
+                                       sample_weight=sw_test)
 print("With isotonic calibration: %1.3f" % clf_isotonic_score)
 
-clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid,
-                                     sample_weight=sw_test)
+clf_sigmoid_score = calibration_error(y_test, prob_pos_sigmoid,
+                                      sample_weight=sw_test)
+
 print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 
 # #############################################################################

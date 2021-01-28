@@ -25,7 +25,7 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import brier_score_loss
+from sklearn.metrics import calibration_error, brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
@@ -72,6 +72,10 @@ def test_calibration(data, method, ensemble):
         # set
         cal_clf.fit(this_X_train, y_train, sample_weight=sw_train)
         prob_pos_cal_clf = cal_clf.predict_proba(this_X_test)[:, 1]
+
+        # Check that calibration error has improved after calibration
+        assert (calibration_error(y_test, prob_pos_clf) >
+                calibration_error(y_test, prob_pos_cal_clf))
 
         # Check that brier score has improved after calibration
         assert (brier_score_loss(y_test, prob_pos_clf) >
@@ -316,6 +320,9 @@ def test_calibration_prefit():
                 prob_pos_cal_clf = y_prob[:, 1]
                 assert_array_equal(y_pred,
                                    np.array([0, 1])[np.argmax(y_prob, axis=1)])
+
+                assert (calibration_error(y_test, prob_pos_clf) >
+                        calibration_error(y_test, prob_pos_cal_clf))
 
                 assert (brier_score_loss(y_test, prob_pos_clf) >
                         brier_score_loss(y_test, prob_pos_cal_clf))

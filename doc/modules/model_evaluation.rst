@@ -63,6 +63,7 @@ Scoring                                Function                                 
 'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
 'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'neg_calibration_error'                :func:`metrics.calibration_error`
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
 'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
 'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
@@ -1744,6 +1745,80 @@ the same does a lower Brier score loss always mean better calibration"
   .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
     and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+
+
+Calibration error
+-----------------
+
+The :func:`calibration_error` function computes the expected and maximum
+calibration errors as defined in [1]_ for binary classes.
+
+Given a set of bins over predicted probabilities, the calibration error
+measures the overall discrepancy across all bins between
+(1) the average predicted probabilities assigned to the positive class, and
+(2) the proportion of samples whose class is the positive class in the actual
+outcome.
+
+The lower the calibration error is for a set of predictions, the
+better the predictions are calibrated.
+
+The aggregation method ``norm`` can be either:
+
+- ``'l1'``: this computes :math:`\sum_k P_k \delta_k`.
+  This is the expected calibration error (ECE) defined in [1]_.
+- ``'l2'``: this computes :math:`\sqrt{\sum_k P_k \delta_k^2}`
+  the square root of the squared calibration error with
+  the "plugin" estimator if ``reduce_bias`` is set to ``False``, or
+  or with the "debiased" estimator (adding a non-positive term in the sum)
+  if ``reduce_bias`` is set to ``True`` [2]_.
+- ``'max'`` this computes :math:`\max_k \delta_k`.
+  This is the maximum calibration error (MCE) defined in [1]_.
+
+Here :math:`k` spans all bins,
+:math:`P_k = \dfrac{\sum_{t\in b_k} w_t}{\sum_t w_t}` denotes the (normalized)
+weight of bin :math:`k` and
+:math:`\delta_k = \dfrac{|\sum_{t\in b_k} w_t o_t - \sum_{t\in b_k} w_t f_t|}{\sum_{t\in b_k} w_t}`
+denotes the absolute difference between the average frequency of positive class
+and the average predicted probability of positive class in bin :math:`k`.
+
+The calibration error is appropriate for binary classification tasks.
+Which label is considered to be the positive label is controlled via the
+parameter pos_label, which defaults to ``None``.
+
+Here is a small example of usage of this function:::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import calibration_error
+    >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    >>> calibration_error(y_true, y_pred, n_bins=2, norm="l1")
+    0.0
+    >>> calibration_error(y_true, y_pred, n_bins=2, norm="max")
+    0.0
+    >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    >>> calibration_error(y_true, y_pred, n_bins=2, norm="l1")
+    0.25
+    >>> calibration_error(y_true, y_pred, n_bins=2, norm="max")
+    0.25
+    >>> from sklearn.metrics import make_scorer
+    >>> from functools import partial
+    >>> max_calibration_error = partial(calibration_error, norm="max")
+    >>> neg_max_calibration_scorer = make_scorer(max_calibration_error, greater_is_better=False)
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> grid = GridSearchCV(RandomForestClassifier(), param_grid={'max_depth': [3, 5, 7]},
+    ...             scoring=neg_max_calibration_scorer)
+
+.. topic:: References:
+
+  .. [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On Calibration
+      of Modern Neural Networks. Proceedings of the 34th International
+      Conference on Machine Learning, PMLR 70:1321-1330, 2017.
+      <http://proceedings.mlr.press/v70/guo17a.html>`_
+        
+  .. [2] `Verified Uncertainty Calibration. Ananya Kumar, Percy Liang, Tengyu
+      Ma. Advances in Neural Information Processing Systems (NeurIPS),
+      2019 <https://arxiv.org/abs/1909.10155>`_
 
 .. _multilabel_ranking_metrics:
 
