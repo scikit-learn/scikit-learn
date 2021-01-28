@@ -50,6 +50,7 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
+from .. import config_context
 from ..base import is_classifier
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..metrics import accuracy_score, r2_score
@@ -175,6 +176,36 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         tree.fit(X, y, sample_weight=sample_weight, check_input=False)
 
     return tree
+
+
+def _permutation_importances_oob(
+    estimator,
+    X,
+    y,
+    sample_weight,
+    n_samples,
+    n_samples_bootstrap,
+    random_state,
+):
+    """Compute the feature permutation importance given a tree."""
+    # avoid circular dependence
+    from ..inspection import permutation_importance
+
+    unsampled_indices = _generate_unsampled_indices(
+        estimator.random_state,
+        n_samples,
+        n_samples_bootstrap,
+    )
+    return permutation_importance(
+        estimator,
+        X[unsampled_indices, :],
+        y[unsampled_indices],
+        scoring=None,
+        n_repeats=1,
+        n_jobs=1,
+        random_state=random_state,
+        sample_weight=sample_weight,
+    ).importances[:, 0]
 
 
 class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
@@ -478,42 +509,34 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         oob_importance : ndarray of shape (n_features, n_estimators)
             Feature importances using OOB samples.
         """
-        # avoid circular dependence
-        from ..inspection import permutation_importance
-
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
 
-        n_samples, n_features = X.shape
-        oob_importances = np.zeros(shape=(n_features, self.n_estimators))
-
+        n_samples = X.shape[0]
         n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples,
             self.max_samples,
         )
-        for idx, estimator in enumerate(self.estimators_):
-            unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state,
-                n_samples,
-                n_samples_bootstrap,
-            )
-            X_oob, y_oob = X[unsampled_indices, :], y[unsampled_indices]
 
-            result_importances = permutation_importance(
-                estimator,
-                X_oob,
-                y_oob,
-                scoring=None,
-                n_repeats=1,
-                n_jobs=1,
-                random_state=random_state,
-                sample_weight=sample_weight,
-            )
-            oob_importances[:, idx] = result_importances.importances[:, 0]
+        with config_context(assume_finite=True):
+            # avoid redundant checking performed on X in the permutation
+            # importance function.
+            oob_importances = np.transpose(Parallel(n_jobs=self.n_jobs)(
+                delayed(_permutation_importances_oob)(
+                    estimator,
+                    X,
+                    y,
+                    sample_weight,
+                    n_samples,
+                    n_samples_bootstrap,
+                    random_state,
+                )
+                for estimator in self.estimators_
+            ))
 
         self._oob_permutation_importance = Bunch(
-            importances_mean=np.mean(oob_importances, axis=1),
-            importances_std=np.std(oob_importances, axis=1),
+            importances_mean=oob_importances.mean(axis=1),
+            importances_std=oob_importances.std(axis=1),
             importances=oob_importances,
         )
 
