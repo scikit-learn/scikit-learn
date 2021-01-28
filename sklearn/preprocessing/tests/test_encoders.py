@@ -942,48 +942,20 @@ def test_ordinal_encoder_passthrough_missing_values_float():
     assert_allclose(X_inverse, X)
 
 
-def test_ordinal_encoder_passthrough_missing_values_object_only_none():
-    """Test ordinal encoder with None with object types."""
-
-    X = np.array([[None, 3.0, 1.0, 3.0]], dtype=object).T
-    oe = OrdinalEncoder().fit(X)
-
-    assert len(oe.categories_) == 1
-    assert_array_equal(oe.categories_[0], [1.0, 3.0, None])
-
-    X_trans = oe.transform(X)
-    assert_allclose(X_trans, [[np.nan], [1.0], [0.0], [1.0]])
-
-    X_inverse = oe.inverse_transform(X_trans)
-    assert_array_equal(X_inverse, X)
-
-
-def test_ordinal_encoder_passthrough_missing_values_object():
-    """Test ordinal encoder with both missing value indictors on object
-    dtypes."""
-
-    X = np.array([[None, "b", "b", "a", np.nan]], dtype=object).T
-    oe = OrdinalEncoder().fit(X)
-    assert len(oe.categories_) == 1
-    categories_0 = oe.categories_[0]
-
-    assert_array_equal(categories_0[:2], ["a", "b"])
-    assert categories_0[2] is None
-    assert np.isnan(categories_0[-1])
-
-    X_trans = oe.transform(X)
-    assert_allclose(X_trans, [[np.nan], [1.0], [1.0], [0.0], [np.nan]])
-
-    X_inverse = oe.inverse_transform(X_trans)
-    assert X_inverse.shape == (5, 1)
-
-    X_inverse_0 = X_inverse[:, 0]
-    assert_array_equal(X_inverse_0[1:-1], ["b", "b", "a"])
-
-    # The first value was original None, this is inverse_transformed to
-    # np.nan because the original feature contains both `None` and `np.nan`
-    assert np.isnan(X_inverse_0[0])
-    assert np.isnan(X_inverse_0[-1])
+@pytest.mark.parametrize("X_train", [
+    np.array([[None, 3.0, 1.0, 3.0]], dtype=object).T,
+    np.array([[None, "b", "b", "a"]], dtype=object).T,
+    np.array([[None, "b", "a", np.nan, "b"]], dtype=object).T
+])
+def test_ordinal_encoder_passthrough_missing_values_object_only_none_errors(
+    X_train
+):
+    """Test ordinal encoder with None will error. """
+    oe = OrdinalEncoder()
+    msg = ("None is an unsupported missing value indicator and was found in "
+           "feature 0. Please convert these values to np.nan")
+    with pytest.raises(ValueError, match=msg):
+        oe.fit(X_train)
 
 
 @pytest.mark.parametrize('pd_nan_type', ['pd.NA', 'np.nan'])
@@ -1020,9 +992,9 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
 
 
 @pytest.mark.parametrize("X, X2, cats, cat_dtype", [
-    ((np.array([['a', None]], dtype=object).T,
+    ((np.array([['a', np.nan]], dtype=object).T,
       np.array([['a', 'b']], dtype=object).T,
-     [np.array(['a', None, 'd'])], np.object_)),
+     [np.array(['a', np.nan, 'd'], dtype=object)], np.object_)),
     ((np.array([['a', np.nan]], dtype=object).T,
       np.array([['a', 'b']], dtype=object).T,
      [np.array(['a', np.nan, 'd'], dtype=object)], np.object_)),
@@ -1055,17 +1027,14 @@ def test_ordinal_encoder_specified_categories_missing_passthrough(
     (np.array([[1.0, 4.0, 3.0]]).T,
      np.array([[0.0, 2.0, 1.0]]).T,
      np.array([[np.nan]])),
-    (np.array([['c', None, 'b']], dtype=object).T,
-     np.array([[1.0, np.nan, 0.0]]).T,
-     np.array([[np.nan]], dtype=object)),
     (np.array([['c', np.nan, 'b']], dtype=object).T,
      np.array([[1.0, np.nan, 0.0]]).T,
-     np.array([[None]], dtype=object)),
+     np.array([['d']], dtype=object)),
     (np.array([['c', 'a', 'b']], dtype=object).T,
      np.array([[2.0, 0.0, 1.0]]).T,
-     np.array([[None]], dtype=object)),
+     np.array([[np.nan]], dtype=object)),
 ])
-def test_ordinal_encoder_handle_missing_and_missing(
+def test_ordinal_encoder_handle_missing_and_unknown(
         X, expected_X_trans, X_test
 ):
     """Test the interaction between handle_missing and handle_unknown"""

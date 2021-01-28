@@ -775,6 +775,15 @@ class OrdinalEncoder(_BaseEncoder):
                                      f"values already used for encoding the "
                                      f"seen categories.")
 
+        # Check for None values in categories
+        for cat_idx, categories_for_idx in enumerate(self.categories_):
+            # None and np.nan will only appear at the end of feature_cats
+            if None in categories_for_idx[-2:]:
+                raise ValueError(
+                    "None is an unsupported missing value indicator and was "
+                    f"found in feature {cat_idx}. Please convert these "
+                    "values to np.nan")
+
         if np.dtype(self.dtype).kind != 'f':
             for cat_idx, categories_for_idx in enumerate(self.categories_):
                 missing_indices = [i for i, v in enumerate(categories_for_idx)
@@ -821,9 +830,6 @@ class OrdinalEncoder(_BaseEncoder):
     def inverse_transform(self, X):
         """
         Convert the data back to the original representation.
-
-        If a categorical feature uses `None` *and* `np.nan` as a missing
-        value indicator, the inverse_transform will map `np.nan` to `np.nan`.
 
         Parameters
         ----------
