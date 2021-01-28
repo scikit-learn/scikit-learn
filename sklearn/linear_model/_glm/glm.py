@@ -474,8 +474,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 class GammaRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
 
-    This regressor uses the 'log' link function. Note that this link
-    function cannot be changed.
+    This regressor uses the 'log' link function.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
