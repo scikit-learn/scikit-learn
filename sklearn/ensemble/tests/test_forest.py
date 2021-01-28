@@ -479,22 +479,33 @@ def test_oob_importance_ignores_random(name):
     assert impurity_importances[-1] > imp_level
 
 
-@pytest.mark.parametrize("name", FOREST_ESTIMATORS)
-def test_oob_importances_raise_error(name):
-    ForestEstimator = FOREST_ESTIMATORS[name]
+@pytest.mark.parametrize(
+    "ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values()
+)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        ({"feature_importances": "xxx"},
+         "feature_importances should be 'impurity' or 'permutation_oob'"),
+        ({"feature_importances": "permutation_oob", "bootstrap": False},
+         "Estimating feature importance on out of bag samples only")
+    ]
+)
+def test_forest_oob_importances_error(ForestEstimator, params, err_msg):
+    # check that proper error messages are raised for feature_importances
+    # validation
+    estimator = ForestEstimator(**params)
+    with pytest.raises(ValueError, match=err_msg):
+        estimator.fit(X, y)
 
-    if name in FOREST_TRANSFORMERS:
-        err_msg = "unexpected keyword argument 'feature_importances'"
-        with pytest.raises(TypeError, match=err_msg):
-            ForestEstimator(feature_importances="permutation_oob")
 
-    else:
-        # No bootstrap
-        err_msg = "Out of bag estimation only available if bootstrap=True"
-        with pytest.raises(ValueError, match=err_msg):
-            ForestEstimator(feature_importances="permutation_oob",
-                            bootstrap=False).fit(X, y)
-
+@pytest.mark.parametrize("ForestTransformer", FOREST_TRANSFORMERS.values())
+def test_forest_transformer_no_oob_importance(ForestTransformer):
+    # check that the forest transformer does not expose the feature_importances
+    # parameter
+    err_msg = "unexpected keyword argument 'feature_importances'"
+    with pytest.raises(TypeError, match=err_msg):
+        ForestTransformer(feature_importances="permutation_oob")
 
 
 @pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())

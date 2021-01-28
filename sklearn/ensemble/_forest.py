@@ -401,7 +401,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             and self.feature_importances == "permutation_oob"
         ):
             raise ValueError(
-                "Out of bag estimation only available if bootstrap=True"
+                "Estimating feature importance on out of bag samples only "
+                "available if bootstrap=True"
             )
 
         random_state = check_random_state(self.random_state)
