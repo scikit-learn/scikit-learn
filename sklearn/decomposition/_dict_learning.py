@@ -1936,8 +1936,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             i = 0
 
             for i, batch in zip(range(n_steps), batches):
-                if i % n_steps_per_epoch == 0 and self.shuffle:
-                    self._random_state.shuffle(X_train)
 
                 this_X = X_train[batch]
 
@@ -1955,7 +1953,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 dict_buffer[:] = dictionary
 
             self.n_steps_ = i + 1
-            self.n_iter_ = (i + 1) // n_steps_per_epoch
+            self.n_iter_ = np.ceil((i + 1) / n_steps_per_epoch)
         else:
             if self.n_iter != "deprecated":
                 warnings.warn(
@@ -1978,7 +1976,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                     print(f"{i} batches processed.")
 
             self.n_steps_ = n_iter
-            self.n_iter_ = n_iter // int(np.ceil(n_samples / self._batch_size))
+            self.n_iter_ = np.ceil(
+                n_iter / int(np.ceil(n_samples / self._batch_size)))
 
         self.components_ = dictionary
 
