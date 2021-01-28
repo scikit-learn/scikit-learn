@@ -175,13 +175,13 @@ plt.show()
 
 # %%
 # Finally, the permutation importance can also be calculated using the
-# out-of-bag data by setting ``feature_importances_type="permutation"`` and
+# out-of-bag data by setting ``feature_importances="permutation_oob"`` and
 # re-running the pipeline. This confirms that ``sex``` is most important
 # and that the random features have low importances.
 rf = Pipeline(steps=[
     ("preprocess", preprocessing),
     ("classifier", RandomForestClassifier(
-          random_state=42, feature_importances_type="permutation"))
+        random_state=42, feature_importances="permutation_oob"))
 ])
 rf.fit(X_train, y_train)
 
