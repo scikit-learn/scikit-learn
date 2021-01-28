@@ -159,7 +159,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             warnings.warn("The default value of n_bins will change from "
                           "5 to 'auto' in 0.25.", FutureWarning)
             self.n_bins = 5
-        
+
         X = self._validate_data(X, dtype='numeric')
 
         supported_dtype = (np.float64, np.float32)
