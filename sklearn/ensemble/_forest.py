@@ -406,7 +406,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        if self.oob_score:
+        if self.oob_score or (self.feature_importances_type == "permutation"):
             y_type = type_of_target(y)
             if y_type in ("multiclass-multioutput", "unknown"):
                 # FIXME: we could consider to support multiclass-multioutput if
@@ -419,10 +419,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     f"supported: continuous, continuous-multioutput, binary, "
                     f"multiclass, multilabel-indicator."
                 )
-            self._set_oob_score_and_attributes(X, y)
-
-        if self.feature_importances_type == "permutation":
-            self._set_oob_permutation_importance(X, y, sample_weight)
+            self._set_oob_score_and_attributes(X, y, sample_weight)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -431,65 +428,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return self
 
-    def _get_tree_oob_performance(self, estimator, X, y, n_samples,
-                                  n_samples_bootstrap, sample_weight):
-        """Get out-of-bag performance for a single tree"""
-        random_state = check_random_state(estimator.random_state)
-
-        scores = np.zeros(X.shape[1])
-
-        unsampled_indices = _generate_unsampled_indices(
-            estimator.random_state, n_samples, n_samples_bootstrap
-        )
-
-        shuffling_idx = np.arange(X.shape[0])
-
-        baseline = estimator.score(X[unsampled_indices, :],
-                                   y[unsampled_indices])
-
-        for col_idx in range(X.shape[1]):
-            X_permuted = X.copy()
-            random_state.shuffle(shuffling_idx)
-            if hasattr(X_permuted, "iloc"):
-                col = X_permuted.iloc[shuffling_idx, col_idx]
-                col.index = X_permuted.index
-                X_permuted.iloc[:, col_idx] = col
-            else:
-                X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-
-            scores[col_idx] = estimator.score(
-                X_permuted[unsampled_indices, :], y[unsampled_indices],
-                sample_weight[unsampled_indices]
-            )
-
-        return baseline - scores
-
-    def _set_oob_permutation_importance(self, X, y, sample_weight):
-        """Compute feature importances from the out-of-bag samples."""
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
-
-        n_samples = y.shape[0]
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples
-        )
-
-        if sample_weight is None:
-            sample_weight = np.ones(n_samples)
-
-        all_imp = np.array(Parallel(n_jobs=self.n_jobs)(
-            delayed(self._get_tree_oob_performance)(
-                estimator, X, y, n_samples, n_samples_bootstrap, sample_weight
-            ) for estimator in self.estimators_))
-
-        self._oob_permutation_importance = Bunch(
-            importances_mean=np.mean(all_imp, axis=0),
-            importances_std=np.std(all_imp, axis=0),
-            importances=all_imp
-        )
-
     @abstractmethod
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -498,9 +438,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
         """
 
-    def _compute_oob_predictions(self, X, y):
+    def _compute_oob_predictions_and_importances(self, X, y, sample_weight):
         """Compute and set the OOB score.
 
         Parameters
@@ -509,6 +451,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
 
         Returns
         -------
@@ -517,8 +461,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The OOB predictions.
       """
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        random_state = check_random_state(self.random_state)
 
-        n_samples = y.shape[0]
+        n_samples, n_features = X.shape
         n_outputs = self.n_outputs_
         if is_classifier(self) and hasattr(self, "n_classes_"):
             # n_classes_ is a ndarray at this stage
@@ -531,22 +476,42 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # the array operations compatible with the 2 settings
             oob_pred_shape = (n_samples, 1, n_outputs)
 
+        if self.feature_importances_type == "permutation":
+            oob_importances = np.zeros(shape=(n_features, self.n_estimators))
+        else:
+            oob_importances = None
+
         oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
         n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
 
         n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples, self.max_samples,
         )
-        for estimator in self.estimators_:
+        for idx, estimator in enumerate(self.estimators_):
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap,
             )
+            X_oob, y_oob = X[unsampled_indices, :], y[unsampled_indices]
 
-            y_pred = self._get_oob_predictions(
-                estimator, X[unsampled_indices, :]
-            )
-            oob_pred[unsampled_indices, ...] += y_pred
+            y_oob_pred = self._get_oob_predictions(estimator, X_oob)
+            oob_pred[unsampled_indices, ...] += y_oob_pred
             n_oob_pred[unsampled_indices, :] += 1
+
+            if self.feature_importances_type == "permutation":
+                # avoid circular dependence
+                from ..inspection import permutation_importance
+
+                result_importances = permutation_importance(
+                    estimator,
+                    X_oob,
+                    y_oob,
+                    scoring=None,
+                    n_repeats=1,
+                    n_jobs=self.n_jobs,
+                    random_state=random_state,
+                    sample_weight=sample_weight,
+                )
+                oob_importances[:, idx] = result_importances.importances[:, 0]
 
         for k in range(n_outputs):
             if (n_oob_pred == 0).any():
@@ -558,7 +523,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 n_oob_pred[n_oob_pred == 0] = 1
             oob_pred[..., k] /= n_oob_pred[..., [k]]
 
-        return oob_pred
+        return oob_pred, oob_importances
 
     def _validate_y_class_weight(self, y):
         # Default implementation
@@ -690,7 +655,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             y_pred = np.rollaxis(y_pred, axis=0, start=3)
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -699,16 +664,30 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
         """
-        self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
+        self.oob_decision_function_, oob_importances_ = (
+            super()
+            ._compute_oob_predictions_and_importances(X, y, sample_weight)
+        )
+
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(
                 axis=-1
             )
         self.oob_score_ = accuracy_score(
-            y, np.argmax(self.oob_decision_function_, axis=1)
+            y, np.argmax(self.oob_decision_function_, axis=1),
+            sample_weight=sample_weight
         )
+
+        if self.feature_importances_type == "permutation":
+            self._oob_permutation_importance = Bunch(
+                importances_mean=np.mean(oob_importances_, axis=1),
+                importances_std=np.std(oob_importances_, axis=1),
+                importances=oob_importances_
+            )
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -983,7 +962,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             y_pred = y_pred[:, np.newaxis, :]
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -992,14 +971,27 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
         """
-        self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(
-            axis=1
+        self.oob_prediction_, oob_importances_ = (
+            super()
+            ._compute_oob_predictions_and_importances(X, y, sample_weight)
         )
+        self.oob_prediction_ = self.oob_prediction_.squeeze(axis=1)
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
-        self.oob_score_ = r2_score(y, self.oob_prediction_)
+        self.oob_score_ = r2_score(
+            y, self.oob_prediction_, sample_weight=sample_weight
+        )
+
+        if self.feature_importances_type == "permutation":
+            self._oob_permutation_importance = Bunch(
+                importances_mean=np.mean(oob_importances_, axis=1),
+                importances_std=np.std(oob_importances_, axis=1),
+                importances=oob_importances_
+            )
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
@@ -2491,7 +2483,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
 
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):

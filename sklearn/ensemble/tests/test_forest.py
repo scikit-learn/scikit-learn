@@ -646,7 +646,7 @@ def test_random_trees_embedding_raise_error_oob(oob_score):
     with pytest.raises(TypeError, match="got an unexpected keyword argument"):
         RandomTreesEmbedding(oob_score=oob_score)
     with pytest.raises(NotImplementedError, match="OOB score not supported"):
-        RandomTreesEmbedding()._set_oob_score_and_attributes(X, y)
+        RandomTreesEmbedding()._set_oob_score_and_attributes(X, y, None)
 
 
 def check_gridsearch(name):
