@@ -221,8 +221,7 @@ def test_n_components_greater_n_features(Estimator):
 
 
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
-                         [[NMF, 'cd', 2], [NMF, 'mu', 2],
-                          [MiniBatchNMF, 'mu', 1]])
+                         [[NMF, 'cd', 2], [NMF, 'mu', 2]])
 @pytest.mark.parametrize('regularization',
                          [None, 'both', 'components', 'transformation'])
 def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
@@ -234,7 +233,7 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
-    init = 'nndsvd'  # FIXME : should be removed in 1.1
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
 
     est1 = Estimator(solver=solver, n_components=5, init=init,
                      regularization=regularization, random_state=0,
@@ -246,9 +245,34 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     H1 = est1.components_
     H2 = est2.components_
 
-    assert_array_almost_equal(W1, W2, decimal=4)
-    assert_array_almost_equal(H1, H2, decimal=4)
+    assert_array_almost_equal(W1, W2)
+    assert_array_almost_equal(H1, H2)
 
+@pytest.mark.parametrize('regularization',
+                         [None, 'both', 'components', 'transformation'])
+def test_nmf_sparse_input_minibatch(regularization):
+    # Test that sparse matrices are accepted as input
+    from scipy.sparse import csc_matrix
+
+    rng = np.random.mtrand.RandomState(42)
+    A = np.abs(rng.randn(10, 10))
+    A[:, 2 * np.arange(5)] = 0
+    A_sparse = csc_matrix(A)
+
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
+
+    est1 = MiniBatchNMF(solver='mu', n_components=5, init=init,
+                        regularization=regularization, random_state=0,
+                        beta_loss=1, batch_size=24)
+    est2 = clone(est1)
+
+    W1 = est1.fit_transform(A)
+    W2 = est2.fit_transform(A_sparse)
+    H1 = est1.components_
+    H2 = est2.components_
+
+    assert_array_almost_equal(W1, W2)
+    assert_array_almost_equal(H1, H2)
 
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
                          [[NMF, 'cd', 2], [NMF, 'mu', 2],
@@ -666,35 +690,15 @@ def test_nmf_close_minibatch_nmf(batch_size):
     # gives close results
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
+    max_iter = 8000
     nmf = NMF(5, solver='mu', init='nndsvdar', random_state=0,
-              max_iter=2000, beta_loss='kullback-leibler')
+              max_iter=max_iter, beta_loss='kullback-leibler')
     mbnmf = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
-                         max_iter=200, beta_loss='kullback-leibler',
+                         max_iter=max_iter, beta_loss='kullback-leibler',
                          batch_size=batch_size)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW, decimal=2)
-
-
-@pytest.mark.parametrize('batch_size', [24, 32])
-def test_nmf_close_minibatch_nmf_predict(batch_size):
-    # Test that the decomposition with standard and minibatch nmf
-    # gives close results
-    rng = np.random.mtrand.RandomState(42)
-    X = np.abs(rng.randn(48, 5))
-    X_train, X_test = train_test_split(X, test_size=0.33,
-                                       random_state=42)
-    nmf = NMF(5, solver='mu', init='nndsvdar', random_state=0,
-              max_iter=2000, beta_loss='kullback-leibler')
-    mbnmf = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
-                         max_iter=200, beta_loss='kullback-leibler',
-                         batch_size=batch_size)
-    nmf.fit(X_train)
-    mbnmf.fit(X_train)
-    W = nmf.transform(X_test)
-    mbW = mbnmf.transform(X_test)
-
-    assert_array_almost_equal(W, mbW, decimal=2)
+    assert_array_almost_equal(W, mbW, decimal=1)
 
 
 def test_minibatch_nmf_partial_fit():
