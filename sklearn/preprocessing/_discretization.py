@@ -29,9 +29,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_bins : int, array-like of integers of shape (n_features,) or 'auto', \
-             default='auto'
+             default=5
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
         For 'auto' option Sturges formula is used: bins are log(n_samples) + 1.
+        
+        .. versionadded:: 0.24
+            Added 'auto' option
 
     encode : {'onehot', 'onehot-dense', 'ordinal'}, default='onehot'
         Method used to encode the transformed result.
@@ -128,7 +131,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_bins='auto', *, encode='onehot', strategy='quantile',
+    def __init__(self, n_bins='warn', *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
         self.encode = encode
@@ -152,6 +155,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
+        if self.n_bins == 'warn':
+            warnings.warn("The default value of n_bins will change from "
+                          "5 to 'auto' in 0.25.", FutureWarning)
+        self.n_bins = 5
         X = self._validate_data(X, dtype='numeric')
 
         supported_dtype = (np.float64, np.float32)
