@@ -424,8 +424,8 @@ class Pipeline(_BaseComposition):
                 if (transform is None or transform == 'passthrough'):
                     continue
                 Xt = transform.transform(Xt)
-        with _print_elapsed_time('Pipeline',
-                                 self._log_message(len(self.steps) - 1, False)):
+        with _print_elapsed_time(
+                'Pipeline', self._log_message(len(self.steps) - 1, False)):
             y_pred = self.steps[-1][-1].predict(Xt, **predict_params)
         return y_pred
 
