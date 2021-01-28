@@ -1021,7 +1021,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         return self._hstack(Xs)
 
-    def _log_message(self, name, idx, total, is_fitting):
+    def _log_message(self, name, idx, total, is_fitting=True):
         if not self.verbose or (self.verbose < 10 and not is_fitting):
             return None
 
