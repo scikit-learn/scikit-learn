@@ -1277,15 +1277,17 @@ class RandomForestClassifier(ForestClassifier):
     feature_importances : {"impurity", "permutation_oob"}, default="impurity"
         The type of feature importance to compute:
 
-        - If "impurity", then gets impurity-based feature importance.
+        - if `"impurity"`, the mean decrease impurity (MDI) is computed.
           The importance of a feature is computed as the (normalized)
           total reduction of the criterion brought by that feature.  It is also
-          known as the Gini importance.
-        - If "permutation_oob", then gets out-of-bag permutation importance.
-          The importance corresponds with the average decrease in R2
-          across all trees when a feature is permuted or shuffled.
+          known as the Gini importance;
+        - if `"permutation_oob"`, the permutation feature importance is
+          computed using the out-of-bag samples. The importance is computed as
+          the average decrease of the accuracy score across all trees when a
+          feature is shuffled.
 
-        .. versionadded: 1.0
+        .. versionadded:: 1.0
+           The `"permutation_oob"` strategy was added in 1.0.
 
     Attributes
     ----------
@@ -1311,14 +1313,23 @@ class RandomForestClassifier(ForestClassifier):
         The number of outputs when ``fit`` is performed.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The impurity-based feature importances.
-        The higher, the more important the feature.
-        See ``feature_importances`` for how these are calculated.
+        The feature importances computed as specified by the strategy defined
+        by `feature_importances` parameter. The higher, the more important the
+        feature.
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values).
-        Consider setting ``feature_importances="permutation_oob"`` or using
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        .. warning::
+           Impurity-based feature importances can be misleading for two
+           reasons:
+
+           - it is biased towards high cardinality features (many unique
+             values);
+           - it is computed from the training set and could be misleading
+             when the estimator overfits.
+
+           For these reasons, consider setting
+           `feature_importances="permutation_oob"` to use feature permutation
+           importances computed on the out-of-bag samples or use the function
+           :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1588,15 +1599,19 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 0.22
 
     feature_importances : {"impurity", "permutation_oob"}, default="impurity"
-        The type of feature importance to calculate:
+        The type of feature importance to compute:
 
-        - If "impurity", then gets impurity-based feature importance.
+        - if `"impurity"`, the mean decrease impurity (MDI) is computed.
           The importance of a feature is computed as the (normalized)
           total reduction of the criterion brought by that feature.  It is also
-          known as the Gini importance.
-        - If "permutation_oob", then gets out-of-bag permutation importance.
-          The importance corresponds with the average decrease in r2_score
-          across all tree when a feature is permuted or shuffled.
+          known as the Gini importance;
+        - if `"permutation_oob"`, the permutation feature importance is
+          computed using the out-of-bag samples. The importance is computed as
+          the average decrease of the :math:`R^2` score across all trees when a
+          feature is shuffled.
+
+        .. versionadded:: 1.0
+           The `"permutation_oob"` strategy was added in 1.0.
 
     Attributes
     ----------
@@ -1608,14 +1623,23 @@ class RandomForestRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The impurity-based feature importances.
-        The higher, the more important the feature.
-        See ``feature_importances`` for how these are calculated.
+        The feature importances computed as specified by the strategy defined
+        by `feature_importances` parameter. The higher, the more important the
+        feature.
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values).
-        Consider setting ``feature_importances="permutation_oob"`` or using
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        .. warning::
+           Impurity-based feature importances can be misleading for two
+           reasons:
+
+           - it is biased towards high cardinality features (many unique
+             values);
+           - it is computed from the training set and could be misleading
+             when the estimator overfits.
+
+           For these reasons, consider setting
+           `feature_importances="permutation_oob"` to use feature permutation
+           importances computed on the out-of-bag samples or use the function
+           :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1914,15 +1938,19 @@ class ExtraTreesClassifier(ForestClassifier):
         .. versionadded:: 0.22
 
     feature_importances : {"impurity", "permutation_oob"}, default="impurity"
-        The type of feature importance to calculate:
+        The type of feature importance to compute:
 
-        - If "impurity", then gets impurity-based feature importance.
+        - if `"impurity"`, the mean decrease impurity (MDI) is computed.
           The importance of a feature is computed as the (normalized)
           total reduction of the criterion brought by that feature.  It is also
-          known as the Gini importance.
-        - If "permutation_oob", then gets out-of-bag permutation importance.
-          The importance corresponds with the average decrease in r2_score
-          across all tree when a feature is permuted or shuffled.
+          known as the Gini importance;
+        - if `"permutation_oob"`, the permutation feature importance is
+          computed using the out-of-bag samples. The importance is computed as
+          the average decrease of the accuracy score across all trees when a
+          feature is shuffled.
+
+        .. versionadded:: 1.0
+           The `"permutation_oob"` strategy was added in 1.0.
 
     Attributes
     ----------
@@ -1942,14 +1970,23 @@ class ExtraTreesClassifier(ForestClassifier):
         number of classes for each output (multi-output problem).
 
     feature_importances_ : ndarray of shape (n_features,)
-        The impurity-based feature importances.
-        The higher, the more important the feature.
-        See ``feature_importances`` for how these are calculated.
+        The feature importances computed as specified by the strategy defined
+        by `feature_importances` parameter. The higher, the more important the
+        feature.
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values).
-        Consider setting ``feature_importances="permutation_oob"`` or using
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        .. warning::
+           Impurity-based feature importances can be misleading for two
+           reasons:
+
+           - it is biased towards high cardinality features (many unique
+             values);
+           - it is computed from the training set and could be misleading
+             when the estimator overfits.
+
+           For these reasons, consider setting
+           `feature_importances="permutation_oob"` to use feature permutation
+           importances computed on the out-of-bag samples or use the function
+           :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -2221,15 +2258,19 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 0.22
 
     feature_importances : {"impurity", "permutation_oob"}, default="impurity"
-        The type of feature importance to calculate:
+        The type of feature importance to compute:
 
-        - If "impurity", then gets impurity-based feature importance.
+        - if `"impurity"`, the mean decrease impurity (MDI) is computed.
           The importance of a feature is computed as the (normalized)
           total reduction of the criterion brought by that feature.  It is also
-          known as the Gini importance.
-        - If "permutation_oob", then gets out-of-bag permutation importance.
-          The importance corresponds with the average decrease in performance
-          across all tree when a feature is permuted or shuffled.
+          known as the Gini importance;
+        - if `"permutation_oob"`, the permutation feature importance is
+          computed using the out-of-bag samples. The importance is computed as
+          the average decrease of the :math:`R^2` score across all trees when a
+          feature is shuffled.
+
+        .. versionadded:: 1.0
+           The `"permutation_oob"` strategy was added in 1.0.
 
     Attributes
     ----------
@@ -2241,14 +2282,23 @@ class ExtraTreesRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The impurity-based feature importances.
-        The higher, the more important the feature.
-        See ``feature_importances`` for how these are calculated.
+        The feature importances computed as specified by the strategy defined
+        by `feature_importances` parameter. The higher, the more important the
+        feature.
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values).
-        Consider setting ``feature_importances="permutation_oob"`` or using
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        .. warning::
+           Impurity-based feature importances can be misleading for two
+           reasons:
+
+           - it is biased towards high cardinality features (many unique
+             values);
+           - it is computed from the training set and could be misleading
+             when the estimator overfits.
+
+           For these reasons, consider setting
+           `feature_importances="permutation_oob"` to use feature permutation
+           importances computed on the out-of-bag samples or use the function
+           :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features.
