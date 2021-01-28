@@ -544,8 +544,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     return W, Ht.T, n_iter
 
 
-def _multiplicative_update_w(X, W, H, A, B, beta_loss, l1_reg_W, l2_reg_W,
-                             single_batch, gamma, rho,
+def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                              H_sum=None, HHt=None, XHt=None, update_H=True):
     """Update W in Multiplicative Update NMF."""
     if beta_loss == 2:
@@ -630,23 +629,6 @@ def _multiplicative_update_w(X, W, H, A, B, beta_loss, l1_reg_W, l2_reg_W,
         denominator = denominator + l2_reg_W * W
     denominator[denominator == 0] = EPSILON
 
-    if not single_batch:
-        if A is None:
-            A = W.copy()
-        else:
-            _check_init(A, (W.shape), "NMF (input A)")
-        if B is None:
-            B = np.ones((W.shape))
-        else:
-            _check_init(B, (W.shape), "NMF (input B)")
-
-        A *= rho
-        B *= rho
-        A += numerator
-        B += denominator
-        numerator = A
-        denominator = B
-
     numerator /= denominator
     delta_W = numerator
 
@@ -654,7 +636,7 @@ def _multiplicative_update_w(X, W, H, A, B, beta_loss, l1_reg_W, l2_reg_W,
     if gamma != 1:
         delta_W **= gamma
 
-    return delta_W, A, B, H_sum, HHt, XHt
+    return delta_W, H_sum, HHt, XHt
 
 
 def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
@@ -793,16 +775,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         denominator = denominator + l2_reg_H * H
     denominator[denominator == 0] = EPSILON
 
-    if not single_batch:
-        if A is None:
-            A = H.copy()
-        else:
-            _check_init(A, (H.shape), "NMF (input A)")
-        if B is None:
-            B = np.ones((H.shape))
-        else:
-            _check_init(B, (H.shape), "NMF (input B)")
-
+    if A is not None and B is not None and not single_batch:
         A *= rho
         B *= rho
         A += numerator
@@ -820,7 +793,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
     return delta_H, A, B
 
 
-def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
+def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
                                batch_size=None,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
@@ -841,6 +814,14 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     H : array-like of shape (n_components, n_features)
         Initial guess for the solution.
+
+    A : array-like of shape (n_components, n_features)
+        Initial guess for the numerator auxiliary function.
+        Used in the batch case only.
+
+    B : array-like of shape (n_components, n_features)
+        Initial guess for the denominator auxiliary function.
+        Used in the batch case only.
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
@@ -912,10 +893,6 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     n_samples = X.shape[0]
     single_batch = False
-    AW = None
-    BW = None
-    AH = None
-    BH = None
 
     if batch_size is None or batch_size >= n_samples:
         batch_size = n_samples
@@ -947,12 +924,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         ):
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
-            if AW is not None and AW.shape[0] > W[slice].shape[0]:
-                AW = AW[0:W[slice].shape[0] , :]
-                BW = BW[0:W[slice].shape[0] , :]
-            delta_W, AW, BW, H_sum, HHt, XHt = _multiplicative_update_w(
-                X[slice], W[slice], H, AW, BW, beta_loss, l1_reg_W, l2_reg_W,
-                single_batch, gamma, rho, H_sum, HHt, XHt, update_H)
+            delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+                X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
+                gamma, H_sum, HHt, XHt, update_H)
             W[slice] *= delta_W
             # necessary for stability with beta_loss < 1
             if beta_loss < 1:
@@ -960,8 +934,8 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
             # update H
             if update_H:
-                delta_H, AH, BH = _multiplicative_update_h(
-                    X[slice], W[slice], H, AH, BH, beta_loss,
+                delta_H, A, B = _multiplicative_update_h(
+                    X[slice], W[slice], H, A, B, beta_loss,
                     l1_reg_H, l2_reg_H, single_batch, gamma, rho)
                 H *= delta_H
 
@@ -998,7 +972,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 @_deprecate_positional_args
 def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                init='warn', update_H=True, solver='cd',
-                               batch_size=None,
+                               A=None, B=None, batch_size=None,
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
@@ -1045,6 +1019,18 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     H : array-like of shape (n_components, n_features), default=None
         If init='custom', it is used as initial guess for the solution.
         If update_H=False, it is used as a constant, to solve for W only.
+
+    A : array-like of shape (n_components, n_features), default=None
+        Initial guess for the numerator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
+
+        .. versionadded:: 1.0
+
+    B : array-like of shape (n_components, n_features), default=None
+        Initial guess for the denominator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
+
+        .. versionadded:: 1.0
 
     n_components : int, default=None
         Number of components, if n_components is not set all features
@@ -1161,6 +1147,16 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     n_iter : int
         Actual number of iterations.
 
+    A : array-like of shape (n_components, n_features)
+        Numerator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
+        Only returned if `batch_size` is not `None`.
+
+    B : array-like of shape (n_components, n_features)
+        Denominator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
+        Only returned if `batch_size` is not `None`.
+
     iter_offset : int
         The number of iteration on data batches that has been
         performed. Only returned if `batch_size` is not `None`.
@@ -1247,6 +1243,16 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
             raise ValueError("Number of samples per batch must be a positive "
                              "integer; got (batch_size=%r)" % batch_size)
 
+        if A is None:
+            A = H.copy()
+        else:
+            _check_init(A, (n_components, n_features), "NMF (input A)")
+
+        if B is None:
+            B = np.ones((n_components, n_features))
+        else:
+            _check_init(B, (n_components, n_features), "NMF (input B)")
+
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
 
@@ -1260,7 +1266,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                                random_state=random_state)
     elif solver == 'mu':
         W, H, n_iter, iter_offset = _fit_multiplicative_update(
-            X, W, H, beta_loss, batch_size, max_iter,
+            X, W, H, A, B, beta_loss, batch_size, max_iter,
             tol, l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H, update_H,
             verbose, forget_factor
         )
@@ -1275,7 +1281,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     if batch_size is None:
         return W, H, n_iter
     else:
-        return W, H, n_iter, iter_offset
+        return W, H, n_iter, A, B, iter_offset
 
 
 class NMF(TransformerMixin, BaseEstimator):
@@ -1782,8 +1788,8 @@ class MiniBatchNMF(NMF):
                                 dtype=[np.float64, np.float32])
 
         with config_context(assume_finite=True):
-            W, H, n_iter_, iter_offset_ = non_negative_factorization(
-                X=X, W=W, H=H, n_components=self.n_components,
+            W, H, n_iter_, A, B, iter_offset_ = non_negative_factorization(
+                X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
                 batch_size=self.batch_size, init=self.init,
                 update_H=True, solver=self.solver, beta_loss=self.beta_loss,
                 tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
@@ -1796,6 +1802,8 @@ class MiniBatchNMF(NMF):
 
         self.n_components_ = H.shape[0]
         self.components_ = H
+        self._components_numerator = A
+        self._components_denominator = B
         self.n_iter_ = n_iter_
         self.iter_offset_ = iter_offset_
 
@@ -1820,8 +1828,10 @@ class MiniBatchNMF(NMF):
                                 reset=False)
 
         with config_context(assume_finite=True):
-            W, _, _, _ = non_negative_factorization(
+            W, _, _, A, B, iter_offset = non_negative_factorization(
                 X=X, W=None, H=self.components_,
+                A=self._components_numerator,
+                B=self._components_denominator,
                 n_components=self.n_components_,
                 init=self.init, update_H=False, solver=self.solver,
                 batch_size=self.batch_size, beta_loss=self.beta_loss,
@@ -1843,8 +1853,10 @@ class MiniBatchNMF(NMF):
                 W = self.transform(X)
 
                 # Add 1 iteration to the current estimation
-                W, H, n_iter, iter_offset = non_negative_factorization(
+                W, H, n_iter, A, B, iter_offset = non_negative_factorization(
                     X=X, W=W, H=self.components_,
+                    A=self._components_numerator,
+                    B=self._components_denominator,
                     n_components=self.n_components,
                     batch_size=self.batch_size, init='custom',
                     update_H=True, solver=self.solver,
@@ -1856,6 +1868,8 @@ class MiniBatchNMF(NMF):
 
             self.n_components_ = H.shape[0]
             self.components_ = H
+            self._components_numerator = A
+            self._components_denominator = B
             self.n_iter_ += n_iter
             self.iter_offset_ += iter_offset
 
