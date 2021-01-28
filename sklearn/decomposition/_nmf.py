@@ -894,7 +894,7 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
     n_samples = X.shape[0]
     single_batch = False
 
-    if batch_size is None or batch_size >= n_samples:
+    if batch_size is None:
         batch_size = n_samples
         single_batch = True
 
