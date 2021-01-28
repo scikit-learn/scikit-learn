@@ -95,7 +95,7 @@ num_selector(X)
 # an ordinal encoder will be sufficient. Besides, numerical values needs to be
 # standardize for a linear model while the raw numerical data can be treated
 # as is by a tree-based model. However, both models need an imputer to
-handle missing values.
+# handle missing values.
 #
 # We will first design the pipeline required for the tree-based models.
 
