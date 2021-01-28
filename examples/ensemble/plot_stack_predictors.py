@@ -20,7 +20,6 @@ stacking strategy. Stacking slightly improves the overall performance.
 #          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
 
-# %%
 print(__doc__)
 
 from sklearn import set_config
@@ -79,7 +78,7 @@ X, y = load_ames_housing()
 # Before we can use Ames dataset we still need to do some preprocessing.
 # First, we will select the categorical and numerical columns of the dataset to
 # construct the first step of the pipeline.
-# %%
+
 from sklearn.compose import make_column_selector
 
 cat_selector = make_column_selector(dtype_include=object)
@@ -100,7 +99,6 @@ num_selector(X)
 #
 # We will first design the pipeline required for the tree-based models.
 
-# %%
 from sklearn.compose import make_column_transformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
@@ -118,7 +116,6 @@ tree_preprocessor
 # Then, we will now define the preprocessor used when the ending regressor
 # is a linear model.
 
-# %%
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 
@@ -150,7 +147,6 @@ linear_preprocessor
 #    the data as it will be fed with the already preprocessed output from the 3
 #    learners.
 
-# %%
 from sklearn.linear_model import LassoCV
 
 lasso_pipeline = make_pipeline(linear_preprocessor, LassoCV())
