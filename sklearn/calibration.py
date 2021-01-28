@@ -929,9 +929,6 @@ class CalibrationDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
 
-        name : str, default=None
-            Name for labeling curve.
-
     See Also
     --------
     calibration_curve : Compute true and predicted probabilities for a
@@ -960,11 +957,10 @@ class CalibrationDisplay:
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
     >>> disp.plot() # doctest: +SKIP
     """
-    def __init__(self, prob_true, prob_pred, y_prob, *, name=None):
+    def __init__(self, prob_true, prob_pred, y_prob):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
-        self.name = name
 
     def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
         """Plot visualization.
@@ -998,8 +994,6 @@ class CalibrationDisplay:
 
         if ax is None:
             fig, ax = plt.subplots()
-
-        name = self.name if name is None else name
 
         line_kwargs = {}
         if name is not None:
