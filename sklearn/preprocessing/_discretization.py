@@ -30,7 +30,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     ----------
     n_bins : int or array-like of shape (n_features,), default='auto'
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
-        For 'auto' option Sturges formula is used.
+        For 'auto' option Sturges formula is used: bins are log(n_samples) + 1.
 
     encode : {'onehot', 'onehot-dense', 'ordinal'}, default='onehot'
         Method used to encode the transformed result.
