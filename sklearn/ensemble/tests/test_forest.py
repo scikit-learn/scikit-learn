@@ -388,7 +388,7 @@ def test_oob_importances(name):
     clf = ForestEstimator(
         n_estimators=10,
         random_state=0,
-        feature_importances_type="permutation",
+        feature_importances="permutation_oob",
         bootstrap=True,
     )
     clf.fit(X_large, y_large)
@@ -414,7 +414,7 @@ def test_oob_importances_multi_class(name):
     clf = ForestEstimator(
         n_estimators=10,
         random_state=0,
-        feature_importances_type="permutation",
+        feature_importances="permutation_oob",
         bootstrap=True,
     )
     clf.fit(X_large_multiclass, y_large_multiclass)
@@ -446,7 +446,7 @@ def test_oob_importance_ignores_random(name):
     clf_oob = ForestEstimator(
         n_estimators=10,
         random_state=0,
-        feature_importances_type="permutation",
+        feature_importances="permutation_oob",
         bootstrap=True,
     )
     clf_oob.fit(X, y)
@@ -456,7 +456,7 @@ def test_oob_importance_ignores_random(name):
     clf_impurity = ForestEstimator(
         n_estimators=10,
         random_state=0,
-        feature_importances_type="impurity",
+        feature_importances="impurity",
         bootstrap=True,
     )
     clf_impurity.fit(X, y)
@@ -484,15 +484,15 @@ def test_oob_importances_raise_error(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     if name in FOREST_TRANSFORMERS:
-        err_msg = "unexpected keyword argument 'feature_importances_type'"
+        err_msg = "unexpected keyword argument 'feature_importances'"
         with pytest.raises(TypeError, match=err_msg):
-            ForestEstimator(feature_importances_type="permutation")
+            ForestEstimator(feature_importances="permutation_oob")
 
     else:
         # No bootstrap
         err_msg = "Out of bag estimation only available if bootstrap=True"
         with pytest.raises(ValueError, match=err_msg):
-            ForestEstimator(feature_importances_type="permutation",
+            ForestEstimator(feature_importances="permutation_oob",
                             bootstrap=False).fit(X, y)
 
 
