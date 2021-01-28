@@ -1157,7 +1157,7 @@ parameter_grid_test_verbose = ((est, pattern, method) for
       r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
      (FeatureUnion([('mult1', 'drop'), ('mult2', Mult()), ('mult3', 'drop')]),
       r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
-    ], ['fit', 'fit_transform', 'fit_predict'])
+    ], ['fit', 'fit_transform', 'fit_predict', 'transform', 'predict'])
     if hasattr(est, method) and not (
         method == 'fit_transform' and hasattr(est, 'steps') and
         isinstance(est.steps[-1][1], FitParamT))
@@ -1172,11 +1172,26 @@ def test_verbose(est, method, pattern, capsys):
     y = [[7], [8]]
 
     est.set_params(verbose=False)
-    func(X, y)
+    if method in ['transform', 'predict']:
+        est.fit(X, y)
+        func(X)
+    else:
+        func(X, y)
     assert not capsys.readouterr().out, 'Got output for verbose=False'
 
     est.set_params(verbose=True)
-    func(X, y)
+    if method in ['transform', 'predict']:
+        func(X)
+        assert not capsys.readouterr().out, 'Got output for verbose=False'
+    else:
+        func(X, y)
+        assert re.match(pattern, capsys.readouterr().out)
+
+    est.set_params(verbose=10)
+    if method in ['transform', 'predict']:
+        func(X)
+    else:
+        func(X, y)
     assert re.match(pattern, capsys.readouterr().out)
 
 

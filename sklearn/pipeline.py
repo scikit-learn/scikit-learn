@@ -73,9 +73,11 @@ class Pipeline(_BaseComposition):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : bool, default=False
-        If True, the time elapsed while fitting each step will be printed as it
+    verbose : bool or int, default=False
+        If True or less than 10, the time elapsed while fitting each step will be printed as it
         is completed.
+        If greater than or equal to 10,  the time elapsed while performing each step (fitting or inference)
+        will be printed as it is completed.
 
     Attributes
     ----------
@@ -237,8 +239,8 @@ class Pipeline(_BaseComposition):
         estimator = self.steps[-1][1]
         return 'passthrough' if estimator is None else estimator
 
-    def _log_message(self, step_idx):
-        if not self.verbose:
+    def _log_message(self, step_idx, is_fitting):
+        if not self.verbose or (self.verbose < 10 and not is_fitting):
             return None
         name, _ = self.steps[step_idx]
 
@@ -278,7 +280,7 @@ class Pipeline(_BaseComposition):
                                         filter_passthrough=False):
             if (transformer is None or transformer == 'passthrough'):
                 with _print_elapsed_time('Pipeline',
-                                         self._log_message(step_idx)):
+                                         self._log_message(step_idx, True)):
                     continue
 
             if hasattr(memory, 'location'):
@@ -303,7 +305,7 @@ class Pipeline(_BaseComposition):
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
-                message=self._log_message(step_idx),
+                message=self._log_message(step_idx, True),
                 **fit_params_steps[name])
             # Replace the transformer of the step with the fitted
             # transformer. This is necessary when loading the transformer
@@ -340,7 +342,7 @@ class Pipeline(_BaseComposition):
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time('Pipeline',
-                                 self._log_message(len(self.steps) - 1)):
+                                 self._log_message(len(self.steps) - 1, True)):
             if self._final_estimator != 'passthrough':
                 fit_params_last_step = fit_params_steps[self.steps[-1][0]]
                 self._final_estimator.fit(Xt, y, **fit_params_last_step)
@@ -379,7 +381,7 @@ class Pipeline(_BaseComposition):
 
         last_step = self._final_estimator
         with _print_elapsed_time('Pipeline',
-                                 self._log_message(len(self.steps) - 1)):
+                                 self._log_message(len(self.steps) - 1, True)):
             if last_step == 'passthrough':
                 return Xt
             fit_params_last_step = fit_params_steps[self.steps[-1][0]]
@@ -414,9 +416,14 @@ class Pipeline(_BaseComposition):
         y_pred : array-like
         """
         Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt, **predict_params)
+        for idx, name, transform in self._iter(with_final=False, filter_passthrough=False):
+            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+                if (transform is None or transform == 'passthrough'):
+                    continue
+                Xt = transform.transform(Xt)
+        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+            y_pred = self.steps[-1][-1].predict(Xt, **predict_params)
+        return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
     def fit_predict(self, X, y=None, **fit_params):
@@ -449,8 +456,7 @@ class Pipeline(_BaseComposition):
         Xt = self._fit(X, y, **fit_params_steps)
 
         fit_params_last_step = fit_params_steps[self.steps[-1][0]]
-        with _print_elapsed_time('Pipeline',
-                                 self._log_message(len(self.steps) - 1)):
+        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, True)):
             y_pred = self.steps[-1][-1].fit_predict(Xt, y,
                                                     **fit_params_last_step)
         return y_pred
@@ -470,9 +476,12 @@ class Pipeline(_BaseComposition):
         y_proba : array-like of shape (n_samples, n_classes)
         """
         Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt)
+        for idx, name, transform in self._iter(with_final=False):
+            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+                Xt = transform.transform(Xt)
+        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+            y_proba = self.steps[-1][-1].predict_proba(Xt)
+        return y_proba
 
     @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
@@ -489,9 +498,12 @@ class Pipeline(_BaseComposition):
         y_score : array-like of shape (n_samples, n_classes)
         """
         Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].decision_function(Xt)
+        for idx, name, transform in self._iter(with_final=False):
+            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+                Xt = transform.transform(Xt)
+        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+            y_score = self.steps[-1][-1].decision_function(Xt)
+        return y_score
 
     @if_delegate_has_method(delegate='_final_estimator')
     def score_samples(self, X):
@@ -508,9 +520,12 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples,)
         """
         Xt = X
-        for _, _, transformer in self._iter(with_final=False):
-            Xt = transformer.transform(Xt)
-        return self.steps[-1][-1].score_samples(Xt)
+        for idx, _, transformer in self._iter(with_final=False):
+            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+                Xt = transformer.transform(Xt)
+        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+            y_score = self.steps[-1][-1].score_samples(Xt)
+        return y_score
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):
@@ -527,9 +542,12 @@ class Pipeline(_BaseComposition):
         y_score : array-like of shape (n_samples, n_classes)
         """
         Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt)
+        for idx, name, transform in self._iter(with_final=False):
+            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+                Xt = transform.transform(Xt)
+        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+            y_score = self.steps[-1][-1].predict_log_proba(Xt)
+        return y_score
 
     @property
     def transform(self):
@@ -556,8 +574,11 @@ class Pipeline(_BaseComposition):
 
     def _transform(self, X):
         Xt = X
-        for _, _, transform in self._iter():
-            Xt = transform.transform(Xt)
+        for idx, _, transform in self._iter(filter_passthrough=False):
+            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+                if (transform is None or transform == 'passthrough'):
+                    continue
+                Xt = transform.transform(Xt)
         return Xt
 
     @property
@@ -614,12 +635,16 @@ class Pipeline(_BaseComposition):
         score : float
         """
         Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+        for idx, name, transform in self._iter(with_final=False):
+            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+                Xt = transform.transform(Xt)
         score_params = {}
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
-        return self.steps[-1][-1].score(Xt, y, **score_params)
+
+        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+            score = self.steps[-1][-1].score(Xt, y, **score_params)
+        return score
 
     @property
     def classes_(self):
@@ -705,9 +730,11 @@ def make_pipeline(*steps, memory=None, verbose=False):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : bool, default=False
-        If True, the time elapsed while fitting each step will be printed as it
+    verbose : bool or int, default=False
+        If True or less than 10, the time elapsed while fitting each step will be printed as it
         is completed.
+        If greater than or equal to 10,  the time elapsed while performing each step (fitting or inference)
+        will be printed as it is completed.
 
     See Also
     --------
@@ -729,8 +756,15 @@ def make_pipeline(*steps, memory=None, verbose=False):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, **fit_params):
-    res = transformer.transform(X)
+def _transform_one(transformer,
+                   X,
+                   y,
+                   weight,
+                   message_clsname='',
+                   message=None,
+                   **fit_params):
+    with _print_elapsed_time(message_clsname, message):
+        res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res
@@ -951,7 +985,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : FeatureUnion
             This estimator
         """
-        transformers = self._parallel_func(X, y, fit_params, _fit_one)
+        transformers = self._parallel_func(X, y, fit_params, _fit_one, True)
         if not transformers:
             # All transformers are None
             return self
@@ -977,7 +1011,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        results = self._parallel_func(X, y, fit_params, _fit_transform_one)
+        results = self._parallel_func(X, y, fit_params, _fit_transform_one, True)
         if not results:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
@@ -987,12 +1021,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         return self._hstack(Xs)
 
-    def _log_message(self, name, idx, total):
-        if not self.verbose:
+    def _log_message(self, name, idx, total, is_fitting):
+        if not self.verbose or (self.verbose < 10 and not is_fitting):
             return None
+
         return '(step %d of %d) Processing %s' % (idx, total, name)
 
-    def _parallel_func(self, X, y, fit_params, func):
+    def _parallel_func(self, X, y, fit_params, func, is_fitting):
         """Runs func in parallel on X and y"""
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
@@ -1002,7 +1037,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return Parallel(n_jobs=self.n_jobs)(delayed(func)(
             transformer, X, y, weight,
             message_clsname='FeatureUnion',
-            message=self._log_message(name, idx, len(transformers)),
+            message=self._log_message(name, idx, len(transformers), is_fitting),
             **fit_params) for idx, (name, transformer,
                                     weight) in enumerate(transformers, 1))
 
@@ -1021,9 +1056,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight)
-            for name, trans, weight in self._iter())
+        Xs = self._parallel_func(X, None, {}, _transform_one, False)
         if not Xs:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
