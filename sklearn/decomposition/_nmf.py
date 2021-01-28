@@ -640,7 +640,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
 
 def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
-                             single_batch, gamma, rho):
+                             gamma, rho):
 
     """update H in Multiplicative Update NMF.
 
@@ -679,10 +679,6 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
     l2_reg_H : float, default=0.
         L2 regularization parameter for H.
 
-    single_batch : bool.
-        True when batch_size is greater than or equal to n_samples.
-        Used only in batch NMF.
-
     gamma : float, default=1.
         Exponent for Maximization-Minimization (MM) algorithm
         [Fevotte 2011].
@@ -693,8 +689,8 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
 
     Returns
     -------
-    delta_H : ndarray of shape (n_components, n_features)
-        Multiplicative update for the matrix H.
+    H : ndarray of shape (n_components, n_features)
+        Updated matrix H.
 
     A : array-like of shape (n_components, n_features)
         Numerator auxiliary function, only used in
@@ -705,6 +701,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         :class:`sklearn.decomposition.MiniBatchNMF`.
     """
 
+    H_old = H.copy()
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
         denominator = np.linalg.multi_dot([W.T, W, H])
@@ -775,22 +772,24 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         denominator = denominator + l2_reg_H * H
     denominator[denominator == 0] = EPSILON
 
-    if A is not None and B is not None and not single_batch:
+    if A is not None and B is not None:
         A *= rho
         B *= rho
-        A += numerator
+        A += numerator * H**2
         B += denominator
         numerator = A
         denominator = B
+        H = (np.divide(A, B))**0.5
+    else:
+        numerator /= denominator
+        delta_H = numerator
 
-    numerator /= denominator
-    delta_H = numerator
+        # gamma is in ]0, 1]
+        if gamma != 1:
+            delta_H **= gamma
+        H = delta_H * H_old
 
-    # gamma is in ]0, 1]
-    if gamma != 1:
-        delta_H **= gamma
-
-    return delta_H, A, B
+    return H, A, B
 
 
 def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
@@ -892,11 +891,9 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
     start_time = time.time()
 
     n_samples = X.shape[0]
-    single_batch = False
 
     if batch_size is None:
         batch_size = n_samples
-        single_batch = True
 
     rho = 0.
     if forget_factor is not None:
@@ -918,7 +915,7 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
 
     H_sum, HHt, XHt = None, None, None
 
-    for n_iter in range(1, max_iter + 1):
+    for n_iter in range(0, max_iter):
         for iter_offset, slice in enumerate(
             gen_batches(n=n_samples, batch_size=batch_size)
         ):
@@ -934,10 +931,9 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
 
             # update H
             if update_H:
-                delta_H, A, B = _multiplicative_update_h(
+                H, A, B = _multiplicative_update_h(
                     X[slice], W[slice], H, A, B, beta_loss,
-                    l1_reg_H, l2_reg_H, single_batch, gamma, rho)
-                H *= delta_H
+                    l1_reg_H, l2_reg_H, gamma, rho)
 
                 # These values will be recomputed since H changed
                 H_sum, HHt, XHt = None, None, None
@@ -1242,16 +1238,16 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         if not isinstance(batch_size, numbers.Integral) or batch_size < 0:
             raise ValueError("Number of samples per batch must be a positive "
                              "integer; got (batch_size=%r)" % batch_size)
+        if batch_size < n_samples:
+            if A is None:
+                A = H.copy()
+            else:
+                _check_init(A, (n_components, n_features), "NMF (input A)")
 
-        if A is None:
-            A = H.copy()
-        else:
-            _check_init(A, (n_components, n_features), "NMF (input A)")
-
-        if B is None:
-            B = np.ones((n_components, n_features))
-        else:
-            _check_init(B, (n_components, n_features), "NMF (input B)")
+            if B is None:
+                B = np.ones((n_components, n_features))
+            else:
+                _check_init(B, (n_components, n_features), "NMF (input B)")
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
