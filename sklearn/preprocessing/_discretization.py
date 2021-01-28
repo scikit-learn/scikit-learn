@@ -246,7 +246,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number) | isinstance(orig_bins, str):
-            if self.n_bins == 'auto':
+            if orig_bins == 'auto':
                 # calculcate number of bins
                 # depending on number of samples with Sturges rule
                 orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
