@@ -239,7 +239,7 @@ class Pipeline(_BaseComposition):
         estimator = self.steps[-1][1]
         return 'passthrough' if estimator is None else estimator
 
-    def _log_message(self, step_idx, is_fitting):
+    def _log_message(self, step_idx, is_fitting=True):
         if not self.verbose or (self.verbose < 10 and not is_fitting):
             return None
         name, _ = self.steps[step_idx]
