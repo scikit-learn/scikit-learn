@@ -48,7 +48,7 @@ def test_invalid_n_bins():
                "n_bins type. Received float, expected int or 'auto'.")
     with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
-    
+
     # Bad string value
     est = KBinsDiscretizer(n_bins='rice')
     err_msg = ("KBinsDiscretizer received an invalid "
