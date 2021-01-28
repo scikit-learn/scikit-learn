@@ -1011,7 +1011,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        results = self._parallel_func(X, y, fit_params, _fit_transform_one, True)
+        results = self._parallel_func(X, y, fit_params,
+                                      _fit_transform_one, True)
         if not results:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
@@ -1037,7 +1038,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return Parallel(n_jobs=self.n_jobs)(delayed(func)(
             transformer, X, y, weight,
             message_clsname='FeatureUnion',
-            message=self._log_message(name, idx, len(transformers), is_fitting),
+            message=self._log_message(name, idx,
+                                      len(transformers), is_fitting),
             **fit_params) for idx, (name, transformer,
                                     weight) in enumerate(transformers, 1))
 
