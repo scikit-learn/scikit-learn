@@ -74,9 +74,10 @@ class Pipeline(_BaseComposition):
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool or int, default=False
-        If True or less than 10, the time elapsed while fitting each step will be printed as it
-        is completed.
-        If greater than or equal to 10,  the time elapsed while performing each step (fitting or inference)
+        If True or less than 10, the time elapsed while fitting
+        each step will be printed as it is completed.
+        If greater than or equal to 10,  the time elapsed
+        while performing each step (fitting or inference)
         will be printed as it is completed.
 
     Attributes
@@ -416,12 +417,15 @@ class Pipeline(_BaseComposition):
         y_pred : array-like
         """
         Xt = X
-        for idx, name, transform in self._iter(with_final=False, filter_passthrough=False):
-            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+        for idx, name, transform in self._iter(with_final=False,
+                                               filter_passthrough=False):
+            with _print_elapsed_time('Pipeline',
+                                     self._log_message(idx, False)):
                 if (transform is None or transform == 'passthrough'):
                     continue
                 Xt = transform.transform(Xt)
-        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+        with _print_elapsed_time('Pipeline',
+                                 self._log_message(len(self.steps) - 1, False)):
             y_pred = self.steps[-1][-1].predict(Xt, **predict_params)
         return y_pred
 
@@ -456,7 +460,8 @@ class Pipeline(_BaseComposition):
         Xt = self._fit(X, y, **fit_params_steps)
 
         fit_params_last_step = fit_params_steps[self.steps[-1][0]]
-        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, True)):
+        with _print_elapsed_time(
+                'Pipeline', self._log_message(len(self.steps) - 1, True)):
             y_pred = self.steps[-1][-1].fit_predict(Xt, y,
                                                     **fit_params_last_step)
         return y_pred
@@ -477,9 +482,11 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for idx, name, transform in self._iter(with_final=False):
-            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+            with _print_elapsed_time(
+                    'Pipeline', self._log_message(idx, False)):
                 Xt = transform.transform(Xt)
-        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+        with _print_elapsed_time(
+                'Pipeline', self._log_message(len(self.steps) - 1, False)):
             y_proba = self.steps[-1][-1].predict_proba(Xt)
         return y_proba
 
@@ -499,9 +506,11 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for idx, name, transform in self._iter(with_final=False):
-            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+            with _print_elapsed_time('Pipeline',
+                                     self._log_message(idx, False)):
                 Xt = transform.transform(Xt)
-        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+        with _print_elapsed_time(
+                'Pipeline', self._log_message(len(self.steps) - 1, False)):
             y_score = self.steps[-1][-1].decision_function(Xt)
         return y_score
 
@@ -521,9 +530,11 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for idx, _, transformer in self._iter(with_final=False):
-            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+            with _print_elapsed_time('Pipeline',
+                                     self._log_message(idx, False)):
                 Xt = transformer.transform(Xt)
-        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+        with _print_elapsed_time(
+                'Pipeline', self._log_message(len(self.steps) - 1, False)):
             y_score = self.steps[-1][-1].score_samples(Xt)
         return y_score
 
@@ -543,9 +554,11 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for idx, name, transform in self._iter(with_final=False):
-            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+            with _print_elapsed_time('Pipeline',
+                                     self._log_message(idx, False)):
                 Xt = transform.transform(Xt)
-        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+        with _print_elapsed_time(
+                'Pipeline', self._log_message(len(self.steps) - 1, False)):
             y_score = self.steps[-1][-1].predict_log_proba(Xt)
         return y_score
 
@@ -575,7 +588,8 @@ class Pipeline(_BaseComposition):
     def _transform(self, X):
         Xt = X
         for idx, _, transform in self._iter(filter_passthrough=False):
-            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+            with _print_elapsed_time('Pipeline',
+                                     self._log_message(idx, False)):
                 if (transform is None or transform == 'passthrough'):
                     continue
                 Xt = transform.transform(Xt)
@@ -636,13 +650,15 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for idx, name, transform in self._iter(with_final=False):
-            with _print_elapsed_time('Pipeline', self._log_message(idx, False)):
+            with _print_elapsed_time('Pipeline',
+                                     self._log_message(idx, False)):
                 Xt = transform.transform(Xt)
         score_params = {}
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
 
-        with _print_elapsed_time('Pipeline', self._log_message(len(self.steps) - 1, False)):
+        with _print_elapsed_time(
+                'Pipeline', self._log_message(len(self.steps) - 1, False)):
             score = self.steps[-1][-1].score(Xt, y, **score_params)
         return score
 
@@ -731,9 +747,10 @@ def make_pipeline(*steps, memory=None, verbose=False):
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool or int, default=False
-        If True or less than 10, the time elapsed while fitting each step will be printed as it
-        is completed.
-        If greater than or equal to 10,  the time elapsed while performing each step (fitting or inference)
+        If True or less than 10, the time elapsed while fitting
+        each step will be printed as it is completed.
+        If greater than or equal to 10, the time elapsed
+        while performing each step (fitting or inference)
         will be printed as it is completed.
 
     See Also
