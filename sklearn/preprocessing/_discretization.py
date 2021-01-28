@@ -244,24 +244,18 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     def _validate_n_bins(self, n_features, n_samples):
         """Returns n_bins_, the number of bins per feature.
         """
-        orig_bins = self.n_bins
-        if isinstance(orig_bins, str):
-            if self.n_bins == 'auto':
-                # calculcate number of bins
-                # depending on number of samples with Sturges rule
-                orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
-            else:
-                raise ValueError(
-                    f"{KBinsDiscretizer.__name__} received "
-                    f"an invalid n_bins value "
-                    f"{orig_bins!r}, while only 'auto' is supported."
-                )
+        if self.n_bins == 'auto':
+            # calculcate number of bins
+            # depending on number of samples with Sturges rule
+            orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
+        else:
+            orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError(
                     f"{KBinsDiscretizer.__name__} received "
-                    f"an invalid n_bins type. "
-                    f"Received {type(orig_bins).__name__}, expected int."
+                    f"an invalid n_bins type. Received "
+                    f"{type(orig_bins).__name__}, expected int or 'auto'."
                 )
             if orig_bins < 2:
                 raise ValueError(
