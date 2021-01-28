@@ -1440,7 +1440,8 @@ class MiniBatchKMeans(KMeans):
         For faster compuations, you can set the ``batch_size`` greater than
         256 * number of cores to enable parallelism on all cores.
 
-        .. versionchanged:: XXX
+        .. versionchanged:: 1.0
+           `batch_size` default changed from 100 to 1024.
 
     verbose : int, default=0
         Verbosity mode.
@@ -1510,7 +1511,12 @@ class MiniBatchKMeans(KMeans):
         center, weighted by the sample weights if provided.
 
     n_iter_ : int
-        Number of batches processed.
+        Number of iterations over the full dataset.
+
+    n_steps_ : int
+        Number of minibatches processed.
+
+        .. versionadded:: 1.0
 
     counts_ : ndarray of shape (n_clusters,)
         Weigth sum of each cluster.
@@ -1570,7 +1576,7 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
                  batch_size=1024, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=3, reassignment_ratio=0.01, mode=0):
+                 init_size=None, n_init=3, reassignment_ratio=0.01):
 
         super().__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
@@ -1581,7 +1587,6 @@ class MiniBatchKMeans(KMeans):
         self.compute_labels = compute_labels
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
-        self.mode = mode
 
     @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
                 " and will be removed in 1.1 (renaming of 0.26).")
@@ -1640,67 +1645,63 @@ class MiniBatchKMeans(KMeans):
                 f"reassignment_ratio should be >= 0, got "
                 f"{self.reassignment_ratio} instead.")
 
-    def _mini_batch_convergence(self, iteration_idx, n_iter, n_samples,
+    def _mini_batch_convergence(self, step, n_steps, n_samples,
                                 centers_squared_diff, batch_inertia):
         """Helper function to encapsulate the early stopping logic"""
         # Normalize inertia to be able to compare values when
         # batch_size changes
         batch_inertia /= self._batch_size
 
+        # count steps starting from 1 for user friendly verbose mode.
+        step = step + 1
+
         # Ignore first iteration because it's inertia from initialization.
-        if iteration_idx == 0:
+        if step == 1:
             if self.verbose:
-                print(f"Minibatch iteration {iteration_idx + 1}/{n_iter}: "
-                      f"mean batch inertia: {batch_inertia}")
+                print(f"Minibatch step {step}/{n_steps}: mean batch "
+                      f"inertia: {batch_inertia}")
             return False
 
         # Compute an Exponentially Weighted Average of the inertia to
         # monitor the convergence while discarding minibatch-local stochastic
         # variability: https://en.wikipedia.org/wiki/Moving_average
-        ewa_inertia = self._ewa_inertia
-        if ewa_inertia is None:
-            ewa_inertia = batch_inertia
+        if self._ewa_inertia is None:
+            self._ewa_inertia = batch_inertia
         else:
             alpha = self._batch_size * 2.0 / (n_samples + 1)
             alpha = min(alpha, 1)
-            ewa_inertia = ewa_inertia * (1 - alpha) + batch_inertia * alpha
+            self._ewa_inertia = (
+                self._ewa_inertia * (1 - alpha) + batch_inertia * alpha)
 
         # Log progress to be able to monitor convergence
         if self.verbose:
-            print(f"Minibatch iteration {iteration_idx + 1}/{n_iter}: "
-                  f"mean batch inertia: {batch_inertia}, ewa inertia: "
-                  f"{ewa_inertia}")
+            print(f"Minibatch step {step}/{n_steps}: mean batch inertia: "
+                  f"{batch_inertia}, ewa inertia: {self._ewa_inertia}")
 
         # Early stopping based on absolute tolerance on squared change of
-        # centers position (using EWA smoothing)
+        # centers position
         if self._tol > 0.0 and centers_squared_diff <= self._tol:
             if self.verbose:
-                print(f"Converged (small centers change) at iteration "
-                      f"{iteration_idx + 1}/{n_iter}")
+                print(f"Converged (small centers change) at step "
+                      f"{step}/{n_steps}")
             return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
         # inertia
-        ewa_inertia_min = self._ewa_inertia_min
-        no_improvement = self._no_improvement
-        if ewa_inertia_min is None or ewa_inertia < ewa_inertia_min:
-            no_improvement = 0
-            ewa_inertia_min = ewa_inertia
+        if (self._ewa_inertia_min is None or
+                self._ewa_inertia < self._ewa_inertia_min):
+            self._no_improvement = 0
+            self._ewa_inertia_min = self._ewa_inertia
         else:
-            no_improvement += 1
+            self._no_improvement += 1
 
         if (self.max_no_improvement is not None
-                and no_improvement >= self.max_no_improvement):
+                and self._no_improvement >= self.max_no_improvement):
             if self.verbose:
-                print(f"Converged (lack of improvement in inertia) at "
-                      f"iteration {iteration_idx}/{n_iter}")
+                print(f"Converged (lack of improvement in inertia) at step "
+                      f"{step}/{n_steps}")
             return True
 
-        # update the convergence context to maintain state across successive
-        # calls:
-        self._ewa_inertia = ewa_inertia
-        self._ewa_inertia_min = ewa_inertia_min
-        self._no_improvement = no_improvement
         return False
 
     def _random_reassign(self):
@@ -1770,7 +1771,7 @@ class MiniBatchKMeans(KMeans):
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
-        # perform several inits with random sub-sets
+        # perform several inits with random subsets
         best_inertia = None
         for init_idx in range(self._n_init):
             if self.verbose:
@@ -1808,12 +1809,12 @@ class MiniBatchKMeans(KMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
-        n_batches = int(np.ceil(float(n_samples) / self._batch_size))
-        n_iter = int(self.max_iter * n_batches)
+        n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
+        n_steps = self.max_iter * n_steps_per_epoch
 
         with threadpool_limits(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
-            for i in range(n_iter):
+            for i in range(n_steps):
                 # Sample a minibatch from the full dataset
                 minibatch_indices = random_state.randint(0, n_samples,
                                                          self._batch_size)
@@ -1841,13 +1842,14 @@ class MiniBatchKMeans(KMeans):
 
                 # Monitor convergence and do early stopping if necessary
                 if self._mini_batch_convergence(
-                        i, n_iter, n_samples, centers_squared_diff,
+                        i, n_steps, n_samples, centers_squared_diff,
                         batch_inertia):
                     break
 
         self.cluster_centers_ = centers
 
-        self.n_iter_ = i + 1
+        self.n_steps_ = i + 1
+        self.n_iter_ = (i + 1) // n_steps_per_epoch
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
@@ -1876,22 +1878,23 @@ class MiniBatchKMeans(KMeans):
         -------
         self
         """
-        is_first_call_to_partial_fit = not hasattr(self, 'cluster_centers_')
+        has_centers = hasattr(self, 'cluster_centers_')
 
         X = self._validate_data(X, accept_sparse='csr',
                                 dtype=[np.float64, np.float32],
                                 order='C', accept_large_sparse=False,
-                                reset=is_first_call_to_partial_fit)
+                                reset=not has_centers)
 
         self._random_state = getattr(self, "_random_state",
                                      check_random_state(self.random_state))
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        self.n_steps_ = getattr(self, "n_steps_", 0)
 
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
-        if is_first_call_to_partial_fit:
-            # this is the first call to partial_fit on this object
+        if not has_centers:
+            # this instance has not been fitted yet (fit or partial_fit)
             self._check_params(X)
 
             # Validate init array
@@ -1930,6 +1933,8 @@ class MiniBatchKMeans(KMeans):
             self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
                 X, sample_weight, x_squared_norms, self.cluster_centers_,
                 n_threads=self._n_threads)
+
+        self.n_steps_ += 1
 
         return self
 
