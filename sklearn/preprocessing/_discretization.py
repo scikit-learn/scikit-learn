@@ -32,7 +32,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
              default=5
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
         For 'auto' option Sturges formula is used: bins are log(n_samples) + 1.
-        
+
         .. versionadded:: 0.24
             Added 'auto' option
 
