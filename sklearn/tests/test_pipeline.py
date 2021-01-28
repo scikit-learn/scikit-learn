@@ -12,21 +12,27 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils.fixes import parse_version
+from sklearn.utils._testing import (
+    assert_raises,
+    assert_raises_regex,
+    assert_raise_message,
+    assert_allclose,
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_no_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+)
 
-from sklearn.base import clone, BaseEstimator, TransformerMixin
+from sklearn.base import clone, is_classifier, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import accuracy_score, r2_score
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
@@ -1264,3 +1270,36 @@ def test_feature_union_warns_unknown_transformer_weight():
     union = FeatureUnion(transformer_list, transformer_weights=weights)
     with pytest.raises(ValueError, match=expected_msg):
         union.fit(X, y)
+
+
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_get_tags_none(passthrough):
+    # Checks that tags are set correctly when the first transformer is None or
+    # 'passthrough'
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/18815
+    pipe = make_pipeline(passthrough, SVC())
+    assert not pipe._get_tags()['pairwise']
+
+
+# FIXME: Replace this test with a full `check_estimator` once we have API only
+# checks.
+@pytest.mark.parametrize("Predictor", [MinimalRegressor, MinimalClassifier])
+def test_search_cv_using_minimal_compatible_estimator(Predictor):
+    # Check that third-party library estimators can be part of a pipeline
+    # and tuned by grid-search without inheriting from BaseEstimator.
+    rng = np.random.RandomState(0)
+    X, y = rng.randn(25, 2), np.array([0] * 5 + [1] * 20)
+
+    model = Pipeline([
+        ("transformer", MinimalTransformer()), ("predictor", Predictor())
+    ])
+    model.fit(X, y)
+
+    y_pred = model.predict(X)
+    if is_classifier(model):
+        assert_array_equal(y_pred, 1)
+        assert model.score(X, y) == pytest.approx(accuracy_score(y, y_pred))
+    else:
+        assert_allclose(y_pred, y.mean())
+        assert model.score(X, y) == pytest.approx(r2_score(y, y_pred))
