@@ -390,8 +390,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 class PoissonRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Poisson distribution.
 
-    This regressor uses the 'log' link function. Note that this link
-    function cannot be changed.
+    This regressor uses the 'log' link function.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
