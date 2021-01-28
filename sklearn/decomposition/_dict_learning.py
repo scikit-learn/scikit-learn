@@ -1613,7 +1613,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
            in 1.2.
 
     n_iter_ : int
-        Number of iterations run.
+        Number of iterations over the full dataset.
 
     iter_offset_ : int
         The number of iteration on data batches that has been
@@ -1632,8 +1632,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
            in 1.2.
 
     n_steps_ : int
-        The number of iteration on data batches that has been
-        performed before.
+        Number of mini-batches processed.
 
         .. versionadded:: 1.0
 
@@ -1826,13 +1825,19 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         B += np.dot(X.T, code)
 
     def _minibatch_convergence(self, X, batch_cost, dictionary, dict_buffer,
-                               n_samples, step):
+                               n_samples, step, n_steps):
         """Helper function to encapsulate the early stopping logic"""
         batch_size = X.shape[0]
 
+        # counts steps starting from 1 for user friendly verbose mode.
+        step = step + 1
+
         # Ignore first iteration because dictionary is not projected on the
         # constraint set yet.
-        if step == 0:
+        if step == 1:
+            if self.verbose:
+                print(f"Minibatch step {step}/{n_steps}: mean batch "
+                      f"cost: {batch_cost}")
             return False
 
         # Compute an Exponentially Weighted Average of the cost function to
@@ -1847,14 +1852,15 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Log progress to be able to monitor convergence
         if self.verbose:
-            print(f"Minibatch step {step}: mean batch cost: {batch_cost:.7f}, "
-                  f"ewa cost: {self._ewa_cost:.7f}")
+            print(f"Minibatch step {step}/{n_steps}: mean batch cost: "
+                  f"{batch_cost}, ewa cost: {self._ewa_cost}")
 
         # Early stopping based on change of dictionary
         dict_diff = linalg.norm(dictionary - dict_buffer) / self._n_components
         if self.tol > 0 and dict_diff <= self.tol:
             if self.verbose:
-                print(f"Converged (small dictionary change) at step {step}")
+                print(f"Converged (small dictionary change) at step "
+                      f"{step}/{n_steps}")
             return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
@@ -1869,7 +1875,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 and self._no_improvement >= self.max_no_improvement):
             if self.verbose:
                 print(f"Converged (lack of improvement in objective function) "
-                      f"at step {step}")
+                      f"at step {step}/{n_steps}")
             return True
 
         return False
@@ -1937,8 +1943,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 batch_cost = self._minibatch_step(
                     this_X, dictionary, self._random_state, i)
 
-                if self._minibatch_convergence(this_X, batch_cost, dictionary,
-                                               dict_buffer, n_samples, i):
+                if self._minibatch_convergence(
+                        this_X, batch_cost, dictionary, dict_buffer, n_samples,
+                        i, n_steps):
                     break
 
                 if self.callback is not None:
@@ -1946,8 +1953,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
                 dict_buffer[:] = dictionary
 
-            self.n_steps_ = n_steps
-            self.n_iter_ = n_steps // n_steps_per_epoch
+            self.n_steps_ = i + 1
+            self.n_iter_ = (i + 1) // n_steps_per_epoch
         else:
             if self.n_iter != "deprecated":
                 warnings.warn(
@@ -1969,8 +1976,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 if self.verbose > 10 or trigger_verbose:
                     print(f"{i} batches processed.")
 
-            self.n_iter_ = n_iter
             self.n_steps_ = n_iter
+            self.n_iter_ = n_iter // int(np.ceil(n_samples / self._batch_size))
 
         self.components_ = dictionary
 
