@@ -134,10 +134,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     def __init__(self, n_bins='warn', *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
-        if self.n_bins == 'warn':
-            warnings.warn("The default value of n_bins will change from "
-                          "5 to 'auto' in 0.25.", FutureWarning)
-            self.n_bins = 5
         self.encode = encode
         self.strategy = strategy
         self.dtype = dtype
@@ -159,6 +155,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
+        if self.n_bins == 'warn':
+            warnings.warn("The default value of n_bins will change from "
+                          "5 to 'auto' in 0.25.", FutureWarning)
         X = self._validate_data(X, dtype='numeric')
 
         supported_dtype = (np.float64, np.float32)
@@ -257,6 +256,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             if orig_bins == 'auto':
                 # calculate number of bins with Sturges rule
                 orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
+            if orig_bins == 'warn:
+                # deprecation cycle case, should be deleted afterwards
+                orig_bins = 5
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError(
                     f"{KBinsDiscretizer.__name__} received "
