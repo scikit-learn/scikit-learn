@@ -28,7 +28,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_bins : int, 'auto' or array-like of shape (n_features,), dtype=integral, default=5
+    n_bins : int, 'auto' or array-like of shape (n_features,), dtype=integral,\
+             default=5
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
         For 'auto' option Sturges formula is used: bins are log(n_samples) + 1.
 
@@ -154,10 +155,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
+        self._n_bins = self.n_bins
         if isinstance(self.n_bins, str):
             if self.n_bins == 'warn':
                 warnings.warn("The default value of n_bins will change from "
-                              "5 to 'auto' in 0.25.", FutureWarning)
+                              "5 to 'auto' in 1.2", FutureWarning)
+                self._n_bins = 5
         X = self._validate_data(X, dtype='numeric')
 
         supported_dtype = (np.float64, np.float32)
@@ -251,14 +254,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     def _validate_n_bins(self, n_features, n_samples):
         """Returns n_bins_, the number of bins per feature.
         """
-        orig_bins = self.n_bins
+        orig_bins = self._n_bins
         if isinstance(orig_bins, numbers.Number) or isinstance(orig_bins, str):
             if orig_bins == 'auto':
                 # calculate number of bins with Sturges rule
                 orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
-            if orig_bins == 'warn':
-                # deprecation cycle case, should be deleted afterwards
-                orig_bins = 5
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError(
                     f"{KBinsDiscretizer.__name__} received "
