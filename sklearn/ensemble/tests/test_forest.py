@@ -69,11 +69,6 @@ X_large, y_large = datasets.make_classification(
     n_samples=500, n_features=10, n_informative=3, n_redundant=0,
     n_repeated=0, shuffle=False, random_state=0)
 
-# Larger multiclass classification sample used for testing feature importances
-X_large_multiclass, y_large_multiclass = datasets.make_classification(
-    n_samples=500, n_features=10, n_informative=3, n_redundant=0,
-    n_repeated=0, n_classes=3, shuffle=False, random_state=42)
-
 # also load the iris dataset
 # and randomly permute it
 iris = datasets.load_iris()
