@@ -448,7 +448,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     )
     @property
     def fit_(self):
-        return self._fit_
+        return self._deprecated_fit
 
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
@@ -457,7 +457,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     )
     @property
     def partial_fit_(self):
-        return self._partial_fit_
+        return self._deprecated_partial_fit
 
     def fit(self, X, y=None):
         """
@@ -476,7 +476,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        self._fit_, self._partial_fit_ = True, False
+        # TODO: Remove deprected flags in 1.2
+        self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
 
     def _fit(self, X, partial):
@@ -571,7 +572,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        self._partial_fit_, self._fit_ = True, False
+        # TODO: Remove deprected flags in 1.2
+        self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()
