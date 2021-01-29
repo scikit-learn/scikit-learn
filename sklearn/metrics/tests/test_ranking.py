@@ -1663,9 +1663,12 @@ def test_top_k_accuracy_score_binary(y_score, k, true_score):
     (np.array([1, 1, 1, 1]), 0.5, [0, 1, 2, 3]),
     (np.array(['a', 'e', 'e', 'a']), 0.75, ['a', 'b', 'd', 'e']),
 ])
+@pytest.mark.parametrize("labels_as_ndarray", [True, False])
 def test_top_k_accuracy_score_multiclass_with_labels(
-        y_true, true_score, labels
+        y_true, true_score, labels, labels_as_ndarray
 ):
+    if labels_as_ndarray:
+        labels = np.asarray(labels)
     y_score = np.array([
         [0.4, 0.3, 0.2, 0.1],
         [0.1, 0.3, 0.4, 0.2],
