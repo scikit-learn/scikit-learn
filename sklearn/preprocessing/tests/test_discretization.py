@@ -51,7 +51,7 @@ def test_auto_bins():
     # where 4 is n_samples in X
     expected_bins = [3, 3, 3, 3]
     est.fit(X)
-    assert est.n_bins_ == expected_bins
+    assert np.all(est.n_bins_ == expected_bins)
 
 
 def test_invalid_n_bins():
