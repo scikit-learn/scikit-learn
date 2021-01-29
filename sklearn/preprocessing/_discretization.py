@@ -129,7 +129,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_bins='warn', *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
@@ -137,6 +136,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.strategy = strategy
         self.dtype = dtype
 
+    @_deprecate_positional_args
     def fit(self, X, y=None):
         """
         Fit the estimator.
@@ -154,9 +154,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        if self.n_bins == 'warn':
-            warnings.warn("The default value of n_bins will change from "
-                          "5 to 'auto' in 0.25.", FutureWarning)
+        if  isinstance(self.n_bins, str):
+            if self.n_bins == 'warn':
+                warnings.warn("The default value of n_bins will change from "
+                              "5 to 'auto' in 0.25.", FutureWarning)
         X = self._validate_data(X, dtype='numeric')
 
         supported_dtype = (np.float64, np.float32)
