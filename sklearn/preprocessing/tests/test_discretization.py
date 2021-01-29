@@ -48,9 +48,10 @@ def test_n_bins_5_deprecated():
 def test_auto_bins():
     est = KBinsDiscretizer(n_bins='auto')
     # for sturges rule: ceil(log2(4) + 1)
+    # where 4 is n_samples in X
     expected_bins = [3, 3, 3, 3]
     est.fit(X)
-    assert est.n_bins_ = expected_bins
+    assert est.n_bins_ == expected_bins
 
 
 def test_invalid_n_bins():
