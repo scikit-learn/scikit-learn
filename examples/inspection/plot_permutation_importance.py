@@ -142,7 +142,9 @@ tree_feature_importances = tree_feature_importances.reindex(
 
 ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Random Forest Feature Importances (MDI)")
-_ = ax.set_xlabel("Impurity decrease")
+ax.set_xlabel("Impurity decrease")
+plt.tight_layout()
+plt.show()
 
 # %%
 # Alternative to MDI using Feature Permutation Importance
@@ -186,7 +188,9 @@ tree_feature_importances = tree_feature_importances.reindex(
 
 ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Random Forest Feature Importances (OOB Permutation)")
-_ = ax.set_xlabel("Accuracy decrease")
+ax.set_xlabel("Accuracy decrease")
+plt.tight_layout()
+plt.show()
 
 # %%
 # With this strategy, the low cardinality categorical feature, ``sex`` is the
@@ -216,7 +220,9 @@ tree_feature_importances = tree_feature_importances.reindex(
 
 ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Permutation Importances (test set)")
-_ = ax.set_xlabel("Accuracy decrease")
+ax.set_xlabel("Accuracy decrease")
+plt.tight_layout()
+plt.show()
 
 # %%
 # As with the permutation importance using the OOB samples, the low cardinality
@@ -241,6 +247,7 @@ tree_feature_importances = tree_feature_importances.reindex(
 ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Permutation Importances (train set)")
 ax.set_xlabel("Accuracy decrease")
+plt.tight_layout()
 plt.show()
 
 # %%
