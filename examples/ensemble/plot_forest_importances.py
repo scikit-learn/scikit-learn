@@ -17,7 +17,6 @@ importances on out-of-bag (OOB) samples.
     alternative as the permutation feature importances.
 """
 print(__doc__)
-# %%
 import matplotlib.pyplot as plt
 
 # %%
@@ -59,12 +58,7 @@ print(f"Elapsed time to fit and compute the importances: "
 # all trees are introspected to compute the mean decrease in impurity (MDI).
 #
 # Let's plot the feature importances ranking.
-import numpy as np
-
-yerr = np.std([
-    tree.feature_importances_ for tree in forest.estimators_],
-    axis=0)
-ax = forest_importances.plot.bar(yerr=yerr)
+ax = forest_importances.plot.bar(yerr=forest.importances_.importances_std)
 ax.set_title("Feature importances using MDI")
 _ = ax.set_ylabel("Mean impurity decrease")
 
@@ -98,10 +92,7 @@ print(f"Elapsed time to fit and compute the importances: "
 # between of the two forests.
 #
 # We now plot the feature importance ranking.
-yerr = np.std([
-    tree.feature_importances_ for tree in forest.estimators_],
-    axis=0)
-ax = forest_importances.plot.bar(yerr=yerr)
+ax = forest_importances.plot.bar(yerr=forest.importances_.importances_std)
 ax.set_title("Feature importances using permutation on OOB")
 ax.set_ylabel("Mean accuracy decrease")
 plt.show()

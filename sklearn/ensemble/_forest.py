@@ -467,8 +467,17 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
             if self.oob_score:
                 self._set_oob_score_and_attributes(X, y, sample_weight)
-            if self.feature_importances == "permutation_oob":
-                self._set_oob_importances(X, y, sample_weight)
+
+        if self.feature_importances == "impurity":
+            importances = self._compute_impurity_importances()
+        else:
+            importances = self._compute_oob_importances(X, y, sample_weight)
+
+        self.importances_ = Bunch(
+            importances_mean=importances.mean(axis=1),
+            importances_std=importances.std(axis=1),
+            importances=importances,
+        )
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -476,6 +485,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.classes_ = self.classes_[0]
 
         return self
+
+    def _compute_impurity_importances(self):
+        parallel_args = {
+            **_joblib_parallel_args(prefer="threads"),
+            "n_jobs": self.n_jobs
+        }
+        all_importances = Parallel(**parallel_args)(
+            delayed(getattr)(tree, 'feature_importances_')
+            for tree in self.estimators_ if tree.tree_.node_count > 1
+        )
+        if not all_importances:
+            return np.zeros(
+                shape=(self.n_features_, 1), dtype=np.float64
+            )
+        return np.transpose(all_importances)
 
     @abstractmethod
     def _set_oob_score_and_attributes(self, X, y, sample_weight):
@@ -493,8 +517,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             Sample weights.
         """
 
-    def _set_oob_importances(self, X, y, sample_weight):
-        """Compute and set importances by permuting features using OOB samples.
+    def _compute_oob_importances(self, X, y, sample_weight):
+        """Compute importances by permuting features using OOB samples.
 
         Parameters
         ----------
@@ -532,11 +556,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 for estimator in self.estimators_
             ))
 
-        self._oob_permutation_importance = Bunch(
-            importances_mean=oob_importances.mean(axis=1),
-            importances_std=oob_importances.std(axis=1),
-            importances=oob_importances,
-        )
+        return oob_importances
 
     def _compute_oob_predictions(self, X):
         """Compute and accumulate predictions of OOB samples.
@@ -631,30 +651,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             array of zeros.
         """
         check_is_fitted(self)
-
         if self.feature_importances == "permutation_oob":
-            feature_importances_ = \
-                self._oob_permutation_importance.importances_mean
-        else:  # impurity-based feature importance
-            parallel_args = {
-                **_joblib_parallel_args(prefer="threads"),
-                "n_jobs": self.n_jobs
-            }
-            all_importances = Parallel(**parallel_args)(
-                delayed(getattr)(tree, 'feature_importances_')
-                for tree in self.estimators_ if tree.tree_.node_count > 1
-            )
-
-            if not all_importances:
-                feature_importances_ = np.zeros(
-                    self.n_features_, dtype=np.float64
-                )
-            else:
-                feature_importances_ = np.mean(
-                    all_importances, axis=0, dtype=np.float64
-                )
-                feature_importances_ /= np.sum(feature_importances_)
-        return feature_importances_
+            return self.importances_.importances_mean
+        # impurity-based feature importances
+        importances = self.importances_.importances_mean
+        if np.allclose(importances, 0.0):
+            # avoid division by zero
+            return importances
+        return importances / importances.sum()
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -1336,6 +1340,16 @@ class RandomForestClassifier(ForestClassifier):
            importances computed on the out-of-bag samples or use the function
            :func:`sklearn.inspection.permutation_importance` as an alternative.
 
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
+
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
@@ -1645,6 +1659,16 @@ class RandomForestRegressor(ForestRegressor):
            `feature_importances="permutation_oob"` to use feature permutation
            importances computed on the out-of-bag samples or use the function
            :func:`sklearn.inspection.permutation_importance` as an alternative.
+
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1993,6 +2017,16 @@ class ExtraTreesClassifier(ForestClassifier):
            importances computed on the out-of-bag samples or use the function
            :func:`sklearn.inspection.permutation_importance` as an alternative.
 
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
+
     n_features_ : int
         The number of features when ``fit`` is performed.
 
@@ -2304,6 +2338,16 @@ class ExtraTreesRegressor(ForestRegressor):
            `feature_importances="permutation_oob"` to use feature permutation
            importances computed on the out-of-bag samples or use the function
            :func:`sklearn.inspection.permutation_importance` as an alternative.
+
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
 
     n_features_ : int
         The number of features.
