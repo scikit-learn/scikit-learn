@@ -77,6 +77,12 @@ Changelog
   :class:`ensemble.ExtraTreesRegressor`.
   :pr:`18603` by :user:`Robert Robison <robert-robison>`.
 
+- |Feature| A new fitted attribute `importances_` has been introduced reporting
+  the impurity-based or permutation feature importances. This attribute is a
+  :class:`~sklearn.utils.Bunch` storing the raw, averaged, and variations of
+  the importances across all trees of the forest.
+  :pr:`18603` by :user:`Robert Robison <robert-robison>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
