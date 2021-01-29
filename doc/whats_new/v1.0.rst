@@ -69,6 +69,11 @@ Changelog
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Feature| Implement out-of-bag permutation importances in all classifiers
+  and regressors that descend from :class:`ensemble.BaseForest`. Accessible
+  by setting `feature_importances="permutation"`.
+  :pr:`18603` by :user:`Robert Robison <robert-robison>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 

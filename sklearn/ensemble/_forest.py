@@ -196,6 +196,10 @@ def _permutation_importances_oob(
         n_samples,
         n_samples_bootstrap,
     )
+
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples)
+
     return permutation_importance(
         estimator,
         X[unsampled_indices, :],
@@ -204,7 +208,7 @@ def _permutation_importances_oob(
         n_repeats=1,
         n_jobs=1,
         random_state=random_state,
-        sample_weight=sample_weight,
+        sample_weight=sample_weight[unsampled_indices],
     ).importances[:, 0]
 
 

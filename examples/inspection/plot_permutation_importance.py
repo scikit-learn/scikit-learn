@@ -136,10 +136,49 @@ ax.set_title("Random Forest Feature Importances (MDI)")
 fig.tight_layout()
 plt.show()
 
+# %%
+# Alternatively, the permutation importances can be calculated using the
+# out-of-bag data by setting ``feature_importances="permutation_oob"``. This
+# shows that the low cardinality categorical feature, ``sex`` is the most
+# important. It gives both random features low importance, confirming that it
+# avoids the limitations of MDI feature importances.
+#
+# Out-of-bag permutation importances are better than
+# ``inspection.permutation_importance`` when data is limited, as it doesn't
+# require a test set. It also has lower variance, since ``n_estimators`` is
+# typically much larger than the ``n_repeats`` parameter in
+# ``inspection.permutation_importance``. However, out-of-bag estimates are
+# only computed after preprocessing. ``inspection.permutation_importance``
+# can be used to inspect at different stages.
+rf = Pipeline(steps=[
+    ("preprocess", preprocessing),
+    ("classifier", RandomForestClassifier(
+        random_state=42, feature_importances="permutation_oob"))
+])
+rf.fit(X_train, y_train)
+
+ohe = (rf.named_steps['preprocess']
+         .named_transformers_['cat'])
+feature_names = ohe.get_feature_names(input_features=categorical_columns)
+feature_names = np.r_[feature_names, numerical_columns]
+
+tree_feature_importances = (
+    rf.named_steps['classifier'].feature_importances_)
+sorted_idx = tree_feature_importances.argsort()
+
+y_ticks = np.arange(0, len(feature_names))
+fig, ax = plt.subplots()
+ax.barh(y_ticks, tree_feature_importances[sorted_idx])
+ax.set_yticklabels(feature_names[sorted_idx])
+ax.set_yticks(y_ticks)
+ax.set_title("Random Forest Feature Importances (OOB Permutation)")
+fig.tight_layout()
+plt.show()
+
 
 # %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
-# held out test set. This shows that the low cardinality categorical feature,
+# held out test set. This confirms that the low cardinality categorical feature
 # ``sex`` is the most important feature.
 #
 # Also note that both random features have very low importances (close to 0) as
@@ -170,35 +209,5 @@ fig, ax = plt.subplots()
 ax.boxplot(result.importances[sorted_idx].T,
            vert=False, labels=X_train.columns[sorted_idx])
 ax.set_title("Permutation Importances (train set)")
-fig.tight_layout()
-plt.show()
-
-# %%
-# Finally, the permutation importance can also be calculated using the
-# out-of-bag data by setting ``feature_importances="permutation_oob"`` and
-# re-running the pipeline. This confirms that ``sex``` is most important
-# and that the random features have low importances.
-rf = Pipeline(steps=[
-    ("preprocess", preprocessing),
-    ("classifier", RandomForestClassifier(
-        random_state=42, feature_importances="permutation_oob"))
-])
-rf.fit(X_train, y_train)
-
-ohe = (rf.named_steps['preprocess']
-         .named_transformers_['cat'])
-feature_names = ohe.get_feature_names(input_features=categorical_columns)
-feature_names = np.r_[feature_names, numerical_columns]
-
-tree_feature_importances = (
-    rf.named_steps['classifier'].feature_importances_)
-sorted_idx = tree_feature_importances.argsort()
-
-y_ticks = np.arange(0, len(feature_names))
-fig, ax = plt.subplots()
-ax.barh(y_ticks, tree_feature_importances[sorted_idx])
-ax.set_yticklabels(feature_names[sorted_idx])
-ax.set_yticks(y_ticks)
-ax.set_title("Random Forest Feature Importances (OOB Permutation)")
 fig.tight_layout()
 plt.show()
