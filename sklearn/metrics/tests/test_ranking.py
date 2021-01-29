@@ -1657,6 +1657,26 @@ def test_top_k_accuracy_score_binary(y_score, k, true_score):
     assert score == score_acc == pytest.approx(true_score)
 
 
+@pytest.mark.parametrize('y_true, true_score, labels', [
+    (np.array([0, 1, 2, 3]), 0.5, None),
+    (np.array([0, 1, 1, 2]), 0.75, [0, 1, 2, 3]),
+    (np.array([0, 1, 1, 1]), 0.5, [0, 1, 2, 3]),
+    (np.array([1, 1, 1, 1]), 0.5, [0, 1, 2, 3]),
+])
+def test_top_k_accuracy_score_multiclass_with_labels(
+        y_true, true_score, labels
+):
+    y_score = np.array([
+        [0.4, 0.3, 0.2, 0.1],
+        [0.1, 0.3, 0.4, 0.2],
+        [0.4, 0.1, 0.2, 0.3],
+        [0.3, 0.2, 0.4, 0.1],
+    ])
+
+    score = top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
+    assert score == pytest.approx(true_score)
+
+
 def test_top_k_accuracy_score_increasing():
     # Make sure increasing k leads to a higher score
     X, y = datasets.make_classification(n_classes=10, n_samples=1000,
