@@ -487,6 +487,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return self
 
     def _compute_impurity_importances(self):
+        """Compute the impurity-based feature importances.
+
+        Returns
+        -------
+        importances : ndarray of shape (n_features,)
+            The impurity-based feature importances.
+        """
         parallel_args = {
             **_joblib_parallel_args(prefer="threads"),
             "n_jobs": self.n_jobs
@@ -530,6 +537,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight : ndarray of shape (n_samples,)
             Sample weights.
+
+        Returns
+        -------
+        oob_importances : ndarray of shape (n_features, n_estimators)
+            The permutation feature importance compuring on OOB.
         """
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
@@ -2585,6 +2597,16 @@ class RandomTreesEmbedding(BaseForest):
 
     feature_importances_ : ndarray of shape (n_features,)
         The feature importances (the higher, the more important the feature).
+
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
