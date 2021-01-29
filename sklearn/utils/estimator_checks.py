@@ -646,6 +646,9 @@ def _set_checking_parameters(estimator):
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
 
+    if name in CROSS_DECOMPOSITION:
+        estimator.set_params(n_components=1)
+
 
 class _NotAnArray:
     """An object that is convertible to an array.
@@ -3132,10 +3135,6 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
-
-    if name in CROSS_DECOMPOSITION:
-        y = np.c_[y, y]
-        y[::2, 1] *= 2
 
     estimator.fit(X, y)
     assert estimator.n_features_in_ == X.shape[1]
