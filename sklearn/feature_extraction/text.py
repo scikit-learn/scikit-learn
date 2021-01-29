@@ -1274,17 +1274,23 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         if sp.issparse(X):
             # We need CSR format for fast row manipulations.
             X = X.tocsr()
+
+            def get_non_zero(i):
+                return X[i, :].nonzero()[1]
         else:
             # We need to convert X to a matrix, so that the indexing
             # returns 2D objects
-            X = np.asmatrix(X)
+            X = np.asarray(X)
+
+            def get_non_zero(i):
+                return np.flatnonzero(X[i, :])
         n_samples = X.shape[0]
 
         terms = np.array(list(self.vocabulary_.keys()))
         indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
+        return [inverse_vocabulary[get_non_zero(i)].ravel()
                 for i in range(n_samples)]
 
     def get_feature_names(self):
