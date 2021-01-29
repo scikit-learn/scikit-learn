@@ -26,6 +26,7 @@ import pytest
 
 import joblib
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -483,6 +484,40 @@ def test_oob_importance_ignores_random(name):
     assert impurity_important == 4
     assert np.all(impurity_importances[:3] > imp_level)
     assert impurity_importances[-1] > imp_level
+
+@pytest.mark.parametrize(
+    "ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values()
+)
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"feature_importances": "permutation_oob", "bootstrap": True},
+        {"feature_importances": "impurity"}
+    ]
+)
+def test_forest_importances_attribute(ForestEstimator, params):
+    # check the fitted attribute `importances_`
+    n_samples, n_features, n_estimators = 500, 5, 10
+    X, y = make_classification(
+        n_samples=n_samples, n_features=n_features, random_state=42,
+    )
+
+    forest = ForestEstimator(n_estimators=n_estimators, **params).fit(X, y)
+    assert forest.importances_.importances_mean.shape == (n_features,)
+    assert forest.importances_.importances_std.shape == (n_features,)
+    assert forest.importances_.importances.shape == (n_features, n_estimators)
+
+    if params["feature_importances"] == "impurity":
+        # impurity-based feature importances are normalized
+        assert_allclose(
+            forest.importances_.importances_mean,
+            (forest.feature_importances_ /
+             forest.importances_.importances_mean.sum())
+        )
+    else:
+        assert_allclose(
+            forest.importances_.importances_mean, forest.feature_importances_
+        )
 
 
 @pytest.mark.parametrize(
