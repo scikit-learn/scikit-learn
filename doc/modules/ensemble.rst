@@ -269,7 +269,7 @@ It can be set with the parameter `feature_importances`. The following sections
 give information regarding the strategies to estimate the feature importance.
 
 Mean decrease in impurity (MDI)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
@@ -296,19 +296,18 @@ the default values.
   The impurity-based feature importances computed on tree-based models suffer
   from two flaws that can lead to misleading conclusions:
 
-  **First**, they are computed on statistics derived from the training dataset
-  and therefore **do not necessarily inform us on which features are most
-  important to make good predictions on held-out dataset.
-
-  **Secondly**, they favor high cardinality features**, that is features with
-  many unique values.
+  - Firstly, they are computed on statistics derived from the training
+    dataset and therefore **do not necessarily inform us on which features are
+    most important to make good predictions on held-out dataset**.
+  - Secondly, they favor **high cardinality features**, that is features with
+    many unique values.
 
   Features importances estimated through feature permutation is an alternative
   that does not suffer from these flaws. We give more details regarding this
   alternative in the next section.
 
 Feature permutation importances on out-of-bag (OOB) samples
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 An alternative to MDI is the feature importances that uses feature permutation.
 Each tree in the ensemble can be evaluated using the out-of-bag samples
@@ -331,7 +330,7 @@ This strategy can be selected by setting
    used in this case.
 
 Illustration of using feature importances
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
@@ -660,7 +659,7 @@ chapter on gradient boosting in [F2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
 Mathematical formulation
--------------------------
+------------------------
 
 We first present GBRT for regression, and then detail the classification
 case.
