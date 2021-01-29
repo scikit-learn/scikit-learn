@@ -918,6 +918,9 @@ class CalibrationDisplay:
     y_prob : ndarray of shape (n_samples,)
         Probability estimates for the positive class, for each sample.
 
+    name : str, default=None
+        Name for labeling curve.
+
     Attributes
     ----------
     line_ : matplotlib Artist
@@ -928,9 +931,6 @@ class CalibrationDisplay:
 
     figure_ : matplotlib Figure
         Figure containing the curve.
-
-    name : str, default=None
-        Name for labeling curve.
 
     See Also
     --------
