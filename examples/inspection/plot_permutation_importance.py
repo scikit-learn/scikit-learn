@@ -225,7 +225,7 @@ _ = ax.set_xlabel("Accuracy decrease")
 # ranking than when computed on the test set. The difference between those two
 # plots is a confirmation that the RF model has enough capacity to use that
 # random numerical feature to overfit. You can further confirm this by
-# re-running this example with constrained RF with min_samples_leaf=10.
+# re-running this example with constrained RF with `min_samples_leaf=10`.
 result = permutation_importance(rf, X_train, y_train, n_repeats=10,
                                 random_state=42, n_jobs=2)
 tree_feature_importances = pd.DataFrame(
