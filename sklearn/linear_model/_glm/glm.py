@@ -391,6 +391,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 class PoissonRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Poisson distribution.
 
+    This regressor uses the 'log' link function.
+
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
     .. versionadded:: 0.23
@@ -472,6 +474,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
 class GammaRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
+
+    This regressor uses the 'log' link function.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
