@@ -632,23 +632,32 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @property
     def feature_importances_(self):
         """
-        The impurity-based feature importances.
+        The feature importances.
 
-        The higher, the more important the feature.
-        The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
-        known as the Gini importance.
+        The higher, the more important the feature. There is two possible
+        strategies:
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        - if `feature_importances="impurity"`, the impurity-based feature
+          importances is reported. The importance of a feature is computed as
+          the (normalized) total reduction of the criterion brought by that
+          feature. It is also known as the Gini importance;
+        - if `feature_importances="permutation_oob"`, the permutation feature
+          importances on out-of-bag samples is reported.
 
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
-            The values of this array sum to 1, unless all trees are single node
-            trees consisting of only the root node, in which case it will be an
-            array of zeros.
+            The values of the feature importances corresponding to either the
+            impurity-based feature importances or the permutation feature
+            importances.
+
+            If the impurity-based feature importances is reported, the values
+            of this array sum to 1, unless all trees are single node trees
+            consisting of only the root node, in which case it will be an array
+            of zeros.
+
+            If the permutation feature importances is reported, the values
+            corresponds to the raw decrease of the score.
         """
         check_is_fitted(self)
         if self.feature_importances == "permutation_oob":
