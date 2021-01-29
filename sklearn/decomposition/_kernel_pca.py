@@ -7,7 +7,7 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
-from ..utils import check_random_state
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 from ..utils.deprecation import deprecated
@@ -167,10 +167,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.copy_X = copy_X
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
@@ -209,9 +209,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             self.lambdas_, self.alphas_ = linalg.eigh(
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
         elif eigen_solver == 'arpack':
-            random_state = check_random_state(self.random_state)
-            # initialize with [-1,1] as in ARPACK
-            v0 = random_state.uniform(-1, 1, K.shape[0])
+            v0 = _init_arpack_v0(K.shape[0], self.random_state)
             self.lambdas_, self.alphas_ = eigsh(K, n_components,
                                                 which="LA",
                                                 tol=self.tol,
