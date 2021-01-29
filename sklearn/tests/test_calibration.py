@@ -573,7 +573,7 @@ def iris_data_binary(iris_data):
     return X[y < 2], y[y < 2]
 
 
-def test_calibration_display_reg(iris_data):
+def test_calibration_display_reg(pyplot, iris_data):
     X, y = iris_data
     reg = LinearRegression().fit(X, y)
 
