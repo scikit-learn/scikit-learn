@@ -248,7 +248,7 @@ plt.show()
 #
 # While they are similar, it should be noted that the variations of the
 # importances is estimated differently: the variance of the decrease of the
-# score is estimated across the number of trees (i.e.`n_estimators`
+# score is estimated across the number of trees (i.e.``n_estimators``
 # parameter) in the forest while it is estimated via the number of repeated
 # permutation (i.e. `n_repeats`) in the other strategy.
 #
