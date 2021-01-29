@@ -1218,6 +1218,5 @@ class CalibrationDisplay:
             y_true, y_prob, n_bins=n_bins, strategy=strategy
         )
 
-        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob,
-                   name=name)
-        return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
+        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob)
+        return disp.plot(ax=ax, ref_line=ref_line, name=name, **kwargs)
