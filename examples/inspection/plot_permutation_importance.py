@@ -132,16 +132,17 @@ ohe = (rf.named_steps['preprocess']
 feature_names = ohe.get_feature_names(input_features=categorical_columns)
 feature_names = np.r_[feature_names, numerical_columns]
 
-tree_feature_importances = pd.Series(
-    rf.named_steps['classifier'].feature_importances_,
-    index=feature_names)
-# sort the Series for the plotting
-tree_feature_importances = tree_feature_importances.sort_values()
+tree_feature_importances = pd.DataFrame(
+    rf.named_steps['classifier'].importances_.importances.T,
+    columns=feature_names)
+# sort (reorder columns) the DataFrame for the plotting
+tree_feature_importances = tree_feature_importances.reindex(
+    tree_feature_importances.mean().sort_values().index,
+    axis="columns")
 
-ax = tree_feature_importances.plot.barh()
+ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Random Forest Feature Importances (MDI)")
-_ = ax.set_xlabel("Mean impurity decrease")
-plt.show()
+_ = ax.set_xlabel("Impurity decrease")
 
 # %%
 # Alternative to MDI using Feature Permutation Importance
@@ -172,18 +173,20 @@ rf = Pipeline(steps=[
 # %%
 # Once the forest has been train, the permutation importances have been
 # estimated internally on the OOB samples. Thus, the fitted attribute
-# `feature_importances_` is now displaying the mean score decrease among all
+# `importances_` is now displaying the score decrease among all
 # trees of the forest for each feature. Thus, we can plot this feature
 # importances and compared it with the MDI estimates.
-tree_feature_importances = pd.Series(
-    rf.named_steps['classifier'].feature_importances_,
-    index=feature_names)
-# sort the Series for the plotting
-tree_feature_importances = tree_feature_importances.sort_values()
+tree_feature_importances = pd.DataFrame(
+    rf.named_steps['classifier'].importances_.importances.T,
+    columns=feature_names)
+# sort (reorder columns) the DataFrame for the plotting
+tree_feature_importances = tree_feature_importances.reindex(
+    tree_feature_importances.mean().sort_values().index,
+    axis="columns")
 
-ax = tree_feature_importances.plot.barh()
+ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Random Forest Feature Importances (OOB Permutation)")
-_ = ax.set_xlabel("Mean accuracy decrease")
+_ = ax.set_xlabel("Accuracy decrease")
 
 # %%
 # With this strategy, the low cardinality categorical feature, ``sex`` is the
