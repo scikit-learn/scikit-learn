@@ -153,6 +153,10 @@ Changelog
   :func:`metrics.mutual_info_score` with NumPy 1.20+.
   :pr:`19179` by `Thomas Fan`_.
 
+- |Fix| :func:`metrics.top_k_accuracy_score` now supports multiclass problems
+  where only two classes appear in `y_true` and all the classes are specified in
+  `labels`. :pr:`19721` by :user:`Joris Clement <flyingdutchman23>`
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
