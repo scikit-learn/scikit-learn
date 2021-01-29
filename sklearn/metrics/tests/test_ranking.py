@@ -1661,6 +1661,7 @@ def test_top_k_accuracy_score_binary(y_score, k, true_score):
     (np.array([0, 1, 1, 2]), 0.75, [0, 1, 2, 3]),
     (np.array([0, 1, 1, 1]), 0.5, [0, 1, 2, 3]),
     (np.array([1, 1, 1, 1]), 0.5, [0, 1, 2, 3]),
+    (np.array(['a', 'e', 'e', 'a']), 0.75, ['a', 'b', 'd', 'e']),
 ])
 def test_top_k_accuracy_score_multiclass_with_labels(
         y_true, true_score, labels
