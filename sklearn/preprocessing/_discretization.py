@@ -28,8 +28,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_bins : int, array-like of integers of shape (n_features,) or 'auto', \
-             default=5
+    n_bins : {int, array-like (n_features,), dtype=integral, 'auto'}, default=5
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
         For 'auto' option Sturges formula is used: bins are log(n_samples) + 1.
 
