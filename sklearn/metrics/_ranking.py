@@ -1655,7 +1655,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
     y_type = type_of_target(y_true)
-    if y_type == "binary" and labels and len(labels) > 2:
+    if y_type == "binary" and labels is not None and len(labels) > 2:
         y_type = "multiclass"
     y_score = check_array(y_score, ensure_2d=False)
     y_score = column_or_1d(y_score) if y_type == 'binary' else y_score
