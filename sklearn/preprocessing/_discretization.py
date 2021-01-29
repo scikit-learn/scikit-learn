@@ -255,7 +255,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             if orig_bins == 'auto':
                 # calculate number of bins with Sturges rule
                 orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
-            if orig_bins == 'warn:
+            if orig_bins == 'warn':
                 # deprecation cycle case, should be deleted afterwards
                 orig_bins = 5
             if not isinstance(orig_bins, numbers.Integral):
