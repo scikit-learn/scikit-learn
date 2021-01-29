@@ -1,7 +1,7 @@
 """
-=========================================
+========================================
 Feature importances with forest of trees
-=========================================
+========================================
 
 This example shows the use of forest of trees to evaluate the importance of
 features on an artificial classification task.
