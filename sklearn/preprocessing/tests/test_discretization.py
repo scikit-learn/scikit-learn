@@ -36,6 +36,15 @@ def test_valid_n_bins():
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
 
 
+def test_n_bins_5_deprecated():
+    # FIXME: remove in 1.2
+    est = KBinsDiscretizer()
+    depr_msg = ("The default value of n_bins will change from "
+                "5 to 'auto' in 1.2")
+    with pytest.warns(FutureWarning, match=depr_msg):
+        est.fit(X)
+
+
 def test_invalid_n_bins():
     est = KBinsDiscretizer(n_bins=1)
     err_msg = ("KBinsDiscretizer received an invalid "
