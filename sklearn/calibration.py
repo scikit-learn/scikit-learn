@@ -929,14 +929,15 @@ class CalibrationDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
 
+    name : str, default=None
+        Name for labeling curve.
+
     See Also
     --------
     calibration_curve : Compute true and predicted probabilities for a
         calibration curve.
-
     CalibrationDisplay.from_predictions : Plot calibration curve using true
         and predicted labels.
-
     CalibrationDisplay.from_estimator : Plot calibration curve using an
         estimator and data.
 
@@ -957,10 +958,11 @@ class CalibrationDisplay:
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
     >>> disp.plot() # doctest: +SKIP
     """
-    def __init__(self, prob_true, prob_pred, y_prob):
+    def __init__(self, prob_true, prob_pred, y_prob, *, name=None):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
+        self.name = name
 
     def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
         """Plot visualization.
@@ -994,6 +996,9 @@ class CalibrationDisplay:
 
         if ax is None:
             fig, ax = plt.subplots()
+
+        name = self.name if name is None else name
+        self.name = name
 
         line_kwargs = {}
         if name is not None:
@@ -1218,5 +1223,6 @@ class CalibrationDisplay:
             y_true, y_prob, n_bins=n_bins, strategy=strategy
         )
 
-        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob)
-        return disp.plot(ax=ax, ref_line=ref_line, name=name, **kwargs)
+        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob,
+                   name=name)
+        return disp.plot(ax=ax, ref_line=ref_line, **kwargs)

@@ -58,7 +58,7 @@ y_test = y[train_samples:]
 #
 # :class:`~sklearn.linear_model.LogisticRegression` returns well calibrated
 # predictions as it directly optimizes log-loss. In contrast, the other methods
-# return biased probabilities, with different biases per method:
+# return biased probabilities, with different biases for each method:
 #
 # * :class:`~sklearn.naive_bayes.GaussianNB` tends to push
 #   probabilities to 0 or 1 (see histogram). This is mainly

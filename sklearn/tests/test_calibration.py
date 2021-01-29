@@ -675,8 +675,7 @@ def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
 @pytest.mark.parametrize(
     "name, expected_label",
     [(None, "_line1"),
-     ("my_est", "my_est"),
-     ("my_est2", "my_est2")]
+     ("my_est", "my_est")]
 )
 def test_calibration_display_default_labels(pyplot, name,
                                             expected_label):
@@ -684,9 +683,25 @@ def test_calibration_display_default_labels(pyplot, name,
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
 
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob)
-    viz.plot(name=name)
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, name=name)
+    viz.plot()
     assert viz.line_.get_label() == expected_label
+
+
+def test_calibration_display_label_class_plot(pyplot):
+    # Checks that when instantiating `CalibrationDisplay` class then calling
+    # `plot`, `self.name` is the one given in `plot`
+    prob_true = np.array([0, 1, 1, 0])
+    prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
+    y_prob = np.array([])
+
+    name = "name one"
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, name=name)
+    assert viz.name == name
+    name = "name two"
+    viz.plot(name=name)
+    assert viz.name == name
+    assert viz.line_.get_label() == name
 
 
 @pytest.mark.parametrize(
