@@ -108,7 +108,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     iterated_power : int >= 0, or 'auto', default='auto'
         Number of iterations for the power method computed by
-        svd_solver == 'randomized'.
+        svd_solver == 'randomized'. When 'auto', it is set to 7 when
+        `n_components < 0.1 * min(X.shape)`, other it is set to 4.
 
         .. versionadded:: 1.0
 
