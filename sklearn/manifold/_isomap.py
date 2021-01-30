@@ -57,7 +57,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
     path_method : {'auto', 'FW', 'D'}, default='auto'
         Method to use in finding shortest path.
