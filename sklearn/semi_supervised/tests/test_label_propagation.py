@@ -157,7 +157,7 @@ def test_convergence_warning():
     assert_no_warnings(mdl.fit, X, y)
 
 
-@pytest.mark.parametrize("label_propagation_class",
+@pytest.mark.parametrize("LabelPropagationCls",
                          [label_propagation.LabelSpreading,
                           label_propagation.LabelPropagation])
 def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
