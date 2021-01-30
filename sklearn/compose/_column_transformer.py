@@ -508,8 +508,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # TODO: this should be `feature_names_in_` when we start having it
         if hasattr(X, "columns"):
             self._feature_names_in = np.asarray(X.columns)
-            self._only_str_columns = all(isinstance(cols, str)
-                                         for cols in self._feature_names_in)
+            self._only_str_columns = all(isinstance(col, str)
+                                         for col in self._feature_names_in)
         else:
             self._feature_names_in = None
         X = _check_X(X)
@@ -564,10 +564,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         check_is_fitted(self)
         X = _check_X(X)
 
-        fit_dataframe_and_transform_ndarray = (
+        fit_dataframe_and_transform_dataframe = (
             self._feature_names_in is not None and hasattr(X, "columns"))
 
-        if fit_dataframe_and_transform_ndarray:
+        if fit_dataframe_and_transform_dataframe:
             named_transformers = self.named_transformers_
             # check that all names seen in fit are in transform, unless
             # they were dropped
@@ -584,12 +584,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if diff:
                 raise ValueError(f"columns are missing: {diff}")
         else:
-            # ndarray was used for training
+            # ndarray was used for fitting or fitting
             self._check_n_features(X, reset=False)
 
         Xs = self._fit_transform(
             X, None, _transform_one, fitted=True,
-            column_as_strings=fit_dataframe_and_transform_ndarray)
+            column_as_strings=fit_dataframe_and_transform_dataframe)
         self._validate_output(Xs)
 
         if not Xs:
