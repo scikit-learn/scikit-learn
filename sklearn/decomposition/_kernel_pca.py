@@ -110,7 +110,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
     remove_zero_eig : bool, default=False
         If True, then all components with zero eigenvalues are removed, so
