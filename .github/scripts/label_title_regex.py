@@ -22,4 +22,4 @@ labels_to_add = [
 
 if labels_to_add:
     api = GhApi(owner=owner, repo=repo, token=github_token())
-    api.issues.add_labels(pull_request.number, labels_to_add)
+    api.issues.add_labels(pull_request.number, labels=labels_to_add)
