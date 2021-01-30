@@ -133,6 +133,12 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports grouping
+  infrequent categories ito a single feature. Infrequent categories is
+  enabled by setting `handle_unknown` to `'auto'` or `'error'` and specifying
+  how to select infrequent categories with `min_frequency` or `max_categories`.
+  :pr:`16018` by `Thomas Fan`_.
+
 - |Feature| The new :class:`preprocessing.SplineTransformer` is a feature
   preprocessing tool for the generation of B-splines, parametrized by the
   polynomial ``degree`` of the splines, number of knots ``n_knots`` and knot
