@@ -240,7 +240,7 @@ class Pipeline(_BaseComposition):
     def _log_message(self, step_idx):
         if not self.verbose:
             return None
-        name, step = self.steps[step_idx]
+        name, _ = self.steps[step_idx]
 
         return '(step %d of %d) Processing %s' % (step_idx + 1,
                                                   len(self.steps),

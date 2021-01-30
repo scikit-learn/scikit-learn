@@ -4,7 +4,7 @@ schedules:
   displayName: Run nightly build
   branches:
     include:
-    - master
+    - main
   always: true
 
 jobs:
