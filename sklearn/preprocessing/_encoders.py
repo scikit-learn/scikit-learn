@@ -306,12 +306,12 @@ class OneHotEncoder(_BaseEncoder):
         .. versionchanged:: 0.23
            Added the possibility to contain `None` values.
 
-    infrequent_indices_ : list of shape (n_features,)
+    infrequent_indices_ : list of arrays
         Defined only when `min_frequency` or `max_categories` is set to a
         non-default value. `infrequent_indices_[i]` is an array of indices
-        mapping from `categories_[i]` to the infrequent categories.
-        `infrequent_indices_[i]` is None if the ith input feature has no
-        infrequent categories.
+        such that `categories_[i][infrequent_indices_[i]]` are all the
+        infrequent category labels. If the ith feature has no infrequent
+        categories `infrequent_indices_[i]` is None.
 
     See Also
     --------
