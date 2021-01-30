@@ -56,6 +56,9 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
+- |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
+  deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
+
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
