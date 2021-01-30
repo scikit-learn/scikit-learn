@@ -136,7 +136,7 @@ class ShrunkCovariance(EmpiricalCovariance):
             and n_features is the number of features.
 
         y: Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -408,7 +408,7 @@ class LedoitWolf(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         y : Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -584,7 +584,7 @@ class OAS(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         y : Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------

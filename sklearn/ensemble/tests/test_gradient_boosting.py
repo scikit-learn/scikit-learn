@@ -13,7 +13,7 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import (make_classification, fetch_california_housing,
+from sklearn.datasets import (make_classification,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -345,8 +345,7 @@ def test_max_feature_regression():
     assert deviance < 0.5, "GB failed with deviance %.4f" % deviance
 
 
-@pytest.mark.network
-def test_feature_importance_regression():
+def test_feature_importance_regression(fetch_california_housing_fxt):
     """Test that Gini importance is calculated correctly.
 
     This test follows the example from [1]_ (pg. 373).
@@ -354,7 +353,7 @@ def test_feature_importance_regression():
     .. [1] Friedman, J., Hastie, T., & Tibshirani, R. (2001). The elements
        of statistical learning. New York: Springer series in statistics.
     """
-    california = fetch_california_housing()
+    california = fetch_california_housing_fxt()
     X, y = california.data, california.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
