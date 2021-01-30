@@ -167,7 +167,7 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     # https://github.com/scikit-learn/scikit-learn/issues/9292
     X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
     y = np.array([0, 1, -1, -1])
-    mdl = label_propagation_class(kernel='knn',
+    mdl = LabelPropagationCls(kernel='knn',
                                   max_iter=100,
                                   n_neighbors=1)
     assert_no_warnings(mdl.fit, X, y)
