@@ -26,8 +26,6 @@ random sampling procedures.
   `'randomized'` solver for faster fit. This solver is enabled by default when
   the number of components requested is less than 80% of the number of samples.
 
-- |Feature| :class:`manifold.Isomap` now offers a new `'randomized'` solver for
-  faster fit.
 
 Details are listed in the changelog below.
 
