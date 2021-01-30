@@ -343,6 +343,7 @@ class DummyRegressorWithExtraPredictParams(DummyRegressor):
 
 
 def test_transform_target_regressor_pass_extra_predict_parameters():
+	"""Checks that predict kwargs are passed to regressor."""
     X, y = friedman
     regr = TransformedTargetRegressor(
         regressor=DummyRegressorWithExtraPredictParams(),
