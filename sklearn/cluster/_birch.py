@@ -327,7 +327,8 @@ class _CFSubcluster:
     def radius(self):
         """Return radius of the subcluster"""
         # Because of numerical issues, this could become negative
-        return sqrt(max(0, self.squared_sum_ / self.n_samples_ - self.sq_norm_))
+        sq_radius = self.squared_sum_ / self.n_samples_ - self.sq_norm_
+        return sqrt(max(0, sq_radius))
 
 
 class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
