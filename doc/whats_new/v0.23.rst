@@ -462,9 +462,6 @@ Changelog
 ...............................
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-<<<<<<< HEAD
-  :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
-=======
   :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
 
 - |Fix| Fixed bug in :class:`gaussian_process.GaussianProcessRegressor` that
@@ -491,7 +488,6 @@ Changelog
   method for :class:`ensemble.RandomForestRegressor` and
   :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
   `Nicolas Hug`_.
->>>>>>> master
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -653,14 +649,6 @@ Changelog
 - |Enhancement| :class:`inspection.PartialDependenceDisplay` now exposes the
   deciles lines as attributes so they can be hidden or customized. :pr:`15785`
   by `Nicolas Hug`_
-
-  :mod:`sklearn.multioutput`
-  ..............................
-
-- |Fix| :func:`multioutput.ClassifierChain.decision_function` and
-  :func:`multioutput.ClassifierChain.predict_proba` now both return a list of
-  ``n_outputs`` arrays of shape `(n_samples, n_classes)`. :pr:`14654` by
-  :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.preprocessing`
 ............................
