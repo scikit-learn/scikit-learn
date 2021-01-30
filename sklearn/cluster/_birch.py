@@ -13,6 +13,7 @@ from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils.extmath import row_norms
+from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
@@ -440,6 +441,24 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self.compute_labels = compute_labels
         self.copy = copy
 
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "fit_ is deprecated in 1.0 and will be removed in 1.2"
+    )
+    @property
+    def fit_(self):
+        return self._deprecated_fit
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "partial_fit_ is deprecated in 1.0 and will be removed in 1.2"
+    )
+    @property
+    def partial_fit_(self):
+        return self._deprecated_partial_fit
+
     def fit(self, X, y=None):
         """
         Build a CF Tree for the input data.
@@ -457,12 +476,13 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        self.fit_, self.partial_fit_ = True, False
-        return self._fit(X)
+        # TODO: Remove deprected flags in 1.2
+        self._deprecated_fit, self._deprecated_partial_fit = True, False
+        return self._fit(X, partial=False)
 
-    def _fit(self, X):
+    def _fit(self, X, partial):
         has_root = getattr(self, 'root_', None)
-        first_call = self.fit_ or (self.partial_fit_ and not has_root)
+        first_call = not (partial and has_root)
 
         X = self._validate_data(X, accept_sparse='csr', copy=self.copy,
                                 reset=first_call)
@@ -552,13 +572,14 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        self.partial_fit_, self.fit_ = True, False
+        # TODO: Remove deprected flags in 1.2
+        self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()
             return self
         else:
-            return self._fit(X)
+            return self._fit(X, partial=True)
 
     def _check_fit(self, X):
         check_is_fitted(self)
