@@ -584,7 +584,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if diff:
                 raise ValueError(f"columns are missing: {diff}")
         else:
-            # ndarray was used for fitting or fitting
+            # ndarray was used for fitting or transforming, thus we only
+            # check that n_features is consistent
             self._check_n_features(X, reset=False)
 
         Xs = self._fit_transform(
