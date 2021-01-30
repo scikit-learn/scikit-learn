@@ -43,7 +43,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         eigenvalues. Indeed current implementation of this method returns the
         n_components with largest module.
 
-        .. versionchanged:: 0.24
+        .. versionchanged:: 1.0
 
     tol : float, default=0
         Convergence tolerance passed to arpack or lobpcg.
