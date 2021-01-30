@@ -44,7 +44,7 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.utils.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal
 from sklearn.decomposition import KernelPCA
 from sklearn.datasets import make_circles
 
