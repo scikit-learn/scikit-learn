@@ -1591,7 +1591,6 @@ Plotting
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
    utils.extmath.randomized_svd
-   utils.extmath._randomized_eigsh
    utils.extmath.fast_logdet
    utils.extmath.density
    utils.extmath.weighted_mode
