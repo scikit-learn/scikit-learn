@@ -110,6 +110,18 @@ def test_sparse_X():
                               brc_sparse.subcluster_centers_)
 
 
+def test_partial_fit_second_call_error_checks():
+    # second partial fit calls will error when n_features is not consistent
+    # with the first call
+    X, y = make_blobs(n_samples=100)
+    brc = Birch(n_clusters=3)
+    brc.partial_fit(X, y)
+
+    msg = "X has 1 features, but Birch is expecting 2 features"
+    with pytest.raises(ValueError, match=msg):
+        brc.partial_fit(X[:, [0]], y)
+
+
 def check_branching_factor(node, branching_factor):
     subclusters = node.subclusters_
     assert branching_factor >= len(subclusters)
@@ -167,3 +179,15 @@ def test_birch_n_clusters_long_int():
     X, _ = make_blobs(random_state=0)
     n_clusters = np.int64(5)
     Birch(n_clusters=n_clusters).fit(X)
+
+
+# TODO: Remove in 1.2
+@pytest.mark.parametrize("attribute", ["fit_", "partial_fit_"])
+def test_birch_fit_attributes_deprecated(attribute):
+    """Test that fit_ and partial_fit_ attributes are deprecated."""
+    msg = f"{attribute} is deprecated in 1.0 and will be removed in 1.2"
+    X, y = make_blobs(n_samples=10)
+    brc = Birch().fit(X, y)
+
+    with pytest.warns(FutureWarning, match=msg):
+        getattr(brc, attribute)

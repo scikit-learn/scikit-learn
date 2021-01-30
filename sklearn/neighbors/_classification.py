@@ -17,7 +17,6 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
-from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
@@ -123,7 +122,7 @@ class KNeighborsClassifier(KNeighborsMixin,
     >>> print(neigh.predict_proba([[0.9]]))
     [[0.66666667 0.33333333]]
 
-    See also
+    See Also
     --------
     RadiusNeighborsClassifier
     KNeighborsRegressor
@@ -192,7 +191,7 @@ class KNeighborsClassifier(KNeighborsMixin,
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
@@ -236,7 +235,7 @@ class KNeighborsClassifier(KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -391,7 +390,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
     >>> print(neigh.predict_proba([[1.0]]))
     [[0.66666667 0.33333333]]
 
-    See also
+    See Also
     --------
     KNeighborsClassifier
     RadiusNeighborsRegressor
@@ -545,7 +544,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
             by lexicographic order.
         """
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)

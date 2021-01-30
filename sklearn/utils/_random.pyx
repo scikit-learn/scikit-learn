@@ -68,7 +68,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
     n_samples : int
         The number of integer to sample.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -123,7 +123,7 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     n_samples : int
         The number of integer to sample.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -183,7 +183,7 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     n_samples : int
          The number of integer to sample.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -238,7 +238,7 @@ cpdef sample_without_replacement(np.int_t n_population,
     n_samples : int
         The number of integer to sample.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used

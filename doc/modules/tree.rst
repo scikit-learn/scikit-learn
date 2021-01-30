@@ -10,7 +10,7 @@ Decision Trees
 for :ref:`classification <tree_classification>` and :ref:`regression
 <tree_regression>`. The goal is to create a model that predicts the value of a
 target variable by learning simple decision rules inferred from the data
-features.
+features. A tree can be seen as a piecewise constant approximation.
 
 For instance, in the example below, decision trees learn from data to
 approximate a sine curve with a set of if-then-else decision rules. The deeper
@@ -33,8 +33,8 @@ Some advantages of decision trees are:
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. However scikit-learn 
-      implementation does not support categorical variables for now. Other 
+    - Able to handle both numerical and categorical data. However scikit-learn
+      implementation does not support categorical variables for now. Other
       techniques are usually specialised in analysing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
@@ -65,6 +65,10 @@ The disadvantages of decision trees include:
       data might result in a completely different tree being generated.
       This problem is mitigated by using decision trees within an
       ensemble.
+
+    - Predictions of decision trees are neither smooth nor continuous, but
+      piecewise constant approximations as seen in the above figure. Therefore,
+      they are not good at extrapolation.
 
     - The problem of learning an optimal decision tree is known to be
       NP-complete under several aspects of optimality and even for simple
@@ -112,7 +116,7 @@ probability, the classifier will predict the class with the lowest index
 amongst those classes.
 
 As an alternative to outputting a specific class, the probability of each class
-can be predicted, which is the fraction of training samples of the class in a 
+can be predicted, which is the fraction of training samples of the class in a
 leaf::
 
     >>> clf.predict_proba([[2., 2.]])
@@ -359,6 +363,11 @@ Tips on practical use
     classification with few classes, ``min_samples_leaf=1`` is often the best
     choice.
 
+    Note that ``min_samples_split`` considers samples directly and independent of
+    ``sample_weight``, if provided (e.g. a node with m weighted samples is still
+    treated as having exactly m samples). Consider ``min_weight_fraction_leaf`` or
+    ``min_impurity_decrease`` if accounting for sample weights is required at splits.
+
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by
     sampling an equal number of samples from each class, or preferably by
@@ -429,99 +438,112 @@ Mathematical formulation
 ========================
 
 Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector
-:math:`y \in R^l`, a decision tree recursively partitions the space such
-that the samples with the same labels are grouped together.
+:math:`y \in R^l`, a decision tree recursively partitions the feature space
+such that the samples with the same labels or similar target values are grouped
+together.
 
-Let the data at node :math:`m` be represented by :math:`Q`. For
-each candidate split :math:`\theta = (j, t_m)` consisting of a
+Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`N_m`
+samples. For each candidate split :math:`\theta = (j, t_m)` consisting of a
 feature :math:`j` and threshold :math:`t_m`, partition the data into
-:math:`Q_{left}(\theta)` and :math:`Q_{right}(\theta)` subsets
+:math:`Q_m^{left}(\theta)` and :math:`Q_m^{right}(\theta)` subsets
 
 .. math::
 
-    Q_{left}(\theta) = {(x, y) | x_j <= t_m}
+    Q_m^{left}(\theta) = \{(x, y) | x_j <= t_m\}
 
-    Q_{right}(\theta) = Q \setminus Q_{left}(\theta)
+    Q_m^{right}(\theta) = Q_m \setminus Q_m^{left}(\theta)
 
-The impurity at :math:`m` is computed using an impurity function
-:math:`H()`, the choice of which depends on the task being solved
-(classification or regression)
+The quality of a candidate split of node :math:`m` is then computed using an
+impurity function or loss function :math:`H()`, the choice of which depends on
+the task being solved (classification or regression)
 
 .. math::
 
-   G(Q, \theta) = \frac{n_{left}}{N_m} H(Q_{left}(\theta))
-   + \frac{n_{right}}{N_m} H(Q_{right}(\theta))
+   G(Q_m, \theta) = \frac{N_m^{left}}{N_m} H(Q_m^{left}(\theta))
+   + \frac{N_m^{right}}{N_m} H(Q_m^{right}(\theta))
 
 Select the parameters that minimises the impurity
 
 .. math::
 
-    \theta^* = \operatorname{argmin}_\theta  G(Q, \theta)
+    \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_{left}(\theta^*)` and
-:math:`Q_{right}(\theta^*)` until the maximum allowable depth is reached,
+Recurse for subsets :math:`Q_m^{left}(\theta^*)` and
+:math:`Q_m^{right}(\theta^*)` until the maximum allowable depth is reached,
 :math:`N_m < \min_{samples}` or :math:`N_m = 1`.
 
 Classification criteria
 -----------------------
 
 If a target is a classification outcome taking on values 0,1,...,K-1,
-for node :math:`m`, representing a region :math:`R_m` with :math:`N_m`
-observations, let
+for node :math:`m`, let
 
 .. math::
 
-    p_{mk} = 1/ N_m \sum_{x_i \in R_m} I(y_i = k)
+    p_{mk} = 1/ N_m \sum_{y \in Q_m} I(y = k)
 
-be the proportion of class k observations in node :math:`m`
+be the proportion of class k observations in node :math:`m`. If :math:`m` is a
+terminal node, `predict_proba` for this region is set to :math:`p_{mk}`.
+Common measures of impurity are the following.
 
-Common measures of impurity are Gini
-
-.. math::
-
-    H(X_m) = \sum_k p_{mk} (1 - p_{mk})
-
-Entropy
+Gini:
 
 .. math::
 
-    H(X_m) = - \sum_k p_{mk} \log(p_{mk})
+    H(Q_m) = \sum_k p_{mk} (1 - p_{mk})
 
-and Misclassification
+Entropy:
 
 .. math::
 
-    H(X_m) = 1 - \max(p_{mk})
+    H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-where :math:`X_m` is the training data in node :math:`m`
+Misclassification:
+
+.. math::
+
+    H(Q_m) = 1 - \max(p_{mk})
 
 Regression criteria
 -------------------
 
-If the target is a continuous value, then for node :math:`m`,
-representing a region :math:`R_m` with :math:`N_m` observations, common
-criteria to minimise as for determining locations for future
-splits are Mean Squared Error, which minimizes the L2 error
-using mean values at terminal nodes, and Mean Absolute Error, which
-minimizes the L1 error using median values at terminal nodes.
+If the target is a continuous value, then for node :math:`m`, common
+criteria to minimize as for determining locations for future splits are Mean
+Squared Error (MSE or L2 error), Poisson deviance as well as Mean Absolute
+Error (MAE or L1 error). MSE and Poisson deviance both set the predicted value
+of terminal nodes to the learned mean value :math:`\bar{y}_m` of the node
+whereas the MAE sets the predicted value of terminal nodes to the median
+:math:`median(y)_m`.
 
 Mean Squared Error:
 
 .. math::
 
-    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{y \in Q_m} y
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - \bar{y}_m)^2
+    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
+
+Half Poisson deviance:
+
+.. math::
+
+    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
+    - y + \bar{y}_m)
+
+Setting `criterion="poisson"` might be a good choice if your target is a count
+or a frequency (count per some unit). In any case, :math:`y >= 0` is a
+necessary condition to use this criterion. Note that it fits much slower than
+the MSE criterion.
 
 Mean Absolute Error:
 
 .. math::
 
-    median(y)_m = \underset{i \in N_m}{\mathrm{median}}(y_i)
+    median(y)_m = \underset{y \in Q_m}{\mathrm{median}}(y)
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - median(y)_m|
+    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} |y - median(y)_m|
 
-where :math:`X_m` is the training data in node :math:`m`
+Note that it fits much slower than the MSE criterion.
 
 
 .. _minimal_cost_complexity_pruning:

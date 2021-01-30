@@ -152,7 +152,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     verbose : int, default=0
         The verbosity level.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when shuffling the data. Pass an int for reproducible output
         across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -226,9 +226,9 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     for Non-Strongly Convex Composite Objectives
     https://arxiv.org/abs/1407.0202
 
-    See also
+    See Also
     --------
-    Ridge, SGDRegressor, ElasticNet, Lasso, SVR, and
+    Ridge, SGDRegressor, ElasticNet, Lasso, SVR,
     LogisticRegression, SGDClassifier, LinearSVC, Perceptron
     """
     if warm_start_mem is None:

@@ -1,4 +1,4 @@
-""" Principal Component Analysis
+""" Principal Component Analysis.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -21,7 +21,7 @@ from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
 from ..utils import check_random_state
-from ..utils import check_array
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -32,7 +32,8 @@ def _assess_dimension(spectrum, rank, n_samples):
     """Compute the log-likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
-    dimf) having spectrum ``spectrum``.
+    dimf) having spectrum ``spectrum``. This implements the method of
+    T. P. Minka.
 
     Parameters
     ----------
@@ -48,12 +49,13 @@ def _assess_dimension(spectrum, rank, n_samples):
     Returns
     -------
     ll : float
-        The log-likelihood
+        The log-likelihood.
 
-    Notes
-    -----
+    References
+    ----------
     This implements the method of `Thomas P. Minka:
-    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
+    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
+    <https://proceedings.neurips.cc/paper/2000/file/7503cfacd12053d309b6bed5c89de212-Paper.pdf>`_
     """
 
     n_features = spectrum.shape[0]
@@ -130,7 +132,7 @@ class PCA(_BasePCA):
 
     Parameters
     ----------
-    n_components : int, float or str, default=None
+    n_components : int, float or 'mle', default=None
         Number of components to keep.
         if n_components is not set all components are kept::
 
@@ -199,7 +201,7 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -271,26 +273,30 @@ class PCA(_BasePCA):
 
     References
     ----------
-    For n_components == 'mle', this class uses the method of *Minka, T. P.
-    "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604*
+    For n_components == 'mle', this class uses the method from:
+    `Minka, T. P.. "Automatic choice of dimensionality for PCA".
+    In NIPS, pp. 598-604 <https://tminka.github.io/papers/pca/minka-pca.pdf>`_
 
     Implements the probabilistic PCA model from:
-    Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
+    `Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
     component analysis". Journal of the Royal Statistical Society:
     Series B (Statistical Methodology), 61(3), 611-622.
+    <http://www.miketipping.com/papers/met-mppca.pdf>`_
     via the score and score_samples methods.
-    See http://www.miketipping.com/papers/met-mppca.pdf
 
     For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
 
     For svd_solver == 'randomized', see:
-    *Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
+    `Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
     "Finding structure with randomness: Probabilistic algorithms for
     constructing approximate matrix decompositions".
-    SIAM review, 53(2), 217-288.* and also
-    *Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
+    SIAM review, 53(2), 217-288.
+    <https://doi.org/10.1137/090771806>`_
+    and also
+    `Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
-    Applied and Computational Harmonic Analysis, 30(1), 47-68.*
+    Applied and Computational Harmonic Analysis, 30(1), 47-68
+    <https://doi.org/10.1016/j.acha.2010.02.003>`_.
 
     Examples
     --------
@@ -342,8 +348,7 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
@@ -362,12 +367,11 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
-        X_new : array-like of shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed values.
 
         Notes
@@ -430,7 +434,7 @@ class PCA(_BasePCA):
                              "".format(self._fit_svd_solver))
 
     def _fit_full(self, X, n_components):
-        """Fit the model by computing full SVD on X"""
+        """Fit the model by computing full SVD on X."""
         n_samples, n_features = X.shape
 
         if n_components == 'mle':
@@ -497,7 +501,7 @@ class PCA(_BasePCA):
 
     def _fit_truncated(self, X, n_components, svd_solver):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
-        on X
+        on X.
         """
         n_samples, n_features = X.shape
 
@@ -530,8 +534,7 @@ class PCA(_BasePCA):
         X -= self.mean_
 
         if svd_solver == 'arpack':
-            # random init solution, as ARPACK does it internally
-            v0 = random_state.uniform(-1, 1, size=min(X.shape))
+            v0 = _init_arpack_v0(min(X.shape), random_state)
             U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
@@ -580,12 +583,12 @@ class PCA(_BasePCA):
 
         Returns
         -------
-        ll : array-like of shape (n_samples,)
+        ll : ndarray of shape (n_samples,)
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()
@@ -606,8 +609,7 @@ class PCA(_BasePCA):
         X : array-like of shape (n_samples, n_features)
             The data.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
@@ -615,3 +617,6 @@ class PCA(_BasePCA):
             Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
+
+    def _more_tags(self):
+        return {'preserves_dtype': [np.float64, np.float32]}

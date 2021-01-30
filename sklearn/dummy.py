@@ -52,7 +52,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
              The default value of `strategy` has changed to "prior" in version
              0.24.
 
-    random_state : int or RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
         ``strategy='stratified'`` or ``strategy='uniform'``.
         Pass an int for reproducible output across multiple function calls.
@@ -64,13 +64,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : ndarray of shape (n_classes,) or list thereof
+    classes_ : ndarray of shape (n_classes,) or list of such arrays
         Class labels for each output.
 
     n_classes_ : int or list of int
         Number of label for each output.
 
-    class_prior_ : ndarray of shape (n_classes,) or list thereof
+    class_prior_ : ndarray of shape (n_classes,) or list of such arrays
         Probability of each class for each output.
 
     n_outputs_ : int
@@ -272,7 +272,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : ndarray of shape (n_samples, n_classes) or list thereof
+        P : ndarray of shape (n_samples, n_classes) or list of such arrays
             Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
@@ -335,7 +335,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : ndarray of shape (n_samples, n_classes) or list thereof
+        P : ndarray of shape (n_samples, n_classes) or list of such arrays
             Returns the log probability of the sample for each class in
             the model, where classes are ordered arithmetically for each
             output.
@@ -351,6 +351,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             'poor_score': True, 'no_validation': True,
             '_xfail_checks': {
                 'check_methods_subset_invariance':
+                'fails for the predict method',
+                'check_methods_sample_order_invariance':
                 'fails for the predict method'
             }
         }
@@ -410,11 +412,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * "constant": always predicts a constant value that is provided by
           the user.
 
-    constant : int or float or array-like of shape (n_outputs,)
+    constant : int or float or array-like of shape (n_outputs,), default=None
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
-    quantile : float in [0.0, 1.0]
+    quantile : float in [0.0, 1.0], default=None
         The quantile to predict using the "quantile" strategy. A quantile of
         0.5 corresponds to the median, while 0.0 to the minimum and 1.0 to the
         maximum.

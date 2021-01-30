@@ -1,4 +1,4 @@
-"""Spectral Embedding"""
+"""Spectral Embedding."""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Wei LI <kuantkid@gmail.com>
@@ -15,12 +15,18 @@ from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, check_array, check_symmetric
+from ..utils import (
+    check_array,
+    check_random_state,
+    check_symmetric,
+)
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 
 
 def _graph_connected_component(graph, node_id):
@@ -173,7 +179,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         but may also lead to instabilities. If None, then ``'arpack'`` is
         used.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used for the initialization of
         the lobpcg eigenvectors decomposition when ``solver`` == 'amg'. Pass
         an int for reproducible results across multiple function calls.
@@ -216,10 +222,10 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
 
     try:
         from pyamg import smoothed_aggregation_solver
-    except ImportError:
+    except ImportError as e:
         if eigen_solver == "amg":
             raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
-                             "not available.")
+                             "not available.") from e
 
     if eigen_solver is None:
         eigen_solver = 'arpack'
@@ -269,7 +275,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
-            v0 = random_state.uniform(-1, 1, laplacian.shape[0])
+            v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=1.0, which='LM',
                 tol=eigen_tol, v0=v0)
@@ -391,7 +397,7 @@ class SpectralEmbedding(BaseEstimator):
         Kernel coefficient for rbf kernel. If None, gamma will be set to
         1/n_features.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used for the initialization of
         the lobpcg eigenvectors when ``solver`` == 'amg'.  Pass an int for
         reproducible results across multiple function calls.
@@ -406,7 +412,7 @@ class SpectralEmbedding(BaseEstimator):
         Number of nearest neighbors for nearest_neighbors graph building.
         If None, n_neighbors will be set to max(n_samples/10, 1).
 
-    n_jobs : int, default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -462,6 +468,14 @@ class SpectralEmbedding(BaseEstimator):
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
+    def _more_tags(self):
+        return {'pairwise': self.affinity in ["precomputed",
+                                              "precomputed_nearest_neighbors"]}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.affinity in ["precomputed",
