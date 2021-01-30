@@ -148,14 +148,18 @@ and tasks.
 - `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
   abstractions around existing neural network libraries
 
-- `keras <https://github.com/fchollet/keras>`_ Deep Learning library capable of
-  running on top of either TensorFlow or Theano.
+- `Keras <https://www.tensorflow.org/api_docs/python/tf/keras>`_ High-level API for
+  TensorFlow with a scikit-learn inspired API.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
 
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
+
+- `scikeras <https://github.com/adriangb/scikeras>`_ provides a wrapper around
+  Keras to interface it with scikit-learn. SciKeras is the successor
+  of `tf.keras.wrappers.scikit_learn`.
 
 **Broad scope**
 
@@ -302,3 +306,30 @@ Domain specific packages
 
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
+
+Translations of scikit-learn documentation
+------------------------------------------
+
+Translation’s purpose is to ease reading and understanding in languages
+other than English. Its aim is to help people who do not understand English
+or have doubts about its interpretation. Additionally, some people prefer
+to read documentation in their native language, but please bear in mind that
+the only official documentation is the English one [#f1]_.
+
+Those translation efforts are community initiatives and we have no control
+on them.
+If you want to contribute or report an issue with the translation, please
+contact the authors of the translation.
+Some available translations are linked here to improve their dissemination
+and promote community efforts.
+
+- `Chinese translation <https://sklearn.apachecn.org/>`_
+  (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
+- `Persian translation <https://sklearn.ir/>`_
+  (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
+
+.. rubric:: Footnotes
+
+.. [#f1] following `linux documentation Disclaimer
+   <https://www.kernel.org/doc/html/latest/translations/index.html#disclaimer>`__
+
