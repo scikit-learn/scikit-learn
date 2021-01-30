@@ -92,7 +92,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         randomized :
             run randomized SVD by the method of Halko et al.
 
-        .. versionchanged:: 0.24
+        .. versionchanged:: 1.0
            Prior to this version the 'randomized' option was not available. The
            'auto' behaviour was different: if the number of components to
            extract was n_components < 10 and if n_samples > 200 then the
