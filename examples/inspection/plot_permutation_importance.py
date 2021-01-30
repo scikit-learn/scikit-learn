@@ -113,18 +113,11 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 # %%
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
-# The impurity-based feature importance ranks the numerical features to be the
-# most important features. As a result, the non-predictive ``random_num``
-# variable is ranked the most important!
-#
-# This problem stems from two limitations of impurity-based feature
-# importances:
-#
-# - impurity-based importances are biased towards high cardinality features;
-# - impurity-based importances are computed on training set statistics and
-#   therefore do not reflect the ability of feature to be useful to make
-#   predictions that generalize to the test set (when the model has enough
-#   capacity).
+# We plot the feature importances computed across all trees of the forest.
+# We use a box plot representation to show the information. The mean is in the
+# box plot would corresponds to the value reported by the fitted attribute
+# `feature_importances_`. The variance is computed by taking the standard
+# deviation of the feature importances across trees.
 import pandas as pd
 
 ohe = (rf.named_steps['preprocess']
@@ -147,6 +140,30 @@ plt.tight_layout()
 plt.show()
 
 # %%
+# The impurity-based feature importance ranks the numerical features to be the
+# most important features. As a result, the non-predictive ``random_num``
+# variable is ranked the most important!
+#
+# This problem stems from two limitations of impurity-based feature
+# importances:
+#
+# - impurity-based importances are biased towards high cardinality features;
+# - impurity-based importances are computed on training set statistics and
+#   therefore do not reflect the ability of feature to be useful to make
+#   predictions that generalize to the test set (when the model has enough
+#   capacity).
+#
+# Another issue that we can observe is linked to correlated features. For
+# instance, `sex` feature has been one-hot encoded. Therefore the categories
+# `sex_female` and `sex_male` are anti-correlated. Looking at the feature
+# importances of these two features, we see that the reported feature
+# importances have a large standard deviation. Indeed, a tree could use either
+# variables to make a split because both variable carry the exact same
+# information. Thus, one tree could use the feature `sex_male` and ignore
+# `sex_female` to create split while another tree could could make the opposite
+# choice. We will see that the permutation feature importance does not solve
+# this issue.
+#
 # Alternative to MDI using Feature Permutation Importance
 # -------------------------------------------------------
 # The limitations of MDI pointed out in the previous section can be bypassed
@@ -193,9 +210,13 @@ plt.tight_layout()
 plt.show()
 
 # %%
-# With this strategy, the low cardinality categorical feature, ``sex`` is the
-# most important. It gives both random features low importance, confirming that
-# it avoids the limitations of MDI feature importances.
+# With this strategy, the low cardinality categorical feature, `sex_male` or
+# `sex_female` are the most important. It gives both random features low
+# importance, confirming that it avoids the limitations of MDI feature
+# importances.
+#
+# However, we still observe that these two anti-correlated features are
+# suffering from a high standard deviation.
 #
 # Feature Permutation Importance on train-test sets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
