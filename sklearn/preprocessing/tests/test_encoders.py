@@ -859,8 +859,8 @@ def test_encoders_has_categorical_tags(Encoder):
 
 
 def test_ohe_infrequent_infrequent_is_a_cat():
-    # category with 'infrequent' is a frequent category, ohe will name mangle
-    # this into 'infrequent_sklearn'
+    """Test category with 'infrequent' is a frequent category, ohe will name
+    mangle this into 'infrequent_sklearn'."""
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['infrequent'] * 10 +
                         ['d'] * 3]).T
     ohe = OneHotEncoder(handle_unknown='auto', sparse=False,
@@ -896,8 +896,8 @@ def test_ohe_infrequent_infrequent_is_a_cat():
 ])
 @pytest.mark.parametrize("categories", ["auto", [['a', 'b', 'c', 'd']]])
 def test_ohe_infrequent_two_levels(kwargs, categories):
-    # Test that different parameters for combine 'a', 'c', and 'd' into
-    # the infrequent category works as expected
+    """Test that different parameters for combine 'a', 'c', and 'd' into
+    the infrequent category works as expected."""
 
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3]).T
     ohe = OneHotEncoder(categories=categories,
@@ -920,7 +920,6 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
     X_inv = ohe.inverse_transform(X_trans)
     assert_array_equal(expected_inv, X_inv)
 
-    # The most frequent infrequent category becomes the feature name
     feature_names = ohe.get_feature_names()
     assert_array_equal(['x0_b', 'x0_infrequent'], feature_names)
 
@@ -935,8 +934,8 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
     {'max_categories': 4, 'min_frequency': 6},
 ])
 def test_ohe_infrequent_three_levels(kwargs):
-    # Test that different parameters for combine 'a', and 'd' into
-    # the infrequent category works as expected
+    """Test that different parameters for combing 'a', and 'd' into
+    the infrequent category works as expected."""
 
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3]).T
     ohe = OneHotEncoder(handle_unknown='auto', sparse=False,
@@ -959,14 +958,13 @@ def test_ohe_infrequent_three_levels(kwargs):
     X_inv = ohe.inverse_transform(X_trans)
     assert_array_equal(expected_inv, X_inv)
 
-    # The most frequent infrequent category becomes the feature name
     feature_names = ohe.get_feature_names()
     assert_array_equal(['x0_b', 'x0_c', 'x0_infrequent'], feature_names)
 
 
 def test_ohe_infrequent_handle_unknown_error():
-    # Test that different parameters for combine 'a', and 'd' into
-    # the infrequent category works as expected
+    """Test that different parameters for combing 'a', and 'd' into
+    the infrequent category works as expected."""
 
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3]).T
     ohe = OneHotEncoder(handle_unknown='error', sparse=False,
@@ -984,7 +982,7 @@ def test_ohe_infrequent_handle_unknown_error():
     X_trans = ohe.transform(X_test)
     assert_allclose(expected, X_trans)
 
-    # 'bad' is not know and will error
+    # 'bad' is not known and will error
     X_test = [['bad']]
     msg = r"Found unknown categories \['bad'\] in column 0"
     with pytest.raises(ValueError, match=msg):
@@ -994,7 +992,7 @@ def test_ohe_infrequent_handle_unknown_error():
 @pytest.mark.parametrize("kwargs", [{'max_categories': 3},
                                     {'min_frequency': 4}])
 def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
-    # 'a' is the only frequent category, all other categories are infrequent
+    #'a' is the only frequent category, all other categories are infrequent
 
     X_train = np.array([['a'] * 5 + ['e'] * 30], dtype=object).T
     ohe = OneHotEncoder(categories=[['c', 'd', 'a', 'b']],
