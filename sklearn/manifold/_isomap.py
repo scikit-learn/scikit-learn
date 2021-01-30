@@ -41,7 +41,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         'randomized' : Run randomized SVD by the method of Halko et al. Note
         that this should only be used when there is no risk of large negative
         eigenvalues. Indeed current implementation of this method returns the
-        n_components with largest module. See :func:`randomized_eigsh`.
+        n_components with largest module.
 
         .. versionchanged:: 0.24
 
