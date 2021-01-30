@@ -83,6 +83,14 @@ Changelog
   the importances across all trees of the forest.
   :pr:`18603` by :user:`Robert Robison <robert-robison>`.
 
+- |Fix| OOB score reported in
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, and
+  :class:`ensemble.ExtraTreesRegressor` is taking into account `sample_weight`
+  while ignoring it previously.
+  :pr:`18603` by :user:`Robert Robison <robert-robison>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
