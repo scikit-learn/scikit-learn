@@ -1375,8 +1375,8 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname,
     assert_allclose(X_trans, X_fit_trans)
 
     if isinstance(explicit_colname, str):
-        # No 'columns' AttributeError when transform input is a numpy array
-        # and columns are specified by position
+        # Raise error if columns are specified by names but input only allows
+        # to specify by position, e.g. numpy array instead of a pandas df.
         X_array = X_fit_array.copy()
         err_msg = 'Specifying the columns'
         with pytest.raises(ValueError, match=err_msg):
@@ -1401,7 +1401,7 @@ def test_feature_name_validation_missing_columns_drop_passthough():
     with pytest.raises(ValueError, match=msg):
         tf.transform(df_dropped)
 
-    # with remainder='drop', thus it is allowed to have 'c' missing
+    # with remainder='drop', it is allowed to have column 'c' missing
     tf = ColumnTransformer([('bycol', Trans(), [1])],
                            remainder='drop')
     tf.fit(df)
