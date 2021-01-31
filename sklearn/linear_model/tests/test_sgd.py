@@ -1636,10 +1636,12 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     [linear_model.SGDClassifier, linear_model.SGDRegressor]
 )
 def test_loss_squared_loss_deprecated(Estimator):
-    est1 = Estimator(loss="squared_loss", random_state=0)
 
+    # Note: class BaseSGD calls self._validate_params() in __init__, therefore
+    # even instatiation of class raises FutureWarning for squared_loss.
     with pytest.warns(FutureWarning,
                       match="The loss 'squared_loss' was deprecated"):
+        est1 = Estimator(loss="squared_loss", random_state=0)
         est1.fit(X, Y)
 
     est2 = Estimator(loss="squared_error", random_state=0)
