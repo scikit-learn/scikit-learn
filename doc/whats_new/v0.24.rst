@@ -20,6 +20,13 @@ Changelog
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputRegressor` now works with estimators
+  that dynamically define `predict` during fitted, such as
+  :class:`ensemble.StackingRegressor`. :pr:`19308` by `Thomas Fan`_.
+
 .. _changes_0_24_1:
 
 Version 0.24.1
