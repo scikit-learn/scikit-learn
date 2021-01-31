@@ -174,7 +174,7 @@ def test_classification_synthetic(loss):
     assert error_rate < 0.08
 
 
-@pytest.mark.parametrize('loss', ('ls', 'lad', 'huber'))
+@pytest.mark.parametrize('loss', ('squared_error', 'lad', 'huber'))
 @pytest.mark.parametrize('subsample', (1.0, 0.5))
 def test_regression_dataset(loss, subsample):
     # Check consistency on regression dataset with least squares
@@ -233,7 +233,7 @@ def test_regression_synthetic():
     random_state = check_random_state(1)
     regression_params = {'n_estimators': 100, 'max_depth': 4,
                          'min_samples_split': 2, 'learning_rate': 0.1,
-                         'loss': 'ls'}
+                         'loss': 'squared_error'}
 
     # Friedman1
     X, y = datasets.make_friedman1(n_samples=1200,
@@ -1060,7 +1060,7 @@ def test_non_uniform_weights_toy_edge_case_reg():
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    for loss in ('huber', 'ls', 'lad', 'quantile'):
+    for loss in ('huber', 'squared_error', 'lad', 'quantile'):
         gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2,
                                        loss=loss)
         gb.fit(X, y, sample_weight=sample_weight)
