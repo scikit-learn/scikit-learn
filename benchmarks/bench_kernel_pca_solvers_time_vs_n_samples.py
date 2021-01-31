@@ -39,7 +39,7 @@ examples is fixed, and the desired number of components varies.
 """
 # Author: Sylvain MARIE, Schneider Electric
 
-from datetime import datetime
+import time
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -92,31 +92,31 @@ for j, n_samples in enumerate(n_samples_range):
     # A- reference (dense)
     print("  - dense")
     for i in range(n_iter):
-        start_time = datetime.now()
+        start_time = time.perf_counter()
         ref_pred = KernelPCA(n_components, eigen_solver="dense") \
             .fit(X_train).transform(X_test)
-        ref_time[j, i] = (datetime.now() - start_time).total_seconds()
+        ref_time[j, i] = time.perf_counter() - start_time
 
     # B- arpack
     if include_arpack:
         print("  - arpack")
         for i in range(n_iter):
-            start_time = datetime.now()
+            start_time = time.perf_counter()
             a_pred = KernelPCA(n_components, eigen_solver="arpack") \
                 .fit(X_train).transform(X_test)
+            a_time[j, i] = time.perf_counter() - start_time
             # check that the result is still correct despite the approx
             assert_array_almost_equal(np.abs(a_pred), np.abs(ref_pred))
-            a_time[j, i] = (datetime.now() - start_time).total_seconds()
 
     # C- randomized
     print("  - randomized")
     for i in range(n_iter):
-        start_time = datetime.now()
+        start_time = time.perf_counter()
         r_pred = KernelPCA(n_components, eigen_solver="randomized") \
             .fit(X_train).transform(X_test)
+        r_time[j, i] = time.perf_counter() - start_time
         # check that the result is still correct despite the approximation
         assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
-        r_time[j, i] = (datetime.now() - start_time).total_seconds()
 
 # Compute statistics for the 3 methods
 avg_ref_time = ref_time.mean(axis=1)
