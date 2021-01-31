@@ -207,6 +207,7 @@ def test_fit_docstring_attributes(name, Estimator):
         est.k = 2
 
     if Estimator.__name__ == 'KBinsDiscretizer':
+        # FIX ME: remove in 1.2
         est.n_bins = 'auto'
 
     if Estimator.__name__ == 'DummyClassifier':
