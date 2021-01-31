@@ -205,6 +205,9 @@ def test_fit_docstring_attributes(name, Estimator):
 
     if Estimator.__name__ == 'SelectKBest':
         est.k = 2
+    
+    if Estimator.__name__ == 'KBinsDiscretizer':
+        est.n_bins = 'auto'
 
     if Estimator.__name__ == 'DummyClassifier':
         est.strategy = "stratified"
