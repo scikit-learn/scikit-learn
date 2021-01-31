@@ -116,7 +116,7 @@ Changelog
   :pr:`18543` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.multioutput`
-......................
+..........................
 
 - |Fix| :func:`multioutput.ClassifierChain.decision_function` and
   :func:`multioutput.ClassifierChain.predict_proba` now both return a list of
