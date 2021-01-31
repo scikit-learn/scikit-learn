@@ -3,6 +3,7 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 import warnings
 import numpy as np
+from numpy.testing import assert_allclose
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
@@ -1346,3 +1347,33 @@ def test_criterion_mae_deprecation(estimator):
            "will be removed in version 1.1")
     with pytest.warns(FutureWarning, match=msg):
         estimator.fit(X, y)
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
+def test_criterion_mse_deprecated(Estimator):
+    est1 = Estimator(criterion="mse", random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match="Criterion 'mse' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = Estimator(criterion="squared_error", random_state=0)
+    est2.fit(X, y)
+    if hasattr(est1, "predict_proba"):
+        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
+    else:
+        assert_allclose(est1.predict(X), est2.predict(X))
+
+
+# TODO: Remove in v1.2
+def test_loss_ls_deprecated():
+    est1 = GradientBoostingRegressor(loss="ls", random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match="The loss 'ls' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = GradientBoostingRegressor(loss="squared_error", random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))
