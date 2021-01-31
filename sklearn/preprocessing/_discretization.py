@@ -130,6 +130,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     """
 
+    @_deprecate_positional_args
     def __init__(self, n_bins='warn', *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
@@ -137,7 +138,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.strategy = strategy
         self.dtype = dtype
 
-    @_deprecate_positional_args
+
     def fit(self, X, y=None):
         """
         Fit the estimator.
@@ -186,8 +187,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 f"Got strategy={self.strategy!r} instead."
             )
 
-        n_features = X.shape[1]
-        n_samples = X.shape[0]
+        n_samples, n_features = X.shape
         n_bins = self._validate_n_bins(n_features, n_samples)
 
         bin_edges = np.zeros(n_features, dtype=object)
@@ -254,10 +254,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """Returns n_bins_, the number of bins per feature.
         """
         orig_bins = self._n_bins
-        if isinstance(orig_bins, numbers.Number) or isinstance(orig_bins, str):
-            if orig_bins == 'auto':
-                # calculate number of bins with Sturges rule
-                orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
+        if isinstance(orig_bins, str) and (orig_bins == 'auto'):
+            # calculate number of bins with Sturges rule
+            orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
+        if isinstance(orig_bins, numbers.Number)
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError(
                     f"{KBinsDiscretizer.__name__} received "
