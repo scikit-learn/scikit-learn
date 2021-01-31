@@ -7,7 +7,7 @@ import math
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
 
-from ._base import BaseMixture, _check_shape
+from ._base import StrictBayesianBaseMixture, _check_shape
 from ._gaussian_mixture import _check_precision_matrix
 from ._gaussian_mixture import _check_precision_positivity
 from ._gaussian_mixture import _compute_log_det_cholesky
@@ -62,7 +62,7 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
                                   np.arange(n_features)[:, np.newaxis])), 0))
 
 
-class BayesianGaussianMixture(BaseMixture):
+class StrictBayesianGaussianMixture(StrictBayesianBaseMixture):
     """Variational Bayesian estimation of a Gaussian mixture.
 
     This class allows to infer an approximate posterior distribution over the
@@ -316,12 +316,13 @@ class BayesianGaussianMixture(BaseMixture):
                  mean_precision_prior=None, mean_prior=None,
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
-                 verbose_interval=10):
+                 verbose_interval=10, min_cluster_size=0.001):
         super().__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
             random_state=random_state, warm_start=warm_start,
-            verbose=verbose, verbose_interval=verbose_interval)
+            verbose=verbose, verbose_interval=verbose_interval,
+            min_cluster_size=min_cluster_size)
 
         self.covariance_type = covariance_type
         self.weight_concentration_prior_type = weight_concentration_prior_type
@@ -330,6 +331,7 @@ class BayesianGaussianMixture(BaseMixture):
         self.mean_prior = mean_prior
         self.degrees_of_freedom_prior = degrees_of_freedom_prior
         self.covariance_prior = covariance_prior
+        self.min_cluster_size = min_cluster_size
 
     def _check_parameters(self, X):
         """Check that the parameters are well defined.
@@ -356,6 +358,7 @@ class BayesianGaussianMixture(BaseMixture):
         self._check_means_parameters(X)
         self._check_precision_parameters(X)
         self._checkcovariance_prior_parameter(X)
+        self._check_min_cluster_size_parameter()
 
     def _check_weights_parameters(self):
         """Check the parameter of the Dirichlet distribution."""
@@ -453,6 +456,12 @@ class BayesianGaussianMixture(BaseMixture):
             raise ValueError("The parameter 'spherical covariance_prior' "
                              "should be greater than 0., but got %.3f."
                              % self.covariance_prior)
+
+    def _check_min_cluster_size_parameter(self):
+        if self.min_cluster_size < 0 or self.min_cluster_size >= 1:
+            raise ValueError("The parameter 'min_cluster_size' should"
+                             "be a percent in the range [0,1), but got %.3f." %
+                             self.min_cluster_size)
 
     def _initialize(self, X, resp):
         """Initialization of the mixture parameters.
@@ -667,6 +676,8 @@ class BayesianGaussianMixture(BaseMixture):
         self._estimate_weights(nk)
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
+
+
 
     def _estimate_log_weights(self):
         if self.weight_concentration_prior_type == 'dirichlet_process':

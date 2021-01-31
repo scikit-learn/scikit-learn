@@ -8,7 +8,7 @@ import numpy as np
 
 from scipy import linalg
 
-from ._base import BaseMixture, _check_shape
+from ._base import PhaseConstrainedBaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.validation import _deprecate_positional_args
@@ -49,6 +49,39 @@ def _check_weights(weights, n_components):
                          "but got sum(weights) = %.5f" % np.sum(weights))
     return weights
 
+def _check_phases(phases, n_components):
+    """Check the user provided 'phases'.
+
+    Parameters
+    ----------
+    phases : array-like, shape (n_components,)
+        The phases of components of each mixture.
+
+    n_components : int
+        Number of components.
+
+    Returns
+    -------
+    phases : array, shape (n_components,)
+    """
+    phases = check_array(phases, dtype=[np.float64, np.float32],
+                          ensure_2d=False)
+    _check_shape(phases, (n_components,), 'weights')
+
+    # check range
+    if (any(np.less(phases, -360.)) or
+            any(np.greater(phases, 360.))):
+        raise ValueError("The parameter 'weights' should be in the range "
+                         "[-360, 360], but got max value %.5f, min value %.5f"
+                         % (np.min(phases), np.max(phases)))
+
+    # check limits
+    if max(phases) - min(phases) > 360:
+        raise ValueError("The parameter 'phases' should have a range of"
+                         "less than or equal to 360 def, but got range of"
+                         "%.5f deg" % (max(phases) - min(phases)))
+
+    return phases
 
 def _check_means(means, n_components, n_features):
     """Validate the provided 'means'.
@@ -71,6 +104,25 @@ def _check_means(means, n_components, n_features):
     means = check_array(means, dtype=[np.float64, np.float32], ensure_2d=False)
     _check_shape(means, (n_components, n_features), 'means')
     return means
+
+def _check_labels_init(labels_init, n_samples):
+    """Validate the provided 'labels_init'.
+
+    Parameters
+    ----------
+    labels_init : array-like, shape (n_components,)
+        The initial labels of the data based off of a 1D GMM BIC Fit on the phase dimension.
+
+    n_components : int
+        Number of components.
+
+    Returns
+    -------
+    phases : array, (n_components,)
+    """
+    labels_init = check_array(labels_init, dtype=[np.float64, np.float32], ensure_2d=False)
+    _check_shape(labels_init, (n_samples,), 'labels_init')
+    return labels_init
 
 
 def _check_precision_positivity(precision, covariance_type):
@@ -246,7 +298,7 @@ def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar):
                                                means, reg_covar).mean(1)
 
 
-def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
+def _phase_constrained_estimate_gaussian_parameters(X, resp, reg_covar, covariance_type, phases):
     """Estimate the Gaussian distribution parameters.
 
     Parameters
@@ -275,13 +327,27 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
         The covariance matrix of the current components.
         The shape depends of the covariance_type.
     """
-    nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
-    means = np.dot(resp.T, X) / nk[:, np.newaxis]
-    covariances = {"full": _estimate_gaussian_covariances_full,
-                   "tied": _estimate_gaussian_covariances_tied,
-                   "diag": _estimate_gaussian_covariances_diag,
-                   "spherical": _estimate_gaussian_covariances_spherical
-                   }[covariance_type](resp, X, nk, means, reg_covar)
+    if phases.all() != None:
+        nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
+        n_components = len(phases)
+        rad_means = np.dot(resp.T, X[:,0]).reshape(-1,1) / nk[:, np.newaxis]
+        means = np.zeros((n_components, 2))
+        means[:,0] = rad_means.reshape(n_components,)
+        means[:,1] = phases
+        covariances = {"full": _estimate_gaussian_covariances_full,
+                       "tied": _estimate_gaussian_covariances_tied,
+                       "diag": _estimate_gaussian_covariances_diag,
+                       "spherical": _estimate_gaussian_covariances_spherical
+                       }[covariance_type](resp, X, nk, means, reg_covar)
+
+    else:
+        nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
+        means = np.dot(resp.T, X) / nk[:, np.newaxis]
+        covariances = {"full": _estimate_gaussian_covariances_full,
+                       "tied": _estimate_gaussian_covariances_tied,
+                       "diag": _estimate_gaussian_covariances_diag,
+                       "spherical": _estimate_gaussian_covariances_spherical
+                       }[covariance_type](resp, X, nk, means, reg_covar)
     return nk, means, covariances
 
 
@@ -431,7 +497,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     return -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
 
 
-class GaussianMixture(BaseMixture):
+class PhaseConstrainedGaussianMixture(PhaseConstrainedBaseMixture):
     """Gaussian Mixture.
 
     Representation of a Gaussian mixture model probability distribution.
@@ -591,21 +657,23 @@ class GaussianMixture(BaseMixture):
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  weights_init=None, means_init=None, precisions_init=None,
                  random_state=None, warm_start=False,
-                 verbose=0, verbose_interval=10):
+                 verbose=0, verbose_interval=10, phases=None, labels_init=None):
         super().__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
             random_state=random_state, warm_start=warm_start,
-            verbose=verbose, verbose_interval=verbose_interval)
+            verbose=verbose, verbose_interval=verbose_interval, phases=phases, labels_init=labels_init)
 
         self.covariance_type = covariance_type
         self.weights_init = weights_init
         self.means_init = means_init
         self.precisions_init = precisions_init
+        self.phases = phases
+        self.labels_init = labels_init
 
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
-        _, n_features = X.shape
+        n_samples, n_features = X.shape
         if self.covariance_type not in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError("Invalid value for 'covariance_type': %s "
                              "'covariance_type' should be in "
@@ -615,6 +683,14 @@ class GaussianMixture(BaseMixture):
         if self.weights_init is not None:
             self.weights_init = _check_weights(self.weights_init,
                                                self.n_components)
+
+        if self.phases is not None:
+            self.phases = _check_phases(self.phases,
+                                               self.n_components)
+
+        if self.labels_init is not None:
+            self.labels_init = _check_labels_init(self.labels_init,
+                                                  n_samples)
 
         if self.means_init is not None:
             self.means_init = _check_means(self.means_init,
@@ -637,8 +713,8 @@ class GaussianMixture(BaseMixture):
         """
         n_samples, _ = X.shape
 
-        weights, means, covariances = _estimate_gaussian_parameters(
-            X, resp, self.reg_covar, self.covariance_type)
+        weights, means, covariances = _phase_constrained_estimate_gaussian_parameters(
+            X, resp, self.reg_covar, self.covariance_type, self.phases)
         weights /= n_samples
 
         self.weights_ = (weights if self.weights_init is None
@@ -659,7 +735,7 @@ class GaussianMixture(BaseMixture):
         else:
             self.precisions_cholesky_ = self.precisions_init
 
-    def _m_step(self, X, log_resp):
+    def _phase_constrained_m_step(self, X, log_resp):
         """M step.
 
         Parameters
@@ -672,8 +748,8 @@ class GaussianMixture(BaseMixture):
         """
         n_samples, _ = X.shape
         self.weights_, self.means_, self.covariances_ = (
-            _estimate_gaussian_parameters(X, np.exp(log_resp), self.reg_covar,
-                                          self.covariance_type))
+            _phase_constrained_estimate_gaussian_parameters(X, np.exp(log_resp), self.reg_covar,
+                                          self.covariance_type, self.phases))
         self.weights_ /= n_samples
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type)
