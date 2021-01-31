@@ -2,6 +2,7 @@ import pickle
 import pytest
 
 import numpy as np
+from numpy.testing import assert_allclose
 import scipy.sparse as sp
 import joblib
 
@@ -1625,3 +1626,23 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize(
+    'Estimator',
+    [linear_model.SGDClassifier, linear_model.SGDRegressor]
+)
+def test_loss_squared_loss_deprecated(Estimator):
+    est1 = Estimator(loss="squared_loss", random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match="The loss 'squared_loss' was deprecated"):
+        est1.fit(X, Y)
+
+    est2 = Estimator(loss="squared_error", random_state=0)
+    est2.fit(X, Y)
+    if hasattr(est1, "predict_proba"):
+        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
+    else:
+        assert_allclose(est1.predict(X), est2.predict(X))
