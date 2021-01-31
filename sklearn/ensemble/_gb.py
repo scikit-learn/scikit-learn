@@ -832,7 +832,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             `'squared_error'` instead, as trees should use a squared error
             criterion in Gradient Boosting.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             Criterion 'mse' was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion='squared_error'` which is equivalent.
 
@@ -1345,7 +1345,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             The loss 'ls' was deprecated in v1.0 and will be removed in
             version 1.2. Use `loss='squared_error'` which is equivalent.
 
@@ -1381,7 +1381,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             1.1 (renaming of 0.26). The correct way of minimizing the absolute
             error is to use `loss='lad'` instead.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             Criterion 'mse' was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion='squared_error'` which is equivalent.
 

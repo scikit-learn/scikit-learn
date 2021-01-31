@@ -1314,7 +1314,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion="squared_error"` which is equivalent.
 
@@ -1919,7 +1919,7 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion="squared_error"` which is equivalent.
 

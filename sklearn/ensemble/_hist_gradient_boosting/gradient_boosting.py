@@ -913,7 +913,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 0.23
            Added option 'poisson'.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             The loss 'least_squares' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
 

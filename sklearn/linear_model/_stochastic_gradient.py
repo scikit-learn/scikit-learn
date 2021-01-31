@@ -791,7 +791,7 @@ class SGDClassifier(BaseSGDClassifier):
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             The loss 'squared_loss' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
 
@@ -1415,7 +1415,7 @@ class SGDRegressor(BaseSGDRegressor):
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             The loss 'squared_loss' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
 

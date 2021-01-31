@@ -1013,7 +1013,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionadded:: 0.24
             Poisson deviance criterion.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion="squared_error"` which is equivalent.
 
@@ -1568,7 +1568,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.24
             Poisson deviance criterion.
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion="squared_error"` which is equivalent.
 

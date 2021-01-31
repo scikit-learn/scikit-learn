@@ -151,7 +151,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         .. versionadded:: 0.18
 
-        .. deprecate:: 1.0
+        .. deprecated:: 1.0
             The loss 'squared_loss' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
 
