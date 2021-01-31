@@ -257,7 +257,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if isinstance(orig_bins, str) and (orig_bins == 'auto'):
             # calculate number of bins with Sturges rule
             orig_bins = int(np.ceil(np.log2(n_samples) + 1.))
-        if isinstance(orig_bins, numbers.Number)
+        if isinstance(orig_bins, numbers.Number):
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError(
                     f"{KBinsDiscretizer.__name__} received "
