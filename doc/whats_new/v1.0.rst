@@ -139,7 +139,7 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer` for calculating number of bins
   via Sturges rule.
   :pr:`9337` by :user:`Gleb Levitskiy <GLevV>`, :user:`Joel Nothman <jnothman>`
-  and :user:`Jérémie du Boisberranger`<jeremiedbb>.
+  and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in 
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``. 
   :pr:`19256` by :user:`Gleb Levitskiy <GLevV>`, :user:`Joel Nothman <jnothman>`
