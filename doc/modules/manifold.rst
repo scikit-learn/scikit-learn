@@ -143,7 +143,6 @@ The overall complexity of Isomap is
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
 
-
 .. topic:: References:
 
    * `"A global geometric framework for nonlinear dimensionality reduction"
