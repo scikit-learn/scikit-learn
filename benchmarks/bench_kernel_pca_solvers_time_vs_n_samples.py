@@ -129,26 +129,25 @@ std_r_time = r_time.std(axis=1)
 
 # 4- Plots
 # --------
-plt.figure(figsize=(15, 20))
+fig, ax = plt.subplots(figsize=(12, 8))
 
 # Display 1 plot with error bars per method
-plt.errorbar(n_samples_range, avg_ref_time, yerr=std_ref_time,
-             marker='x', linestyle='', color='r', label='full')
+ax.errorbar(n_samples_range, avg_ref_time, yerr=std_ref_time,
+            marker='x', linestyle='', color='r', label='full')
 if include_arpack:
-    plt.errorbar(n_samples_range, avg_a_time, yerr=std_a_time, marker='x',
-                 linestyle='', color='g', label='arpack')
-plt.errorbar(n_samples_range, avg_r_time, yerr=std_r_time, marker='x',
-             linestyle='', color='b', label='randomized')
-plt.legend(loc='upper left')
+    ax.errorbar(n_samples_range, avg_a_time, yerr=std_a_time, marker='x',
+                linestyle='', color='g', label='arpack')
+ax.errorbar(n_samples_range, avg_r_time, yerr=std_r_time, marker='x',
+            linestyle='', color='b', label='randomized')
+fig.legend(loc='upper left')
 
 # customize axes
-ax = plt.gca()
 ax.set_xlim(min(n_samples_range) * 0.9, max(n_samples_range) * 1.1)
 ax.set_ylabel("Execution time (s)")
 ax.set_xlabel("n_samples")
 
-plt.title("Execution time comparison of kPCA with %i components on samples "
-          "with %i features, according to the choice of `eigen_solver`"
-          "" % (n_components, n_features))
+ax.set_title("Execution time comparison of kPCA with %i components on samples "
+             "with %i features, according to the choice of `eigen_solver`"
+             "" % (n_components, n_features))
 
 plt.show()
