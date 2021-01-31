@@ -55,7 +55,7 @@ clf.fit(X, y)
 # Make the prediction on the meshed x-axis
 y_lower = clf.predict(xx)
 
-clf.set_params(loss='ls')
+clf.set_params(loss='squared_error')
 clf.fit(X, y)
 
 # Make the prediction on the meshed x-axis
