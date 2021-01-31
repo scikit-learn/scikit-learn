@@ -139,7 +139,7 @@ if include_arpack:
                 linestyle='', color='g', label='arpack')
 ax.errorbar(n_samples_range, avg_r_time, yerr=std_r_time, marker='x',
             linestyle='', color='b', label='randomized')
-fig.legend(loc='upper left')
+ax.legend(loc='upper left')
 
 # customize axes
 ax.set_xlim(min(n_samples_range) * 0.9, max(n_samples_range) * 1.1)

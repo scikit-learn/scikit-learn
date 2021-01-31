@@ -133,7 +133,7 @@ ax.errorbar(n_compo_range, avg_a_time, yerr=std_a_time, marker='x',
             linestyle='', color='g', label='arpack')
 ax.errorbar(n_compo_range, avg_r_time, yerr=std_r_time, marker='x',
             linestyle='', color='b', label='randomized')
-fig.legend(loc='upper left')
+ax.legend(loc='upper left')
 
 # customize axes
 ax.set_xscale('log')
