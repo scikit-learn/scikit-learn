@@ -253,7 +253,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     def _validate_n_bins(self, n_features, n_samples):
         """Returns n_bins_, the number of bins per feature.
         """
-        orig_bins = self._n_bins  
+        orig_bins = self._n_bins
         if isinstance(orig_bins, numbers.Number) or isinstance(orig_bins, str):
             if orig_bins == 'auto':
                 # calculate number of bins with Sturges rule
