@@ -11,7 +11,7 @@ from sklearn import preprocessing
 
 from scipy.sparse import rand as sparse_rand
 
-eigen_solvers = ['auto', 'dense', 'arpack', 'randomized']
+eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
 
 
@@ -176,34 +176,13 @@ def test_isomap_clone_bug():
                      n_neighbors)
 
 
-@pytest.mark.parametrize("path_method", path_methods)
-@pytest.mark.parametrize("eigen_solver",
-                         [e for e in eigen_solvers if e != 'randomized'])
-def test_sparse_input_not_randomized(eigen_solver, path_method):
-    # see specific test for randomized method below
-    X = sparse_rand(100, 3, density=0.1, format='csr', random_state=45)
+def test_sparse_input():
+    X = sparse_rand(100, 3, density=0.1, format='csr')
 
-    for path_method in path_methods:
-        clf = manifold.Isomap(n_components=2,
-                              eigen_solver=eigen_solver,
-                              path_method=path_method)
-        clf.fit(X)
-
-
-@pytest.mark.parametrize("path_method", path_methods)
-def test_sparse_input_randomized(path_method):
-    # The randomized method is not robust to large negative eigenvalues.
-    # And unfortunately, even with setting `sparse_rand`'s random state,
-    # we can not get consistent results across all platforms.
-    # for this reason this test remains loose with just a try: except
-    X_fail_rd = sparse_rand(100, 3, density=0.1, format='csr')
-    for path_method in path_methods:
-        clf = manifold.Isomap(n_components=2,
-                              eigen_solver='randomized',
-                              path_method=path_method)
-        try:
-            clf.fit(X_fail_rd)
-            # for some path_methods/input data/targets it works
-        except ValueError as e:
-            # for some other this exception happens
-            assert "There are significant negative eigenval" in str(e)
+    # Should not error
+    for eigen_solver in eigen_solvers:
+        for path_method in path_methods:
+            clf = manifold.Isomap(n_components=2,
+                                  eigen_solver=eigen_solver,
+                                  path_method=path_method)
+            clf.fit(X)

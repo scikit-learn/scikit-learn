@@ -28,7 +28,7 @@ class Isomap(TransformerMixin, BaseEstimator):
     n_components : int, default=2
         number of coordinates for the manifold
 
-    eigen_solver : {'auto', 'arpack', 'dense', 'randomized'}, default='auto'
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         'auto' : Attempt to choose the most efficient solver
         for the given problem.
 
@@ -38,13 +38,6 @@ class Isomap(TransformerMixin, BaseEstimator):
         'dense' : Use a direct solver (i.e. LAPACK)
         for the eigenvalue decomposition.
 
-        'randomized' : Run randomized SVD by the method of Halko et al. Note
-        that this should only be used when there is no risk of large negative
-        eigenvalues. Indeed current implementation of this method returns the
-        n_components with largest module.
-
-        .. versionchanged:: 1.0
-
     tol : float, default=0
         Convergence tolerance passed to arpack or lobpcg.
         not used if eigen_solver == 'dense'.
@@ -52,12 +45,6 @@ class Isomap(TransformerMixin, BaseEstimator):
     max_iter : int, default=None
         Maximum number of iterations for the arpack solver.
         not used if eigen_solver == 'dense'.
-
-    iterated_power : int >= 0, or 'auto', default='auto'
-        Number of iterations for the power method computed by
-        svd_solver == 'randomized'.
-
-        .. versionadded:: 1.0
 
     path_method : {'auto', 'FW', 'D'}, default='auto'
         Method to use in finding shortest path.
@@ -138,8 +125,7 @@ class Isomap(TransformerMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, *, n_neighbors=5, n_components=2, eigen_solver='auto',
-                 tol=0, max_iter=None, iterated_power='auto',
-                 path_method='auto',
+                 tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
                  p=2, metric_params=None):
         self.n_neighbors = n_neighbors
@@ -147,7 +133,6 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.eigen_solver = eigen_solver
         self.tol = tol
         self.max_iter = max_iter
-        self.iterated_power = iterated_power
         self.path_method = path_method
         self.neighbors_algorithm = neighbors_algorithm
         self.n_jobs = n_jobs
@@ -164,6 +149,12 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.nbrs_.fit(X)
         self.n_features_in_ = self.nbrs_.n_features_in_
 
+        self.kernel_pca_ = KernelPCA(n_components=self.n_components,
+                                     kernel="precomputed",
+                                     eigen_solver=self.eigen_solver,
+                                     tol=self.tol, max_iter=self.max_iter,
+                                     n_jobs=self.n_jobs)
+
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                metric=self.metric, p=self.p,
                                metric_params=self.metric_params,
@@ -174,22 +165,6 @@ class Isomap(TransformerMixin, BaseEstimator):
                                                 directed=False)
         G = self.dist_matrix_ ** 2
         G *= -0.5
-
-        kpca_eigen_solver = self.eigen_solver
-        if kpca_eigen_solver == 'auto':
-            # use the legacy 'auto' to avoid the randomized method as it
-            # does not skip the large negative eigenvalues for now
-            if G.shape[0] > 200 and self.n_components < 10:
-                kpca_eigen_solver = 'arpack'
-            else:
-                kpca_eigen_solver = 'dense'
-
-        self.kernel_pca_ = KernelPCA(n_components=self.n_components,
-                                     kernel="precomputed",
-                                     eigen_solver=kpca_eigen_solver,
-                                     tol=self.tol, max_iter=self.max_iter,
-                                     iterated_power=self.iterated_power,
-                                     n_jobs=self.n_jobs)
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
 

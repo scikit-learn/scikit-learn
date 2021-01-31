@@ -115,14 +115,6 @@ Changelog
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
-:mod:`sklearn.manifold`
-.......................
-
-- |Feature| :class:`manifold.Isomap` can now use the new
-  `eigen_solver='randomized'` option from :class:`decomposition.KernelPCA` to
-  get faster results.
-  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
-
 :mod:`sklearn.metrics`
 ......................
 

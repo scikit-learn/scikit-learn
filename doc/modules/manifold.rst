@@ -131,8 +131,7 @@ The Isomap algorithm comprises three stages:
    eigenvectors corresponding to the :math:`d` largest eigenvalues of the
    :math:`N \times N` isomap kernel.  For a dense solver, the cost is
    approximately :math:`O[d N^2]`.  This cost can often be improved using
-   the ``ARPACK`` solver, or the ``randomized`` solver, similarly to
-   :ref:`kernel_PCA`. The eigensolver can be specified by the user
+   the ``ARPACK`` solver.  The eigensolver can be specified by the user
    with the ``eigen_solver`` keyword of ``Isomap``.  If unspecified, the
    code attempts to choose the best algorithm for the input data.
 
