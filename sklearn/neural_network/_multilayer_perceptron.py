@@ -1127,7 +1127,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron regressor.
 
-    This model optimizes the squared-loss using LBFGS or stochastic gradient
+    This model optimizes the squared error using LBFGS or stochastic gradient
     descent.
 
     .. versionadded:: 0.18
