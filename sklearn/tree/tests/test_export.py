@@ -177,7 +177,7 @@ def test_graphviz_toy():
     # Test regression output with plot_options
     clf = DecisionTreeRegressor(max_depth=3,
                                 min_samples_split=2,
-                                criterion="mse",
+                                criterion="squared_error",
                                 random_state=2)
     clf.fit(X, y)
 
