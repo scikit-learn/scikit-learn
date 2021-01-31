@@ -156,8 +156,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self
         """
         self._n_bins = self.n_bins
-        if isinstance(self.n_bins, str):
-            if self.n_bins == 'warn':
+        if isinstance(self.n_bins, str) and self.n_bins == 'warn':
                 warnings.warn("The default value of n_bins will change from "
                               "5 to 'auto' in 1.2", FutureWarning)
                 self._n_bins = 5
