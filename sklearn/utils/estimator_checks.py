@@ -615,7 +615,7 @@ def _set_checking_parameters(estimator):
 
     if name == 'KBinsDiscretizer':
         # FIX ME: remove in 1.2
-        estimator.n_bins = 'auto' 
+        estimator.n_bins = 'auto'
 
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
