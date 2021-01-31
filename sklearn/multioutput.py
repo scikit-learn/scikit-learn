@@ -684,13 +684,10 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         Returns
         -------
-        Y_prob : list of n_outputs ndarray of shape (n_samples, n_classes)
-            The class probabilities of the input samples. The order of the
-            classes for each output corresponds to the respective entry of
-            the attribute `classes_`.
+        Y_prob : array-like of shape (n_samples, n_classes)
         """
         X = check_array(X, accept_sparse=True)
-        Y_prob_chain = []
+        Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -698,11 +695,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
                 X_aug = sp.hstack((X, previous_predictions))
             else:
                 X_aug = np.hstack((X, previous_predictions))
-            Y_prob_chain.append(estimator.predict_proba(X_aug))
+            Y_prob_chain[:, chain_idx] = estimator.predict_proba(X_aug)[:, 1]
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
         inv_order = np.empty_like(self.order_)
         inv_order[self.order_] = np.arange(len(self.order_))
-        Y_prob = [Y_prob_chain[i] for i in inv_order]
+        Y_prob = Y_prob_chain[:, inv_order]
 
         return Y_prob
 
@@ -716,12 +713,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         Returns
         -------
-        Y_decision : list of n_outputs ndarray of shape (n_samples, n_classes)
-            Decision function of the input samples for each model
-            in the chain.  The order of the classes for each output corresponds
-            to the respective entry of the attribute `classes_`.
+        Y_decision : array-like of shape (n_samples, n_classes)
+            Returns the decision function of the sample for each model
+            in the chain.
         """
-        Y_decision_chain = []
+        Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -729,17 +725,18 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
                 X_aug = sp.hstack((X, previous_predictions))
             else:
                 X_aug = np.hstack((X, previous_predictions))
-            Y_decision_chain.append(estimator.decision_function(X_aug))
+            Y_decision_chain[:, chain_idx] = estimator.decision_function(X_aug)
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
 
         inv_order = np.empty_like(self.order_)
         inv_order[self.order_] = np.arange(len(self.order_))
-        Y_decision = [Y_decision_chain[i] for i in inv_order]
+        Y_decision = Y_decision_chain[:, inv_order]
 
         return Y_decision
 
     def _more_tags(self):
-        return {'_skip_test': True}
+        return {'_skip_test': True,
+                'multioutput_only': True}
 
 
 class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
