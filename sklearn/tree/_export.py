@@ -25,8 +25,6 @@ from . import _tree
 from ._reingold_tilford import buchheim, Tree
 from . import DecisionTreeClassifier
 
-import warnings
-
 
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
@@ -80,10 +78,9 @@ SENTINEL = Sentinel()
 
 @_deprecate_positional_args
 def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
-              class_names=None, label='all', filled=False,
-              impurity=True, node_ids=False,
-              proportion=False, rotate='deprecated', rounded=False,
-              precision=3, ax=None, fontsize=None):
+              class_names=None, label='all', filled=False, impurity=True,
+              node_ids=False, proportion=False, rounded=False, precision=3,
+              ax=None, fontsize=None):
     """Plot a decision tree.
 
     The sample counts that are shown are weighted with any sample_weights that
@@ -135,14 +132,6 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
 
-    rotate : bool, default=False
-        This parameter has no effect on the matplotlib tree visualisation and
-        it is kept here for backward compatibility.
-
-        .. deprecated:: 0.23
-           ``rotate`` is deprecated in 0.23 and will be removed in 1.0
-           (renaming of 0.25).
-
     rounded : bool, default=False
         When set to ``True``, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
@@ -180,16 +169,10 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
 
     check_is_fitted(decision_tree)
 
-    if rotate != 'deprecated':
-        warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
-                       "It will be removed in 1.0 (renaming of 0.25)."),
-                      FutureWarning)
-
     exporter = _MPLTreeExporter(
         max_depth=max_depth, feature_names=feature_names,
-        class_names=class_names, label=label, filled=filled,
-        impurity=impurity, node_ids=node_ids,
-        proportion=proportion, rotate=rotate, rounded=rounded,
+        class_names=class_names, label=label, filled=filled, impurity=impurity,
+        node_ids=node_ids, proportion=proportion, rounded=rounded,
         precision=precision, fontsize=fontsize)
     return exporter.export(decision_tree, ax=ax)
 
