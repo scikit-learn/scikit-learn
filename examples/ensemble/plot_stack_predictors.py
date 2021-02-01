@@ -92,8 +92,8 @@ num_selector(X)
 # Then, we will need to design preprocessing pipelines which depends on the
 # ending regressor. If the ending regressor is a linear model, one needs to
 # one-hot encode the categories. If the ending regressor is a tree-based model
-# an ordinal encoder will be sufficient. Besides, numerical values needs to be
-# standardize for a linear model while the raw numerical data can be treated
+# an ordinal encoder will be sufficient. Besides, numerical values need to be
+# standardized for a linear model while the raw numerical data can be treated
 # as is by a tree-based model. However, both models need an imputer to
 # handle missing values.
 #
