@@ -701,7 +701,6 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         :class:`sklearn.decomposition.MiniBatchNMF`.
     """
 
-    H_old = H.copy()
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
         denominator = np.linalg.multi_dot([W.T, W, H])
@@ -772,22 +771,24 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         denominator = denominator + l2_reg_H * H
     denominator[denominator == 0] = EPSILON
 
+    if gamma != 1.:
+        H **= 1. / gamma
+
+
     if A is not None and B is not None:
         A *= rho
         B *= rho
-        A += numerator * H**2
+        A += numerator * H
         B += denominator
         numerator = A
         denominator = B
-        H = (np.divide(A, B))**0.5
+        H = (np.divide(A, B))
     else:
-        numerator /= denominator
-        delta_H = numerator
+        H *= (np.divide(numerator, denominator))
 
-        # gamma is in ]0, 1]
-        if gamma != 1:
-            delta_H **= gamma
-        H = delta_H * H_old
+    # gamma is in ]0, 1]
+    if gamma != 1.:
+        H **= gamma
 
     return H, A, B
 
@@ -915,7 +916,7 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
 
     H_sum, HHt, XHt = None, None, None
 
-    for n_iter in range(0, max_iter):
+    for n_iter in range(1, max_iter+1):
         for iter_offset, slice in enumerate(
             gen_batches(n=n_samples, batch_size=batch_size)
         ):
@@ -944,8 +945,8 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
 
             iter_offset += 1
 
-        # test convergence criterion every iteration
-        if tol > 0:
+        # test convergence criterion every 10 iterations
+        if tol > 0 and n_iter % 10 == 0:
             error = _beta_divergence(X, W, H, beta_loss, square_root=True)
             if verbose:
                 iter_time = time.time()
@@ -957,7 +958,7 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
             previous_error = error
 
     # do not print if we have already printed in the convergence test
-    if verbose and tol == 0:
+    if verbose and (tol == 0 or n_iter % 10 != 0):
         end_time = time.time()
         print("Epoch %02d reached after %.3f seconds." %
               (n_iter, end_time - start_time))
