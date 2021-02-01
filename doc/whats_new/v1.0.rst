@@ -56,8 +56,21 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
+- |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
+  deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
+
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Do not allow to compute out-of-bag (OOB) score in
+  :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.ExtraTreesClassifier` with multiclass-multioutput target
+  since scikit-learn does not provide any metric supporting this type of
+  target. Additional private refactoring was performed.
+  :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_extraction`
 .................................

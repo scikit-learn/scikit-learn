@@ -293,6 +293,6 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'centroids_')
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         return self.classes_[pairwise_distances(
             X, self.centroids_, metric=self.metric).argmin(axis=1)]
