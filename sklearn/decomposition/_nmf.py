@@ -10,6 +10,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 import time
+import itertools
 import warnings
 from math import sqrt
 
@@ -793,7 +794,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
 
 
 def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
-                               batch_size=None,
+                               batch_size=None, iter_offset=0,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
                                update_H=True, verbose=0, forget_factor=None):
@@ -827,6 +828,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     batch_size : int, default=None
         Number of samples in each mini-batch.
         Used in the batch case only.
+
+    iter_offset : int, default=0
+        Number of previous iterations completed used for initialization.
 
     max_iter : int, default=200
         Number of iterations.
@@ -869,7 +873,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     n_iter : int
         The number of iterations done by the algorithm.
 
-    iter_offset_ : int
+    iter_offset : int
         The number of iteration on data batches that has been
         performed.
 
@@ -889,6 +893,11 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     if batch_size is None:
         batch_size = n_samples
+
+    if batch_size < n_samples:
+        # Initialize auxiliary matrices
+        A = H.copy()
+        B = np.ones(H.shape)
 
     rho = 0.
     if forget_factor is not None:
@@ -910,42 +919,46 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     H_sum, HHt, XHt = None, None, None
 
-    for n_iter in range(1, max_iter+1):
-        if batch_size < n_samples:
-            # Initialize auxiliary matrices
-            A = H.copy()
-            B = np.ones(H.shape)
-        for iter_offset, slice in enumerate(
-            gen_batches(n=n_samples, batch_size=batch_size)
-        ):
-            # update W
-            # H_sum, HHt and XHt are saved and reused if not update_H
-            delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-                X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
-                gamma, H_sum, HHt, XHt, update_H)
-            W[slice] *= delta_W
+    batches = gen_batches(n_samples, batch_size)
+    batches = itertools.cycle(batches)
+
+    n_steps_per_epoch = int(np.ceil(n_samples / batch_size))
+    n_steps = int(max_iter * n_steps_per_epoch)
+
+    # If n_iter is zero, we need to return zero.
+    n_iter = iter_offset + 1
+
+    for n_iter, batch in zip(range(iter_offset, iter_offset + max_iter + 1),
+                             batches):
+        # update W
+        # H_sum, HHt and XHt are saved and reused if not update_H
+        delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+            X[batch], W[batch], H, beta_loss, l1_reg_W, l2_reg_W,
+            gamma, H_sum, HHt, XHt, update_H)
+        W[batch] *= delta_W
+        # necessary for stability with beta_loss < 1
+        if beta_loss < 1:
+            W[batch][W[batch] < np.finfo(np.float64).eps] = 0.
+
+        # update H
+        if update_H:
+            H, A, B = _multiplicative_update_h(
+                X[batch], W[batch], H, A, B, beta_loss,
+                l1_reg_H, l2_reg_H, gamma, rho
+            )
+
+            # These values will be recomputed since H changed
+            H_sum, HHt, XHt = None, None, None
+
             # necessary for stability with beta_loss < 1
-            if beta_loss < 1:
-                W[slice][W[slice] < np.finfo(np.float64).eps] = 0.
+            if beta_loss <= 1:
+                H[H < np.finfo(np.float64).eps] = 0.
 
-            # update H
-            if update_H:
-                H, A, B = _multiplicative_update_h(
-                    X[slice], W[slice], H, A, B, beta_loss,
-                    l1_reg_H, l2_reg_H, gamma, rho)
-
-                # These values will be recomputed since H changed
-                H_sum, HHt, XHt = None, None, None
-
-                # necessary for stability with beta_loss < 1
-                if beta_loss <= 1:
-                    H[H < np.finfo(np.float64).eps] = 0.
-
-            iter_offset += 1
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
-            error = _beta_divergence(X, W, H, beta_loss, square_root=True)
+            error = _beta_divergence(X[batch], W[batch], H,
+                                     beta_loss, square_root=True)
             if verbose:
                 iter_time = time.time()
                 print("Epoch %02d reached after %.3f seconds, error: %f" %
@@ -1230,7 +1243,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                                random_state=random_state)
     elif solver == 'mu':
         W, H, n_iter, iter_offset = _fit_multiplicative_update(
-            X, W, H, beta_loss, batch_size, max_iter,
+            X, W, H, beta_loss, batch_size, iter_offset, max_iter,
             tol, l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H, update_H,
             verbose, forget_factor
         )
