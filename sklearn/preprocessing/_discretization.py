@@ -138,7 +138,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.strategy = strategy
         self.dtype = dtype
 
-
     def fit(self, X, y=None):
         """
         Fit the estimator.
@@ -258,8 +257,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if isinstance(orig_bins, str):
             if orig_bins == 'auto':
                 # calculate number of bins with Sturges rule
-                orig_bins = np.maximum(int(np.ceil(np.log2(n_samples) + 1.)),
-                                       2)
+                orig_bins = max(int(np.ceil(np.log2(n_samples) + 1.)), 2)
             else:
                 raise ValueError(
                     f"{KBinsDiscretizer.__name__} received "
