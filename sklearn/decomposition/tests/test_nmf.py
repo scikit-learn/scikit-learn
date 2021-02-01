@@ -21,18 +21,20 @@ from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 
-@pytest.mark.parametrize(['Estimator', 'solver'],
-                         [[NMF, 'cd'], [NMF, 'mu'],
-                          [MiniBatchNMF, 'mu']])
+@pytest.mark.parametrize(['Estimator', 'solver', 'loss'],
+                         [[NMF, 'cd', 2], [NMF, 'mu', 2],
+                          [MiniBatchNMF, 'mu', 1]])
 @pytest.mark.parametrize('regularization',
                          [None, 'both', 'components', 'transformation'])
-def test_convergence_warning(Estimator, solver, regularization):
+def test_convergence_warning(Estimator, solver, loss, regularization):
     convergence_warning = ("Maximum number of iterations 1 reached. "
                            "Increase it to improve convergence.")
     A = np.ones((2, 2))
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
         Estimator(
-            solver=solver, regularization=regularization, max_iter=1
+            solver=solver, regularization=regularization,
+            max_iter=1, init=init, beta_loss=loss
         ).fit(A)
 
 
@@ -220,11 +222,11 @@ def test_n_components_greater_n_features(Estimator):
     Estimator(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
 
-@pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
-                         [[NMF, 'cd', 2], [NMF, 'mu', 2]])
+@pytest.mark.parametrize(['Estimator', 'solver'],
+                         [[NMF, 'cd'], [NMF, 'mu']])
 @pytest.mark.parametrize('regularization',
                          [None, 'both', 'components', 'transformation'])
-def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
+def test_nmf_sparse_input(Estimator, solver, regularization):
     # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
 
@@ -236,8 +238,7 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     init = 'nndsvda'  # FIXME : should be removed in 1.1
 
     est1 = Estimator(solver=solver, n_components=5, init=init,
-                     regularization=regularization, random_state=0,
-                     beta_loss=beta_loss)
+                     regularization=regularization, random_state=0)
     est2 = clone(est1)
 
     W1 = est1.fit_transform(A)
@@ -263,7 +264,7 @@ def test_nmf_sparse_input_minibatch(regularization):
 
     est1 = MiniBatchNMF(solver='mu', n_components=5, init=init,
                         regularization=regularization, random_state=0,
-                        beta_loss=1, batch_size=24)
+                        beta_loss=1, batch_size=A.shape[0])
     est2 = clone(est1)
 
     W1 = est1.fit_transform(A)
@@ -307,10 +308,10 @@ def test_non_negative_factorization_consistency(Estimator, init, beta_loss,
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    W_nmf, H, _ = non_negative_factorization(
+    W_nmf, H, _, _ = non_negative_factorization(
         A, init=init, solver=solver, beta_loss=beta_loss,
         regularization=regularization, random_state=1, tol=1e-2)
-    W_nmf_2, _, _ = non_negative_factorization(
+    W_nmf_2, _, _, _ = non_negative_factorization(
         A, H=H, update_H=False, init=init, solver=solver, beta_loss=beta_loss,
         regularization=regularization, random_state=1, tol=1e-2)
 
@@ -457,14 +458,14 @@ def test_nmf_multiplicative_update_sparse():
     for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
         # Reference with dense array X
         W, H = W0.copy(), H0.copy()
-        W1, H1, _ = non_negative_factorization(
+        W1, H1, _, _ = non_negative_factorization(
             X, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
             l1_ratio=l1_ratio, regularization='both', random_state=42)
 
         # Compare with sparse X
         W, H = W0.copy(), H0.copy()
-        W2, H2, _ = non_negative_factorization(
+        W2, H2, _, _ = non_negative_factorization(
             X_csr, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
             l1_ratio=l1_ratio, regularization='both', random_state=42)
@@ -476,7 +477,7 @@ def test_nmf_multiplicative_update_sparse():
         # behavior, but the results should be continuous w.r.t beta_loss
         beta_loss -= 1.e-5
         W, H = W0.copy(), H0.copy()
-        W3, H3, _ = non_negative_factorization(
+        W3, H3, _, _ = non_negative_factorization(
             X_csr, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
             l1_ratio=l1_ratio, regularization='both', random_state=42)
@@ -498,7 +499,7 @@ def test_nmf_negative_beta_loss():
     X_csr = sp.csr_matrix(X)
 
     def _assert_nmf_no_nan(X, beta_loss):
-        W, H, _ = non_negative_factorization(
+        W, H, _, _ = non_negative_factorization(
             X, init='random', n_components=n_components, solver='mu',
             beta_loss=beta_loss, random_state=0, max_iter=1000)
         assert not np.any(np.isnan(W))
@@ -595,7 +596,7 @@ def test_nmf_decreasing():
             previous_loss = None
             for _ in range(30):
                 # one more iteration starting from the previous results
-                W, H, _ = non_negative_factorization(
+                W, H, _, _ = non_negative_factorization(
                     X, W, H, beta_loss=beta_loss, init='custom',
                     n_components=n_components, max_iter=1, alpha=alpha,
                     solver=solver, tol=tol, l1_ratio=l1_ratio, verbose=0,
@@ -684,13 +685,13 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
-@pytest.mark.parametrize('batch_size', [32, 48])
+@pytest.mark.parametrize('batch_size', [1, 24, 32, 48])
 def test_nmf_close_minibatch_nmf(batch_size):
     # Test that the decomposition with standard and minibatch nmf
     # gives close results
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
-    max_iter = 8000
+    max_iter = 10000
     nmf = NMF(5, solver='mu', init='nndsvdar', random_state=0,
               max_iter=max_iter, beta_loss='kullback-leibler')
     mbnmf = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
