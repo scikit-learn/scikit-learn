@@ -917,7 +917,7 @@ class _BaseSparseCoding(TransformerMixin):
         if (hasattr(self, "alpha") and self.alpha != 1. and
                 self.transform_alpha is None):
             warnings.warn("By default transform_alpha will be equal to"
-                          "alpha instead of 1.0 starting from 1.2",
+                          "alpha instead of 1.0 starting from version 1.2",
                           FutureWarning)
             transform_alpha = 1.  # TODO change to self.alpha in 1.2
         else:
