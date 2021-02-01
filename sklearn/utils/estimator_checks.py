@@ -63,7 +63,7 @@ from ..datasets import (
     load_iris,
     make_blobs,
     make_multilabel_classification,
-    make_regression,
+    make_regression
 )
 
 REGRESSION_DATASET = None
@@ -645,6 +645,9 @@ def _set_checking_parameters(estimator):
 
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
+
+    if name in CROSS_DECOMPOSITION:
+        estimator.set_params(n_components=1)
 
 
 class _NotAnArray:
@@ -3122,9 +3125,11 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if 'warm_start' in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 100
-    X = rng.normal(loc=100, size=(n_samples, 2))
+    n_samples = 150
+    X = rng.normal(size=(n_samples, 8))
+    X = _enforce_estimator_tags_x(estimator, X)
     X = _pairwise_estimator_convert_X(X, estimator)
+
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
