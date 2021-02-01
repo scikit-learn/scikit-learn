@@ -15,7 +15,7 @@ from scipy import sparse as sp
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
-from ..utils.validation import check_array, check_X_y, check_is_fitted
+from ..utils.validation import check_array, check_X_y, check_is_fitted, column_or_1d
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import (check_classification_targets,
                                 _check_partial_fit_first_call)
@@ -100,6 +100,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
+        X, y = self._validate_data(X, y)
+        y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True)
 
     def partial_fit(self, X, y, classes=None):
