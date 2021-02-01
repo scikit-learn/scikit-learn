@@ -16,7 +16,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_array, column_or_1d
+from ..utils import check_random_state, column_or_1d
 from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
@@ -702,9 +702,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = check_array(
+        X = self._validate_data(
             X, accept_sparse=['csr', 'csc'], dtype=None,
-            force_all_finite=False
+            force_all_finite=False, reset=False
         )
 
         if self.n_features_ != X.shape[1]:
@@ -753,9 +753,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X = check_array(
+            X = self._validate_data(
                 X, accept_sparse=['csr', 'csc'], dtype=None,
-                force_all_finite=False
+                force_all_finite=False, reset=False
             )
 
             if self.n_features_ != X.shape[1]:
@@ -811,9 +811,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = check_array(
+        X = self._validate_data(
             X, accept_sparse=['csr', 'csc'], dtype=None,
-            force_all_finite=False
+            force_all_finite=False, reset=False
         )
 
         if self.n_features_ != X.shape[1]:
@@ -1024,9 +1024,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = check_array(
+        X = self._validate_data(
             X, accept_sparse=['csr', 'csc'], dtype=None,
-            force_all_finite=False
+            force_all_finite=False, reset=False
         )
 
         # Parallel loop
