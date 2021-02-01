@@ -786,43 +786,39 @@ div.admonition p.admonition-title + p, div.deprecated p {
   display: inline;
 }
 
-div.admonition, div.deprecated {
+div.admonition, div.deprecated,
+div.versionchanged, div.versionadded{
+  margin-top: 0.5rem;
   padding: 0.5rem;
   border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
   border: 1px solid #ddd;
-  margin-bottom: 1rem;
 }
 
 div.admonition {
   background-color: #eee;
 }
 
-div.admonition p, div.admonition dl, div.admonition dd {
+div.admonition p, div.admonition dl, div.admonition dd,
+div.deprecated p, div.versionchanged p, div.versionadded p{
   margin-bottom: 0
 }
 
 div.deprecated {
   color: #b94a48;
   background-color: #F3E5E5;
-  border: 1px solid #eed3d7;
+  border-color: #eed3d7;
 }
 
 div.seealso {
   background-color: #FFFBE8;
-  border: 1px solid #fbeed5;
+  border-color: #fbeed5;
   color: #AF8A4B;
 }
 
 div.versionchanged {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
   background-color: #FFFBE8;
-  border: 1px solid #fbeed5;
-  border-radius: 0.5rem;
-}
-
-div.versionchanged p {
-  margin-bottom: 0;
+  border-color: #fbeed5;
 }
 
 dt.label {
