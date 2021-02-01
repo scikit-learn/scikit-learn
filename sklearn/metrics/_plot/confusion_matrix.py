@@ -49,7 +49,10 @@ class ConfusionMatrixDisplay:
     --------
     confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
         classification.
-    plot_confusion_matrix : Plot Confusion Matrix.
+    ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
+        given an estimator, the data, and the label.
+    ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
+        given the true and predicted labels.
 
     Examples
     --------

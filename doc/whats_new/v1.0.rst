@@ -56,6 +56,9 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
+- |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
+  deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -98,6 +101,10 @@ Changelog
 - |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
+
+- |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
+  sample_weight object is not modified anymore. :pr:`19182` by
+  :user:`Yosuke KOBAYASHI <m7142yosuke>`.
 
 - |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
   is deprecated and will be removed in 1.2.
