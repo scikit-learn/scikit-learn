@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..linear_model import ridge_regression
@@ -54,10 +54,12 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         for more details.
 
     U_init : ndarray of shape (n_samples, n_components), default=None
-        Initial values for the loadings for warm restart scenarios.
+        Initial values for the loadings for warm restart scenarios. Only used
+        if `U_init` and `V_init` are not None.
 
     V_init : ndarray of shape (n_components, n_features), default=None
-        Initial values for the components for warm restart scenarios.
+        Initial values for the components for warm restart scenarios. Only used
+        if `U_init` and `V_init` are not None.
 
     verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.
@@ -103,7 +105,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     >>> np.mean(transformer.components_ == 0)
     0.9666...
 
-    See also
+    See Also
     --------
     PCA
     MiniBatchSparsePCA
@@ -197,7 +199,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         X = X - self.mean_
 
         U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
@@ -296,7 +298,7 @@ class MiniBatchSparsePCA(SparsePCA):
     >>> np.mean(transformer.components_ == 0)
     0.94
 
-    See also
+    See Also
     --------
     PCA
     SparsePCA

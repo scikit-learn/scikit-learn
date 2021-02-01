@@ -22,6 +22,7 @@ from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
@@ -54,6 +55,8 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
@@ -110,6 +113,8 @@ def test_as_float_array_nan(X):
     assert_allclose_dense_sparse(X_converted, X)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_np_matrix():
     # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
@@ -336,18 +341,41 @@ def test_check_array():
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
-    # deprecation warning if string-like array with dtype="numeric"
-    expected_warn_regex = r"converted to decimal numbers if dtype='numeric'"
-    X_str = [['11', '12'], ['13', 'xx']]
-    for X in [X_str, np.array(X_str, dtype='U'), np.array(X_str, dtype='S')]:
-        with pytest.warns(FutureWarning, match=expected_warn_regex):
-            check_array(X, dtype="numeric")
 
-    # deprecation warning if byte-like array with dtype="numeric"
-    X_bytes = [[b'a', b'b'], [b'c', b'd']]
-    for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
-        with pytest.warns(FutureWarning, match=expected_warn_regex):
-            check_array(X, dtype="numeric")
+# TODO: Check for error in 1.1 when implicit conversation is removed
+@pytest.mark.parametrize("X", [
+   [['1', '2'], ['3', '4']],
+   np.array([['1', '2'], ['3', '4']], dtype='U'),
+   np.array([['1', '2'], ['3', '4']], dtype='S'),
+   [[b'1', b'2'], [b'3', b'4']],
+   np.array([[b'1', b'2'], [b'3', b'4']], dtype='V1')
+])
+def test_check_array_numeric_warns(X):
+    """Test that check_array warns when it converts a bytes/string into a
+    float."""
+    expected_msg = (r"Arrays of bytes/strings is being converted to decimal .*"
+                    r"deprecated in 0.24 and will be removed in 1.1")
+    with pytest.warns(FutureWarning, match=expected_msg):
+        check_array(X, dtype="numeric")
+
+
+# TODO: remove in 1.1
+@ignore_warnings(category=FutureWarning)
+@pytest.mark.parametrize("X", [
+   [['11', '12'], ['13', 'xx']],
+   np.array([['11', '12'], ['13', 'xx']], dtype='U'),
+   np.array([['11', '12'], ['13', 'xx']], dtype='S'),
+   [[b'a', b'b'], [b'c', b'd']],
+   np.array([[b'a', b'b'], [b'c', b'd']], dtype='V1')
+])
+def test_check_array_dtype_numeric_errors(X):
+    """Error when string-ike array can not be converted"""
+    if (np_version < parse_version("1.14")
+            and hasattr(X, "dtype") and X.dtype.kind == "V"):
+        pytest.skip("old numpy would convert V dtype into float silently")
+    expected_warn_msg = "Unable to convert array of bytes/strings"
+    with pytest.raises(ValueError, match=expected_warn_msg):
+        check_array(X, dtype="numeric")
 
 
 @pytest.mark.parametrize("pd_dtype", ["Int8", "Int16", "UInt8", "UInt16"])
@@ -381,16 +409,20 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
         check_array(X, force_all_finite=True)
 
 
+# TODO: remove test in 1.1 once this behavior is deprecated
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
     # get converted
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
     X_df = MockDataFrame(X)
-    assert check_array(X_df).dtype.kind == "f"
-    assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
+    with pytest.warns(FutureWarning):
+        assert check_array(X_df).dtype.kind == "f"
+    with pytest.warns(FutureWarning):
+        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
     # smoke-test against dataframes with column named "dtype"
     X_df.dtype = "Hans"
-    assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
+    with pytest.warns(FutureWarning):
+        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
 
 
 def test_check_array_pandas_dtype_casting():
@@ -1140,6 +1172,16 @@ def test_deprecate_positional_args_warns_for_function():
         f3(1, 2)
 
 
+def test_deprecate_positional_args_warns_for_function_version():
+    @_deprecate_positional_args(version="1.1")
+    def f1(a, *, b):
+        pass
+
+    with pytest.warns(FutureWarning,
+                      match=r"From version 1.1 passing these as positional"):
+        f1(1, 2)
+
+
 def test_deprecate_positional_args_warns_for_class():
 
     class A1:
@@ -1252,27 +1294,27 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 
 
 @pytest.mark.parametrize(
-    "ntype1, ntype2, expected_dtype",
+    "ntype1, ntype2, expected_subtype",
     [
-        ("longfloat", "longdouble", "float128"),
-        ("float16", "half", "float16"),
-        ("single", "float32", "float32"),
-        ("double", "float64", "float64"),
-        ("int8", "byte", "int8"),
-        ("short", "int16", "int16"),
-        ("intc", "int32", "int32"),
-        ("int0", "long", "int64"),
-        ("int", "long", "int64"),
-        ("int64", "longlong", "int64"),
-        ("int_", "intp", "int64"),
-        ("ubyte", "uint8", "uint8"),
-        ("uint16", "ushort", "uint16"),
-        ("uintc", "uint32", "uint32"),
-        ("uint", "uint64", "uint64"),
-        ("uintp", "ulonglong", "uint64"),
+        ("longfloat", "longdouble", np.floating),
+        ("float16", "half", np.floating),
+        ("single", "float32", np.floating),
+        ("double", "float64", np.floating),
+        ("int8", "byte", np.integer),
+        ("short", "int16", np.integer),
+        ("intc", "int32", np.integer),
+        ("int0", "long", np.integer),
+        ("int", "long", np.integer),
+        ("int64", "longlong", np.integer),
+        ("int_", "intp", np.integer),
+        ("ubyte", "uint8", np.unsignedinteger),
+        ("uint16", "ushort", np.unsignedinteger),
+        ("uintc", "uint32", np.unsignedinteger),
+        ("uint", "uint64", np.unsignedinteger),
+        ("uintp", "ulonglong", np.unsignedinteger)
     ]
 )
-def test_check_pandas_sparse_valid(ntype1, ntype2, expected_dtype):
+def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
     pd = pytest.importorskip("pandas", minversion="0.25.0")
@@ -1281,4 +1323,4 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_dtype):
                        'col2': pd.arrays.SparseArray([1, 0, 1],
                                                      dtype=ntype2)})
     arr = check_array(df, accept_sparse=['csr', 'csc'])
-    assert arr.dtype.name == expected_dtype
+    assert np.issubdtype(arr.dtype, expected_subtype)

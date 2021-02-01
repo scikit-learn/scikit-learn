@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
@@ -25,6 +25,7 @@ from ..utils import check_random_state
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
@@ -139,7 +140,7 @@ def lars_path(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lars_path_gram
     lasso_path
@@ -274,7 +275,7 @@ def lars_path_gram(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -417,7 +418,7 @@ def _lars_path_solver(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lasso_path
     LassoLars
@@ -852,27 +853,33 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
+        .. versionadded:: 0.23
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
 
+        .. versionadded:: 0.23
+
     Attributes
     ----------
-    alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of \
-            shape (n_targets,)
-        Maximum of covariances (in absolute value) at each iteration. \
-        ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
-        whichever is smaller.
+    alphas_ : array-like of shape (n_alphas + 1,) or list of such arrays
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        is smaller. If this is a list of array-like, the length of the outer
+        list is `n_targets`.
 
-    active_ : list of shape (n_alphas,) or list of thereof of shape \
-            (n_targets,)
+    active_ : list of shape (n_alphas,) or list of such lists
         Indices of active variables at the end of the path.
+        If this is a list of list, the length of the outer list is `n_targets`.
 
-    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list of \
-            thereof of shape (n_targets,)
+    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list \
+            of such arrays
         The varying values of the coefficients along the path. It is not
-        present if the ``fit_path`` parameter is ``False``.
+        present if the ``fit_path`` parameter is ``False``. If this is a list
+        of array-like, the length of the outer list is `n_targets`.
 
     coef_ : array-like of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
@@ -893,7 +900,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> print(reg.coef_)
     [ 0. -1.11...]
 
-    See also
+    See Also
     --------
     lars_path, LarsCV
     sklearn.decomposition.sparse_encode
@@ -1104,28 +1111,34 @@ class LassoLars(Lars):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
+        .. versionadded:: 0.23
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
 
+        .. versionadded:: 0.23
+
     Attributes
     ----------
-    alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of shape \
-            (n_targets,)
-        Maximum of covariances (in absolute value) at each iteration. \
-        ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
-        nodes in the path with correlation greater than ``alpha``, whichever \
-        is smaller.
+    alphas_ : array-like of shape (n_alphas + 1,) or list of such arrays
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        is smaller. If this is a list of array-like, the length of the outer
+        list is `n_targets`.
 
-    active_ : list of length n_alphas or list of thereof of shape (n_targets,)
+    active_ : list of length n_alphas or list of such lists
         Indices of active variables at the end of the path.
+        If this is a list of list, the length of the outer list is `n_targets`.
 
-    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list of \
-            thereof of shape (n_targets,)
+    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list \
+            of such arrays
         If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
-        present if the ``fit_path`` parameter is ``False``.
+        present if the ``fit_path`` parameter is ``False``. If this is a list
+        of array-like, the length of the outer list is `n_targets`.
 
     coef_ : array-like of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
@@ -1146,7 +1159,7 @@ class LassoLars(Lars):
     >>> print(reg.coef_)
     [ 0.         -0.963257...]
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1372,8 +1385,9 @@ class LarsCV(Lars):
 
     Attributes
     ----------
-    active_ : list of length n_alphas or list of thereof of shape (n_targets,)
+    active_ : list of length n_alphas or list of such lists
         Indices of active variables at the end of the path.
+        If this is a list of lists, the outer list length is `n_targets`.
 
     coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
@@ -1413,7 +1427,7 @@ class LarsCV(Lars):
     >>> reg.predict(X[:1,])
     array([154.0842...])
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LassoLarsCV
     """
@@ -1660,7 +1674,7 @@ class LassoLarsCV(LarsCV):
     features are selected compared to the total number, for instance if
     there are very few samples compared to the number of features.
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LarsCV, LassoCV
     """
@@ -1765,6 +1779,12 @@ class LassoLarsIC(LassoLars):
     alpha_ : float
         the alpha parameter chosen by the information criterion
 
+    alphas_ : array-like of shape (n_alphas + 1,) or list of such arrays
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        is smaller. If a list, it will be of length `n_targets`.
+
     n_iter_ : int
         number of iterations run by lars_path to find the grid of
         alphas.
@@ -1796,7 +1816,7 @@ class LassoLarsIC(LassoLars):
     https://en.wikipedia.org/wiki/Akaike_information_criterion
     https://en.wikipedia.org/wiki/Bayesian_information_criterion
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LassoLarsCV
     """
@@ -1845,13 +1865,12 @@ class LassoLarsIC(LassoLars):
 
         X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy_X)
-        max_iter = self.max_iter
 
         Gram = self.precompute
 
         alphas_, _, coef_path_, self.n_iter_ = lars_path(
             X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
-            method='lasso', verbose=self.verbose, max_iter=max_iter,
+            method='lasso', verbose=self.verbose, max_iter=self.max_iter,
             eps=self.eps, return_n_iter=True, positive=self.positive)
 
         n_samples = X.shape[0]

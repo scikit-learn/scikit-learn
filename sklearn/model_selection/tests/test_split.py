@@ -43,6 +43,7 @@ from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _build_repr
+from sklearn.model_selection._split import _yields_constant_splits
 
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
@@ -1619,3 +1620,41 @@ def test_random_state_shuffle_false(Klass):
     with pytest.raises(ValueError,
                        match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)
+
+
+@pytest.mark.parametrize('cv, expected', [
+    (KFold(), True),
+    (KFold(shuffle=True, random_state=123), True),
+    (StratifiedKFold(), True),
+    (StratifiedKFold(shuffle=True, random_state=123), True),
+    (RepeatedKFold(random_state=123), True),
+    (RepeatedStratifiedKFold(random_state=123), True),
+    (ShuffleSplit(random_state=123), True),
+    (GroupShuffleSplit(random_state=123), True),
+    (StratifiedShuffleSplit(random_state=123), True),
+    (GroupKFold(), True),
+    (TimeSeriesSplit(), True),
+    (LeaveOneOut(), True),
+    (LeaveOneGroupOut(), True),
+    (LeavePGroupsOut(n_groups=2), True),
+    (LeavePOut(p=2), True),
+
+    (KFold(shuffle=True, random_state=None), False),
+    (KFold(shuffle=True, random_state=None), False),
+    (StratifiedKFold(shuffle=True, random_state=np.random.RandomState(0)),
+     False),
+    (StratifiedKFold(shuffle=True, random_state=np.random.RandomState(0)),
+     False),
+    (RepeatedKFold(random_state=None), False),
+    (RepeatedKFold(random_state=np.random.RandomState(0)), False),
+    (RepeatedStratifiedKFold(random_state=None), False),
+    (RepeatedStratifiedKFold(random_state=np.random.RandomState(0)), False),
+    (ShuffleSplit(random_state=None), False),
+    (ShuffleSplit(random_state=np.random.RandomState(0)), False),
+    (GroupShuffleSplit(random_state=None), False),
+    (GroupShuffleSplit(random_state=np.random.RandomState(0)), False),
+    (StratifiedShuffleSplit(random_state=None), False),
+    (StratifiedShuffleSplit(random_state=np.random.RandomState(0)), False),
+])
+def test_yields_constant_splits(cv, expected):
+    assert _yields_constant_splits(cv) == expected

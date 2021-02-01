@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -391,8 +392,11 @@ def test_logistic_regression_path_convergence_fail():
     # advice (scaling the data) and to the logistic regression specific
     # documentation that includes hints on the solver configuration.
     with pytest.warns(ConvergenceWarning) as record:
-        _logistic_regression_path(
-            X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            _logistic_regression_path(
+                X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
 
     assert len(record) == 1
     warn_msg = record[0].message.args[0]
@@ -1865,3 +1869,23 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     assert_allclose(clf.coef_.sum(axis=0), 0, atol=1e-10)
     if fit_intercept:
         clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-15)
+
+
+@pytest.mark.parametrize("multi_class", ['ovr', 'multinomial', 'auto'])
+@pytest.mark.parametrize("class_weight", [
+    {0: 1.0, 1: 10.0, 2: 1.0}, 'balanced'
+])
+def test_sample_weight_not_modified(multi_class, class_weight):
+    X, y = load_iris(return_X_y=True)
+    n_features = len(X)
+    W = np.ones(n_features)
+    W[:n_features // 2] = 2
+
+    expected = W.copy()
+
+    clf = LogisticRegression(random_state=0,
+                             class_weight=class_weight,
+                             max_iter=200,
+                             multi_class=multi_class)
+    clf.fit(X, y, sample_weight=W)
+    assert_allclose(expected, W)

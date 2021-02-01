@@ -711,12 +711,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         .. versionadded:: 0.17
 
-    See also
+    See Also
     --------
-    RidgeClassifier : Ridge classifier
-    RidgeCV : Ridge regression with built-in cross validation
+    RidgeClassifier : Ridge classifier.
+    RidgeCV : Ridge regression with built-in cross validation.
     :class:`~sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
-        combines ridge regression with the kernel trick
+        combines ridge regression with the kernel trick.
 
     Examples
     --------
@@ -1466,7 +1466,7 @@ class _RidgeGCV(LinearModel):
 
         if np.any(self.alphas <= 0):
             raise ValueError(
-                "alphas must be positive. Got {} containing some "
+                "alphas must be strictly positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
@@ -1670,8 +1670,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    By default, it performs Leave-One-Out Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation.
+    By default, it performs efficient Leave-One-Out Cross-Validation.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
 
@@ -1749,6 +1748,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         fitting, the `alpha_` attribute will contain a value for each target.
         When set to `False`, a single alpha is used for all targets.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     cv_values_ : ndarray of shape (n_samples, n_alphas) or \
@@ -1774,6 +1775,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Score of base estimator with best alpha, or, if
         ``alpha_per_target=True``, a score for each target.
 
+        .. versionadded:: 0.23
+
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
@@ -1783,11 +1786,11 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.5166...
 
-    See also
+    See Also
     --------
-    Ridge : Ridge regression
-    RidgeClassifier : Ridge classifier
-    RidgeClassifierCV : Ridge classifier with built-in cross validation
+    Ridge : Ridge regression.
+    RidgeClassifier : Ridge classifier.
+    RidgeClassifierCV : Ridge classifier with built-in cross validation.
     """
 
 
@@ -1880,6 +1883,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     best_score_ : float
         Score of base estimator with best alpha.
 
+        .. versionadded:: 0.23
+
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
@@ -1892,11 +1897,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.9630...
 
-    See also
+    See Also
     --------
-    Ridge : Ridge regression
-    RidgeClassifier : Ridge classifier
-    RidgeCV : Ridge regression with built-in cross validation
+    Ridge : Ridge regression.
+    RidgeClassifier : Ridge classifier.
+    RidgeCV : Ridge regression with built-in cross validation.
 
     Notes
     -----
