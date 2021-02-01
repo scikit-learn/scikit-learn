@@ -14,7 +14,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.fixes import loguniform
-from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import linspace, parse_version, np_version
 
 
@@ -85,11 +84,6 @@ def test_loguniform(low, high, base):
         loguniform(base ** low, base ** high).rvs(random_state=0)
         == loguniform(base ** low, base ** high).rvs(random_state=0)
     )
-
-
-def test_masked_array_deprecated():  # TODO: remove in 1.0
-    with pytest.warns(FutureWarning, match='is deprecated'):
-        MaskedArray()
 
 
 def test_linspace():
