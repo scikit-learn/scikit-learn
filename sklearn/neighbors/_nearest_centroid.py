@@ -100,7 +100,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(X, y) # Comment to delete
         y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True)
 
