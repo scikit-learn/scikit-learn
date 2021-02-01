@@ -317,7 +317,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         check_is_fitted(self)
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -379,7 +379,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         space.
         """
         check_is_fitted(self)
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -984,7 +984,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
-        X = check_array(X, dtype=np.float64)
+        X = self._validate_data(X, dtype=np.float64, reset=False)
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
