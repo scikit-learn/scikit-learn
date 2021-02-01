@@ -1869,3 +1869,23 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     assert_allclose(clf.coef_.sum(axis=0), 0, atol=1e-10)
     if fit_intercept:
         clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-15)
+
+
+@pytest.mark.parametrize("multi_class", ['ovr', 'multinomial', 'auto'])
+@pytest.mark.parametrize("class_weight", [
+    {0: 1.0, 1: 10.0, 2: 1.0}, 'balanced'
+])
+def test_sample_weight_not_modified(multi_class, class_weight):
+    X, y = load_iris(return_X_y=True)
+    n_features = len(X)
+    W = np.ones(n_features)
+    W[:n_features // 2] = 2
+
+    expected = W.copy()
+
+    clf = LogisticRegression(random_state=0,
+                             class_weight=class_weight,
+                             max_iter=200,
+                             multi_class=multi_class)
+    clf.fit(X, y, sample_weight=W)
+    assert_allclose(expected, W)
