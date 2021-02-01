@@ -774,7 +774,6 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
     if gamma != 1.:
         H **= 1. / gamma
 
-
     if A is not None and B is not None:
         A *= rho
         B *= rho

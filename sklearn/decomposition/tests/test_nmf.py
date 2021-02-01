@@ -2,7 +2,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from scipy import linalg
-from sklearn.model_selection import train_test_split
 from sklearn.decomposition import NMF, MiniBatchNMF
 from sklearn.decomposition import non_negative_factorization
 from sklearn.decomposition import _nmf as nmf  # For testing internals
@@ -249,6 +248,7 @@ def test_nmf_sparse_input(Estimator, solver, regularization):
     assert_array_almost_equal(W1, W2)
     assert_array_almost_equal(H1, H2)
 
+
 @pytest.mark.parametrize('regularization',
                          [None, 'both', 'components', 'transformation'])
 def test_nmf_sparse_input_minibatch(regularization):
@@ -274,6 +274,7 @@ def test_nmf_sparse_input_minibatch(regularization):
 
     assert_array_almost_equal(W1, W2)
     assert_array_almost_equal(H1, H2)
+
 
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
                          [[NMF, 'cd', 2], [NMF, 'mu', 2],
