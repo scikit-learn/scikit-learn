@@ -181,6 +181,26 @@ def test_haversine_metric():
                               np.sin(0.5 * D2) ** 2)
 
 
+def test_arccos_metric():
+    arccos = DistanceMetric.get_metric('arccos')
+    def arccos_slow(x1, x2):
+        inprod, ss1, ss2 = 0, 0, 0
+        for x1_, x2_ in zip(x1, x2):
+            inprod += x1_ * x2_
+            ss1 += x1_ * x1_
+            ss2 += x2_ * x2_
+        return np.arccos(inprod / np.sqrt(ss1 * ss2)) / np.pi
+
+    a = np.random.random_sample((10, 5))
+    b = arccos.pairwise(a)
+    c = np.zeros_like(b)
+    for i, x1 in enumerate(a):
+        for j, x2 in enumerate(a):
+            c[i, j] = arccos_slow(x1, x2)
+
+    assert_array_almost_equal(b, c)
+
+
 def test_pyfunc_metric():
     X = np.random.random((10, 3))
 

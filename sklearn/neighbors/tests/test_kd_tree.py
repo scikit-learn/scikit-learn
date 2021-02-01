@@ -8,6 +8,7 @@ DIMENSION = 3
 METRICS = {'euclidean': {},
            'manhattan': {},
            'chebyshev': {},
+           'arccos': {},
            'minkowski': dict(p=3)}
 
 
