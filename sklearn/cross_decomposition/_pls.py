@@ -490,11 +490,6 @@ class PLSRegression(_PLS):
     scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
     max_iter : int, default=500
         The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
@@ -542,8 +537,7 @@ class PLSRegression(_PLS):
         `Y = X @ coef_`.
 
     n_iter_ : list of shape (n_components,)
-        Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        Number of iterations of the power method for each component.
 
     Examples
     --------
