@@ -11,7 +11,7 @@ class KNeighborsClassifierBenchmark(Predictor, Estimator, Benchmark):
     """
 
     param_names = ['algorithm', 'dimension', 'n_jobs']
-    params = (['brute', 'kd_tree', 'ball_tree'],
+    params = (['ball_tree'],
               ['low', 'high'],
               Benchmark.n_jobs_vals)
 
@@ -34,6 +34,7 @@ class KNeighborsClassifierBenchmark(Predictor, Estimator, Benchmark):
         algorithm, dimension, n_jobs = params
 
         estimator = KNeighborsClassifier(algorithm=algorithm,
+                                         metric='arccos',
                                          n_jobs=n_jobs)
 
         return estimator
