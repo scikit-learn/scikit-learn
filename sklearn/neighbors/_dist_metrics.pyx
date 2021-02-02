@@ -44,6 +44,12 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 
+# ddot from CBLAS (cf sklearn/linear_model/cd_fast.pyx:102-117)
+cdef extern from "cblas.h":
+    double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY
+                             ) nogil
+
+
 # some handy constants
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin, acos, M_PI
 cdef DTYPE_t INF = np.inf
@@ -1086,12 +1092,9 @@ cdef class HaversineDistance(DistanceMetric):
 
 cdef class ArccosDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) nogil except -1:
-        cdef DTYPE_t d = 0, norm1 = 0, norm2 = 0
-        cdef np.intp_t j
-        for j in range(size):
-            d += x1[j] * x2[j]
-            norm1 += x1[j] * x1[j]
-            norm2 += x2[j] * x2[j]
+        cdef DTYPE_t d = ddot(size, x1, 1, x2, 1)
+        cdef DTYPE_t norm1 = ddot(size, x1, 1, x1, 1)
+        cdef DTYPE_t norm2 = ddot(size, x2, 1, x2, 1)
         return acos(d / sqrt(norm1 * norm2)) / M_PI
 
 
