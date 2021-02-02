@@ -19,8 +19,7 @@ np.import_array()
 
 
 def min_pos(np.ndarray X):
-    """
-    Find the minimum value of an array over positive values
+    """Find the minimum value of an array over positive values
 
     Returns the maximum representable value of the input dtype if none of the
     values are positive.
