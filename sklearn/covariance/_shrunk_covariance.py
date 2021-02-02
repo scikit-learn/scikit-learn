@@ -136,7 +136,7 @@ class ShrunkCovariance(EmpiricalCovariance):
             and n_features is the number of features.
 
         y: Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -176,7 +176,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         If False, data will be centered before computation.
 
     block_size : int, default=1000
-        Size of the blocks into which the covariance matrix will be split.
+        Size of blocks into which the covariance matrix will be split.
 
     Returns
     -------
@@ -271,7 +271,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
         If False, data will be centered before computation.
 
     block_size : int, default=1000
-        Size of the blocks into which the covariance matrix will be split.
+        Size of blocks into which the covariance matrix will be split.
         This is purely a memory optimization and does not affect results.
 
     Returns
@@ -339,7 +339,7 @@ class LedoitWolf(EmpiricalCovariance):
         If False (default), data will be centered before computation.
 
     block_size : int, default=1000
-        Size of the blocks into which the covariance matrix will be split
+        Size of blocks into which the covariance matrix will be split
         during its Ledoit-Wolf estimation. This is purely a memory
         optimization and does not affect results.
 
@@ -408,7 +408,7 @@ class LedoitWolf(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         y : Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -584,7 +584,7 @@ class OAS(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         y : Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------

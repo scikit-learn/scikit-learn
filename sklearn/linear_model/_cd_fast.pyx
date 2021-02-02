@@ -622,8 +622,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
 def enet_coordinate_descent_multi_task(
         floating[::1, :] W, floating l1_reg, floating l2_reg,
-        np.ndarray[floating, ndim=2, mode='fortran'] X,  # TODO: use views in 0.24
-        np.ndarray[floating, ndim=2, mode='fortran'] Y,
+        np.ndarray[floating, ndim=2, mode='fortran'] X,  # TODO: use views with Cython 3.0
+        np.ndarray[floating, ndim=2, mode='fortran'] Y,  # hopefully with skl 1.0
         int max_iter, floating tol, object rng, bint random=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression

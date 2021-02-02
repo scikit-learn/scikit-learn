@@ -86,7 +86,7 @@ def _generalized_average(U, V, average_method):
 
 @_deprecate_positional_args
 def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
-                       dtype=np.int):
+                       dtype=np.int64):
     """Build a contingency matrix describing the relationship between labels.
 
     Parameters
@@ -108,7 +108,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
 
         .. versionadded:: 0.18
 
-    dtype : numeric type, default=np.int
+    dtype : numeric type, default=np.int64
         Output dtype. Ignored if `eps` is not `None`.
 
         .. versionadded:: 0.24
@@ -795,6 +795,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
+    mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
     return np.clip(mi.sum(), 0.0, None)
 
 

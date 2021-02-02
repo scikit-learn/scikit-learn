@@ -1,9 +1,8 @@
 import os
 from os.path import exists
 from os.path import join
+from os import environ
 import warnings
-
-import numpy as np
 
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
@@ -50,6 +49,12 @@ def setup_loading_other_datasets():
         raise SkipTest("Skipping loading_other_datasets.rst, "
                        "pandas not installed")
 
+    # checks SKLEARN_SKIP_NETWORK_TESTS to see if test should run
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", '1') == "0"
+    if not run_network_tests:
+        raise SkipTest("Skipping loading_other_datasets.rst, tests can be "
+                       "enabled by settting SKLEARN_SKIP_NETWORK_TESTS=0")
+
 
 def setup_compose():
     try:
@@ -70,6 +75,13 @@ def setup_grid_search():
         import pandas  # noqa
     except ImportError:
         raise SkipTest("Skipping grid_search.rst, pandas not installed")
+
+
+def setup_preprocessing():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping preprocessing.rst, pandas not installed")
 
 
 def setup_unsupervised_learning():
@@ -105,5 +117,7 @@ def pytest_runtest_setup(item):
         setup_impute()
     elif fname.endswith('modules/grid_search.rst'):
         setup_grid_search()
+    elif fname.endswith('modules/preprocessing.rst'):
+        setup_preprocessing()
     elif fname.endswith('statistical_inference/unsupervised_learning.rst'):
         setup_unsupervised_learning()

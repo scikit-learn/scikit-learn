@@ -773,17 +773,29 @@ def test_vectorizer_inverse_transform(Vectorizer):
     vectorizer = Vectorizer()
     transformed_data = vectorizer.fit_transform(data)
     inversed_data = vectorizer.inverse_transform(transformed_data)
+    assert isinstance(inversed_data, list)
+
     analyze = vectorizer.build_analyzer()
     for doc, inversed_terms in zip(data, inversed_data):
         terms = np.sort(np.unique(analyze(doc)))
         inversed_terms = np.sort(np.unique(inversed_terms))
         assert_array_equal(terms, inversed_terms)
 
-    # Test that inverse_transform also works with numpy arrays
-    transformed_data = transformed_data.toarray()
-    inversed_data2 = vectorizer.inverse_transform(transformed_data)
+    assert sparse.issparse(transformed_data)
+    assert transformed_data.format == "csr"
+
+    # Test that inverse_transform also works with numpy arrays and
+    # scipy
+    transformed_data2 = transformed_data.toarray()
+    inversed_data2 = vectorizer.inverse_transform(transformed_data2)
     for terms, terms2 in zip(inversed_data, inversed_data2):
         assert_array_equal(np.sort(terms), np.sort(terms2))
+
+    # Check that inverse_transform also works on non CSR sparse data:
+    transformed_data3 = transformed_data.tocsc()
+    inversed_data3 = vectorizer.inverse_transform(transformed_data3)
+    for terms, terms3 in zip(inversed_data, inversed_data3):
+        assert_array_equal(np.sort(terms), np.sort(terms3))
 
 
 def test_count_vectorizer_pipeline_grid_selection():
@@ -1385,3 +1397,11 @@ def test_tie_breaking_sample_order_invariance():
     vocab1 = vec.fit(['hello', 'world']).vocabulary_
     vocab2 = vec.fit(['world', 'hello']).vocabulary_
     assert vocab1 == vocab2
+
+
+@fails_if_pypy
+def test_nonnegative_hashing_vectorizer_result_indices():
+    # add test for pr 19035
+    hashing = HashingVectorizer(n_features=1000000, ngram_range=(2, 3))
+    indices = hashing.transform(['22pcs efuture']).indices
+    assert indices[0] >= 0

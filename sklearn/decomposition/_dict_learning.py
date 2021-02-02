@@ -6,6 +6,7 @@
 import time
 import sys
 import itertools
+import warnings
 
 from math import ceil
 
@@ -487,10 +488,12 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         for more details.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial value for the dictionary for warm restart scenarios.
+        Initial value for the dictionary for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
 
     code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the sparse code for warm restart scenarios.
+        Initial value for the sparse code for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
 
     callback : callable, default=None
         Callable that gets invoked every five iterations
@@ -909,10 +912,21 @@ class _BaseSparseCoding(TransformerMixin):
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
+        # transform_alpha has to be changed in _transform
+        # this is done for consistency with the value of alpha
+        if (hasattr(self, "alpha") and self.alpha != 1. and
+                self.transform_alpha is None):
+            warnings.warn("By default transform_alpha will be equal to"
+                          "alpha instead of 1.0 starting from version 1.2",
+                          FutureWarning)
+            transform_alpha = 1.  # TODO change to self.alpha in 1.2
+        else:
+            transform_alpha = self.transform_alpha
+
         code = sparse_encode(
             X, dictionary, algorithm=self.transform_algorithm,
             n_nonzero_coefs=self.transform_n_nonzero_coefs,
-            alpha=self.transform_alpha, max_iter=self.transform_max_iter,
+            alpha=transform_alpha, max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs, positive=self.positive_code)
 
         if self.split_sign:
@@ -1024,8 +1038,8 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         The unchanged dictionary atoms.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
-           Use `dictionary` instead.
+           This attribute is deprecated in 0.24 and will be removed in
+           1.1 (renaming of 0.26). Use `dictionary` instead.
 
     Examples
     --------
@@ -1089,8 +1103,8 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return self
 
     @deprecated("The attribute 'components_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 0.26. Use the "
-                "'dictionary' instead.")
+                "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use "
+                "the 'dictionary' instead.")
     @property
     def components_(self):
         return self.dictionary
@@ -1156,10 +1170,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     fit_algorithm : {'lars', 'cd'}, default='lars'
         * `'lars'`: uses the least angle regression method to solve the lasso
-           problem (`linear_model.lars_path`);
+          problem (:func:`~sklearn.linear_model.lars_path`);
         * `'cd'`: uses the coordinate descent method to compute the
-          Lasso solution (`linear_model.Lasso`). Lars will be faster if
-          the estimated components are sparse.
+          Lasso solution (:class:`~sklearn.linear_model.Lasso`). Lars will be
+          faster if the estimated components are sparse.
 
         .. versionadded:: 0.17
            *cd* coordinate descent method to improve speed.
@@ -1169,11 +1183,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Algorithm used to transform the data:
 
         - `'lars'`: uses the least angle regression method
-          (`linear_model.lars_path`);
+          (:func:`~sklearn.linear_model.lars_path`);
         - `'lasso_lars'`: uses Lars to compute the Lasso solution.
         - `'lasso_cd'`: uses the coordinate descent method to compute the
-          Lasso solution (`linear_model.Lasso`). `'lasso_lars'` will be faster
-          if the estimated components are sparse.
+          Lasso solution (:class:`~sklearn.linear_model.Lasso`). `'lasso_lars'`
+          will be faster if the estimated components are sparse.
         - `'omp'`: uses orthogonal matching pursuit to estimate the sparse
           solution.
         - `'threshold'`: squashes to zero all coefficients less than alpha from
@@ -1184,8 +1198,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case. If `None`, then
+        solution. This is only used by `algorithm='lars'` and
+        `algorithm='omp'`. If `None`, then
         `transform_n_nonzero_coefs=int(n_features / 10)`.
 
     transform_alpha : float, default=None
@@ -1193,10 +1207,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
-        If `None`, default to 1.0
+        If `None`, defaults to `alpha`.
 
     n_jobs : int or None, default=None
         Number of parallel jobs to run.
@@ -1205,10 +1216,12 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         for more details.
 
     code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the code, for warm restart.
+        Initial value for the code, for warm restart. Only used if `code_init`
+        and `dict_init` are not None.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial values for the dictionary, for warm restart.
+        Initial values for the dictionary, for warm restart. Only used if
+        `code_init` and `dict_init` are not None.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
@@ -1404,7 +1417,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     shuffle : bool, default=True
         Whether to shuffle the samples before forming batches.
 
-    dict_init : nbarray of shape (n_components, n_features), default=None
+    dict_init : ndarray of shape (n_components, n_features), default=None
         initial value of the dictionary for warm restart scenarios
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
@@ -1424,8 +1437,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case. If `None`, then
+        solution. This is only used by `algorithm='lars'` and
+        `algorithm='omp'`. If `None`, then
         `transform_n_nonzero_coefs=int(n_features / 10)`.
 
     transform_alpha : float, default=None
@@ -1433,10 +1446,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
-        If `None`, default to 1.
+        If `None`, defaults to `alpha`.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
