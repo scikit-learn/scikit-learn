@@ -333,7 +333,8 @@ class CalibratedClassifierCV(ClassifierMixin,
                     delayed(_fit_classifier_calibrator_pair)(
                         clone(base_estimator), X, y, train=train, test=test,
                         method=self.method, classes=self.classes_,
-                        supports_sw=supports_sw, class_weight=self.class_weight,
+                        supports_sw=supports_sw,
+                        class_weight=self.class_weight,
                         sample_weight=calibrator_sw)
                     for train, test in cv.split(X, y)
                 )
