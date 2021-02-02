@@ -710,7 +710,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     """Mutual Information between two clusterings.
 
-    The Mutual Information is a measure of the similarity between two labels 
+    The Mutual Information is a measure of the similarity between two labels
     of the same data. Where :math:`|U_i|` is the number of the samples
     in cluster :math:`U_i` and :math:`|V_j|` is the number of the
     samples in cluster :math:`V_j`, the Mutual Information
