@@ -19,27 +19,27 @@ np.import_array()
 
 
 def min_pos(np.ndarray X):
-   """
-   Find the minimum value of an array over positive values
+    """
+    Find the minimum value of an array over positive values
 
-   Returns the maximum representable value of the input dtype if none of the
-   values are positive.
-   """
-   if X.dtype == np.float32:
-      return _min_pos[float](<float *> X.data, X.size)
-   elif X.dtype == np.float64:
-      return _min_pos[double](<double *> X.data, X.size)
-   else:
-      raise ValueError('Unsupported dtype for array X')
+    Returns the maximum representable value of the input dtype if none of the
+    values are positive.
+    """
+    if X.dtype == np.float32:
+        return _min_pos[float](<float *> X.data, X.size)
+    elif X.dtype == np.float64:
+        return _min_pos[double](<double *> X.data, X.size)
+    else:
+        raise ValueError('Unsupported dtype for array X')
 
 
 cdef floating _min_pos(floating* X, Py_ssize_t size):
-   cdef Py_ssize_t i
-   cdef floating min_val = FLT_MAX if floating is float else DBL_MAX
-   for i in range(size):
-      if 0. < X[i] < min_val:
-         min_val = X[i]
-   return min_val
+    cdef Py_ssize_t i
+    cdef floating min_val = FLT_MAX if floating is float else DBL_MAX
+    for i in range(size):
+        if 0. < X[i] < min_val:
+            min_val = X[i]
+    return min_val
 
 
 # General Cholesky Delete.
