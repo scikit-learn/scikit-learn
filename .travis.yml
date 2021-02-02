@@ -22,10 +22,10 @@ env:
     - CIBW_BUILD_VERBOSITY=1
     - CIBW_TEST_REQUIRES="pytest pytest-xdist threadpoolctl"
     - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
-    - CIBW_ENVIRONMENT="CPU_COUNT=8
+    - CIBW_ENVIRONMENT="CPU_COUNT=2
                         OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
-                        SKLEARN_BUILD_PARALLEL=8
+                        SKLEARN_BUILD_PARALLEL=3
                         SKLEARN_SKIP_NETWORK_TESTS=1"
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
       arch: arm64
       if: commit_message =~ /\[arm64\]/
       env:
-        - CPU_COUNT=8
+        - CPU_COUNT=4
 
     # Linux environments to build the scikit-learn wheels for the ARM64
     # architecture and Python 3.6 and newer. This is used both at release time
