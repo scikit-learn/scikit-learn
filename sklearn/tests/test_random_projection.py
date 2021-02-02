@@ -77,6 +77,10 @@ def test_input_size_jl_min_dim():
                                   eps=np.full((10, 10), 0.5))
 
 
+def test_overflow_jl_min_dim():
+    assert 368416070986 == johnson_lindenstrauss_min_dim(100, eps=0.00001)
+
+
 ###############################################################################
 # tests random matrix generation
 ###############################################################################
