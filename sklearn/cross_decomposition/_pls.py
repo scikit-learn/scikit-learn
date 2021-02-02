@@ -317,7 +317,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         check_is_fitted(self)
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -379,7 +379,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         space.
         """
         check_is_fitted(self)
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -490,11 +490,6 @@ class PLSRegression(_PLS):
     scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
     max_iter : int, default=500
         The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
@@ -542,8 +537,7 @@ class PLSRegression(_PLS):
         `Y = X @ coef_`.
 
     n_iter_ : list of shape (n_components,)
-        Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        Number of iterations of the power method for each component.
 
     Examples
     --------
@@ -984,7 +978,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
-        X = check_array(X, dtype=np.float64)
+        X = self._validate_data(X, dtype=np.float64, reset=False)
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
