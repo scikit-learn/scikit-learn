@@ -567,6 +567,7 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         dictionary = dict_init
     else:
         code, S, dictionary = linalg.svd(X, full_matrices=False)
+        # flip the initial code's sign to enforce deterministic output
         code, dictionary = svd_flip(code, dictionary)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)

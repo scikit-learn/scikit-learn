@@ -65,12 +65,17 @@ Changelog
 - |API| In :class:`decomposition.DictionaryLearning`,
   :class:`decomposition.MiniBatchDictionaryLearning`,
   :func:`dict_learning` and :func:`dict_learning_online`,
-  `transform_alpha` will be equal to `alpha` instead of 1.0 by default 
+  `transform_alpha` will be equal to `alpha` instead of 1.0 by default
   starting from version 1.2
   :pr:`19159` by :user:`Benoît Malézieux <bmalezieux>`.
 
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
+
+- |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
+  ensure determinism of the output. Achieved by flipping signs of the SVD
+  output which is used to initialize the code.
+  :pr:`18433` by :user:`Bruno Charron <brcharron>`.
 
 :mod:`sklearn.ensemble`
 .......................
