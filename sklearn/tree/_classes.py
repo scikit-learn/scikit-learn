@@ -407,8 +407,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 check_input=check_input)
             return self
 
-        random_state = check_random_state(self.random_state)
-
         if self.ccp_alpha < 0.0:
             raise ValueError("ccp_alpha must be greater than or equal to 0")
 
@@ -441,7 +439,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
-        expanded_class_weight = None
 
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
