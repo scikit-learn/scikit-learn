@@ -1091,36 +1091,30 @@ cdef class HaversineDistance(DistanceMetric):
 # most suitable when you wish to use cosine distance.
 
 cdef class ArccosDistance(DistanceMetric):
-    cdef inline DTYPE_t diagonal(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) nogil except -1:
+    cdef inline DTYPE_t cosine_similarity(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) nogil except -1:
+        cdef DTYPE_t d = ddot(size, x1, 1, x2, 1)
         cdef DTYPE_t norm1 = ddot(size, x1, 1, x1, 1)
         cdef DTYPE_t norm2 = ddot(size, x2, 1, x2, 1)
-        return sqrt(norm1 * norm2)
-
-    cdef inline DTYPE_t projection(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) nogil except -1:
-        return ddot(size, x1, 1, x2, 1)
-
-    cdef inline DTYPE_t cosine_similarity(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) nogil except -1:
-        return self.projection(x1, x2, size) / self.diagonal(x1, x2, size)
+        return d / sqrt(norm1 * norm2)
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) nogil except -1:
-        # Inverse of cosine similarity. Divided by pi, this has been used as an
-        # angular distance by itself.
-        return self.diagonal(x1, x2, size) / self.projection(x1, x2, size)
+        # The non-metric, but rank-preserving, cosine distance.
+        return 1 - self.cosine_similarity(x1, x2, size)
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) nogil except -1:
         return acos(self.cosine_similarity(x1, x2, size)) / M_PI
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
-        return acos(1 / rdist) / M_PI
+        return acos(1 - rdist) / M_PI
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
-        return 1 / (M_PI * cos(dist))
+        return 1 - cos(M_PI * dist)
 
     def rdist_to_dist(self, rdist):
-        return np.arccos(1 / rdist) / np.pi
+        return np.arccos(1 - rdist) / np.pi
 
     def dist_to_rdist(self, dist):
-        return 1 / (np.pi * np.cos(dist))
+        return 1 - np.cos(np.pi * dist)
 
 
 #------------------------------------------------------------
