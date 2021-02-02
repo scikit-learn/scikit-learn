@@ -20,7 +20,7 @@ def test_min_pos():
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_min_pos_no_positive(dtype):
     # Check that the return value of min_pos is the maximum representable
-    # value of the input dtype
+    # value of the input dtype when all input elements are <= 0
     X = np.full(100, -1.).astype(dtype, copy=False)
 
     assert min_pos(X) == np.finfo(dtype).max
