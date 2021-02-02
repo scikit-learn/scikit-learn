@@ -136,6 +136,15 @@ Changelog
   positioning strategy ``knots``.
   :pr:`18368` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| Added new argument ``auto`` for ``n_bins`` parameter in
+  :class:`preprocessing.KBinsDiscretizer` for calculating number of bins
+  via Sturges rule.
+  :pr:`19290` by :user:`Gleb Levitskiy <GLevV>`.
+
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in 
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``. 
+  :pr:`19290` by :user:`Gleb Levitskiy <GLevV>`.
+
 :mod:`sklearn.tree`
 ...................
 
