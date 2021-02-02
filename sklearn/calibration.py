@@ -276,7 +276,8 @@ class CalibratedClassifierCV(ClassifierMixin,
             self.class_weight_ = compute_class_weight(self.class_weight,
                                                       self.classes_, y)
             label_encoder_ = LabelEncoder()
-            calibrator_sw *= self.class_weight_[label_encoder_.fit_transform(y)]
+            calibrator_sw *= self.class_weight_[
+                label_encoder_.fit_transform(y)]
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator, predictions, y, self.classes_, self.method,
@@ -308,7 +309,8 @@ class CalibratedClassifierCV(ClassifierMixin,
             self.class_weight_ = compute_class_weight(self.class_weight,
                                                       self.classes_, y)
             label_encoder_ = LabelEncoder()
-            calibrator_sw *= self.class_weight_[label_encoder_.fit_transform(y)]
+            calibrator_sw *= self.class_weight_[
+                label_encoder_.fit_transform(y)]
 
             # Check that each cross-validation fold can have at least one
             # example per class
@@ -327,7 +329,6 @@ class CalibratedClassifierCV(ClassifierMixin,
 
             if self.ensemble:
                 parallel = Parallel(n_jobs=self.n_jobs)
-
                 self.calibrated_classifiers_ = parallel(
                     delayed(_fit_classifier_calibrator_pair)(
                         clone(base_estimator), X, y, train=train, test=test,
