@@ -899,13 +899,14 @@ class PartialDependenceDisplay:
         ax.set_ylabel(self.feature_names[feature_idx[1]])
 
     @_deprecate_positional_args(version="1.1")
-    def plot(self,
-             *,
-             ax=None,
-             n_cols=3,
-             line_kw=None,
-             contour_kw=None,
-             bar_kw=None,
+    def plot(
+        self,
+        *,
+        ax=None,
+        n_cols=3,
+        line_kw=None,
+        contour_kw=None,
+        bar_kw=None,
     ):
         """Plot partial dependence plots.
 
