@@ -974,7 +974,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         print("Epoch %02d reached after %.3f seconds." %
               (n_iter, end_time - start_time))
 
-    return W, H, n_iter, iter_offset
+    return W, H, n_iter, n_iter - iter_offset + 1
 
 
 @_deprecate_positional_args
