@@ -179,7 +179,8 @@ def test_sample_weight(data, method, ensemble):
 
 
 @pytest.mark.parametrize("method", ['sigmoid', 'isotonic'])
-def test_class_weight(method):
+@pytest.mark.parametrize('ensemble', [True, False])
+def test_class_weight(method, ensemble):
     n_samples = 100
     n_classes = 2
     class_weight = np.random.RandomState(seed=42).uniform(size=n_classes)
@@ -193,13 +194,15 @@ def test_class_weight(method):
 
     base_estimator = LinearSVC(random_state=42)
     calibrated_clf = CalibratedClassifierCV(base_estimator, method=method,
+                                            ensemble=ensemble,
                                             class_weight=cw)
     calibrated_clf.fit(X_train, y_train)
     probs_with_cw = calibrated_clf.predict_proba(X_test)
 
     # As the weights are used for the calibration, they should still yield
     # a different predictions
-    calibrated_clf = CalibratedClassifierCV(base_estimator, method=method)
+    calibrated_clf = CalibratedClassifierCV(base_estimator, method=method,
+                                            ensemble=ensemble)
     calibrated_clf.fit(X_train, y_train)
     probs_without_cw = calibrated_clf.predict_proba(X_test)
 

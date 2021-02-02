@@ -28,6 +28,7 @@ from .utils import (
     column_or_1d,
     deprecated,
     indexable,
+    compute_class_weight,
 )
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
@@ -110,7 +111,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         See :term:`Glossary <class_weight>` for more details.
 
-     n_jobs : int, default=None
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
@@ -254,6 +255,8 @@ class CalibratedClassifierCV(ClassifierMixin,
         else:
             base_estimator = self.base_estimator
 
+        calibrator_sw = _check_sample_weight(sample_weight, X)
+
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
             # `classes_` and `n_features_in_` should be consistent with that
@@ -270,9 +273,14 @@ class CalibratedClassifierCV(ClassifierMixin,
             n_classes = len(self.classes_)
             predictions = _compute_predictions(pred_method, X, n_classes)
 
+            self.class_weight_ = compute_class_weight(self.class_weight,
+                                                      self.classes_, y)
+            label_encoder_ = LabelEncoder()
+            calibrator_sw *= self.class_weight_[label_encoder_.fit_transform(y)]
+
             calibrated_classifier = _fit_calibrator(
                 base_estimator, predictions, y, self.classes_, self.method,
-                sample_weight
+                calibrator_sw
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
@@ -296,6 +304,12 @@ class CalibratedClassifierCV(ClassifierMixin,
                                   "sample_weights, sample weights will only be"
                                   " used for the calibration itself.")
 
+            # build sample weights for calibrator
+            self.class_weight_ = compute_class_weight(self.class_weight,
+                                                      self.classes_, y)
+            label_encoder_ = LabelEncoder()
+            calibrator_sw *= self.class_weight_[label_encoder_.fit_transform(y)]
+
             # Check that each cross-validation fold can have at least one
             # example per class
             if isinstance(self.cv, int):
@@ -318,7 +332,8 @@ class CalibratedClassifierCV(ClassifierMixin,
                     delayed(_fit_classifier_calibrator_pair)(
                         clone(base_estimator), X, y, train=train, test=test,
                         method=self.method, classes=self.classes_,
-                        supports_sw=supports_sw, sample_weight=sample_weight)
+                        supports_sw=supports_sw, class_weight=self.class_weight,
+                        sample_weight=calibrator_sw)
                     for train, test in cv.split(X, y)
                 )
             else:
@@ -329,14 +344,14 @@ class CalibratedClassifierCV(ClassifierMixin,
                     cv=cv, method=method_name, n_jobs=self.n_jobs
                 )
                 predictions = _compute_predictions(pred_method, X, n_classes)
-
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
                 else:
                     this_estimator.fit(X, y)
+
                 calibrated_classifier = _fit_calibrator(
                     this_estimator, predictions, y, self.classes_, self.method,
-                    sample_weight
+                    calibrator_sw
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
@@ -400,7 +415,8 @@ class CalibratedClassifierCV(ClassifierMixin,
 
 
 def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
-                                    method, classes, sample_weight=None):
+                                    method, classes, class_weight=None,
+                                    sample_weight=None):
     """Fit a classifier/calibration pair on a given train/test split.
 
     Fit the classifier on the train set, compute its predictions on the test
@@ -433,6 +449,9 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     classes : ndarray, shape (n_classes,)
         The target classes.
 
+    class_weight : dict or 'balanced', default=None
+        Weights associated with classes in the form ``{class_label: weight}``.
+
     sample_weight : array-like, default=None
         Sample weights for `X`.
 
@@ -449,10 +468,9 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     n_classes = len(classes)
     pred_method = _get_prediction_method(estimator)
     predictions = _compute_predictions(pred_method, X[test], n_classes)
-
-    sw = None if sample_weight is None else sample_weight[test]
     calibrated_classifier = _fit_calibrator(
-        estimator, predictions, y[test], classes, method, sample_weight=sw
+        estimator, predictions, y[test], classes, method,
+        sample_weight=sample_weight[test]
     )
     return calibrated_classifier
 
