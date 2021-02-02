@@ -172,7 +172,8 @@ def test_kde_sample_weights():
         for algorithm in ['auto', 'ball_tree', 'kd_tree']:
             for metric in ['euclidean', 'minkowski', 'manhattan',
                            'chebyshev', 'arccos']:
-                if algorithm != 'kd_tree' or metric in KDTree.valid_metrics:
+                if ((metric != 'arccos' or d != 1) and
+                    (algorithm != 'kd_tree' or metric in KDTree.valid_metrics)):
                     kde = KernelDensity(algorithm=algorithm, metric=metric)
 
                     # Test that adding a constant sample weight has no effect
@@ -197,7 +198,7 @@ def test_kde_sample_weights():
 
                     # Test that sample weights has a non-trivial effect
                     diff = np.max(np.abs(scores_no_weight - scores_weight))
-                    assert diff > 0.001
+                    assert diff > 0.0005
 
                     # Test invariance with respect to arbitrary scaling
                     scale_factor = rng.rand()
