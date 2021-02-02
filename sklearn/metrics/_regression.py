@@ -1,10 +1,10 @@
-"""Metrics to assess performance on regression task
+"""Metrics to assess performance on regression task.
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
-the better
+the better.
 
 Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
-the lower the better
+the lower the better.
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -68,7 +68,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     -------
     type_true : one of {'continuous', continuous-multioutput'}
         The type of the true target data, as output by
-        'utils.multiclass.type_of_target'
+        'utils.multiclass.type_of_target'.
 
     y_true : array-like of shape (n_samples, n_outputs)
         Ground truth (correct) target values.
@@ -82,8 +82,8 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
 
-    dtype: str or list, default="numeric"
-        the dtype argument passed to check_array
+    dtype : str or list, default="numeric"
+        the dtype argument passed to check_array.
     """
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)

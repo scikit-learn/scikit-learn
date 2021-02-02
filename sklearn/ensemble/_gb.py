@@ -358,6 +358,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self)
 
+    @abstractmethod
+    def _warn_mae_for_criterion(self):
+        pass
+
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -393,6 +397,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
+        if self.criterion == 'mae':
+            # TODO: This should raise an error from 1.1
+            self._warn_mae_for_criterion()
+
         # if not warmstart - clear the estimator state
         if not self.warm_start:
             self._clear_state()
@@ -802,6 +810,11 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         some cases.
 
         .. versionadded:: 0.18
+        .. deprecated:: 0.24
+            `criterion='mae'` is deprecated and will be removed in version
+            1.1 (renaming of 0.26). Use `criterion='friedman_mse'` or `'mse'`
+            instead, as trees should use a least-square criterion in
+            Gradient Boosting.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -866,7 +879,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1007,22 +1021,19 @@ shape (n_estimators, ``loss_.K``)
     max_features_ : int
         The inferred value of max_features.
 
-
     See Also
     --------
-    sklearn.ensemble.HistGradientBoostingClassifier : Histogram-based Gradient
-        Boosting Classification Tree.
+    HistGradientBoostingClassifier : Histogram-based Gradient Boosting
+        Classification Tree.
     sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
-    sklearn.ensemble.RandomForestClassifier : A meta-estimator that fits a
-        number of decision tree classifiers on various sub-samples of the
-        dataset and uses averaging to improve the predictive accuracy and
-        control over-fitting.
-    sklearn.ensemble.AdaBoostClassifier : A meta-estimator that begins by
-        fitting a classifier on the original dataset and then fits additional
-        copies of the classifier on the same dataset where the weights of
-        incorrectly classified instances are adjusted such that subsequent
-        classifiers focus more on difficult cases.
-
+    RandomForestClassifier : A meta-estimator that fits a number of decision
+        tree classifiers on various sub-samples of the dataset and uses
+        averaging to improve the predictive accuracy and control over-fitting.
+    AdaBoostClassifier : A meta-estimator that begins by fitting a classifier
+        on the original dataset and then fits additional copies of the
+        classifier on the same dataset where the weights of incorrectly
+        classified instances are adjusted such that subsequent classifiers
+        focus more on difficult cases.
 
     Notes
     -----
@@ -1101,6 +1112,14 @@ shape (n_estimators, ``loss_.K``)
         # expose n_classes_ attribute
         self.n_classes_ = self._n_classes
         return y
+
+    def _warn_mae_for_criterion(self):
+        # TODO: This should raise an error from 1.1
+        warnings.warn("criterion='mae' was deprecated in version 0.24 and "
+                      "will be removed in version 1.1 (renaming of 0.26). Use "
+                      "criterion='friedman_mse' or 'mse' instead, as trees "
+                      "should use a least-square criterion in Gradient "
+                      "Boosting.", FutureWarning)
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
@@ -1320,6 +1339,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         some cases.
 
         .. versionadded:: 0.18
+        .. deprecated:: 0.24
+            `criterion='mae'` is deprecated and will be removed in version
+            1.1 (renaming of 0.26). The correct way of minimizing the absolute
+            error is to use `loss='lad'` instead.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1384,7 +1407,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1514,7 +1538,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. deprecated:: 0.24
             Attribute ``n_classes_`` was deprecated in version 0.24 and
-            will be removed in 0.26.
+            will be removed in 1.1 (renaming of 0.26).
 
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
@@ -1529,8 +1553,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     See Also
     --------
-    sklearn.ensemble.HistGradientBoostingRegressor : Histogram-based
-        Gradient Boosting Classification Tree.
+    HistGradientBoostingRegressor : Histogram-based Gradient Boosting
+        Classification Tree.
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
     sklearn.tree.RandomForestRegressor : A random forest regressor.
 
@@ -1601,6 +1625,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             y = y.astype(DOUBLE)
         return y
 
+    def _warn_mae_for_criterion(self):
+        # TODO: This should raise an error from 1.1
+        warnings.warn("criterion='mae' was deprecated in version 0.24 and "
+                      "will be removed in version 1.1 (renaming of 0.26). The "
+                      "correct way of minimizing the absolute error is to use "
+                      " loss='lad' instead.", FutureWarning)
+
     def predict(self, X):
         """Predict regression target for X.
 
@@ -1664,10 +1695,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
 
-    # FIXME: to be removed in 0.26
+    # FIXME: to be removed in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
-                "in version 0.24 and will be removed in 0.26.")
+                "in version 0.24 and will be removed in 1.1 "
+                "(renaming of 0.26).")
     @property
     def n_classes_(self):
         try:

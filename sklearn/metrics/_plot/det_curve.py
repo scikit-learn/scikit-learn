@@ -42,6 +42,11 @@ class DetCurveDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
 
+    See Also
+    --------
+    det_curve : Compute error rates for different probability thresholds.
+    plot_det_curve : Plot detection error tradeoff (DET) curve.
+
     Examples
     --------
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
@@ -185,9 +190,9 @@ def plot_det_curve(
 
     See Also
     --------
-    det_curve : Compute error rates for different probability thresholds
-
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
+    det_curve : Compute error rates for different probability thresholds.
+    DetCurveDisplay : DET curve visualization.
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
 
     Examples
     --------
