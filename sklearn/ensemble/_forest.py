@@ -57,7 +57,7 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array, compute_sample_weight
+from ..utils import check_random_state, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
@@ -446,7 +446,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 (n_samples, 1, n_outputs)
             The OOB predictions.
       """
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse='csr',
+                                reset=False)
 
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
@@ -2421,7 +2422,7 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        X = check_array(X, accept_sparse=['csc'])
+        X = self._validate_data(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
