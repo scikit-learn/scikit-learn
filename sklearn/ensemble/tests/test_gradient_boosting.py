@@ -30,7 +30,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
@@ -991,20 +990,6 @@ def test_max_leaf_nodes_max_depth(GBEstimator):
     est = GBEstimator(max_depth=1).fit(X, y)
     tree = est.estimators_[0, 0].tree_
     assert tree.max_depth == 1
-
-
-@pytest.mark.parametrize('GBEstimator', GRADIENT_BOOSTING_ESTIMATORS)
-def test_min_impurity_split(GBEstimator):
-    # Test if min_impurity_split of base estimators is set
-    # Regression test for #8006
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-
-    est = GBEstimator(min_impurity_split=0.1)
-    est = assert_warns_message(FutureWarning,
-                               "min_impurity_decrease",
-                               est.fit, X, y)
-    for tree in est.estimators_.flat:
-        assert tree.min_impurity_split == 0.1
 
 
 @pytest.mark.parametrize('GBEstimator', GRADIENT_BOOSTING_ESTIMATORS)
