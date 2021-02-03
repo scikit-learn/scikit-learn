@@ -28,6 +28,7 @@ from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.externals._arff import ArffContainerType
 from functools import partial
+from sklearn.utils._testing import fails_if_pypy
 
 
 currdir = os.path.dirname(os.path.abspath(__file__))
@@ -296,6 +297,9 @@ def test_feature_to_dtype_error(feature):
         _feature_to_dtype(feature)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_iris_pandas(monkeypatch):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
@@ -337,6 +341,9 @@ def test_fetch_openml_iris_pandas(monkeypatch):
     assert frame.index.is_unique
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch):
     # as_frame = True returns the same underlying data as as_frame = False
     pytest.importorskip('pandas')
@@ -356,6 +363,9 @@ def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch):
     assert_array_equal(norm_target, frame_target)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
@@ -398,6 +408,9 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     assert np.all(frame.dtypes == [np.float64] * 4 + [cat_dtype])
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_anneal_pandas(monkeypatch):
     # classification dataset with numeric and categorical columns
     pd = pytest.importorskip('pandas')
@@ -435,6 +448,9 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
     assert frame.shape == frame_shape
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_cpu_pandas(monkeypatch):
     # regression dataset with numeric and categorical columns
     pd = pytest.importorskip('pandas')
@@ -489,6 +505,9 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
         fetch_openml(data_id=data_id, as_frame=True, cache=False)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_as_frame_auto(monkeypatch):
     pd = pytest.importorskip('pandas')
 
@@ -503,6 +522,9 @@ def test_fetch_openml_as_frame_auto(monkeypatch):
     assert isinstance(data.data, scipy.sparse.csr_matrix)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     pytest.importorskip('pandas')
 
@@ -515,6 +537,9 @@ def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
             fetch_openml(data_id=data_id, as_frame=True, cache=False)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -543,6 +568,9 @@ def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
     assert y.name == target_column
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_adultcensus_pandas(monkeypatch):
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -579,6 +607,9 @@ def test_fetch_openml_adultcensus_pandas(monkeypatch):
     assert frame.shape == frame_shape
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_miceprotein_pandas(monkeypatch):
     # JvR: very important check, as this dataset defined several row ids
     # and ignore attributes. Note that data_features json has 82 attributes,
@@ -619,6 +650,9 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
     assert frame_n_floats == n_floats
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_emotions_pandas(monkeypatch):
     # classification dataset with multiple targets (natively)
     pd = pytest.importorskip('pandas')
@@ -657,6 +691,9 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
     assert expected_frame_floats == n_floats
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_titanic_pandas(monkeypatch):
     # dataset with strings
     pd = pytest.importorskip('pandas')
@@ -1208,6 +1245,9 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     assert 'animal' not in dataset['feature_names']
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 @pytest.mark.parametrize('as_frame', [True, False])
 def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     if as_frame:

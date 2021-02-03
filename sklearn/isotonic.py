@@ -190,7 +190,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    Ties are broken using the secondary method from Leeuw, 1977.
+    Ties are broken using the secondary method from de Leeuw, 1977.
 
     References
     ----------
@@ -201,11 +201,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Isotone Optimization in R : Pool-Adjacent-Violators
     Algorithm (PAVA) and Active Set Methods
-    Leeuw, Hornik, Mair
+    de Leeuw, Hornik, Mair
     Journal of Statistical Software 2009
 
     Correctness of Kruskal's algorithms for monotone regression with ties
-    Leeuw, Psychometrica, 1977
+    de Leeuw, Psychometrica, 1977
 
     Examples
     --------

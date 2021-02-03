@@ -55,6 +55,8 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
@@ -111,6 +113,8 @@ def test_as_float_array_nan(X):
     assert_allclose_dense_sparse(X_converted, X)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_np_matrix():
     # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
@@ -338,7 +342,7 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 0.26 when implicit conversation is removed
+# TODO: Check for error in 1.1 when implicit conversation is removed
 @pytest.mark.parametrize("X", [
    [['1', '2'], ['3', '4']],
    np.array([['1', '2'], ['3', '4']], dtype='U'),
@@ -350,12 +354,12 @@ def test_check_array_numeric_warns(X):
     """Test that check_array warns when it converts a bytes/string into a
     float."""
     expected_msg = (r"Arrays of bytes/strings is being converted to decimal .*"
-                    r"deprecated in 0.24 and will be removed in 0.26")
+                    r"deprecated in 0.24 and will be removed in 1.1")
     with pytest.warns(FutureWarning, match=expected_msg):
         check_array(X, dtype="numeric")
 
 
-# TODO: remove in 0.26
+# TODO: remove in 1.1
 @ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("X", [
    [['11', '12'], ['13', 'xx']],
@@ -405,7 +409,7 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
         check_array(X, force_all_finite=True)
 
 
-# TODO: remove test in 0.26 once this behavior is deprecated
+# TODO: remove test in 1.1 once this behavior is deprecated
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
     # get converted
@@ -1166,6 +1170,16 @@ def test_deprecate_positional_args_warns_for_function():
     with pytest.warns(FutureWarning,
                       match=r"Pass b=2 as keyword args"):
         f3(1, 2)
+
+
+def test_deprecate_positional_args_warns_for_function_version():
+    @_deprecate_positional_args(version="1.1")
+    def f1(a, *, b):
+        pass
+
+    with pytest.warns(FutureWarning,
+                      match=r"From version 1.1 passing these as positional"):
+        f1(1, 2)
 
 
 def test_deprecate_positional_args_warns_for_class():

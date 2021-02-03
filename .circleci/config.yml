@@ -132,7 +132,7 @@ jobs:
       - run: ls -ltrh doc/_build/html/stable
       - deploy:
           command: |
-            if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
+            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
 
@@ -162,6 +162,6 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - pypy3
