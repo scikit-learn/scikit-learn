@@ -276,7 +276,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 # Convert all columns to using their string labels
                 column_is_scalar = np.isscalar(column)
 
-                indices = self._transformer_to_indices[name]
+                indices = self._transformer_to_input_indices[name]
                 column = self._feature_names_in[indices]
 
                 if column_is_scalar:
@@ -310,15 +310,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Converts callable column specifications.
         """
         columns = []
-        transformer_to_indices = {}
+        transformer_to_input_indices = {}
         for name, _, column in self.transformers:
             if callable(column):
                 column = column(X)
             columns.append(column)
-            transformer_to_indices[name] = _get_column_indices(X, column)
+            transformer_to_input_indices[name] = _get_column_indices(X, column)
 
         self._columns = columns
-        self._transformer_to_indices = transformer_to_indices
+        self._transformer_to_input_indices = transformer_to_input_indices
 
     def _validate_remainder(self, X):
         """
@@ -336,10 +336,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 self.remainder)
 
         self._n_features = X.shape[1]
-        cols = set(chain(*self._transformer_to_indices.values()))
+        cols = set(chain(*self._transformer_to_input_indices.values()))
         remaining = sorted(set(range(self._n_features)) - cols)
         self._remainder = ('remainder', self.remainder, remaining)
-        self._transformer_to_indices['remainder'] = remaining
+        self._transformer_to_input_indices['remainder'] = remaining
 
     @property
     def named_transformers_(self):
@@ -570,7 +570,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # check that all names seen in fit are in transform, unless
             # they were dropped
             non_dropped_indices = [
-                ind for name, ind in self._transformer_to_indices.items()
+                ind for name, ind in self._transformer_to_input_indices.items()
                 if name in named_transformers and
                 isinstance(named_transformers[name], str) and
                 named_transformers[name] != 'drop']
