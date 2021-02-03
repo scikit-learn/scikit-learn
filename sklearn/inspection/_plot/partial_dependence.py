@@ -238,7 +238,7 @@ def plot_partial_dependence(
         The list should be same size as `features`. If `None`, all features
         are assumed to be continuous.
 
-        .. versionadded:: 0.25
+        .. versionadded:: 1.0
 
     Returns
     -------
@@ -536,7 +536,7 @@ class PartialDependenceDisplay:
         The list should be same size as `features`. If `None`, all features
         are assumed to be continuous.
 
-        .. versionadded:: 0.25
+        .. versionadded:: 1.0
 
     Attributes
     ----------

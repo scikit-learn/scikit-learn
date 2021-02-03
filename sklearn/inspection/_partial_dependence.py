@@ -319,7 +319,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         The list should be same size as `features`. If `None`, all features
         are assumed to be continuous.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
 
     Returns
