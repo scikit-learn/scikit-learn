@@ -147,7 +147,8 @@ if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # dependencies specified in pyproject.toml using an isolated build
     # environment:
     pip install --verbose --editable .
-elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
+else
+    if [[ "$BUILD_WITH_ICC" == "true" ]]; then
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
         rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -160,6 +161,7 @@ elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
         # To compile with a different compiler, we also need to specify the
         # compiler for this command
         python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
+    fi
     # Use the pre-installed build dependencies and build directly in the
     # current environment.
     python setup.py develop
