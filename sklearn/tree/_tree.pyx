@@ -215,6 +215,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     impurity = splitter.node_impurity()
                     first = 0
 
+                is_leaf = is_leaf or impurity == 0
+
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
                     # If EPSILON=0 in the below comparison, float precision
@@ -433,7 +435,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         is_leaf = (depth >= self.max_depth or
                    n_node_samples < self.min_samples_split or
                    n_node_samples < 2 * self.min_samples_leaf or
-                   weighted_n_node_samples < 2 * self.min_weight_leaf)
+                   weighted_n_node_samples < 2 * self.min_weight_leaf or
+                   impurity == 0)
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
