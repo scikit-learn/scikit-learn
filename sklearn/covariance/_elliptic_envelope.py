@@ -199,7 +199,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
         values = self.decision_function(X)
-        is_inlier = np.full(X.shape[0], -1, dtype=int)
+        is_inlier = np.full(values.shape[0], -1, dtype=int)
         is_inlier[values >= 0] = 1
 
         return is_inlier
