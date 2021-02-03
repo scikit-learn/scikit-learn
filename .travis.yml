@@ -30,12 +30,6 @@ env:
 
 jobs:
   include:
-    - python: 3.7
-      env:
-        - CHECK_WARNING=true
-        - BUILD_WITH_ICC=true
-      if: type = cron OR commit_message =~ /\[icc-build\]/
-
     # Manual trigger of linux/arm64 tests in PR without triggering the full
     # wheel building process for all the Python versions.
     - python: 3.9
