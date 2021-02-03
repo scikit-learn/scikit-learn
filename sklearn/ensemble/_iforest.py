@@ -238,7 +238,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = check_array(X, accept_sparse=['csc'])
+        X = self._validate_data(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -309,7 +309,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             be considered as an inlier according to the fitted model.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         is_inlier = np.ones(X.shape[0], dtype=int)
         is_inlier[self.decision_function(X) < 0] = -1
         return is_inlier
@@ -375,7 +375,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
                              "match the input. Model n_features is {0} and "
