@@ -108,7 +108,7 @@ Overview of clustering methods
    * - :ref:`Birch`
      - branching factor, threshold, optional global clusterer.
      - Large ``n_clusters`` and ``n_samples``
-     - Large dataset, outlier removal, data reduction, transductive
+     - Large dataset, outlier removal, data reduction, inductive
      - Euclidean distance between points
 
 Non-flat geometry clustering is useful when the clusters have a specific
