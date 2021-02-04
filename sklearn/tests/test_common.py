@@ -270,7 +270,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'discriminant_analysis',
     'ensemble',
     'feature_extraction',
-    'feature_selection',
     'isotonic',
     'manifold',
     'mixture',
