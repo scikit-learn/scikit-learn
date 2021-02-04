@@ -1468,7 +1468,9 @@ def test_little_tree_with_small_max_samples(ForestClass):
 # FIXME: remove in 1.2
 @pytest.mark.parametrize(
     "Estimator",
-    [RandomForestClassifier, RandomForestRegressor]
+    [ExtraTreesClassifier, ExtraTreesRegressor,
+     RandomForestClassifier, RandomForestRegressor,
+     RandomTreesEmbedding]
 )
 def test_n_features_deprecation(Estimator):
     # Check that we raise the proper deprecation warning if accessing
