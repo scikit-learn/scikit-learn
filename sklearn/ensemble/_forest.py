@@ -57,7 +57,7 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, compute_sample_weight
+from ..utils import check_random_state, compute_sample_weight, deprecated
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
@@ -312,9 +312,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # ensemble sorts the indices.
             X.sort_indices()
 
-        # Remap output
-        self.n_features_ = X.shape[1]
-
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
             warn("A column-vector y was passed when a 1d array was"
@@ -531,11 +528,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             for tree in self.estimators_ if tree.tree_.node_count > 1)
 
         if not all_importances:
-            return np.zeros(self.n_features_, dtype=np.float64)
+            return np.zeros(self.n_features_in_, dtype=np.float64)
 
         all_importances = np.mean(all_importances,
                                   axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute n_features_ was deprecated in version 1.0. and will be "
+        "removed in 1.2. Use 'n_features_in_' instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -1164,6 +1171,10 @@ class RandomForestClassifier(ForestClassifier):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute n_features_ was deprecated in version 1.0. and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1463,6 +1474,10 @@ class RandomForestRegressor(ForestRegressor):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+            Attribute n_features_ was deprecated in version 1.0. and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1784,6 +1799,10 @@ class ExtraTreesClassifier(ForestClassifier):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute n_features_ was deprecated in version 1.0. and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -2069,6 +2088,10 @@ class ExtraTreesRegressor(ForestRegressor):
     n_features_ : int
         The number of features.
 
+        .. deprecated:: 1.0
+            Attribute n_features_ was deprecated in version 1.0. and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     n_outputs_ : int
         The number of outputs.
 
@@ -2292,6 +2315,10 @@ class RandomTreesEmbedding(BaseForest):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+            Attribute n_features_ was deprecated in version 1.0. and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
