@@ -585,7 +585,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
                                       "solver (use 'svd' or 'eigen').")
         check_is_fitted(self)
 
-        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
+        X = self._validate_data(X, reset=False)
         if self.solver == 'svd':
             X_new = np.dot(X - self.xbar_, self.scalings_)
         elif self.solver == 'eigen':
