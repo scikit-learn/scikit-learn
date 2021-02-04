@@ -615,7 +615,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                  default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. The Gram matrix can also be passed as argument.
-        For sparse input this option is always ``True`` to preserve sparsity.
+        For sparse input this option is always ``False`` to preserve sparsity.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -944,7 +944,7 @@ class Lasso(ElasticNet):
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
-        this option is always ``True`` to preserve sparsity.
+        this option is always ``False`` to preserve sparsity.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
