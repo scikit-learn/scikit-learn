@@ -178,7 +178,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Notes
     -----
-    In binary and multiclass classification, this function is equal
+    In binary classification, this function is equal
     to the ``jaccard_score`` function.
 
     Examples
