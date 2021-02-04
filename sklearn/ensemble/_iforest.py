@@ -144,6 +144,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute n_features_ was deprecated in version 1.0. and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
@@ -376,11 +380,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         # Check data
         X = self._validate_data(X, accept_sparse='csr', reset=False)
-        if self.n_features_ != X.shape[1]:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {0} and "
-                             "input n_features is {1}."
-                             "".format(self.n_features_, X.shape[1]))
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
