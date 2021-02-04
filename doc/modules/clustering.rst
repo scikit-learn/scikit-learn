@@ -52,7 +52,7 @@ Overview of clustering methods
      - Very large ``n_samples``, medium ``n_clusters`` with
        :ref:`MiniBatch code <mini_batch_kmeans>`
      - General-purpose, even cluster size, flat geometry,
-       not too many clusters, inductive 
+       not too many clusters, inductive
      - Distances between points
 
    * - :ref:`Affinity propagation <affinity_propagation>`
