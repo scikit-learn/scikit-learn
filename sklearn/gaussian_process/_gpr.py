@@ -200,7 +200,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             self._y_train_std = np.std(y, axis=0)
 
             # Remove mean and make unit variance
-            y = (y - self._y_train_mean) / self._y_train_std
+            y = (y - self._y_train_mean) / _handle_zeros_in_std(self._y_train_std)
 
         else:
             self._y_train_mean = np.zeros(1)
@@ -519,3 +519,20 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
     def _more_tags(self):
         return {'requires_fit': False}
+
+
+def _handle_zeros_in_std(std, copy=True):
+    """
+    Makes sure that whenever std is zero, we handle it correctly.
+    """
+
+    if np.isscalar(std):
+        if std == .0:
+            std = 1.
+        return std
+    elif isinstance(std, np.ndarray):
+        if copy:
+            # New array to avoid side-effects
+            std = std.copy()
+        std[std == 0.0] = 1.0
+        return std
