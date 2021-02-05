@@ -1352,6 +1352,8 @@ def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
     -------
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
+        The inertia is computed after finding the labels and before updating
+        the centers.
     """
     # Perform label assignment to nearest centers
     labels, inertia = _labels_inertia(X, sample_weight,
@@ -1809,8 +1811,7 @@ class MiniBatchKMeans(KMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
-        n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
-        n_steps = self.max_iter * n_steps_per_epoch
+        n_steps = (self.max_iter * n_samples) // self._batch_size
 
         with threadpool_limits(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
@@ -1849,7 +1850,7 @@ class MiniBatchKMeans(KMeans):
         self.cluster_centers_ = centers
 
         self.n_steps_ = i + 1
-        self.n_iter_ = np.ceil((i + 1) / n_steps_per_epoch)
+        self.n_iter_ = int(np.ceil(((i + 1) * self._batch_size) / n_samples))
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(

@@ -467,6 +467,37 @@ def test_minibatch_kmeans_init_size():
     assert km._init_size == n_samples
 
 
+@pytest.mark.parametrize("tol, max_no_improvement", [(1e-4, None), (0, 10)])
+def test_minibatch_declared_convergence(tol, max_no_improvement):
+    # Check that convergence based on small center change is achievable.
+    X, _, centers = make_blobs(centers=3, random_state=0, return_centers=True)
+
+    km = MiniBatchKMeans(n_clusters=3, init=centers, batch_size=20, tol=tol,
+                         random_state=0, max_iter=10,
+                         max_no_improvement=max_no_improvement)
+
+    km.fit(X)
+    assert 1 < km.n_iter_ < 10
+
+
+def test_minibatch_iter_steps():
+    # Check consistency of n_iter_ and n_steps_ attributes.
+    batch_size = 30
+    n_samples = X.shape[0]
+    km = MiniBatchKMeans(n_clusters=3, batch_size=batch_size,
+                         random_state=0).fit(X)
+
+    # n_iter_ is the number of started epochs
+    assert km.n_iter_ == np.ceil((km.n_steps_ * batch_size) / n_samples)
+
+    # without stopping condition, max_iter should be reached
+    km = MiniBatchKMeans(n_clusters=3, batch_size=batch_size, random_state=0,
+                         tol=0, max_no_improvement=None, max_iter=10).fit(X)
+
+    assert km.n_iter_ == 10
+    assert km.n_steps_ == (10 * n_samples) // batch_size
+
+
 def test_kmeans_copyx():
     # Check that copy_x=False returns nearly equal X after de-centering.
     my_X = X.copy()
