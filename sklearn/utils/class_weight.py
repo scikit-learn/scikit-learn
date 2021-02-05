@@ -24,13 +24,13 @@ def compute_class_weight(class_weight, *, classes, y):
         Array of the classes occurring in the data, as given by
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
 
-    y : array-like, shape (n_samples,)
-        Array of original class labels per sample;
+    y : array-like of shape (n_samples,)
+        Array of original class labels per sample.
 
     Returns
     -------
-    class_weight_vect : ndarray, shape (n_classes,)
-        Array with class_weight_vect[i] the weight for i-th class
+    class_weight_vect : ndarray of shape (n_classes,)
+        Array with class_weight_vect[i] the weight for i-th class.
 
     References
     ----------
@@ -78,7 +78,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     Parameters
     ----------
-    class_weight : dict, list of dicts, "balanced", or None, optional
+    class_weight : dict, list of dicts, "balanced", or None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -99,7 +99,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Array of original class labels per sample.
 
-    indices : array-like, shape (n_subsample,), or None
+    indices : array-like of shape (n_subsample,), default=None
         Array of indices to be used in a subsample. Can be of length less than
         n_samples in the case of a subsample, or equal to n_samples in the
         case of a bootstrap subsample with repeated indices. If None, the
@@ -108,8 +108,8 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     Returns
     -------
-    sample_weight_vect : ndarray, shape (n_samples,)
-        Array with sample weights as applied to the original y
+    sample_weight_vect : ndarray of shape (n_samples,)
+        Array with sample weights as applied to the original y.
     """
 
     y = np.atleast_1d(y)

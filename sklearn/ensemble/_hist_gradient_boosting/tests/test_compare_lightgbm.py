@@ -46,7 +46,6 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
 
@@ -99,7 +98,6 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
 
@@ -160,7 +158,6 @@ def test_same_predictions_multiclass_classification(
     pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
     lr = 1

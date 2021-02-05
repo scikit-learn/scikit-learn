@@ -129,7 +129,7 @@ for i, (name, this_prec) in enumerate(precs):
 # plot the model selection metric
 plt.figure(figsize=(4, 3))
 plt.axes([.2, .15, .75, .7])
-plt.plot(model.cv_alphas_, np.mean(model.grid_scores_, axis=1), 'o-')
+plt.plot(model.cv_results_["alphas"], model.cv_results_["mean_score"], 'o-')
 plt.axvline(model.alpha_, color='.5')
 plt.title('Model selection')
 plt.ylabel('Cross-validation score')

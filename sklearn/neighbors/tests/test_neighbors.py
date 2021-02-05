@@ -26,6 +26,7 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.fixes import sp_version, parse_version
 
 import joblib
 
@@ -95,19 +96,24 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
-def test_unsupervised_inputs():
-    # test the types of valid input into NearestNeighbors
-    X = rng.random_sample((10, 3))
+@pytest.mark.parametrize("NearestNeighbors", [neighbors.KNeighborsClassifier,
+                                              neighbors.KNeighborsRegressor,
+                                              neighbors.NearestNeighbors])
+def test_unsupervised_inputs(NearestNeighbors):
+    # Test unsupervised inputs for neighbors estimators
 
+    X = rng.random_sample((10, 3))
+    y = rng.randint(3, size=10)
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
     nbrs_fid.fit(X)
 
     dist1, ind1 = nbrs_fid.kneighbors(X)
 
-    nbrs = neighbors.NearestNeighbors(n_neighbors=1)
+    nbrs = NearestNeighbors(n_neighbors=1)
 
-    for input in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
-        nbrs.fit(input)
+    for data in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
+        nbrs.fit(data, y)
+
         dist2, ind2 = nbrs.kneighbors(X)
 
         assert_array_almost_equal(dist1, dist2)
@@ -673,6 +679,39 @@ def test_radius_neighbors_returns_array_of_objects():
     assert_array_equal(neigh_ind, expected_ind)
 
 
+@pytest.mark.parametrize(["algorithm", "metric"], [("ball_tree", "euclidean"),
+                                                   ("kd_tree", "euclidean"),
+                                                   ("brute", "euclidean"),
+                                                   ("brute", "precomputed")])
+def test_radius_neighbors_sort_results(algorithm, metric):
+    # Test radius_neighbors[_graph] output when sort_result is True
+    n_samples = 10
+    rng = np.random.RandomState(42)
+    X = rng.random_sample((n_samples, 4))
+
+    if metric == "precomputed":
+        X = neighbors.radius_neighbors_graph(X, radius=np.inf, mode="distance")
+    model = neighbors.NearestNeighbors(algorithm=algorithm, metric=metric)
+    model.fit(X)
+
+    # self.radius_neighbors
+    distances, indices = model.radius_neighbors(X=X, radius=np.inf,
+                                                sort_results=True)
+    for ii in range(n_samples):
+        assert_array_equal(distances[ii], np.sort(distances[ii]))
+
+    # sort_results=True and return_distance=False
+    if metric != "precomputed":  # no need to raise with precomputed graph
+        with pytest.raises(ValueError, match="return_distance must be True"):
+            model.radius_neighbors(X=X, radius=np.inf, sort_results=True,
+                                   return_distance=False)
+
+    # self.radius_neighbors_graph
+    graph = model.radius_neighbors_graph(X=X, radius=np.inf, mode="distance",
+                                         sort_results=True)
+    assert _is_sorted_by_data(graph)
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
@@ -1206,6 +1245,9 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
+        if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
+            # wminkowski will be removed in SciPy 1.8.0
+            continue
         results = {}
         p = metric_params.pop('p', 2)
         for algorithm in algorithms:
@@ -1227,8 +1269,16 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                           if metric == 'haversine' else slice(None))
 
             neigh.fit(X[:, feature_sl])
-            results[algorithm] = neigh.kneighbors(test[:, feature_sl],
-                                                  return_distance=True)
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if (metric == "wminkowski" and algorithm == 'brute'
+                    and sp_version >= parse_version("1.6.0")):
+                ExceptionToAssert = DeprecationWarning
+
+            with pytest.warns(ExceptionToAssert):
+                results[algorithm] = neigh.kneighbors(test[:, feature_sl],
+                                                      return_distance=True)
 
         assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
         assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
@@ -1693,3 +1743,14 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     )
     model.fit(X)
     assert model._fit_method == expected_algo
+
+
+# TODO: Remove in 1.1
+@pytest.mark.parametrize("NearestNeighbors", [neighbors.KNeighborsClassifier,
+                                              neighbors.KNeighborsRegressor,
+                                              neighbors.NearestNeighbors])
+def test_pairwise_deprecated(NearestNeighbors):
+    nn = NearestNeighbors(metric='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        nn._pairwise

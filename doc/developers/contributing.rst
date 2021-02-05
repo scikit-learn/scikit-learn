@@ -4,6 +4,8 @@
 Contributing
 ============
 
+.. currentmodule:: sklearn
+
 This project is a community effort, and everyone is welcome to
 contribute.
 
@@ -55,11 +57,11 @@ find a typo in the documentation, or have made improvements, do not hesitate to
 send an email to the mailing list or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
-But there are many other ways to help. In particular answering queries on the
-`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
-investigating bugs, and :ref:`reviewing other developers' pull requests
-<code_review>` are very valuable contributions that decrease the burden on the
-project maintainers.
+But there are many other ways to help. In particular helping to
+:ref:`improve, triage, and investigate issues <bug_triaging>` and
+:ref:`reviewing other developers' pull requests <code_review>` are very
+valuable contributions that decrease the burden on the project
+maintainers.
 
 Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
@@ -173,6 +175,9 @@ feedback:
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
 
+If you want to help curate issues, read :ref:`the following
+<bug_triaging>`.
+
 Contributing code
 =================
 
@@ -190,6 +195,28 @@ Contributing code
   label in your search. This lists all the issues that have been unclaimed
   so far. In order to claim an issue for yourself, please comment exactly
   ``take`` on it for the CI to automatically assign the issue to you.
+
+Video resources
+---------------
+These videos are step-by-step introductions on how to contribute to
+scikit-learn, and are a great companion to the following text guidelines.
+Please make sure to still check our guidelines below, since they describe our
+latest up-to-date workflow.
+
+- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
+  `Video <https://youtu.be/5OL8XoMMOfA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+
+- Example of Submitting a Pull Request to scikit-learn:
+  `Video <https://youtu.be/PU1WyDPGePI>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+
+- Sprint-specific instructions and practical tips:
+  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
 
 How to contribute
 -----------------
@@ -211,66 +238,84 @@ how to set up your git repository:
    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
 3. Clone your fork of the scikit-learn repo from your GitHub account to your
-   local disk::
+   local disk:
 
-       $ git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
-       $ cd scikit-learn
+   .. prompt:: bash $
 
-4. Install the development dependencies::
+       git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+       cd scikit-learn
 
-       $ pip install cython pytest pytest-cov flake8 mypy
+4. Install the development dependencies:
 
-5. Install scikit-learn in editable mode::
+    .. prompt:: bash $
 
-       $ pip install --no-build-isolation --editable .
+       pip install cython pytest pytest-cov flake8 mypy
 
-   for more details about advanced installation, see the
+5. Install scikit-learn in editable mode:
+
+    .. prompt:: bash $
+
+       pip install --no-build-isolation --editable .
+
+   If you receive errors in building scikit-learn, see the
    :ref:`install_bleeding_edge` section.
 
 .. _upstream:
 
 6. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
-   synchronized with the latest changes::
+   synchronized with the latest changes:
 
-    $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+   .. prompt:: bash $
+
+    git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-7. Synchronize your master branch with the upstream master branch::
+7. Synchronize your main branch with the upstream main branch:
 
-        $ git checkout master
-        $ git pull upstream master
+   .. prompt:: bash $
 
-8. Create a feature branch to hold your development changes::
+        git checkout main
+        git pull upstream main
 
-        $ git checkout -b my_feature
+8. Create a feature branch to hold your development changes:
+
+    .. prompt:: bash $
+
+        git checkout -b my_feature
 
    and start making changes. Always use a feature branch. It's good
-   practice to never work on the ``master`` branch!
+   practice to never work on the ``main`` branch!
 
 9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-   run code style checks before each commit::
+   run code style checks before each commit:
 
-        $ pip install pre-commit
-        $ pre-commit install
+   .. prompt:: bash $
+
+        pip install pre-commit
+        pre-commit install
 
    pre-commit checks can be disabled for a particular commit with
    `git commit -n`.
 
 10. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
-    ``git add`` and then ``git commit``::
+    ``git add`` and then ``git commit``:
 
-        $ git add modified_files
-        $ git commit
+    .. prompt:: bash $
+
+        git add modified_files
+        git commit
 
     to record your changes in Git, then push the changes to your GitHub
-    account with::
+    account with:
 
-       $ git push -u origin my_feature
+    .. prompt:: bash $
+
+       git push -u origin my_feature
 
 11. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
@@ -281,7 +326,9 @@ modifying code and submitting a PR:
 .. note::
 
     If you are modifying a Cython module, you have to re-compile after
-    modifications and before testing them::
+    modifications and before testing them:
+
+    .. prompt:: bash $
 
         pip install --no-build-isolation -e .
 
@@ -289,10 +336,12 @@ modifying code and submitting a PR:
     each time, only the files you have modified.
 
 It is often helpful to keep your local feature branch synchronized with the
-latest changes of the main scikit-learn repository::
+latest changes of the main scikit-learn repository:
 
-    $ git fetch upstream
-    $ git merge upstream/master
+.. prompt:: bash $
+
+    git fetch upstream
+    git merge upstream/main
 
 Subsequently, you might need to solve the conflicts. You can refer to the
 `Git documentation related to resolving merge conflict using the command
@@ -367,14 +416,16 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    verify the correct behavior of the fix or feature. In this manner, further
    modifications on the code base are granted to be consistent with the
    desired behavior. In the case of bug fixes, at the time of the PR, the
-   non-regression tests should fail for the code base in the master branch
+   non-regression tests should fail for the code base in the main branch
    and pass for the PR code.
 
 5. **Make sure that your PR does not add PEP8 violations**. To check the
    code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the upstream remote)::
+   :ref:`above <upstream>` to set up the upstream remote):
 
-        git diff upstream/master -u -- "*.py" | flake8 --diff
+   .. prompt:: bash $
+
+        git diff upstream/main -u -- "*.py" | flake8 --diff
 
    or `make flake8-diff` which should work on unix-like system.
 
@@ -396,10 +447,10 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    the keywords (e.g., ``See also #1234``).
 
 9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency or through examples of usage. Examples also
-   illustrate the features and intricacies of the library to users. Have a
-   look at other examples in the `examples/
-   <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
+   performance and efficiency (see :ref:`monitoring_performances`) or through
+   examples of usage. Examples also illustrate the features and intricacies of
+   the library to users. Have a look at other examples in the `examples/
+   <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
    directory for reference. Examples should demonstrate why the new
    functionality is useful in practice and, if possible, compare it to other
    methods available in scikit-learn.
@@ -419,20 +470,20 @@ will expect.
 You can check for common programming errors with the following tools:
 
 * Code with a good unittest coverage (at least 80%, better 100%), check
-  with::
+  with:
 
-    $ pip install pytest pytest-cov
-    $ pytest --cov sklearn path/to/tests_for_package
+  .. prompt:: bash $
+
+    pip install pytest pytest-cov
+    pytest --cov sklearn path/to/tests_for_package
 
   see also :ref:`testing_coverage`
 
-* A moderate use of type annotations is encouraged but is not mandatory. See
-  [mypy quickstart](https://mypy.readthedocs.io/en/latest/getting_started.html)
-  for an introduction, as well as [pandas contributing documentation](
-  https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints)
-  for style guidelines. Whether you add type annotation or not::
+  Run static analysis with `mypy`:
 
-    mypy --ignore-missing-import sklearn
+  .. prompt:: bash $
+
+      mypy sklearn
 
   must not produce new errors in your pull request. Using `# type: ignore`
   annotation can be a workaround for a few cases that are not supported by
@@ -442,8 +493,7 @@ You can check for common programming errors with the following tools:
   - on properties with decorators
 
 Bonus points for contributions that include a performance analysis with
-a benchmark script and profiling output (please report on the mailing
-list or on the GitHub issue).
+a benchmark script and profiling output (see :ref:`monitoring_performances`).
 
 Also check out the :ref:`performance-howto` guide for more details on
 profiling and Cython optimizations.
@@ -478,13 +528,19 @@ message, the following actions are taken.
     ====================== ===================
     Commit Message Marker  Action Taken by CI
     ---------------------- -------------------
-    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [ci skip]              CI is skipped completely
+    [cd build]             CD is run (wheels and source distribution are built)
     [lint skip]            Azure pipeline skips linting
+    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
+    [icc-build]            Add a Travis build with the Intel C compiler (ICC)
+    [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
-    [doc build]            Docs built including example gallery plots
+    [doc build]            Docs built including example gallery plots (very long)
     ====================== ===================
+
+Note that, by default, the documentation is built but only the examples
+that are directly modified by the pull request are executed.
 
 .. _stalled_pull_request:
 
@@ -526,7 +582,7 @@ Stalled and Unclaimed Issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Generally speaking, issues which are up for grabs will have a
-`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
 tag. However, not all issues which need contributors will have this tag,
 as the "help wanted" tag is not always up-to-date with the state
 of the issue. Contributors can find issues which are still up for grabs
@@ -586,7 +642,7 @@ underestimate how easy an issue is to solve!
     we use the help wanted tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the help wanted tag can be found
-    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
 
     Note that not all issues which need contributors will have this tag.
 
@@ -615,27 +671,37 @@ the development version.
 ..
     packaging is not needed once setuptools starts shipping packaging>=17.0
 
-Building the documentation requires installing some additional packages::
+Building the documentation requires installing some additional packages:
+
+.. prompt:: bash $
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn
+                scikit-image packaging seaborn sphinx-prompt
 
-To build the documentation, you need to be in the ``doc`` folder::
+To build the documentation, you need to be in the ``doc`` folder:
+
+.. prompt:: bash $
 
     cd doc
 
 In the vast majority of cases, you only need to generate the full web site,
-without the example gallery::
+without the example gallery:
+
+.. prompt:: bash $
 
     make
 
 The documentation will be generated in the ``_build/html/stable`` directory.
-To also generate the example gallery you can use::
+To also generate the example gallery you can use:
+
+.. prompt:: bash $
 
     make html
 
 This will run all the examples, which takes a while. If you only want to
-generate a few examples, you can use::
+generate a few examples, you can use:
+
+.. prompt:: bash $
 
     EXAMPLES_PATTERN=your_regex_goes_here make html
 
@@ -644,7 +710,9 @@ This is particularly useful if you are modifying a few examples.
 Set the environment variable `NO_MATHJAX=1` if you intend to view
 the documentation in an offline setting.
 
-To build the PDF manual, run::
+To build the PDF manual, run:
+
+.. prompt:: bash $
 
     make latexpdf
 
@@ -684,12 +752,12 @@ opposed to how it works "under the hood".
 
 Finally, follow the formatting rules below to make it consistently good:
 
-* Add "See also" in docstrings for related classes/functions.
+* Add "See Also" in docstrings for related classes/functions.
 
-* "See also" in docstrings should be one line per reference,
+* "See Also" in docstrings should be one line per reference,
   with a colon and an explanation, for example::
 
-    See also
+    See Also
     --------
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.
@@ -705,7 +773,7 @@ Finally, follow the formatting rules below to make it consistently good:
         literal (either `hello` or `goodbye`), a bool, or an int. The default
         value is True.
 
-    array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
+    array_parameter : {array-like, sparse matrix} of shape (n_samples, n_features) or (n_samples,)
         This parameter accepts data in either of the mentioned forms, with one
         of the mentioned shapes. The default value is
         `np.ones(shape=(n_samples,))`.
@@ -716,24 +784,36 @@ Finally, follow the formatting rules below to make it consistently good:
 
     sample_weight : array-like of shape (n_samples,), default=None
 
-In general have the following in mind:
+    multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
 
-    1. Use Python basic types. (``bool`` instead of ``boolean``)
-    2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
-       or ``array-like of shape (n_samples, n_features)``
-    3. For strings with multiple options, use brackets:
-       ``input: {'log', 'squared', 'multinomial'}``
-    4. 1D or 2D data can be a subset of
-       ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
-       can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. When specifying the data type of a list, use ``of`` as a delimiter:
-       ``list of int``.
-    6. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
-       after defining the shape:
-       ``ndarray of shape (n_samples,), dtype=np.int32``.
-    7. When the default is ``None``, ``None`` only needs to be specified at the
-       end with ``default=None``. Be sure to include in the docstring, what it
-       means for the parameter or attribute to be ``None``.
+  In general have the following in mind:
+
+      1. Use Python basic types. (``bool`` instead of ``boolean``)
+      2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+         or ``array-like of shape (n_samples, n_features)``
+      3. For strings with multiple options, use brackets:
+         ``input: {'log', 'squared', 'multinomial'}``
+      4. 1D or 2D data can be a subset of
+         ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
+         can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
+      5. Specify ``dataframe`` when "frame-like" features are being used, such
+         as the column names.
+      6. When specifying the data type of a list, use ``of`` as a delimiter:
+         ``list of int``. When the parameter supports arrays giving details
+         about the shape and/or data type and a list of such arrays, you can
+         use one of ``array-like of shape (n_samples,) or list of such arrays``.
+      7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
+         after defining the shape:
+         ``ndarray of shape (n_samples,), dtype=np.int32``. You can specify
+         multiple dtype as a set:
+         ``array-like of shape (n_samples,), dtype={np.float64, np.float32}``.
+         If one wants to mention arbitrary precision, use `integral` and
+         `floating` rather than the Python dtype `int` and `float`. When both
+         `int` and `floating` are supported, there is no need to specify the
+         dtype.
+      8. When the default is ``None``, ``None`` only needs to be specified at the
+         end with ``default=None``. Be sure to include in the docstring, what it
+         means for the parameter or attribute to be ``None``.
 
 * For unwritten formatting rules, try to follow existing good works:
 
@@ -743,8 +823,12 @@ In general have the following in mind:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
-* Before submitting you pull request check if your modifications have introduced
-  new sphinx warnings and try to fix them.
+* Do not modify sphinx labels as this would break existing cross references and
+  external links pointing to specific sections in the
+  scikit-learn documentation.
+
+* Before submitting your pull request check if your modifications have
+  introduced new sphinx warnings and try to fix them.
 
 .. _generated_doc_CI:
 
@@ -807,6 +891,125 @@ To test code coverage, you need to install the `coverage
     write or adapt a test specifically for these lines.
 
 3. Loop.
+
+.. _monitoring_performances:
+
+Monitoring performance
+======================
+
+*This section is heavily inspired from the* `pandas documentation
+<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
+
+When proposing changes to the existing code base, it's important to make sure
+that they don't introduce performance regressions. Scikit-learn uses
+`asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
+performance of a selection of common estimators and functions. The benchmark
+suite can be found in the `scikit-learn/asv_benchmarks` directory.
+
+To use all features of asv, you will need either `conda` or `virtualenv`. For
+more details please check the `asv installation webpage
+<https://asv.readthedocs.io/en/latest/installing.html>`_.
+
+First of all you need to install the development version of asv:
+
+.. prompt:: bash $
+
+    pip install git+https://github.com/airspeed-velocity/asv
+
+and change your directory to `asv_benchmarks/`:
+
+.. prompt:: bash $
+
+  cd asv_benchmarks/
+
+The benchmark suite is configured to run against your local clone of
+scikit-learn. Make sure it is up to date:
+
+.. prompt:: bash $
+
+  git fetch upstream
+
+In the benchmark suite, the benchmarks are organized following the same
+structure as scikit-learn. For example, you can compare the performance of a
+specific estimator between upstream/main and the branch you are working on:
+
+.. prompt:: bash $
+
+  asv continuous -b LogisticRegression upstream/main HEAD
+
+The command uses conda by default for creating the benchmark environments. If
+you want to use virtualenv instead, use the `-E` flag:
+
+.. prompt:: bash $
+
+  asv continuous -E virtualenv -b LogisticRegression upstream/main HEAD
+
+You can also specify a whole module to benchmark:
+
+.. prompt:: bash $
+
+  asv continuous -b linear_model upstream/main HEAD
+
+You can replace `HEAD` by any local branch. By default it will only report the
+benchmarks that have change by at least 10%. You can control this ratio with
+the `-f` flag.
+
+To run the full benchmark suite, simply remove the `-b` flag :
+
+.. prompt:: bash $
+
+  asv continuous upstream/main HEAD
+
+However this can take up to two hours. The `-b` flag also accepts a regular
+expression for a more complex subset of benchmarks to run.
+
+To run the benchmarks without comparing to another branch, use the `run`
+command:
+
+.. prompt:: bash $
+
+  asv run -b linear_model HEAD^!
+
+You can also run the benchmark suite using the version of scikit-learn already
+installed in your current Python environment:
+
+.. prompt:: bash $
+
+  asv run --python=same
+
+It's particulary useful when you installed scikit-learn in editable mode to
+avoid creating a new environment each time you run the benchmarks. By default
+the results are not saved when using an existing installation. To save the
+results you must specify a commit hash:
+
+.. prompt:: bash $
+
+  asv run --python=same --set-commit-hash=<commit hash>
+
+Benchmarks are saved and organized by machine, environment and commit. To see
+the list of all saved benchmarks:
+
+.. prompt:: bash $
+
+  asv show
+
+and to see the report of a specific run:
+
+.. prompt:: bash $
+
+  asv show <commit hash>
+
+When running benchmarks for a pull request you're working on please report the
+results on github.
+
+The benchmark suite supports additional configurable options which can be set
+in the `benchmarks/config.json` configuration file. For example, the benchmarks
+can run for a provided list of values for the `n_jobs` parameter.
+
+More information on how to write a benchmark and how to use asv can be found in
+the `asv documentation <https://asv.readthedocs.io/en/latest/index.html>`_.
+
+.. _issue_tracker_tags:
 
 Issue Tracker Tags
 ==================
@@ -1051,7 +1254,7 @@ Reading the existing code base
 ==============================
 
 Reading and digesting an existing code base is always a difficult exercise
-that takes time and experience to master. Even though we try to write simple
+that takes time and experience to main. Even though we try to write simple
 code in general, understanding the code can seem overwhelming at first,
 given the sheer size of the project. Here is a list of tips that may help
 make this task easier and faster (in no particular order).
@@ -1067,17 +1270,17 @@ make this task easier and faster (in no particular order).
   is performed, especially at the beginning of the :term:`fit` methods.
   Sometimes, only a very small portion of the code is doing the actual job.
   For example looking at the ``fit()`` method of
-  :class:`sklearn.linear_model.LinearRegression`, what you're looking for
+  :class:`~linear_model.LinearRegression`, what you're looking for
   might just be the call the ``scipy.linalg.lstsq``, but it is buried into
   multiple lines of input checking and the handling of different kinds of
   parameters.
 - Due to the use of `Inheritance
   <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
   some methods may be implemented in parent classes. All estimators inherit
-  at least from :class:`BaseEstimator <sklearn.base.BaseEstimator>`, and
-  from a ``Mixin`` class (e.g. :class:`ClassifierMixin
-  <sklearn.base.ClassifierMixin>`) that enables default behaviour depending
-  on the nature of the estimator (classifier, regressor, transformer, etc.).
+  at least from :class:`~base.BaseEstimator`, and
+  from a ``Mixin`` class (e.g. :class:`~base.ClassifierMixin`) that enables default
+  behaviour depending on the nature of the estimator (classifier, regressor,
+  transformer, etc.).
 - Sometimes, reading the tests for a given function will give you an idea of
   what its intended purpose is. You can use ``git grep`` (see below) to find
   all the tests written for a function. Most tests for a specific

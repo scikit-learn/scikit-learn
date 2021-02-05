@@ -20,7 +20,7 @@ class _VisualBlock:
         estimators.
         If kind == 'single', then `estimators` is a single estimator.
 
-    names : list of str
+    names : list of str, default=None
         If kind != 'single', then `names` corresponds to estimators.
         If kind == 'single', then `names` is a single string corresponding to
         the single estimator.
