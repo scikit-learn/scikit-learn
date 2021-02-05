@@ -1809,7 +1809,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
 
     adjusted : bool, default=False
         When true, the result is adjusted for chance, so that random
-        performance would score 0, and perfect performance scores 1.
+        performance would score 0, while keeping perfect performance at a score
+        of 1.
 
     Returns
     -------
