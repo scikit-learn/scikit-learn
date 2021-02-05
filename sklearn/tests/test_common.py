@@ -267,7 +267,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
     'compose',
     'covariance',
-    'discriminant_analysis',
     'feature_extraction',
     'feature_selection',
     'isotonic',
