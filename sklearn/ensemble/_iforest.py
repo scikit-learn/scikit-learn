@@ -145,7 +145,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The number of features when ``fit`` is performed.
 
         .. deprecated:: 1.0
-            Attribute n_features_ was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0. and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     Notes
