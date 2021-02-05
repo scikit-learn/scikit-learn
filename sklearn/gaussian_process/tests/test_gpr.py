@@ -543,3 +543,15 @@ def test_bound_check_fixed_hyperparameter():
                         periodicity_bounds="fixed")  # seasonal component
     kernel = k1 + k2
     GaussianProcessRegressor(kernel=kernel).fit(X, y)
+
+
+def test_handling_zeros_in_std():
+    # Test that zero std is handled properly
+    X = [[0.75 ], [0.125]]
+    y = np.array([1, 1])
+    gpr = GaussianProcessRegressor(normalize_y=True).fit(X, y)
+    y_pred, y_cov = gpr.predict(X, return_cov=True)
+
+    assert_almost_equal(y_pred, y)
+    assert_almost_equal(np.diag(y_cov), 0.)
+
