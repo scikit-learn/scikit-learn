@@ -166,8 +166,8 @@ In an effort to promote clear and non-ambiguous use of the library, most
 constructor and function parameters are now expected to be passed as keyword
 arguments (i.e. using the `param=value` syntax) instead of positional. To
 ease the transition, a `FutureWarning` is raised if a keyword-only parameter
-is used as positional. In version 0.25, these parameters will be strictly
-keyword-only, and a `TypeError` will be raised.
+is used as positional. In version 1.0 (renaming of 0.25), these parameters
+will be strictly keyword-only, and a `TypeError` will be raised.
 :issue:`15005` by `Joel Nothman`_, `Adrin Jalali`_, `Thomas Fan`_, and
 `Nicolas Hug`_. See `SLEP009
 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_

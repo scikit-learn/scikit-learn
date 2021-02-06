@@ -85,7 +85,7 @@ def test_invalid_classification_loss():
         (None, None, True, 5, 1e-1),
         ('loss', .1, True, 5, 1e-7),  # use loss
         ('loss', None, True, 5, 1e-1),  # use loss on training data
-        (None, None, False, 5, None),  # no early stopping
+        (None, None, False, 5, 0.0),  # no early stopping
         ])
 def test_early_stopping_regression(scoring, validation_fraction,
                                    early_stopping, n_iter_no_change, tol):
@@ -126,7 +126,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
         (None, None, True, 5, 1e-1),
         ('loss', .1, True, 5, 1e-7),  # use loss
         ('loss', None, True, 5, 1e-1),  # use loss on training data
-        (None, None, False, 5, None),  # no early stopping
+        (None, None, False, 5, 0.0),  # no early stopping
         ])
 def test_early_stopping_classification(data, scoring, validation_fraction,
                                        early_stopping, n_iter_no_change, tol):
@@ -820,7 +820,7 @@ def test_unknown_categories_nan(insert_missing, Est,
         categorical_features = [1]
 
     if insert_missing:
-        mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
+        mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
         X[mask] = np.nan
 
