@@ -360,4 +360,3 @@ def test_johnson_lindenstrauss_min_dim():
     Regression test for #17111: before #19374, 32-bit systems would fail.
     """
     assert johnson_lindenstrauss_min_dim(100, eps=1e-5) == 368416070986
-    
