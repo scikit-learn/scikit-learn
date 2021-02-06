@@ -202,7 +202,7 @@ def _monkey_patch_webbased_functions(context,
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
-        
+
         if has_gzip_header and gzip_response:
             with open(path, 'rb') as f:
                 fp = BytesIO(f.read())
