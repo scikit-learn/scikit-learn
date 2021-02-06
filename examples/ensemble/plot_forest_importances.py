@@ -13,20 +13,18 @@ remaining are not.
 
 .. warning::
     Impurity-based feature importances can be misleading for high cardinality
-    features (many unique values). See
-    :func:`sklearn.inspection.permutation_importance` as an alternative.
+    features (many unique values). 
 """
 print(__doc__)
 
 # %%
+import time
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from sklearn.datasets import make_classification
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.inspection import permutation_importance
 
-# %%
 # Build a classification task using 3 informative features
 X, y = make_classification(n_samples=1000,
                            n_features=10,
@@ -37,42 +35,44 @@ X, y = make_classification(n_samples=1000,
                            random_state=0,
                            shuffle=False)
 
-# Build a forest and compute the impurity-based feature importances
-forest = ExtraTreesClassifier(n_estimators=250,
-                              random_state=0)
 
-forest.fit(X, y)
-importances = forest.feature_importances_
-std = np.std([tree.feature_importances_ for tree in forest.estimators_],
-             axis=0)
-indices = np.argsort(importances)
 
-# Print the feature ranking
-print("Feature ranking:")
-for f in range(X.shape[1]):
-    feat_index = indices[::-1][f]
-    print(f"{f + 1}. feature {feat_index} ({importances[feat_index]:.4f})")
+# %%
+# Feature permulation importance on full model
+# --------------------------------------------
+# Another way to calculate the feature importances is by 
+# using permutation_importance from the inspection submodule.
+# Here, we'll fit an Extra-Trees Classifier to the data and 
+# calculate the feature importances on the full data set.
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.inspection import permutation_importance
 
 feature_names = [f'feature {i}' for i in range(X.shape[1])]
 
-# %%
-# Plot the impurity-based feature importances of the forest
-fig = plt.figure(figsize=(12, 6))
-plt.subplot(1, 2, 1)
-plt.barh(range(X.shape[1]), importances[indices],
-         color="r", xerr=std[indices], align='center')
-plt.yticks(range(X.shape[1]), np.array(feature_names)[indices])
-plt.ylim([-1, X.shape[1]])
-plt.title("Feature importances")
+forest = ExtraTreesClassifier(n_estimators=250,
+                              random_state=42)
 
-# Plot the feature importances based on permutation importance
+start_time = time.time()                        
+forest.fit(X, y)
 result = permutation_importance(forest, X, y, n_repeats=10,
                                 random_state=42, n_jobs=2)
-sorted_idx = result.importances_mean.argsort()
-plt.subplot(1, 2, 2)
-plt.boxplot(result.importances[sorted_idx].T,
-            vert=False,
-            labels=np.array(feature_names)[sorted_idx])
-plt.title("Permutation Importances")
-fig.tight_layout()
+forest_importances = pd.Series(
+    result.importances_mean, index=feature_names)
+elapsed_time = time.time() - start_time
+print(f"Elapsed time to fit and compute the importances: "
+      f"{elapsed_time:.3f} seconds")
+
+# The computation for full permutation importance is more costly.
+# Features are shuffled n times and the model refitted to estimate
+# the importance of it. Please see :ref:`permutation_importance` for
+# more details.
+
+# We can now plot the importance ranking.
+
+ax = forest_importances.plot.bar(yerr=result.importances_std)
+ax.set_title("Feature importances using permutation on full model")
+ax.set_ylabel("Mean accuracy decrease")
 plt.show()
+
+# Same as in the OOB feature importance three most important features
+# are detected.
