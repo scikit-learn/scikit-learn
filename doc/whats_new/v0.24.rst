@@ -234,10 +234,6 @@ Changelog
   files downloaded or cached to ensure data integrity.
   :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
-
 - |Enhancement| :func:`datasets.fetch_openml` now allows argument `as_frame`
   to be 'auto', which tries to convert returned data to pandas DataFrame
   unless data is sparse.

@@ -1,6 +1,7 @@
 """Test the openml loader.
 """
 import gzip
+from io import BytesIO
 import json
 import numpy as np
 import os
@@ -203,21 +204,26 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.json'))
 
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
+
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_download_data(url, has_gzip_header):
@@ -227,10 +233,12 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.arff'))
 
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_list(url, has_gzip_header):
@@ -247,10 +255,12 @@ def _monkey_patch_webbased_functions(context,
                             hdrs=None, fp=None)
 
         if has_gzip_header:
-            fp = open(json_file_path, 'rb')
+            with open(json_file_path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(json_file_path, 'rb')
+            with read_fn(json_file_path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen(request):
@@ -1311,3 +1321,18 @@ def test_convert_arff_data_type():
     msg = r"arff\['data'\] must be a generator when converting to pd.DataFrame"
     with pytest.raises(ValueError, match=msg):
         _convert_arff_data_dataframe(arff, ['a'], {})
+
+
+def test_missing_values_pandas(monkeypatch):
+    """check that missing values in categories are compatible with pandas
+    categorical"""
+    pytest.importorskip('pandas')
+
+    data_id = 42585
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    penguins = fetch_openml(data_id=data_id, cache=False, as_frame=True)
+
+    cat_dtype = penguins.data.dtypes['sex']
+    # there are nans in the categorical
+    assert penguins.data['sex'].isna().any()
+    assert_array_equal(cat_dtype.categories, ['FEMALE', 'MALE', '_'])
