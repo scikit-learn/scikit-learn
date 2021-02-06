@@ -1,6 +1,7 @@
 """Test the openml loader.
 """
 import gzip
+from io import BytesIO
 import json
 import numpy as np
 import os
@@ -201,10 +202,12 @@ def _monkey_patch_webbased_functions(context,
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
-
+        
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
+
         else:
             fp = read_fn(path, 'rb')
             return _MockHTTPResponse(fp, False)
@@ -213,8 +216,10 @@ def _monkey_patch_webbased_functions(context,
         assert url.startswith(url_prefix_data_features)
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
+
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
@@ -227,7 +232,8 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.arff'))
 
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
