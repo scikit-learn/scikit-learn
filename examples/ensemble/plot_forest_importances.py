@@ -13,13 +13,12 @@ remaining are not.
 
 .. warning::
     Impurity-based feature importances can be misleading for high cardinality
-    features (many unique values). 
+    features (many unique values).
 """
 print(__doc__)
 
 # %%
 import time
-import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -39,9 +38,9 @@ X, y = make_classification(n_samples=1000,
 # %%
 # Feature permutation importance on full model
 # --------------------------------------------
-# Another way to calculate the feature importances is by 
+# Another way to calculate the feature importances is by
 # using permutation_importance from the inspection submodule.
-# Here, we'll fit an Extra-Trees Classifier to the data and 
+# Here, we'll fit an Extra-Trees Classifier to the data and
 # calculate the feature importances on the full data set.
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.inspection import permutation_importance
@@ -51,7 +50,7 @@ feature_names = [f'feature {i}' for i in range(X.shape[1])]
 forest = ExtraTreesClassifier(n_estimators=250,
                               random_state=42)
 
-start_time = time.time()                        
+start_time = time.time()
 forest.fit(X, y)
 result = permutation_importance(forest, X, y, n_repeats=10,
                                 random_state=42, n_jobs=2)
