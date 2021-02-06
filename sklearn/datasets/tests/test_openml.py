@@ -1,6 +1,7 @@
 """Test the openml loader.
 """
 import gzip
+from io import BytesIO
 import json
 import numpy as np
 import os
@@ -203,21 +204,26 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.json'))
 
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
+
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_download_data(url, has_gzip_header):
@@ -227,10 +233,12 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.arff'))
 
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_list(url, has_gzip_header):
@@ -247,10 +255,12 @@ def _monkey_patch_webbased_functions(context,
                             hdrs=None, fp=None)
 
         if has_gzip_header:
-            fp = open(json_file_path, 'rb')
+            with open(json_file_path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(json_file_path, 'rb')
+            with read_fn(json_file_path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen(request):
