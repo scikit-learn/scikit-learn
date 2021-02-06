@@ -256,7 +256,6 @@ Changelog
   :pr:`18280` by :user:`Alex Liang <tianchuliang>` and
   `Guillaume Lemaitre`_.
 
-<<<<<<< HEAD
 - |Enhancement| :func:`datasets.fetch_openml` now supports categories with
   missing values when returning a pandas dataframe. :pr:`18383` by
   `Thomas Fan`_.
@@ -269,8 +268,6 @@ Changelog
   changed from False to 'auto'.
   :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
 
-=======
->>>>>>> upstream/main
 - |Enhancement| :func:`datasets.fetch_20newsgroups_vectorized` now supports
   loading as a pandas ``DataFrame`` by setting ``as_frame=True``.
   :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>` and
