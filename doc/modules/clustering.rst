@@ -103,7 +103,7 @@ Overview of clustering methods
      - Flat geometry, good for density estimation
      - Mahalanobis distances to  centers
 
-   * - :ref:`Birch`
+   * - :ref:`BIRCH <birch>`
      - branching factor, threshold, optional global clusterer.
      - Large ``n_clusters`` and ``n_samples``
      - Large dataset, outlier removal, data reduction.
@@ -943,7 +943,7 @@ represented as children of a larger parent cluster.
 
 .. _birch:
 
-Birch
+BIRCH
 =====
 
 The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
@@ -962,7 +962,7 @@ the need to hold the entire input data in memory. This information includes:
 - Centroids - To avoid recalculation linear sum / n_samples.
 - Squared norm of the centroids.
 
-The Birch algorithm has two parameters, the threshold and the branching factor.
+The BIRCH algorithm has two parameters, the threshold and the branching factor.
 The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
@@ -996,13 +996,13 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
   then this node is again split into two and the process is continued
   recursively, till it reaches the root.
 
-**Birch or MiniBatchKMeans?**
+**BIRCH or MiniBatchKMeans?**
 
- - Birch does not scale very well to high dimensional data. As a rule of thumb if
+ - BIRCH does not scale very well to high dimensional data. As a rule of thumb if
    ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
  - If the number of instances of data needs to be reduced, or if one wants a
    large number of subclusters either as a preprocessing step or otherwise,
-   Birch is more useful than MiniBatchKMeans.
+   BIRCH is more useful than MiniBatchKMeans.
 
 
 **How to use partial_fit?**
