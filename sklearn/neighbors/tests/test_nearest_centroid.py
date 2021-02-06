@@ -1,7 +1,7 @@
 """
 Testing for the nearest centroid module.
 """
-
+import pytest
 import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_array_equal
@@ -157,5 +157,5 @@ def test_features_zero_var():
     y[0] = 1
 
     clf = NearestCentroid(shrink_threshold=0.1)
-    with pytest_raises(ValueError):
+    with pytest.raises(ValueError):
         clf.fit(X, y)

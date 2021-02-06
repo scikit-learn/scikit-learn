@@ -207,7 +207,7 @@ def test_bad_pyfunc_metric():
 
     X = np.ones((5, 2))
     with pytest.raises(TypeError, match="Custom distance function must accept two vectors"):
-        BallTree(, X, metric=wrong_distance)
+        BallTree(X, metric=wrong_distance)
 
 
 def test_input_data_size():

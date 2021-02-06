@@ -126,7 +126,7 @@ def test_params_validation():
     rng = np.random.RandomState(42)
 
     # TypeError
-    with pytest.raisess(TypeError):
+    with pytest.raises(TypeError):
         NCA(max_iter='21').fit(X, y)
     with pytest.raises(TypeError):
         NCA(verbose='true').fit(X, y)
