@@ -207,9 +207,9 @@ def _monkey_patch_webbased_functions(context,
             with open(path, 'rb') as f:
                 fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
-
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_features(url, has_gzip_header):
@@ -222,7 +222,8 @@ def _monkey_patch_webbased_functions(context,
                 fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_download_data(url, has_gzip_header):
@@ -236,7 +237,8 @@ def _monkey_patch_webbased_functions(context,
                 fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_list(url, has_gzip_header):
@@ -253,10 +255,12 @@ def _monkey_patch_webbased_functions(context,
                             hdrs=None, fp=None)
 
         if has_gzip_header:
-            fp = open(json_file_path, 'rb')
+            with open(json_file_path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(json_file_path, 'rb')
+            with read_fn(json_file_path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen(request):
