@@ -143,7 +143,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ('AgglomerativeClustering', average_linkage),
         ('DBSCAN', dbscan),
         ('OPTICS', optics),
-        ('Birch', birch),
+        ('BIRCH', birch),
         ('GaussianMixture', gmm)
     )
 
