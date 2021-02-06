@@ -234,7 +234,8 @@ def test_trustworthiness():
     X_embedded = np.array([[0], [2], [4], [1], [3]])
     assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
 
-    # test warning
+
+def test_trustworthiness_warning():
     regex = "n_neighbors .+ should be less than .+"
     with pytest.warns(UserWarning, match=regex):
         X = np.random.rand(7, 4)
