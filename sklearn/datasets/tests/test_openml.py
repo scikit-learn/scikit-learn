@@ -797,6 +797,9 @@ def test_decode_iris(monkeypatch):
     _test_features_list(data_id)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Multiple active versions of the dataset matching the name"
+)
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_iris_multitarget(monkeypatch, gzip_response):
     # classification dataset with numeric only columns
@@ -816,6 +819,9 @@ def test_fetch_openml_iris_multitarget(monkeypatch, gzip_response):
                                compare_default_target=False)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Multiple active versions of the dataset matching the name"
+)
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_anneal(monkeypatch, gzip_response):
     # classification dataset with numeric and categorical columns
@@ -841,6 +847,9 @@ def test_decode_anneal(monkeypatch):
     _test_features_list(data_id)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Multiple active versions of the dataset matching the name"
+)
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_anneal_multitarget(monkeypatch, gzip_response):
     # classification dataset with numeric and categorical columns
@@ -860,6 +869,9 @@ def test_fetch_openml_anneal_multitarget(monkeypatch, gzip_response):
                                compare_default_target=False)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Multiple active versions of the dataset matching the name"
+)
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_cpu(monkeypatch, gzip_response):
     # regression dataset with numeric and categorical columns
