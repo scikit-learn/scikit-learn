@@ -302,6 +302,8 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+        .. versionchanged:: 1.2
+
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
@@ -332,11 +334,11 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 
     if random_state == 'warn':
         warnings.warn(
-            "'random_state' will be set to "
-            "None starting from 1.2 which means that "
-            "results will differ at every function call. Set 'random_state' "
-            "to an integer value to silence this warning, "
-            "or to 0 to keep the behavior of versions <1.0",
+            "If 'random_state' is not supplied "
+            "it will be set to 0 starting from version 1.2 "
+            "Set 'random_state' to an integer value to silence "
+            "this warning, "
+            "or to 0 to keep the behavior of versions <1.0 ",
             FutureWarning
         )
         random_state = 0
