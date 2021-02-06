@@ -73,6 +73,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
 
     def _check_X(self, X):
+        # Only called to validate X in non-fit methods, therefore reset=False
         return self._validate_data(
             X, accept_sparse=['csr', 'csc'], ensure_2d=True, allow_nd=True,
             dtype=None, reset=False)
