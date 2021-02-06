@@ -778,7 +778,8 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
         " iris exist. Versions may be fundamentally different, "
         "returning version 1.",
         fetch_openml,
-        name=data_name
+        name=data_name,
+        as_frame=False
     )
 
 
