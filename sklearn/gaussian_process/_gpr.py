@@ -14,7 +14,6 @@ import scipy.optimize
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
-from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _deprecate_positional_args
@@ -201,7 +200,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             self._y_train_std = np.std(y, axis=0)
 
             # Remove mean and make unit variance
-            y = (y - self._y_train_mean) / _handle_zeros_in_scale(self._y_train_std)
+            y = (y - self._y_train_mean) / np.where(self._y_train_std, self._y_train_std, 1)
 
         else:
             self._y_train_mean = np.zeros(1)

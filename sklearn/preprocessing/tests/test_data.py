@@ -46,7 +46,6 @@ from sklearn.preprocessing import add_dummy_feature
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import power_transform
-from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
 
 from sklearn.exceptions import NotFittedError
@@ -535,15 +534,6 @@ def test_scaler_float16_overflow():
     # float16 precision is 2^-8 which is around 0.004. Thus only 2 decimals are
     # checked to account for precision differences.
     assert_array_almost_equal(X_scaled, X_scaled_f64, decimal=2)
-
-
-def test_handle_zeros_in_scale():
-    s1 = np.array([0, 1, 2, 3])
-    s2 = _handle_zeros_in_scale(s1)
-
-    assert not s1[0] == s2[0]
-    assert_array_equal(s1, np.array([0, 1, 2, 3]))
-    assert_array_equal(s2, np.array([1, 1, 2, 3]))
 
 
 def test_minmax_scaler_partial_fit():

@@ -61,14 +61,6 @@ __all__ = [
 ]
 
 
-def _handle_zeros_in_scale(scale):
-    """Makes sure that whenever scale is zero, we handle it correctly.
-
-    This happens in most scalers when we have constant features.
-    """
-    return np.where(scale, scale, 1.)
-
-
 @_deprecate_positional_args
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
@@ -160,7 +152,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                              " got axis=%d" % axis)
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
-            var = _handle_zeros_in_scale(var)
+            var = np.where(var, var, 1)
             inplace_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
@@ -187,7 +179,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                               "to prescale your features.")
                 Xr -= mean_1
         if with_std:
-            scale_ = _handle_zeros_in_scale(scale_)
+            scale_ = np.where(scale_, scale_, 1)
             Xr /= scale_
             if with_mean:
                 mean_2 = np.nanmean(Xr, axis=0)
@@ -398,7 +390,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         data_range = data_max - data_min
         self.scale_ = ((feature_range[1] - feature_range[0]) /
-                       _handle_zeros_in_scale(data_range))
+                       np.where(data_range, data_range, 1))
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_min_ = data_min
         self.data_max_ = data_max
@@ -845,7 +837,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
-            self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))
+            sqrt_var_ = np.sqrt(self.var_)
+            self.scale_ = np.where(sqrt_var_, sqrt_var_, 1)
         else:
             self.scale_ = None
 
@@ -1073,7 +1066,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             self.n_samples_seen_ += X.shape[0]
 
         self.max_abs_ = max_abs
-        self.scale_ = _handle_zeros_in_scale(max_abs)
+        self.scale_ = np.where(max_abs, max_abs, 1)
         return self
 
     def transform(self, X):
@@ -1368,7 +1361,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             quantiles = np.transpose(quantiles)
 
             self.scale_ = quantiles[1] - quantiles[0]
-            self.scale_ = _handle_zeros_in_scale(self.scale_)
+            self.scale_ = np.where(self.scale_, self.scale_, 1)
             if self.unit_variance:
                 adjust = (stats.norm.ppf(q_max / 100.0) -
                           stats.norm.ppf(q_min / 100.0))
@@ -1922,7 +1915,7 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
             norms = row_norms(X)
         elif norm == 'max':
             norms = np.max(abs(X), axis=1)
-        norms = _handle_zeros_in_scale(norms)
+        norms = np.where(norms, norms, 1)
         X /= norms[:, np.newaxis]
 
     if axis == 0:
