@@ -1321,3 +1321,18 @@ def test_convert_arff_data_type():
     msg = r"arff\['data'\] must be a generator when converting to pd.DataFrame"
     with pytest.raises(ValueError, match=msg):
         _convert_arff_data_dataframe(arff, ['a'], {})
+
+
+def test_missing_values_pandas(monkeypatch):
+    """check that missing values in categories are compatible with pandas
+    categorical"""
+    pytest.importorskip('pandas')
+
+    data_id = 42585
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    penguins = fetch_openml(data_id=data_id, cache=False, as_frame=True)
+
+    cat_dtype = penguins.data.dtypes['sex']
+    # there are nans in the categorical
+    assert penguins.data['sex'].isna().any()
+    assert_array_equal(cat_dtype.categories, ['FEMALE', 'MALE', '_'])
