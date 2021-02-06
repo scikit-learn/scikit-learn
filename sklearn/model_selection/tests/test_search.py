@@ -14,7 +14,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils._testing import (
-    assert_raises,
     assert_warns,
     assert_warns_message,
     assert_raise_message,
@@ -177,7 +176,8 @@ def test_parameter_grid():
     assert len(empty) == 1
     assert list(empty) == [{}]
     assert_grid_iter_equals_getitem(empty)
-    assert_raises(IndexError, lambda: empty[1])
+    with pytest.raises(IndexError):
+        empty[1]
 
     has_empty = ParameterGrid([{'C': [1, 10]}, {}, {'C': [.5]}])
     assert len(has_empty) == 4
@@ -207,7 +207,8 @@ def test_grid_search():
 
     # Test exception handling on scoring
     grid_search.scoring = 'sklearn'
-    assert_raises(ValueError, grid_search.fit, X, y)
+    with pytest.raises(ValueError):
+        grid_search.fit(X, y)
 
 
 def test_grid_search_pipeline_steps():
@@ -408,7 +409,8 @@ def test_grid_search_error():
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    assert_raises(ValueError, cv.fit, X_[:180], y_)
+    with pytest.raises(ValueError):
+        cv.fit(X_[:180], y_)
 
 
 def test_grid_search_one_grid_point():
@@ -464,7 +466,8 @@ def test_grid_search_bad_param_grid():
 
     param_dict = {"C": np.ones((3, 2))}
     clf = SVC()
-    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+    with pytest.raises(ValueError):
+        GridSearchCV(clf, param_dict)
 
 
 def test_grid_search_sparse():
@@ -548,7 +551,8 @@ def test_grid_search_precomputed_kernel():
 
     # test error is raised when the precomputed kernel is not array-like
     # or sparse
-    assert_raises(ValueError, cv.fit, K_train.tolist(), y_train)
+    with pytest.raises(ValueError):
+        cv.fit(K_train.tolist(), y_train)
 
 
 def test_grid_search_precomputed_kernel_error_nonsquare():
@@ -558,7 +562,8 @@ def test_grid_search_precomputed_kernel_error_nonsquare():
     y_train = np.ones((10, ))
     clf = SVC(kernel='precomputed')
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    assert_raises(ValueError, cv.fit, K_train, y_train)
+    with pytest.raises(ValueError):
+        cv.fit(K_train, y_train)
 
 
 class BrokenClassifier(BaseEstimator):
@@ -1472,7 +1477,8 @@ def test_grid_search_failing_classifier_raise():
                       refit=False, error_score='raise')
 
     # FailingClassifier issues a ValueError so this is what we look for.
-    assert_raises(ValueError, gs.fit, X, y)
+    with pytest.raises(ValueError):
+        gs.fit(X, y)
 
 
 def test_parameters_sampler_replacement():
