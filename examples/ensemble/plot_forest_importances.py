@@ -36,9 +36,8 @@ X, y = make_classification(n_samples=1000,
                            shuffle=False)
 
 
-
 # %%
-# Feature permulation importance on full model
+# Feature permutation importance on full model
 # --------------------------------------------
 # Another way to calculate the feature importances is by 
 # using permutation_importance from the inspection submodule.
