@@ -341,11 +341,13 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 
     if random_state == 'warn':
         warnings.warn(
-            "If 'random_state' is not supplied "
-            "it will be set to 0 starting from version 1.2 "
-            "Set 'random_state' to an integer value to silence "
-            "this warning, "
-            "or to 0 to keep the behavior of versions <1.0 ",
+            "If 'random_state' is not supplied, the current default is to use 0 " 
+            "as a fixed seed. This will change to None in version 1.2 "
+            "leading to non-deterministic results that better reflect " 
+            "the nature of the randomized_svd solver. "
+            "If you want to silence this warning, set 'random_state' " 
+            "to an integer seed or to None explicitly depending "
+            "if you want your code to be deterministic or not. ",
             FutureWarning
         )
         random_state = 0
