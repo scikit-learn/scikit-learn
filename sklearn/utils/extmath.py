@@ -307,7 +307,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         The previous behavior (`random_state=0`) is deprecated, and
         from v1.2 the default value will be `random_state=None`. Set
         the value of `random_state` explicitly to suppress the deprecation
-        warning. 
+        warning.
 
         .. versionchanged:: 1.2
 
