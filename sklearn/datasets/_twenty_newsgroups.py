@@ -1,4 +1,4 @@
-"""Caching loader for the 20 newsgroups text classification dataset
+"""Caching loader for the 20 newsgroups text classification dataset.
 
 
 The description of the dataset is available on the official website at:
@@ -39,6 +39,7 @@ import joblib
 
 from . import get_data_home
 from . import load_files
+from ._base import _convert_data_dataframe
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
@@ -95,7 +96,7 @@ def strip_newsgroup_header(text):
 
     Parameters
     ----------
-    text : string
+    text : str
         The text from which to remove the signature block.
     """
     _before, _blankline, after = text.partition('\n\n')
@@ -114,7 +115,7 @@ def strip_newsgroup_quoting(text):
 
     Parameters
     ----------
-    text : string
+    text : str
         The text from which to remove the signature block.
     """
     good_lines = [line for line in text.split('\n')
@@ -132,7 +133,7 @@ def strip_newsgroup_footer(text):
 
     Parameters
     ----------
-    text : string
+    text : str
         The text from which to remove the signature block.
     """
     lines = text.strip().split('\n')
@@ -168,30 +169,30 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    subset : 'train' or 'test', 'all', optional
+    subset : {'train', 'test', 'all'}, default='train'
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    categories : None or collection of string or unicode
+    categories : array-like, dtype=str or unicode, default=None
         If None (default), load all the categories.
         If not None, list of category names to load (other categories
         ignored).
 
-    shuffle : bool, optional
+    shuffle : bool, default=True
         Whether or not to shuffle the data: might be important for models that
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    remove : tuple
+    remove : tuple, default=()
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
         these are kinds of text that will be detected and removed from the
         newsgroup posts, preventing classifiers from overfitting on
@@ -204,11 +205,11 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
         'headers' follows an exact standard; the other filters are not always
         correct.
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns `(data.data, data.target)` instead of a Bunch
         object.
 
@@ -219,15 +220,15 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
     bunch : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : list, length [n_samples]
+        data : list of shape (n_samples,)
             The data list to learn.
-        target: array, shape [n_samples]
+        target: ndarray of shape (n_samples,)
             The target labels.
-        filenames: list, length [n_samples]
+        filenames: list of shape (n_samples,)
             The path to the location of the data.
         DESCR: str
             The full description of the dataset.
-        target_names: list, length [n_classes]
+        target_names: list of shape (n_classes,)
             The names of target classes.
 
     (data, target) : tuple if `return_X_y=True`
@@ -321,27 +322,27 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
 
     if return_X_y:
         return data.data, data.target
+
     return data
 
 
 @_deprecate_positional_args
 def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                   download_if_missing=True, return_X_y=False,
-                                  normalize=True):
-    """Load the 20 newsgroups dataset and vectorize it into token counts \
-(classification).
+                                  normalize=True, as_frame=False):
+    """Load and vectorize the 20 newsgroups dataset (classification).
 
     Download it if necessary.
 
     This is a convenience function; the transformation is done using the
     default settings for
-    :class:`sklearn.feature_extraction.text.CountVectorizer`. For more
+    :class:`~sklearn.feature_extraction.text.CountVectorizer`. For more
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
     fetch_20newsgroups with a custom
-    :class:`sklearn.feature_extraction.text.CountVectorizer`,
-    :class:`sklearn.feature_extraction.text.HashingVectorizer`,
-    :class:`sklearn.feature_extraction.text.TfidfTransformer` or
-    :class:`sklearn.feature_extraction.text.TfidfVectorizer`.
+    :class:`~sklearn.feature_extraction.text.CountVectorizer`,
+    :class:`~sklearn.feature_extraction.text.HashingVectorizer`,
+    :class:`~sklearn.feature_extraction.text.TfidfTransformer` or
+    :class:`~sklearn.feature_extraction.text.TfidfVectorizer`.
 
     The resulting counts are normalized using
     :func:`sklearn.preprocessing.normalize` unless normalize is set to False.
@@ -357,11 +358,11 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
 
     Parameters
     ----------
-    subset : 'train' or 'test', 'all', optional
+    subset : {'train', 'test', 'all'}, default='train'
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    remove : tuple
+    remove : tuple, default=()
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
         these are kinds of text that will be detected and removed from the
         newsgroup posts, preventing classifiers from overfitting on
@@ -371,11 +372,11 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         ends of posts that look like signatures, and 'quotes' removes lines
         that appear to be quoting another post.
 
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify an download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -391,21 +392,38 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
 
         .. versionadded:: 0.22
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string, or categorical). The target is
+        a pandas DataFrame or Series depending on the number of
+        `target_columns`.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     bunch : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data: sparse matrix, shape [n_samples, n_features]
-            The data matrix to learn.
-        target: array, shape [n_samples]
-            The target labels.
-        target_names: list, length [n_classes]
+        data: {sparse matrix, dataframe} of shape (n_samples, n_features)
+            The input data matrix. If ``as_frame`` is `True`, ``data`` is
+            a pandas DataFrame with sparse columns.
+        target: {ndarray, series} of shape (n_samples,)
+            The target labels. If ``as_frame`` is `True`, ``target`` is a
+            pandas Series.
+        target_names: list of shape (n_classes,)
             The names of target classes.
         DESCR: str
             The full description of the dataset.
+        frame: dataframe of shape (n_samples, n_features + 1)
+            Only present when `as_frame=True`. Pandas DataFrame with ``data``
+            and ``target``.
+
+            .. versionadded:: 0.24
 
     (data, target) : tuple if ``return_X_y`` is True
+        `data` and `target` would be of the format defined in the `Bunch`
+        description above.
 
         .. versionadded:: 0.20
     """
@@ -433,12 +451,22 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                    download_if_missing=download_if_missing)
 
     if os.path.exists(target_file):
-        X_train, X_test = joblib.load(target_file)
+        try:
+            X_train, X_test, feature_names = joblib.load(target_file)
+        except ValueError as e:
+            raise ValueError(
+                f"The cached dataset located in {target_file} was fetched "
+                f"with an older scikit-learn version and it is not compatible "
+                f"with the scikit-learn version imported. You need to "
+                f"manually delete the file: {target_file}."
+            ) from e
     else:
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()
         X_test = vectorizer.transform(data_test.data).tocsr()
-        joblib.dump((X_train, X_test), target_file, compress=9)
+        feature_names = vectorizer.get_feature_names()
+
+        joblib.dump((X_train, X_test, feature_names), target_file, compress=9)
 
     # the data is stored as int16 for compactness
     # but normalize needs floats
@@ -467,10 +495,25 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
     with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    frame = None
+    target_name = ['category_class']
+
+    if as_frame:
+        frame, data, target = _convert_data_dataframe(
+            "fetch_20newsgroups_vectorized",
+            data,
+            target,
+            feature_names,
+            target_names=target_name,
+            sparse_data=True
+        )
+
     if return_X_y:
         return data, target
 
     return Bunch(data=data,
                  target=target,
+                 frame=frame,
                  target_names=target_names,
+                 feature_names=feature_names,
                  DESCR=fdescr)

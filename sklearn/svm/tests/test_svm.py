@@ -349,7 +349,7 @@ def test_decision_function():
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.classes_[(clf.decision_function(X) > 0).astype(np.int)])
+        clf.classes_[(clf.decision_function(X) > 0).astype(int)])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
@@ -776,7 +776,7 @@ def test_linearsvc():
 
     # test also decision function
     dec = clf.decision_function(T)
-    res = (dec > 0).astype(np.int) + 1
+    res = (dec > 0).astype(int) + 1
     assert_array_equal(res, true_result)
 
 
@@ -1235,7 +1235,7 @@ def test_n_support_oneclass_svr():
     assert reg.n_support_ == 4
 
 
-# TODO: Remove in 0.25 when probA_ and probB_ are deprecated
+# TODO: Remove in 1.0 when probA_ and probB_ are deprecated
 @pytest.mark.parametrize("SVMClass, data", [
     (svm.OneClassSVM, (X, )),
     (svm.SVR, (X, Y))
@@ -1245,7 +1245,7 @@ def test_svm_probA_proB_deprecated(SVMClass, data, deprecated_prob):
     clf = SVMClass().fit(*data)
 
     msg = ("The {} attribute is deprecated in version 0.23 and will be "
-           "removed in version 0.25.").format(deprecated_prob)
+           "removed in version 1.0").format(deprecated_prob)
     with pytest.warns(FutureWarning, match=msg):
         getattr(clf, deprecated_prob)
 

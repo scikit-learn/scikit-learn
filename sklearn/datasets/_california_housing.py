@@ -66,22 +66,22 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : optional, default=True
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
         .. versionadded:: 0.20
 
-    as_frame : boolean, default=False
+    as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
@@ -104,16 +104,15 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
             Array of ordered feature names used in the dataset.
         DESCR : string
             Description of the California housing dataset.
+        frame : pandas DataFrame
+            Only present when `as_frame=True`. DataFrame with ``data`` and
+            ``target``.
+
+            .. versionadded:: 0.23
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
 
     Notes
     -----

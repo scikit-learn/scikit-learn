@@ -61,6 +61,19 @@ example, when data are collected without an experimental design.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
+Non-Negative Least Squares
+--------------------------
+
+It is possible to constrain all the coefficients to be non-negative, which may
+be useful when they represent some physical or naturally non-negative
+quantities (e.g., frequency counts or prices of goods).
+:class:`LinearRegression` accepts a boolean ``positive``
+parameter: when set to `True` `Non Negative Least Squares
+<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
+
+.. topic:: Examples:
+
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`
 
 Ordinary Least Squares Complexity
 ---------------------------------
@@ -160,13 +173,12 @@ This method has the same order of complexity as
 .. between these
 
 
-Setting the regularization parameter: generalized Cross-Validation
-------------------------------------------------------------------
+Setting the regularization parameter: leave-one-out Cross-Validation
+--------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Generalized Cross-Validation
-(GCV), an efficient form of leave-one-out cross-validation::
+as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -179,7 +191,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
-example `cv=10` for 10-fold cross-validation, rather than Generalized
+example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
 .. topic:: References
@@ -355,7 +367,7 @@ Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2`-norm for regularization.
 The objective function to minimize is:
 
-.. math::  \min_{w} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
+.. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
 
 where :math:`\text{Fro}` indicates the Frobenius norm
 

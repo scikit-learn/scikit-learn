@@ -11,6 +11,7 @@ from .metrics.pairwise import pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
 from .utils.validation import _deprecate_positional_args
+from .utils.deprecation import deprecated
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -38,19 +39,19 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    alpha : float or array-like of shape (n_targets,)
+    alpha : float or array-like of shape (n_targets,), default=1.0
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`sklearn.svm.LinearSVC`. If an array is passed, penalties are
+        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number. See :ref:`ridge_regression` for formula.
 
     kernel : string or callable, default="linear"
         Kernel mapping used internally. This parameter is directly passed to
-        :class:`sklearn.metrics.pairwise.pairwise_kernel`.
+        :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
         If `kernel` is a string, it must be one of the metrics
         in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
@@ -75,7 +76,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of string to any, optional
+    kernel_params : mapping of string to any, default=None
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
@@ -95,12 +96,10 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
       "Machine Learning: A Probabilistic Perspective", The MIT Press
       chapter 14.4.3, pp. 492-493
 
-    See also
+    See Also
     --------
-    sklearn.linear_model.Ridge:
-        Linear ridge regression.
-    sklearn.svm.SVR:
-        Support Vector Regression implemented using libsvm.
+    sklearn.linear_model.Ridge : Linear ridge regression.
+    sklearn.svm.SVR : Support Vector Regression implemented using libsvm.
 
     Examples
     --------
@@ -134,11 +133,18 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return pairwise_kernels(X, Y, metric=self.kernel,
                                 filter_params=True, **params)
 
+    def _more_tags(self):
+        return {'pairwise': self.kernel == 'precomputed'}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model
 
         Parameters
@@ -150,7 +156,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
-        sample_weight : float or array-like of shape [n_samples]
+        sample_weight : float or array-like of shape (n_samples,), default=None
             Individual weights for each sample, ignored if None is passed.
 
         Returns
@@ -199,5 +205,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Returns predicted values.
         """
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

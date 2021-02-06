@@ -35,7 +35,7 @@ from itertools import cycle, islice
 
 np.random.seed(0)
 
-######################################################################
+# %%
 # Generate datasets. We choose the size big enough to see the scalability
 # of the algorithms, but not too big to avoid too long running times
 
@@ -58,7 +58,7 @@ varied = datasets.make_blobs(n_samples=n_samples,
                              cluster_std=[1.0, 2.5, 0.5],
                              random_state=random_state)
 
-######################################################################
+# %%
 # Run the clustering and plot
 
 # Set up cluster parameters
@@ -123,7 +123,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
         t1 = time.time()
         if hasattr(algorithm, 'labels_'):
-            y_pred = algorithm.labels_.astype(np.int)
+            y_pred = algorithm.labels_.astype(int)
         else:
             y_pred = algorithm.predict(X)
 

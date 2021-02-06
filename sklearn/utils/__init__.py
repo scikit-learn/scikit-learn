@@ -24,7 +24,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version
+from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (as_float_array,
                          assert_all_finite,
@@ -43,7 +43,6 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
-
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "check_random_state",
@@ -53,15 +52,14 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_html_repr"
-           ]
+           "DataConversionWarning", "estimator_html_repr"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):
-    """Container object exposing keys as attributes
+    """Container object exposing keys as attributes.
 
     Bunch objects are sometimes used as an output for functions and methods.
     They extend dictionaries by enabling values to be accessed by key,
@@ -117,7 +115,7 @@ def safe_mask(X, mask):
     X : {array-like, sparse matrix}
         Data on which to apply mask.
 
-    mask : array
+    mask : ndarray
         Mask to be used on X.
 
     Returns
@@ -154,7 +152,7 @@ def axis0_safe_slice(X, mask, len_mask):
     X : {array-like, sparse matrix}
         Data on which to apply mask.
 
-    mask : array
+    mask : ndarray
         Mask to be used on X.
 
     len_mask : int
@@ -171,7 +169,7 @@ def axis0_safe_slice(X, mask, len_mask):
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    if np_version < (1, 12) or issparse(array):
+    if np_version < parse_version('1.12') or issparse(array):
         # FIXME: Remove the check for NumPy when using >= 1.12
         # check if we have an boolean array-likes to make the proper indexing
         if key_dtype == 'bool':
@@ -440,7 +438,7 @@ def resample(*arrays,
         If replace is False it should not be larger than the length of
         arrays.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
@@ -497,9 +495,9 @@ def resample(*arrays,
       ...          random_state=0)
       [1, 1, 1, 0, 1]
 
-    See also
+    See Also
     --------
-    :func:`sklearn.utils.shuffle`
+    shuffle
     """
     max_n_samples = n_samples
     random_state = check_random_state(random_state)
@@ -565,8 +563,8 @@ def resample(*arrays,
         return resampled_arrays
 
 
-def shuffle(*arrays, **options):
-    """Shuffle arrays or sparse matrices in a consistent way
+def shuffle(*arrays, random_state=None, n_samples=None):
+    """Shuffle arrays or sparse matrices in a consistent way.
 
     This is a convenience alias to ``resample(*arrays, replace=False)`` to do
     random permutations of the collections.
@@ -577,17 +575,16 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    Other Parameters
-    ----------------
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    n_samples : int, None by default
+    n_samples : int, default=None
         Number of samples to generate. If left to None this is
-        automatically set to the first dimension of the arrays.
+        automatically set to the first dimension of the arrays.  It should
+        not be larger than the length of arrays.
 
     Returns
     -------
@@ -627,12 +624,12 @@ def shuffle(*arrays, **options):
       >>> shuffle(y, n_samples=2, random_state=0)
       array([0, 1])
 
-    See also
+    See Also
     --------
-    :func:`sklearn.utils.resample`
+    resample
     """
-    options['replace'] = False
-    return resample(*arrays, **options)
+    return resample(*arrays, replace=False, n_samples=n_samples,
+                    random_state=random_state)
 
 
 @_deprecate_positional_args
@@ -641,9 +638,9 @@ def safe_sqr(X, *, copy=True):
 
     Parameters
     ----------
-    X : array like, matrix, sparse matrix
+    X : {array-like, ndarray, sparse matrix}
 
-    copy : boolean, optional, default True
+    copy : bool, default=True
         Whether to create a copy of X and operate on it or to perform
         inplace computation (default behaviour).
 
@@ -686,7 +683,7 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     ----------
     n : int
     batch_size : int
-        Number of element in each batch
+        Number of element in each batch.
     min_batch_size : int, default=0
         Minimum batch size to produce.
 
@@ -734,7 +731,7 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     n : int
     n_packs : int
         Number of slices to generate.
-    n_samples : int or None (default = None)
+    n_samples : int, default=None
         Number of samples. Pass n_samples when the slices are to be used for
         sparse matrix indexing; slicing off-the-end raises an exception, while
         it works for NumPy arrays.
@@ -814,10 +811,7 @@ def _to_object_array(sequence):
     array([array([0]), array([1])], dtype=object)
     >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
-    >>> np.array([np.array([0]), np.array([1])])
-    array([[0],
-       [1]])
-    >>> np.array([np.array([0]), np.array([1, 2])])
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
     """
     out = np.empty(len(sequence), dtype=object)
@@ -834,7 +828,7 @@ def indices_to_mask(indices, mask_length):
         List of integers treated as indices.
     mask_length : int
         Length of boolean mask to be generated.
-        This parameter must be greater than max(indices)
+        This parameter must be greater than max(indices).
 
     Returns
     -------
@@ -851,25 +845,25 @@ def indices_to_mask(indices, mask_length):
     if mask_length <= np.max(indices):
         raise ValueError("mask_length must be greater than max(indices)")
 
-    mask = np.zeros(mask_length, dtype=np.bool)
+    mask = np.zeros(mask_length, dtype=bool)
     mask[indices] = True
 
     return mask
 
 
 def _message_with_time(source, message, time):
-    """Create one line message for logging purposes
+    """Create one line message for logging purposes.
 
     Parameters
     ----------
     source : str
-        String indicating the source or the reference of the message
+        String indicating the source or the reference of the message.
 
     message : str
-        Short message
+        Short message.
 
     time : int
-        Time in seconds
+        Time in seconds.
     """
     start_message = "[%s] " % source
 
@@ -886,20 +880,20 @@ def _message_with_time(source, message, time):
 
 @contextmanager
 def _print_elapsed_time(source, message=None):
-    """Log elapsed time to stdout when the context is exited
+    """Log elapsed time to stdout when the context is exited.
 
     Parameters
     ----------
     source : str
-        String indicating the source or the reference of the message
+        String indicating the source or the reference of the message.
 
-    message : str or None
-        Short message. If None, nothing will be printed
+    message : str, default=None
+        Short message. If None, nothing will be printed.
 
     Returns
     -------
     context_manager
-        Prints elapsed time upon exit if verbose
+        Prints elapsed time upon exit if verbose.
     """
     if message is None:
         yield
@@ -913,16 +907,16 @@ def _print_elapsed_time(source, message=None):
 
 @_deprecate_positional_args
 def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
-    """Calculates how many rows can be processed within working_memory
+    """Calculates how many rows can be processed within working_memory.
 
     Parameters
     ----------
     row_bytes : int
         The expected number of bytes of memory that will be consumed
         during the processing of each row.
-    max_n_rows : int, optional
+    max_n_rows : int, default=None
         The maximum return value.
-    working_memory : int or float, optional
+    working_memory : int or float, default=None
         The number of rows to fit inside this number of MiB will be returned.
         When None (default), the value of
         ``sklearn.get_config()['working_memory']`` is used.
@@ -951,10 +945,10 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
 
 
 def is_scalar_nan(x):
-    """Tests if x is NaN
+    """Tests if x is NaN.
 
     This function is meant to overcome the issue that np.isnan does not allow
-    non-numerical types as input, and that np.nan is not np.float('nan').
+    non-numerical types as input, and that np.nan is not float('nan').
 
     Parameters
     ----------
@@ -1048,7 +1042,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             need_to_add -= add_now
             if need_to_add == 0:
                 break
-    return floored.astype(np.int)
+    return floored.astype(int)
 
 
 def check_matplotlib_support(caller_name):
@@ -1072,7 +1066,7 @@ def check_matplotlib_support(caller_name):
 
 
 def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandsa is not
+    """Raise ImportError with detailed error message if pandas is not
     installed.
 
     Plot utilities like :func:`fetch_openml` should lazily import
@@ -1098,11 +1092,11 @@ def all_estimators(type_filter=None):
     This function crawls the module and gets all classes that inherit
     from BaseEstimator. Classes that are defined in test-modules are not
     included.
-    By default meta_estimators such as GridSearchCV are also not included.
 
     Parameters
     ----------
-    type_filter : string, list of string,  or None, default=None
+    type_filter : {"classifier", "regressor", "cluster", "transformer"} \
+            or list of such str, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
         'classifier', 'regressor', 'cluster' and 'transformer' to get

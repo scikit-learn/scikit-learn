@@ -67,7 +67,7 @@ from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
@@ -190,8 +190,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo', 'dok',
-                                             'bsr', 'lil', 'dia'])
+        X_2d = self._validate_data(
+            X, accept_sparse=['csc', 'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'],
+            reset=False)
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
             probabilities = np.array([
@@ -278,6 +279,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             if self._variant == 'propagation':
                 normalizer = np.sum(
                     self.label_distributions_, axis=1)[:, np.newaxis]
+                normalizer[normalizer == 0] = 1
                 self.label_distributions_ /= normalizer
                 self.label_distributions_ = np.where(unlabeled,
                                                      self.label_distributions_,
@@ -375,7 +377,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     See Also
     --------
-    LabelSpreading : Alternate label propagation strategy more robust to noise
+    LabelSpreading : Alternate label propagation strategy more robust to noise.
     """
 
     _variant = 'propagation'
@@ -489,7 +491,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     See Also
     --------
-    LabelPropagation : Unregularized graph based semi-supervised learning
+    LabelPropagation : Unregularized graph based semi-supervised learning.
     """
 
     _variant = 'spreading'

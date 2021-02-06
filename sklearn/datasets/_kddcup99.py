@@ -18,6 +18,7 @@ import numpy as np
 import joblib
 
 from ._base import _fetch_remote
+from ._base import _convert_data_dataframe
 from . import get_data_home
 from ._base import RemoteFileMetadata
 from ..utils import Bunch
@@ -48,7 +49,8 @@ logger = logging.getLogger(__name__)
 @_deprecate_positional_args
 def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
                    random_state=None,
-                   percent10=True, download_if_missing=True, return_X_y=False):
+                   percent10=True, download_if_missing=True, return_X_y=False,
+                   as_frame=False):
     """Load the kddcup99 dataset (classification).
 
     Download it if necessary.
@@ -66,11 +68,11 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
 
     Parameters
     ----------
-    subset : None, 'SA', 'SF', 'http', 'smtp'
+    subset : {'SA', 'SF', 'http', 'smtp'}, default=None
         To return the corresponding classical subsets of kddcup 99.
         If None, return the entire kddcup 99 dataset.
 
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
         .. versionadded:: 0.19
@@ -78,7 +80,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling and for
         selection of abnormal samples if `subset='SA'`. Pass an int for
         reproducible output across multiple function calls.
@@ -91,35 +93,54 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.20
+
+    as_frame : bool, default=False
+        If `True`, returns a pandas Dataframe for the ``data`` and ``target``
+        objects in the `Bunch` returned object; `Bunch` return object will also
+        have a ``frame`` member.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : ndarray of shape (494021, 41)
-            The data matrix to learn.
-        target : ndarray of shape (494021,)
-            The regression target for each sample.
+        data : {ndarray, dataframe} of shape (494021, 41)
+            The data matrix to learn. If `as_frame=True`, `data` will be a
+            pandas DataFrame.
+        target : {ndarray, series} of shape (494021,)
+            The regression target for each sample. If `as_frame=True`, `target`
+            will be a pandas Series.
+        frame : dataframe of shape (494021, 42)
+            Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             The full description of the dataset.
+        feature_names : list
+            The names of the dataset columns
+        target_names: list
+            The names of the target columns
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
-    kddcup99 = _fetch_brute_kddcup99(data_home=data_home,
-                                     percent10=percent10,
-                                     download_if_missing=download_if_missing)
+    kddcup99 = _fetch_brute_kddcup99(
+        data_home=data_home,
+        percent10=percent10,
+        download_if_missing=download_if_missing
+    )
 
     data = kddcup99.data
     target = kddcup99.target
+    feature_names = kddcup99.feature_names
+    target_names = kddcup99.target_names
 
     if subset == 'SA':
         s = target == b'normal.'
@@ -143,6 +164,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         # select all samples with positive logged_in attribute:
         s = data[:, 11] == 1
         data = np.c_[data[s, :11], data[s, 12:]]
+        feature_names = feature_names[:11] + feature_names[12:]
         target = target[s]
 
         data[:, 0] = np.log((data[:, 0] + 0.1).astype(float, copy=False))
@@ -154,15 +176,21 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
+            feature_names = [feature_names[0], feature_names[4],
+                             feature_names[5]]
 
         if subset == 'smtp':
             s = data[:, 2] == b'smtp'
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
+            feature_names = [feature_names[0], feature_names[4],
+                             feature_names[5]]
 
         if subset == 'SF':
             data = np.c_[data[:, 0], data[:, 2], data[:, 4], data[:, 5]]
+            feature_names = [feature_names[0], feature_names[2],
+                             feature_names[4], feature_names[5]]
 
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
@@ -171,10 +199,23 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     with open(join(module_path, 'descr', 'kddcup99.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    frame = None
+    if as_frame:
+        frame, data, target = _convert_data_dataframe(
+            "fetch_kddcup99", data, target, feature_names, target_names
+        )
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target, DESCR=fdescr)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        feature_names=feature_names,
+        DESCR=fdescr,
+    )
 
 
 def _fetch_brute_kddcup99(data_home=None,
@@ -184,11 +225,11 @@ def _fetch_brute_kddcup99(data_home=None,
 
     Parameters
     ----------
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : boolean, default=True
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -200,12 +241,16 @@ def _fetch_brute_kddcup99(data_home=None,
     dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : numpy array of shape (494021, 41)
+        data : ndarray of shape (494021, 41)
             Each row corresponds to the 41 features in the dataset.
-        target : numpy array of shape (494021,)
+        target : ndarray of shape (494021,)
             Each value corresponds to one of the 21 attack types or to the
             label 'normal.'.
-        DESCR : string
+        feature_names : list
+            The names of the dataset columns
+        target_names: list
+            The names of the target columns
+        DESCR : str
             Description of the kddcup99 dataset.
 
     """
@@ -224,52 +269,56 @@ def _fetch_brute_kddcup99(data_home=None,
     targets_path = join(kddcup_dir, "targets")
     available = exists(samples_path)
 
+    dt = [('duration', int),
+          ('protocol_type', 'S4'),
+          ('service', 'S11'),
+          ('flag', 'S6'),
+          ('src_bytes', int),
+          ('dst_bytes', int),
+          ('land', int),
+          ('wrong_fragment', int),
+          ('urgent', int),
+          ('hot', int),
+          ('num_failed_logins', int),
+          ('logged_in', int),
+          ('num_compromised', int),
+          ('root_shell', int),
+          ('su_attempted', int),
+          ('num_root', int),
+          ('num_file_creations', int),
+          ('num_shells', int),
+          ('num_access_files', int),
+          ('num_outbound_cmds', int),
+          ('is_host_login', int),
+          ('is_guest_login', int),
+          ('count', int),
+          ('srv_count', int),
+          ('serror_rate', float),
+          ('srv_serror_rate', float),
+          ('rerror_rate', float),
+          ('srv_rerror_rate', float),
+          ('same_srv_rate', float),
+          ('diff_srv_rate', float),
+          ('srv_diff_host_rate', float),
+          ('dst_host_count', int),
+          ('dst_host_srv_count', int),
+          ('dst_host_same_srv_rate', float),
+          ('dst_host_diff_srv_rate', float),
+          ('dst_host_same_src_port_rate', float),
+          ('dst_host_srv_diff_host_rate', float),
+          ('dst_host_serror_rate', float),
+          ('dst_host_srv_serror_rate', float),
+          ('dst_host_rerror_rate', float),
+          ('dst_host_srv_rerror_rate', float),
+          ('labels', 'S16')]
+
+    column_names = [c[0] for c in dt]
+    target_names = column_names[-1]
+    feature_names = column_names[:-1]
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
         _fetch_remote(archive, dirname=kddcup_dir)
-        dt = [('duration', int),
-              ('protocol_type', 'S4'),
-              ('service', 'S11'),
-              ('flag', 'S6'),
-              ('src_bytes', int),
-              ('dst_bytes', int),
-              ('land', int),
-              ('wrong_fragment', int),
-              ('urgent', int),
-              ('hot', int),
-              ('num_failed_logins', int),
-              ('logged_in', int),
-              ('num_compromised', int),
-              ('root_shell', int),
-              ('su_attempted', int),
-              ('num_root', int),
-              ('num_file_creations', int),
-              ('num_shells', int),
-              ('num_access_files', int),
-              ('num_outbound_cmds', int),
-              ('is_host_login', int),
-              ('is_guest_login', int),
-              ('count', int),
-              ('srv_count', int),
-              ('serror_rate', float),
-              ('srv_serror_rate', float),
-              ('rerror_rate', float),
-              ('srv_rerror_rate', float),
-              ('same_srv_rate', float),
-              ('diff_srv_rate', float),
-              ('srv_diff_host_rate', float),
-              ('dst_host_count', int),
-              ('dst_host_srv_count', int),
-              ('dst_host_same_srv_rate', float),
-              ('dst_host_diff_srv_rate', float),
-              ('dst_host_same_src_port_rate', float),
-              ('dst_host_srv_diff_host_rate', float),
-              ('dst_host_serror_rate', float),
-              ('dst_host_srv_serror_rate', float),
-              ('dst_host_rerror_rate', float),
-              ('dst_host_srv_rerror_rate', float),
-              ('labels', 'S16')]
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)
@@ -304,7 +353,12 @@ def _fetch_brute_kddcup99(data_home=None,
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
 
-    return Bunch(data=X, target=y)
+    return Bunch(
+        data=X,
+        target=y,
+        feature_names=feature_names,
+        target_names=[target_names],
+    )
 
 
 def _mkdirp(d):

@@ -7,12 +7,13 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
 import numpy as np
-from joblib import Parallel, delayed
+from joblib import Parallel
 import scipy.sparse as sparse
 
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
+from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 
 from ._base import _fit_single_estimator
@@ -32,6 +33,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
@@ -146,7 +148,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
             for est in all_estimators if est != 'drop'
         )
-        self.n_features_in_ = self.estimators_[0].n_features_in_
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
@@ -196,6 +197,17 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                               sample_weight=sample_weight)
 
         return self
+
+    @property
+    def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute "
+                f"n_features_in_") from nfe
+        return self.estimators_[0].n_features_in_
 
     def _transform(self, X):
         """Concatenate and return the predictions of the estimators."""
@@ -255,9 +267,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`.
 
-    .. versionadded:: 0.22
-
     Read more in the :ref:`User Guide <stacking>`.
+
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -268,7 +280,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
-        The default classifier is a `LogisticRegression`.
+        The default classifier is a
+        :class:`~sklearn.linear_model.LogisticRegression`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy used in
@@ -281,8 +294,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and y is
-        either binary or multiclass, `StratifiedKFold` is used. In all other
-        cases, `KFold` is used.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used.
+        In all other cases, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -527,9 +541,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`.
 
-    .. versionadded:: 0.22
-
     Read more in the :ref:`User Guide <stacking>`.
+
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -540,7 +554,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     final_estimator : estimator, default=None
         A regressor which will be used to combine the base estimators.
-        The default regressor is a `RidgeCV`.
+        The default regressor is a :class:`~sklearn.linear_model.RidgeCV`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy used in
@@ -553,8 +567,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and y is
-        either binary or multiclass, `StratifiedKFold` is used. In all other
-        cases, `KFold` is used.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used.
+        In all other cases, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

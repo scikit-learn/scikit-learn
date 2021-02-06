@@ -46,6 +46,8 @@ what target are your trying to predict: binary, multiclass (1 out of
 ``n_classes``) or multilabel (``k`` out of ``n_classes``) classification
 or continuous variable regression.
 
+User questions should **not be asked on the bug tracker**, as it crowds
+the list of issues and makes the development of the project harder.
 
 .. _bug_tracker:
 

@@ -7,6 +7,7 @@ import numbers
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
@@ -70,10 +71,11 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     estimator : object
         The base estimator from which the transformer is built.
         This can be both a fitted (if ``prefit`` is set to True)
-        or a non-fitted estimator. The estimator must have either a
+        or a non-fitted estimator. The estimator should have a
         ``feature_importances_`` or ``coef_`` attribute after fitting.
+        Otherwise, the ``importance_getter`` parameter should be used.
 
-    threshold : string, float, optional default None
+    threshold : string or float, default=None
         The threshold value to use for feature selection. Features whose
         importance is greater or equal are kept while the others are
         discarded. If "median" (resp. "mean"), then the ``threshold`` value is
@@ -83,7 +85,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         or implicitly (e.g, Lasso), the threshold used is 1e-5.
         Otherwise, "mean" is used by default.
 
-    prefit : bool, default False
+    prefit : bool, default=False
         Whether a prefit model is expected to be passed into the constructor
         directly or not. If True, ``transform`` must be called directly
         and SelectFromModel cannot be used with ``cross_val_score``,
@@ -91,18 +93,18 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
-    norm_order : non-zero int, inf, -inf, default 1
+    norm_order : non-zero int, inf, -inf, default=1
         Order of the norm used to filter the vectors of coefficients below
         ``threshold`` in the case where the ``coef_`` attribute of the
         estimator is of dimension 2.
 
-    max_features : int or None, optional
+    max_features : int, default=None
         The maximum number of features to select.
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
 
-    importance_getter : str or callable, optional (default='auto')
+    importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
 
@@ -154,6 +156,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.02],
            [-0.48],
            [ 1.48]])
+
+    See Also
+    --------
+    RFE : Recursive feature elimination based on importance weights.
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
     """
     @_deprecate_positional_args
     def __init__(self, estimator, *, threshold=None, prefit=False,
@@ -198,7 +208,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,), default=None
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -242,7 +252,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,), default=None
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -275,5 +285,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         return self.estimator_.n_features_in_
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'allow_nan': estimator_tags.get('allow_nan', True)}
+        return {
+            'allow_nan': _safe_tags(self.estimator, key="allow_nan")
+        }

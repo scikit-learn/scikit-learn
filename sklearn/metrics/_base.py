@@ -1,5 +1,5 @@
 """
-Common code for all metrics
+Common code for all metrics.
 
 """
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -22,7 +22,7 @@ from ..utils.multiclass import type_of_target
 
 def _average_binary_score(binary_metric, y_true, y_score, average,
                           sample_weight=None):
-    """Average a binary metric for multilabel classification
+    """Average a binary metric for multilabel classification.
 
     Parameters
     ----------
@@ -141,7 +141,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
     Parameters
     ----------
     binary_metric : callable
-        The binary metric function to use that accepts the following as input
+        The binary metric function to use that accepts the following as input:
             y_true_target : array, shape = [n_samples_target]
                 Some sub-array of y_true for a pair of classes designated
                 positive and negative in the one-vs-one scheme.
@@ -154,11 +154,11 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
 
     y_score : array-like of shape (n_samples, n_classes)
         Target scores corresponding to probability estimates of a sample
-        belonging to a particular class
+        belonging to a particular class.
 
-    average : 'macro' or 'weighted', optional (default='macro')
+    average : {'macro', 'weighted'}, default='macro'
         Determines the type of averaging performed on the pairwise binary
-        metric scores
+        metric scores:
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -170,7 +170,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
     Returns
     -------
     score : float
-        Average of the pairwise binary metric scores
+        Average of the pairwise binary metric scores.
     """
     check_consistent_length(y_true, y_score)
 
@@ -200,3 +200,52 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
     return np.average(pair_scores, weights=prevalence)
+
+
+def _check_pos_label_consistency(pos_label, y_true):
+    """Check if `pos_label` need to be specified or not.
+
+    In binary classification, we fix `pos_label=1` if the labels are in the set
+    {-1, 1} or {0, 1}. Otherwise, we raise an error asking to specify the
+    `pos_label` parameters.
+
+    Parameters
+    ----------
+    pos_label : int, str or None
+        The positive label.
+    y_true : ndarray of shape (n_samples,)
+        The target vector.
+
+    Returns
+    -------
+    pos_label : int
+        If `pos_label` can be inferred, it will be returned.
+
+    Raises
+    ------
+    ValueError
+        In the case that `y_true` does not have label in {-1, 1} or {0, 1},
+        it will raise a `ValueError`.
+    """
+    # ensure binary classification if pos_label is not specified
+    # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
+    # triggering a FutureWarning by calling np.array_equal(a, b)
+    # when elements in the two arrays are not comparable.
+    classes = np.unique(y_true)
+    if (pos_label is None and (
+            classes.dtype.kind in 'OUS' or
+            not (np.array_equal(classes, [0, 1]) or
+                 np.array_equal(classes, [-1, 1]) or
+                 np.array_equal(classes, [0]) or
+                 np.array_equal(classes, [-1]) or
+                 np.array_equal(classes, [1])))):
+        classes_repr = ", ".join(repr(c) for c in classes)
+        raise ValueError(
+            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+            f"specified: either make y_true take value in {{0, 1}} or "
+            f"{{-1, 1}} or pass pos_label explicitly."
+        )
+    elif pos_label is None:
+        pos_label = 1.0
+
+    return pos_label

@@ -7,12 +7,16 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from joblib import Parallel, delayed, effective_n_jobs
+import numbers
+from joblib import Parallel, effective_n_jobs
+
 
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -31,8 +35,10 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
     return rfe._fit(
-        X_train, y_train, lambda estimator, features:
-        _score(estimator, X_test[:, features], y_test, scorer)).scores_
+        X_train, y_train,
+        lambda estimator, features: _score(
+            estimator, X_test[:, features], y_test, scorer
+        )).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -52,22 +58,27 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method that provides
         information about feature importance
         (e.g. `coef_`, `feature_importances_`).
 
-    n_features_to_select : int or None (default=None)
-        The number of features to select. If `None`, half of the features
-        are selected.
+    n_features_to_select : int or float, default=None
+        The number of features to select. If `None`, half of the features are
+        selected. If integer, the parameter is the absolute number of features
+        to select. If float between 0 and 1, it is the fraction of features to
+        select.
 
-    step : int or float, optional (default=1)
+        .. versionchanged:: 0.24
+           Added float values for fractions.
+
+    step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Controls verbosity of output.
 
     importance_getter : str or callable, default='auto'
@@ -89,19 +100,19 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
+    estimator_ : ``Estimator`` instance
+        The fitted estimator used to select features.
+
     n_features_ : int
         The number of selected features.
 
-    support_ : array of shape [n_features]
-        The mask of selected features.
-
-    ranking_ : array of shape [n_features]
+    ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
-    estimator_ : object
-        The external estimator fit on the reduced dataset.
+    support_ : ndarray of shape (n_features,)
+        The mask of selected features.
 
     Examples
     --------
@@ -125,10 +136,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     -----
     Allows NaN/Inf in the input if the underlying estimator does as well.
 
-    See also
+    See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features
+        selection of the best number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
 
     References
     ----------
@@ -178,15 +193,27 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
+            force_all_finite=not tags.get("allow_nan", True),
             multi_output=True
         )
+        error_msg = ("n_features_to_select must be either None, a "
+                     "positive integer representing the absolute "
+                     "number of features or a float in (0.0, 1.0] "
+                     "representing a percentage of features to "
+                     f"select. Got {self.n_features_to_select}")
+
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
-        else:
+        elif self.n_features_to_select < 0:
+            raise ValueError(error_msg)
+        elif isinstance(self.n_features_to_select, numbers.Integral):  # int
             n_features_to_select = self.n_features_to_select
+        elif self.n_features_to_select > 1.0:  # float > 1
+            raise ValueError(error_msg)
+        else:  # float
+            n_features_to_select = int(n_features * self.n_features_to_select)
 
         if 0.0 < self.step < 1.0:
             step = int(max(1, self.step * n_features))
@@ -195,8 +222,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if step <= 0:
             raise ValueError("Step must be >0")
 
-        support_ = np.ones(n_features, dtype=np.bool)
-        ranking_ = np.ones(n_features, dtype=np.int)
+        support_ = np.ones(n_features, dtype=bool)
+        ranking_ = np.ones(n_features, dtype=int)
 
         if step_score:
             self.scores_ = []
@@ -346,11 +373,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True),
-                'requires_y': True,
-                }
+        return {
+            'poor_score': True,
+            'allow_nan': _safe_tags(self.estimator, key='allow_nan'),
+            'requires_y': True,
+        }
 
 
 class RFECV(RFE):
@@ -363,12 +390,12 @@ class RFECV(RFE):
 
     Parameters
     ----------
-    estimator : object
+    estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method that provides
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
 
-    step : int or float, optional (default=1)
+    step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
@@ -376,7 +403,7 @@ class RFECV(RFE):
         Note that the last iteration may remove fewer than ``step`` features in
         order to reach ``min_features_to_select``.
 
-    min_features_to_select : int, (default=1)
+    min_features_to_select : int, default=1
         The minimum number of features to be selected. This number of features
         will always be scored, even if the difference between the original
         feature count and ``min_features_to_select`` isn't divisible by
@@ -384,7 +411,7 @@ class RFECV(RFE):
 
         .. versionadded:: 0.20
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -404,15 +431,15 @@ class RFECV(RFE):
         .. versionchanged:: 0.22
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
-    scoring : string, callable or None, optional, (default=None)
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Controls verbosity of output.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of cores to run in parallel while fitting across folds.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -420,7 +447,7 @@ class RFECV(RFE):
 
         .. versionadded:: 0.18
 
-    importance_getter : str or callable, optional (default='auto')
+    importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a `coef_`
         or `feature_importances_` attributes of estimator.
 
@@ -439,26 +466,26 @@ class RFECV(RFE):
 
     Attributes
     ----------
+    estimator_ : ``Estimator`` instance
+        The fitted estimator used to select features.
+
+    grid_scores_ : ndarray of shape (n_subsets_of_features,)
+        The cross-validation scores such that
+        ``grid_scores_[i]`` corresponds to
+        the CV score of the i-th subset of features.
+
     n_features_ : int
         The number of selected features with cross-validation.
 
-    support_ : array of shape [n_features]
-        The mask of selected features.
-
-    ranking_ : array of shape [n_features]
+    ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`
         corresponds to the ranking
         position of the i-th feature.
         Selected (i.e., estimated best)
         features are assigned rank 1.
 
-    grid_scores_ : array of shape [n_subsets_of_features]
-        The cross-validation scores such that
-        ``grid_scores_[i]`` corresponds to
-        the CV score of the i-th subset of features.
-
-    estimator_ : object
-        The external estimator fit on the reduced dataset.
+    support_ : ndarray of shape (n_features,)
+        The mask of selected features.
 
     Notes
     -----
@@ -486,9 +513,9 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    See also
+    See Also
     --------
-    RFE : Recursive feature elimination
+    RFE : Recursive feature elimination.
 
     References
     ----------
@@ -524,7 +551,7 @@ class RFECV(RFE):
             Target values (integers for classification, real numbers for
             regression).
 
-        groups : array-like of shape (n_samples,) or None
+        groups : array-like of shape (n_samples,) or None, default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
