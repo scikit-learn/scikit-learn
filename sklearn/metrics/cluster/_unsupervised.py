@@ -65,6 +65,7 @@ def silhouette_score(X, labels, *, metric='euclidean', sample_size=None,
 
     labels : array-like of shape (n_samples,)
         Predicted labels for each sample.
+        please note that if you use -1 as a label, it will be considered as noisy example
 
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
