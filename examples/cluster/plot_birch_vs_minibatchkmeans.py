@@ -3,7 +3,7 @@
 Compare BIRCH and MiniBatchKMeans
 =================================
 
-This example compares the timing of Birch (with and without the global
+This example compares the timing of BIRCH (with and without the global
 clustering step) and MiniBatchKMeans on a synthetic dataset having
 100,000 samples and 2 features generated using make_blobs.
 
