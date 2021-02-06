@@ -61,23 +61,12 @@ __all__ = [
 ]
 
 
-def _handle_zeros_in_scale(scale, copy=True):
+def _handle_zeros_in_scale(scale):
     """Makes sure that whenever scale is zero, we handle it correctly.
 
     This happens in most scalers when we have constant features.
     """
-
-    # if we are fitting on 1D arrays, scale might be a scalar
-    if np.isscalar(scale):
-        if scale == .0:
-            scale = 1.
-        return scale
-    elif isinstance(scale, np.ndarray):
-        if copy:
-            # New array to avoid side-effects
-            scale = scale.copy()
-        scale[scale == 0.0] = 1.0
-        return scale
+    return np.where(scale, scale, 1.)
 
 
 @_deprecate_positional_args
@@ -171,7 +160,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                              " got axis=%d" % axis)
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
-            var = _handle_zeros_in_scale(var, copy=False)
+            var = _handle_zeros_in_scale(var)
             inplace_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
@@ -198,7 +187,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                               "to prescale your features.")
                 Xr -= mean_1
         if with_std:
-            scale_ = _handle_zeros_in_scale(scale_, copy=False)
+            scale_ = _handle_zeros_in_scale(scale_)
             Xr /= scale_
             if with_mean:
                 mean_2 = np.nanmean(Xr, axis=0)
@@ -1379,7 +1368,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             quantiles = np.transpose(quantiles)
 
             self.scale_ = quantiles[1] - quantiles[0]
-            self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
+            self.scale_ = _handle_zeros_in_scale(self.scale_)
             if self.unit_variance:
                 adjust = (stats.norm.ppf(q_max / 100.0) -
                           stats.norm.ppf(q_min / 100.0))
@@ -1933,7 +1922,7 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
             norms = row_norms(X)
         elif norm == 'max':
             norms = np.max(abs(X), axis=1)
-        norms = _handle_zeros_in_scale(norms, copy=False)
+        norms = _handle_zeros_in_scale(norms)
         X /= norms[:, np.newaxis]
 
     if axis == 0:

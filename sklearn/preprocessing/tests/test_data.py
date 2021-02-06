@@ -539,7 +539,7 @@ def test_scaler_float16_overflow():
 
 def test_handle_zeros_in_scale():
     s1 = np.array([0, 1, 2, 3])
-    s2 = _handle_zeros_in_scale(s1, copy=True)
+    s2 = _handle_zeros_in_scale(s1)
 
     assert not s1[0] == s2[0]
     assert_array_equal(s1, np.array([0, 1, 2, 3]))
