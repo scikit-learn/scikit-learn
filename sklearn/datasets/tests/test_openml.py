@@ -3,14 +3,14 @@
 import gzip
 import warnings
 import json
-import numpy as np
 import os
 import re
+from io import BytesIO
+
+import numpy as np
 import scipy.sparse
 import sklearn
 import pytest
-
-from io import BytesIO
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
 from sklearn.datasets._openml import (_open_openml_url,
