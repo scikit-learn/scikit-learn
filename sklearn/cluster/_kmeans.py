@@ -149,7 +149,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
 # K-means batch estimation by EM (expectation maximization)
 
 def _tolerance(X, tol):
-    """Return a tolerance which is independent of the dataset."""
+    """Return a tolerance which is dependent on the dataset."""
     if tol == 0:
         return 0
     if sp.issparse(X):
