@@ -348,7 +348,6 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
             "If you want to silence this warning, set 'random_state' "
             "to an integer seed or to None explicitly depending "
             "if you want your code to be deterministic or not.",
-            FutureWarning
         )
         random_state = 0
 

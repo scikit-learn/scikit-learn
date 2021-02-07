@@ -172,6 +172,10 @@ Changelog
   :class:`~sklearn.semi_supervised.LabelPropagation`.
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> c8456e71c15c36ed47e094263d7d0e0c57bd8065
 :mod:`sklearn.utils`
 .................................
 
@@ -180,6 +184,10 @@ Changelog
   :class:`~sklearn.utils.extmath`.
   :pr:`19370` by :user:`Clifford Akai-Nettey<cliffordEmmanuel>` and
   :user:`Cindy Bezuidenhout <cinbez>`.
+<<<<<<< HEAD
+=======
+
+>>>>>>> c8456e71c15c36ed47e094263d7d0e0c57bd8065
 :mod:`sklearn.datasets`
 .......................
 
@@ -187,6 +195,10 @@ Changelog
   missing values when returning a pandas dataframe. :pr:`19365` by
   `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
   :user:`EL-ATEIF Sara <elateifsara>`.
+<<<<<<< HEAD
+=======
+
+>>>>>>> c8456e71c15c36ed47e094263d7d0e0c57bd8065
 
 Code and Documentation Contributors
 -----------------------------------
