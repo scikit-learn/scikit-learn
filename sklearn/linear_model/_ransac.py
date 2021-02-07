@@ -86,16 +86,13 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     min_samples : int (>= 1) or float ([0, 1]), default=None
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_samples >= 1`, treated as a
-        relative number `ceil(min_samples * X.shape[0]`) for
+        relative number `ceil(min_samples * X.shape[0])` for
         `min_samples < 1`. This is typically chosen as the minimal number of
         samples necessary to estimate the given `base_estimator`. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         depedent upon the model, so if a base_estimator other than
-        `LinearRegression` is used, the user must provide a value. For example,
-        when RANSAC is used to find correspondences between images, a value of
-        4 is appropriate for stereo images, and 2 is appropriate for images of
-        a rigid body in motion.
+        `LinearRegression` is used, the user must provide a value.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
@@ -273,7 +270,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             if isinstance(base_estimator, LinearRegression):
                 min_samples = X.shape[1] + 1
             else:
-                raise ValueError("a value for min_samples must be provided "
+                raise ValueError("A value for min_samples must be provided "
                                  "for models other than LinearRegression. The "
                                  "appropriate value will be dependent on the "
                                  "precise model.")

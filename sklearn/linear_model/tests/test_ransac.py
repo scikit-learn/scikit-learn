@@ -10,7 +10,7 @@ from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
-from sklearn.linear_model import LinearRegression, RANSACRegressor
+from sklearn.linear_model import LinearRegression, RANSACRegressor, Ridge
 from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model._ransac import _dynamic_max_trials
 from sklearn.exceptions import ConvergenceWarning
@@ -317,6 +317,9 @@ def test_ransac_min_n_samples():
     ransac_estimator7 = RANSACRegressor(base_estimator,
                                         min_samples=X.shape[0] + 1,
                                         residual_threshold=5, random_state=0)
+    # GH #19390
+    ransac_estimator8 = RANSACRegressor(Ridge(), min_samples=None,
+                                        residual_threshold=5, random_state=0)
 
     ransac_estimator1.fit(X, y)
     ransac_estimator2.fit(X, y)
@@ -333,6 +336,7 @@ def test_ransac_min_n_samples():
     assert_raises(ValueError, ransac_estimator3.fit, X, y)
     assert_raises(ValueError, ransac_estimator4.fit, X, y)
     assert_raises(ValueError, ransac_estimator7.fit, X, y)
+    assert_raises(ValueError, ransac_estimator8.fit, X, y)
 
 
 def test_ransac_multi_dimensional_targets():
