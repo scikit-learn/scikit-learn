@@ -283,6 +283,8 @@ class PCA(_BasePCA):
     Series B (Statistical Methodology), 61(3), 611-622.
     <http://www.miketipping.com/papers/met-mppca.pdf>`_
     via the score and score_samples methods.
+    The explained variance according to the two is
+    explained_variance_ = (S ** 2) / n_samples
 
     For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
 
@@ -464,7 +466,7 @@ class PCA(_BasePCA):
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / n_samples
+        explained_variance_ = (S ** 2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
