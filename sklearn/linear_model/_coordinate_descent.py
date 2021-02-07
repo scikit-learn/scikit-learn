@@ -557,7 +557,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
-        
+
     if return_n_iter:
         return alphas, coefs, dual_gaps, n_iters
     return alphas, coefs, dual_gaps
