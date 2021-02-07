@@ -71,6 +71,7 @@ ax = forest_importances.plot.bar(yerr=std)
 ax.set_title("Feature importances using MDI")
 _ = ax.set_ylabel("Mean decrease in impurity")
 
+# %%
 # Feature importance based on feature permutation
 # -----------------------------------------------
 # Permutation feature importance overcomes limitations of the impurity-based
