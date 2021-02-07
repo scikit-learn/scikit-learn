@@ -180,6 +180,13 @@ Changelog
   :class:`~sklearn.utils.extmath`.
   :pr:`19370` by :user:`Clifford Akai-Nettey<cliffordEmmanuel>` and
   :user:`Cindy Bezuidenhout <cinbez>`.
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.fetch_openml` now supports categories with
+  missing values when returning a pandas dataframe. :pr:`19365` by
+  `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
+  :user:`EL-ATEIF Sara <elateifsara>`.
 
 Code and Documentation Contributors
 -----------------------------------
