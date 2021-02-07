@@ -1,15 +1,16 @@
 """Test the openml loader.
 """
 import gzip
-from io import BytesIO
+import warnings
 import json
-import numpy as np
 import os
 import re
+from io import BytesIO
+
+import numpy as np
 import scipy.sparse
 import sklearn
 import pytest
-
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
 from sklearn.datasets._openml import (_open_openml_url,
@@ -96,7 +97,11 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     # Please note that cache=False is crucial, as the monkey patched files are
     # not consistent with reality
-    fetch_openml(name=data_name, cache=False, as_frame=False)
+    with warnings.catch_warnings():
+        # See discussion in PR #19373
+        # Catching UserWarnings about multiple versions of dataset
+        warnings.simplefilter("ignore", category=UserWarning)
+        fetch_openml(name=data_name, cache=False, as_frame=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
 
@@ -765,11 +770,6 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     # classification dataset with numeric only columns
     data_id = 61
     data_name = 'iris'
-    data_version = 1
-    target_column = 'class'
-    expected_observations = 150
-    expected_features = 4
-    expected_missing = 0
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_warns_message(
@@ -777,17 +777,9 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
         "Multiple active versions of the dataset matching the name"
         " iris exist. Versions may be fundamentally different, "
         "returning version 1.",
-        _fetch_dataset_from_openml,
-        **{'data_id': data_id, 'data_name': data_name,
-           'data_version': data_version,
-           'target_column': target_column,
-           'expected_observations': expected_observations,
-           'expected_features': expected_features,
-           'expected_missing': expected_missing,
-           'expect_sparse': False,
-           'expected_data_dtype': np.float64,
-           'expected_target_dtype': object,
-           'compare_default_target': True}
+        fetch_openml,
+        name=data_name,
+        as_frame=False
     )
 
 
