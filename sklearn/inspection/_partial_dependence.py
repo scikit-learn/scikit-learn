@@ -11,6 +11,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
+from joblib import Parallel, effective_n_jobs
 
 from ..base import is_classifier, is_regressor
 from ..pipeline import Pipeline
@@ -23,6 +24,7 @@ from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
@@ -206,7 +208,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 @_deprecate_positional_args
 def partial_dependence(estimator, X, features, *, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto', kind='legacy'):
+                       method='auto', n_jobs=None, verbose=0, kind='legacy'):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -295,6 +297,15 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
 
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the `'brute'` and `'recursion'` method.
+
+    n_jobs : int, default=None
+        The number of CPUs to use to compute the partial dependences.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    verbose : int, default=0
+        Verbose output during PD computations.
 
     kind : {'legacy', 'average', 'individual', 'both'}, default='legacy'
         Whether to return the partial dependence averaged across all the
@@ -481,10 +492,18 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         grid_resolution
     )
 
+    split_grid = _split_data_for_parallel_execution(grid, n_jobs)
+
     if method == 'brute':
-        averaged_predictions, predictions = _partial_dependence_brute(
-            estimator, grid, features_indices, X, response_method
-        )
+
+        pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
+            delayed(_partial_dependence_brute)(
+                estimator, grid_chunk, features_indices, X, response_method
+            ) for grid_chunk in split_grid)
+
+        averaged_predictions = np.concatenate([x[0] for x in pd_results],
+                                              axis=-1)
+        predictions = np.concatenate([x[1] for x in pd_results], axis=-1)
 
         # reshape predictions to
         # (n_outputs, n_instances, n_values_feature_0, n_values_feature_1, ...)
@@ -492,9 +511,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             -1, X.shape[0], *[val.shape[0] for val in values]
         )
     else:
-        averaged_predictions = _partial_dependence_recursion(
-            estimator, grid, features_indices
-        )
+        pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
+            delayed(_partial_dependence_recursion)(
+                estimator, grid_chunk, features_indices
+            ) for grid_chunk in split_grid)
+
+        averaged_predictions = np.concatenate(pd_results, axis=-1)
 
     # reshape averaged_predictions to
     # (n_outputs, n_values_feature_0, n_values_feature_1, ...)
@@ -520,3 +542,9 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             average=averaged_predictions, individual=predictions,
             values=values,
         )
+
+
+def _split_data_for_parallel_execution(data, n_jobs):
+    effective_number_of_jobs = effective_n_jobs(n_jobs)
+    n_splits = min(effective_number_of_jobs, data.shape[0])
+    return np.array_split(data, n_splits)

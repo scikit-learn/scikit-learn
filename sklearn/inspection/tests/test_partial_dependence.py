@@ -10,7 +10,8 @@ from sklearn.inspection import partial_dependence
 from sklearn.inspection._partial_dependence import (
     _grid_from_X,
     _partial_dependence_brute,
-    _partial_dependence_recursion
+    _partial_dependence_recursion,
+    _split_data_for_parallel_execution
 )
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -79,8 +80,9 @@ iris = load_iris()
 @pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('features', ([1], [1, 2]))
 @pytest.mark.parametrize('kind', ('legacy', 'average', 'individual', 'both'))
+@pytest.mark.parametrize('n_jobs', (None, 8))
 def test_output_shape(Estimator, method, data, grid_resolution,
-                      features, kind):
+                      features, kind, n_jobs):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
@@ -98,7 +100,7 @@ def test_output_shape(Estimator, method, data, grid_resolution,
     est.fit(X, y)
     result = partial_dependence(
         est, X=X, features=features, method=method, kind=kind,
-        grid_resolution=grid_resolution
+        grid_resolution=grid_resolution, n_jobs=n_jobs
     )
     # FIXME: Remove 'legacy' support in 1.1
     pdp, axes = result if kind == 'legacy' else (result, result["values"])
@@ -717,3 +719,18 @@ def test_warning_for_kind_legacy():
 
     with pytest.warns(FutureWarning, match=err_msg):
         partial_dependence(est, X=X, features=[1, 2], kind='legacy')
+
+
+def test_split_data_for_parallel_execution_shapes():
+    input_shape = (20, 3, 3)
+    data = np.ones(input_shape)
+
+    def shapes_after_split(n_jobs):
+        return [x.shape for x in
+                _split_data_for_parallel_execution(data, n_jobs)]
+
+    assert shapes_after_split(None)[0] == input_shape
+    assert shapes_after_split(2)[0] == (10, 3, 3)
+    assert shapes_after_split(2)[-1] == (10, 3, 3)
+    assert shapes_after_split(32)[0] == (1, 3, 3)
+    assert len(shapes_after_split(32)) == 20

@@ -5,7 +5,6 @@ from math import ceil
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
-from joblib import Parallel
 
 from .. import partial_dependence
 from ...base import is_regressor
@@ -14,30 +13,29 @@ from ...utils import check_matplotlib_support  # noqa
 from ...utils import check_random_state
 from ...utils import _safe_indexing
 from ...utils.validation import _deprecate_positional_args
-from ...utils.fixes import delayed
 
 
 @_deprecate_positional_args
 def plot_partial_dependence(
-    estimator,
-    X,
-    features,
-    *,
-    feature_names=None,
-    target=None,
-    response_method="auto",
-    n_cols=3,
-    grid_resolution=100,
-    percentiles=(0.05, 0.95),
-    method="auto",
-    n_jobs=None,
-    verbose=0,
-    line_kw=None,
-    contour_kw=None,
-    ax=None,
-    kind="average",
-    subsample=1000,
-    random_state=None,
+        estimator,
+        X,
+        features,
+        *,
+        feature_names=None,
+        target=None,
+        response_method="auto",
+        n_cols=3,
+        grid_resolution=100,
+        percentiles=(0.05, 0.95),
+        method="auto",
+        n_jobs=None,
+        verbose=0,
+        line_kw=None,
+        contour_kw=None,
+        ax=None,
+        kind="average",
+        subsample=1000,
+        random_state=None,
 ):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
@@ -342,14 +340,17 @@ def plot_partial_dependence(
             )
 
     # compute predictions and/or averaged predictions
-    pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(partial_dependence)(estimator, X, fxs,
-                                    response_method=response_method,
-                                    method=method,
-                                    grid_resolution=grid_resolution,
-                                    percentiles=percentiles,
-                                    kind=kind)
-        for fxs in features)
+    pd_results = [
+        partial_dependence(estimator, X, fxs,
+                           response_method=response_method,
+                           method=method,
+                           grid_resolution=grid_resolution,
+                           percentiles=percentiles,
+                           kind=kind,
+                           n_jobs=n_jobs,
+                           verbose=verbose)
+        for fxs in features
+    ]
 
     # For multioutput regression, we can only check the validity of target
     # now that we have the predictions.
@@ -536,6 +537,7 @@ class PartialDependenceDisplay:
     partial_dependence : Compute Partial Dependence values.
     plot_partial_dependence : Plot Partial Dependence.
     """
+
     @_deprecate_positional_args
     def __init__(
         self,
