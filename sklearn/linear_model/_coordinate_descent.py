@@ -435,6 +435,18 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
     """
+    X_offset_param = params.pop('X_offset', None)
+    X_scale_param = params.pop('X_scale', None)
+    tol = params.pop('tol', 1e-4)
+    max_iter = params.pop('max_iter', 1000)
+    random_state = params.pop('random_state', None)
+    selection = params.pop('selection', 'cyclic')
+
+    params.pop('fit_intercept', None)
+    params.pop('normalize', None)
+    if len(params) > 0:
+        raise ValueError("Unexpected parameters in params", params.keys())
+
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
@@ -460,10 +472,10 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
-        if 'X_offset' in params:
+        if X_offset_param is not None:
             # As sparse matrices are not actually centered we need this
             # to be passed to the CD solver.
-            X_sparse_scaling = params['X_offset'] / params['X_scale']
+            X_sparse_scaling = X_offset_param / X_scale_param
             X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
@@ -484,13 +496,10 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
-    tol = params.pop('tol', 1e-4)
-    max_iter = params.pop('max_iter', 1000)
     dual_gaps = np.empty(n_alphas)
     n_iters = []
 
-    rng = check_random_state(params.pop('random_state', None))
-    selection = params.pop('selection', 'cyclic')
+    rng = check_random_state(random_state)
     if selection not in ['random', 'cyclic']:
         raise ValueError("selection should be either random or cyclic.")
     random = (selection == 'random')
@@ -548,19 +557,6 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
-
-# Checks if remaining acceptable parameters have been passed,
-# removes acceptable parameters. If any parameters are left, we
-# know that there are 1 or more unacceptable parameters.
-
-    if 'X_offset' in params:
-        params.pop('X_offset')
-
-    if 'X_scale' in params:
-        params.pop('X_scale')
-
-    if (len(params) != 0):
-        raise TypeError('One or more parameters are unrecognized')
         
     if return_n_iter:
         return alphas, coefs, dual_gaps, n_iters
