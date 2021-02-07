@@ -492,7 +492,7 @@ Algorithm                    Valid Metrics
 
     >>> from sklearn.neighbors import KDTree
     >>> import numpy as np
-    >>> print(np.sort(KDTree.valid_metrics)) # doctest: +ELLIPSIS
+    >>> print(np.sort(KDTree.valid_metrics))
      ['chebyshev' 'cityblock' 'euclidean' 'infinity' 'l1' 'l2' 'manhattan'
      'minkowski' 'p']
 
