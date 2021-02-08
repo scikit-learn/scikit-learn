@@ -172,6 +172,14 @@ Changelog
   :class:`~sklearn.semi_supervised.LabelPropagation`.
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.fetch_openml` now supports categories with
+  missing values when returning a pandas dataframe. :pr:`19365` by
+  `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
+  :user:`EL-ATEIF Sara <elateifsara>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
