@@ -2,13 +2,50 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_24_2:
+
+Version 0.24.2
+==============
+
+**TBD 2021**
+
+Changelog
+---------
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Validate the constructor parameter `handle_unknown` in
+  :class:`preprocessing.OrdinalEncoder` to only allow for `'error'` and
+  `'use_encoded_value'` strategies.
+  :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_0_24_1:
 
 Version 0.24.1
 ==============
 
+**January 2021**
+
+Packaging
+---------
+
+The 0.24.0 scikit-learn wheels were not working with MacOS <1.15 due to
+`libomp`. The version of `libomp` used to build the wheels was too recent for
+older macOS versions. This issue has been fixed for 0.24.1 scikit-learn wheels.
+Scikit-learn wheels published on PyPI.org now officially support macOS 10.13
+and later.
+
 Changelog
 ---------
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fix numerical stability bug that could happen in
+  :func:`metrics.adjusted_mutual_info_score` and
+  :func:`metrics.mutual_info_score` with NumPy 1.20+.
+  :pr:`19179` by `Thomas Fan`_.
 
 :mod:`sklearn.semi_supervised`
 ..............................
@@ -56,20 +93,8 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
-
 Changelog
 ---------
-
-..
-    Entries should be grouped by module (in alphabetic order) and prefixed with
-    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
-    |Fix| or |API| (see whats_new.rst for descriptions).
-    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
-    Changes not specific to a module should be listed under *Multiple Modules*
-    or *Miscellaneous*.
-    Entries should end with:
-    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
-    where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.base`
 ...................
@@ -206,10 +231,6 @@ Changelog
 .......................
 
 - |Feature| :func:`datasets.fetch_openml` now validates md5 checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
-
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
   files downloaded or cached to ensure data integrity.
   :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
@@ -627,6 +648,12 @@ Changelog
   :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
+
+- |Enhancement| :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV` and
+  :func:`model_selection.cross_validate` support `scoring` being a callable
+  returning a dictionary of of multiple metric names/values association.
+  :pr:`15126` by `Thomas Fan`_.
 
 :mod:`sklearn.multiclass`
 .........................

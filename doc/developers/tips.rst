@@ -79,7 +79,7 @@ When a unit test fails, the following tricks can make debugging easier:
   2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
      instead drop into the rich IPython debugger ``ipdb``, you may set up a
      shell alias to:
-    
+
 .. prompt:: bash $
 
     pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
@@ -200,7 +200,7 @@ PR-WIP: What's needed before merge?
 PR-WIP: Regression test needed
     ::
 
-        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at master but pass in this PR.
+        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
 
 PR-WIP: PEP8
     ::
