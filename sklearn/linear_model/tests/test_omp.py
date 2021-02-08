@@ -2,8 +2,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
@@ -85,14 +83,23 @@ def test_unreachable_accuracy():
 
 
 def test_bad_input():
-    assert_raises(ValueError, orthogonal_mp, X, y, tol=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y, n_nonzero_coefs=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y,
-                  n_nonzero_coefs=n_features + 1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, tol=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_nonzero_coefs=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy,
-                  n_nonzero_coefs=n_features + 1)
+    with pytest.error(ValueError):
+        orthogonal_mp(X, y, tol=-1)
+
+    with pytest.error(ValueError):
+        orthogonal_mp(X, y, n_nonzero_coefs = -1)
+
+    with pytest.error(ValueError):
+        orthogonal_mp(X, y, n_nonzero_coefs= n_features + 1)   
+
+    with pytest.error(ValueError):
+        orthogonal_mp(G, Xy, tol=-1)
+
+    with pytest.error(ValueError):
+        orthogonal_mp(G, Xy, n_nonzero_coefs=-1)
+
+    with pytest.error(ValueError):
+        orthogonal_mp(G, Xy, n_nonzero_coefs = n_features+1)
 
 
 def test_perfect_signal_recovery():
