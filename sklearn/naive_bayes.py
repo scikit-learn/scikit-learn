@@ -711,9 +711,11 @@ class MultinomialNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If false and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
-        If true, warn user about potential numeric errors
+        If False and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
+        If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
+        
+        .. versionadded:: 1.0
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -838,9 +840,11 @@ class ComplementNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If false and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
-        If true, warn user about potential numeric errors
+        If False and alpha is too close to 0, it will set alpha to `_ALPHA_MIN`.
+        If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
+
+        .. versionadded:: 1.0
 
     fit_prior : bool, default=True
         Only used in edge case with a single class in the training set.
@@ -973,9 +977,11 @@ class BernoulliNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If false and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
-        If true, warn user about potential numeric errors
+        If False and alpha is too close to 0, it will set alpha to `_ALPHA_MIN`.
+        If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
+
+        .. versionadded:: 1.0
 
     binarize : float or None, default=0.0
         Threshold for binarizing (mapping to booleans) of sample features.
@@ -1114,8 +1120,12 @@ class CategoricalNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If false and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
-        If true, warn user about potential numeric errors
+    force_alpha : bool, default=False
+        If False and alpha is too close to 0, it will set alpha to `_ALPHA_MIN`.
+        If True, warn user about potential numeric errors
+        and proceed with alpha unchanged.
+
+        .. versionadded:: 1.0
         and proceed with alpha unchanged.
 
     fit_prior : bool, default=True
