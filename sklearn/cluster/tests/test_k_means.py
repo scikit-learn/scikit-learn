@@ -1108,7 +1108,7 @@ def test_xxx():
     X_class = _safe_indexing(X, target_class_indices)
     X_class_sparse = sp.csr_matrix(X_class)
 
-    kmeans = KMeans(n_clusters=201, algorithm="full", random_state=0)
+    kmeans = KMeans(n_clusters=201, n_init=1, algorithm="full", random_state=0)
 
     kmeans_dense = clone(kmeans).fit(X_class)
     kmeans_sparse = clone(kmeans).fit(X_class_sparse)
