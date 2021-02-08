@@ -729,7 +729,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     -----
     The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
-    The average complexity is given by O(k n T), were n is the number of
+    The average complexity is given by O(k n T), where n is the number of
     samples and T is the number of iteration.
 
     The worst case complexity is given by O(n^(k+2/p)) with
