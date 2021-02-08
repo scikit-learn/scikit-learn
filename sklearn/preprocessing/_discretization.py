@@ -28,7 +28,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_bins : int, 'auto' or array-like of shape (n_features,), dtype=integral,\
+    n_bins : int or array-like of shape (n_features,), dtype=integral,\
              default=5
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
 
