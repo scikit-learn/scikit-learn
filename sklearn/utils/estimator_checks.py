@@ -613,10 +613,6 @@ def _set_checking_parameters(estimator):
     if name == "TheilSenRegressor":
         estimator.max_subpopulation = 100
 
-    if name == 'KBinsDiscretizer':
-        # FIX ME: remove in 1.2
-        estimator.n_bins = 'auto'
-
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
         # of components of the random matrix projection will be probably
