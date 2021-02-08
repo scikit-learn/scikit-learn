@@ -583,7 +583,7 @@ def test_partial_dependence_pipeline():
 
 @pytest.mark.parametrize(
     "estimator",
-    [LogisticRegression(max_iter=1000, random_state=0),
+    [LogisticRegression(random_state=0, C=1e-3),
      GradientBoostingClassifier(random_state=0, n_estimators=5)],
     ids=['estimator-brute', 'estimator-recursion']
 )
