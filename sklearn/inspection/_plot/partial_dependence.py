@@ -868,7 +868,9 @@ class PartialDependenceDisplay:
         """
         if categorical:
             heatmap_idx = np.unravel_index(pd_plot_idx, self.heatmaps_.shape)
-            self.heatmaps_[heatmap_idx] = ax.imshow(avg_preds[self.target_idx].T, **heatmap_kw)
+            self.heatmaps_[heatmap_idx] = ax.imshow(
+                avg_preds[self.target_idx].T, **heatmap_kw
+            )
 
             ax.set_xticks(np.arange(len(feature_values[0])))
             ax.set_yticks(np.arange(len(feature_values[1])))
@@ -882,7 +884,9 @@ class PartialDependenceDisplay:
 
             XX, YY = np.meshgrid(feature_values[0], feature_values[1])
             Z = avg_preds[self.target_idx].T
-            CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k")
+            CS = ax.contour(
+                XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k"
+            )
             contour_idx = np.unravel_index(pd_plot_idx, self.contours_.shape)
             self.contours_[contour_idx] = ax.contourf(
                 XX,
@@ -901,16 +905,23 @@ class PartialDependenceDisplay:
             )
             # create the decile line for the vertical axis
             xlim, ylim = ax.get_xlim(), ax.get_ylim()
-            vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
+            vlines_idx = np.unravel_index(
+                pd_plot_idx, self.deciles_vlines_.shape
+            )
             self.deciles_vlines_[vlines_idx] = ax.vlines(
-                self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k",
+                self.deciles[feature_idx[0]], 0, 0.05, transform=trans,
+                color="k",
             )
             # create the decile line for the horizontal axis
-            hlines_idx = np.unravel_index(pd_plot_idx, self.deciles_hlines_.shape)
-            self.deciles_hlines_[hlines_idx] = ax.hlines(
-                self.deciles[feature_idx[1]], 0, 0.05, transform=trans, color="k",
+            hlines_idx = np.unravel_index(
+                pd_plot_idx, self.deciles_hlines_.shape
             )
-            # reset xlim and ylim since they are overwritten by hlines and vlines
+            self.deciles_hlines_[hlines_idx] = ax.hlines(
+                self.deciles[feature_idx[1]], 0, 0.05, transform=trans,
+                color="k",
+            )
+            # reset xlim and ylim since they are overwritten by hlines and
+            # vlines
             ax.set_xlim(xlim)
             ax.set_ylim(ylim)
 
