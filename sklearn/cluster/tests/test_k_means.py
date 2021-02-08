@@ -8,6 +8,8 @@ from threadpoolctl import threadpool_limits
 
 import pytest
 
+from sklearn.base import clone
+from sklearn.utils import _safe_indexing
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -30,7 +32,7 @@ from sklearn.cluster._k_means_fast import _euclidean_dense_dense_wrapper
 from sklearn.cluster._k_means_fast import _euclidean_sparse_dense_wrapper
 from sklearn.cluster._k_means_fast import _inertia_dense
 from sklearn.cluster._k_means_fast import _inertia_sparse
-from sklearn.datasets import make_blobs
+from sklearn.datasets import make_blobs, make_classification
 from io import StringIO
 
 
@@ -1091,3 +1093,27 @@ def test_kmeans_plusplus_dataorder():
     centers_fortran, _ = kmeans_plusplus(X_fortran, n_clusters, random_state=0)
 
     assert_allclose(centers_c, centers_fortran)
+
+
+def test_xxx():
+    X, y = make_classification(
+        n_samples=1000,
+        n_classes=3,
+        n_informative=4,
+        weights=[0.2, 0.3, 0.5],
+        random_state=0,
+    )
+
+    target_class_indices = np.flatnonzero(y == 2)
+    X_class = _safe_indexing(X, target_class_indices)
+    X_class_sparse = sp.csr_matrix(X_class)
+
+    kmeans = KMeans(n_clusters=201, algorithm="full", random_state=0)
+
+    kmeans_dense = clone(kmeans).fit(X_class)
+    kmeans_sparse = clone(kmeans).fit(X_class_sparse)
+
+    np.testing.assert_allclose(
+        kmeans_dense.cluster_centers_,
+        kmeans_sparse.cluster_centers_
+    )
