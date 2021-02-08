@@ -217,6 +217,7 @@ class PCA(_BasePCA):
 
     explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
+        The degrees of freedom for variance estimation are (n_samples - 1)
 
         Equal to n_components largest eigenvalues
         of the covariance matrix of X.
@@ -283,8 +284,6 @@ class PCA(_BasePCA):
     Series B (Statistical Methodology), 61(3), 611-622.
     <http://www.miketipping.com/papers/met-mppca.pdf>`_
     via the score and score_samples methods.
-    The explained variance according to the two is
-    explained_variance_ = (S ** 2) / n_samples
 
     For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
 
