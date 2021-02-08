@@ -110,3 +110,13 @@ plot_partial_dependence(rf_pipeline, X, features=features_to_plot,
 fig = plt.gcf()
 plt.subplots_adjust(hspace=0.5)
 plt.show()
+
+# %%
+# Two-way partial dependence plots
+##############################################################################
+#
+# Partial dependence of a pair of categorical variable are plotted at a
+# heatmap.
+plot_partial_dependence(rf_pipeline, X, features=[('ExterQual', 'HeatingQC')],
+                        is_categorical=[(True, True)])
+plt.show()

@@ -494,7 +494,7 @@ dummy_classification_data = make_classification(random_state=0)
       'Each entry in is_categorical must be either a boolean'),
      (dummy_classification_data,
       {'features': [(1, 2)], 'is_categorical': [(True, False)]},
-      'Contour plots are not supported for'),
+      'Two-way partial dependence plots are not'),
      (dummy_classification_data,
       {'features': [1], 'is_categorical': [True], 'kind': 'individual'},
       'It is not possible to display individual effects')]

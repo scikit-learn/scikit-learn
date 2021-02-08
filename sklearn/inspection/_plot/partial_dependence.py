@@ -374,8 +374,9 @@ def plot_partial_dependence(
             if not 1 <= np.size(cats) <= 2:
                 raise ValueError('Each entry in is_categorical must be either '
                                  'a boolean or an iterable of size at most 2.')
-            if np.size(cats) == 2 and (cats[0] is True or cats[1] is True):
-                raise ValueError('Contour plots are not supported for '
+            if np.size(cats) == 2 and (cats[0] != cats[1]):
+                raise ValueError('Two-way partial dependence plots are not '
+                                 'supported for pairs of continuous and '
                                  'categorical features.')
             if cats[0] is True:
                 has_categorical = True
@@ -834,6 +835,8 @@ class PartialDependenceDisplay:
         pd_plot_idx,
         Z_level,
         contour_kw,
+        categorical,
+        heatmap_kw,
     ):
         """Plot 2-way partial dependence.
 
@@ -857,41 +860,59 @@ class PartialDependenceDisplay:
             The Z-level used to encode the average predictions.
         contour_kw : dict
             Dict with keywords passed when plotting the contours.
+        categorical : bool
+            Whether features are categorical.
+        heatmap_kw: dict
+            Dict with keywords passed when plotting the PD heatmap
+            (categorical).
         """
-        from matplotlib import transforms  # noqa
+        if categorical:
+            heatmap_idx = np.unravel_index(pd_plot_idx, self.heatmaps_.shape)
+            self.heatmaps_[heatmap_idx] = ax.imshow(avg_preds[self.target_idx].T, **heatmap_kw)
 
-        XX, YY = np.meshgrid(feature_values[0], feature_values[1])
-        Z = avg_preds[self.target_idx].T
-        CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k")
-        contour_idx = np.unravel_index(pd_plot_idx, self.contours_.shape)
-        self.contours_[contour_idx] = ax.contourf(
-            XX,
-            YY,
-            Z,
-            levels=Z_level,
-            vmax=Z_level[-1],
-            vmin=Z_level[0],
-            **contour_kw,
-        )
-        ax.clabel(CS, fmt="%2.2f", colors="k", fontsize=10, inline=True)
+            ax.set_xticks(np.arange(len(feature_values[0])))
+            ax.set_yticks(np.arange(len(feature_values[1])))
 
-        trans = transforms.blended_transform_factory(
-            ax.transData, ax.transAxes
-        )
-        # create the decile line for the vertical axis
-        xlim, ylim = ax.get_xlim(), ax.get_ylim()
-        vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
-        self.deciles_vlines_[vlines_idx] = ax.vlines(
-            self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k",
-        )
-        # create the decile line for the horizontal axis
-        hlines_idx = np.unravel_index(pd_plot_idx, self.deciles_hlines_.shape)
-        self.deciles_hlines_[hlines_idx] = ax.hlines(
-            self.deciles[feature_idx[1]], 0, 0.05, transform=trans, color="k",
-        )
-        # reset xlim and ylim since they are overwritten by hlines and vlines
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
+            ax.set_xticklabels(feature_values[0])
+            ax.set_yticklabels(feature_values[1])
+
+            ax.figure.colorbar(self.heatmaps_[heatmap_idx], ax=ax)
+        else:
+            from matplotlib import transforms  # noqa
+
+            XX, YY = np.meshgrid(feature_values[0], feature_values[1])
+            Z = avg_preds[self.target_idx].T
+            CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k")
+            contour_idx = np.unravel_index(pd_plot_idx, self.contours_.shape)
+            self.contours_[contour_idx] = ax.contourf(
+                XX,
+                YY,
+                Z,
+                levels=Z_level,
+                vmax=Z_level[-1],
+                vmin=Z_level[0],
+                **contour_kw,
+            )
+            print(self.contours_[contour_idx])
+            ax.clabel(CS, fmt="%2.2f", colors="k", fontsize=10, inline=True)
+
+            trans = transforms.blended_transform_factory(
+                ax.transData, ax.transAxes
+            )
+            # create the decile line for the vertical axis
+            xlim, ylim = ax.get_xlim(), ax.get_ylim()
+            vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
+            self.deciles_vlines_[vlines_idx] = ax.vlines(
+                self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k",
+            )
+            # create the decile line for the horizontal axis
+            hlines_idx = np.unravel_index(pd_plot_idx, self.deciles_hlines_.shape)
+            self.deciles_hlines_[hlines_idx] = ax.hlines(
+                self.deciles[feature_idx[1]], 0, 0.05, transform=trans, color="k",
+            )
+            # reset xlim and ylim since they are overwritten by hlines and vlines
+            ax.set_xlim(xlim)
+            ax.set_ylim(ylim)
 
         # set xlabel if it is not already set
         if not ax.get_xlabel():
@@ -907,6 +928,7 @@ class PartialDependenceDisplay:
         line_kw=None,
         contour_kw=None,
         bar_kw=None,
+        heatmap_kw=None,
     ):
         """Plot partial dependence plots.
 
@@ -935,8 +957,12 @@ class PartialDependenceDisplay:
             call for two-way partial dependence plots.
 
         bar_kw : dict, default=None
-            Dict with keywords passed to the `matplotlib.pyplot.bar` call.
-            For categorical partial dependence plots.
+            Dict with keywords passed to the `matplotlib.pyplot.bar`
+            call for one-way categorical partial dependence plots.
+
+        heatmap_kw : dict, default=None
+            Dict with keywords passed to the `matplotlib.pyplot.imshow`
+            call for two-way categorical partial dependence plots.
 
         Returns
         -------
@@ -953,6 +979,8 @@ class PartialDependenceDisplay:
             contour_kw = {}
         if bar_kw is None:
             bar_kw = {}
+        if heatmap_kw is None:
+            heatmap_kw = {}
 
         if ax is None:
             _, ax = plt.subplots()
@@ -975,6 +1003,9 @@ class PartialDependenceDisplay:
 
         default_bar_kws = {'color': 'C0'}
         bar_kw = {**default_bar_kws, **bar_kw}
+
+        default_heatmap_kw = {}
+        heatmap_kw = {**default_heatmap_kw, **heatmap_kw}
 
         n_features = len(self.features)
         if self.kind in ("individual", "both"):
@@ -1011,6 +1042,7 @@ class PartialDependenceDisplay:
                 self.lines_ = np.empty((n_rows, n_cols, n_lines), dtype=object)
             self.contours_ = np.empty((n_rows, n_cols), dtype=object)
             self.bars_ = np.empty((n_rows, n_cols), dtype=object)
+            self.heatmaps_ = np.empty((n_rows, n_cols), dtype=object)
 
             axes_ravel = self.axes_.ravel()
 
@@ -1091,6 +1123,8 @@ class PartialDependenceDisplay:
                     pd_plot_idx,
                     Z_level,
                     contour_kw,
+                    cat[0] and cat[1],
+                    heatmap_kw,
                 )
 
         return self

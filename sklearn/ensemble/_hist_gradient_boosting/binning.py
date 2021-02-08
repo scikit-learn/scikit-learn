@@ -14,7 +14,6 @@ from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF, X_BITSET_INNER_DTYPE
-from ._bitset import set_bitset_memoryview
 
 
 def _find_binning_thresholds(col_data, max_bins):
