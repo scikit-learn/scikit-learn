@@ -31,10 +31,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     n_bins : int, 'auto' or array-like of shape (n_features,), dtype=integral,\
              default=5
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
-        For 'auto' option Sturges formula is used: bins are log(n_samples) + 1.
-
-        .. versionadded:: 1.0
-            Added 'auto' option
 
     encode : {'onehot', 'onehot-dense', 'ordinal'}, default='onehot'
         Method used to encode the transformed result.
@@ -131,7 +127,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_bins='warn', *, encode='onehot', strategy='quantile',
+    def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
         self.encode = encode
@@ -155,11 +151,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        self._n_bins = self.n_bins
-        if isinstance(self.n_bins, str) and self.n_bins == 'warn':
-            warnings.warn("The default value of n_bins will change from "
-                          "5 to 'auto' in 1.2", FutureWarning)
-            self._n_bins = 5
 
         X = self._validate_data(X, dtype='numeric')
 
@@ -187,8 +178,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 f"Got strategy={self.strategy!r} instead."
             )
 
-        n_samples, n_features = X.shape
-        n_bins = self._validate_n_bins(n_features, n_samples)
+        n_features = X.shape[1]
+        n_bins = self._validate_n_bins(n_features)
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
@@ -250,20 +241,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         return self
 
-    def _validate_n_bins(self, n_features, n_samples):
+    def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature.
         """
-        orig_bins = self._n_bins
-        if isinstance(orig_bins, str):
-            if orig_bins == 'auto':
-                # calculate number of bins with Sturges rule
-                orig_bins = max(int(np.ceil(np.log2(n_samples) + 1.)), 2)
-            else:
-                raise ValueError(
-                    f"{KBinsDiscretizer.__name__} received "
-                    f"an invalid n_bins value. Received "
-                    f"{orig_bins}, while only 'auto' is supported."
-                )
+        orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError(
