@@ -217,7 +217,7 @@ class PCA(_BasePCA):
 
     explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
-        The degrees of freedom for variance estimation are (n_samples - 1)
+        The variance estimation uses `n_samples - 1` degrees of freedom.
 
         Equal to n_components largest eigenvalues
         of the covariance matrix of X.
