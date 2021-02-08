@@ -65,7 +65,7 @@ def _weight_func(dist):
     # Dist could be multidimensional, flatten it so all values
     # can be looped
     with np.errstate(divide='ignore'):
-        retval = 1. / dist
+        retval = 1. / (dist + 1e-8)
     return retval ** 2
 
 
