@@ -3,7 +3,7 @@
 Feature importances with a forest of trees
 ==========================================
 
-This examples shows the use of a forest of trees to evaluate the importance of
+This example shows the use of a forest of trees to evaluate the importance of
 features on an artificial classification task. The blue bars are the feature
 importances of the forest, along with their inter-trees variability represented
 by the error bars.
@@ -15,12 +15,12 @@ print(__doc__)
 import matplotlib.pyplot as plt
 
 # %%
-# Data generation an model fitting
-# --------------------------------
+# Data generation and model fitting
+# ---------------------------------
 # We generate a synthetic dataset with only 3 informative features. We will
-# explicitely not shuffle the dataset to ensure that the informative features
-# correspond to the three first columns of X. In addition, we will split our
-# dataset into a training and testing subset.
+# explicitly not shuffle the dataset to ensure that the informative features
+# will correspond to the three first columns of X. In addition, we will split
+# our dataset into training and testing subsets.
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
@@ -31,8 +31,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, random_state=42)
 
 # %%
-# We will then fit a random forest classifier that will be used to compute
-# the feature importances.
+# A random forest classifier will be fitted to compute the feature importances.
 from sklearn.ensemble import RandomForestClassifier
 
 feature_names = [f'feature {i}' for i in range(X.shape[1])]
@@ -43,7 +42,7 @@ forest.fit(X_train, y_train)
 # Feature importance based on mean decrease in impurity
 # -----------------------------------------------------
 # Feature importances are provided by the fitted attribute
-# `feature_importances_` and it is computed as the mean and standard
+# `feature_importances_` and they are computed as the mean and standard
 # deviation of accumulation of the impurity decrease within each tree.
 #
 # .. warning::
