@@ -3,7 +3,7 @@ import numpy as np
 from joblib import Parallel
 
 from ..metrics import check_scoring
-from ..metrics._scorer import _check_multimetric_scoring
+from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
@@ -29,7 +29,11 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
     # (memmap). X.copy() on the other hand is always guaranteed to return a
     # writable data-structure whose columns can be shuffled inplace.
     X_permuted = X.copy()
-    scores = np.zeros(n_repeats)
+    if isinstance(scorer, _MultimetricScorer):
+        scores = {name: np.zeros(n_repeats) for name in scorer._scorers}
+    else:
+        scores = np.zeros(n_repeats)
+
     shuffling_idx = np.arange(X.shape[0])
     for n_round in range(n_repeats):
         random_state.shuffle(shuffling_idx)
@@ -42,7 +46,11 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
         feature_score = _weights_scorer(
             scorer, estimator, X_permuted, y, sample_weight
         )
-        scores[n_round] = feature_score
+        if isinstance(feature_score, dict):
+            for name, score in feature_score.items():
+                scores[name][n_round] = score
+        else:
+            scores[n_round] = feature_score
 
     return scores
 
@@ -175,19 +183,22 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
                      importances_std=np.std(importances, axis=1),
                      importances=importances)
     else:
-        scorers = _check_multimetric_scoring(estimator, scoring)
+        scorers_dict = _check_multimetric_scoring(estimator, scoring)
+        scorer = _MultimetricScorer(**scorers_dict)
+
+        baseline_score = _weights_scorer(scorer, estimator, X, y,
+                                         sample_weight)
+
+        scores = Parallel(n_jobs=n_jobs)(
+            delayed(_calculate_permutation_scores)(
+                estimator, X, y, sample_weight, col_idx, random_seed,
+                n_repeats, scorer
+            ) for col_idx in range(X.shape[1]))
+
         ret = dict()
-        for name, scorer in scorers.items():
-            baseline_score = _weights_scorer(scorer, estimator, X, y,
-                                             sample_weight)
-
-            scores = Parallel(n_jobs=n_jobs)(
-                delayed(_calculate_permutation_scores)(
-                    estimator, X, y, sample_weight, col_idx, random_seed,
-                    n_repeats, scorer
-                ) for col_idx in range(X.shape[1]))
-
-            importances = baseline_score - np.array(scores)
+        for name in baseline_score.keys():
+            score = [scores[col_idx][name] for col_idx in range(X.shape[1])]
+            importances = baseline_score[name] - np.array(score)
             ret[name] = Bunch(importances_mean=np.mean(importances, axis=1),
                               importances_std=np.std(importances, axis=1),
                               importances=importances)
