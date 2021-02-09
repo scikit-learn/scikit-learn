@@ -12,6 +12,13 @@ Version 0.24.2
 Changelog
 ---------
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixed a bug in :class:`ensemble.HistGradientBoostingRegressor` `fit`
+  with `sample_weight` parameter and `least_absolute_deviation` loss function.
+  :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 

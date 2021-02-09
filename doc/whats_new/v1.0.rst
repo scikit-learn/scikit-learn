@@ -87,10 +87,6 @@ Changelog
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Fixed a bug in :class:`ensemble.HistGradientBoostingRegressor` `fit`
-  with `sample_weight` parameter and `least_absolute_deviation` loss function.
-  :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
-
 :mod:`sklearn.feature_extraction`
 .................................
 
