@@ -23,7 +23,6 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
