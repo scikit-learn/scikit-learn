@@ -121,8 +121,9 @@ Gaussian mixture models, useful for clustering, are described in
 mixture models. KMeans can be seen as a special case of Gaussian mixture
 model with equal covariance per component.
 
-:term:`Transductive <transductive>` clustering methods (in contrast to :term:`inductive` clustering methods)
-are not designed to be applied to new, unseen data.
+:term:`Transductive <transductive>` clustering methods (in contrast to
+:term:`inductive` clustering methods) are not designed to be applied to new,
+unseen data.
 
 .. _k_means:
 
