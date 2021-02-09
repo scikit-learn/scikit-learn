@@ -552,7 +552,7 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
     with config_context(assume_finite=True):
         # We remove the validation of the query points (in *args)
         # done at the beginning of BinaryTree.query as those
-        # points got already validated in the caller.
+        # points already got validated in the caller.
         return tree.query(*args, **kwargs)
 
 
@@ -864,7 +864,7 @@ def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
     with config_context(assume_finite=True):
         # We remove the validation of the query points (in *args)
         # done at the beginning of BinaryTree.query_radius as those
-        # points got already validated in the caller.
+        # points already got validated in the caller.
         return tree.query_radius(*args, **kwargs)
 
 
