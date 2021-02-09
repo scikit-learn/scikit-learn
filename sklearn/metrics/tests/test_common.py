@@ -101,6 +101,7 @@ REGRESSION_METRICS = {
     "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
+    "pinball_error": pinball_error,
     "median_absolute_error": median_absolute_error,
     "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,

@@ -1961,7 +1961,7 @@ The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
 :func:`mean_absolute_error`, :func:`explained_variance_score` and
-:func:`r2_score`.
+:func:`r2_score`, :func:`pinball_error`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -2353,6 +2353,34 @@ the difference in errors decreases. Finally, by setting, ``power=2``::
 
 we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
+
+.. _pinball_error:
+
+Pinball error
+-------------------
+
+The :func:`pinball_error` function is mostly used to estimate quantile
+regression. `pinball error <https://en.wikipedia.org/wiki/
+Quantile_regression#Computation>`_ is equivalent to
+:func:`mean_absolute_error` when quantile (parameter *alpha*)
+is equal to 0.5.
+
+.. math::
+
+  \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left( \alpha (y_i - \hat{y}_i)^+ - (1 - \alpha) (y_i - \hat{y}_i)^- \right)
+
+Here is a small example of usage of the :func:`mean_absolute_error` function::
+
+  >>> from sklearn.metrics import pinball_error
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> pinball_error(y_true, y_pred)
+  0.25
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> pinball_error(y_true, y_pred, alpha=0.1)
+  0.35
+
 
 .. _clustering_metrics:
 

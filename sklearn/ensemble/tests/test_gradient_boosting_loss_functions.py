@@ -8,6 +8,7 @@ import pytest
 from pytest import approx
 
 from sklearn.utils import check_random_state
+from sklearn.metrics import pinball_error
 from sklearn.ensemble._gb_losses import RegressionLossFunction
 from sklearn.ensemble._gb_losses import LeastSquaresError
 from sklearn.ensemble._gb_losses import LeastAbsoluteError
@@ -115,7 +116,8 @@ def test_quantile_loss_function():
     y_found = QuantileLossFunction(0.9)(x, np.zeros_like(x))
     y_expected = np.asarray([0.1, 0.0, 0.9]).mean()
     np.testing.assert_allclose(y_found, y_expected)
-
+    y_found_p = pinball_error(x, np.zeros_like(x), alpha=0.9)
+    np.testing.assert_allclose(y_found, y_found_p)
 
 def test_sample_weight_deviance():
     # Test if deviance supports sample weights.

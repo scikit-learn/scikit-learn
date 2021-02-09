@@ -43,6 +43,7 @@ __ALL__ = [
     "mean_squared_log_error",
     "median_absolute_error",
     "mean_absolute_percentage_error",
+    "pinball_error",
     "r2_score",
     "explained_variance_score",
     "mean_tweedie_deviance",
@@ -184,6 +185,79 @@ def mean_absolute_error(y_true, y_pred, *,
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average(np.abs(y_pred - y_true),
                                weights=sample_weight, axis=0)
+    if isinstance(multioutput, str):
+        if multioutput == 'raw_values':
+            return output_errors
+        elif multioutput == 'uniform_average':
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
+def pinball_error(y_true, y_pred, *,
+                  sample_weight=None,
+                  alpha=0.5,
+                  multioutput='uniform_average'):
+    """Pinball error regression loss (or quantile regression loss).
+
+    Read more in the :ref:`User Guide <pinball_error>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    alpha: double, slope of the pinball loss, default=0.5,
+        if alpha is 0.5, this loss is equivalent to :ref:`mean_absolute_error`.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+
+    Returns
+    -------
+    loss : float or ndarray of floats
+        If multioutput is 'raw_values', then mean absolute error is returned
+        for each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average of all output errors is returned.
+
+        MAE output is non-negative floating point. The best value is 0.0.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import pinball_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> pinball_error(y_true, y_pred)
+    0.25
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> pinball_error(y_true, y_pred, alpha=0.1)
+    0.35
+    """
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    diff = y_pred - y_true
+    sign = (diff >= 0).astype(diff.dtype)
+    loss = diff * sign * (1 - alpha) - diff * (1 - sign) * alpha
+    output_errors = np.average(loss, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
