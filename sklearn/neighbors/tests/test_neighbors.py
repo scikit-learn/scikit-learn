@@ -23,6 +23,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
@@ -601,7 +602,8 @@ def test_radius_neighbors_classifier_zero_distance():
                                                       weights=weights,
                                                       algorithm=algorithm)
             clf.fit(X, y)
-            assert_array_equal(correct_labels1, clf.predict(z1))
+            assert_array_equal(correct_labels1,
+                               assert_no_warnings(clf.predict, z1))
 
 
 def test_neighbors_regressors_zero_distance():
