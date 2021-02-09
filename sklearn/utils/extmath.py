@@ -789,8 +789,11 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
 #     return updated_mean, updated_variance, updated_weight_sum
 
 
+### ONLY DURING DEVELOPMENT
+### variant=1 means that we initialize the sample_weights to np.ones in case they
+###   are not set. This allows to test two differnt computation speed
 def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
-                              sample_weight=None):
+                              sample_weight=None, variant=0):
     """Calculate mean update and a Youngs and Cramer variance update.
 
     last_mean and last_variance are statistics computed at the last step by the
@@ -836,6 +839,10 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     `utils.sparsefuncs.incr_mean_variance_axis` and
     `utils.sparsefuncs_fast.incr_mean_variance_axis0`
     """
+
+    if variant == 1 and sample_weight is None:
+        sample_weight = np.ones(X.shape[0])
+
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
