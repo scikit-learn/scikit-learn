@@ -1687,8 +1687,7 @@ class Matern(RBF):
 
             if self.nu == 0.5:
                 denominator = np.sqrt(D.sum(2))[:, :, np.newaxis]
-                denominator[denominator == 0.0] = 1e-8
-                K_gradient = K[..., np.newaxis] * D / denominator
+                K_gradient = K[..., np.newaxis] * np.divide(D, denominator, where=denominator != 0)
                 K_gradient[~np.isfinite(K_gradient)] = 0
             elif self.nu == 1.5:
                 K_gradient = \
