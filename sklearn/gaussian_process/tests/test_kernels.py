@@ -19,7 +19,8 @@ from sklearn.base import clone
 
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
                                     assert_array_almost_equal,
-                                    assert_allclose, assert_no_warnings,
+                                    assert_allclose,
+                                    assert_no_warnings,
                                     assert_raise_message)
 
 
