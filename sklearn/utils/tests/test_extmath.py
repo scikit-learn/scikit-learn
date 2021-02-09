@@ -464,7 +464,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mult = 10
     X = rng.rand(1000, 20).astype(dtype)*mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0,sample_weight,
+    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0,
                                              sample_weigth=sample_weigth)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
