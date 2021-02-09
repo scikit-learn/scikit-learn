@@ -391,6 +391,104 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 @pytest.mark.parametrize(
     "LinearModel, params",
     [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     (LassoLars, {"alpha": 0.1}),
+     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+     (BayesianRidge, {}),
+     (ARDRegression, {}),
+     (OrthogonalMatchingPursuit, {}),
+     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
+     (Lars, {}),
+     (LinearRegression, {}),
+     (LassoLarsIC, {})]
+)
+@pytest.mark.parametrize(
+    "sample_weight", [None, True]
+)
+def test_model_pipeline_same_as_normalize_true_sample_weight(
+    LinearModel, sample_weight, params):
+    # Test that linear models (LinearModel) set with normalize set to True are
+    # doing the same as the same linear model preceeded by StandardScaler
+    # in the pipeline and with normalize set to False
+
+    # normalize is True
+    model_name = LinearModel.__name__
+    model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
+
+    pipeline = make_pipeline(
+        StandardScaler(),
+        LinearModel(normalize=False, fit_intercept=True, **params)
+    )
+
+    is_multitask = model_normalize._get_tags()["multioutput_only"]
+
+    # prepare the data
+    n_samples, n_features = 100, 2
+    rng = np.random.RandomState(0)
+    w = rng.randn(n_features)
+    X = rng.randn(n_samples, n_features)
+    X += 20  # make features non-zero mean
+    y = X.dot(w)
+
+    if sample_weight:
+        sample_weight = rng.rand(X.shape[0])
+
+    # make classes out of regression
+    if is_classifier(model_normalize):
+        y[y > np.mean(y)] = -1
+        y[y > 0] = 1
+    if is_multitask:
+        y = np.stack((y, y), axis=1)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    if 'alpha' in params:
+        model_normalize.set_params(alpha=params['alpha'])
+        if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
+            new_params = dict(
+                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
+        if model_name in ['Ridge', 'RidgeClassifier']:
+            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
+    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
+        if params['l1_ratio'] == 1:
+            new_params = dict(
+                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
+        if params['l1_ratio'] == 0:
+            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
+
+    if 'new_params' in locals():
+        pipeline[1].set_params(**new_params)
+
+    model_normalize.fit(X_train, y_train, sample_weight=sample_weight)
+
+    y_pred_normalize = model_normalize.predict(X_test)
+
+    kwargs = {pipeline.steps[0][0] + '__sample_weight':
+              sample_weight,
+              pipeline.steps[-1][0] + '__sample_weight':
+              sample_weight}
+
+    pipeline.fit(X_train, y_train, **kwargs)
+    y_pred_standardize = pipeline.predict(X_test)
+
+    assert_allclose(
+        model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
+    assert pipeline[1].intercept_ == pytest.approx(y_train.mean())
+    assert (model_normalize.intercept_ ==
+            pytest.approx(y_train.mean() -
+                          model_normalize.coef_.dot(X_train.mean(0))))
+    assert_allclose(y_pred_normalize, y_pred_standardize)
+
+
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.parametrize(
+    "LinearModel, params",
+    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
      (LassoCV, {"tol": 1e-16}),
      (ElasticNetCV, {}),
      (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),

@@ -28,7 +28,7 @@ from sklearn.utils._testing import _convert_container
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "estimator",
-    [LinearRegression, Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV]
+    [LinearRegression, Ridge] #, RidgeCV, RidgeClassifier, RidgeClassifierCV]
 )
 @pytest.mark.parametrize(
     "is_sparse, with_mean",
@@ -36,12 +36,12 @@ from sklearn.utils._testing import _convert_container
      (False, True),
      (False, False)]
 )
-def test_linear_model_sample_weights_normalize_in_pipeline(
+def test_linear_model_sample_weight_normalize_in_pipeline(
         estimator, is_sparse, with_mean
 ):
-    # Test that the results for running linear regression LinearRegression with
+    # Test that the results for running linear model estimator with
     # sample_weight set and with normalize set to True gives similar results as
-    # LinearRegression with no normalize in a pipeline with a StandardScaler
+    # estimator with no normalize in a pipeline with a StandardScaler
     # and set sample_weight.
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=20, n_features=5, noise=1e-2,
@@ -66,7 +66,10 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         StandardScaler(with_mean=with_mean),
         estimator(normalize=False)
     )
-    kwargs = {reg_with_scaler.steps[-1][0] + '__sample_weight':
+
+    kwargs = {reg_with_scaler.steps[0][0] + '__sample_weight':
+              sample_weight,
+              reg_with_scaler.steps[-1][0] + '__sample_weight':
               sample_weight}
     reg_with_scaler.fit(X_train, y_train, **kwargs)
 
