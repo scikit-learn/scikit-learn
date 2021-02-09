@@ -267,9 +267,9 @@ def pinball_loss(y_true, y_pred, *,
             # pass None as weights to np.average: uniform mean
             multioutput = None
         else:
-            raise ValueError(f"multioutput is expected to be 'raw_values' "
-                             "or 'uniform_average' but we got '{multioutput}'"
-                             " instead.")
+            raise ValueError("multioutput is expected to be 'raw_values' "
+                             "or 'uniform_average' but we got %r"
+                             " instead." % multioutput)
 
     return np.average(output_errors, weights=multioutput)
 
