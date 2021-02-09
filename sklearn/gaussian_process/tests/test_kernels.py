@@ -52,8 +52,6 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_kernel_gradient(kernel):
-    def create_kernel(kernel, X):
-        return kernel(X, eval_gradient=True)
     # Compare analytic and numeric gradient of kernels.
     K, K_gradient = assert_no_warnings(kernel, X, eval_gradient=True)
 
