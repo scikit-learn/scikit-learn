@@ -263,7 +263,7 @@ class LeastAbsoluteDeviation(BaseLoss):
             else:
                 median_res = _weighted_percentile(y_true[indices]
                                                   - raw_predictions[indices],
-                                                  sample_weight=sample_weight,
+                                                  sample_weight=sample_weight[indices],
                                                   percentile=50)
             leaf.value = grower.shrinkage * median_res
             # Note that the regularization is ignored here

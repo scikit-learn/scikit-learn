@@ -203,6 +203,18 @@ def test_least_absolute_deviation():
     assert gbdt.score(X, y) > .9
 
 
+def test_least_absolute_deviation_sample_weight():
+    # non regression test for issue #19400
+    # make sure no error is thrown during fit of
+    # HistGradientBoostingRegressor with least_absolute_deviation loss function
+    n = 100
+    X = np.random.uniform(-1, 1, [n, 2])
+    y = np.random.uniform(-1, 1, n)
+    sample_weight = np.random.uniform(0, 1, n)
+    gbdt = HistGradientBoostingRegressor(loss='least_absolute_deviation')
+    gbdt.fit(X, y, sample_weight=sample_weight)
+
+
 @pytest.mark.parametrize('y', [([1., -2., 0.]), ([0., 0., 0.])])
 def test_poisson_y_positive(y):
     # Test that ValueError is raised if either one y_i < 0 or sum(y_i) <= 0.
