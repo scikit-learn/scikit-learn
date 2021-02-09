@@ -19,6 +19,7 @@ from joblib import Parallel, effective_n_jobs
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
+from .. import config_context
 from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
@@ -495,19 +496,23 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 else:
                     self._fit_method = 'brute'
 
-        if self._fit_method == 'ball_tree':
-            self._tree = BallTree(X, self.leaf_size,
-                                  metric=self.effective_metric_,
-                                  **self.effective_metric_params_)
-        elif self._fit_method == 'kd_tree':
-            self._tree = KDTree(X, self.leaf_size,
-                                metric=self.effective_metric_,
-                                **self.effective_metric_params_)
-        elif self._fit_method == 'brute':
-            self._tree = None
-        else:
-            raise ValueError("algorithm = '%s' not recognized"
-                             % self.algorithm)
+        with config_context(assume_finite=True):
+            # In the following cases, we remove the validation of X done at
+            # the beginning of the BinaryTree's constructors as X already got
+            # validated when calling this method, NeighborsBase._fit.
+            if self._fit_method == 'ball_tree':
+                self._tree = BallTree(X, self.leaf_size,
+                                      metric=self.effective_metric_,
+                                      **self.effective_metric_params_)
+            elif self._fit_method == 'kd_tree':
+                self._tree = KDTree(X, self.leaf_size,
+                                    metric=self.effective_metric_,
+                                    **self.effective_metric_params_)
+            elif self._fit_method == 'brute':
+                self._tree = None
+            else:
+                raise ValueError("algorithm = '%s' not recognized"
+                                 % self.algorithm)
 
         if self.n_neighbors is not None:
             if self.n_neighbors <= 0:
@@ -544,7 +549,11 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
     The Cython method tree.query is not directly picklable by cloudpickle
     under PyPy.
     """
-    return tree.query(*args, **kwargs)
+    with config_context(assume_finite=True):
+        # We remove the validation of the query points (in *args)
+        # done at the beginning of BinaryTree.query as those
+        # points got already validated in the caller.
+        return tree.query(*args, **kwargs)
 
 
 class KNeighborsMixin:
@@ -852,7 +861,11 @@ def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
     The Cython method tree.query_radius is not directly picklable by
     cloudpickle under PyPy.
     """
-    return tree.query_radius(*args, **kwargs)
+    with config_context(assume_finite=True):
+        # We remove the validation of the query points (in *args)
+        # done at the beginning of BinaryTree.query_radius as those
+        # points got already validated in the caller.
+        return tree.query_radius(*args, **kwargs)
 
 
 class RadiusNeighborsMixin:
