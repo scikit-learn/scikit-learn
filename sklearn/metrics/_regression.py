@@ -970,3 +970,4 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(
         y_true, y_pred, sample_weight=sample_weight, power=2
     )
+
