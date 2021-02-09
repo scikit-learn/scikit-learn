@@ -30,6 +30,7 @@ from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
+from sklearn.utils.extmath import _incremental_weighted_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
