@@ -595,6 +595,13 @@ def test_incremental_mean_and_variance_ignore_nan():
     assert_allclose(X_nan_count, X_count)
 
 
+#
+# TODO use the following function to compare the two 
+# incremental mean/variance update functions
+# _incremental_mean_and_var and _incremental_weighted_mean_and_var
+# on uniform weights
+
+
 @skip_if_32bit
 def test_incremental_variance_numerical_stability():
     # Test Youngs and Cramer incremental variance formulas.
