@@ -19,7 +19,7 @@ from sklearn.base import clone
 
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
                                     assert_array_almost_equal,
-                                    assert_allclose,
+                                    assert_allclose, assert_no_warnings,
                                     assert_raise_message)
 
 
@@ -51,8 +51,10 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_kernel_gradient(kernel):
+    def create_kernel(kernel, X):
+        return kernel(X, eval_gradient=True)
     # Compare analytic and numeric gradient of kernels.
-    K, K_gradient = kernel(X, eval_gradient=True)
+    K, K_gradient = assert_no_warnings(create_kernel, kernel, X)
 
     assert K_gradient.shape[0] == X.shape[0]
     assert K_gradient.shape[1] == X.shape[0]
