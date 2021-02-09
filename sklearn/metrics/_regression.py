@@ -43,7 +43,7 @@ __ALL__ = [
     "mean_squared_log_error",
     "median_absolute_error",
     "mean_absolute_percentage_error",
-    "pinball_error",
+    "pinball_loss",
     "r2_score",
     "explained_variance_score",
     "mean_tweedie_deviance",
@@ -195,13 +195,13 @@ def mean_absolute_error(y_true, y_pred, *,
     return np.average(output_errors, weights=multioutput)
 
 
-def pinball_error(y_true, y_pred, *,
-                  sample_weight=None,
-                  alpha=0.5,
-                  multioutput='uniform_average'):
-    """Pinball error regression loss (or quantile regression loss).
+def pinball_loss(y_true, y_pred, *,
+                 sample_weight=None,
+                 alpha=0.5,
+                 multioutput='uniform_average'):
+    """Pinball loss for quantile regression.
 
-    Read more in the :ref:`User Guide <pinball_error>`.
+    Read more in the :ref:`User Guide <pinball_loss>`.
 
     Parameters
     ----------
@@ -215,7 +215,8 @@ def pinball_error(y_true, y_pred, *,
         Sample weights.
 
     alpha: double, slope of the pinball loss, default=0.5,
-        if alpha is 0.5, this loss is equivalent to :ref:`mean_absolute_error`.
+        this loss is equivalent to :ref:`mean_absolute_error` when `alpha=0.5`,
+        `alpha=0.95` is minimized by estimators of the 95th percentile.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -237,18 +238,19 @@ def pinball_error(y_true, y_pred, *,
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average of all output errors is returned.
 
-        MAE output is non-negative floating point. The best value is 0.0.
+        The pinball loss output is a non-negative floating point. The best
+        value is 0.0.
 
     Examples
     --------
-    >>> from sklearn.metrics import pinball_error
+    >>> from sklearn.metrics import pinball_loss
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> pinball_error(y_true, y_pred)
+    >>> pinball_loss(y_true, y_pred)
     0.25
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> pinball_error(y_true, y_pred, alpha=0.1)
+    >>> pinball_loss(y_true, y_pred, alpha=0.1)
     0.35
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -264,6 +266,10 @@ def pinball_error(y_true, y_pred, *,
         elif multioutput == 'uniform_average':
             # pass None as weights to np.average: uniform mean
             multioutput = None
+        else:
+            raise ValueError(f"multioutput is expected to be 'raw_values' "
+                             "or 'uniform_average' but we got '{multioutput}'"
+                             " instead.")
 
     return np.average(output_errors, weights=multioutput)
 

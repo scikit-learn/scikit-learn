@@ -15,7 +15,7 @@ from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import max_error
-from sklearn.metrics import pinball_error
+from sklearn.metrics import pinball_loss
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
 
@@ -34,10 +34,10 @@ def test_regression_metrics(n_samples=50):
                         mean_squared_error(np.log(1 + y_true),
                                            np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
-    assert_almost_equal(pinball_error(y_true, y_pred), 0.5)
-    assert_almost_equal(pinball_error(y_true, y_pred_), 0.5)
-    assert_almost_equal(pinball_error(y_true, y_pred, alpha=0.4), 0.6)
-    assert_almost_equal(pinball_error(y_true, y_pred_, alpha=0.4), 0.4)
+    assert_almost_equal(pinball_loss(y_true, y_pred), 0.5)
+    assert_almost_equal(pinball_loss(y_true, y_pred_), 0.5)
+    assert_almost_equal(pinball_loss(y_true, y_pred, alpha=0.4), 0.6)
+    assert_almost_equal(pinball_loss(y_true, y_pred_, alpha=0.4), 0.4)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
     mape = mean_absolute_percentage_error(y_true, y_pred)
     assert np.isfinite(mape)
@@ -96,7 +96,7 @@ def test_multioutput_regression():
     error = mean_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. + 2. / 3) / 4.)
 
-    error = pinball_error(y_true, y_pred)
+    error = pinball_loss(y_true, y_pred)
     assert_almost_equal(error, (1. + 2. / 3) / 8.)
 
     error = np.around(mean_absolute_percentage_error(y_true, y_pred),
@@ -117,7 +117,7 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(mean_squared_error([0.], [0.], squared=False), 0.00, 2)
     assert_almost_equal(mean_squared_log_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(pinball_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(pinball_loss([0.], [0.]), 0.00, 2)
     assert_almost_equal(mean_absolute_percentage_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(median_absolute_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(max_error([0.], [0.]), 0.00, 2)
@@ -217,7 +217,7 @@ def test_regression_multioutput_array():
 
     mse = mean_squared_error(y_true, y_pred, multioutput='raw_values')
     mae = mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-    maq = pinball_error(y_true, y_pred, multioutput='raw_values')
+    pbl = pinball_loss(y_true, y_pred, multioutput='raw_values')
     mape = mean_absolute_percentage_error(y_true, y_pred,
                                           multioutput='raw_values')
     r = r2_score(y_true, y_pred, multioutput='raw_values')
@@ -225,7 +225,7 @@ def test_regression_multioutput_array():
 
     assert_array_almost_equal(mse, [0.125, 0.5625], decimal=2)
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
-    assert_array_almost_equal(maq, [0.25/2, 0.625/2], decimal=2)
+    assert_array_almost_equal(pbl, [0.25/2, 0.625/2], decimal=2)
     assert_array_almost_equal(mape, [0.0778, 0.2262], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
@@ -236,11 +236,11 @@ def test_regression_multioutput_array():
     y_pred = [[1, 1]]*4
     mse = mean_squared_error(y_true, y_pred, multioutput='raw_values')
     mae = mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-    maq = pinball_error(y_true, y_pred, multioutput='raw_values')
+    pbl = pinball_loss(y_true, y_pred, multioutput='raw_values')
     r = r2_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(mse, [1., 1.], decimal=2)
     assert_array_almost_equal(mae, [1., 1.], decimal=2)
-    assert_array_almost_equal(maq, [0.5, 0.5], decimal=2)
+    assert_array_almost_equal(pbl, [0.5, 0.5], decimal=2)
     assert_array_almost_equal(r, [0., 0.], decimal=2)
 
     r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput='raw_values')

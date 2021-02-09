@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import pinball_error
+from sklearn.metrics import pinball_loss
 
 np.random.seed(1)
 
@@ -47,9 +47,9 @@ clf = GradientBoostingRegressor(loss='quantile', alpha=alpha,
 
 clf.fit(X, y)
 
-# Metric :func:`pinball_error` is equivalent to the loss.
+# Metric :func:`pinball_loss` is equivalent to the loss.
 yp = clf.predict(X)
-print(clf.loss_(y, yp), pinball_error(y, yp, alpha=alpha))
+print(clf.loss_(y, yp), pinball_loss(y, yp, alpha=alpha))
 
 # Make the prediction on the meshed x-axis
 y_upper = clf.predict(xx)
