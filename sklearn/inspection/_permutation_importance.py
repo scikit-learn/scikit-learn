@@ -3,6 +3,7 @@ import numpy as np
 from joblib import Parallel
 
 from ..metrics import check_scoring
+from ..metrics._scorer import _check_multimetric_scoring
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
@@ -74,10 +75,21 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     y : array-like or None, shape (n_samples, ) or (n_samples, n_classes)
         Targets for supervised or `None` for unsupervised.
 
-    scoring : string, callable or None, default=None
-        Scorer to use. It can be a single
-        string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer is used.
+    scoring : str, callable, list, tuple, or dict, default=None
+        Scorer to use.
+        If `scoring` represents a single score, one can use:
+
+        - a single string (see :ref:`scoring_parameter`);
+        - a callable (see :ref:`scoring`) that returns a single value.
+
+        If `scoring` reprents multiple scores, one can use:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where the keys are the metric
+          names and the values are the metric scores;
+        - a dictionary with metric names as keys and callables a values.
+
+        If None, the estimator's default scorer is used.
 
     n_repeats : int, default=5
         Number of times to permute a feature.
@@ -112,6 +124,10 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
         importances : ndarray, shape (n_features, n_repeats)
             Raw permutation importance scores.
 
+        If there are multiple scoring metrics in the scoring parameter
+        result is a dict with scorer names as keys (i.e., ``auc``) and
+        dictionary-like object like above as values.
+
     References
     ----------
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
@@ -143,14 +159,36 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
-    scorer = check_scoring(estimator, scoring=scoring)
-    baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
+    if scoring is None or isinstance(scoring, str) or callable(scoring):
+        scorer = check_scoring(estimator, scoring=scoring)
+        baseline_score = _weights_scorer(scorer, estimator, X, y,
+                                         sample_weight)
 
-    scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, sample_weight, col_idx, random_seed, n_repeats, scorer
-    ) for col_idx in range(X.shape[1]))
+        scores = Parallel(n_jobs=n_jobs)(
+            delayed(_calculate_permutation_scores)(
+                estimator, X, y, sample_weight, col_idx, random_seed,
+                n_repeats, scorer
+            ) for col_idx in range(X.shape[1]))
 
-    importances = baseline_score - np.array(scores)
-    return Bunch(importances_mean=np.mean(importances, axis=1),
-                 importances_std=np.std(importances, axis=1),
-                 importances=importances)
+        importances = baseline_score - np.array(scores)
+        return Bunch(importances_mean=np.mean(importances, axis=1),
+                     importances_std=np.std(importances, axis=1),
+                     importances=importances)
+    else:
+        scorers = _check_multimetric_scoring(estimator, scoring)
+        ret = dict()
+        for name, scorer in scorers:
+            baseline_score = _weights_scorer(scorer, estimator, X, y,
+                                             sample_weight)
+
+            scores = Parallel(n_jobs=n_jobs)(
+                delayed(_calculate_permutation_scores)(
+                    estimator, X, y, sample_weight, col_idx, random_seed,
+                    n_repeats, scorer
+                ) for col_idx in range(X.shape[1]))
+
+            importances = baseline_score - np.array(scores)
+            ret[name] = Bunch(importances_mean=np.mean(importances, axis=1),
+                              importances_std=np.std(importances, axis=1),
+                              importances=importances)
+        return ret
