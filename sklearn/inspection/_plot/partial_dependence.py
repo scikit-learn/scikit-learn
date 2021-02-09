@@ -584,6 +584,26 @@ class PartialDependenceDisplay:
         item in `ax`. Elements that are None correspond to a nonexisting axes
         or an axes that does not include a contour plot.
 
+    bars_ : ndarray of matplotlib Artists
+        If `ax` is an axes or None, `bars_[i, j]` is the partial dependence bar
+        plot on the i-th row and j-th column (for a categorical feature).
+        If `ax` is a list of axes, `bars_[i]` is the partial dependence bar
+        plot corresponding to the i-th item in `ax`. Elements that are None
+        correspond to a nonexisting axes or an axes that does not include a
+        bar plot.
+
+        .. versionadded:: 1.0
+
+    heatmaps_ : ndarray of matplotlib Artists
+        If `ax` is an axes or None, `heatmaps_[i, j]` is the partial dependence
+        heatmap on the i-th row and j-th column (for a pair of categorical
+        features) . If `ax` is a list of axes, `heatmaps_[i]` is the partial
+        dependence heatmap corresponding to the i-th item in `ax`. Elements
+        that are None correspond to a nonexisting axes or an axes that does not
+        include a heatmap.
+
+        .. versionadded:: 1.0
+
     figure_ : matplotlib Figure
         Figure containing partial dependence plots.
 
@@ -1082,6 +1102,7 @@ class PartialDependenceDisplay:
                 self.lines_ = np.empty(ax.shape + (n_lines,), dtype=object)
             self.contours_ = np.empty_like(ax, dtype=object)
             self.bars_ = np.empty_like(ax, dtype=object)
+            self.heatmaps_ = np.empty_like(ax, dtype=object)
 
         # create contour levels for two-way plots
         if 2 in self.pdp_lim:
