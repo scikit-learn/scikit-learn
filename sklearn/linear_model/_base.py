@@ -250,12 +250,15 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
         else:
             X_offset = np.average(X, axis=0, weights=sample_weight)
+            X_scale = np.sqrt(np.average(X**2, weights=sample_weight, axis=0) -
+                              X_offset**2)
             X -= X_offset
-            if normalize:
-                X, X_scale = f_normalize(X, axis=0, copy=False,
-                                         return_norm=True)
-            else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
+            X = X / X_scale
+        #     if normalize:
+        #         X, X_scale = f_normalize(X, axis=0, copy=False,
+        #                                  return_norm=True)
+        #     else:
+        #         X_scale = np.ones(X.shape[1], dtype=X.dtype)
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y = y - y_offset
     else:
@@ -334,6 +337,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         """Set the intercept_
         """
         if self.fit_intercept:
+            print(X_scale)
             self.coef_ = self.coef_ / X_scale
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:

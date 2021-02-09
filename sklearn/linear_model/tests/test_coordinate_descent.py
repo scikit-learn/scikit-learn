@@ -390,28 +390,31 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
-    [#(Lasso, {"tol": 1e-16, "alpha": 0.1}),
-     #(LassoLars, {"alpha": 0.1}),
-     #(RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
-     #(ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
-     #(ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
-     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
-     #(BayesianRidge, {}),
-     #(ARDRegression, {}),
-     #(OrthogonalMatchingPursuit, {}),
-     #(MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
-     #(MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
-     #(MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
-     #(Lars, {}),
-     #(LinearRegression, {}),
-     #(LassoLarsIC, {})
+    [
+     # (Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     # (LassoLars, {"alpha": 0.1}),
+     # (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     # (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     # (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     # (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 1.}),
+     # (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.}),
+     # (BayesianRidge, {}),
+     # (ARDRegression, {}),
+     # (OrthogonalMatchingPursuit, {}),
+     # (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     # (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     # (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
+     # (Lars, {}),
+     # (LinearRegression, {}),
+     # (LassoLarsIC, {})
      ]
 )
 @pytest.mark.parametrize(
     "sample_weight", [None, True]
 )
 def test_model_pipeline_same_as_normalize_true_sample_weight(
-    LinearModel, sample_weight, params):
+        LinearModel, sample_weight, params):
     # Test that linear models (LinearModel) set with normalize set to True are
     # doing the same as the same linear model preceeded by StandardScaler
     # in the pipeline and with normalize set to False
@@ -433,7 +436,7 @@ def test_model_pipeline_same_as_normalize_true_sample_weight(
     w = rng.randn(n_features)
     X = rng.randn(n_samples, n_features)
     X += 20  # make features non-zero mean
-    y = X.dot(w)
+    y = X.dot(w)  # XXX : should add some intercept
 
     # make classes out of regression
     if is_classifier(model_normalize):
@@ -445,7 +448,9 @@ def test_model_pipeline_same_as_normalize_true_sample_weight(
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     if sample_weight:
-        sample_weight = rng.rand(X_train.shape[0])
+        # sample_weight = 10. * np.ones(X_train.shape[0])
+        sample_weight = 0.1 + rng.rand(X_train.shape[0])
+        # sample_weight /= np.linalg.norm(sample_weight)
 
     if 'alpha' in params:
         model_normalize.set_params(alpha=params['alpha'])
@@ -476,12 +481,14 @@ def test_model_pipeline_same_as_normalize_true_sample_weight(
     pipeline.fit(X_train, y_train, **kwargs)
     y_pred_standardize = pipeline.predict(X_test)
 
-    assert_allclose(
-        model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
-    assert pipeline[1].intercept_ == pytest.approx(y_train.mean())
+    y_train_mean = np.average(y_train, weights=sample_weight)
+    X_train_mean = np.average(X_train, weights=sample_weight, axis=0)
+    # assert_allclose(
+    #     model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
+    assert pipeline[1].intercept_ == pytest.approx(y_train_mean)
     assert (model_normalize.intercept_ ==
-            pytest.approx(y_train.mean() -
-                          model_normalize.coef_.dot(X_train.mean(0))))
+            pytest.approx(y_train_mean -
+                          model_normalize.coef_.dot(X_train_mean)))
     assert_allclose(y_pred_normalize, y_pred_standardize)
 
 
