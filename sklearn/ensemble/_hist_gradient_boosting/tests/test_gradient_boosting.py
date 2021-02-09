@@ -207,10 +207,11 @@ def test_least_absolute_deviation_sample_weight():
     # non regression test for issue #19400
     # make sure no error is thrown during fit of
     # HistGradientBoostingRegressor with least_absolute_deviation loss function
-    n = 100
-    X = np.random.uniform(-1, 1, [n, 2])
-    y = np.random.uniform(-1, 1, n)
-    sample_weight = np.random.uniform(0, 1, n)
+	rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.uniform(-1, 1, size=(n_samples, 2))
+    y = rng.uniform(-1, 1, size=n_samples)
+    sample_weight = rng.uniform(0, 1, size=n_samples)
     gbdt = HistGradientBoostingRegressor(loss='least_absolute_deviation')
     gbdt.fit(X, y, sample_weight=sample_weight)
 
