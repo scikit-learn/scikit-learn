@@ -714,7 +714,7 @@ class MultinomialNB(_BaseDiscreteNB):
         If False and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
         If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
-        
+
         .. versionadded:: 1.0
 
     fit_prior : bool, default=True
@@ -840,8 +840,8 @@ class ComplementNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If False and alpha is too close to 0, it will set alpha to `_ALPHA_MIN`.
-        If True, warn user about potential numeric errors
+        If False and alpha is too close to 0, it will set alpha to
+        `_ALPHA_MIN`. If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
 
         .. versionadded:: 1.0
@@ -977,8 +977,8 @@ class BernoulliNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If False and alpha is too close to 0, it will set alpha to `_ALPHA_MIN`.
-        If True, warn user about potential numeric errors
+        If False and alpha is too close to 0, it will set alpha to
+        `_ALPHA_MIN`. If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
 
         .. versionadded:: 1.0
@@ -1120,8 +1120,8 @@ class CategoricalNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If False and alpha is too close to 0, it will set alpha to `_ALPHA_MIN`.
-        If True, warn user about potential numeric errors
+        If False and alpha is too close to 0, it will set alpha to
+        `_ALPHA_MIN`. If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
 
         .. versionadded:: 1.0
