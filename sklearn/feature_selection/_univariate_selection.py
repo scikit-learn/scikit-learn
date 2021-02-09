@@ -141,7 +141,7 @@ def f_classif(X, y):
     pval : array, shape = [n_features,]
         The set of p-values.
 
-    See Also
+    See also
     --------
     chi2 : Chi-squared stats of non-negative features for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
@@ -204,7 +204,7 @@ def chi2(X, y):
     -----
     Complexity of this algorithm is O(n_classes * n_features).
 
-    See Also
+    See also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
@@ -259,7 +259,7 @@ def r_regression(X, y, *, center=True):
     corr : array, shape=(n_features,)
         Pearson R correlation coefficients of features.
 
-    See Also
+    See also
     --------
     f_regression: Univariate linear regression tests returning f-statistic
         and p-values
@@ -438,7 +438,7 @@ class SelectPercentile(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
-        Default is f_classif (see below "See Also"). The default function only
+        Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
         .. versionadded:: 0.18
@@ -470,7 +470,7 @@ class SelectPercentile(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
-    See Also
+    See also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif : Mutual information for a discrete target.
@@ -524,7 +524,7 @@ class SelectKBest(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
-        Default is f_classif (see below "See Also"). The default function only
+        Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
         .. versionadded:: 0.18
@@ -557,7 +557,7 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
-    See Also
+    See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
@@ -615,7 +615,7 @@ class SelectFpr(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
-        Default is f_classif (see below "See Also"). The default function only
+        Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
     alpha : float, default=5e-2
@@ -640,7 +640,7 @@ class SelectFpr(_BaseFilter):
     >>> X_new.shape
     (569, 16)
 
-    See Also
+    See also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     chi2 : Chi-squared stats of non-negative features for classification tasks.
@@ -679,7 +679,7 @@ class SelectFdr(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
-        Default is f_classif (see below "See Also"). The default function only
+        Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
     alpha : float, default=5e-2
@@ -708,7 +708,7 @@ class SelectFdr(_BaseFilter):
     ----------
     https://en.wikipedia.org/wiki/False_discovery_rate
 
-    See Also
+    See also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif : Mutual information for a discrete target.
@@ -750,7 +750,7 @@ class SelectFwe(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
-        Default is f_classif (see below "See Also"). The default function only
+        Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
     alpha : float, default=5e-2
@@ -775,7 +775,7 @@ class SelectFwe(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
-    See Also
+    See also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     chi2 : Chi-squared stats of non-negative features for classification tasks.
@@ -843,7 +843,7 @@ class GenericUnivariateSelect(_BaseFilter):
     >>> X_new.shape
     (569, 20)
 
-    See Also
+    See also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif : Mutual information for a discrete target.
