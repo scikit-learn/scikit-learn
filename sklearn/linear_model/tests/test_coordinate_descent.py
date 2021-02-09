@@ -390,21 +390,22 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
-    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
-     (LassoLars, {"alpha": 0.1}),
-     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
-     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
-     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+    [#(Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     #(LassoLars, {"alpha": 0.1}),
+     #(RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     #(ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     #(ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
-     (BayesianRidge, {}),
-     (ARDRegression, {}),
-     (OrthogonalMatchingPursuit, {}),
-     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
-     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
-     (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
-     (Lars, {}),
-     (LinearRegression, {}),
-     (LassoLarsIC, {})]
+     #(BayesianRidge, {}),
+     #(ARDRegression, {}),
+     #(OrthogonalMatchingPursuit, {}),
+     #(MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     #(MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     #(MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
+     #(Lars, {}),
+     #(LinearRegression, {}),
+     #(LassoLarsIC, {})
+     ]
 )
 @pytest.mark.parametrize(
     "sample_weight", [None, True]
@@ -434,9 +435,6 @@ def test_model_pipeline_same_as_normalize_true_sample_weight(
     X += 20  # make features non-zero mean
     y = X.dot(w)
 
-    if sample_weight:
-        sample_weight = rng.rand(X.shape[0])
-
     # make classes out of regression
     if is_classifier(model_normalize):
         y[y > np.mean(y)] = -1
@@ -445,6 +443,9 @@ def test_model_pipeline_same_as_normalize_true_sample_weight(
         y = np.stack((y, y), axis=1)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    if sample_weight:
+        sample_weight = rng.rand(X_train.shape[0])
 
     if 'alpha' in params:
         model_normalize.set_params(alpha=params['alpha'])
