@@ -6,6 +6,8 @@ Kernel Density Estimation
 
 import numpy as np
 from scipy.special import gammainc
+
+from .. import config_context
 from ..base import BaseEstimator
 from ..utils import check_array, check_random_state
 from ..utils.validation import _check_sample_weight, check_is_fitted
@@ -204,9 +206,13 @@ class KernelDensity(BaseEstimator):
         else:
             N = self.tree_.sum_weight
         atol_N = self.atol * N
-        log_density = self.tree_.kernel_density(
-            X, h=self.bandwidth, kernel=self.kernel, atol=atol_N,
-            rtol=self.rtol, breadth_first=self.breadth_first, return_log=True)
+        with config_context(assume_finite=True):
+            # We remove the validation of X done at the beginning of
+            # BinaryTree.kernel_density as X already got validated at the
+            # beginning of this method, KernelDensity.score_samples.
+            log_density = self.tree_.kernel_density(
+                X, h=self.bandwidth, kernel=self.kernel, atol=atol_N,
+                rtol=self.rtol, breadth_first=self.breadth_first, return_log=True)
         log_density -= np.log(N)
         return log_density
 
