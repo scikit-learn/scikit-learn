@@ -15,12 +15,15 @@ prediction. We compare the performance of each individual regressor with the
 stacking strategy. Stacking slightly improves the overall performance.
 
 """
-print(__doc__)
 
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 #          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
 
+print(__doc__)
+
+from sklearn import set_config
+set_config(display='diagram')
 
 # %%
 # Download the dataset
@@ -73,68 +76,56 @@ X, y = load_ames_housing()
 ##############################################################################
 #
 # Before we can use Ames dataset we still need to do some preprocessing.
-# First, the dataset has many missing values. To impute them, we will exchange
-# categorical missing values with the new category 'missing' while the
-# numerical missing values with the 'mean' of the column. We will also encode
-# the categories with either :class:`~sklearn.preprocessing.OneHotEncoder
-# <sklearn.preprocessing.OneHotEncoder>` or
-# :class:`~sklearn.preprocessing.OrdinalEncoder
-# <sklearn.preprocessing.OrdinalEncoder>` depending for which type of model we
-# will use them (linear or non-linear model). To facilitate this preprocessing
-# we will make two pipelines.
-# You can skip this section if your data is ready to use and does
-# not need preprocessing
+# First, we will select the categorical and numerical columns of the dataset to
+# construct the first step of the pipeline.
 
+from sklearn.compose import make_column_selector
+
+cat_selector = make_column_selector(dtype_include=object)
+num_selector = make_column_selector(dtype_include=np.number)
+cat_selector(X)
+
+# %%
+num_selector(X)
+
+# %%
+# Then, we will need to design preprocessing pipelines which depends on the
+# ending regressor. If the ending regressor is a linear model, one needs to
+# one-hot encode the categories. If the ending regressor is a tree-based model
+# an ordinal encoder will be sufficient. Besides, numerical values need to be
+# standardized for a linear model while the raw numerical data can be treated
+# as is by a tree-based model. However, both models need an imputer to
+# handle missing values.
+#
+# We will first design the pipeline required for the tree-based models.
 
 from sklearn.compose import make_column_transformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
+
+cat_tree_processor = OrdinalEncoder(
+    handle_unknown="use_encoded_value", unknown_value=-1)
+num_tree_processor = SimpleImputer(strategy="mean", add_indicator=True)
+
+tree_preprocessor = make_column_transformer(
+    (num_tree_processor, num_selector), (cat_tree_processor, cat_selector))
+tree_preprocessor
+
+# %%
+# Then, we will now define the preprocessor used when the ending regressor
+# is a linear model.
+
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 
+cat_linear_processor = OneHotEncoder(handle_unknown="ignore")
+num_linear_processor = make_pipeline(
+    StandardScaler(), SimpleImputer(strategy="mean", add_indicator=True))
 
-cat_cols = X.columns[X.dtypes == 'O']
-num_cols = X.columns[X.dtypes == 'float64']
-
-categories = [
-    X[column].unique() for column in X[cat_cols]]
-
-for cat in categories:
-    cat[cat == None] = 'missing'  # noqa
-
-cat_proc_nlin = make_pipeline(
-    SimpleImputer(missing_values=None, strategy='constant',
-                  fill_value='missing'),
-    OrdinalEncoder(categories=categories)
-    )
-
-num_proc_nlin = make_pipeline(SimpleImputer(strategy='mean'))
-
-cat_proc_lin = make_pipeline(
-    SimpleImputer(missing_values=None,
-                  strategy='constant',
-                  fill_value='missing'),
-    OneHotEncoder(categories=categories)
-)
-
-num_proc_lin = make_pipeline(
-    SimpleImputer(strategy='mean'),
-    StandardScaler()
-)
-
-# transformation to use for non-linear estimators
-processor_nlin = make_column_transformer(
-    (cat_proc_nlin, cat_cols),
-    (num_proc_nlin, num_cols),
-    remainder='passthrough')
-
-# transformation to use for linear estimators
-processor_lin = make_column_transformer(
-    (cat_proc_lin, cat_cols),
-    (num_proc_lin, num_cols),
-    remainder='passthrough')
-
+linear_preprocessor = make_column_transformer(
+    (num_linear_processor, num_selector), (cat_linear_processor, cat_selector))
+linear_preprocessor
 
 # %%
 # Stack of predictors on a single data set
@@ -149,37 +140,44 @@ processor_lin = make_column_transformer(
 # Here, we combine 3 learners (linear and non-linear) and use a ridge regressor
 # to combine their outputs together.
 #
-# Note: although we will make new pipelines with the processors which we wrote
-# in the previous section for the 3 learners, the final estimator RidgeCV()
-# does not need preprocessing of the data as it will be fed with the already
-# preprocessed output from the 3 learners.
+# .. note::
+#    Although we will make new pipelines with the processors which we wrote in
+#    the previous section for the 3 learners, the final estimator
+#    :class:`~sklearn.linear_model.RidgeCV()` does not need preprocessing of
+#    the data as it will be fed with the already preprocessed output from the 3
+#    learners.
 
+from sklearn.linear_model import LassoCV
 
+lasso_pipeline = make_pipeline(linear_preprocessor, LassoCV())
+lasso_pipeline
+
+# %%
+from sklearn.ensemble import RandomForestRegressor
+
+rf_pipeline = make_pipeline(
+    tree_preprocessor, RandomForestRegressor(random_state=42))
+rf_pipeline
+
+# %%
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import RandomForestRegressor
+
+gbdt_pipeline = make_pipeline(
+    tree_preprocessor, HistGradientBoostingRegressor(random_state=0))
+gbdt_pipeline
+
+# %%
 from sklearn.ensemble import StackingRegressor
-from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
-
-
-lasso_pipeline = make_pipeline(processor_lin,
-                               LassoCV())
-
-rf_pipeline = make_pipeline(processor_nlin,
-                            RandomForestRegressor(random_state=42))
-
-gradient_pipeline = make_pipeline(
-    processor_nlin,
-    HistGradientBoostingRegressor(random_state=0))
 
 estimators = [('Random Forest', rf_pipeline),
               ('Lasso', lasso_pipeline),
-              ('Gradient Boosting', gradient_pipeline)]
+              ('Gradient Boosting', gbdt_pipeline)]
 
-stacking_regressor = StackingRegressor(estimators=estimators,
-                                       final_estimator=RidgeCV())
-
+stacking_regressor = StackingRegressor(
+    estimators=estimators, final_estimator=RidgeCV())
+stacking_regressor
 
 # %%
 # Measure and plot the results
