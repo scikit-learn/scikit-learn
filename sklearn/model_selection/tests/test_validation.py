@@ -15,7 +15,6 @@ from sklearn.exceptions import FitFailedWarning
 from sklearn.model_selection.tests.test_search import FailingClassifier
 
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_array_almost_equal
@@ -534,12 +533,12 @@ def test_cross_val_score_predict_groups():
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2), GroupKFold(),
                  GroupShuffleSplit()]
     for cv in group_cvs:
-        assert_raise_message(ValueError,
-                             "The 'groups' parameter should not be None.",
-                             cross_val_score, estimator=clf, X=X, y=y, cv=cv)
-        assert_raise_message(ValueError,
-                             "The 'groups' parameter should not be None.",
-                             cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
+        with pytest.raises(ValueError,
+                           match="The 'groups' parameter should not be None."):
+            cross_val_score(estimator=clf, X=X, y=y, cv=cv)
+        with pytest.raises(ValueError,
+                           match="The 'groups' parameter should not be None."):
+            cross_val_predict(estimator=clf, X=X, y=y, cv=cv)
 
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
@@ -887,15 +886,17 @@ def test_cross_val_predict_decision_function_shape():
     # class.
     X = X[:100]
     y = y[:100]
-    assert_raise_message(ValueError,
-                         'Only 1 class/es in training fold,'
-                         ' but 2 in overall dataset. This'
-                         ' is not supported for decision_function'
-                         ' with imbalanced folds. To fix '
-                         'this, use a cross-validation technique '
-                         'resulting in properly stratified folds',
-                         cross_val_predict, RidgeClassifier(), X, y,
-                         method='decision_function', cv=KFold(2))
+    error_message = 'Only 1 class/es in training fold,'\
+                         ' but 2 in overall dataset. This'\
+                         ' is not supported for decision_function'\
+                         ' with imbalanced folds. To fix '\
+                         'this, use a cross-validation technique '\
+                         'resulting in properly stratified folds'\
+
+    with pytest.raises(ValueError, match=error_message):
+        cross_val_predict(RidgeClassifier(), X, y,
+                          method='decision_function',
+                          cv=KFold(2))
 
     X, y = load_digits(return_X_y=True)
     est = SVC(kernel='linear', decision_function_shape='ovo')
@@ -1778,28 +1779,27 @@ def test_fit_and_score_failing():
 
     fit_and_score_kwargs = {'error_score': 'raise'}
     # check if exception was raised, with default error_score='raise'
-    assert_raise_message(ValueError, "Failing classifier failed as required",
-                         _fit_and_score, *fit_and_score_args,
-                         **fit_and_score_kwargs)
+    with pytest.raises(ValueError, 
+                       match="Failing classifier failed as required"):
+         _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
 
     # check that functions upstream pass error_score param to _fit_and_score
     error_message = ("error_score must be the string 'raise' or a"
                      " numeric value. (Hint: if using 'raise', please"
                      " make sure that it has been spelled correctly.)")
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+         cross_validate(failing_clf, X, cv=3, error_score='unvalid-string')
 
-    assert_raise_message(ValueError, error_message, cross_validate,
-                         failing_clf, X, cv=3, error_score='unvalid-string')
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+         cross_val_score(failing_clf, X, cv=3, error_score='unvalid-string')
 
-    assert_raise_message(ValueError, error_message, cross_val_score,
-                         failing_clf, X, cv=3, error_score='unvalid-string')
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        learning_curve(failing_clf, X, y, cv=3, error_score='unvalid-string')
 
-    assert_raise_message(ValueError, error_message, learning_curve,
-                         failing_clf, X, y, cv=3, error_score='unvalid-string')
-
-    assert_raise_message(ValueError, error_message, validation_curve,
-                         failing_clf, X, y, param_name='parameter',
-                         param_range=[FailingClassifier.FAILING_PARAMETER],
-                         cv=3, error_score='unvalid-string')
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+         validation_curve(failing_clf, X, y, param_name='parameter',
+                          param_range=[FailingClassifier.FAILING_PARAMETER],
+                          cv=3, error_score='unvalid-string')
 
     assert failing_clf.score() == 0.  # FailingClassifier coverage
 
@@ -1945,8 +1945,8 @@ def test_score():
     def two_params_scorer(estimator, X_test):
         return None
     fit_and_score_args = [None, None, None, two_params_scorer]
-    assert_raise_message(ValueError, error_message,
-                         _score, *fit_and_score_args, error_score=np.nan)
+    with pytest.raises(ValueError, match=error_message):
+        _score(*fit_and_score_args, error_score=np.nan)
 
 
 def test_callable_multimetric_confusion_matrix_cross_validate():
