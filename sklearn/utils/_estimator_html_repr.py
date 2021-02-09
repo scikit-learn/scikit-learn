@@ -305,11 +305,11 @@ def estimator_html_repr(estimator):
         HTML representation of estimator.
     """
     with closing(StringIO()) as out:
-        container_id = uuid.uuid4()
+        container_id = "sk-" + str(uuid.uuid4())
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
         out.write(f'<style>{style_with_id}</style>'
-                  f'<div id="{container_id}">'
+                  f'<div id="{container_id}" class"sk-top-container">'
                   '<div class="sk-container">')
         _write_estimator_html(out, estimator, estimator.__class__.__name__,
                               str(estimator), first_call=True)
