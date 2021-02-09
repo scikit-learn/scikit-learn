@@ -64,7 +64,7 @@ tree_disp = plot_partial_dependence(tree, X, ["age", "bmi"], ax=ax)
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Multi-layer Perceptron")
 mlp_disp = plot_partial_dependence(mlp, X, ["age", "bmi"], ax=ax,
-                                   line_kw={"c": "red"})
+                                   line_kw={"color": "red"})
 
 # %%
 # Plotting partial dependence of the two models together
@@ -88,7 +88,7 @@ mlp_disp = plot_partial_dependence(mlp, X, ["age", "bmi"], ax=ax,
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
 tree_disp.plot(ax=ax1)
 ax1.set_title("Decision Tree")
-mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
+mlp_disp.plot(ax=ax2, line_kw={"color": "red"})
 ax2.set_title("Multi-layer Perceptron")
 
 # %%
@@ -102,7 +102,7 @@ ax2.set_title("Multi-layer Perceptron")
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
 tree_disp.plot(ax=[ax1, ax2], line_kw={"label": "Decision Tree"})
 mlp_disp.plot(ax=[ax1, ax2], line_kw={"label": "Multi-layer Perceptron",
-                                      "c": "red"})
+                                      "color": "red"})
 ax1.legend()
 ax2.legend()
 
@@ -115,7 +115,7 @@ ax2.legend()
 # `plot` will only show the y label and y ticks on the left most plot.
 
 tree_disp.plot(line_kw={"label": "Decision Tree"})
-mlp_disp.plot(line_kw={"label": "Multi-layer Perceptron", "c": "red"},
+mlp_disp.plot(line_kw={"label": "Multi-layer Perceptron", "color": "red"},
               ax=tree_disp.axes_)
 tree_disp.figure_.set_size_inches(10, 6)
 tree_disp.axes_[0, 0].legend()
@@ -131,4 +131,5 @@ plt.show()
 # plot function.
 tree_disp = plot_partial_dependence(tree, X, ["age"])
 mlp_disp = plot_partial_dependence(mlp, X, ["age"],
-                                   ax=tree_disp.axes_, line_kw={"c": "red"})
+                                   ax=tree_disp.axes_,
+                                   line_kw={"color": "red"})

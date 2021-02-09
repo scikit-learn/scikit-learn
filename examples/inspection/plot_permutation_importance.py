@@ -63,16 +63,13 @@ X = X[categorical_columns + numerical_columns]
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, random_state=42)
 
-categorical_pipe = Pipeline([
-    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))
-])
+categorical_encoder = OneHotEncoder(handle_unknown='ignore')
 numerical_pipe = Pipeline([
     ('imputer', SimpleImputer(strategy='mean'))
 ])
 
 preprocessing = ColumnTransformer(
-    [('cat', categorical_pipe, categorical_columns),
+    [('cat', categorical_encoder, categorical_columns),
      ('num', numerical_pipe, numerical_columns)])
 
 rf = Pipeline([
@@ -122,8 +119,7 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 #   predictions that generalize to the test set (when the model has enough
 #   capacity).
 ohe = (rf.named_steps['preprocess']
-         .named_transformers_['cat']
-         .named_steps['onehot'])
+         .named_transformers_['cat'])
 feature_names = ohe.get_feature_names(input_features=categorical_columns)
 feature_names = np.r_[feature_names, numerical_columns]
 
@@ -134,8 +130,8 @@ sorted_idx = tree_feature_importances.argsort()
 y_ticks = np.arange(0, len(feature_names))
 fig, ax = plt.subplots()
 ax.barh(y_ticks, tree_feature_importances[sorted_idx])
-ax.set_yticklabels(feature_names[sorted_idx])
 ax.set_yticks(y_ticks)
+ax.set_yticklabels(feature_names[sorted_idx])
 ax.set_title("Random Forest Feature Importances (MDI)")
 fig.tight_layout()
 plt.show()

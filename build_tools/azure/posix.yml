@@ -18,6 +18,8 @@ jobs:
     OMP_NUM_THREADS: '2'
     OPENBLAS_NUM_THREADS: '2'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
+    CCACHE_DIR: $(Pipeline.Workspace)/ccache
+    CCACHE_COMPRESS: '1'
     NUMPY_VERSION: 'latest'
     SCIPY_VERSION: 'latest'
     CYTHON_VERSION: 'latest'
@@ -42,6 +44,11 @@ jobs:
     - bash: sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
       condition: startsWith(variables['DISTRIB'], 'conda')
+    - task: Cache@2
+      inputs:
+        key: '"$(Agent.JobName)"'
+        path: $(CCACHE_DIR)
+      displayName: ccache
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'

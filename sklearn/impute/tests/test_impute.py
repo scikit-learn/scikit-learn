@@ -27,6 +27,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute._base import _most_frequent
 
 
 def _check_statistics(X, X_true,
@@ -1069,6 +1070,32 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
 
 
 @pytest.mark.parametrize(
+    "rs_imputer",
+    [None, 1, np.random.RandomState(seed=1)]
+)
+@pytest.mark.parametrize(
+    "rs_estimator",
+    [None, 1, np.random.RandomState(seed=1)]
+)
+def test_iterative_imputer_dont_set_random_state(rs_imputer, rs_estimator):
+    class ZeroEstimator:
+        def __init__(self, random_state):
+            self.random_state = random_state
+
+        def fit(self, *args, **kgards):
+            return self
+
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+    estimator = ZeroEstimator(random_state=rs_estimator)
+    imputer = IterativeImputer(random_state=rs_imputer)
+    X_train = np.zeros((10, 3))
+    imputer.fit(X_train)
+    assert estimator.random_state == rs_estimator
+
+
+@pytest.mark.parametrize(
     "X_fit, X_trans, params, msg_err",
     [(np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, -1]]),
       {'features': 'missing-only', 'sparse': 'auto'},
@@ -1448,3 +1475,28 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
     with pytest.raises(ValueError,
                        match=f"Got 'add_indicator={imputer.add_indicator}'"):
         imputer.inverse_transform(X_1_trans)
+
+
+@pytest.mark.parametrize(
+    "expected,array,dtype,extra_value,n_repeat",
+    [
+        # array of object dtype
+        ("extra_value", ['a', 'b', 'c'], object, "extra_value", 2),
+        (
+            "most_frequent_value",
+            ['most_frequent_value', 'most_frequent_value', 'value'],
+            object, "extra_value", 1
+        ),
+        ("a", ['min_value', 'min_value' 'value'], object, "a", 2),
+        ("min_value", ['min_value', 'min_value', 'value'], object, "z", 2),
+        # array of numeric dtype
+        (10, [1, 2, 3], int, 10, 2),
+        (1, [1, 1, 2], int, 10, 1),
+        (10, [20, 20, 1], int, 10, 2),
+        (1, [1, 1, 20], int, 10, 2),
+    ]
+)
+def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
+    assert expected == _most_frequent(
+        np.array(array, dtype=dtype), extra_value, n_repeat
+    )

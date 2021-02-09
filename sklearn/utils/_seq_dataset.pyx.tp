@@ -262,7 +262,7 @@ cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
         self.feature_indices_ptr = <int *> feature_indices.data
 
         self.current_index = -1
-        self.X_stride = X.strides[0] / X.itemsize
+        self.X_stride = X.strides[0] // X.itemsize
         self.X_data_ptr = <{{c_type}} *>X.data
         self.Y_data_ptr = <{{c_type}} *>Y.data
         self.sample_weight_data = <{{c_type}} *>sample_weights.data
