@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
@@ -90,7 +91,7 @@ def test_bad_input():
         orthogonal_mp(X, y, n_nonzero_coefs = -1)
 
     with pytest.error(ValueError):
-        orthogonal_mp(X, y, n_nonzero_coefs= n_features + 1)   
+        orthogonal_mp(X, y, n_nonzero_coefs= n_features + 1)
 
     with pytest.error(ValueError):
         orthogonal_mp(G, Xy, tol=-1)

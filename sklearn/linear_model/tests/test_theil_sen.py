@@ -8,6 +8,7 @@ import os
 import sys
 from contextlib import contextmanager
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal, assert_array_less
 from numpy.testing import assert_array_almost_equal, assert_warns
 from scipy.linalg import norm
@@ -203,7 +204,7 @@ def test_calc_breakdown_point():
 def test_checksubparams_negative_subpopulation():
     X, y, w, c = gen_toy_problem_1d()
     theil_sen = TheilSenRegressor(max_subpopulation=-1, random_state=0)
-    
+
     with pytest.error(ValueError):
         theil_sen.fit(X, y)
 

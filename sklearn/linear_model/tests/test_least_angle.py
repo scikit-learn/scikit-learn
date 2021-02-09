@@ -1,9 +1,8 @@
 import warnings
 
 import numpy as np
-import pytest
 from scipy import linalg
-
+import pytest
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from sklearn.utils._testing import assert_allclose
