@@ -212,7 +212,8 @@ class KernelDensity(BaseEstimator):
             # beginning of this method, KernelDensity.score_samples.
             log_density = self.tree_.kernel_density(
                 X, h=self.bandwidth, kernel=self.kernel, atol=atol_N,
-                rtol=self.rtol, breadth_first=self.breadth_first, return_log=True)
+                rtol=self.rtol, breadth_first=self.breadth_first,
+                return_log=True)
         log_density -= np.log(N)
         return log_density
 
