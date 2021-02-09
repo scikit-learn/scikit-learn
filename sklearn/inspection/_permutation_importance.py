@@ -177,7 +177,7 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
         ret = dict()
-        for name, scorer in scorers:
+        for name, scorer in scorers.items():
             baseline_score = _weights_scorer(scorer, estimator, X, y,
                                              sample_weight)
 
