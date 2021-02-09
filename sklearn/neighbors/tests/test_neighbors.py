@@ -66,7 +66,7 @@ def _weight_func(dist):
     # Dist could be multidimensional, flatten it so all values
     # can be looped
     with np.errstate(divide='ignore'):
-        retval = 1. / (dist + 1e-8)
+        retval = 1. / dist
     return retval ** 2
 
 
@@ -602,8 +602,8 @@ def test_radius_neighbors_classifier_zero_distance():
                                                       weights=weights,
                                                       algorithm=algorithm)
             clf.fit(X, y)
-            assert_array_equal(correct_labels1,
-                               assert_no_warnings(clf.predict, z1))
+            with np.errstate(invalid="ignore"):
+                assert_array_equal(correct_labels1, clf.predict(z1))
 
 
 def test_neighbors_regressors_zero_distance():
