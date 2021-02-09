@@ -50,6 +50,7 @@ from sklearn.metrics import mean_poisson_deviance
 from sklearn.metrics import mean_gamma_deviance
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import pinball_error
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
