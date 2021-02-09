@@ -21,8 +21,7 @@ from sklearn.metrics import mean_tweedie_deviance
 
 from sklearn.metrics._regression import _check_reg_targets
 
-# from ...exceptions import UndefinedMetricWarning
-from sklearn.exceptions import UndefinedMetricWarning
+from ...exceptions import UndefinedMetricWarning
 
 
 def test_regression_metrics(n_samples=50):
