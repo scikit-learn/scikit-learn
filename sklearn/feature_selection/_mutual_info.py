@@ -5,6 +5,7 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.special import digamma
 
+from .. import config_context
 from ..metrics.cluster import mutual_info_score
 from ..neighbors import NearestNeighbors, KDTree
 from ..preprocessing import scale
@@ -58,18 +59,23 @@ def _compute_mi_cc(x, y, n_neighbors):
     radius = nn.kneighbors()[0]
     radius = np.nextafter(radius[:, -1], 0)
 
-    # KDTree is explicitly fit to allow for the querying of number of
-    # neighbors within a specified radius
-    kd = KDTree(x, metric='chebyshev')
-    nx = kd.query_radius(x, radius, count_only=True, return_distance=False)
-    nx = np.array(nx) - 1.0
+    with config_context(assume_finite=True):
+        # We remove the validation of x done at the beginning of
+        # KDTree.__init__ and KDTree.query_radius as x already got validated
+        # at the beginning of feature_selection._estimate_mi.
 
-    kd = KDTree(y, metric='chebyshev')
-    ny = kd.query_radius(y, radius, count_only=True, return_distance=False)
-    ny = np.array(ny) - 1.0
+        # KDTree is explicitly fit to allow for the querying of number of
+        # neighbors within a specified radius
+        kd = KDTree(x, metric='chebyshev')
+        nx = kd.query_radius(x, radius, count_only=True, return_distance=False)
+        nx = np.array(nx) - 1.0
 
-    mi = (digamma(n_samples) + digamma(n_neighbors) -
-          np.mean(digamma(nx + 1)) - np.mean(digamma(ny + 1)))
+        kd = KDTree(y, metric='chebyshev')
+        ny = kd.query_radius(y, radius, count_only=True, return_distance=False)
+        ny = np.array(ny) - 1.0
+
+        mi = (digamma(n_samples) + digamma(n_neighbors) -
+              np.mean(digamma(nx + 1)) - np.mean(digamma(ny + 1)))
 
     return max(0, mi)
 
