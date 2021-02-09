@@ -55,7 +55,7 @@ def test_kernel_gradient(kernel):
     def create_kernel(kernel, X):
         return kernel(X, eval_gradient=True)
     # Compare analytic and numeric gradient of kernels.
-    K, K_gradient = assert_no_warnings(create_kernel, kernel, X)
+    K, K_gradient = assert_no_warnings(kernel, X, eval_gradient=True)
 
     assert K_gradient.shape[0] == X.shape[0]
     assert K_gradient.shape[1] == X.shape[0]
