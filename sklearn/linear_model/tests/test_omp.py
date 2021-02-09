@@ -88,10 +88,10 @@ def test_bad_input():
         orthogonal_mp(X, y, tol=-1)
 
     with pytest.error(ValueError):
-        orthogonal_mp(X, y, n_nonzero_coefs = -1)
+        orthogonal_mp(X, y, n_nonzero_coefs=-1)
 
     with pytest.error(ValueError):
-        orthogonal_mp(X, y, n_nonzero_coefs= n_features + 1)
+        orthogonal_mp(X, y, n_nonzero_coefs=n_features+1)
 
     with pytest.error(ValueError):
         orthogonal_mp(G, Xy, tol=-1)
@@ -100,7 +100,7 @@ def test_bad_input():
         orthogonal_mp(G, Xy, n_nonzero_coefs=-1)
 
     with pytest.error(ValueError):
-        orthogonal_mp(G, Xy, n_nonzero_coefs = n_features+1)
+        orthogonal_mp(G, Xy, n_nonzero_coefs=n_features+1)
 
 
 def test_perfect_signal_recovery():
