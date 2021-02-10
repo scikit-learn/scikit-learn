@@ -393,7 +393,10 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     "estimator, is_sparse, with_mean",
     [(LinearRegression, True, False),
      (LinearRegression, False, True),
-     (LinearRegression, False, False)]
+     (LinearRegression, False, False),
+     (Ridge, True, False),
+     (Ridge, False, True),
+     (Ridge, False, False)]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(
         estimator, is_sparse, with_mean
@@ -425,7 +428,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         StandardScaler(with_mean=with_mean),
         estimator(normalize=False)
     )
-    kwargs = {reg_with_scaler.steps[-1][0] + '__sample_weight':
+    kwargs = {reg_with_scaler.steps[0][0] + '__sample_weight':
+              sample_weight,
+              reg_with_scaler.steps[-1][0] + '__sample_weight':
               sample_weight}
     reg_with_scaler.fit(X_train, y_train, **kwargs)
 
