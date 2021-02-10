@@ -255,7 +255,7 @@ def test_fit_docstring_attributes(name, Estimator):
         est.init = 'nndsvda'
 
     if Estimator.__name__ == 'MiniBatchNMF':
-        est.beta_loss='kullback-leibler'
+        est.beta_loss = 'kullback-leibler'
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
