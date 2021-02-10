@@ -30,7 +30,6 @@ from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
-from sklearn.utils.extmath import _incremental_weighted_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
@@ -488,11 +487,9 @@ def test_incremental_weighted_mean_and_variance(mean, var, weight_loc,
             last_mean, last_weight_sum, last_var = 0, 0, 0
             for batch in gen_batches(n, chunk_size):
                 last_mean, last_var, last_weight_sum = \
-                    _incremental_mean_and_var(X[batch],
-                                              last_mean,
-                                              last_var,
-                                              last_weight_sum,
-                                              sample_weight=sample_weight[batch])
+                    _incremental_mean_and_var(
+                        X[batch], last_mean, last_var, last_weight_sum,
+                        sample_weight=sample_weight[batch])
             assert_allclose(last_mean, expected_mean)
             assert_allclose(last_var, expected_var, atol=1e-6)
 
@@ -596,7 +593,7 @@ def test_incremental_mean_and_variance_ignore_nan():
 
 
 #
-# TODO use the following function to compare the two 
+# TODO use the following function to compare the two
 # incremental mean/variance update functions
 # _incremental_mean_and_var and _incremental_weighted_mean_and_var
 # on uniform weights
