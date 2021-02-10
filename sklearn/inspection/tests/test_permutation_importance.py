@@ -23,7 +23,20 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.estimator_checks import _NotAnArray
 
+
+def test_array_function_not_called():
+    X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                  [2, 1], [2, 2], [2, 3], [2, 4],
+                  [3, 1], [3, 2], [3, 3], [3, 4]])
+    X = _NotAnArray(X)
+    y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+    estimator = LogisticRegression()
+    estimator.fit(X, y)
+    rng = np.random.RandomState(42)
+    permutation_importance(estimator, X, y, n_repeats=5,
+                           random_state=rng, n_jobs=1)
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])

@@ -14,6 +14,7 @@ from sklearn.exceptions import FitFailedWarning
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
 
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raise_message
@@ -241,6 +242,17 @@ class MockClassifier:
 
     def get_params(self, deep=False):
         return {'a': self.a, 'allow_nd': self.allow_nd}
+
+
+def test_array_function_not_called():
+    X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                  [2, 1], [2, 2], [2, 3], [2, 4],
+                  [3, 1], [3, 2], [3, 3], [3, 4]])
+    X = _NotAnArray(X)
+    y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+    estimator = LogisticRegression()
+    grid = GridSearchCV(estimator, param_grid={'C': [1, 10]})
+    cross_validate(grid, X, y, n_jobs=2)
 
 
 # XXX: use 2D array, since 1D X is being detected as a single sample in
