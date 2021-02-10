@@ -122,7 +122,7 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
 
     Returns
     -------
-    result : :class:`~sklearn.utils.Bunch`
+    result : :class:`~sklearn.utils.Bunch` or dict
         Dictionary-like object, with the following attributes.
 
         importances_mean : ndarray, shape (n_features, )
