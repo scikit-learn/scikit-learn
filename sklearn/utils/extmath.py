@@ -766,7 +766,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     else:
         T = new_sum / new_sample_count
         if sample_weight is not None:
-            new_unnormalized_variance = np.nansum(sample_weight[:, None] *
+            new_unnormalized_variance = np.nansum(sample_weight *
                                                   (X - T)**2, axis=0)
         else:
             new_unnormalized_variance = np.nansum((X - T)**2, axis=0)
