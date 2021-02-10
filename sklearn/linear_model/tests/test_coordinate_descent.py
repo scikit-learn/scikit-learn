@@ -401,11 +401,11 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 )
 @pytest.mark.parametrize(
     "is_sparse",
-    [False] #, True]
+    [False]  # , True]
 )
 @pytest.mark.parametrize(
     "with_mean",
-    [True, False]
+    [True]  # , False]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(
         with_mean, is_sparse, estimator, params
