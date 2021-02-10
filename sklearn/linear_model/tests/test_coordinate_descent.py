@@ -303,6 +303,24 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
+def _scale_alpha(estimator, n_samples):
+    if 'alpha' not in estimator.get_params():
+        return
+
+    model_name = estimator.__class__.__name__
+    if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
+        alpha = estimator.alpha * np.sqrt(n_samples)
+    if model_name in ['Ridge', 'RidgeClassifier']:
+        alpha = estimator.alpha * n_samples
+    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
+        if estimator.l1_ratio == 1:
+            alpha = estimator.alpha * np.sqrt(n_samples)
+        if estimator.l1_ratio == 0:
+            alpha = estimator.alpha * n_samples
+
+    estimator.set_params(alpha=alpha)
+
+
 # FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
@@ -329,7 +347,6 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # in the pipeline and with normalize set to False
 
     # normalize is True
-    model_name = LinearModel.__name__
     model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
 
     pipeline = make_pipeline(
@@ -356,22 +373,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    if 'alpha' in params:
-        model_normalize.set_params(alpha=params['alpha'])
-        if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
-            new_params = dict(
-                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
-        if model_name in ['Ridge', 'RidgeClassifier']:
-            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
-    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
-        if params['l1_ratio'] == 1:
-            new_params = dict(
-                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
-        if params['l1_ratio'] == 0:
-            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
-
-    if 'new_params' in locals():
-        pipeline[1].set_params(**new_params)
+    _scale_alpha(pipeline[1], X_train.shape[0])
 
     model_normalize.fit(X_train, y_train)
     y_pred_normalize = model_normalize.predict(X_test)
@@ -449,21 +451,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         StandardScaler(with_mean=with_mean),
         estimator(normalize=False, fit_intercept=True, **params)
     )
-    if 'alpha' in params:
-        if model_name in ['Lasso']:
-            new_params = dict(
-                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
-        if model_name in ['Ridge', 'RidgeClassifier']:
-            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
-    if model_name in ['ElasticNet']:
-        if params['l1_ratio'] == 1:
-            new_params = dict(
-                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
-        if params['l1_ratio'] == 0:
-            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
 
-    if 'new_params' in locals():
-        reg_with_scaler[1].set_params(**new_params)
+    _scale_alpha(reg_with_scaler[1], X_train.shape[0])
 
     kwargs = {reg_with_scaler.steps[0][0] + '__sample_weight':
               sample_weight,
