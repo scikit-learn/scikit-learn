@@ -221,11 +221,12 @@ def test_n_components_greater_n_features(Estimator):
     Estimator(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
 
-@pytest.mark.parametrize(['Estimator', 'solver'],
-                         [[NMF, 'cd'], [NMF, 'mu']])
+@pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
+                         [[NMF, 'cd', 2], [NMF, 'mu', 2],
+                          [MiniBatchNMF, 'mu', 1]])
 @pytest.mark.parametrize('regularization',
                          [None, 'both', 'components', 'transformation'])
-def test_nmf_sparse_input(Estimator, solver, regularization):
+def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
 
@@ -237,6 +238,7 @@ def test_nmf_sparse_input(Estimator, solver, regularization):
     init = 'nndsvda'  # FIXME : should be removed in 1.1
 
     est1 = Estimator(solver=solver, n_components=5, init=init,
+                     beta_loss=beta_loss, max_iter=500,
                      regularization=regularization, random_state=0)
     est2 = clone(est1)
 
@@ -248,34 +250,6 @@ def test_nmf_sparse_input(Estimator, solver, regularization):
     assert_array_almost_equal(W1, W2)
     assert_array_almost_equal(H1, H2)
 
-
-@pytest.mark.parametrize('regularization',
-                         [None, 'both', 'components', 'transformation'])
-def test_nmf_sparse_input_minibatch(regularization):
-    # Test that sparse matrices are accepted as input
-    from scipy.sparse import csc_matrix
-
-    rng = np.random.mtrand.RandomState(42)
-    A = np.abs(rng.randn(10, 10))
-    A[:, 2 * np.arange(5)] = 0
-    A_sparse = csc_matrix(A)
-
-    init = 'nndsvda'  # FIXME : should be removed in 1.1
-
-    est1 = MiniBatchNMF(solver='mu', n_components=5, init=init,
-                        regularization=regularization, random_state=0,
-                        beta_loss=1, batch_size=A.shape[0])
-    est2 = clone(est1)
-
-    W1 = est1.fit_transform(A)
-    W2 = est2.fit_transform(A_sparse)
-    H1 = est1.components_
-    H2 = est2.components_
-
-    assert_array_almost_equal(W1, W2)
-    assert_array_almost_equal(H1, H2)
-
-
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
                          [[NMF, 'cd', 2], [NMF, 'mu', 2],
                           [MiniBatchNMF, 'mu', 1]])
@@ -286,7 +260,7 @@ def test_nmf_sparse_transform(Estimator, solver, beta_loss):
     A[1, 1] = 0
     A = csc_matrix(A)
 
-    init = 'nndsvd'  # FIXME : should be removed in 1.1
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
 
     model = Estimator(solver=solver, random_state=0, n_components=2,
                       beta_loss=beta_loss, max_iter=400, init=init)
@@ -527,15 +501,16 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
-    init = 'nndsvda'  # FIXME : should be removed in 1.1
+    init = 'nndsvdar'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
+    max_iter = 500
     regul = Estimator(n_components=n_components, solver=solver,
                       alpha=0.5, l1_ratio=l1_ratio, random_state=42,
-                      init=init, beta_loss=beta_loss)
+                      init=init, beta_loss=beta_loss, max_iter=max_iter)
     model = Estimator(n_components=n_components, solver=solver,
                       alpha=0., l1_ratio=l1_ratio, random_state=42,
-                      init=init, beta_loss=beta_loss)
+                      init=init, beta_loss=beta_loss, max_iter=max_iter)
 
     W_regul = regul.fit_transform(X)
     W_model = model.fit_transform(X)
@@ -556,10 +531,10 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
     l1_ratio = 0.
     regul = Estimator(n_components=n_components, solver=solver,
                       alpha=0.5, l1_ratio=l1_ratio, random_state=42,
-                      init=init, beta_loss=beta_loss)
+                      init=init, beta_loss=beta_loss, max_iter=max_iter)
     model = Estimator(n_components=n_components, solver=solver,
                       alpha=0., l1_ratio=l1_ratio, random_state=42,
-                      init=init, beta_loss=beta_loss)
+                      init=init, beta_loss=beta_loss, max_iter=max_iter)
 
     W_regul = regul.fit_transform(X)
     W_model = model.fit_transform(X)
@@ -686,17 +661,20 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
-@pytest.mark.parametrize('batch_size', [1, 24, 32, 48])
+@pytest.mark.parametrize('batch_size', [24, 32, 48])
 def test_nmf_close_minibatch_nmf(batch_size):
     # Test that the decomposition with standard and minibatch nmf
     # gives close results
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
-    max_iter = 10000
-    nmf = NMF(5, solver='mu', init='nndsvdar', random_state=0,
-              max_iter=max_iter, beta_loss='kullback-leibler')
-    mbnmf = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
-                         max_iter=max_iter, beta_loss='kullback-leibler',
+    max_iter = 100000
+    solver = 'mu'
+    beta_loss='kullback-leibler'
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
+    nmf = NMF(5, solver=solver, init=init, random_state=0,
+              max_iter=max_iter, beta_loss=beta_loss)
+    mbnmf = MiniBatchNMF(5, solver=solver, init=init, random_state=0,
+                         max_iter=max_iter, beta_loss=beta_loss,
                          batch_size=batch_size)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)

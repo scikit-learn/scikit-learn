@@ -922,14 +922,10 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
 
-    n_steps_per_epoch = int(np.ceil(n_samples / batch_size))
-    n_steps = int(max_iter * n_steps_per_epoch)
-
-    # If n_iter is zero, we need to return zero.
-    n_iter = iter_offset + 1
-
-    for n_iter, batch in zip(range(iter_offset, iter_offset + max_iter + 1),
-                             batches):
+    for n_iter, batch in zip(
+        range(iter_offset + 1, iter_offset + max_iter + 1),
+        batches
+    ):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
