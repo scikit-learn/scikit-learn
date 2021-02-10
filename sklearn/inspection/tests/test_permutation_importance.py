@@ -461,5 +461,4 @@ def test_permutation_importance_multi_metric(input_scorers):
                                                scoring=scorer,
                                                n_repeats=1)
 
-        assert_allclose(multi_result.importances, single_result.importances,
-                        rtol=1e-1, atol=1e-6)
+        assert_allclose(multi_result.importances, single_result.importances)
