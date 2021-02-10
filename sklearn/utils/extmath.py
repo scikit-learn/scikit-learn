@@ -760,8 +760,8 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     else:
         if sample_weight is not None:
             T = new_sum / new_sample_count
-            new_unnormalized_variance = np.sum(sample_weight[:, None] *
-                                               (X - T)**2, axis=0)
+            new_unnormalized_variance = np.nansum(sample_weight[:, None] *
+                                                  (X - T)**2, axis=0)
         else:
             new_unnormalized_variance = (
                 _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
