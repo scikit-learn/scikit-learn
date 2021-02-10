@@ -300,7 +300,6 @@ def test_calibration_zero_probability():
     probas = cal_clf.predict_proba(X)
 
     # Check all probabilities are 1. / n_classes
-    assert False
     assert_allclose(probas, np.full_like(probas, 1. / len(n_classes)))
 
 
