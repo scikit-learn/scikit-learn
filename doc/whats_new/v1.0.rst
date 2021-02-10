@@ -103,7 +103,7 @@ Changelog
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
 
 :mod:`sklearn.inspection`
-.................................
+.........................
 
 - |Fix| Allow multiple scorers input to
   :func:`~sklearn.inspection.permutation_importance`.
