@@ -386,39 +386,17 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
                           model_normalize.coef_.dot(X_train.mean(0))))
     assert_allclose(y_pred_normalize, y_pred_standardize)
 
-'''
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-@pytest.mark.parametrize(
-    "estimator, is_sparse, with_mean",
-    [#(LinearRegression, True, False),
-     #(LinearRegression, False, True),
-     #(LinearRegression, False, False),
-     #(Ridge, True, False),
-     (Ridge, False, True),
-     #(Ridge, False, False)
-     ]
-)
-'''
+
 # FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "estimator, params",
     [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
-     # (LassoLars, {"alpha": 0.1}), (unexpected sample_weight)
      # (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
-     (BayesianRidge, {}),
-     # (ARDRegression, {}), (unexpected sample_weight)
-     # (OrthogonalMatchingPursuit, {}), (unexpected sample_weight)
-     # (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}), (unexpected sample_weight)
-     # (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}), (unexpected sample_weight)
-     # (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}), (unexpected sample_weight)
-     # (Lars, {}), (unexpected sample_weight)
      (LinearRegression, {}),
-     # (LassoLarsIC, {}) (unexpected sample_weight)
      ]
 )
 @pytest.mark.parametrize(
@@ -451,7 +429,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         X_train = sparse.csr_matrix(X_train)
         X_test = _convert_container(X_train, 'sparse')
 
-    sample_weight = 0.1 * rng.rand(X_train.shape[0])
+    sample_weight = rng.rand(X_train.shape[0])
 
     # linear estimator with explicit sample_weight
     reg_with_normalize = estimator(normalize=True, fit_intercept=True,
@@ -465,12 +443,12 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     )
     if 'alpha' in params:
         # reg_with_scaler.set_params(alpha=params['alpha'])
-        if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
+        if model_name in ['Lasso']:
             new_params = dict(
                 alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
         if model_name in ['Ridge', 'RidgeClassifier']:
             new_params = dict(alpha=params['alpha'] * X_train.shape[0])
-    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
+    if model_name in ['ElasticNet']:
         if params['l1_ratio'] == 1:
             new_params = dict(
                 alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
@@ -489,11 +467,6 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     y_pred_norm = reg_with_normalize.predict(X_test)
     y_pred_pip = reg_with_scaler.predict(X_test)
 
-    # assert_allclose(
-    #    reg_with_normalize.coef_ * reg_with_scaler[0].scale_,
-    #     reg_with_scaler[1].coef_
-    #)
-    #assert_allclose(y_pred_norm, y_pred_pip)
     y_train_mean = np.average(y_train, weights=sample_weight)
     X_train_mean = np.average(X_train, weights=sample_weight, axis=0)
     assert reg_with_scaler[1].intercept_ == pytest.approx(y_train_mean)
