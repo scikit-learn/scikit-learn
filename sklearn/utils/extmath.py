@@ -714,6 +714,8 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     last_variance : array-like of shape (n_features,)
 
     last_sample_count : array-like of shape (n_features,)
+        The number of samples encountered until now if sample_weight is None.
+        If sample_weight is not None, this is the sum of sample_weight encountered.
 
     sample_weight : array-like of shape (n_samples,) or None
         Sample weights. If None, compute the unweighted mean/variance.
@@ -761,13 +763,12 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     if last_variance is None:
         updated_variance = None
     else:
+        T = new_sum / new_sample_count
         if sample_weight is not None:
-            T = new_sum / new_sample_count
             new_unnormalized_variance = np.nansum(sample_weight[:, None] *
                                                   (X - T)**2, axis=0)
         else:
-            new_unnormalized_variance = (
-                _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
+            new_unnormalized_variance = np.nansum((X - T)**2, axis=0)
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):
