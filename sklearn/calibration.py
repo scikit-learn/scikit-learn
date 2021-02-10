@@ -657,11 +657,9 @@ class _CalibratedClassifier:
             proba[:, 0] = 1. - proba[:, 1]
         else:
             denominator = np.sum(proba, axis=1)[:, np.newaxis]
+            # XXX : for some reason all probas can be 0
             proba = np.divide(proba, denominator, out=np.full_like(
-                proba, np.nan), where=denominator != 0)
-
-        # XXX : for some reason all probas can be 0
-        proba[np.isnan(proba)] = 1. / n_classes
+                proba, 1 / n_classes), where=denominator != 0)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
