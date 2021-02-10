@@ -124,7 +124,7 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
 
         Passing multiple scores to `scoring` is more efficient than calling
         `permutation_importance` for each of the scores as it reuses
-        predictions by avoiding redundant computation.
+        predictions to avoid redundant computation.
 
         If None, the estimator's default scorer is used.
 
