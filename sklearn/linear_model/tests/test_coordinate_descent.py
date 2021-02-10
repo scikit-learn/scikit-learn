@@ -394,7 +394,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     "estimator, params",
     [
      (Lasso, {"tol": 1e-16, "alpha": 0.1}),
-     # (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
@@ -424,6 +424,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=20, n_features=5, noise=1e-2,
                            random_state=rng)
+
+    if is_classifier(estimator):
+        y = np.sign(y)
 
     # make sure the data is not centered to make the problem more
     # difficult
