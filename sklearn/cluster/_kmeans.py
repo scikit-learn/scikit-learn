@@ -20,6 +20,7 @@ from threadpoolctl import threadpool_info
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
@@ -103,7 +104,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
     indices[0] = center_id
 
     # Initialize list of closest distances and calculate current potential
-    closest_dist_sq = euclidean_distances(
+    closest_dist_sq = _euclidean_distances(
         centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
         squared=True)
     current_pot = closest_dist_sq.sum()
@@ -120,7 +121,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
                 out=candidate_ids)
 
         # Compute distances to center candidates
-        distance_to_candidates = euclidean_distances(
+        distance_to_candidates = _euclidean_distances(
             X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
         # update closest distances squared and potential for each candidate
@@ -148,7 +149,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
 # K-means batch estimation by EM (expectation maximization)
 
 def _tolerance(X, tol):
-    """Return a tolerance which is independent of the dataset."""
+    """Return a tolerance which is dependent on the dataset."""
     if tol == 0:
         return 0
     if sp.issparse(X):
@@ -212,7 +213,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
 
         .. deprecated:: 0.23
             'precompute_distances' was deprecated in version 0.23 and will be
-            removed in 0.25. It has no effect.
+            removed in 1.0 (renaming of 0.25). It has no effect.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -254,7 +255,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            0.25.
+            1.0 (renaming of 0.25).
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -657,7 +658,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         .. deprecated:: 0.23
             'precompute_distances' was deprecated in version 0.22 and will be
-            removed in 0.25. It has no effect.
+            removed in 1.0 (renaming of 0.25). It has no effect.
 
     verbose : int, default=0
         Verbosity mode.
@@ -686,7 +687,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            0.25.
+            1.0 (renaming of 0.25).
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -728,7 +729,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     -----
     The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
-    The average complexity is given by O(k n T), were n is the number of
+    The average complexity is given by O(k n T), where n is the number of
     samples and T is the number of iteration.
 
     The worst case complexity is given by O(n^(k+2/p)) with
@@ -784,13 +785,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute_distances
         if self.precompute_distances != 'deprecated':
             warnings.warn("'precompute_distances' was deprecated in version "
-                          "0.23 and will be removed in 0.25. It has no "
-                          "effect", FutureWarning)
+                          "0.23 and will be removed in 1.0 (renaming of 0.25)"
+                          ". It has no effect", FutureWarning)
 
         # n_jobs
         if self.n_jobs != 'deprecated':
             warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 0.25.", FutureWarning)
+                          " removed in 1.0 (renaming of 0.25).", FutureWarning)
             self._n_threads = self.n_jobs
         else:
             self._n_threads = None
@@ -855,15 +856,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 f"match the number of features of the data {X.shape[1]}.")
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order='C', accept_large_sparse=False)
-        n_samples, n_features = X.shape
-        expected_n_features = self.cluster_centers_.shape[1]
-        if not n_features == expected_n_features:
-            raise ValueError(
-                f"Incorrect number of features. Got {n_features} features, "
-                f"expected {expected_n_features}.")
-
+        X = self._validate_data(X, accept_sparse='csr', reset=False,
+                                dtype=[np.float64, np.float32],
+                                order='C', accept_large_sparse=False)
         return X
 
     def _check_mkl_vcomp(self, X, n_samples):
@@ -1518,13 +1513,15 @@ class MiniBatchKMeans(KMeans):
         Weigth sum of each cluster.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in
+           1.1 (renaming of 0.26).
 
     init_size_ : int
         The effective number of samples used for the initialization.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in
+           1.1 (renaming of 0.26).
 
     See Also
     --------
@@ -1583,19 +1580,19 @@ class MiniBatchKMeans(KMeans):
         self.reassignment_ratio = reassignment_ratio
 
     @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
-                " and will be removed in 0.26.")
+                " and will be removed in 1.1 (renaming of 0.26).")
     @property
     def counts_(self):
         return self._counts
 
     @deprecated("The attribute 'init_size_' is deprecated in "  # type: ignore
-                "0.24 and will be removed in 0.26.")
+                "0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def init_size_(self):
         return self._init_size
 
     @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 0.26.")
+                "in 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def random_state_(self):
         return getattr(self, "_random_state", None)
