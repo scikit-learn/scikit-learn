@@ -54,6 +54,7 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
 
     return scores
 
+
 def _create_importances_bunch(baseline_score, score):
     """Create output importances Bunch."""
     importances = baseline_score - np.array(score)
