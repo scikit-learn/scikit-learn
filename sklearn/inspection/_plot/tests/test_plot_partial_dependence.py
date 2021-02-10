@@ -588,3 +588,44 @@ def test_partial_dependence_overwrite_labels(
             legend_text = ax.get_legend().get_texts()
             assert len(legend_text) == 1
             assert legend_text[0].get_text() == label
+
+
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
+@pytest.mark.parametrize(
+    "line_kw, pd_line_kw, ice_lines_kw, expected_colors",
+    [
+        ({"color": "r"}, {"color": "g"}, {"color": "b"}, ("g", "b")),
+        (None, {"color": "g"}, {"color": "b"}, ("g", "b")),
+        ({"color": "r"}, None, {"color": "b"}, ("r", "b")),
+        ({"color": "r"}, {"color": "g"}, None, ("g", "r")),
+        ({"color": "r"}, None, None, ("r", "r")),
+    ]
+)
+def test_plot_partial_dependence_lines_kw(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    line_kw,
+    pd_line_kw,
+    ice_lines_kw,
+    expected_colors,
+):
+
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        [0, 2],
+        grid_resolution=20,
+        feature_names=diabetes.feature_names,
+        n_cols=2,
+        kind="both",
+        line_kw=line_kw,
+        pd_line_kw=pd_line_kw,
+        ice_lines_kw=ice_lines_kw,
+    )
+
+    line = disp.lines_[0, 0, -1]
+    assert line.get_color() == expected_colors[0]
+
+    line = disp.lines_[0, 0, 0]
+    assert line.get_color() == expected_colors[1]
