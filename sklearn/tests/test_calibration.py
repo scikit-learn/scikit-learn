@@ -284,7 +284,7 @@ def test_calibration_zero_probability():
     class ZeroCalibrator():
         # This function is called from _CalibratedClassifier.predict_proba.
         def predict(self, X):
-            return np.zeros_like(X)
+            return np.zeros(X.shape[0])
 
     X, y = make_blobs(n_samples=50, n_features=10, random_state=7,
                       centers=10, cluster_std=15.0)
