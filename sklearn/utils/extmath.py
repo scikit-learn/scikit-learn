@@ -693,6 +693,7 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
 def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
                               sample_weight=None):
     """Calculate mean update and a Youngs and Cramer variance update.
+
     If sample_weight is given, the weighted mean and variance is computed.
 
     Update a given mean and (possibly) variance according to new data given
