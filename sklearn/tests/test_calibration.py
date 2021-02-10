@@ -7,6 +7,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
+from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import LeaveOneOut, train_test_split
 
 from sklearn.utils._testing import (assert_array_almost_equal,
@@ -276,13 +277,6 @@ def test_calibration_multiclass(method, ensemble, seed):
 
 
 def test_calibration_zero_probability():
-    class FakeClassifier():
-        def __init__(self, n_classes):
-            self.classes_ = n_classes
-
-        def predict_proba(self, X):
-            return np.empty_like(X)
-
     class ZeroCalibrator():
         # This function is called from _CalibratedClassifier.predict_proba.
         def predict(self, X):
@@ -292,7 +286,8 @@ def test_calibration_zero_probability():
                       centers=10, cluster_std=15.0)
     n_classes = np.unique(y)
 
-    clf = FakeClassifier(n_classes)
+    clf = DummyClassifier()
+    clf.fit(X, y)
     calibrator = ZeroCalibrator()
     cal_clf = _CalibratedClassifier(
         base_estimator=clf, calibrators=[calibrator], classes=n_classes)
