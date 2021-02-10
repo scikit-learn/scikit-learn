@@ -14,12 +14,10 @@ from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.linear_model._base import make_dataset
 from sklearn.linear_model._logistic import _multinomial_loss_grad
-
 from sklearn.utils.extmath import row_norms
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer
@@ -449,8 +447,9 @@ def test_get_auto_step_size():
             assert_almost_equal(step_size_log, step_size_log_, decimal=4)
 
     msg = 'Unknown loss function for SAG solver, got wrong instead of'
-    assert_raise_message(ValueError, msg, get_auto_step_size,
-                         max_squared_sum_, alpha, "wrong", fit_intercept)
+
+    with pytest.raises(ValueError, match=msg):
+        get_auto_step_size(max_squared_sum_, alpha, "wrong", fit_intercept)
 
 
 @pytest.mark.parametrize("seed", range(3))  # locally tested with 1000 seeds
@@ -737,11 +736,9 @@ def test_classifier_single_class():
     X = [[1, 2], [3, 4]]
     y = [1, 1]
 
-    assert_raise_message(ValueError,
-                         "This solver needs samples of at least 2 classes "
-                         "in the data",
-                         LogisticRegression(solver='sag').fit,
-                         X, y)
+
+    with pytest.raises(ValueError, match="This solver needs samples of at least 2 classes in the data"):
+        LogisticRegression(solver='sag').fit(X, y)
 
 
 def test_step_size_alpha_error():
@@ -754,10 +751,14 @@ def test_step_size_alpha_error():
 
     clf1 = LogisticRegression(solver='sag', C=1. / alpha,
                               fit_intercept=fit_intercept)
-    assert_raise_message(ZeroDivisionError, msg, clf1.fit, X, y)
+
+    with pytest.raises(ZeroDivisionError, match=msg):
+        clf1.fit(X, y)
 
     clf2 = Ridge(fit_intercept=fit_intercept, solver='sag', alpha=alpha)
-    assert_raise_message(ZeroDivisionError, msg, clf2.fit, X, y)
+
+    with pytest.raises(ZeroDivisionError, match=msg):
+        clf1.fit(X, y)
 
 
 def test_multinomial_loss():

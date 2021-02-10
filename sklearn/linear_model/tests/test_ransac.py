@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from scipy import sparse
 
 from numpy.testing import assert_array_almost_equal
@@ -7,7 +8,6 @@ from numpy.testing import assert_array_equal
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_raises_regexp
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression, RANSACRegressor
@@ -55,15 +55,15 @@ def test_ransac_is_data_valid():
 
     rng = np.random.RandomState(0)
     X = rng.rand(10, 2)
-    y = rng.rand(10, 1)
+    y = rng.rand(10, 1).÷
 
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=5,
                                        is_data_valid=is_data_valid,
                                        random_state=0)
-
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_is_model_valid():
@@ -77,8 +77,8 @@ def test_ransac_is_model_valid():
                                        residual_threshold=5,
                                        is_model_valid=is_model_valid,
                                        random_state=0)
-
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_max_trials():
@@ -87,7 +87,8 @@ def test_ransac_max_trials():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=5, max_trials=0,
                                        random_state=0)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
     # there is a 1e-9 chance it will take these many trials. No good reason
     # 1e-2 isn't enough, can still happen
@@ -330,9 +331,15 @@ def test_ransac_min_n_samples():
     assert_array_almost_equal(ransac_estimator1.predict(X),
                               ransac_estimator6.predict(X))
 
-    assert_raises(ValueError, ransac_estimator3.fit, X, y)
-    assert_raises(ValueError, ransac_estimator4.fit, X, y)
-    assert_raises(ValueError, ransac_estimator7.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator3.fit(X, y)
+
+    with pytest.raises(ValueError):
+        ransac_estimator4.fit(X, y)
+
+    with pytest.raises(ValueError):
+        ransac_estimator7.fit(X, y)
+
 
 
 def test_ransac_multi_dimensional_targets():
@@ -445,11 +452,14 @@ def test_ransac_dynamic_max_trials():
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=-0.1)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
+
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=1.1)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
-
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(random_state=0)
@@ -494,7 +504,9 @@ def test_ransac_fit_sample_weight():
     # sample_weight, raises error
     base_estimator = OrthogonalMatchingPursuit()
     ransac_estimator = RANSACRegressor(base_estimator)
-    assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
+
+    with pytest.raises(ValueError):
+        ransac_estimator.fit( X, y, weights)
 
 
 def test_ransac_final_model_fit_sample_weight():
