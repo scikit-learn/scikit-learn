@@ -698,8 +698,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     Update a given mean and (possibly) variance according to new data given
     in X. last_mean is always required to compute the new mean.
     If last_variance is None, no variance is computed and None return for
-    updated_variance. last_n_samples_seen is the number of samples
-    encountered until now.
+    updated_variance.
 
     From the paper "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
@@ -715,7 +714,8 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
 
     last_sample_count : array-like of shape (n_features,)
         The number of samples encountered until now if sample_weight is None.
-        If sample_weight is not None, this is the sum of sample_weight encountered.
+        If sample_weight is not None, this is the sum of sample_weight
+        encountered.
 
     sample_weight : array-like of shape (n_samples,) or None
         Sample weights. If None, compute the unweighted mean/variance.
