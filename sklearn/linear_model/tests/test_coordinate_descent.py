@@ -29,6 +29,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
+from sklearn.utils.sparsefuncs import mean_variance_axis
 
 from sklearn.linear_model import (
     ARDRegression,
@@ -391,7 +392,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "estimator, params",
-    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
+    [
+     (Lasso, {"tol": 1e-16, "alpha": 0.1}),
      # (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
@@ -400,12 +402,12 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
      ]
 )
 @pytest.mark.parametrize(
-    "is_sparse",
-    [False]  # , True]
-)
-@pytest.mark.parametrize(
-    "with_mean",
-    [True]  # , False]
+    "is_sparse, with_mean", [
+        (False, True),
+        (False, False),
+        (True, False)
+        # No need to test sparse and with_mean=True
+    ]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(
         with_mean, is_sparse, estimator, params
@@ -415,6 +417,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # LinearRegression with no normalize in a pipeline with a StandardScaler
     # and set sample_weight.
     model_name = estimator.__name__
+
+    if model_name in ['Lasso', 'ElasticNet'] and is_sparse:
+        pytest.skip(f'{model_name} does not suppert sample_weight with sparse')
 
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=20, n_features=5, noise=1e-2,
@@ -442,7 +447,6 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         estimator(normalize=False, fit_intercept=True, **params)
     )
     if 'alpha' in params:
-        # reg_with_scaler.set_params(alpha=params['alpha'])
         if model_name in ['Lasso']:
             new_params = dict(
                 alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
@@ -468,8 +472,11 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     y_pred_pip = reg_with_scaler.predict(X_test)
 
     y_train_mean = np.average(y_train, weights=sample_weight)
-    X_train_mean = np.average(X_train, weights=sample_weight, axis=0)
-    assert reg_with_scaler[1].intercept_ == pytest.approx(y_train_mean)
+    if is_sparse:
+        X_train_mean, _ = mean_variance_axis(X_train, axis=0,
+                                             weights=sample_weight)
+    else:
+        X_train_mean = np.average(X_train, weights=sample_weight, axis=0)
     assert (reg_with_normalize.intercept_ ==
             pytest.approx(y_train_mean -
                           reg_with_normalize.coef_.dot(X_train_mean)))
