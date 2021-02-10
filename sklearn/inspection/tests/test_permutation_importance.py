@@ -23,6 +23,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
+from sklearn.metrics import get_scorer
 
 
 
@@ -435,3 +436,30 @@ def test_permutation_importance_no_weights_scoring_function():
                                scoring=my_scorer,
                                n_repeats=1,
                                sample_weight=w)
+
+
+@pytest.mark.parametrize("input_scorers", [
+    ["r2", "neg_mean_squared_error"],
+    {
+        "r2": get_scorer("r2"),
+        "neg_mean_squared_error": get_scorer("neg_mean_squared_error")
+    }])
+def test_permutation_importance_multi_metric(input_scorers):
+    # Test permutation importance when scoring contains multiple scorers
+
+    # Creating some data and estimator for the permutation test
+    x, y = make_regression(n_samples=500, n_features=10, random_state=0)
+    lr = LinearRegression().fit(x, y)
+
+    multi_importance = permutation_importance(lr, x, y, random_state=1,
+                                              scoring=input_scorers,
+                                              n_repeats=1)
+
+    for scorer in input_scorers:
+        multi_result = multi_importance[scorer]
+        single_result = permutation_importance(lr, x, y, random_state=1,
+                                               scoring=scorer,
+                                               n_repeats=1)
+
+        assert_allclose(multi_result.importances, single_result.importances,
+                        rtol=1e-1, atol=1e-6)
