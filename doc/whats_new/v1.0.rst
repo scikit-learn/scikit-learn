@@ -200,6 +200,11 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
+- |Efficiency| :class:`feature_extraction.text.TfidfTransformer` is now faster
+  and more memory-efficient by using a numpy vector instead of a sparse matrix
+  for storing the inverse document frequency.
+  :pr:`18843` by :user:`Paolo Montesel <thebabush>`.
+
 - |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
