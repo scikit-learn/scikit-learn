@@ -288,7 +288,7 @@ def test_calibration_zero_probability():
         def predict(self, X):
             return np.zeros_like(X)
 
-    X, y = make_blobs(n_samples=500, n_features=100, random_state=7,
+    X, y = make_blobs(n_samples=50, n_features=10, random_state=7,
                       centers=10, cluster_std=15.0)
     n_classes = np.unique(y)
 
