@@ -19,7 +19,6 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_no_warnings
@@ -979,7 +978,8 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    assert_warns(ConvergenceWarning, a.fit, np.array(X), Y)
+    with pytest.warns(ConvergenceWarning, match=r".*"):
+        a.fit(np.array(X), Y)
 
 
 def test_unfitted():
@@ -1008,11 +1008,13 @@ def test_linear_svm_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
     lsvc = svm.LinearSVC(random_state=0, max_iter=2)
-    assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
+    with pytest.warns(ConvergenceWarning, match=r".*"):
+        lsvc.fit(X, Y)
     assert lsvc.n_iter_ == 2
 
     lsvr = svm.LinearSVR(random_state=0, max_iter=2)
-    assert_warns(ConvergenceWarning, lsvr.fit, iris.data, iris.target)
+    with pytest.warns(ConvergenceWarning, match=r".*"):
+        lsvr.fit(iris.data, iris.target)
     assert lsvr.n_iter_ == 2
 
 
