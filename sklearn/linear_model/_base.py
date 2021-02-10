@@ -263,6 +263,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
             if normalize:
                 X_scale = np.sqrt(X_var) * np.sqrt(len(X))
+                X_scale[X_scale == 0.0] = 1.0
                 X = X / X_scale
             else:
                 X_scale = np.ones(X.shape[1], dtype=X.dtype)
