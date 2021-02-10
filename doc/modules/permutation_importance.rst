@@ -80,12 +80,15 @@ computation of importances can be specified with the `scoring` argument,
 which also accepts multiple scorers. Using multiple scorers is more computationally
 efficient than sequentially calling :func:`permutation_importance` several times
 with a different scorer, as it reuses model predictions.
-Different metrics might lead to significantly different feature importances.
+The ranking of the features is approximately the same for different metrics even
+if the scales of the importance values are very different. However, this is not
+guaranteed and different metrics might lead to significantly different feature
+importances, in particular for models trained for imbalanced classification problems,
+for which the choice of the classification metric can be critical.
 An example of using multiple scorers is shown below, employing a list of metrics,
-but more input formats are possible, as documented in
-`multimetric-scoring <https://scikit-learn.org/stable/modules/model_evaluation.html#multimetric-scoring>`_.
+but more input formats are possible, as documented in :ref:`multimetric_scoring`.
 
-  >>> scoring = ['r2', 'neg_mean_absolute_percentage_error', 'explained_variance']
+  >>> scoring = ['r2', 'neg_mean_absolute_percentage_error', 'neg_mean_squared_error']
   >>> r_multi = permutation_importance(
   ...     model, X_val, y_val, n_repeats=30, random_state=0, scoring=scoring)
   ...
@@ -99,19 +102,19 @@ but more input formats are possible, as documented in
   ...             f" +/- {r.importances_std[i]:.3f}")
   ...
   r2
-      s5      0.204 +/- 0.050
-      bmi     0.176 +/- 0.048
-      bp      0.088 +/- 0.033
-      sex     0.056 +/- 0.023
+    s5      0.204 +/- 0.050
+    bmi     0.176 +/- 0.048
+    bp      0.088 +/- 0.033
+    sex     0.056 +/- 0.023
   neg_mean_absolute_percentage_error
-      s5      0.081 +/- 0.020
-      bmi     0.064 +/- 0.015
-      bp      0.029 +/- 0.010
-  explained_variance
-      s5      0.204 +/- 0.050
-      bmi     0.176 +/- 0.048
-      bp      0.088 +/- 0.033
-      sex     0.056 +/- 0.023
+    s5      0.081 +/- 0.020
+    bmi     0.064 +/- 0.015
+    bp      0.029 +/- 0.010
+  neg_mean_squared_error
+    s5      1013.903 +/- 246.460
+    bmi     872.694 +/- 240.296
+    bp      438.681 +/- 163.025
+    sex     277.382 +/- 115.126
 
 Outline of the permutation importance algorithm
 -----------------------------------------------
