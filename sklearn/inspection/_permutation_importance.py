@@ -4,6 +4,7 @@ from joblib import Parallel
 
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
+from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
@@ -29,13 +30,10 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
     # (memmap). X.copy() on the other hand is always guaranteed to return a
     # writable data-structure whose columns can be shuffled inplace.
     X_permuted = X.copy()
-    if isinstance(scorer, _MultimetricScorer):
-        scores = {name: np.zeros(n_repeats) for name in scorer._scorers}
-    else:
-        scores = np.zeros(n_repeats)
 
+    scores = []
     shuffling_idx = np.arange(X.shape[0])
-    for n_round in range(n_repeats):
+    for _ in range(n_repeats):
         random_state.shuffle(shuffling_idx)
         if hasattr(X_permuted, "iloc"):
             col = X_permuted.iloc[shuffling_idx, col_idx]
@@ -43,14 +41,14 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        feature_score = _weights_scorer(
-            scorer, estimator, X_permuted, y, sample_weight
+        scores.append(
+            _weights_scorer(scorer, estimator, X_permuted, y, sample_weight)
         )
-        if isinstance(feature_score, dict):
-            for name, score in feature_score.items():
-                scores[name][n_round] = score
-        else:
-            scores[n_round] = feature_score
+
+    if isinstance(scores[0], dict):
+        scores = _aggregate_score_dicts(scores)
+    else:
+        scores = np.array(scores)
 
     return scores
 
@@ -218,8 +216,9 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
             name: _create_importances_bunch(
                 baseline_score[name],
                 # unpack the permuted scores
-                np.array([scores[col_idx][name]
-                         for col_idx in range(X.shape[1])])
+                np.array([
+                    scores[col_idx][name] for col_idx in range(X.shape[1])
+                ])
             )
             for name in baseline_score
         }
