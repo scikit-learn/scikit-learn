@@ -1503,6 +1503,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                                  " has been trained with n_features=%d" % (
                                      n_features, expected_n_features))
 
+            # sparse matrix does not support broadcasting but
+            # with CSR matrix we can safely pick-up the indices
             if copy:
                 X = X.copy()
             X.data *= self._idf_diag.data[X.indices]
