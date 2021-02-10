@@ -18,7 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import deprecated
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
-from ..utils.extmath import randomized_svd, row_norms
+from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -567,6 +567,8 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         dictionary = dict_init
     else:
         code, S, dictionary = linalg.svd(X, full_matrices=False)
+        # flip the initial code's sign to enforce deterministic output
+        code, dictionary = svd_flip(code, dictionary)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
     if n_components <= r:  # True even if n_components=None
