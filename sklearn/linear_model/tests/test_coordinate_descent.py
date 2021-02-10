@@ -419,7 +419,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     model_name = estimator.__name__
 
     if model_name in ['Lasso', 'ElasticNet'] and is_sparse:
-        pytest.skip(f'{model_name} does not suppert sample_weight with sparse')
+        pytest.skip(f'{model_name} does not support sample_weight with sparse')
 
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=20, n_features=5, noise=1e-2,
