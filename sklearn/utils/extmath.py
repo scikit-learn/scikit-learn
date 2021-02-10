@@ -751,7 +751,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     if sample_weight is not None:
         new_sum = _safe_accumulator_op(np.nansum, X * sample_weight,
                                        axis=0)
-        new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X)),
+        new_sample_count = np.sum(sample_weight * (~np.isnan(X)),
                                   axis=0)
     else:
         new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
