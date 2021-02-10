@@ -293,7 +293,7 @@ def test_calibration_zero_probability():
     n_classes = np.unique(y)
 
     clf = FakeClassifier(n_classes)
-    calibrator = FakeCalibrator()
+    calibrator = ZeroCalibrator()
     cal_clf = _CalibratedClassifier(
         base_estimator=clf, calibrators=[calibrator], classes=n_classes)
 
