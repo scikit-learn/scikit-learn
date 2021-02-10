@@ -705,6 +705,7 @@ def test_multiclass_classifier_class_weight():
         spweights1, spintercept1 = sag_sparse(X, y_encoded, step_size, alpha,
                                               n_iter=max_iter, dloss=log_dloss,
                                               sample_weight=sample_weight)
+
         spweights2, spintercept2 = sag_sparse(X, y_encoded, step_size, alpha,
                                               n_iter=max_iter, dloss=log_dloss,
                                               sample_weight=sample_weight,
@@ -736,8 +737,8 @@ def test_classifier_single_class():
     X = [[1, 2], [3, 4]]
     y = [1, 1]
 
-
-    with pytest.raises(ValueError, match="This solver needs samples of at least 2 classes in the data"):
+    with pytest.raises(ValueError, match="This solver needs samples"
+                       "of at least 2 classes in the data"):
         LogisticRegression(solver='sag').fit(X, y)
 
 
@@ -758,7 +759,7 @@ def test_step_size_alpha_error():
     clf2 = Ridge(fit_intercept=fit_intercept, solver='sag', alpha=alpha)
 
     with pytest.raises(ZeroDivisionError, match=msg):
-        clf1.fit(X, y)
+        clf2.fit(X, y)
 
 
 def test_multinomial_loss():

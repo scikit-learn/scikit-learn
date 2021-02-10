@@ -168,9 +168,8 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
                                    SGDRegressor, SparseSGDRegressor])
 def test_sgd_bad_alpha(klass):
     # Check whether expected ValueError on bad alpha
-
     with pytest.raises(ValueError):
-      klass(alpha=-.1)
+        klass(alpha=-.1)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -178,7 +177,7 @@ def test_sgd_bad_alpha(klass):
 def test_sgd_bad_penalty(klass):
     # Check whether expected ValueError on bad penalty
     with pytest.raises(ValueError):
-      klass(penalty='foobar', l1_ratio=0.85)
+        klass(penalty='foobar', l1_ratio=0.85)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -186,7 +185,7 @@ def test_sgd_bad_penalty(klass):
 def test_sgd_bad_loss(klass):
     # Check whether expected ValueError on bad loss
     with pytest.raises(ValueError):
-      klass(loss="foobar")
+        klass(loss="foobar")
 
 
 def _test_warm_start(klass, X, Y, lr):
@@ -235,7 +234,7 @@ def test_input_format(klass):
     Y_ = np.c_[Y_, Y_]
 
     with pytest.raises(ValueError):
-      ransac_estimator3.fit(X, Y_)
+        clf.fit(X, Y_)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -340,7 +339,7 @@ def test_sgd_bad_alpha_for_optimal_learning_rate(klass):
     # since alpha is used to compute the optimal learning rate
 
     with pytest.raises(ValueError):
-      klass(alpha=0, learning_rate="optimal")
+        klass(alpha=0, learning_rate="optimal")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -444,55 +443,56 @@ def test_sgd_clf(klass):
 def test_sgd_bad_l1_ratio(klass):
     # Check whether expected ValueError on bad l1_ratio
     with pytest.raises(ValueError):
-      klass(l1_ratio=1.1)
+        klass(l1_ratio=1.1)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_bad_learning_rate_schedule(klass):
     # Check whether expected ValueError on bad learning_rate
     with pytest.raises(ValueError):
-      klass(learning_rate="<unknown>")
+        klass(learning_rate="<unknown>")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_bad_eta0(klass):
     # Check whether expected ValueError on bad eta0
     with pytest.raises(ValueError):
-      klass(eta0=0, learning_rate="constant")
+        klass(eta0=0, learning_rate="constant")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_max_iter_param(klass):
     # Test parameter validity check
     with pytest.raises(ValueError):
-      klass(max_iter=-10000)
+        klass(max_iter=-10000)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_shuffle_param(klass):
     # Test parameter validity check
     with pytest.raises(ValueError):
-      klass(shuffle="false")
+        klass(shuffle="false")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_early_stopping_param(klass):
     # Test parameter validity check
     with pytest.raises(ValueError):
-      klass(early_stopping="false")
+        klass(early_stopping="false")
+
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_validation_fraction(klass):
     # Test parameter validity check
     with pytest.raises(ValueError):
-      klass(validation_fraction=-.1)
+        klass(validation_fraction=-.1)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_n_iter_no_change(klass):
     # Test parameter validity check
     with pytest.raises(ValueError):
-      klass(n_iter_no_change=0)
+        klass(n_iter_no_change=0)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -500,7 +500,7 @@ def test_argument_coef(klass):
     # Checks coef_init not allowed as model argument (only fit)
     # Provided coef_ does not match dataset
     with pytest.raises(ValueError):
-      klass(coef_init=np.zeros((3,)))
+        klass(coef_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -508,8 +508,7 @@ def test_provide_coef(klass):
     # Checks coef_init shape for the warm starts
     # Provided coef_ does not match dataset.
     with pytest.raises(ValueError):
-      klass().fit( X, Y, coef_init=np.zeros((3,)))
-
+        klass().fit(X, Y, coef_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -517,8 +516,7 @@ def test_set_intercept(klass):
     # Checks intercept_ shape for the warm starts
     # Provided intercept_ does not match dataset.
     with pytest.raises(ValueError):
-      klass().fit( X, Y, intercept_init=np.zeros((3,)))
-
+        klass().fit(X, Y, intercept_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -581,7 +579,7 @@ def test_sgd_at_least_two_labels(klass):
     clf = klass(alpha=0.01, max_iter=20)
 
     with pytest.raises(ValueError):
-      clf.fit(X2, np.ones(9))
+        clf.fit(X2, np.ones(9))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -668,7 +666,7 @@ def test_set_coef_multiclass(klass):
     clf = klass()
 
     with pytest.raises(ValueError):
-      clf.fit(X2, Y2, coef_init=np.zeros((2, 2)))
+        clf.fit(X2, Y2, coef_init=np.zeros((2, 2)))
 
     # Provided coef_ does match dataset
     clf = klass().fit(X2, Y2, coef_init=np.zeros((3, 2)))
@@ -676,9 +674,8 @@ def test_set_coef_multiclass(klass):
     # Provided intercept_ does not match dataset
     clf = klass()
 
-
     with pytest.raises(ValueError):
-      clf.fit(X2, Y2, intercept_init=np.zeros((1,)))
+        clf.fit(X2, Y2, intercept_init=np.zeros((1,)))
 
     # Provided intercept_ does match dataset.
     clf = klass().fit(X2, Y2, intercept_init=np.zeros((3,)))
@@ -856,7 +853,7 @@ def test_wrong_class_weight_label(klass):
     clf = klass(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
 
     with pytest.raises(ValueError):
-      clf.fit(X, Y)
+        clf.fit(X, Y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -865,7 +862,7 @@ def test_wrong_class_weight_format(klass):
     clf = klass(alpha=0.1, max_iter=1000, class_weight=[0.5])
 
     with pytest.raises(ValueError):
-      clf.fit(X, Y)
+        clf.fit(X, Y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -961,7 +958,7 @@ def test_wrong_sample_weights(klass):
     clf = klass(alpha=0.1, max_iter=1000, fit_intercept=False)
     # provided sample_weight too long
     with pytest.raises(ValueError):
-      clf.fit(X, Y, sample_weight=np.arange(7))
+        clf.fit(X, Y, sample_weight=np.arange(7))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -969,7 +966,7 @@ def test_partial_fit_exception(klass):
     clf = klass(alpha=0.01)
     # classes was not specified
     with pytest.raises(ValueError):
-      clf.partial_fit(X3, Y3)
+        clf.partial_fit(X3, Y3)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -1406,7 +1403,7 @@ def test_underflow_or_overlow():
                      " might help.")
 
         with pytest.raises(ValueError, match=msg_regxp):
-          model.fit(X3, y)
+            model.fit(X3, y)
 
 
 def test_numerical_stability_large_gradient():

@@ -733,7 +733,8 @@ def test_multioutput_enetcv_error():
     y = rng.randn(10, 2)
     clf = ElasticNetCV()
     with pytest.raises(ValueError):
-        clf.fit( X, y)
+        clf.fit(X, y)
+
 
 def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
@@ -807,13 +808,14 @@ def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
-        with pytest.raises(ValueError, match= ".*should be.*True.*False.*auto.*"
-                            "array-like.*Got 'invalid'"):
-            clf.fit( X, y)
+        with pytest.raises(ValueError, match=".*should "
+                           "be.*True.*False.*auto.* "
+                           "array-like.*Got 'invalid'"):
+            clf.fit(X, y)
 
     # Precompute = 'auto' is not supported for ElasticNet
-    with pytest.raises(ValueError, match= ".*should be.*True.*False.*array-like.*"
-                        "Got 'auto'"):
+    with pytest.raises(ValueError, match=".*should"
+                       "be.*True.*False.*array-like.* Got 'auto'"):
         ElasticNet(precompute='auto').fit(X, y)
 
 

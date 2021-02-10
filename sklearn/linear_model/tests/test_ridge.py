@@ -56,8 +56,8 @@ X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
 
 
-DENSE_FILTER = lambda X: X
-SPARSE_FILTER = lambda X: sp.csr_matrix(X)
+def DENSE_FILTER(X): X
+def SPARSE_FILTER(X): sp.csr_matrix(X)
 
 
 def _accuracy_callable(y_test, y_pred):
@@ -192,14 +192,14 @@ def test_ridge_sample_weights():
             W = np.diag(sample_weight)
             if intercept is False:
                 X_aug = X
-                I = np.eye(n_features)
+                matrix = np.eye(n_features)
             else:
                 dummy_column = np.ones(shape=(n_samples, 1))
                 X_aug = np.concatenate((dummy_column, X), axis=1)
-                I = np.eye(n_features + 1)
-                I[0, 0] = 0
+                matrix = np.eye(n_features + 1)
+                matrix[0, 0] = 0
 
-            cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * I,
+            cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * matrix,
                                     X_aug.T.dot(W).dot(y))
 
             if intercept is False:
@@ -320,6 +320,7 @@ def test_ridge_individual_penalties():
 
     with pytest.raises(ValueError):
         ridge.fit(X, y)
+
 
 @pytest.mark.parametrize('n_col', [(), (1,), (3,)])
 def test_X_CenterStackOp(n_col):
@@ -608,7 +609,7 @@ def _test_ridge_loo(filter_):
     assert ridge_gcv2.alpha_ == pytest.approx(alpha_)
 
     # check that we get same best alpha with custom score_func
-    func = lambda x, y: -mean_squared_error(x, y)
+    def func(x, y): -mean_squared_error(x, y)
     scoring = make_scorer(func)
     ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
@@ -869,7 +870,6 @@ def test_ridge_sparse_svd():
 
     with pytest.raises(ValueError):
         ridge.fit(X, y)
-    
 
 
 def test_class_weights():
@@ -983,8 +983,7 @@ def test_ridgecv_store_cv_values(scoring):
     r = RidgeCV(cv=3, store_cv_values=True, scoring=scoring)
 
     with pytest.raises(ValueError, match="cv!=None and store_cv_values"):
-        r.fit(X, y)
-
+        r.fit(x, y)
 
 
 @pytest.mark.parametrize("scoring", [None, 'accuracy', _accuracy_callable])
@@ -1071,12 +1070,13 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
         def fit_ridge_not_ok_2():
             ridge.fit(X, y, sample_weights_not_OK_2)
 
-        with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        with pytest.raises(ValueError, match="Sample weights"
+                           "must be 1D array or scalar"):
             fit_ridge_not_ok
 
-        with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        with pytest.raises(ValueError, match="Sample weights"
+                           "must be 1D array or scalar"):
             fit_ridge_not_ok_2
-
 
 
 def test_sparse_design_with_sample_weights():
@@ -1131,14 +1131,11 @@ def test_ridgecv_negative_alphas():
     with pytest.raises(ValueError, match="alphas must be strictly positive"):
         ridge.fit(X, y)
 
-
-
     # Negative floats
     ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
 
     with pytest.raises(ValueError, match="alphas must be strictly positive"):
         ridge.fit(X, y)
-
 
 
 def test_raises_value_error_if_solver_not_supported():
@@ -1157,7 +1154,8 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     with pytest.raises(exception, match=message):
-        func
+        func()
+
 
 def test_sparse_cg_max_iter():
     reg = Ridge(solver="sparse_cg", max_iter=1)
@@ -1269,19 +1267,18 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
 
         with pytest.raises(ValueError, match="In Ridge, only 'sag' solver"):
             ridge_regression(X_testing, y,
-                            alpha=alpha,
-                            solver=solver,
-                            sample_weight=sample_weight,
-                            return_intercept=return_intercept,
-                            tol=tol)
+                             alpha=alpha,
+                             solver=solver,
+                             sample_weight=sample_weight,
+                             return_intercept=return_intercept,
+                             tol=tol)
         return
 
     out = ridge_regression(X_testing, y, alpha=alpha,
                            solver=solver,
                            sample_weight=sample_weight,
                            return_intercept=return_intercept,
-                           tol=tol,
-                           )
+                           tol=tol)
 
     if return_intercept:
         coef, intercept = out
@@ -1294,9 +1291,8 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
 def test_ridge_classifier_no_support_multilabel():
     X, y = make_multilabel_classification(n_samples=10, random_state=0)
 
-
     with pytest.raises(ValueError):
-         RidgeClassifier().fit(X, y)
+        RidgeClassifier().fit(X, y)
 
 
 @pytest.mark.parametrize(

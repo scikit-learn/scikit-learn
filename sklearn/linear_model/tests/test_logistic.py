@@ -80,33 +80,31 @@ def test_error():
     msg = "Penalty term must be positive"
     with pytest.raises(ValueError, match=msg):
         LogisticRegression(C=-1).fit(X, Y1)
-    
+
     with pytest.raises(ValueError, match=msg):
-        LogisticRegression(C="test").fit(X, Y1)                         
+        LogisticRegression(C="test").fit(X, Y1)
 
     msg = "is not a valid scoring value"
 
     with pytest.raises(ValueError, match=msg):
         LogisticRegression(scoring='bad-scorer', cv=2).fit(X, Y1)
 
-
-
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
-        with pytest.raises(ValueError, match=msg):
-             LR(tol=-1).fit(X, Y1)
 
         with pytest.raises(ValueError, match=msg):
-            LR(tol="test").fit(X, Y1)    
+            LR(tol=-1).fit(X, Y1)
 
+        with pytest.raises(ValueError, match=msg):
+            LR(tol="test").fit(X, Y1)
 
         msg = "Maximum number of iteration must be positive"
 
         with pytest.raises(ValueError, match=msg):
-            LR(max_iter=-1).fit(X, Y1) 
+            LR(max_iter=-1).fit(X, Y1)
 
         with pytest.raises(ValueError, match=msg):
-            LR(max_iter="test").fit(X, Y1) 
+            LR(max_iter="test").fit(X, Y1)
 
 
 def test_logistic_cv_mock_scorer():
@@ -224,7 +222,7 @@ def test_check_solver_option(LR):
     msg = ("multi_class should be 'multinomial', 'ovr' or 'auto'. "
            "Got wrong_name")
     lr = LR(solver='newton-cg', multi_class="wrong_name")
-    
+
     with pytest.raises(ValueError, match=msg):
         lr.fit(X, y)
 
@@ -240,6 +238,7 @@ def test_check_solver_option(LR):
         msg = ("Solver %s supports only 'l2' or 'none' penalties," %
                solver)
         lr = LR(solver=solver, penalty='l1', multi_class='ovr')
+
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
@@ -340,7 +339,7 @@ def test_inconsistent_input():
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
     with pytest.raises(ValueError):
-        clf.fit( X, y_wrong)
+        clf.fit(X, y_wrong)
 
     # Wrong dimensions for test data
     with pytest.raises(ValueError):
@@ -447,7 +446,7 @@ def test_liblinear_dual_random_state():
     msg = "Arrays are not almost equal to 6 decimals"
 
     with pytest.raises(AssertionError, match=msg):
-       assert_array_almost_equal(lr1.coef_, lr3.coef)
+        assert_array_almost_equal(lr1.coef_, lr3.coef)
 
 
 def test_logistic_loss_and_grad():
@@ -1068,7 +1067,7 @@ def test_logreg_intercept_scaling():
                ' set fit_intercept=False.' % clf.intercept_scaling)
 
         with pytest.raises(ValueError, match=msg):
-            clf.fit( X, Y1)
+            clf.fit(X, Y1)
 
 
 def test_logreg_intercept_scaling_zero():
@@ -1645,10 +1644,12 @@ def test_l1_ratio_param(l1_ratio):
     msg = "l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio
 
     with pytest.raises(ValueError, match=msg):
-        LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=l1_ratio).fit(X, Y1)
-    
+        LogisticRegression(penalty='elasticnet',
+                           solver='saga', l1_ratio=l1_ratio).fit(X, Y1)
+
     if l1_ratio is not None:
-        msg = ("l1_ratio parameter is only used when penalty is 'elasticnet'."
+        msg = ("l1_ratio parameter is only used when"
+               "penalty is 'elasticnet'."
                " Got (penalty=l1)")
         assert_warns_message(UserWarning, msg,
                              LogisticRegression(penalty='l1', solver='saga',
@@ -1662,7 +1663,9 @@ def test_l1_ratios_param(l1_ratios):
            "(l1_ratios=%r)" % l1_ratios)
 
     with pytest.raises(ValueError, match=msg):
-        LogisticRegressionCV(penalty='elasticnet', solver='saga', l1_ratios=l1_ratios, cv=2).fit(X, Y1)
+        LogisticRegressionCV(penalty='elasticnet',
+                             solver='saga',
+                             l1_ratios=l1_ratios, cv=2).fit(X, Y1)
 
     if l1_ratios is not None:
         msg = ("l1_ratios parameter is only used when penalty is "
@@ -1785,8 +1788,9 @@ def test_penalty_none(solver):
 
     lr = LogisticRegressionCV(penalty='none')
 
-    with pytest.raises(ValueError, match="penalty='none' is not useful and not supported by LogisticRegressionCV"):
-         lr.fit( X, y)
+    with pytest.raises(ValueError, match="penalty='none' is not useful and"
+                       "not supported by LogisticRegressionCV"):
+        lr.fit(X, y)
 
 
 @pytest.mark.parametrize(

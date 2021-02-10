@@ -158,7 +158,7 @@ def test_partial_fit_weight_class_balanced():
     # partial_fit with class_weight='balanced' not supported
     clf = PassiveAggressiveClassifier(class_weight="balanced", max_iter=100)
     with pytest.raises(ValueError):
-        clf.partial_fit( X, y, classes=np.unique(y))
+        clf.partial_fit(X, y, classes=np.unique(y))
 
 
 def test_equal_class_weight():
@@ -270,6 +270,7 @@ def test_regressor_undefined_methods():
     for meth in ("transform",):
         with pytest.raises(ValueError):
             lambda x: getattr(reg, x, meth)
+
 
 # TODO: remove in 1.0
 @pytest.mark.parametrize('klass', [PassiveAggressiveClassifier,

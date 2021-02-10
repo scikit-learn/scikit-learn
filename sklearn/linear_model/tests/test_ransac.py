@@ -55,7 +55,7 @@ def test_ransac_is_data_valid():
 
     rng = np.random.RandomState(0)
     X = rng.rand(10, 2)
-    y = rng.rand(10, 1).÷
+    y = rng.rand(10, 1)
 
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
@@ -100,6 +100,7 @@ def test_ransac_max_trials():
         ransac_estimator.set_params(min_samples=2, random_state=i)
         ransac_estimator.fit(X, y)
         assert ransac_estimator.n_trials_ < max_trials + 1
+
 
 def test_ransac_stop_n_inliers():
     base_estimator = LinearRegression()
@@ -341,7 +342,6 @@ def test_ransac_min_n_samples():
         ransac_estimator7.fit(X, y)
 
 
-
 def test_ransac_multi_dimensional_targets():
 
     base_estimator = LinearRegression()
@@ -363,10 +363,10 @@ def test_ransac_multi_dimensional_targets():
 
 
 def test_ransac_residual_loss():
-    loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
-    loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+    def loss_multi1(y_true, y_pred): np.sum(np.abs(y_true - y_pred), axis=1)
+    def loss_multi2(y_true, y_pred): np.sum((y_true - y_pred) ** 2, axis=1)
 
-    loss_mono = lambda y_true, y_pred : np.abs(y_true - y_pred)
+    def loss_mono(y_true, y_pred): np.abs(y_true - y_pred)
     yyy = np.column_stack([y, y, y])
 
     base_estimator = LinearRegression()
@@ -461,6 +461,7 @@ def test_ransac_dynamic_max_trials():
     with pytest.raises(ValueError):
         ransac_estimator.fit(X, y)
 
+
 def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(random_state=0)
     n_samples = y.shape[0]
@@ -506,7 +507,7 @@ def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(base_estimator)
 
     with pytest.raises(ValueError):
-        ransac_estimator.fit( X, y, weights)
+        ransac_estimator.fit(X, y, weights)
 
 
 def test_ransac_final_model_fit_sample_weight():
