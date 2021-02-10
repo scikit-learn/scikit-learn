@@ -191,10 +191,13 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
         ) for col_idx in range(X.shape[1]))
 
     if isinstance(baseline_score, dict):
-        ret = dict()
-        for name in baseline_score:
-            score = [scores[col_idx][name] for col_idx in range(X.shape[1])]
-            ret[name] = _create_importances_bunch(baseline_score[name], score)
-        return ret
+        return {
+            name: _create_importances_bunch(
+                baseline_score[name],
+                # unpack the permuted scores
+                [scores[col_idx][name] for col_idx in range(X.shape[1])]
+            )
+            for name in baseline_score
+        }
     else:
-        return _create_importances_bunch(baseline_score, score)
+        return _create_importances_bunch(baseline_score, scores)
