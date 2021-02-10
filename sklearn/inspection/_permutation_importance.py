@@ -124,6 +124,10 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables a values.
 
+        Passing multiple scores to `scoring` is more efficient than calling
+        `permutation_importance` for each of the scores as it reuses
+        predictions by avoiding redundant computation.
+
         If None, the estimator's default scorer is used.
 
     n_repeats : int, default=5
