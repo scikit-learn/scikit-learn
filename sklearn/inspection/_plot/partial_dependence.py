@@ -33,6 +33,8 @@ def plot_partial_dependence(
     n_jobs=None,
     verbose=0,
     line_kw=None,
+    ice_lines_kw=None,
+    pd_line_kw=None,
     contour_kw=None,
     ax=None,
     kind="average",
@@ -184,6 +186,16 @@ def plot_partial_dependence(
     line_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
+
+    ice_lines_kw : dict, default=None
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+        For ICE lines in the one-way partial dependence plots.
+        Takes priority over ```line_kw`` when not ``None``.
+
+    pd_line_kw : dict, default=None
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+        For partial dependence in one-way partial dependence plots.
+        Takes priority over ```line_kw`` when not ``None``.
 
     contour_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
@@ -399,7 +411,12 @@ def plot_partial_dependence(
         random_state=random_state,
     )
     return display.plot(
-        ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw
+        ax=ax,
+        n_cols=n_cols,
+        line_kw=line_kw,
+        ice_lines_kw=ice_lines_kw,
+        pd_line_kw=pd_line_kw,
+        contour_kw=contour_kw,
     )
 
 
@@ -655,8 +672,8 @@ class PartialDependenceDisplay:
         n_cols,
         pd_plot_idx,
         n_lines,
-        individual_line_kw,
-        line_kw,
+        ice_lines_kw,
+        pd_line_kw,
     ):
         """Plot 1-way partial dependence: ICE and PDP.
 
@@ -684,9 +701,9 @@ class PartialDependenceDisplay:
             matching 2D position in the grid layout.
         n_lines : int
             The total number of lines expected to be plot on the axis.
-        individual_line_kw : dict
+        ice_lines_kw : dict
             Dict with keywords passed when plotting the ICE lines.
-        line_kw : dict
+        pd_line_kw : dict
             Dict with keywords passed when plotting the PD plot.
         """
         from matplotlib import transforms  # noqa
@@ -699,7 +716,7 @@ class PartialDependenceDisplay:
                 ax,
                 pd_plot_idx,
                 n_lines,
-                individual_line_kw,
+                ice_lines_kw,
             )
 
         if self.kind in ("average", "both"):
@@ -713,7 +730,7 @@ class PartialDependenceDisplay:
                 feature_values,
                 ax,
                 pd_line_idx,
-                line_kw,
+                pd_line_kw,
             )
 
         trans = transforms.blended_transform_factory(
@@ -741,7 +758,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if line_kw.get("label", None) and self.kind != 'individual':
+        if pd_line_kw.get("label", None) and self.kind != 'individual':
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -818,7 +835,16 @@ class PartialDependenceDisplay:
         ax.set_ylabel(self.feature_names[feature_idx[1]])
 
     @_deprecate_positional_args(version="1.1")
-    def plot(self, *, ax=None, n_cols=3, line_kw=None, contour_kw=None):
+    def plot(
+        self,
+        *,
+        ax=None,
+        n_cols=3,
+        line_kw=None,
+        ice_lines_kw=None,
+        pd_line_kw=None,
+        contour_kw=None,
+    ):
         """Plot partial dependence plots.
 
         Parameters
@@ -840,6 +866,16 @@ class PartialDependenceDisplay:
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
             For one-way partial dependence plots.
+
+        ice_lines_kw : dict, default=None
+            Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+            For ICE lines in the one-way partial dependence plots.
+            Takes priority over ```line_kw`` when not ``None``.
+
+        pd_line_kw : dict, default=None
+            Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+            For partial dependence in one-way partial dependence plots.
+            Takes priority over ```line_kw`` when not ``None``.
 
         contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
@@ -869,14 +905,22 @@ class PartialDependenceDisplay:
             "color": "C0",
             "label": "average" if self.kind == "both" else None,
         }
-        line_kw = {**default_line_kws, **line_kw}
 
-        individual_line_kw = line_kw.copy()
-        del individual_line_kw["label"]
+        if ice_lines_kw is None:
+            ice_lines_kw = {**default_line_kws, **line_kw}
 
-        if self.kind == 'individual' or self.kind == 'both':
-            individual_line_kw['alpha'] = 0.3
-            individual_line_kw['linewidth'] = 0.5
+            if self.kind == 'individual' or self.kind == 'both':
+                ice_lines_kw['alpha'] = 0.3
+                ice_lines_kw['linewidth'] = 0.5
+        else:
+            ice_lines_kw = {**default_line_kws, **ice_lines_kw}
+
+        del ice_lines_kw["label"]
+
+        if pd_line_kw is None:
+            pd_line_kw = {**default_line_kws, **line_kw}
+        else:
+            pd_line_kw = {**default_line_kws, **pd_line_kw}
 
         n_features = len(self.features)
         if self.kind in ("individual", "both"):
@@ -972,8 +1016,8 @@ class PartialDependenceDisplay:
                     n_cols,
                     pd_plot_idx,
                     n_lines,
-                    individual_line_kw,
-                    line_kw,
+                    ice_lines_kw,
+                    pd_line_kw,
                 )
             else:
                 self._plot_two_way_partial_dependence(
