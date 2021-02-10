@@ -897,6 +897,7 @@ class PartialDependenceDisplay:
 
             ax.set_xticklabels(feature_values[0])
             ax.set_yticklabels(feature_values[1])
+            ax.tick_params(axis='x', rotation=90)
 
             ax.figure.colorbar(self.heatmaps_[heatmap_idx], ax=ax)
         else:
