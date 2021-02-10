@@ -283,7 +283,7 @@ def test_calibration_zero_probability():
         def predict_proba(self, X):
             return np.empty_like(X)
 
-    class FakeCalibrator():
+    class ZeroCalibrator():
         # This function is called from _CalibratedClassifier.predict_proba.
         def predict(self, X):
             return np.zeros_like(X)
