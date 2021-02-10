@@ -106,7 +106,7 @@ for name, gbr in sorted(gbrs.items()):
 DataFrame(results).set_index('model')
 
 # %%
-# Let's finally plot the function, the prediction and the 
+# Let's finally plot the function, the prediction and the
 # 95% confidence interval based on the MSE.
 y_pred = gbrs['MSE'].predict(xx)
 y_lower = gbrs['q0.05'].predict(xx)
