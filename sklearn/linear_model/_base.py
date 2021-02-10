@@ -256,8 +256,8 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                                           last_sample_count=0.,
                                           sample_weight=sample_weight)
 
-            X_var = X_var.astype(X.dtype)
             X_offset = X_offset.astype(X.dtype)
+            X_var = X_var.astype(X.dtype)
 
             X -= X_offset
 
