@@ -20,12 +20,12 @@ import matplotlib.pyplot as plt
 # ----------------------------------
 # We use the faces data from datasets submodules and split the dataset
 # into training and testing subsets. Also, we'll set the number of cores
-# to use for the tasks. 
+# to use for the tasks.
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 
 # %%
-# We select the number of cores to use to perform parallel fitting of 
+# We select the number of cores to use to perform parallel fitting of
 # the forest model. `-1` means use all available cores.
 n_jobs = -1
 
@@ -85,7 +85,7 @@ from sklearn.inspection import permutation_importance
 
 start_time = time.time()
 result = permutation_importance(
-    forest, X_test, y_test, n_repeats=10, 
+    forest, X_test, y_test, n_repeats=10,
     random_state=42, n_jobs=n_jobs)
 elapsed_time = time.time() - start_time
 print(f"Elapsed time to compute the importances: "
@@ -105,7 +105,7 @@ plt.show()
 
 # %%
 # We can see similar areas are detected using both methods. Although
-# the importances vary. We can see that permutation importance gives lower importance
-# values on any single pixel, which matches the intuition: The class of a
-# digit seen on an image depends on values of many pixels together rather than
-# a few pixels.
+# the importances vary. We can see that permutation importance gives lower
+# importance values on any single pixel, which matches the intuition:
+# The class of a digit seen on an image depends on values of many pixels
+# together rather than a few pixels.
