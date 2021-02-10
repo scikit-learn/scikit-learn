@@ -23,9 +23,9 @@ def f(x):
     """The function to predict."""
     return x * np.sin(x)
 
-#----------------------------------------------------------------------
+# %%
 #  First the noiseless case
-X = np.atleast_2d(np.random.uniform(0, 10.0, size=100)).T
+X = np.atleast_2d(np.random.uniform(0, 10.0, size=200)).T
 X = X.astype(np.float32)
 
 # Observations
@@ -46,8 +46,8 @@ xx = xx.astype(np.float32)
 
 # %%
 # Let's fit a model based trained with MSE loss.
-gbr_mse = GradientBoostingRegressor(loss='ls', n_estimators=250, max_depth=3,
-                                    learning_rate=.1, min_samples_leaf=9,
+gbr_mse = GradientBoostingRegressor(loss='ls', n_estimators=250, max_depth=2,
+                                    learning_rate=.05, min_samples_leaf=9,
                                     min_samples_split=9)
 
 # %%
@@ -61,8 +61,8 @@ gbr_mse = GradientBoostingRegressor(loss='ls', n_estimators=250, max_depth=3,
 gbrs = {
     "q%1.2f" % alpha:
         GradientBoostingRegressor(loss='quantile', alpha=alpha,
-                                  n_estimators=250, max_depth=3,
-                                  learning_rate=.1, min_samples_leaf=9,
+                                  n_estimators=250, max_depth=2,
+                                  learning_rate=.05, min_samples_leaf=9,
                                   min_samples_split=9)
     for alpha in [0.05, 0.5, 0.95]
 }
@@ -72,40 +72,7 @@ for alpha, gbr in gbrs.items():
     gbr.fit(X_train, y_train)
 
 # %%
-# Let's measure the models given :func:`mean_square_error` and
-# :func:`pinball_loss` metrics on the training datasets.
-results = []
-for name, gbr in sorted(gbrs.items()):
-    metrics = {'model': name}
-    y_pred = gbr.predict(X_train)
-    for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = pinball_loss(
-            y_train, y_pred, alpha=alpha)
-    metrics['MSE'] = mean_squared_error(y_train, y_pred)
-    results.append(metrics)
-DataFrame(results).set_index('model')
-
-# %%
-# One column shows all models evaluated by the same metric.
-# The number of the diagonal is the metric evaluated on a
-# model trained to minimize this same metric. It is expected
-# to be the minimum value on this column.
-
-# %%
-# We do the same on the test set.
-results = []
-for name, gbr in sorted(gbrs.items()):
-    metrics = {'model': name}
-    y_pred = gbr.predict(X_test)
-    for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = pinball_loss(
-            y_test, y_pred, alpha=alpha)
-    metrics['MSE'] = mean_squared_error(y_test, y_pred)
-    results.append(metrics)
-DataFrame(results).set_index('model')
-
-# %%
-# Let's finally plot the function, the prediction and the
+# Let's plot the function, the prediction and the
 # 95% confidence interval based on the MSE.
 y_pred = gbrs['MSE'].predict(xx)
 y_lower = gbrs['q0.05'].predict(xx)
@@ -127,3 +94,46 @@ plt.ylabel('$f(x)$')
 plt.ylim(-10, 20)
 plt.legend(loc='upper left')
 plt.show()
+
+# %%
+# Let's measure the models given :func:`mean_square_error` and
+# :func:`pinball_loss` metrics on the training dataset.
+results = []
+for name, gbr in sorted(gbrs.items()):
+    metrics = {'model': name}
+    y_pred = gbr.predict(X_train)
+    for alpha in [0.05, 0.5, 0.95]:
+        metrics["pbl=%1.2f" % alpha] = pinball_loss(
+            y_train, y_pred, alpha=alpha)
+    metrics['MSE'] = mean_squared_error(y_train, y_pred)
+    results.append(metrics)
+DataFrame(results).set_index('model')
+
+# %%
+# One column shows all models evaluated by the same metric.
+# The minimum number on a column is obtained when the model
+# is trained and measured with the same metric.
+# This should be always the case on the training set if the training
+# converged. The measures give almost the same results
+# when the model is trained with MSE or with the quantile loss and alpha=0.5.
+# The random noise added to the data explains that proximity.
+# Both trainings would give much more different models if the dataset
+# had outliers or if the added noise was not gaussian.
+# The quantile loss is less sensitive to outliers.
+#
+# We then do the same on the test set.
+results = []
+for name, gbr in sorted(gbrs.items()):
+    metrics = {'model': name}
+    y_pred = gbr.predict(X_test)
+    for alpha in [0.05, 0.5, 0.95]:
+        metrics["pbl=%1.2f" % alpha] = pinball_loss(
+            y_test, y_pred, alpha=alpha)
+    metrics['MSE'] = mean_squared_error(y_test, y_pred)
+    results.append(metrics)
+DataFrame(results).set_index('model')
+
+# %%
+# Errors are higher meaning the model slightly overfitted the data.
+# It still shows the minimum of a metric is obtained when
+# the model is trained by minimizing this same metric.
