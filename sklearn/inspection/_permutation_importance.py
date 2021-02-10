@@ -129,14 +129,14 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
 
     Returns
     -------
-    result : :class:`~sklearn.utils.Bunch` or dict
+    result : :class:`~sklearn.utils.Bunch` or dict of such instances
         Dictionary-like object, with the following attributes.
 
-        importances_mean : ndarray, shape (n_features, )
+        importances_mean : ndarray of shape (n_features, )
             Mean of feature importance over `n_repeats`.
-        importances_std : ndarray, shape (n_features, )
+        importances_std : ndarray of shape (n_features, )
             Standard deviation over `n_repeats`.
-        importances : ndarray, shape (n_features, n_repeats)
+        importances : ndarray of shape (n_features, n_repeats)
             Raw permutation importance scores.
 
         If there are multiple scoring metrics in the scoring parameter
