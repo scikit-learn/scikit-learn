@@ -131,6 +131,12 @@ Changelog
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
+- |Fix|: Fixed a bug in linear_model._base._preprocess_data when
+  `normalize=True` and `sample_weight` is set. `sample_weight` now weights
+  standard deviation as expected.
+  :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
+  :user:`Maria Telenczuk <maikia>`.
+
 :mod:`sklearn.metrics`
 ......................
 
