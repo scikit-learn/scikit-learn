@@ -461,11 +461,16 @@ def test_preprocess_data_multioutput():
         assert_array_almost_equal(yt, y - y_mean)
 
 
-def test_preprocess_data_weighted():
+@pytest.mark.parametrize(
+    "is_sparse",
+    [False, True]
+)
+def test_preprocess_data_weighted(is_sparse):
     n_samples = 200
     n_features = 2
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
+
     sample_weight = rng.rand(n_samples)
     expected_X_mean = np.average(X, axis=0, weights=sample_weight)
     expected_y_mean = np.average(y, axis=0, weights=sample_weight)
@@ -476,22 +481,27 @@ def test_preprocess_data_weighted():
                                      axis=0)
     expected_X_norm = np.sqrt(X_sample_weight_var) * np.sqrt(len(X))
 
+    if is_sparse:
+        X = sparse.csr_matrix(X)
+
     Xt, yt, X_mean, y_mean, X_norm = \
         _preprocess_data(X, y, fit_intercept=True, normalize=False,
-                         sample_weight=sample_weight)
+                         sample_weight=sample_weight, return_mean=True)
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_norm, np.ones(n_features))
-    assert_array_almost_equal(Xt, X - expected_X_mean)
+    if not is_sparse:
+        assert_array_almost_equal(Xt, X - expected_X_mean)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
     Xt, yt, X_mean, y_mean, X_norm = \
         _preprocess_data(X, y, fit_intercept=True, normalize=True,
-                         sample_weight=sample_weight)
+                         sample_weight=sample_weight, return_mean=True)
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_norm, expected_X_norm)
-    assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_norm)
+    if not is_sparse:
+        assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_norm)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
