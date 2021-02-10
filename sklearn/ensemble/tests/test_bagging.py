@@ -346,7 +346,11 @@ def test_oob_score_classification():
         assert abs(test_score - clf.oob_score_) < 0.1
 
         # Test with few estimators
-        with pytest.warns(UserWarning, match=r".*"):
+        with pytest.warns(
+                UserWarning,
+                match="Some inputs do not have OOB scores. This probably "
+                      "means too few estimators were used to compute any "
+                      "reliable oob estimates."):
             BaggingClassifier(base_estimator=base_estimator,
                               n_estimators=1,
                               bootstrap=True,
@@ -375,7 +379,11 @@ def test_oob_score_regression():
     assert abs(test_score - clf.oob_score_) < 0.1
 
     # Test with few estimators
-    with pytest.warns(UserWarning, match=r".*"):
+    with pytest.warns(
+            UserWarning,
+            match="Some inputs do not have OOB scores. This probably means "
+                  "too few estimators were used to compute any reliable oob "
+                  "estimates."):
         BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                          n_estimators=1,
                          bootstrap=True,

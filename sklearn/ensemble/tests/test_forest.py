@@ -1126,7 +1126,10 @@ def check_class_weight_errors(name):
     # Warning warm_start with preset
     clf = ForestClassifier(class_weight='balanced', warm_start=True,
                            random_state=0)
-    with pytest.warns(UserWarning, match=r".*"):
+    with pytest.warns(
+            UserWarning,
+            match="Warm-start fitting without increasing n_estimators does "
+                  "not fit new trees."):
         clf.fit(X, y)
         clf.fit(X, _y)
 
@@ -1228,7 +1231,10 @@ def check_warm_start_equal_n_estimators(name):
     # Now est_2 equals est.
 
     est_2.set_params(random_state=2)
-    with pytest.warns(UserWarning, match=r".*"):
+    with pytest.warns(
+            UserWarning,
+            match="Warm-start fitting without increasing n_estimators does "
+                  "not fit new trees."):
         est_2.fit(X, y)
     # If we had fit the trees again we would have got a different forest as we
     # changed the random state.
