@@ -813,9 +813,11 @@ def test_precompute_invalid_argument():
         assert_raises_regex(ValueError, ".*should be.*True.*False.*auto.*"
                             "array-like.*Got 'invalid'", clf.fit, X, y)
 
-    # Precompute = 'auto' is not supported for ElasticNet
+    # Precompute = 'auto' is not supported for ElasticNet and Lasso
     assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
                         "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
+    assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
+                        "Got 'auto'", Lasso(precompute='auto').fit, X, y)
 
 
 def test_elasticnet_precompute_incorrect_gram():
