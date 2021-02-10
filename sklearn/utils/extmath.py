@@ -737,7 +737,6 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     `utils.sparsefuncs.incr_mean_variance_axis` and
     `utils.sparsefuncs_fast.incr_mean_variance_axis0`
     """
-
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
@@ -768,9 +767,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):
-
             last_over_new_count = last_sample_count / new_sample_count
-
             updated_unnormalized_variance = (
                 last_unnormalized_variance + new_unnormalized_variance +
                 last_over_new_count / updated_sample_count *
