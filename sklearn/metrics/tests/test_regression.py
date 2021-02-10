@@ -21,7 +21,7 @@ from sklearn.metrics import mean_tweedie_deviance
 
 from sklearn.metrics._regression import _check_reg_targets
 
-from ...exceptions import UndefinedMetricWarning
+from sklearn.exceptions import UndefinedMetricWarning
 
 
 def test_regression_metrics(n_samples=50):
@@ -348,3 +348,15 @@ def test_mean_absolute_percentage_error():
     y_true = random_number_generator.exponential(size=100)
     y_pred = 1.2 * y_true
     assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(0.2)
+
+
+def test_pinball_loss():
+    data = np.linspace(0, 1, 100)
+    th = 0.2
+    for constant_pred in range(0, 11):
+        alpha = constant_pred / 10
+        pbl = pinball_loss(data, alpha * np.ones(100), alpha=th)
+        err = ((alpha - data[data < alpha]).sum() * (1 - th) +
+               (data[data >= alpha] - alpha).sum() * th)
+        err /= data.shape[0]
+        assert_almost_equal(err, pbl)

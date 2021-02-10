@@ -15,7 +15,6 @@ from sklearn.metrics import pinball_loss, mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from pandas import DataFrame
-from tqdm import tqdm
 
 np.random.seed(1)
 
@@ -69,7 +68,7 @@ gbrs = {
 }
 gbrs['MSE'] = gbr_mse
 
-for alpha, gbr in tqdm(gbrs.items()):
+for alpha, gbr in gbrs.items():
     gbr.fit(X_train, y_train)
 
 # %%
