@@ -26,7 +26,7 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import CalibratedClassifierCV
+from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
@@ -273,6 +273,35 @@ def test_calibration_multiclass(method, ensemble, seed):
     calibrated_brier = multiclass_brier(y_test, cal_clf_probs,
                                         n_classes=n_classes)
     assert calibrated_brier < 1.1 * uncalibrated_brier
+
+
+def test_calibration_zero_probability():
+    class FakeClassifier():
+        def __init__(self, n_classes):
+            self.classes_ = n_classes
+
+        def predict_proba(self, X):
+            return np.empty_like(X)
+
+    class FakeCalibrator():
+        # This function is called from _CalibratedClassifier.predict_proba.
+        def predict(self, X):
+            return np.zeros_like(X)
+
+    X, y = make_blobs(n_samples=500, n_features=100, random_state=7,
+                      centers=10, cluster_std=15.0)
+    n_classes = np.unique(y)
+
+    clf = FakeClassifier(n_classes)
+    calibrator = FakeCalibrator()
+    cal_clf = _CalibratedClassifier(
+        base_estimator=clf, calibrators=[calibrator], classes=n_classes)
+
+    probas = cal_clf.predict_proba(X)
+
+    # Check all probabilities are 1. / n_classes
+    assert False
+    assert_allclose(probas, np.full_like(probas, 1. / len(n_classes)))
 
 
 def test_calibration_prefit():
