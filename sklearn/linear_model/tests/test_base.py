@@ -470,10 +470,11 @@ def test_preprocess_data_weighted():
     expected_X_mean = np.average(X, axis=0, weights=sample_weight)
     expected_y_mean = np.average(y, axis=0, weights=sample_weight)
 
-    # XXX: if normalize=True, should we expect a weighted standard deviation?
-    #      Currently not weighted, but calculated with respect to weighted mean
-    expected_X_norm = (np.sqrt(X.shape[0]) *
-                       np.mean((X - expected_X_mean) ** 2, axis=0) ** .5)
+    X_sample_weight_avg = np.average(X, weights=sample_weight, axis=0)
+    X_sample_weight_var = np.average((X-X_sample_weight_avg)**2,
+                                     weights=sample_weight,
+                                     axis=0)
+    expected_X_norm = np.sqrt(X_sample_weight_var) * np.sqrt(len(X))
 
     Xt, yt, X_mean, y_mean, X_norm = \
         _preprocess_data(X, y, fit_intercept=True, normalize=False,
