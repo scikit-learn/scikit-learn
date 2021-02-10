@@ -162,8 +162,8 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
             Raw permutation importance scores.
 
         If there are multiple scoring metrics in the scoring parameter
-        result is a dict with scorer names as keys (i.e., ``auc``) and
-        dictionary-like object like above as values.
+        `result` is a dict with scorer names as keys (e.g. 'roc_auc') and
+        `Bunch` objects like above as values.
 
     References
     ----------
