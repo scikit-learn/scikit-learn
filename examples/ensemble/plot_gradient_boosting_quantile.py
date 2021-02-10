@@ -56,7 +56,7 @@ gbr_mse = GradientBoostingRegressor(loss='ls', n_estimators=250, max_depth=2,
 # the quantile loss and alpha=0.05, 0.5, 0.95.
 # The models obtained for alpha=0.05 and alpha=0.95
 # produce a 95% confidence interval. The model trained
-# with alpha=0.5 produce the median regression:
+# with alpha=0.5 produces a regression of the median:
 # there are the same number of targets above and below
 # the predicted values.
 gbrs = {
