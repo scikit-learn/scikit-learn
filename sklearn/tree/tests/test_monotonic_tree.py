@@ -5,7 +5,8 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
 
 
-def test_montonic_constraints():
+@pytest.mark.parametrize('seed', range(4))
+def test_montonic_constraints(seed):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=0)
     train = np.arange(90)
     test = np.arange(90, 100)
@@ -23,7 +24,7 @@ def test_montonic_constraints():
     for name, TreeRegressor in REG_TREES.items():
         est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
         if hasattr(est, "random_state"):
-            est.set_params(**{"random_state": 0})
+            est.set_params(**{"random_state": seed})
         est.fit(X_train, y_train)
 
         y0 = est.predict(X_test_0)
@@ -40,7 +41,7 @@ def test_montonic_constraints():
     for name, TreeClassifier in CLF_TREES.items():
         est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
         if hasattr(est, "random_state"):
-            est.set_params(**{"random_state": 0})
+            est.set_params(**{"random_state": seed})
         est.fit(X_train, y_train)
 
         y0 = est.predict_proba(X_test_0)[:, 0]
