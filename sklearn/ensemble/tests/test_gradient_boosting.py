@@ -319,7 +319,7 @@ def test_check_inputs_predict_stages():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(x, y)
     score = np.zeros((y.shape)).reshape(-1, 1)
-    with pytest.raises(ValueError, match="When X is a sparse matrix," +
+    with pytest.raises(ValueError, match="When X is a sparse matrix, " +
                        "a CSR format is expected"):
         predict_stages(clf.estimators_, x_sparse_csc, clf.learning_rate, score)
     x_fortran = np.asfortranarray(x)
