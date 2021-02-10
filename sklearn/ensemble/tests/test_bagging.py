@@ -652,8 +652,10 @@ def test_warm_start_equal_n_estimators():
     # modify X to nonsense values, this should not change anything
     X_train += 1.
 
-    with pytest.warns(UserWarning,
-                      match="Warm-start fitting without increasing n_estimators does not"):
+    with pytest.warns(
+            UserWarning,
+            match="Warm-start fitting without increasing n_estimators "
+                  "does not"):
         clf.fit(X_train, y_train)
     assert_array_equal(y_pred, clf.predict(X_test))
 
