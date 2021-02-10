@@ -33,6 +33,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import _incremental_weighted_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
@@ -40,7 +41,7 @@ from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
 
 from ..utils.fixes import delayed
-from ..preprocessing import normalize as f_normalize
+# from ..preprocessing import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -249,16 +250,19 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                 X_scale = np.ones(X.shape[1], dtype=X.dtype)
 
         else:
-            X_offset = np.average(X, axis=0, weights=sample_weight)
-            X_scale = np.sqrt(np.average(X**2, weights=sample_weight, axis=0) -
-                              X_offset**2)
+            X_offset, X_var, _ = \
+                _incremental_weighted_mean_and_var(X, sample_weight,
+                                                   last_mean=0.,
+                                                   last_variance=0.,
+                                                   last_weight_sum=0.)
             X -= X_offset
-            X = X / X_scale
-        #     if normalize:
-        #         X, X_scale = f_normalize(X, axis=0, copy=False,
-        #                                  return_norm=True)
-        #     else:
-        #         X_scale = np.ones(X.shape[1], dtype=X.dtype)
+            X_scale = np.sqrt(X_var) * np.sqrt(len(X))
+
+            if normalize:
+                X = X / X_scale
+            else:
+                X_scale = np.ones(X.shape[1], dtype=X.dtype)
+
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y = y - y_offset
     else:
