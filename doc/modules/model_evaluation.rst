@@ -2359,12 +2359,12 @@ sensitive to relative errors.
 Pinball loss
 ------------
 
-The :func:`pinball_loss` function is mostly used to used
+The :func:`pinball_loss` function is mostly used
 to evaluate the predictive performance of quantile
-regression models... `pinball loss <https://en.wikipedia.org/wiki/
+regression models. The `pinball loss <https://en.wikipedia.org/wiki/
 Quantile_regression#Computation>`_ is equivalent to
-:func:`mean_absolute_error` when quantile (parameter *alpha*)
-is equal to 0.5.
+:func:`mean_absolute_error` when the quantile parameter ``alpha``
+is set to 0.5.
 
 .. math::
 
