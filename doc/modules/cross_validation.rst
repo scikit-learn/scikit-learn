@@ -219,7 +219,7 @@ following keys -
 ``['test_<scorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']``
 
 ``return_train_score`` is set to ``False`` by default to save computation time.
-To evaluate the scores on the training set as well you need to be set to
+To evaluate the scores on the training set as well you need to set it to
 ``True``.
 
 You may also retain the estimator fitted on each training set by setting
