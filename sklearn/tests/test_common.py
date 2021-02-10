@@ -269,7 +269,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'covariance',
     'ensemble',
     'feature_extraction',
-    'feature_selection',
     'isotonic',
     'manifold',
     'mixture',
