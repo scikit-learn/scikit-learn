@@ -180,6 +180,14 @@ Changelog
   :class:`~sklearn.semi_supervised.LabelPropagation`.
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| Add kwargs to format ICE and PD lines separately in partial
+  dependence plots :func:`~sklearn.inspection.plot_partial_dependence` and
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.plot`.
+  :pr:`19428` by :user:`Mehdi Hamoumi <mhham>`
+
 Code and Documentation Contributors
 -----------------------------------
 
