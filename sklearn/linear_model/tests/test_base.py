@@ -490,7 +490,9 @@ def test_preprocess_data_weighted(is_sparse):
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_norm, np.ones(n_features))
-    if not is_sparse:
+    if is_sparse:
+        assert_array_almost_equal(Xt.toarray(), X.toarray() - expected_X_mean)
+    else:
         assert_array_almost_equal(Xt, X - expected_X_mean)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
@@ -500,8 +502,14 @@ def test_preprocess_data_weighted(is_sparse):
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_norm, expected_X_norm)
-    if not is_sparse:
-        assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_norm)
+    if is_sparse:
+        assert_array_almost_equal(
+            Xt.toarray(), (X.toarray() - expected_X_mean) / expected_X_norm
+            )
+    else:
+        assert_array_almost_equal(
+            Xt, (X - expected_X_mean) / expected_X_norm
+            )
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
