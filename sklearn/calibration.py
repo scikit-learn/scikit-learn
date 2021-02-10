@@ -656,7 +656,9 @@ class _CalibratedClassifier:
         if n_classes == 2:
             proba[:, 0] = 1. - proba[:, 1]
         else:
-            proba /= np.sum(proba, axis=1)[:, np.newaxis]
+            denominator = np.sum(proba, axis=1)[:, np.newaxis]
+            proba = np.divide(proba, denominator, out=np.full_like(
+                proba, np.nan), where=denominator != 0)
 
         # XXX : for some reason all probas can be 0
         proba[np.isnan(proba)] = 1. / n_classes
