@@ -715,7 +715,8 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
 
     last_sample_count : array-like of shape (n_features,)
 
-    sample_weight : array-like of shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,) or None
+        Sample weights. If None, compute the unweighted mean/variance.
 
     Returns
     -------
