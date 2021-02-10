@@ -1,6 +1,7 @@
 import numbers
 from itertools import chain
 from math import ceil
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -894,6 +895,17 @@ class PartialDependenceDisplay:
             line_kw = {}
         if contour_kw is None:
             contour_kw = {}
+
+        if line_kw is not None and ice_lines_kw is not None:
+            warnings.warn(
+                "Both line_kw and ice_lines_kw are specified. ice_lines_kw "
+                "will take priority."
+            )
+        if line_kw is not None and pd_line_kw is not None:
+            warnings.warn(
+                "Both line_kw and pd_line_kw are specified. pd_line_kw will "
+                "take priority."
+            )
 
         if ax is None:
             _, ax = plt.subplots()
