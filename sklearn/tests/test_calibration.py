@@ -298,8 +298,8 @@ def test_calibration_zero_probability():
 
     probas = cal_clf.predict_proba(X)
 
-    # Check that all probabilities are uniformly 1. / n_classes
-    assert_allclose(probas, np.full_like(probas, 1. / len(n_classes)))
+    # Check that all probabilities are uniformly 1. / len(n_classes)
+    assert_allclose(probas, 1. / len(n_classes))
 
 
 def test_calibration_prefit():
