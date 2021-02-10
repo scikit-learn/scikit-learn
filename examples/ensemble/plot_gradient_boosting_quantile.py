@@ -60,7 +60,7 @@ gbr_mse = GradientBoostingRegressor(loss='ls', n_estimators=250, max_depth=3,
 # there are the same number of targets above and below
 # the predicted values.
 gbrs = {
-    "q%1.2f" % alpha: 
+    "q%1.2f" % alpha:
         GradientBoostingRegressor(loss='quantile', alpha=alpha,
                                   n_estimators=250, max_depth=3,
                                   learning_rate=.1, min_samples_leaf=9,
@@ -80,8 +80,8 @@ for name, gbr in sorted(gbrs.items()):
     metrics = {'model': name}
     y_pred = gbr.predict(X_train)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = pinball_loss(y_train, y_pred,
-                                                   alpha=alpha)
+        metrics["pbl=%1.2f" % alpha] = pinball_loss(
+            y_train, y_pred, alpha=alpha)
     metrics['MSE'] = mean_squared_error(y_train, y_pred)
     results.append(metrics)
 DataFrame(results).set_index('model')
@@ -99,8 +99,8 @@ for name, gbr in sorted(gbrs.items()):
     metrics = {'model': name}
     y_pred = gbr.predict(X_test)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = pinball_loss(y_test, y_pred,
-                                                   alpha=alpha)
+        metrics["pbl=%1.2f" % alpha] = pinball_loss(
+            y_test, y_pred, alpha=alpha)
     metrics['MSE'] = mean_squared_error(y_test, y_pred)
     results.append(metrics)
 DataFrame(results).set_index('model')
