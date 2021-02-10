@@ -978,7 +978,10 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    with pytest.warns(ConvergenceWarning, match=r".*"):
+    warning_msg = r'Solver terminated early \(max_iter=1\).' \
+                  '  Consider pre-processing your data with' \
+                  ' StandardScaler or MinMaxScaler.'
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
         a.fit(np.array(X), Y)
 
 
@@ -1008,12 +1011,14 @@ def test_linear_svm_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
     lsvc = svm.LinearSVC(random_state=0, max_iter=2)
-    with pytest.warns(ConvergenceWarning, match=r".*"):
+    warning_msg = "Liblinear failed to converge, increase" \
+                  " the number of iterations."
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
         lsvc.fit(X, Y)
     assert lsvc.n_iter_ == 2
 
     lsvr = svm.LinearSVR(random_state=0, max_iter=2)
-    with pytest.warns(ConvergenceWarning, match=r".*"):
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
         lsvr.fit(iris.data, iris.target)
     assert lsvr.n_iter_ == 2
 
