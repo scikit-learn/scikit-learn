@@ -249,12 +249,16 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                 X_scale = np.ones(X.shape[1], dtype=X.dtype)
 
         else:
+            xtype = X.dtype
+
             X_offset, X_var, _ = \
                 _incremental_mean_and_var(X,
                                           last_mean=0.,
                                           last_variance=0.,
                                           last_sample_count=0.,
                                           sample_weight=sample_weight)
+            X_offset = X_offset.astype(xtype)
+            X_var = X_var.astype(xtype)
             X -= X_offset
 
             if normalize:
