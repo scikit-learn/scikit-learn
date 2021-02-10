@@ -695,11 +695,11 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     """Calculate mean update and a Youngs and Cramer variance update.
     If sample_weight is given, the weighted mean and variance is computed.
 
-    last_mean and last_variance are statistics computed at the last step by the
-    function. Both must be initialized to 0.0. In case no scaling is required
-    last_variance can be None. The mean is always required and returned because
-    necessary for the calculation of the variance. last_n_samples_seen is the
-    number of samples encountered until now.
+    Update a given mean and (possibly) variance according to new data given
+    in X. last_mean is always required to compute the new mean.
+    If last_variance is None, no variance is computed and None return for
+    updated_variance. last_n_samples_seen is the number of samples
+    encountered until now.
 
     From the paper "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
@@ -723,7 +723,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     updated_mean : ndarray of shape (n_features,)
 
     updated_variance : ndarray of shape (n_features,)
-        If None, only mean is computed.
+        None if last_variance was None.
 
     updated_sample_count : ndarray of shape (n_features,)
 
