@@ -439,7 +439,8 @@ MULTILABELS_METRICS = {
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = {
     "mean_absolute_error", "median_absolute_error", "mean_squared_error",
-    "r2_score", "explained_variance_score", "mean_absolute_percentage_error"
+    "r2_score", "explained_variance_score", "mean_absolute_percentage_error",
+    "pinball_loss"
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -460,7 +461,7 @@ SYMMETRIC_METRICS = {
     "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
-    "median_absolute_error", "max_error",
+    "median_absolute_error", "max_error", "pinball_loss",
 
     "cohen_kappa_score", "mean_normal_deviance"
 }

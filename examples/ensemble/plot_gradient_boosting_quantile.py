@@ -11,7 +11,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import pinball_loss
+from sklearn.metrics import pinball_loss, mean_squared_error
+from sklearn.model_selection import train_test_split
+
+from pandas import DataFrame
+from tqdm import tqdm
 
 np.random.seed(1)
 
@@ -33,45 +37,87 @@ noise = np.random.normal(0, dy)
 y += noise
 y = y.astype(np.float32)
 
+# Split into train, test datasets.
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+
 # Mesh the input space for evaluations of the real function, the prediction and
-# its MSE
+# its MSE.
 xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 xx = xx.astype(np.float32)
 
-alpha = 0.95
+# %%
+# Let's fit a model based trained with MSE loss.
+gbr_mse = GradientBoostingRegressor(loss='ls', n_estimators=250, max_depth=3,
+                                    learning_rate=.1, min_samples_leaf=9,
+                                    min_samples_split=9)
 
-clf = GradientBoostingRegressor(loss='quantile', alpha=alpha,
-                                n_estimators=250, max_depth=3,
-                                learning_rate=.1, min_samples_leaf=9,
-                                min_samples_split=9)
+# %%
+# Let's fit this models and three others trained with
+# the quantile loss and alpha=0.05, 0.5, 0.95.
+# The models obtained for alpha=0.05 and alpha=0.95
+# produce a 95% confidence interval. The model trained
+# with alpha=0.5 produce the median regression:
+# there are the same number of targets above and below
+# the predicted values.
+gbrs = {
+    "q%1.2f" % alpha: 
+        GradientBoostingRegressor(loss='quantile', alpha=alpha,
+                                  n_estimators=250, max_depth=3,
+                                  learning_rate=.1, min_samples_leaf=9,
+                                  min_samples_split=9)
+    for alpha in [0.05, 0.5, 0.95]
+}
+gbrs['MSE'] = gbr_mse
 
-clf.fit(X, y)
+for alpha, gbr in tqdm(gbrs.items()):
+    gbr.fit(X_train, y_train)
 
-# Metric :func:`pinball_loss` is equivalent to the loss.
-yp = clf.predict(X)
-print(clf.loss_(y, yp), pinball_loss(y, yp, alpha=alpha))
+# %%
+# Let's measure the models given :func:`mean_square_error` and
+# :func:`pinball_loss` metrics on the training datasets.
+results = []
+for name, gbr in sorted(gbrs.items()):
+    metrics = {'model': name}
+    y_pred = gbr.predict(X_train)
+    for alpha in [0.05, 0.5, 0.95]:
+        metrics["pbl=%1.2f" % alpha] = pinball_loss(y_train, y_pred,
+                                                   alpha=alpha)
+    metrics['MSE'] = mean_squared_error(y_train, y_pred)
+    results.append(metrics)
+DataFrame(results).set_index('model')
 
-# Make the prediction on the meshed x-axis
-y_upper = clf.predict(xx)
+# %%
+# One column shows all models evaluated by the same metric.
+# The number of the diagonal is the metric evaluated on a
+# model trained to minimize this same metric. It is expected
+# to be the minimum value on this column.
 
-clf.set_params(alpha=1.0 - alpha)
-clf.fit(X, y)
+# %%
+# We do the same on the test set.
+results = []
+for name, gbr in sorted(gbrs.items()):
+    metrics = {'model': name}
+    y_pred = gbr.predict(X_test)
+    for alpha in [0.05, 0.5, 0.95]:
+        metrics["pbl=%1.2f" % alpha] = pinball_loss(y_test, y_pred,
+                                                   alpha=alpha)
+    metrics['MSE'] = mean_squared_error(y_test, y_pred)
+    results.append(metrics)
+DataFrame(results).set_index('model')
 
-# Make the prediction on the meshed x-axis
-y_lower = clf.predict(xx)
+# %%
+# Let's finally plot the function, the prediction and the 
+# 95% confidence interval based on the MSE.
+y_pred = gbrs['MSE'].predict(xx)
+y_lower = gbrs['q0.05'].predict(xx)
+y_upper = gbrs['q0.95'].predict(xx)
+y_med = gbrs['q0.50'].predict(xx)
 
-clf.set_params(loss='ls')
-clf.fit(X, y)
-
-# Make the prediction on the meshed x-axis
-y_pred = clf.predict(xx)
-
-# Plot the function, the prediction and the 95% confidence interval based on
-# the MSE
 fig = plt.figure()
 plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
-plt.plot(X, y, 'b.', markersize=10, label=u'Observations')
-plt.plot(xx, y_pred, 'r-', label=u'Prediction')
+plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
+plt.plot(xx, y_med, 'r-', label='Prediction Median', color="orange")
+plt.plot(xx, y_pred, 'r-', label='Prediction MSE')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
 plt.fill(np.concatenate([xx, xx[::-1]]),
