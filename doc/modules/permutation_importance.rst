@@ -86,7 +86,8 @@ but more input formats are possible, as documented in
 `multimetric-scoring <https://scikit-learn.org/stable/modules/model_evaluation.html#multimetric-scoring>`_.
 
   >>> scoring = ['r2', 'neg_mean_absolute_percentage_error', 'explained_variance']
-  >>> r_multi = permutation_importance(model, X_val, y_val, n_repeats=30, random_state=0, scoring=scoring)
+  >>> r_multi = permutation_importance(
+  ...     model, X_val, y_val, n_repeats=30, random_state=0, scoring=scoring)
   ...
   >>> for metric in r_multi:
   ...     print(f"{metric}")
