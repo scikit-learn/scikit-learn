@@ -33,7 +33,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import _incremental_weighted_mean_and_var
+from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
@@ -250,10 +250,11 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
         else:
             X_offset, X_var, _ = \
-                _incremental_weighted_mean_and_var(X, sample_weight,
-                                                   last_mean=0.,
-                                                   last_variance=0.,
-                                                   last_weight_sum=0.)
+                _incremental_mean_and_var(X,
+                                          last_mean=0.,
+                                          last_variance=0.,
+                                          last_sample_count=0.,
+                                          sample_weight=sample_weight)
             X -= X_offset
 
             if normalize:
