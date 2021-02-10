@@ -250,6 +250,7 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     assert_array_almost_equal(W1, W2)
     assert_array_almost_equal(H1, H2)
 
+
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
                          [[NMF, 'cd', 2], [NMF, 'mu', 2],
                           [MiniBatchNMF, 'mu', 1]])
@@ -669,7 +670,7 @@ def test_nmf_close_minibatch_nmf(batch_size):
     X = np.abs(rng.randn(48, 5))
     max_iter = 100000
     solver = 'mu'
-    beta_loss='kullback-leibler'
+    beta_loss = 'kullback-leibler'
     init = 'nndsvda'  # FIXME : should be removed in 1.1
     nmf = NMF(5, solver=solver, init=init, random_state=0,
               max_iter=max_iter, beta_loss=beta_loss)

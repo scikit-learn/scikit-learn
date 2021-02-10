@@ -950,7 +950,6 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             if beta_loss <= 1:
                 H[H < np.finfo(np.float64).eps] = 0.
 
-
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
             error = _beta_divergence(X[batch], W[batch], H,
