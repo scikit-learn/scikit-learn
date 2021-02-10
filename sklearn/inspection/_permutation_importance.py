@@ -55,9 +55,28 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
     return scores
 
 
-def _create_importances_bunch(baseline_score, score):
-    """Create output importances Bunch."""
-    importances = baseline_score - np.array(score)
+def _create_importances_bunch(baseline_score, permuted_score):
+    """Compute the importances as the decrease in score.
+
+    Parameters
+    ----------
+    baseline_score : ndarray of shape (n_features,)
+        The baseline score without permutation.
+    permuted_score : ndarray of shape (n_features, n_repeats)
+        The permuted scores for the `n` repetitions.
+
+    Returns
+    -------
+    importances : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+        importances_mean : ndarray, shape (n_features, )
+            Mean of feature importance over `n_repeats`.
+        importances_std : ndarray, shape (n_features, )
+            Standard deviation over `n_repeats`.
+        importances : ndarray, shape (n_features, n_repeats)
+            Raw permutation importance scores.
+    """
+    importances = baseline_score - permuted_score
     return Bunch(importances_mean=np.mean(importances, axis=1),
                  importances_std=np.std(importances, axis=1),
                  importances=importances)
@@ -195,9 +214,10 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
             name: _create_importances_bunch(
                 baseline_score[name],
                 # unpack the permuted scores
-                [scores[col_idx][name] for col_idx in range(X.shape[1])]
+                np.array([scores[col_idx][name]
+                         for col_idx in range(X.shape[1])])
             )
             for name in baseline_score
         }
     else:
-        return _create_importances_bunch(baseline_score, scores)
+        return _create_importances_bunch(baseline_score, np.array(scores))
