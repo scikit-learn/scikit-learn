@@ -313,5 +313,6 @@ def test_lad_equals_quantile_50(seed):
     lad_weighted_loss = lad(y_true, raw_predictions, sample_weight=weights)
     ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
     assert lad_weighted_loss == approx(2 * ql_weighted_loss)
-    pbl_weighted_loss = pinball_loss(y_true, raw_predictions, sample_weight=weights)
+    pbl_weighted_loss = pinball_loss(y_true, raw_predictions,
+                                     sample_weight=weights)
     assert pbl_weighted_loss == ql_weighted_loss

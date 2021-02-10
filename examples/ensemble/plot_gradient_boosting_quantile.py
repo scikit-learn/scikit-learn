@@ -23,6 +23,7 @@ def f(x):
     """The function to predict."""
     return x * np.sin(x)
 
+
 # %%
 #  First the noiseless case
 X = np.atleast_2d(np.random.uniform(0, 10.0, size=200)).T
