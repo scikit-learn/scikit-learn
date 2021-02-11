@@ -110,7 +110,7 @@ Changelog
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
 - |Enhancement| in :func:`~sklearn.inspection.plot_partial_dependence`, allow
-  `kind` to accept a list of string to specify for each feature interaction
+  `kind` to accept a list of strings to specify for each feature interaction
   which type of plot a user wants to draw.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
