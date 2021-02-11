@@ -610,6 +610,8 @@ def test_plot_partial_dependence_lines_kw(
     ice_lines_kw,
     expected_colors,
 ):
+    # check that passing pd_line_kw and ice_lines_kw will act on the 
+    # specific lines in the plot
 
     disp = plot_partial_dependence(
         clf_diabetes,
