@@ -129,7 +129,7 @@ def test_classifier_undefined_methods():
     clf = PassiveAggressiveClassifier(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba", "transform"):
         with pytest.raises(ValueError):
-            lambda x: getattr(clf, x, meth)
+            getattr(clf, meth)
 
 
 def test_class_weights():
@@ -269,7 +269,7 @@ def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     for meth in ("transform",):
         with pytest.raises(ValueError):
-            lambda x: getattr(reg, x, meth)
+            getattr(reg, meth)
 
 
 # TODO: remove in 1.0

@@ -1076,7 +1076,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
 
         with pytest.raises(ValueError, match="Sample weights"
                            "must be 1D array or scalar"):
-            fit_ridge_not_ok_2
+            fit_ridge_not_ok_2()
 
 
 def test_sparse_design_with_sample_weights():

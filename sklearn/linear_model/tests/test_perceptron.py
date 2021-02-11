@@ -67,7 +67,7 @@ def test_undefined_methods():
     clf = Perceptron(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba"):
         with pytest.raises(ValueError):
-            lambda x: getattr(clf, x, meth)
+            getattr(clf, meth)
 
 
 def test_perceptron_l1_ratio():

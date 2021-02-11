@@ -446,7 +446,7 @@ def test_liblinear_dual_random_state():
     msg = "Arrays are not almost equal to 6 decimals"
 
     with pytest.raises(AssertionError, match=msg):
-        assert_array_almost_equal(lr1.coef_, lr3.coef)
+        assert_array_almost_equal(lr1.coef_, lr3.coef_)
 
 
 def test_logistic_loss_and_grad():
