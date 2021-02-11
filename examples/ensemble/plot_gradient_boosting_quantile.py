@@ -140,7 +140,7 @@ DataFrame(results).set_index('model')
 # signficiantly different and therefore one could not use the least squares
 # model get a good estimation of the conditional median nor the converse.
 #
-# If the target distribution had not been skewed and had no ouliers (e.g. with
+# If the target distribution were symmetric and had no outliers (e.g. with
 # a Gaussian noise), then median estimator and the least squares estimator
 # would have yielded similar predictions.
 #
