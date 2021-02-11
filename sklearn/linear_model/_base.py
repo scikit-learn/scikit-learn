@@ -249,12 +249,15 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         if normalize:
             X_var *= X.shape[0]
             X_scale = np.sqrt(X_var, X_var)
-
-            X_scale[X_scale == 0] = 1
-            if sp.issparse(X):
-                inplace_column_scale(X, 1. / X_scale)
+            if np.any(X_scale == 0):
+                X_scale_ = X_scale.copy()
+                X_scale_[X_scale_ == 0] = 1
             else:
-                X /= X_scale
+                X_scale_ = X_scale
+            if sp.issparse(X):
+                inplace_column_scale(X, 1. / X_scale_)
+            else:
+                X /= X_scale_
         else:
             X_scale = np.ones(X.shape[1], dtype=X.dtype)
 
