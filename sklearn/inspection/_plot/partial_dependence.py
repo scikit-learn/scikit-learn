@@ -899,12 +899,12 @@ class PartialDependenceDisplay:
         if line_kw is not None and ice_lines_kw is not None:
             warnings.warn(
                 "Both line_kw and ice_lines_kw are specified. ice_lines_kw "
-                "will take priority."
+                "will take priority. Do not pass line_kw to silence this warning."
             )
         if line_kw is not None and pd_line_kw is not None:
             warnings.warn(
                 "Both line_kw and pd_line_kw are specified. pd_line_kw will "
-                "take priority."
+                "take priority. Do not pass line_kw to silence this warning."
             )
 
         if ax is None:
