@@ -229,44 +229,34 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
     if fit_intercept:
         if sp.issparse(X):
-            X_offset, X_var = mean_variance_axis(X, axis=0,
-                                                 weights=sample_weight)
+            X_offset, X_var = mean_variance_axis(
+                X, axis=0, weights=sample_weight
+            )
+
             if not return_mean:
                 X_offset[:] = X.dtype.type(0)
-
-            if normalize:
-                # TODO: f_normalize could be used here as well but the function
-                # inplace_csr_row_normalize_l2 must be changed such that it
-                # can return also the norms computed internally
-
-                # transform variance to norm in-place
-                X_var *= X.shape[0]
-                X_scale = np.sqrt(X_var, X_var)
-                del X_var
-                X_scale[X_scale == 0] = 1
-                inplace_column_scale(X, 1. / X_scale)
-            else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
-
         else:
-            X_offset, X_var, _ = \
-                _incremental_mean_and_var(X,
-                                          last_mean=0.,
-                                          last_variance=0.,
-                                          last_sample_count=0.,
-                                          sample_weight=sample_weight)
+            X_offset, X_var, _ = _incremental_mean_and_var(
+                X, last_mean=0., last_variance=0., last_sample_count=0.,
+                sample_weight=sample_weight
+            )
 
             X_offset = X_offset.astype(X.dtype)
-            X_var = X_var.astype(X.dtype)
-
             X -= X_offset
 
-            if normalize:
-                X_scale = np.sqrt(X_var) * np.sqrt(len(X))
-                X_scale[X_scale == 0.0] = 1.0
-                X = X / X_scale
+        X_var = X_var.astype(X.dtype)
+
+        if normalize:
+            X_var *= X.shape[0]
+            X_scale = np.sqrt(X_var, X_var)
+            del X_var
+            X_scale[X_scale == 0] = 1
+            if sp.issparse(X):
+                inplace_column_scale(X, 1. / X_scale)
             else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
+                X /= X_scale
+        else:
+            X_scale = np.ones(X.shape[1], dtype=X.dtype)
 
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y = y - y_offset
