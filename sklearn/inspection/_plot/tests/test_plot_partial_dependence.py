@@ -644,7 +644,7 @@ def test_plot_partial_dependence_lines_kw_warnings(
     check that passing line_kw along with pd_line_kw and ice_lines_kw
     raises warnings
     """
-    with pytest.warns(Warning, match=r"^Both line_kw and") as record:
+    with pytest.warns(UserWarning, match=r"^Both line_kw and") as record:
         plot_partial_dependence(
             clf_diabetes,
             diabetes.data,
