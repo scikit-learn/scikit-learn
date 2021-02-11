@@ -249,7 +249,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         if normalize:
             X_var *= X.shape[0]
             X_scale = np.sqrt(X_var, X_var)
-            del X_var
+
             X_scale[X_scale == 0] = 1
             if sp.issparse(X):
                 inplace_column_scale(X, 1. / X_scale)
