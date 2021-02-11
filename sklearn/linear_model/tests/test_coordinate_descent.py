@@ -304,6 +304,9 @@ def test_lasso_cv_positive_constraint():
 
 
 def _scale_alpha(estimator, n_samples):
+    """"Rescale the parameter alpha from when the estimator is evoked with
+    normalize set to True to when it is evoked in a Pipeline with normalize set
+    to False and with a StandardScaler."""
     if 'alpha' not in estimator.get_params():
         return
 
@@ -321,7 +324,9 @@ def _scale_alpha(estimator, n_samples):
     estimator.set_params(alpha=alpha)
 
 
-# FIXME: 'normalize' to be removed in 1.2
+# FIXME: 'normalize' to be removed in 1.2 for all the models excluding:
+# OrthogonalMatchingPursuit, Lars, LassoLars, LarsCV, LassoLarsCV
+# for which it is to be removed in 1.4
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
