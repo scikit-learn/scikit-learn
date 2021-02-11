@@ -1074,7 +1074,8 @@ class RandomForestClassifier(ForestClassifier):
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate the generalization score.
+        Whether to use out-of-bag samples to estimate the generalization score. 
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
