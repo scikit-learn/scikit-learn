@@ -29,7 +29,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import (assert_almost_equal,
-                                    assert_warns_message, assert_raise_message,
+                                    assert_raise_message,
                                     assert_no_warnings,
                                     fails_if_pypy,
                                     assert_allclose_dense_sparse,
@@ -417,8 +417,8 @@ def test_tfidf_no_smoothing():
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
     in_warning_message = 'divide by zero'
-    assert_warns_message(RuntimeWarning, in_warning_message,
-                         tr.fit_transform, X).toarray()
+    with pytest.warns(RuntimeWarning, match=in_warning_message):
+        tr.fit_transform(X).toarray()
 
 
 def test_sublinear_tf():
@@ -1208,8 +1208,8 @@ def test_vectorizer_stop_words_inconsistent():
     for vec in [CountVectorizer(),
                 TfidfVectorizer(), HashingVectorizer()]:
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
-        assert_warns_message(UserWarning, message, vec.fit_transform,
-                             ['hello world'])
+        with pytest.warns(UserWarning, match=message):
+            vec.fit_transform(['hello world'])
         # reset stop word validation
         del vec._stop_words_id
         assert _check_stop_words_consistency(vec) is False
@@ -1220,8 +1220,8 @@ def test_vectorizer_stop_words_inconsistent():
 
     # Test caching of inconsistency assessment
     vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
-    assert_warns_message(UserWarning, message, vec.fit_transform,
-                         ['hello world'])
+    with pytest.warns(UserWarning, match=message):
+        vec.fit_transform(['hello world'])
 
 
 @skip_if_32bit
