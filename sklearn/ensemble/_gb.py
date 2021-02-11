@@ -764,7 +764,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0. and will be "
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
         "removed in 1.2. Use 'n_features_in_' instead."
     )
     @property
@@ -1023,7 +1023,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         The number of data features.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     n_classes_ : int
@@ -1561,7 +1561,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The number of data features.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     max_features_ : int

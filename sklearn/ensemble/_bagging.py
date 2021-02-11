@@ -432,7 +432,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0. and will be "
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
         "removed in 1.2. Use 'n_features_in_' instead."
     )
     @property
@@ -534,7 +534,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         The number of features when :meth:`fit` is performed.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     estimators_ : list of estimators
@@ -926,7 +926,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         The number of features when :meth:`fit` is performed.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     estimators_ : list of estimators

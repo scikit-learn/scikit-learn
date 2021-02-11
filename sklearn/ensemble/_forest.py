@@ -537,7 +537,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0. and will be "
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
         "removed in 1.2. Use 'n_features_in_' instead."
     )
     @property
@@ -1172,7 +1172,7 @@ class RandomForestClassifier(ForestClassifier):
         The number of features when ``fit`` is performed.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
@@ -1476,7 +1476,7 @@ class RandomForestRegressor(ForestRegressor):
         The number of features when ``fit`` is performed.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
@@ -1800,7 +1800,7 @@ class ExtraTreesClassifier(ForestClassifier):
         The number of features when ``fit`` is performed.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
@@ -2089,7 +2089,7 @@ class ExtraTreesRegressor(ForestRegressor):
         The number of features.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
@@ -2317,7 +2317,7 @@ class RandomTreesEmbedding(BaseForest):
         The number of features when ``fit`` is performed.
 
         .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0. and will be
+            Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
