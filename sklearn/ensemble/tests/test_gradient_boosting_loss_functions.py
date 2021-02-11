@@ -295,10 +295,11 @@ def test_init_raw_predictions_values():
 
 
 @pytest.mark.parametrize('seed', range(5))
-def test_lad_equals_quantile_50(seed):
+@pytest.mark.parametrize('alpha', [0.4, 0.5, 0.6])
+def test_lad_equals_quantiles(seed, alpha):
     # Make sure quantile loss with alpha = .5 is equivalent to LAD
     lad = LeastAbsoluteError()
-    ql = QuantileLossFunction(alpha=0.5)
+    ql = QuantileLossFunction(alpha=alpha)
 
     n_samples = 50
     rng = np.random.RandomState(seed)
@@ -307,12 +308,15 @@ def test_lad_equals_quantile_50(seed):
 
     lad_loss = lad(y_true, raw_predictions)
     ql_loss = ql(y_true, raw_predictions)
-    assert lad_loss == approx(2 * ql_loss)
+    if alpha == 0.5:
+        assert lad_loss == approx(2 * ql_loss * alpha)
 
     weights = np.linspace(0, 1, n_samples) ** 2
     lad_weighted_loss = lad(y_true, raw_predictions, sample_weight=weights)
     ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
-    assert lad_weighted_loss == approx(2 * ql_weighted_loss)
+    if alpha == 0.5:
+        assert lad_weighted_loss == approx(2 * ql_weighted_loss)
     pbl_weighted_loss = pinball_loss(y_true, raw_predictions,
-                                     sample_weight=weights)
+                                     sample_weight=weights,
+                                     alpha=alpha)
     assert pbl_weighted_loss == approx(ql_weighted_loss)
