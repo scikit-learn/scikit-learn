@@ -439,7 +439,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     # make sure the data is not centered to make the problem more
     # difficult
-    X += 10
+    X[X < 0] = 0
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
                                                         random_state=rng)
     if is_sparse:
