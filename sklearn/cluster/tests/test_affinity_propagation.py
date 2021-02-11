@@ -9,8 +9,7 @@ from scipy.sparse import csr_matrix
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import (
-    assert_array_equal, assert_warns,
-    assert_warns_message, assert_no_warnings)
+    assert_array_equal, assert_no_warnings)
 
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster._affinity_propagation import (
@@ -104,7 +103,8 @@ def test_affinity_propagation_fit_non_convergence():
     # Force non-convergence by allowing only a single iteration
     af = AffinityPropagation(preference=-10, max_iter=1, random_state=82)
 
-    assert_warns(ConvergenceWarning, af.fit, X)
+    with pytest.warns(ConvergenceWarning):
+        af.fit(X)
     assert_array_equal(np.empty((0, 2)), af.cluster_centers_)
     assert_array_equal(np.array([-1, -1, -1]), af.labels_)
 
@@ -114,16 +114,18 @@ def test_affinity_propagation_equal_mutual_similarities():
     S = -euclidean_distances(X, squared=True)
 
     # setting preference > similarity
-    cluster_center_indices, labels = assert_warns_message(
-        UserWarning, "mutually equal", affinity_propagation, S, preference=0)
+    with pytest.warns(UserWarning, match="mutually equal"):
+        cluster_center_indices, labels = affinity_propagation(
+            S, preference=0)
 
     # expect every sample to become an exemplar
     assert_array_equal([0, 1], cluster_center_indices)
     assert_array_equal([0, 1], labels)
 
     # setting preference < similarity
-    cluster_center_indices, labels = assert_warns_message(
-        UserWarning, "mutually equal", affinity_propagation, S, preference=-10)
+    with pytest.warns(UserWarning, match="mutually equal"):
+        cluster_center_indices, labels = affinity_propagation(
+            S, preference=-10)
 
     # expect one cluster, with arbitrary (first) sample as exemplar
     assert_array_equal([0], cluster_center_indices)
@@ -144,14 +146,15 @@ def test_affinity_propagation_predict_non_convergence():
     X = np.array([[0, 0], [1, 1], [-2, -2]])
 
     # Force non-convergence by allowing only a single iteration
-    af = assert_warns(ConvergenceWarning,
-                      AffinityPropagation(preference=-10,
-                                          max_iter=1, random_state=75).fit, X)
+    with pytest.warns(ConvergenceWarning):
+        af = AffinityPropagation(preference=-10,
+                                 max_iter=1, random_state=75).fit(X)
 
     # At prediction time, consider new samples as noise since there are no
     # clusters
     to_predict = np.array([[2, 2], [3, 3], [4, 4]])
-    y = assert_warns(ConvergenceWarning, af.predict, to_predict)
+    with pytest.warns(ConvergenceWarning):
+        y = af.predict(to_predict)
     assert_array_equal(np.array([-1, -1, -1]), y)
 
 
