@@ -30,7 +30,8 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                top_k_accuracy_score, f1_score, roc_auc_score,
                average_precision_score, precision_score, recall_score,
                log_loss, balanced_accuracy_score, explained_variance_score,
-               brier_score_loss, jaccard_score, mean_absolute_percentage_error)
+               brier_score_loss, jaccard_score, mean_absolute_percentage_error,
+               pinball_loss)
 
 from .cluster import adjusted_rand_score
 from .cluster import rand_score
@@ -652,6 +653,8 @@ neg_mean_poisson_deviance_scorer = make_scorer(
 neg_mean_gamma_deviance_scorer = make_scorer(
     mean_gamma_deviance, greater_is_better=False
 )
+neg_pinball_loss_scorer = make_scorer(pinball_loss,
+                                      greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)

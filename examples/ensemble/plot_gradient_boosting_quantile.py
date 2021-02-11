@@ -135,11 +135,11 @@ DataFrame(results).set_index('model')
 # the same metric. This should be always the case on the training set if the
 # training converged.
 #
-# Note that because the target noise is skewed by the presence large outliers,
-# the conditional estimation of the mean from the least squares model is
-# different from the median from quantile loss model with alpha=0.5. This would
-# not have been the case of a Gaussian noise where the least squaares loss
-# would also have given a good estimator of the conditional median.
+# Note that because the target noise is skewed by the presence of large
+# outliers, the conditional estimation of the mean from the least squares model
+# is different from the median from quantile loss model with alpha=0.5. This
+# would not have been the case of a Gaussian noise where the least squares
+# loss would also have given a good estimator of the conditional median.
 #
 # We then do the same on the test set.
 results = []
