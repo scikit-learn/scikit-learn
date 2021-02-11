@@ -18,6 +18,7 @@ from sklearn.utils._testing import (
     assert_almost_equal, assert_array_equal,
     assert_array_almost_equal)
 
+
 def test_n_samples_leaves_roots():
     # Sanity check for the number of samples in leaves and roots
     X, y = make_blobs(n_samples=10)
