@@ -303,7 +303,7 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
-def _scale_alpha(estimator, n_samples):
+def _scale_alpha_inplace(estimator, n_samples):
     """"Rescale the parameter alpha from when the estimator is evoked with
     normalize set to True to when it is evoked in a Pipeline with normalize set
     to False and with a StandardScaler."""
@@ -378,7 +378,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    _scale_alpha(pipeline[1], X_train.shape[0])
+    _scale_alpha_inplace(pipeline[1], X_train.shape[0])
 
     model_normalize.fit(X_train, y_train)
     y_pred_normalize = model_normalize.predict(X_test)
@@ -457,7 +457,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         estimator(normalize=False, fit_intercept=True, **params)
     )
 
-    _scale_alpha(reg_with_scaler[1], X_train.shape[0])
+    _scale_alpha_inplace(reg_with_scaler[1], X_train.shape[0])
 
     kwargs = {reg_with_scaler.steps[0][0] + '__sample_weight':
               sample_weight,
