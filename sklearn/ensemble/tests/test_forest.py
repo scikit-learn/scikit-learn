@@ -29,8 +29,6 @@ import joblib
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
@@ -1130,8 +1128,14 @@ def check_class_weight_errors(name):
     # Warning warm_start with preset
     clf = ForestClassifier(class_weight='balanced', warm_start=True,
                            random_state=0)
-    assert_warns(UserWarning, clf.fit, X, y)
-    assert_warns(UserWarning, clf.fit, X, _y)
+    clf.fit(X, y)
+
+    warn_msg = (
+        "Warm-start fitting without increasing n_estimators does not fit new "
+        "trees."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        clf.fit(X, _y)
 
     # Not a list or preset for multi-output
     clf = ForestClassifier(class_weight=1, random_state=0)
@@ -1234,7 +1238,12 @@ def check_warm_start_equal_n_estimators(name):
     # Now est_2 equals est.
 
     est_2.set_params(random_state=2)
-    assert_warns(UserWarning, est_2.fit, X, y)
+    warn_msg = (
+        "Warm-start fitting without increasing n_estimators does not fit "
+        "new trees."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        est_2.fit(X, y)
     # If we had fit the trees again we would have got a different forest as we
     # changed the random state.
     assert_array_equal(est.apply(X), est_2.apply(X))
@@ -1329,9 +1338,8 @@ def test_min_impurity_split():
 
     for Estimator in all_estimators:
         est = Estimator(min_impurity_split=0.1)
-        est = assert_warns_message(FutureWarning,
-                                   "min_impurity_decrease",
-                                   est.fit, X, y)
+        with pytest.warns(FutureWarning, match="min_impurity_decrease"):
+            est = est.fit(X, y)
         for tree in est.estimators_:
             assert tree.min_impurity_split == 0.1
 

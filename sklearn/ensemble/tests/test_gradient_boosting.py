@@ -27,8 +27,6 @@ from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
@@ -558,7 +556,13 @@ def test_shape_y():
     # This will raise a DataConversionWarning that we want to
     # "always" raise, elsewhere the warnings gets ignored in the
     # later tests, and the tests that check for this warning fail
-    assert_warns(DataConversionWarning, clf.fit, X, y_)
+    warn_msg = (
+        "A column-vector y was passed when a 1d array was expected. "
+        "Please change the shape of y to \\(n_samples, \\), for "
+        "example using ravel()."
+    )
+    with pytest.warns(DataConversionWarning, match=warn_msg):
+        clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert 100 == len(clf.estimators_)
 
@@ -1003,9 +1007,8 @@ def test_min_impurity_split(GBEstimator):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
     est = GBEstimator(min_impurity_split=0.1)
-    est = assert_warns_message(FutureWarning,
-                               "min_impurity_decrease",
-                               est.fit, X, y)
+    with pytest.warns(FutureWarning, match="min_impurity_decrease"):
+        est = est.fit(X, y)
     for tree in est.estimators_.flat:
         assert tree.min_impurity_split == 0.1
 
