@@ -1,5 +1,6 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#         Maria Telenczuk <https://github.com/maikia>
 #
 # License: BSD 3 clause
 
@@ -24,6 +25,7 @@ from sklearn.linear_model._base import make_dataset
 from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
 
 rng = np.random.RandomState(0)
 rtol = 1e-6
@@ -490,6 +492,7 @@ def test_preprocess_data_weighted(is_sparse):
     if is_sparse:
         X = sparse.csr_matrix(X)
 
+    # normalize is False
     Xt, yt, X_mean, y_mean, X_norm = \
         _preprocess_data(X, y, fit_intercept=True, normalize=False,
                          sample_weight=sample_weight, return_mean=True)
@@ -502,9 +505,11 @@ def test_preprocess_data_weighted(is_sparse):
         assert_array_almost_equal(Xt, X - expected_X_mean)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
+    # normalize is True
     Xt, yt, X_mean, y_mean, X_norm = \
         _preprocess_data(X, y, fit_intercept=True, normalize=True,
                          sample_weight=sample_weight, return_mean=True)
+
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_norm, expected_X_norm)
@@ -513,10 +518,16 @@ def test_preprocess_data_weighted(is_sparse):
         assert_array_almost_equal(
             Xt.toarray(), X.toarray() / expected_X_norm
         )
+        scaler = StandardScaler(with_mean=False).fit(
+            X, sample_weight=sample_weight)
     else:
         assert_array_almost_equal(
             Xt, (X - expected_X_mean) / expected_X_norm
         )
+        scaler = StandardScaler(with_mean=True).fit(
+            X, sample_weight=sample_weight)
+        assert_array_almost_equal(scaler.mean_, X_mean)
+    assert_array_almost_equal(scaler.transform(X), Xt)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
