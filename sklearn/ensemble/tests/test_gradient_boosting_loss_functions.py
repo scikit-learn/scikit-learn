@@ -309,7 +309,7 @@ def test_lad_equals_quantiles(seed, alpha):
     lad_loss = lad(y_true, raw_predictions)
     ql_loss = ql(y_true, raw_predictions)
     if alpha == 0.5:
-        assert lad_loss == approx(2 * ql_loss * alpha)
+        assert lad_loss == approx(2 * ql_loss)
 
     weights = np.linspace(0, 1, n_samples) ** 2
     lad_weighted_loss = lad(y_true, raw_predictions, sample_weight=weights)
