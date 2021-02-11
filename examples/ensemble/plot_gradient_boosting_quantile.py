@@ -99,7 +99,7 @@ plt.plot(xx, y_pred, 'r-', label='Predicted mean')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
 plt.fill_between(xx.ravel(), y_lower, y_upper,
-                 alpha=0.5, fc='b', ec='None',
+                 alpha=0.5, ec='None',
                  label='Predicted 90% interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
@@ -252,7 +252,7 @@ plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
 plt.fill_between(xx.ravel(), y_lower, y_upper,
-                 alpha=0.5, fc='b', ec='None',
+                 alpha=0.5, ec='None',
                  label='Predicted 90% interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
