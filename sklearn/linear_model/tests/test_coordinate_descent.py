@@ -304,9 +304,12 @@ def test_lasso_cv_positive_constraint():
 
 
 def _scale_alpha_inplace(estimator, n_samples):
-    """"Rescale the parameter alpha from when the estimator is evoked with
+    """Rescale the alpha param to check equivalence with StandardScaler
+    
+    Rescale the alpha parameter from when the estimator is evoked with
     normalize set to True to when it is evoked in a Pipeline with normalize set
-    to False and with a StandardScaler."""
+    to False and with a StandardScaler.
+    """
     if 'alpha' not in estimator.get_params():
         return
 
