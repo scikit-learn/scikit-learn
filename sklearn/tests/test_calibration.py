@@ -288,10 +288,7 @@ def test_calibration_zero_probability():
 
     X, y = make_blobs(n_samples=50, n_features=10, random_state=7,
                       centers=10, cluster_std=15.0)
-    n_classes = np.unique(y)
-
-    clf = DummyClassifier()
-    clf.fit(X, y)
+    clf = DummyClassifier().fit(X, y)
     calibrator = ZeroCalibrator()
     cal_clf = _CalibratedClassifier(
         base_estimator=clf, calibrators=[calibrator], classes=n_classes)
