@@ -80,11 +80,7 @@ computation of importances can be specified with the `scoring` argument,
 which also accepts multiple scorers. Using multiple scorers is more computationally
 efficient than sequentially calling :func:`permutation_importance` several times
 with a different scorer, as it reuses model predictions.
-The ranking of the features is approximately the same for different metrics even
-if the scales of the importance values are very different. However, this is not
-guaranteed and different metrics might lead to significantly different feature
-importances, in particular for models trained for imbalanced classification problems,
-for which the choice of the classification metric can be critical.
+
 An example of using multiple scorers is shown below, employing a list of metrics,
 but more input formats are possible, as documented in :ref:`multimetric_scoring`.
 
@@ -115,6 +111,12 @@ but more input formats are possible, as documented in :ref:`multimetric_scoring`
     bmi     872.694 +/- 240.296
     bp      438.681 +/- 163.025
     sex     277.382 +/- 115.126
+
+The ranking of the features is approximately the same for different metrics even
+if the scales of the importance values are very different. However, this is not
+guaranteed and different metrics might lead to significantly different feature
+importances, in particular for models trained for imbalanced classification problems,
+for which the choice of the classification metric can be critical.
 
 Outline of the permutation importance algorithm
 -----------------------------------------------
