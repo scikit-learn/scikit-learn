@@ -471,6 +471,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     reg_with_scaler.fit(X_train, y_train, **fit_params)
 
+    # Check that the 2 regressions models are exactly equivalent in the
+    # sense that they predict exactly the same outcome.
     y_pred_nomalize = reg_with_normalize.predict(X_test)
     y_pred_scaler = reg_with_scaler.predict(X_test)
 
