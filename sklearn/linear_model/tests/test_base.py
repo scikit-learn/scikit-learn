@@ -485,7 +485,7 @@ def test_preprocess_data_weighted(is_sparse):
     X_sample_weight_var = np.average((X - X_sample_weight_avg)**2,
                                      weights=sample_weight,
                                      axis=0)
-    expected_X_norm = np.sqrt(X_sample_weight_var) * np.sqrt(len(X))
+    expected_X_norm = np.sqrt(X_sample_weight_var) * np.sqrt(n_samples)
 
     if is_sparse:
         X = sparse.csr_matrix(X)
