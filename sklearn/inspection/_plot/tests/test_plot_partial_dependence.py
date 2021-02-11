@@ -473,6 +473,12 @@ dummy_classification_data = make_classification(random_state=0)
       'It is not possible to display individual effects for more than one'),
      (dummy_classification_data, {'features': [(1, 2)], 'kind': 'both'},
       'It is not possible to display individual effects for more than one'),
+     (dummy_classification_data,
+      {'features': [1, (1, 2)], 'kind': ['individual', 'individual']},
+      'It is not possible to display individual effects for more than one'),
+     (dummy_classification_data,
+      {'features': [1, (1, 2)], 'kind': ['both', 'both']},
+      'It is not possible to display individual effects for more than one'),
      (dummy_classification_data, {'features': [1], 'subsample': -1},
       'When an integer, subsample=-1 should be positive.'),
      (dummy_classification_data, {'features': [1], 'subsample': 1.2},
@@ -588,3 +594,16 @@ def test_partial_dependence_overwrite_labels(
             legend_text = ax.get_legend().get_texts()
             assert len(legend_text) == 1
             assert legend_text[0].get_text() == label
+
+
+def test_partial_dependence_kind_list(
+    pyplot, clf_diabetes, diabetes,
+):
+    """Check that we can provide a list of strings to kind parameter."""
+    plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=[0, 2, (1, 2)],
+        grid_resolution=20,
+        kind=["both", "both", "average"],
+    )

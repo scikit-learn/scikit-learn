@@ -201,18 +201,26 @@ def plot_partial_dependence(
 
         .. versionadded:: 0.22
 
-    kind : {'average', 'individual', 'both'}, default='average'
+    kind : {'average', 'individual', 'both'} or list of such str, \
+            default='average'
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both.
 
         - ``kind='average'`` results in the traditional PD plot;
         - ``kind='individual'`` results in the ICE plot.
 
+        A list of such string can be passed. The length of the list should be
+        as the number of interaction requested in `features`. This option
+        allows to silent warning when ICE plots are requested for both 1- and
+        2-way PD.
+
        Note that the fast ``method='recursion'`` option is only available for
        ``kind='average'``. Plotting individual dependencies requires using the
        slower ``method='brute'`` option.
 
         .. versionadded:: 0.24
+        .. versionadded:: 1.0
+           Add the possibility to pass a list of string for each plot.
 
     subsample : float, int or None, default=1000
         Sampling for ICE curves when `kind` is 'individual' or 'both'.
@@ -285,6 +293,13 @@ def plot_partial_dependence(
     if len(set(feature_names)) != len(feature_names):
         raise ValueError('feature_names should not contain duplicates.')
 
+    if isinstance(kind, str):
+        kind = [kind] * len(features)
+    elif len(kind) != len(features):
+        raise ValueError(
+            "FIXME: we should have the length for kind and features"
+        )
+
     def convert_feature(fx):
         if isinstance(fx, str):
             try:
@@ -295,7 +310,7 @@ def plot_partial_dependence(
 
     # convert features into a seq of int tuples
     tmp_features = []
-    for fxs in features:
+    for kind_plot, fxs in zip(kind, features):
         if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
@@ -308,7 +323,7 @@ def plot_partial_dependence(
         if not 1 <= np.size(fxs) <= 2:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
-        if kind != 'average' and np.size(fxs) > 1:
+        if kind_plot != 'average' and np.size(fxs) > 1:
             raise ValueError(
                 f"It is not possible to display individual effects for more "
                 f"than one feature at a time. Got: features={features}.")
@@ -348,8 +363,8 @@ def plot_partial_dependence(
                                     method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles,
-                                    kind=kind)
-        for fxs in features)
+                                    kind=kind_plot)
+        for kind_plot, fxs in zip(kind, features))
 
     # For multioutput regression, we can only check the validity of target
     # now that we have the predictions.
@@ -357,7 +372,7 @@ def plot_partial_dependence(
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
     pd_result = pd_results[0]  # checking the first result is enough
-    n_tasks = (pd_result.average.shape[0] if kind == 'average'
+    n_tasks = (pd_result.average.shape[0] if kind[0] == 'average'
                else pd_result.individual.shape[0])
     if is_regressor(estimator) and n_tasks > 1:
         if target is None:
@@ -370,9 +385,9 @@ def plot_partial_dependence(
 
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
-    for pdp in pd_results:
+    for idx, pdp in enumerate(pd_results):
         values = pdp["values"]
-        preds = (pdp.average if kind == 'average' else pdp.individual)
+        preds = (pdp.average if kind[idx] == 'average' else pdp.individual)
         min_pd = preds[target_idx].min()
         max_pd = preds[target_idx].max()
         n_fx = len(values)
@@ -453,18 +468,26 @@ class PartialDependenceDisplay:
     deciles : dict
         Deciles for feature indices in ``features``.
 
-    kind : {'average', 'individual', 'both'}, default='average'
+    kind : {'average', 'individual', 'both'} or list of such str, \
+            default='average'
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both.
 
         - ``kind='average'`` results in the traditional PD plot;
         - ``kind='individual'`` results in the ICE plot.
 
+        A list of such string can be passed. The length of the list should be
+        as the number of interaction requested in `features`. This option
+        allows to silent warning when ICE plots are requested for both 1- and
+        2-way PD.
+
        Note that the fast ``method='recursion'`` option is only available for
        ``kind='average'``. Plotting individual dependencies requires using the
        slower ``method='brute'`` option.
 
         .. versionadded:: 0.24
+        .. versionadded:: 1.0
+           Add the possibility to pass a list of string for each plot.
 
     subsample : float, int or None, default=1000
         Sampling for ICE curves when `kind` is 'individual' or 'both'.
@@ -853,6 +876,15 @@ class PartialDependenceDisplay:
         check_matplotlib_support("plot_partial_dependence")
         import matplotlib.pyplot as plt  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
+
+        if isinstance(self.kind, str):
+            kind = [self.kind] * len(self.features)
+        else:
+            if len(self.kind) != len(self.features):
+                raise ValueError(
+                    "FIXME: we should have the length for kind and features"
+                )
+            kind = self.kind
 
         if line_kw is None:
             line_kw = {}

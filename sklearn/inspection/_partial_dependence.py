@@ -311,7 +311,6 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             `kind='average'` will be the new default. It is intended to migrate
             from the ndarray output to :class:`~sklearn.utils.Bunch` output.
 
-
     Returns
     -------
     predictions : ndarray or :class:`~sklearn.utils.Bunch`
