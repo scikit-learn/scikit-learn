@@ -9,7 +9,7 @@ from scipy.sparse import csr_matrix
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import (
-    assert_array_equal, assert_no_warnings)
+    assert_array_equal)
 
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster._affinity_propagation import (
@@ -70,6 +70,7 @@ def test_affinity_propagation():
     af_2 = AffinityPropagation(affinity='precomputed', random_state=21)
     with pytest.raises(TypeError):
         af_2.fit(csr_matrix((3, 3)))
+
 
 def test_affinity_propagation_predict():
     # Test AffinityPropagation.predict
@@ -132,8 +133,10 @@ def test_affinity_propagation_equal_mutual_similarities():
     assert_array_equal([0, 0], labels)
 
     # setting different preferences
-    cluster_center_indices, labels = assert_no_warnings(
-        affinity_propagation, S, preference=[-20, -10], random_state=37)
+    with pytest.warns(None) as record:
+        cluster_center_indices, labels = affinity_propagation(
+            S, preference=[-20, -10], random_state=37)
+    assert not len(record)
 
     # expect one cluster, with highest-preference sample as exemplar
     assert_array_equal([1], cluster_center_indices)
