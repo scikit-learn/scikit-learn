@@ -939,12 +939,11 @@ class Lasso(ElasticNet):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : 'auto', bool or array-like of shape (n_features, n_features),\
+    precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument. For sparse input
-        this option is always ``False`` to preserve sparsity.
+        calculations. The Gram matrix can also be passed as argument.
+        For sparse input this option is always ``False`` to preserve sparsity.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
