@@ -183,6 +183,7 @@ DataFrame(results).set_index('model')
 # %%
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import make_scorer
+from pprint import pprint
 
 
 param_grid = dict(
@@ -206,7 +207,7 @@ search_05p = RandomizedSearchCV(
     n_jobs=2,
     random_state=0,
 ).fit(X_train, y_train)
-search_05p.best_params_
+pprint(search_05p.best_params_)
 
 # %%
 # We observe that the search procedure identifies that deeper trees are needed
@@ -230,7 +231,7 @@ search_95p = clone(search_05p).set_params(
     scoring=neg_pinball_loss_95p_scorer,
 )
 search_95p.fit(X_train, y_train)
-search_95p.best_params_
+pprint(search_95p.best_params_)
 
 # %%
 # This time, shallower trees are selected and lead to a more constant piecewise
