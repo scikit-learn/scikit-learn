@@ -414,10 +414,10 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 def test_linear_model_sample_weights_normalize_in_pipeline(
         with_mean, is_sparse, estimator, params
 ):
-    # Test that the results for running linear regression LinearRegression with
-    # sample_weight set and with normalize set to True gives similar results as
-    # LinearRegression with no normalize in a pipeline with a StandardScaler
-    # and set sample_weight.
+    # Test that the results for running linear model with sample_weight
+    # and with normalize set to True gives similar results as the same linear
+    # model with normalize set to False in a pipeline with
+    # a StandardScaler and sample_weight.
     model_name = estimator.__name__
 
     if model_name in ['Lasso', 'ElasticNet'] and is_sparse:
