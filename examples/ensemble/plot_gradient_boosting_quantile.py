@@ -18,41 +18,43 @@ from pandas import DataFrame
 
 np.random.seed(1)
 
+# %%
+# The function to predict.
 
 def f(x):
-    """The function to predict."""
     return x * np.sin(x)
 
 
 # %%
-#  First the noiseless case
+# Draw a set of points `(x, y=f(x))`.
 X = np.atleast_2d(np.random.uniform(0, 10.0, size=200)).T
 X = X.astype(np.float32)
-
-# Observations
 y = f(X).ravel()
 
+# %%
+# A gaussian noise is added to get `(x, y=f(x) + \epsilon)`.
 dy = 1.5 + 1.0 * np.random.random(y.shape)
 noise = np.random.normal(0, dy)
 y += noise
 y = y.astype(np.float32)
 
-# Split into train, test datasets.
+# %%
+# (X, y) is split into train, test datasets.
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-# Mesh the input space for evaluations of the real function, the prediction and
-# its MSE.
+# %%
+# Create a set is a deterministic set of points in [0, 10].
 xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 xx = xx.astype(np.float32)
 
 # %%
-# Let's fit a model based trained with MSE loss.
+# Instantiate a model based trained with MSE loss.
 gbr_mse = GradientBoostingRegressor(loss='ls', n_estimators=250, max_depth=2,
                                     learning_rate=.05, min_samples_leaf=9,
                                     min_samples_split=9)
 
 # %%
-# Let's fit this models and three others trained with
+# Fit this model and three others trained with
 # the quantile loss and alpha=0.05, 0.5, 0.95.
 # The models obtained for alpha=0.05 and alpha=0.95
 # produce a 95% confidence interval. The model trained
@@ -73,7 +75,7 @@ for alpha, gbr in gbrs.items():
     gbr.fit(X_train, y_train)
 
 # %%
-# Let's plot the function, the prediction and the
+# Plot the function, the prediction and the
 # 95% confidence interval based on the MSE.
 y_pred = gbrs['MSE'].predict(xx)
 y_lower = gbrs['q0.05'].predict(xx)
@@ -97,7 +99,7 @@ plt.legend(loc='upper left')
 plt.show()
 
 # %%
-# Let's measure the models given :func:`mean_square_error` and
+# Measure the models given :func:`mean_square_error` and
 # :func:`pinball_loss` metrics on the training dataset.
 results = []
 for name, gbr in sorted(gbrs.items()):
