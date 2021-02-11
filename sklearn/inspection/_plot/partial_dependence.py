@@ -294,11 +294,12 @@ def plot_partial_dependence(
     if len(set(feature_names)) != len(feature_names):
         raise ValueError('feature_names should not contain duplicates.')
 
-    if isinstance(kind, str):
-        kind = [kind] * len(features)
-    elif len(kind) != len(features):
+    kind_ = [kind] * len(features) if isinstance(kind, str) else kind
+    if len(kind_) != len(features):
         raise ValueError(
-            "FIXME: we should have the length for kind and features"
+            f"When kind is provided as a list of strings, it should countain "
+            f"as many element as features. kind contains {len(kind)} elements "
+            f"and features contains {len(features)} element."
         )
 
     def convert_feature(fx):
@@ -312,7 +313,7 @@ def plot_partial_dependence(
     # convert features into a seq of int tuples
     tmp_features = []
     ice_for_two_way_pd = []
-    for kind_plot, fxs in zip(kind, features):
+    for kind_plot, fxs in zip(kind_, features):
         if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
@@ -331,13 +332,10 @@ def plot_partial_dependence(
             ice_for_two_way_pd.append(False)
 
         tmp_features.append(fxs)
+    print(any(ice_for_two_way_pd), isinstance(kind, str))
 
-    if all(ice_for_two_way_pd):
-        raise ValueError(
-            f"It is not possible to display individual effects for more "
-            f"than one feature at a time. Got: features={features}."
-        )
-    elif any(ice_for_two_way_pd):
+    if (isinstance(kind, str) and any(ice_for_two_way_pd) and
+            not all(ice_for_two_way_pd)):
         warnings.warn(
             "You requested to plot individual response even with a 2-way "
             "partial dependence. If you set kind='both' or kind='individual' "
@@ -347,10 +345,15 @@ def plot_partial_dependence(
             "warning. Only average response will be plotted for the 2-way "
             "partial dependence.", UserWarning
         )
-        kind = [
+        kind_ = [
             "average" if force_average else kind_plot
-            for force_average, kind_plot in zip(ice_for_two_way_pd, kind)
+            for force_average, kind_plot in zip(ice_for_two_way_pd, kind_)
         ]
+    elif any(ice_for_two_way_pd):
+        raise ValueError(
+            f"It is not possible to display individual effects for more "
+            f"than one feature at a time. Got: features={features}."
+        )
 
     features = tmp_features
 
@@ -387,7 +390,7 @@ def plot_partial_dependence(
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles,
                                     kind=kind_plot)
-        for kind_plot, fxs in zip(kind, features))
+        for kind_plot, fxs in zip(kind_, features))
 
     # For multioutput regression, we can only check the validity of target
     # now that we have the predictions.
@@ -395,7 +398,7 @@ def plot_partial_dependence(
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
     pd_result = pd_results[0]  # checking the first result is enough
-    n_tasks = (pd_result.average.shape[0] if kind[0] == 'average'
+    n_tasks = (pd_result.average.shape[0] if kind_[0] == 'average'
                else pd_result.individual.shape[0])
     if is_regressor(estimator) and n_tasks > 1:
         if target is None:
@@ -410,7 +413,7 @@ def plot_partial_dependence(
     pdp_lim = {}
     for idx, pdp in enumerate(pd_results):
         values = pdp["values"]
-        preds = (pdp.average if kind[idx] == 'average' else pdp.individual)
+        preds = (pdp.average if kind_[idx] == 'average' else pdp.individual)
         min_pd = preds[target_idx].min()
         max_pd = preds[target_idx].max()
         n_fx = len(values)
@@ -432,7 +435,7 @@ def plot_partial_dependence(
         target_idx=target_idx,
         pdp_lim=pdp_lim,
         deciles=deciles,
-        kind=kind,
+        kind=kind_,
         subsample=subsample,
         random_state=random_state,
     )
