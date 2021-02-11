@@ -669,6 +669,7 @@ class PartialDependenceDisplay:
 
     def _plot_one_way_partial_dependence(
         self,
+        kind,
         preds,
         avg_preds,
         feature_values,
@@ -685,6 +686,8 @@ class PartialDependenceDisplay:
 
         Parameters
         ----------
+        kind : str
+            The kind of partial plot to draw.
         preds : ndarray of shape \
                 (n_instances, n_grid_points) or None
             The predictions computed for all points of `feature_values` for a
@@ -714,7 +717,7 @@ class PartialDependenceDisplay:
         """
         from matplotlib import transforms  # noqa
 
-        if self.kind in ("individual", "both"):
+        if kind in ("individual", "both"):
             self._plot_ice_lines(
                 preds[self.target_idx],
                 feature_values,
@@ -725,9 +728,9 @@ class PartialDependenceDisplay:
                 individual_line_kw,
             )
 
-        if self.kind in ("average", "both"):
+        if kind in ("average", "both"):
             # the average is stored as the last line
-            if self.kind == "average":
+            if kind == "average":
                 pd_line_idx = pd_plot_idx
             else:
                 pd_line_idx = pd_plot_idx * n_lines + n_ice_lines
@@ -764,7 +767,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if line_kw.get("label", None) and self.kind != 'individual':
+        if line_kw.get("label", None) and kind != 'individual':
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -886,42 +889,30 @@ class PartialDependenceDisplay:
                 )
             kind = self.kind
 
-        if line_kw is None:
-            line_kw = {}
-        if contour_kw is None:
-            contour_kw = {}
-
         if ax is None:
             _, ax = plt.subplots()
 
+        if contour_kw is None:
+            contour_kw = {}
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
-        default_line_kws = {
-            "color": "C0",
-            "label": "average" if self.kind == "both" else None,
-        }
-        line_kw = {**default_line_kws, **line_kw}
-
-        individual_line_kw = line_kw.copy()
-        del individual_line_kw["label"]
-
-        if self.kind == 'individual' or self.kind == 'both':
-            individual_line_kw['alpha'] = 0.3
-            individual_line_kw['linewidth'] = 0.5
-
         n_features = len(self.features)
-        if self.kind in ("individual", "both"):
-            n_ice_lines = self._get_sample_count(
-                len(self.pd_results[0].individual[0])
-            )
-            if self.kind == "individual":
-                n_lines = n_ice_lines
-            else:
-                n_lines = n_ice_lines + 1
-        else:
+        is_average_plot = [kind_plot == "average" for kind_plot in kind]
+        if all(is_average_plot):
+            # only average plots are requested
             n_ice_lines = 0
             n_lines = 1
+        else:
+            # we need to determine the number of ICE samples computed
+            ice_plot_idx = is_average_plot.index(False)
+            n_ice_lines = self._get_sample_count(
+                len(self.pd_results[ice_plot_idx].individual[0])
+            )
+            if any([kind_plot == "both" for kind_plot in kind]):
+                n_lines = n_ice_lines + 1  # account for the average line
+            else:
+                n_lines = n_ice_lines
 
         if isinstance(ax, plt.Axes):
             # If ax was set off, it has most likely been set to off
@@ -939,7 +930,7 @@ class PartialDependenceDisplay:
             n_rows = int(np.ceil(n_features / float(n_cols)))
 
             self.axes_ = np.empty((n_rows, n_cols), dtype=object)
-            if self.kind == 'average':
+            if all(is_average_plot):
                 self.lines_ = np.empty((n_rows, n_cols), dtype=object)
             else:
                 self.lines_ = np.empty((n_rows, n_cols, n_lines), dtype=object)
@@ -966,7 +957,7 @@ class PartialDependenceDisplay:
             self.bounding_ax_ = None
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
-            if self.kind == 'average':
+            if all(is_average_plot):
                 self.lines_ = np.empty_like(ax, dtype=object)
             else:
                 self.lines_ = np.empty(ax.shape + (n_lines,), dtype=object)
@@ -979,22 +970,39 @@ class PartialDependenceDisplay:
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
-        for pd_plot_idx, (axi, feature_idx, pd_result) in enumerate(
-            zip(self.axes_.ravel(), self.features, self.pd_results)
+        for pd_plot_idx, (axi, feature_idx, pd_result, kind_plot) in enumerate(
+            zip(self.axes_.ravel(), self.features, self.pd_results, kind)
         ):
             avg_preds = None
             preds = None
             feature_values = pd_result["values"]
-            if self.kind == 'individual':
+            if kind_plot == "individual":
                 preds = pd_result.individual
-            elif self.kind == 'average':
+            elif kind_plot == "average":
                 avg_preds = pd_result.average
-            else:  # kind='both'
+            else:  # kind_plot == 'both'
                 avg_preds = pd_result.average
                 preds = pd_result.individual
 
             if len(feature_values) == 1:
+
+                # define the line-style for the current plot
+                line_kw_ = {} if line_kw is None else line_kw.copy()
+                default_line_kws = {
+                    "color": "C0",
+                    "label": "average" if kind_plot == "both" else None,
+                }
+                line_kw_ = {**default_line_kws, **line_kw_}
+
+                individual_line_kw = line_kw_.copy()
+                del individual_line_kw["label"]
+
+                if kind_plot == "individual" or kind_plot == "both":
+                    individual_line_kw["alpha"] = 0.3
+                    individual_line_kw["linewidth"] = 0.5
+
                 self._plot_one_way_partial_dependence(
+                    kind_plot,
                     preds,
                     avg_preds,
                     feature_values[0],
@@ -1005,7 +1013,7 @@ class PartialDependenceDisplay:
                     pd_plot_idx,
                     n_lines,
                     individual_line_kw,
-                    line_kw,
+                    line_kw_,
                 )
             else:
                 self._plot_two_way_partial_dependence(
