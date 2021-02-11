@@ -451,7 +451,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     sample_weight = rng.rand(X_train.shape[0])
 
-    # linear estimator with explicit sample_weight, normalize = True
+    # linear estimator with built-in feature normalization
     reg_with_normalize = estimator(normalize=True, fit_intercept=True,
                                    **params)
     reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
@@ -475,6 +475,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # sense that they predict exactly the same outcome.
     y_pred_nomalize = reg_with_normalize.predict(X_test)
     y_pred_scaler = reg_with_scaler.predict(X_test)
+    assert_allclose(y_pred_nomalize,  y_pred_scaler)
 
     y_train_mean = np.average(y_train, weights=sample_weight)
     if is_sparse:
@@ -485,7 +486,6 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     assert (reg_with_normalize.intercept_ ==
             pytest.approx(y_train_mean -
                           reg_with_normalize.coef_.dot(X_train_mean)))
-    assert_allclose(y_pred_nomalize,  y_pred_scaler)
 
 
 # FIXME: 'normalize' to be removed in 1.2
