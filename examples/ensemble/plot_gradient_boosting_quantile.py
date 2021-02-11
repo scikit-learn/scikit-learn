@@ -3,95 +3,101 @@
 Prediction Intervals for Gradient Boosting Regression
 =====================================================
 
-This example shows how quantile regression can be used
-to create prediction intervals.
+This example shows how quantile regression can be used to create prediction
+intervals.
 """
-
+# %%
+# Generate some data for a synthetic regression problem by applying the f
+# function to uniformly sampled random inputs.
 import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import pinball_loss, mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from pandas import DataFrame
-
-np.random.seed(1)
-
-# %%
-# The function to predict.
 
 def f(x):
+    """The function to predict."""
     return x * np.sin(x)
 
 
-# %%
-# Draw a set of points `(x, y=f(x))`.
-X = np.atleast_2d(np.random.uniform(0, 10.0, size=200)).T
+rng = np.random.RandomState(42)
+X = np.atleast_2d(rng.uniform(0, 10.0, size=1000)).T
 X = X.astype(np.float32)
 y = f(X).ravel()
 
 # %%
-# A gaussian noise is added to get `(x, y=f(x) + \epsilon)`.
-dy = 1.5 + 1.0 * np.random.random(y.shape)
-noise = np.random.normal(0, dy)
+# To make the problem interesting, add centered `log-normal distributed
+# <https://en.wikipedia.org/wiki/Log-normal_distribution>`_ random noise to the
+# target variable.
+#
+# The lognormal distribution is very skewed, meaning that it is likely to get
+# large outliers but impossible to observe small outliers.
+sigma = 1.2
+noise = rng.lognormal(sigma=sigma, size=y.shape) - np.exp(sigma ** 2 / 2)
 y += noise
-y = y.astype(np.float32)
 
 # %%
-# (X, y) is split into train, test datasets.
+# Split into train, test datasets:
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
 # %%
-# Create a set is a deterministic set of points in [0, 10].
+# Fit gradient boosting models trained with the quantile loss and
+# alpha=0.05, 0.5, 0.95.
+#
+# The models obtained for alpha=0.05 and alpha=0.95 produce a 90% confidence
+# interval (95% - 5% = 90%).
+#
+# The model trained with alpha=0.5 produces a regression of the median: on
+# average, there should be the same number of target observations above and
+# below the predicted values.
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import pinball_loss, mean_squared_error
+
+
+all_models = {}
+common_params = dict(
+    learning_rate=0.05,
+    n_estimators=250,
+    max_depth=2,
+    min_samples_leaf=9,
+    min_samples_split=9,
+)
+for alpha in [0.05, 0.5, 0.95]:
+    gbr = GradientBoostingRegressor(loss='quantile', alpha=alpha,
+                                    **common_params)
+    all_models["q %1.2f" % alpha] = gbr.fit(X_train, y_train)
+
+# %%
+# For the sake of comparison, also fit a baseline model trained with the usual
+# least squares loss (ls), also known as the mean squared error (MSE).
+gbr_ls = GradientBoostingRegressor(loss='ls', **common_params)
+all_models["ls"] = gbr_ls.fit(X_train, y_train)
+
+# %%
+# Create an evenly spaced set of input values spanning the [0, 10] range.
 xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 xx = xx.astype(np.float32)
 
 # %%
-# Instantiate a model based trained with MSE loss.
-gbr_mse = GradientBoostingRegressor(loss='ls', n_estimators=250, max_depth=2,
-                                    learning_rate=.05, min_samples_leaf=9,
-                                    min_samples_split=9)
+# Plot the true function (expected mean), the prediction of the conditional
+# mean (least squares loss), the conditional median and the conditional 90%
+# interval (from 5th to 95th conditional percentiles).
+import matplotlib.pyplot as plt
 
-# %%
-# Fit this model and three others trained with
-# the quantile loss and alpha=0.05, 0.5, 0.95.
-# The models obtained for alpha=0.05 and alpha=0.95
-# produce a 95% confidence interval. The model trained
-# with alpha=0.5 produces a regression of the median:
-# there are the same number of targets above and below
-# the predicted values.
-gbrs = {
-    "q%1.2f" % alpha:
-        GradientBoostingRegressor(loss='quantile', alpha=alpha,
-                                  n_estimators=250, max_depth=2,
-                                  learning_rate=.05, min_samples_leaf=9,
-                                  min_samples_split=9)
-    for alpha in [0.05, 0.5, 0.95]
-}
-gbrs['MSE'] = gbr_mse
 
-for alpha, gbr in gbrs.items():
-    gbr.fit(X_train, y_train)
-
-# %%
-# Plot the function, the prediction and the
-# 95% confidence interval based on the MSE.
-y_pred = gbrs['MSE'].predict(xx)
-y_lower = gbrs['q0.05'].predict(xx)
-y_upper = gbrs['q0.95'].predict(xx)
-y_med = gbrs['q0.50'].predict(xx)
+y_pred = all_models['ls'].predict(xx)
+y_lower = all_models['q0.05'].predict(xx)
+y_upper = all_models['q0.95'].predict(xx)
+y_med = all_models['q0.50'].predict(xx)
 
 fig = plt.figure()
 plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
 plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
-plt.plot(xx, y_med, 'r-', label='Prediction Median', color="orange")
-plt.plot(xx, y_pred, 'r-', label='Prediction MSE')
+plt.plot(xx, y_med, 'r-', label='Predicted median', color="orange")
+plt.plot(xx, y_pred, 'r-', label='Predicted mean')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
 plt.fill(np.concatenate([xx, xx[::-1]]),
          np.concatenate([y_upper, y_lower[::-1]]),
-         alpha=.5, fc='b', ec='None', label='95% prediction interval')
+         alpha=.5, fc='b', ec='None', label='Predicted 90% interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
 plt.ylim(-10, 20)
@@ -99,10 +105,21 @@ plt.legend(loc='upper left')
 plt.show()
 
 # %%
-# Measure the models with :func:`mean_square_error` and
-# :func:`pinball_loss` metrics on the training dataset.
+# Note that the predicted median is on average below the predicted mean as the
+# noise is skewed towards high values (large outliers). Also note that the
+# median estimate is smoother because of its natural robustness to outliers.
+#
+# Also observe that the inductive bias of gradient boosting trees is
+# unfortunately preventing our 0.05 quantile to fully capture the sinoisoidal
+# shape of the signal, in particular around x=8. Tuning hyper-parameters could
+# potentially reduce this effect a bit.
+#
+# Measure the models with :func:`mean_square_error` and :func:`pinball_loss`
+# metrics on the training dataset.
+from pandas import DataFrame
+
 results = []
-for name, gbr in sorted(gbrs.items()):
+for name, gbr in sorted(all_models.items()):
     metrics = {'model': name}
     y_pred = gbr.predict(X_train)
     for alpha in [0.05, 0.5, 0.95]:
@@ -113,20 +130,20 @@ for name, gbr in sorted(gbrs.items()):
 DataFrame(results).set_index('model')
 
 # %%
-# One column shows all models evaluated by the same metric.
-# The minimum number on a column is obtained when the model
-# is trained and measured with the same metric.
-# This should be always the case on the training set if the training
-# converged. The measures give almost the same results
-# when the model is trained with MSE or with the quantile loss and alpha=0.5.
-# The random noise added to the data explains that proximity.
-# The quantile loss is less sensitive to outliers but when
-# they are none and the noise is gaussian - which is the case here -,
-# both methics almost give the same results.
+# One column shows all models evaluated by the same metric. The minimum number
+# on a column should be obtained when the model is trained and measured with
+# the same metric. This should be always the case on the training set if the
+# training converged.
+#
+# Note that because the target noise is skewed by the presence large outliers,
+# the conditional estimation of the mean from the least squares model is
+# different from the median from quantile loss model with alpha=0.5. This would
+# not have been the case of a Gaussian noise where the least squaares loss
+# would also have given a good estimator of the conditional median.
 #
 # We then do the same on the test set.
 results = []
-for name, gbr in sorted(gbrs.items()):
+for name, gbr in sorted(all_models.items()):
     metrics = {'model': name}
     y_pred = gbr.predict(X_test)
     for alpha in [0.05, 0.5, 0.95]:
@@ -137,6 +154,6 @@ for name, gbr in sorted(gbrs.items()):
 DataFrame(results).set_index('model')
 
 # %%
-# Errors are higher meaning the model slightly overfitted the data.
-# It still shows the minimum of a metric is obtained when
-# the model is trained by minimizing this same metric.
+# Errors are higher meaning the models slightly overfitted the data. It still
+# shows the minimum of a metric is obtained when the model is trained by
+# minimizing this same metric.
