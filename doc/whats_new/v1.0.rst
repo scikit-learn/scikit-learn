@@ -105,9 +105,19 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| Allow multiple scorers input to
+- |Enhancement| Allow multiple scorers input to
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
+
+- |Enhancement| in :func:`~sklearn.inspection.plot_partial_dependence`, allow
+  `kind` to accept a list of string to specify for each feature interaction
+  which type of plot a user wants to draw.
+  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| in :func:`~sklearn.inspection.plot_partial_dependence`, be lenient and
+  only raise a warning when passing `kind='both'` or `kind='individual'` with a
+  mix of 1- and 2-way partial dependence in `features`.
+  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.linear_model`
 ...........................

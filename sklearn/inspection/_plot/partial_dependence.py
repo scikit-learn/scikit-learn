@@ -1,4 +1,5 @@
 import numbers
+import warnings
 from itertools import chain
 from math import ceil
 
@@ -310,6 +311,7 @@ def plot_partial_dependence(
 
     # convert features into a seq of int tuples
     tmp_features = []
+    ice_for_two_way_pd = []
     for kind_plot, fxs in zip(kind, features):
         if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
@@ -324,10 +326,31 @@ def plot_partial_dependence(
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
         if kind_plot != 'average' and np.size(fxs) > 1:
-            raise ValueError(
-                f"It is not possible to display individual effects for more "
-                f"than one feature at a time. Got: features={features}.")
+            ice_for_two_way_pd.append(True)
+        else:
+            ice_for_two_way_pd.append(False)
+
         tmp_features.append(fxs)
+
+    if all(ice_for_two_way_pd):
+        raise ValueError(
+            f"It is not possible to display individual effects for more "
+            f"than one feature at a time. Got: features={features}."
+        )
+    elif any(ice_for_two_way_pd):
+        warnings.warn(
+            "You requested to plot individual response even with a 2-way "
+            "partial dependence. If you set kind='both' or kind='individual' "
+            "for both 1- and 2-way partial dependence, you can pass a list of "
+            "such string and specified 'average' for the index corresponding "
+            "to the 2-way partial dependence plot. It will silence this "
+            "warning. Only average response will be plotted for the 2-way "
+            "partial dependence.", UserWarning
+        )
+        kind = [
+            "average" if force_average else kind_plot
+            for force_average, kind_plot in zip(ice_for_two_way_pd, kind)
+        ]
 
     features = tmp_features
 

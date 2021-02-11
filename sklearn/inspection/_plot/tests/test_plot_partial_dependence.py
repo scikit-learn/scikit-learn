@@ -600,10 +600,61 @@ def test_partial_dependence_kind_list(
     pyplot, clf_diabetes, diabetes,
 ):
     """Check that we can provide a list of strings to kind parameter."""
-    plot_partial_dependence(
+    matplotlib = pytest.importorskip("matplotlib")
+
+    disp = plot_partial_dependence(
         clf_diabetes,
         diabetes.data,
         features=[0, 2, (1, 2)],
         grid_resolution=20,
         kind=["both", "both", "average"],
     )
+
+    for idx in [0, 1]:
+        assert all(
+            [
+                isinstance(line, matplotlib.lines.Line2D)
+                for line in disp.lines_[0, idx].ravel()
+            ]
+        )
+        assert disp.contours_[0, idx] is None
+
+    assert disp.contours_[0, 2] is not None
+    assert all([line is None for line in disp.lines_[0, 2].ravel()])
+
+
+@pytest.mark.parametrize("kind", ["individual", "both"])
+def test_partial_dependence_kind_str_with_warning(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    kind,
+):
+    """Check that we can provide kind="both" but that a warning will be raised
+    due to the 2-way PD."""
+    matplotlib = pytest.importorskip("matplotlib")
+
+    warn_msg = (
+        "You requested to plot individual response even with a 2-way "
+        "partial dependence."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        disp = plot_partial_dependence(
+            clf_diabetes,
+            diabetes.data,
+            features=[0, 2, (1, 2)],
+            grid_resolution=20,
+            kind=kind,
+        )
+
+    for idx in [0, 1]:
+        assert all(
+            [
+                isinstance(line, matplotlib.lines.Line2D)
+                for line in disp.lines_[0, idx].ravel()
+            ]
+        )
+        assert disp.contours_[0, idx] is None
+
+    assert disp.contours_[0, 2] is not None
+    assert all([line is None for line in disp.lines_[0, 2].ravel()])
