@@ -310,12 +310,11 @@ def _scale_alpha_inplace(estimator, n_samples):
     if 'alpha' not in estimator.get_params():
         return
 
-    model_name = estimator.__class__.__name__
-    if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
+    if isinstance(estimator, (Lasso, LassoLars, MultiTaskLasso)):
         alpha = estimator.alpha * np.sqrt(n_samples)
-    if model_name in ['Ridge', 'RidgeClassifier']:
+    if isinstance(estimator, (Ridge, RidgeClassifier)):
         alpha = estimator.alpha * n_samples
-    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
+    if isinstance(estimator, (ElasticNet, MultiTaskElasticNet)):
         if estimator.l1_ratio == 1:
             alpha = estimator.alpha * np.sqrt(n_samples)
         if estimator.l1_ratio == 0:
