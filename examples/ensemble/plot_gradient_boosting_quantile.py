@@ -84,9 +84,9 @@ import matplotlib.pyplot as plt
 
 
 y_pred = all_models['ls'].predict(xx)
-y_lower = all_models['q0.05'].predict(xx)
-y_upper = all_models['q0.95'].predict(xx)
-y_med = all_models['q0.50'].predict(xx)
+y_lower = all_models['q 0.05'].predict(xx)
+y_upper = all_models['q 0.95'].predict(xx)
+y_med = all_models['q 0.50'].predict(xx)
 
 fig = plt.figure()
 plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
