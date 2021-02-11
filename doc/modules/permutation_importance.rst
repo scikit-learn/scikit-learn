@@ -94,8 +94,8 @@ but more input formats are possible, as documented in :ref:`multimetric_scoring`
   ...     for i in r.importances_mean.argsort()[::-1]:
   ...         if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
   ...             print(f"    {diabetes.feature_names[i]:<8}"
-  ...             f"{r.importances_mean[i]:.3f}"
-  ...             f" +/- {r.importances_std[i]:.3f}")
+  ...                   f"{r.importances_mean[i]:.3f}"
+  ...                   f" +/- {r.importances_std[i]:.3f}")
   ...
   r2
     s5      0.204 +/- 0.050
