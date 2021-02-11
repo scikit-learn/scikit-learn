@@ -657,7 +657,9 @@ class _CalibratedClassifier:
             proba[:, 0] = 1. - proba[:, 1]
         else:
             denominator = np.sum(proba, axis=1)[:, np.newaxis]
-            # XXX : for some reason all probas can be 0
+            # In the edge case where for each class calibrator returns a null
+            # probability for a given sample, use the uniform distribution
+            # instead.
             uniform_proba = np.full_like(proba, 1 / n_classes)
             proba = np.divide(proba, denominator, out=uniform_proba,
                               where=denominator != 0)
