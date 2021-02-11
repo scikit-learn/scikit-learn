@@ -475,10 +475,12 @@ def test_parallel_classification():
     assert_array_almost_equal(decisions1, decisions2)
 
     X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
-    with pytest.raises(ValueError, match="Number of features of the model "
-                       "must match the input. Model n_features is {0} "
-                       "and input n_features is {1} "
-                       "".format(X_test.shape[1], X_err.shape[1])):
+    err_msg = (
+        f"Number of features of the model must match the input. Model "
+        f"n_features is {X_test.shape[1]} and input n_features is "
+        f"{X_err.shape[1]} "
+    )
+    with pytest.raises(ValueError, match=err_msg):
         ensemble.decision_function(X_err)
 
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),

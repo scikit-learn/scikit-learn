@@ -319,8 +319,8 @@ def test_check_inputs_predict_stages():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(x, y)
     score = np.zeros((y.shape)).reshape(-1, 1)
-    with pytest.raises(ValueError, match="When X is a sparse matrix, " +
-                       "a CSR format is expected"):
+    err_msg = "When X is a sparse matrix, a CSR format is expected"
+    with pytest.raises(ValueError, match=err_msg):
         predict_stages(clf.estimators_, x_sparse_csc, clf.learning_rate, score)
     x_fortran = np.asfortranarray(x)
     with pytest.raises(ValueError, match="X should be C-ordered np.ndarray"):
@@ -414,8 +414,7 @@ def test_staged_predict():
     clf = GradientBoostingRegressor()
     # test raise ValueError if not fitted
     with pytest.raises(ValueError):
-        (lambda X: np.fromiter(clf.staged_predict(X),
-                               dtype=np.float64))(X_test)
+        np.fromiter(clf.staged_predict(X_test), dtype=np.float64)
 
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)

@@ -53,8 +53,8 @@ def test_base_zero_n_estimators():
     ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                  n_estimators=0)
     iris = load_iris()
-    with pytest.raises(ValueError, match="n_estimators must be greater " +
-                       "than zero, got 0."):
+    err_msg = "n_estimators must be greater than zero, got 0."
+    with pytest.raises(ValueError, match=err_msg):
         ensemble.fit(iris.data, iris.target)
 
 
