@@ -295,8 +295,8 @@ def test_calibration_zero_probability():
 
     probas = cal_clf.predict_proba(X)
 
-    # Check that all probabilities are uniformly 1. / len(n_classes)
-    assert_allclose(probas, 1. / len(n_classes))
+    # Check that all probabilities are uniformly 1. / clf.n_classes_
+    assert_allclose(probas, 1. / clf.n_classes_)
 
 
 def test_calibration_prefit():
