@@ -39,6 +39,9 @@ y += noise
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
 # %%
+# Fitting non-linear quantile and least squares regressors
+# --------------------------------------------------------
+#
 # Fit gradient boosting models trained with the quantile loss and
 # alpha=0.05, 0.5, 0.95.
 #
@@ -95,9 +98,9 @@ plt.plot(xx, y_med, 'r-', label='Predicted median', color="orange")
 plt.plot(xx, y_pred, 'r-', label='Predicted mean')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
-plt.fill(np.concatenate([xx, xx[::-1]]),
-         np.concatenate([y_upper, y_lower[::-1]]),
-         alpha=.5, fc='b', ec='None', label='Predicted 90% interval')
+plt.fill_between(xx.ravel(), y_lower, y_upper,
+                 alpha=0.5, fc='b', ec='None',
+                 label='Predicted 90% interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
 plt.ylim(-10, 20)
@@ -111,8 +114,11 @@ plt.show()
 #
 # Also observe that the inductive bias of gradient boosting trees is
 # unfortunately preventing our 0.05 quantile to fully capture the sinoisoidal
-# shape of the signal, in particular around x=8. Tuning hyper-parameters could
-# potentially reduce this effect a bit.
+# shape of the signal, in particular around x=8. Tuning hyper-parameters can
+# reduce this effect as shown in the last part of this notebook.
+#
+# Analysis of the error metrics
+# -----------------------------
 #
 # Measure the models with :func:`mean_square_error` and :func:`pinball_loss`
 # metrics on the training dataset.
@@ -160,3 +166,98 @@ DataFrame(results).set_index('model')
 # Errors are higher meaning the models slightly overfitted the data. It still
 # shows the minimum of a metric is obtained when the model is trained by
 # minimizing this same metric.
+#
+# Tuning the hyper-parameters of the quantile regressors
+# ------------------------------------------------------
+#
+# In the plot above, we observed that the 5th percentile regressor seems to
+# underfit and could not adapt to sinusoidal shape of the signal.
+#
+# The hyper-parameters of the model were approximately hand-tuned for the
+# median regressor and there is no reason than the same hyper-parameters are
+# suitable for the 5th percentile regressor.
+#
+# To confirm this hypothesis, we tuned the hyper-parameters of a new regressor
+# of the 5th percentile by selecting the best model parameters by
+# cross-validation on the pinball loss with alpha=0.05:
+
+# %%
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.metrics import make_scorer
+
+
+param_grid = dict(
+    learning_rate=[0.01, 0.05, 0.1, 0.5, 1],
+    n_estimators=[50, 100, 150, 200, 250, 300],
+    max_depth=[2, 5, 10, 15, 20],
+    min_samples_leaf=[1, 5, 10, 20, 30, 50],
+    min_samples_split=[2, 5, 10, 20, 30, 50],
+)
+alpha = 0.05
+neg_pinball_loss_05p_scorer = make_scorer(
+    pinball_loss,
+    alpha=alpha,
+    greater_is_better=False,  # maximize the negative loss
+)
+search_05p = RandomizedSearchCV(
+    GradientBoostingRegressor(loss="quantile", alpha=alpha),
+    param_grid,
+    n_iter=30,
+    scoring=neg_pinball_loss_05p_scorer,
+    n_jobs=2,
+    verbose=10,
+    random_state=42,
+).fit(X_train, y_train)
+search_05p.best_params_
+
+# %%
+# We observe that the search procedure identifies that deeper trees are needed
+# to get a good fit for the 5th percentile regressor. Deeper trees are more
+# expressive and less likely to underfit.
+#
+# Let's do another hyper-parameter tuning session for the 95th percentile
+# regressor. We need to redefine the `scoring` metric used to select the best
+# model, along with adjusting the alpha parameter of the inner gradient
+# boosting estimator itself:
+from sklearn.base import clone
+
+alpha = 0.95
+neg_pinball_loss_95p_scorer = make_scorer(
+    pinball_loss,
+    alpha=alpha,
+    greater_is_better=False,  # maximize the negative loss
+)
+search_95p = clone(search_05p).set_params(
+    estimator__alpha=alpha,
+    scoring=neg_pinball_loss_95p_scorer,
+)
+search_95p.fit(X_train, y_train)
+search_95p.best_params_
+
+# %%
+# This time, shallower trees are selected and lead to a more constant piecewise
+# and therefore more robust estimation of the 95th percentile. This is
+# beneficial as it avoids overfitting the large outliers of the log-normal
+# additive noise.
+#
+# We can confirm this intuition by displaying the predicted 90% confidence
+# interval comprised by the predictions of those two tuned quantile regressors:
+# the prediction of the upper 95th percentile has a much coarser shape than the
+# prediction of the lower 5th percentile:
+y_lower = search_05p.predict(xx)
+y_upper = search_95p.predict(xx)
+
+fig = plt.figure()
+plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
+plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
+plt.plot(xx, y_upper, 'k-')
+plt.plot(xx, y_lower, 'k-')
+plt.fill_between(xx.ravel(), y_lower, y_upper,
+                 alpha=0.5, fc='b', ec='None',
+                 label='Predicted 90% interval')
+plt.xlabel('$x$')
+plt.ylabel('$f(x)$')
+plt.ylim(-10, 20)
+plt.legend(loc='upper left')
+plt.title("Prediction with tuned hyper-parameters")
+plt.show()
