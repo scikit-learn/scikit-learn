@@ -136,10 +136,13 @@ DataFrame(results).set_index('model')
 # training converged.
 #
 # Note that because the target noise is skewed by the presence of large
-# outliers, the conditional estimation of the mean from the least squares model
-# is different from the median from quantile loss model with alpha=0.5. This
-# would not have been the case of a Gaussian noise where the least squares
-# loss would also have given a good estimator of the conditional median.
+# outliers, the expected conditional mean and conditional median are
+# signficiantly different and therefore one could not use the least squares
+# model get a good estimation of the conditional median nor the converse.
+#
+# If the target distribution had not been skewed and had no ouliers (e.g. with
+# a Gaussian noise), then median estimator and the least squares estimator
+# would have yielded similar predictions.
 #
 # We then do the same on the test set.
 results = []
