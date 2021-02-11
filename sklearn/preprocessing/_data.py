@@ -917,7 +917,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy,
+        X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False,
                         dtype=FLOAT_DTYPES, force_all_finite="allow-nan")
 
         if sparse.issparse(X):
