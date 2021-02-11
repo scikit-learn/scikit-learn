@@ -187,8 +187,8 @@ from sklearn.metrics import make_scorer
 
 
 param_grid = dict(
-    learning_rate=[0.01, 0.05, 0.1, 0.5, 1],
-    n_estimators=[50, 100, 150, 200, 250, 300],
+    learning_rate=[0.01, 0.05, 0.1],
+    n_estimators=[100, 150, 200, 250, 300],
     max_depth=[2, 5, 10, 15, 20],
     min_samples_leaf=[1, 5, 10, 20, 30, 50],
     min_samples_split=[2, 5, 10, 20, 30, 50],
@@ -202,11 +202,10 @@ neg_pinball_loss_05p_scorer = make_scorer(
 search_05p = RandomizedSearchCV(
     GradientBoostingRegressor(loss="quantile", alpha=alpha),
     param_grid,
-    n_iter=30,
+    n_iter=10,  # increase this if computational budget allows
     scoring=neg_pinball_loss_05p_scorer,
     n_jobs=2,
-    verbose=10,
-    random_state=42,
+    random_state=0,
 ).fit(X_train, y_train)
 search_05p.best_params_
 
