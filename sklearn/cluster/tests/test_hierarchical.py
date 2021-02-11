@@ -33,7 +33,6 @@ from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster._hierarchical_fast import average_merge, max_merge
 from sklearn.utils._fast_dict import IntFloatDict
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
 
 
@@ -94,17 +93,18 @@ def test_unstructured_linkage_tree():
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
         with ignore_warnings():
-            children, n_nodes, n_leaves, parent = assert_warns(
-                UserWarning, ward_tree, this_X.T, n_clusters=10)
+            with pytest.warns(UserWarning):
+                children, n_nodes, n_leaves, parent = ward_tree(
+                    this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
             with ignore_warnings():
-                children, n_nodes, n_leaves, parent = assert_warns(
-                    UserWarning, tree_builder, this_X.T, n_clusters=10)
-
+                with pytest.warns(UserWarning):
+                    children, n_nodes, n_leaves, parent = tree_builder(
+                        this_X.T, n_clusters=10)
             n_nodes = 2 * X.shape[1] - 1
             assert len(children) + n_leaves == n_nodes
 
@@ -550,7 +550,8 @@ def test_connectivity_fixing_non_lil():
     m = np.array([[True, False], [False, True]])
     c = grid_to_graph(n_x=2, n_y=2, mask=m)
     w = AgglomerativeClustering(connectivity=c, linkage='ward')
-    assert_warns(UserWarning, w.fit, x)
+    with pytest.warns(UserWarning):
+        w.fit(x)
 
 
 def test_int_float_dict():
