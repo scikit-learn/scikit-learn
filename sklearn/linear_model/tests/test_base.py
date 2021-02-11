@@ -520,6 +520,9 @@ def test_preprocess_data_weighted(is_sparse):
         )
         scaler = StandardScaler(with_mean=False).fit(
             X, sample_weight=sample_weight)
+        assert_array_almost_equal(
+            scaler.transform(X).toarray() / np.sqrt(n_samples), Xt.toarray()
+            )
     else:
         assert_array_almost_equal(
             Xt, (X - expected_X_mean) / expected_X_norm
@@ -527,7 +530,7 @@ def test_preprocess_data_weighted(is_sparse):
         scaler = StandardScaler(with_mean=True).fit(
             X, sample_weight=sample_weight)
         assert_array_almost_equal(scaler.mean_, X_mean)
-    assert_array_almost_equal(scaler.transform(X), Xt)
+        assert_array_almost_equal(scaler.transform(X) / np.sqrt(n_samples), Xt)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
