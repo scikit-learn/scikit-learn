@@ -304,9 +304,7 @@ def test_lasso_cv_positive_constraint():
 
 
 def _scale_alpha_inplace(estimator, n_samples):
-    """Rescale the alpha param to check equivalence with StandardScaler
-    
-    Rescale the alpha parameter from when the estimator is evoked with
+    """Rescale the parameter alpha from when the estimator is evoked with
     normalize set to True to when it is evoked in a Pipeline with normalize set
     to False and with a StandardScaler.
     """
@@ -441,7 +439,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         y = np.sign(y)
 
     # make sure the data is not centered to make the problem more
-    # difficult
+    # difficult + add 0s for the sparse case
     X[X < 0] = 0
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
