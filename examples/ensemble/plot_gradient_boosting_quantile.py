@@ -99,7 +99,7 @@ plt.legend(loc='upper left')
 plt.show()
 
 # %%
-# Measure the models given :func:`mean_square_error` and
+# Measure the models with :func:`mean_square_error` and
 # :func:`pinball_loss` metrics on the training dataset.
 results = []
 for name, gbr in sorted(gbrs.items()):
@@ -120,9 +120,9 @@ DataFrame(results).set_index('model')
 # converged. The measures give almost the same results
 # when the model is trained with MSE or with the quantile loss and alpha=0.5.
 # The random noise added to the data explains that proximity.
-# Both trainings would give much more different models if the dataset
-# had outliers or if the added noise was not gaussian.
-# The quantile loss is less sensitive to outliers.
+# The quantile loss is less sensitive to outliers but when
+# they are none and the noise is gaussian - which is the case here -,
+# both methics almost give the same results.
 #
 # We then do the same on the test set.
 results = []
