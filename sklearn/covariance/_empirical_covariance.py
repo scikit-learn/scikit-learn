@@ -235,6 +235,7 @@ class EmpiricalCovariance(BaseEstimator):
             The likelihood of the data set with `self.covariance_` as an
             estimator of its covariance matrix.
         """
+        X = self._validate_data(X_test, reset=False)
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(
             X_test - self.location_, assume_centered=True)
