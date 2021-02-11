@@ -466,7 +466,7 @@ def test_preprocess_data_multioutput():
 @pytest.mark.parametrize("is_sparse", [False, True])
 def test_preprocess_data_weighted(is_sparse):
     n_samples = 200
-    n_features = 2
+    n_features = 4
     # Generate random data with 50% of zero values to make sure
     # that the sparse variant of this test is actually sparse. This also
     # shifts the mean value for each columns in X further away from
