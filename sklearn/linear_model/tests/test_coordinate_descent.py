@@ -471,8 +471,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     reg_with_scaler.fit(X_train, y_train, **fit_params)
 
-    y_pred_norm = reg_with_normalize.predict(X_test)
-    y_pred_pip = reg_with_scaler.predict(X_test)
+    y_pred_nomalize = reg_with_normalize.predict(X_test)
+    y_pred_scaler = reg_with_scaler.predict(X_test)
 
     y_train_mean = np.average(y_train, weights=sample_weight)
     if is_sparse:
@@ -483,7 +483,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     assert (reg_with_normalize.intercept_ ==
             pytest.approx(y_train_mean -
                           reg_with_normalize.coef_.dot(X_train_mean)))
-    assert_allclose(y_pred_norm, y_pred_pip)
+    assert_allclose(y_pred_nomalize,  y_pred_scaler)
 
 
 # FIXME: 'normalize' to be removed in 1.2
