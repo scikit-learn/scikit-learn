@@ -30,7 +30,6 @@ from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import (assert_almost_equal,
                                     assert_raise_message,
-                                    assert_no_warnings,
                                     fails_if_pypy,
                                     assert_allclose_dense_sparse,
                                     skip_if_32bit)
@@ -1215,7 +1214,9 @@ def test_vectorizer_stop_words_inconsistent():
         assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
-    assert_no_warnings(vec.fit_transform, ['hello world'])
+    with pytest.warns(None) as record:
+        vec.fit_transform(['hello world'])
+    assert not len(record)
     assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment
