@@ -72,7 +72,6 @@ imp_reshaped = importances.reshape(img_shape)
 plt.matshow(imp_reshaped, cmap=plt.cm.hot)
 plt.title("Pixel importances using impurity values")
 plt.colorbar()
-plt.tight_layout()
 plt.show()
 
 # %%
@@ -100,7 +99,6 @@ print(f"Elapsed time to compute the importances: "
 plt.matshow(result.importances_mean.reshape(img_shape), cmap=plt.cm.hot)
 plt.title("Pixel importances using permutation importance")
 plt.colorbar()
-plt.tight_layout()
 plt.show()
 
 # %%
