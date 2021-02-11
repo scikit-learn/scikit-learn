@@ -473,10 +473,10 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     # Check that the 2 regressions models are exactly equivalent in the
     # sense that they predict exactly the same outcome.
-    y_pred_nomalize = reg_with_normalize.predict(X_test)
+    y_pred_normalize = reg_with_normalize.predict(X_test)
     y_pred_scaler = reg_with_scaler.predict(X_test)
-    assert_allclose(y_pred_nomalize,  y_pred_scaler)
-
+    assert_allclose(y_pred_normalize,  y_pred_scaler)
+    # Check intercept computation when normalize is True
     y_train_mean = np.average(y_train, weights=sample_weight)
     if is_sparse:
         X_train_mean, _ = mean_variance_axis(X_train, axis=0,
