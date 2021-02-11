@@ -278,7 +278,7 @@ def test_calibration_multiclass(method, ensemble, seed):
 
 def test_calibration_zero_probability():
     # Test an edge case where _CalibratedClassifier avoids numerical errors
-    # in the multiclass normalization step if the all the calibrators output
+    # in the multiclass normalization step if all the calibrators output
     # zero all at once for a given sample and instead fallback to uniform
     # probabilities.
     class ZeroCalibrator():
