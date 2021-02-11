@@ -255,6 +255,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             else:
                 X_scale_ = X_scale
             if sp.issparse(X):
+                # import pdb; pdb.set_trace()
                 inplace_column_scale(X, 1. / X_scale_)
             else:
                 X /= X_scale_
