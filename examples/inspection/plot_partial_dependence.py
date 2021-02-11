@@ -215,8 +215,8 @@ print('Computing partial dependence plots...')
 tic = time()
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
 display = plot_partial_dependence(
-    est, X_train, features, kind='both', n_jobs=3, grid_resolution=20,
-    ax=ax,
+    est, X_train, features, kind=['both', 'both', 'average'],
+    n_jobs=3, grid_resolution=20, ax=ax,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
