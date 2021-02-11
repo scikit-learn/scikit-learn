@@ -470,7 +470,7 @@ dummy_classification_data = make_classification(random_state=0)
       {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
       'feature_names should not contain duplicates'),
      (dummy_classification_data, {'features': [1, 2], 'kind': ["both"]},
-      'When kind is provided as a list of strings, it should contain'),
+      'When `kind` is provided as a list of strings, it should contain'),
      (dummy_classification_data, {'features': [(1, 2)], 'kind': 'individual'},
       'It is not possible to display individual effects for more than one'),
      (dummy_classification_data, {'features': [(1, 2)], 'kind': 'both'},
