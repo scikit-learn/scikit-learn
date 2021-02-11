@@ -13,6 +13,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.exceptions import ConvergenceWarning
@@ -450,24 +451,25 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     sample_weight = rng.rand(X_train.shape[0])
 
-    # linear estimator with explicit sample_weight
+    # linear estimator with explicit sample_weight, normalize = True
     reg_with_normalize = estimator(normalize=True, fit_intercept=True,
                                    **params)
     reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
 
-    # linear estimator in a pipeline
-    reg_with_scaler = make_pipeline(
-        StandardScaler(with_mean=with_mean),
-        estimator(normalize=False, fit_intercept=True, **params)
-    )
+    # linear estimator in a pipeline with a StandardScaler, normalize=False
+    linear_regressor = estimator(normalize=False, fit_intercept=True, **params)
+    _scale_alpha_inplace(linear_regressor, X_train.shape[0])  # rescale alpha
+    reg_with_scaler = Pipeline([
+        ("scaler", StandardScaler(with_mean=with_mean)),
+        ("linear_regressor", linear_regressor)
+    ])
 
-    _scale_alpha_inplace(reg_with_scaler[1], X_train.shape[0])
+    fit_params = {
+        "scaler__sample_weight":  sample_weight,
+        "linear_regressor__sample_weight": sample_weight,
+    }
 
-    kwargs = {reg_with_scaler.steps[0][0] + '__sample_weight':
-              sample_weight,
-              reg_with_scaler.steps[-1][0] + '__sample_weight':
-              sample_weight}
-    reg_with_scaler.fit(X_train, y_train, **kwargs)
+    reg_with_scaler.fit(X_train, y_train, **fit_params)
 
     y_pred_norm = reg_with_normalize.predict(X_test)
     y_pred_pip = reg_with_scaler.predict(X_test)
