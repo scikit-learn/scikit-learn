@@ -12,7 +12,6 @@ import numpy as np
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_allclose
 
@@ -91,12 +90,12 @@ def test_iforest_error():
     X = iris.data
 
     # Test max_samples
-    assert_raises(ValueError,
-                  IsolationForest(max_samples=-1).fit, X)
-    assert_raises(ValueError,
-                  IsolationForest(max_samples=0.0).fit, X)
-    assert_raises(ValueError,
-                  IsolationForest(max_samples=2.0).fit, X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples=-1).fit(X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples=0.0).fit(X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples=2.0).fit(X)
     # The dataset has less than 256 samples, explicitly setting
     # max_samples > n_samples should result in a warning. If not set
     # explicitly there should be no warning
@@ -117,11 +116,14 @@ def test_iforest_error():
                      if issubclass(each.category, UserWarning)]
     assert len(user_warnings) == 0
 
-    assert_raises(ValueError, IsolationForest(max_samples='foobar').fit, X)
-    assert_raises(ValueError, IsolationForest(max_samples=1.5).fit, X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples='foobar').fit(X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples=1.5).fit(X)
 
     # test X_test n_features match X_train one:
-    assert_raises(ValueError, IsolationForest().fit(X).predict, X[:, 1:])
+    with pytest.raises(ValueError):
+        IsolationForest().fit(X).predict(X[:, 1:])
 
 
 def test_recalculate_max_depth():

@@ -29,7 +29,6 @@ import joblib
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
@@ -833,12 +832,12 @@ def check_min_samples_split(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     # test boundary value
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_split=-1).fit, X, y)
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_split=0).fit, X, y)
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_split=1.1).fit, X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_split=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_split=0).fit(X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_split=1.1).fit(X, y)
 
     est = ForestEstimator(min_samples_split=10, n_estimators=1, random_state=0)
     est.fit(X, y)
@@ -870,10 +869,10 @@ def check_min_samples_leaf(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     # test boundary value
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=-1).fit, X, y)
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=0).fit, X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_leaf=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_leaf=0).fit(X, y)
 
     est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
     est.fit(X, y)
@@ -1026,14 +1025,15 @@ def test_memory_layout(name, dtype):
 @ignore_warnings
 def check_1d_input(name, X, X_2d, y):
     ForestEstimator = FOREST_ESTIMATORS[name]
-    assert_raises(ValueError, ForestEstimator(n_estimators=1,
-                                              random_state=0).fit, X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(n_estimators=1, random_state=0).fit(X, y)
 
     est = ForestEstimator(random_state=0)
     est.fit(X_2d, y)
 
     if name in FOREST_CLASSIFIERS or name in FOREST_REGRESSORS:
-        assert_raises(ValueError, est.predict, X)
+        with pytest.raises(ValueError):
+            est.predict(X)
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
@@ -1120,8 +1120,10 @@ def check_class_weight_errors(name):
 
     # Invalid preset string
     clf = ForestClassifier(class_weight='the larch', random_state=0)
-    assert_raises(ValueError, clf.fit, X, y)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
     # Warning warm_start with preset
     clf = ForestClassifier(class_weight='balanced', warm_start=True,
@@ -1137,11 +1139,13 @@ def check_class_weight_errors(name):
 
     # Not a list or preset for multi-output
     clf = ForestClassifier(class_weight=1, random_state=0)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
     # Incorrect length list for multi-output
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}], random_state=0)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
@@ -1210,7 +1214,8 @@ def check_warm_start_smaller_n_estimators(name):
     est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=True)
     est.fit(X, y)
     est.set_params(n_estimators=4)
-    assert_raises(ValueError, est.fit, X, y)
+    with pytest.raises(ValueError):
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
