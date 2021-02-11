@@ -465,7 +465,16 @@ def test_preprocess_data_multioutput():
 def test_preprocess_data_weighted(is_sparse):
     n_samples = 200
     n_features = 2
+    # Generate random data with 50% of zero values to make sure
+    # that the sparse variant of this test is actually sparse. This also
+    # shifts the mean value for each columns in X further away from
+    # zero.
     X = rng.rand(n_samples, n_features)
+    X[X < 0.5] = 0.
+    
+    # Scale the first feature of X to be 10 larger than the other to
+    # better check the impact of feature scaling.
+    X[:, 0] *= 10
     y = rng.rand(n_samples)
 
     sample_weight = rng.rand(n_samples)
