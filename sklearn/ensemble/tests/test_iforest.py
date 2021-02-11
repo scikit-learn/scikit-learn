@@ -100,9 +100,8 @@ def test_iforest_error():
     # The dataset has less than 256 samples, explicitly setting
     # max_samples > n_samples should result in a warning. If not set
     # explicitly there should be no warning
-    with pytest.warns(
-            UserWarning,
-            match="max_samples will be set to n_samples for estimation"):
+    warn_msg = "max_samples will be set to n_samples for estimation"
+    with pytest.warns(UserWarning, match=warn_msg):
         IsolationForest(max_samples=1000).fit(X)
     # note that assert_no_warnings does not apply since it enables a
     # PendingDeprecationWarning triggered by scipy.sparse's use of
@@ -139,9 +138,8 @@ def test_max_samples_attribute():
     assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=500)
-    with pytest.warns(
-            UserWarning,
-            match="max_samples will be set to n_samples for estimation"):
+    warn_msg = "max_samples will be set to n_samples for estimation"
+    with pytest.warns(UserWarning, match=warn_msg):
         clf.fit(X)
     assert clf.max_samples_ == X.shape[0]
 

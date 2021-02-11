@@ -558,11 +558,12 @@ def test_shape_y():
     # This will raise a DataConversionWarning that we want to
     # "always" raise, elsewhere the warnings gets ignored in the
     # later tests, and the tests that check for this warning fail
-    with pytest.warns(
-            DataConversionWarning,
-            match="A column-vector y was passed when a 1d array was expected. "
-                  "Please change the shape of y to \\(n_samples, \\), for "
-                  "example using ravel()."):
+    warn_msg = (
+        "A column-vector y was passed when a 1d array was expected. "
+        "Please change the shape of y to \\(n_samples, \\), for "
+        "example using ravel()."
+    )
+    with pytest.warns(DataConversionWarning, match=warn_msg):
         clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert 100 == len(clf.estimators_)

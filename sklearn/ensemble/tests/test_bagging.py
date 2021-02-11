@@ -346,18 +346,19 @@ def test_oob_score_classification():
         assert abs(test_score - clf.oob_score_) < 0.1
 
         # Test with few estimators
-        with pytest.warns(
-                UserWarning,
-                match="Some inputs do not have OOB scores. This probably "
-                      "means too few estimators were used to compute any "
-                      "reliable oob estimates."):
-            BaggingClassifier(base_estimator=base_estimator,
-                              n_estimators=1,
-                              bootstrap=True,
-                              oob_score=True,
-                              random_state=rng).fit(
-                X_train,
-                y_train)
+        warn_msg = (
+            "Some inputs do not have OOB scores. This probably means too few "
+            "estimators were used to compute any reliable oob estimates."
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            clf = BaggingClassifier(
+                base_estimator=base_estimator,
+                n_estimators=1,
+                bootstrap=True,
+                oob_score=True,
+                random_state=rng,
+            )
+            clf.fit(X_train, y_train)
 
 
 def test_oob_score_regression():
@@ -379,18 +380,18 @@ def test_oob_score_regression():
     assert abs(test_score - clf.oob_score_) < 0.1
 
     # Test with few estimators
-    with pytest.warns(
-            UserWarning,
-            match="Some inputs do not have OOB scores. This probably means "
-                  "too few estimators were used to compute any reliable oob "
-                  "estimates."):
-        BaggingRegressor(base_estimator=DecisionTreeRegressor(),
-                         n_estimators=1,
-                         bootstrap=True,
-                         oob_score=True,
-                         random_state=rng).fit(
-            X_train,
-            y_train)
+    warn_msg = (
+        "Some inputs do not have OOB scores. This probably means too few "
+        "estimators were used to compute any reliable oob estimates."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        regr = BaggingRegressor(
+            base_estimator=DecisionTreeRegressor(),
+            n_estimators=1,
+            bootstrap=True,
+            oob_score=True,
+            random_state=rng)
+        regr.fit(X_train, y_train)
 
 
 def test_single_estimator():
@@ -660,10 +661,8 @@ def test_warm_start_equal_n_estimators():
     # modify X to nonsense values, this should not change anything
     X_train += 1.
 
-    with pytest.warns(
-            UserWarning,
-            match="Warm-start fitting without increasing n_estimators "
-                  "does not"):
+    warn_msg = "Warm-start fitting without increasing n_estimators does not"
+    with pytest.warns(UserWarning, match=warn_msg):
         clf.fit(X_train, y_train)
     assert_array_equal(y_pred, clf.predict(X_test))
 
