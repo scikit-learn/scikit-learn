@@ -291,7 +291,7 @@ def test_calibration_zero_probability():
     clf = DummyClassifier().fit(X, y)
     calibrator = ZeroCalibrator()
     cal_clf = _CalibratedClassifier(
-        base_estimator=clf, calibrators=[calibrator], classes=n_classes)
+        base_estimator=clf, calibrators=[calibrator], classes=clf.classes_)
 
     probas = cal_clf.predict_proba(X)
 
