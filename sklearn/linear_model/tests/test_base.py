@@ -471,7 +471,7 @@ def test_preprocess_data_weighted(is_sparse):
     # zero.
     X = rng.rand(n_samples, n_features)
     X[X < 0.5] = 0.
-    
+
     # Scale the first feature of X to be 10 larger than the other to
     # better check the impact of feature scaling.
     X[:, 0] *= 10
