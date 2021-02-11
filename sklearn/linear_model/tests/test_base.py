@@ -478,7 +478,7 @@ def test_preprocess_data_weighted(is_sparse):
     # better check the impact of feature scaling.
     X[:, 0] *= 10
     # Constant non-zero feature
-    # X[:, 2] = 1.
+    X[:, 2] = 1.
     # Constant zero feature (non-materialized in the sparse case)
     X[:, 3] = 0.
     y = rng.rand(n_samples)
@@ -518,15 +518,21 @@ def test_preprocess_data_weighted(is_sparse):
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_norm, expected_X_norm)
 
-    expected_X_norm[expected_X_norm == 0] = 1
+    if np.any(expected_X_norm == 0):
+        expected_X_norm_ = expected_X_norm.copy()
+        expected_X_norm_[expected_X_norm_ == 0] = 1
+    else:
+        expected_X_norm_ = expected_X_norm
+    # avoid roundoff errors
+    expected_X_norm_[expected_X_norm_ < 1e-10] = 1
     if is_sparse:
         # X is not centered
         assert_array_almost_equal(
-            Xt.toarray(), X.toarray() / expected_X_norm
+            Xt.toarray(), X.toarray() / expected_X_norm_
         )
     else:
         assert_array_almost_equal(
-            Xt, (X - expected_X_mean) / expected_X_norm
+            Xt, (X - expected_X_mean) / expected_X_norm_
         )
 
     # _preprocess_data with normalize=True scales the data by the feature-wise
