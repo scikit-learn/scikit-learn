@@ -501,10 +501,10 @@ class PartialDependenceDisplay:
         - ``kind='average'`` results in the traditional PD plot;
         - ``kind='individual'`` results in the ICE plot.
 
-        A list of such string can be passed. The length of the list should be
-        as the number of interaction requested in `features`. This option
-        allows to silent warning when ICE plots are requested for both 1- and
-        2-way PD.
+        A list of such strings can be provided. The length of the list should
+        be the same as the number of interaction requested in `features`.
+        This option allows to silent warning when ICE plots are requested for
+        both 1- and 2-way PD.
 
        Note that the fast ``method='recursion'`` option is only available for
        ``kind='average'``. Plotting individual dependencies requires using the
@@ -908,11 +908,15 @@ class PartialDependenceDisplay:
         if isinstance(self.kind, str):
             kind = [self.kind] * len(self.features)
         else:
-            if len(self.kind) != len(self.features):
-                raise ValueError(
-                    "FIXME: we should have the length for kind and features"
-                )
             kind = self.kind
+
+        if len(kind) != len(self.features):
+            raise ValueError(
+                f"When `kind` is provided as a list of strings, it should "
+                f"contain as many elements as `features`. `kind` contains "
+                f"{len(kind)} element(s) and `features` contains "
+                f"{len(self.features)} element(s)."
+            )
 
         if ax is None:
             _, ax = plt.subplots()
