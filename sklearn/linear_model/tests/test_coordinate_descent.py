@@ -317,8 +317,11 @@ def _scale_alpha_inplace(estimator, n_samples):
     if isinstance(estimator, (ElasticNet, MultiTaskElasticNet)):
         if estimator.l1_ratio == 1:
             alpha = estimator.alpha * np.sqrt(n_samples)
-        if estimator.l1_ratio == 0:
+        elif estimator.l1_ratio == 0:
             alpha = estimator.alpha * n_samples
+        else:
+            # To avoid silent errors in case of refactoring
+            raise NotImplementedError
 
     estimator.set_params(alpha=alpha)
 
