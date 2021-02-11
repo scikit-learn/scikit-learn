@@ -461,10 +461,7 @@ def test_preprocess_data_multioutput():
         assert_array_almost_equal(yt, y - y_mean)
 
 
-@pytest.mark.parametrize(
-    "is_sparse",
-    [False, True]
-)
+@pytest.mark.parametrize("is_sparse", [False, True])
 def test_preprocess_data_weighted(is_sparse):
     n_samples = 200
     n_features = 2
