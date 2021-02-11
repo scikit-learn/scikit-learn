@@ -210,10 +210,10 @@ def plot_partial_dependence(
         - ``kind='average'`` results in the traditional PD plot;
         - ``kind='individual'`` results in the ICE plot.
 
-        A list of such string can be passed. The length of the list should be
-        as the number of interaction requested in `features`. This option
-        allows to silent warning when ICE plots are requested for both 1- and
-        2-way PD.
+        A list of such strings can be provided. The length of the list should
+        be the same as the number of interaction requested in `features`.
+        This option allows to silent warning when ICE plots are requested for
+        both 1- and 2-way PD.
 
        Note that the fast ``method='recursion'`` option is only available for
        ``kind='average'``. Plotting individual dependencies requires using the
@@ -294,12 +294,13 @@ def plot_partial_dependence(
     if len(set(feature_names)) != len(feature_names):
         raise ValueError('feature_names should not contain duplicates.')
 
+    # expand kind to always be a list of str
     kind_ = [kind] * len(features) if isinstance(kind, str) else kind
     if len(kind_) != len(features):
         raise ValueError(
-            f"When kind is provided as a list of strings, it should countain "
-            f"as many element as features. kind contains {len(kind)} elements "
-            f"and features contains {len(features)} element."
+            f"When `kind` is provided as a list of strings, it should contain "
+            f"as many elements as `features`. `kind` contains {len(kind_)} "
+            f"element(s) and `features` contains {len(features)} element(s)."
         )
 
     def convert_feature(fx):
@@ -311,8 +312,7 @@ def plot_partial_dependence(
         return int(fx)
 
     # convert features into a seq of int tuples
-    tmp_features = []
-    ice_for_two_way_pd = []
+    tmp_features, ice_for_two_way_pd = [], []
     for kind_plot, fxs in zip(kind_, features):
         if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
@@ -326,16 +326,15 @@ def plot_partial_dependence(
         if not 1 <= np.size(fxs) <= 2:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
-        if kind_plot != 'average' and np.size(fxs) > 1:
-            ice_for_two_way_pd.append(True)
-        else:
-            ice_for_two_way_pd.append(False)
+        # store the information if 2-way PD was requested with ICE to later
+        # warn or raise an error depending of the original value of `kind`
+        ice_for_two_way_pd.append(kind_plot != 'average' and np.size(fxs) > 1)
 
         tmp_features.append(fxs)
-    print(any(ice_for_two_way_pd), isinstance(kind, str))
 
     if (isinstance(kind, str) and any(ice_for_two_way_pd) and
             not all(ice_for_two_way_pd)):
+        # only warn when 1- and 2-way PD were requested and `kind` was a string
         warnings.warn(
             "You requested to plot individual response even with a 2-way "
             "partial dependence. If you set kind='both' or kind='individual' "
@@ -346,8 +345,8 @@ def plot_partial_dependence(
             "partial dependence.", UserWarning
         )
         kind_ = [
-            "average" if force_average else kind_plot
-            for force_average, kind_plot in zip(ice_for_two_way_pd, kind_)
+            "average" if forcing_average else kind_plot
+            for forcing_average, kind_plot in zip(ice_for_two_way_pd, kind_)
         ]
     elif any(ice_for_two_way_pd):
         raise ValueError(
