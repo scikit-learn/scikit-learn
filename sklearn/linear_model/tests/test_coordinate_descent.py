@@ -417,7 +417,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     ]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(
-        with_mean, is_sparse, estimator, params
+        is_sparse, with_mean, estimator, params
 ):
     # Test that the results for running linear model with sample_weight
     # and with normalize set to True gives similar results as the same linear
