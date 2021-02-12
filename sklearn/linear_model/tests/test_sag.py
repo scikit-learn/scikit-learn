@@ -846,4 +846,3 @@ def test_sag_classifier_raises_error(solver):
 
     with pytest.raises(ValueError, match="Floating-point under-/overflow"):
         clf.fit(X, y)
-        
