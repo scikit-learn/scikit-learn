@@ -1861,6 +1861,7 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     According to [1], the maximum of the L2 penalized likelihood automatically
     satisfies the symmetric constraint:
     sum(coef_k, k=1..c) = 0
+
     Further details can be found in the appendix of [2].
 
     Reference
