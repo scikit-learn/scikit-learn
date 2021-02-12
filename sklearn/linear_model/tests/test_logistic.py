@@ -19,6 +19,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns_message
@@ -216,34 +217,29 @@ def test_check_solver_option(LR):
     msg = ("Logistic Regression supports only solvers in ['liblinear', "
            "'newton-cg', 'lbfgs', 'sag', 'saga'], got wrong_name.")
     lr = LR(solver="wrong_name", multi_class="ovr")
-    with pytest.raises(ValueError, match=msg):
-        lr.fit(X, y)
+    assert_raise_message(ValueError, msg, lr.fit, X, y)
 
     msg = ("multi_class should be 'multinomial', 'ovr' or 'auto'. "
            "Got wrong_name")
     lr = LR(solver='newton-cg', multi_class="wrong_name")
-    with pytest.raises(ValueError, match=msg):
-        lr.fit(X, y)
+    assert_raise_message(ValueError, msg, lr.fit, X, y)
 
     # only 'liblinear' solver
     msg = "Solver liblinear does not support a multinomial backend."
     lr = LR(solver='liblinear', multi_class='multinomial')
-    with pytest.raises(ValueError, match=msg):
-        lr.fit(X, y)
+    assert_raise_message(ValueError, msg, lr.fit, X, y)
 
     # all solvers except 'liblinear' and 'saga'
     for solver in ['newton-cg', 'lbfgs', 'sag']:
         msg = ("Solver %s supports only 'l2' or 'none' penalties," %
                solver)
         lr = LR(solver=solver, penalty='l1', multi_class='ovr')
-        with pytest.raises(ValueError, match=msg):
-            lr.fit(X, y)
+        assert_raise_message(ValueError, msg, lr.fit, X, y)
     for solver in ['newton-cg', 'lbfgs', 'sag', 'saga']:
         msg = ("Solver %s supports only dual=False, got dual=True" %
                solver)
         lr = LR(solver=solver, dual=True, multi_class='ovr')
-        with pytest.raises(ValueError, match=msg):
-            lr.fit(X, y)
+        assert_raise_message(ValueError, msg, lr.fit, X, y)
 
     # only saga supports elasticnet. We only test for liblinear because the
     # error is raised before for the other solvers (solver %s supports only l2
@@ -252,14 +248,12 @@ def test_check_solver_option(LR):
         msg = ("Only 'saga' solver supports elasticnet penalty, got "
                "solver={}.".format(solver))
         lr = LR(solver=solver, penalty='elasticnet')
-        with pytest.raises(ValueError, match=msg):
-            lr.fit(X, y)
+        assert_raise_message(ValueError, msg, lr.fit, X, y)
 
     # liblinear does not support penalty='none'
     msg = "penalty='none' is not supported for the liblinear solver"
     lr = LR(penalty='none', solver='liblinear')
-    with pytest.raises(ValueError, match=msg):
-        lr.fit(X, y)
+    assert_raise_message(ValueError, msg, lr.fit, X, y)
 
 
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
@@ -443,8 +437,8 @@ def test_liblinear_dual_random_state():
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
     # different results for different random states
     msg = "Arrays are not almost equal to 6 decimals"
-    with pytest.raises(ValueError, match=msg):
-        assert_array_almost_equal(lr1.coef_, lr3.coef_)
+    assert_raise_message(AssertionError, msg,
+                         assert_array_almost_equal, lr1.coef_, lr3.coef_)
 
 
 def test_logistic_loss_and_grad():
@@ -1063,8 +1057,7 @@ def test_logreg_intercept_scaling():
         msg = ('Intercept scaling is %r but needs to be greater than 0.'
                ' To disable fitting an intercept,'
                ' set fit_intercept=False.' % clf.intercept_scaling)
-        with pytest.raises(ValueError, match=msg):
-            clf.fit(X, Y1)
+        assert_raise_message(ValueError, msg, clf.fit, X, Y1)
 
 
 def test_logreg_intercept_scaling_zero():
@@ -1639,11 +1632,10 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
 def test_l1_ratio_param(l1_ratio):
 
     msg = "l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio
-    with pytest.raises(ValueError, match=msg):
-        LogisticRegression(penalty='elasticnet',
-                           solver='saga',
-                           l1_ratio=l1_ratio).fit(X, Y1)
-
+    assert_raise_message(ValueError, msg,
+                         LogisticRegression(penalty='elasticnet',
+                                            solver='saga',
+                                            l1_ratio=l1_ratio).fit, X, Y1)
     if l1_ratio is not None:
         msg = ("l1_ratio parameter is only used when penalty is 'elasticnet'."
                " Got (penalty=l1)")
@@ -1657,11 +1649,11 @@ def test_l1_ratios_param(l1_ratios):
 
     msg = ("l1_ratios must be a list of numbers between 0 and 1; got "
            "(l1_ratios=%r)" % l1_ratios)
-    with pytest.raises(ValueError, match=msg):
-        LogisticRegressionCV(penalty='elasticnet',
-                             solver='saga',
-                             l1_ratios=l1_ratios, cv=2).fit(X, Y1)
-
+    assert_raise_message(ValueError, msg,
+                         LogisticRegressionCV(penalty='elasticnet',
+                                              solver='saga',
+                                              l1_ratios=l1_ratios, cv=2).fit,
+                         X, Y1)
     if l1_ratios is not None:
         msg = ("l1_ratios parameter is only used when penalty is "
                "'elasticnet'. Got (penalty=l1)")
@@ -1782,10 +1774,12 @@ def test_penalty_none(solver):
     assert_array_equal(pred_none, pred_l2_C_inf)
 
     lr = LogisticRegressionCV(penalty='none')
-    with pytest.raises(ValueError, match="penalty='none' is not useful and "
-                                         "not supported by "
-                                         "LogisticRegressionCV"):
-        lr.fit(X, y)
+    assert_raise_message(
+        ValueError,
+        "penalty='none' is not useful and not supported by "
+        "LogisticRegressionCV",
+        lr.fit, X, y
+    )
 
 
 @pytest.mark.parametrize(
