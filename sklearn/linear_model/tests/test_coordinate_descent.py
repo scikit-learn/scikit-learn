@@ -812,7 +812,7 @@ def test_precompute_invalid_argument():
             clf.fit(X, y)
 
     # Precompute = 'auto' is not supported for ElasticNet and Lasso
-    err_msg =  ".*should be.*True.*False.*array-like.*Got 'auto'"
+    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
     with pytest.raises(ValueError, match=err_msg):
         ElasticNet(precompute='auto').fit(X, y)
 
