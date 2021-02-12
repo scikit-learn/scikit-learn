@@ -124,7 +124,6 @@ class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     def partial_fit(self, X, y=None, **params):
         self.train_sizes += X.shape[0]
         self.x = X[0]
-
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(params)
             if missing:
@@ -887,11 +886,11 @@ def test_cross_val_predict_decision_function_shape():
     X = X[:100]
     y = y[:100]
     error_message = 'Only 1 class/es in training fold,'\
-                         ' but 2 in overall dataset. This'\
-                         ' is not supported for decision_function'\
-                         ' with imbalanced folds. To fix '\
-                         'this, use a cross-validation technique '\
-                         'resulting in properly stratified folds'\
+                    ' but 2 in overall dataset. This'\
+                    ' is not supported for decision_function'\
+                    ' with imbalanced folds. To fix '\
+                    'this, use a cross-validation technique '\
+                    'resulting in properly stratified folds'\
 
     with pytest.raises(ValueError, match=error_message):
         cross_val_predict(RidgeClassifier(), X, y,
@@ -1779,27 +1778,27 @@ def test_fit_and_score_failing():
 
     fit_and_score_kwargs = {'error_score': 'raise'}
     # check if exception was raised, with default error_score='raise'
-    with pytest.raises(ValueError, 
+    with pytest.raises(ValueError,
                        match="Failing classifier failed as required"):
-         _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
+        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
 
     # check that functions upstream pass error_score param to _fit_and_score
     error_message = ("error_score must be the string 'raise' or a"
                      " numeric value. (Hint: if using 'raise', please"
                      " make sure that it has been spelled correctly.)")
     with pytest.raises(ValueError, match=re.escape(error_message)):
-         cross_validate(failing_clf, X, cv=3, error_score='unvalid-string')
+        cross_validate(failing_clf, X, cv=3, error_score='unvalid-string')
 
     with pytest.raises(ValueError, match=re.escape(error_message)):
-         cross_val_score(failing_clf, X, cv=3, error_score='unvalid-string')
+        cross_val_score(failing_clf, X, cv=3, error_score='unvalid-string')
 
     with pytest.raises(ValueError, match=re.escape(error_message)):
         learning_curve(failing_clf, X, y, cv=3, error_score='unvalid-string')
 
     with pytest.raises(ValueError, match=re.escape(error_message)):
-         validation_curve(failing_clf, X, y, param_name='parameter',
-                          param_range=[FailingClassifier.FAILING_PARAMETER],
-                          cv=3, error_score='unvalid-string')
+        validation_curve(failing_clf, X, y, param_name='parameter',
+                         param_range=[FailingClassifier.FAILING_PARAMETER],
+                         cv=3, error_score='unvalid-string')
 
     assert failing_clf.score() == 0.  # FailingClassifier coverage
 
@@ -1898,7 +1897,6 @@ def test_cross_validate_failing_scorer(
                     # check the test (and optionally train score) for all
                     # scorers that should be assigned to `error_score`.
                     assert_allclose(results[key], error_score)
-
 
 
 def three_params_scorer(i, j, k):
