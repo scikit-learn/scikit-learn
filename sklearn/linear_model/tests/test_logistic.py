@@ -1,5 +1,4 @@
 import os
-import sys
 import re
 import warnings
 import numpy as np
