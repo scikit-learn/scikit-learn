@@ -385,8 +385,8 @@ def test_countvectorizer_uppercase_in_vocab():
                " be matched with any documents")
 
     vectorizer = CountVectorizer(lowercase=True, vocabulary=vocabulary)
-    assert_warns_message(UserWarning, message,
-                         vectorizer.fit_transform, vocabulary)
+    with pytest.warns(UserWarning, match=message):
+        vectorizer.fit_transform(vocabulary)
 
 
 def test_tf_idf_smoothing():
