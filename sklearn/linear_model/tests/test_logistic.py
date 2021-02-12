@@ -1,5 +1,4 @@
 import os
-import sys
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
@@ -1691,9 +1690,9 @@ def test_logistic_regression_path_coefs_multinomial():
 
 
 @pytest.mark.parametrize('est',
-                         [LogisticRegression(random_state=0),
+                         [LogisticRegression(random_state=0, max_iter=500),
                           LogisticRegressionCV(random_state=0, cv=3,
-                                               Cs=3, tol=1e-3)],
+                                               Cs=3, tol=1e-3, max_iter=500)],
                          ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
                                     'saga'])
@@ -1703,8 +1702,9 @@ def test_logistic_regression_multi_class_auto(est, solver):
     def fit(X, y, **kw):
         return clone(est).set_params(**kw).fit(X, y)
 
-    X = iris.data[::10]
-    X2 = iris.data[1::10]
+    scaled_data = scale(iris.data)
+    X = scaled_data[::10]
+    X2 = scaled_data[1::10]
     y_multi = iris.target[::10]
     y_bin = y_multi == 0
     est_auto_bin = fit(X, y_bin, multi_class='auto', solver=solver)
@@ -1722,10 +1722,6 @@ def test_logistic_regression_multi_class_auto(est, solver):
     else:
         est_multi_multi = fit(X, y_multi, multi_class='multinomial',
                               solver=solver)
-        if sys.platform == 'darwin' and solver == 'lbfgs':
-            pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
-                         'multi_class="multinomial") is nondeterministic on '
-                         'MacOS.')
         assert_allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert_allclose(est_auto_multi.predict_proba(X2),
                         est_multi_multi.predict_proba(X2))
@@ -1869,3 +1865,23 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     assert_allclose(clf.coef_.sum(axis=0), 0, atol=1e-10)
     if fit_intercept:
         clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-15)
+
+
+@pytest.mark.parametrize("multi_class", ['ovr', 'multinomial', 'auto'])
+@pytest.mark.parametrize("class_weight", [
+    {0: 1.0, 1: 10.0, 2: 1.0}, 'balanced'
+])
+def test_sample_weight_not_modified(multi_class, class_weight):
+    X, y = load_iris(return_X_y=True)
+    n_features = len(X)
+    W = np.ones(n_features)
+    W[:n_features // 2] = 2
+
+    expected = W.copy()
+
+    clf = LogisticRegression(random_state=0,
+                             class_weight=class_weight,
+                             max_iter=200,
+                             multi_class=multi_class)
+    clf.fit(X, y, sample_weight=W)
+    assert_allclose(expected, W)

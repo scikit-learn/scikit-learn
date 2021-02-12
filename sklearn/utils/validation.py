@@ -1273,7 +1273,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     return lambdas
 
 
-def _check_sample_weight(sample_weight, X, dtype=None):
+def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
@@ -1296,6 +1296,9 @@ def _check_sample_weight(sample_weight, X, dtype=None):
        is be allocated.  If `dtype` is not one of `float32`, `float64`,
        `None`, the output will be of dtype `float64`.
 
+    copy : bool, default=False
+        If True, a copy of sample_weight will be created.
+
     Returns
     -------
     sample_weight : ndarray of shape (n_samples,)
@@ -1315,7 +1318,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
             sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
-            order="C"
+            order="C", copy=copy
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")

@@ -655,3 +655,11 @@ def test_update_dict():
     _update_dict(newd_online, X, code, A, B)
 
     assert_allclose(newd_batch, newd_online)
+
+
+@pytest.mark.parametrize("Estimator", [DictionaryLearning,
+                                       MiniBatchDictionaryLearning])
+def test_warning_default_transform_alpha(Estimator):
+    dl = Estimator(alpha=0.1)
+    with pytest.warns(FutureWarning, match="default transform_alpha"):
+        dl.fit_transform(X)
