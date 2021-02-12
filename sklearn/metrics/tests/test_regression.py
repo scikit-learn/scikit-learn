@@ -357,6 +357,10 @@ def test_pinball_loss_on_constant_predictions(
     distribution,
     target_quantile
 ):
+    if not hasattr(np, "quantile"):
+        pytest.skip("This test requires a more recent version of numpy "
+                    "with support for np.quantile.")
+
     # Check that the pinball loss is minimized
     n_samples = 100
     rng = np.random.RandomState(42)
