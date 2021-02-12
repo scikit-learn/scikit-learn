@@ -1783,8 +1783,7 @@ def test_penalty_none(solver):
 
     lr = LogisticRegressionCV(penalty='none')
     with pytest.raises(TypeError, "penalty='none' is not useful and "
-                                   "not supported by "
-                                   "LogisticRegressionCV"):
+                                  "not supported by LogisticRegressionCV"):
         lr.fit(X, y)
 
 
