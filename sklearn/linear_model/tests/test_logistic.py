@@ -1,8 +1,6 @@
 import os
-
 import sys
 import re
-
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
@@ -216,8 +214,8 @@ def test_multinomial_validation(solver):
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
 
-    msg = ["Logistic Regression supports only solvers in ['liblinear', "
-           "'newton-cg', 'lbfgs', 'sag', 'saga'], got wrong_name."]
+    msg = (r"Logistic Regression supports only solvers in \['liblinear', "
+           r"'newton-cg', 'lbfgs', 'sag', 'saga'\], got wrong_name.")
     lr = LR(solver="wrong_name", multi_class="ovr")
     with pytest.raises(ValueError, match=msg):
         lr.fit(X, y)
@@ -1641,7 +1639,7 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
 @pytest.mark.parametrize('l1_ratio', (-1, 2, None, 'something_wrong'))
 def test_l1_ratio_param(l1_ratio):
 
-    msg = ("l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio)
+    msg = r"l1_ratio must be between 0 and 1; got \(l1_ratio=%r\)" % l1_ratio
     with pytest.raises(ValueError, match=msg):
         LogisticRegression(penalty='elasticnet', solver='saga',
                            l1_ratio=l1_ratio).fit(X, Y1)
@@ -1790,7 +1788,7 @@ def test_penalty_none(solver):
         "penalty='none' is not useful and not supported by "
         "LogisticRegressionCV"
     )
-    with pytest.raises(TypeError, match=err_msg):
+    with pytest.raises(ValueError, match=err_msg):
         lr.fit(X, y)
 
 
