@@ -270,10 +270,11 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             if isinstance(base_estimator, LinearRegression):
                 min_samples = X.shape[1] + 1
             else:
-                raise ValueError("A value for min_samples must be provided "
-                                 "for models other than LinearRegression. The "
-                                 "appropriate value will be dependent on the "
-                                 "precise model.")
+                raise ValueError(
+                    "A value for min_samples must be provided for models other "
+                    "than LinearRegression. The appropriate value will be "
+                    "dependent on the precise model."
+                )
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
