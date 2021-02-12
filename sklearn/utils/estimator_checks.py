@@ -26,7 +26,9 @@ from ._testing import create_memmap_backed_data
 from ._testing import raises
 from . import is_scalar_nan
 
+from ..linear_model import LinearRegression
 from ..linear_model import LogisticRegression
+from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
 
 from ..base import (
@@ -347,7 +349,9 @@ def _construct_instance(Estimator):
     required_parameters = getattr(Estimator, "_required_parameters", [])
     if len(required_parameters):
         if required_parameters in (["estimator"], ["base_estimator"]):
-            if issubclass(Estimator, RegressorMixin):
+            if issubclass(Estimator, RANSACRegressor):
+                estimator = Estimator(LinearRegression())
+            elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LogisticRegression(C=1))
