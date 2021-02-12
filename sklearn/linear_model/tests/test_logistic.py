@@ -1,5 +1,4 @@
 import os
-import sys
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
@@ -1691,9 +1690,9 @@ def test_logistic_regression_path_coefs_multinomial():
 
 
 @pytest.mark.parametrize('est',
-                         [LogisticRegression(random_state=0),
+                         [LogisticRegression(random_state=0, max_iter=500),
                           LogisticRegressionCV(random_state=0, cv=3,
-                                               Cs=3, tol=1e-3)],
+                                               Cs=3, tol=1e-3, max_iter=500)],
                          ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
                                     'saga'])
@@ -1703,8 +1702,9 @@ def test_logistic_regression_multi_class_auto(est, solver):
     def fit(X, y, **kw):
         return clone(est).set_params(**kw).fit(X, y)
 
-    X = iris.data[::10]
-    X2 = iris.data[1::10]
+    scaled_data = scale(iris.data)
+    X = scaled_data[::10]
+    X2 = scaled_data[1::10]
     y_multi = iris.target[::10]
     y_bin = y_multi == 0
     est_auto_bin = fit(X, y_bin, multi_class='auto', solver=solver)
@@ -1722,10 +1722,6 @@ def test_logistic_regression_multi_class_auto(est, solver):
     else:
         est_multi_multi = fit(X, y_multi, multi_class='multinomial',
                               solver=solver)
-        if sys.platform == 'darwin' and solver == 'lbfgs':
-            pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
-                         'multi_class="multinomial") is nondeterministic on '
-                         'MacOS.')
         assert_allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert_allclose(est_auto_multi.predict_proba(X2),
                         est_multi_multi.predict_proba(X2))
