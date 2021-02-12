@@ -78,6 +78,7 @@ def test_predict_2_classes():
 def test_error():
     # Test for appropriate exception on errors
     msg = "Penalty term must be positive"
+
     with pytest.raises(ValueError, match=msg):
         LogisticRegression(C=-1).fit(X, Y1)
 
@@ -85,7 +86,6 @@ def test_error():
         LogisticRegression(C="test").fit(X, Y1)
 
     msg = "is not a valid scoring value"
-
     with pytest.raises(ValueError, match=msg):
         LogisticRegressionCV(scoring='bad-scorer', cv=2).fit(X, Y1)
 
@@ -204,6 +204,7 @@ def test_predict_iris():
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
 def test_multinomial_validation(solver):
     lr = LogisticRegression(C=-1, solver=solver, multi_class='multinomial')
+
     with pytest.raises(ValueError):
         lr.fit([[0, 1], [1, 0]], [0, 1])
 
@@ -215,21 +216,18 @@ def test_check_solver_option(LR):
     msg = ("Logistic Regression supports only solvers in ['liblinear', "
            "'newton-cg', 'lbfgs', 'sag', 'saga'], got wrong_name.")
     lr = LR(solver="wrong_name", multi_class="ovr")
-
     with pytest.raises(ValueError, match=msg):
         lr.fit(X, y)
 
     msg = ("multi_class should be 'multinomial', 'ovr' or 'auto'. "
            "Got wrong_name")
     lr = LR(solver='newton-cg', multi_class="wrong_name")
-
     with pytest.raises(ValueError, match=msg):
         lr.fit(X, y)
 
     # only 'liblinear' solver
     msg = "Solver liblinear does not support a multinomial backend."
     lr = LR(solver='liblinear', multi_class='multinomial')
-
     with pytest.raises(ValueError, match=msg):
         lr.fit(X, y)
 
@@ -238,16 +236,15 @@ def test_check_solver_option(LR):
         msg = ("Solver %s supports only 'l2' or 'none' penalties," %
                solver)
         lr = LR(solver=solver, penalty='l1', multi_class='ovr')
-
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
-
     for solver in ['newton-cg', 'lbfgs', 'sag', 'saga']:
         msg = ("Solver %s supports only dual=False, got dual=True" %
                solver)
         lr = LR(solver=solver, dual=True, multi_class='ovr')
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
+
     # only saga supports elasticnet. We only test for liblinear because the
     # error is raised before for the other solvers (solver %s supports only l2
     # penalties)
@@ -338,6 +335,7 @@ def test_inconsistent_input():
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
+
     with pytest.raises(ValueError):
         clf.fit(X, y_wrong)
 
@@ -361,6 +359,7 @@ def test_nan():
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
     logistic = LogisticRegression(random_state=0)
+
     with pytest.raises(ValueError):
         logistic.fit(Xnan, Y1)
 
@@ -444,8 +443,7 @@ def test_liblinear_dual_random_state():
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
     # different results for different random states
     msg = "Arrays are not almost equal to 6 decimals"
-
-    with pytest.raises(AssertionError, match=msg):
+    with pytest.raises(ValueError, match=msg):
         assert_array_almost_equal(lr1.coef_, lr3.coef_)
 
 
@@ -1065,7 +1063,6 @@ def test_logreg_intercept_scaling():
         msg = ('Intercept scaling is %r but needs to be greater than 0.'
                ' To disable fitting an intercept,'
                ' set fit_intercept=False.' % clf.intercept_scaling)
-
         with pytest.raises(ValueError, match=msg):
             clf.fit(X, Y1)
 
@@ -1642,14 +1639,13 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
 def test_l1_ratio_param(l1_ratio):
 
     msg = "l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio
-
     with pytest.raises(ValueError, match=msg):
         LogisticRegression(penalty='elasticnet',
-                           solver='saga', l1_ratio=l1_ratio).fit(X, Y1)
+                           solver='saga',
+                           l1_ratio=l1_ratio).fit(X, Y1)
 
     if l1_ratio is not None:
-        msg = ("l1_ratio parameter is only used when"
-               "penalty is 'elasticnet'."
+        msg = ("l1_ratio parameter is only used when penalty is 'elasticnet'."
                " Got (penalty=l1)")
         assert_warns_message(UserWarning, msg,
                              LogisticRegression(penalty='l1', solver='saga',
@@ -1661,7 +1657,6 @@ def test_l1_ratios_param(l1_ratios):
 
     msg = ("l1_ratios must be a list of numbers between 0 and 1; got "
            "(l1_ratios=%r)" % l1_ratios)
-
     with pytest.raises(ValueError, match=msg):
         LogisticRegressionCV(penalty='elasticnet',
                              solver='saga',
@@ -1787,9 +1782,9 @@ def test_penalty_none(solver):
     assert_array_equal(pred_none, pred_l2_C_inf)
 
     lr = LogisticRegressionCV(penalty='none')
-
-    with pytest.raises(ValueError, match="penalty='none' is not useful and"
-                       "not supported by LogisticRegressionCV"):
+    with pytest.raises(ValueError, match="penalty='none' is not useful and "
+                                         "not supported by "
+                                         "LogisticRegressionCV"):
         lr.fit(X, y)
 
 
@@ -1859,22 +1854,18 @@ def test_scores_attribute_layout_elasticnet():
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_multinomial_identifiability_on_iris(fit_intercept):
     """Test that the multinomial classification is identifiable.
-
     A multinomial with c classes can be modeled with
     probability_k = exp(X@coef_k) / sum(exp(X@coef_l), l=1..c) for k=1..c.
     This is not identifiable, unless one chooses a further constraint.
     According to [1], the maximum of the L2 penalized likelihood automatically
     satisfies the symmetric constraint:
     sum(coef_k, k=1..c) = 0
-
     Further details can be found in the appendix of [2].
-
     Reference
     ---------
     .. [1] Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
     penalized logistic regression". Biostatistics 5 3 (2004): 427-43.
     https://doi.org/10.1093/biostatistics%2Fkxg046
-
     .. [2] Powers, Scott, Trevor J. Hastie and Robert Tibshirani. "Nuclear
     penalized multinomial regression with an application to predicting at bat
     outcomes in baseball." Statistical modelling 18 5-6 (2017): 388-410 .
