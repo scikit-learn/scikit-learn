@@ -730,12 +730,21 @@ def test_enet_multitarget():
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
 
 
-def test_multioutput_enetcv_error():
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 2)
-    y = rng.randn(10, 2)
-    clf = ElasticNetCV()
-    assert_raises(ValueError, clf.fit, X, y)
+@pytest.mark.parametrize("LinearModel", (RidgeCV, ElasticNetCV))
+def test_linear_model_cv_multitarget(LinearModel):
+    n_targets = 3
+    X, y, _, _ = build_dataset(n_samples=10, n_features=8,
+                               n_informative_features=10, n_targets=n_targets)
+    estimator = LinearModel(cv=3)
+    estimator.fit(X, y)
+    coef, intercept, alpha = (estimator.coef_, estimator.intercept_,
+                              estimator.alpha_)
+
+    estimator.set_params(alphas=[alpha])
+    for k in range(n_targets):
+        estimator.fit(X, y[:, k])
+        assert_array_almost_equal(coef[k, :], estimator.coef_)
+        assert_array_almost_equal(intercept[k], estimator.intercept_)
 
 
 def test_multitask_enet_and_lasso_cv():
