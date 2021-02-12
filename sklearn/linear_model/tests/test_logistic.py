@@ -1854,6 +1854,7 @@ def test_scores_attribute_layout_elasticnet():
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_multinomial_identifiability_on_iris(fit_intercept):
     """Test that the multinomial classification is identifiable.
+
     A multinomial with c classes can be modeled with
     probability_k = exp(X@coef_k) / sum(exp(X@coef_l), l=1..c) for k=1..c.
     This is not identifiable, unless one chooses a further constraint.
@@ -1861,6 +1862,7 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     satisfies the symmetric constraint:
     sum(coef_k, k=1..c) = 0
     Further details can be found in the appendix of [2].
+
     Reference
     ---------
     .. [1] Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
