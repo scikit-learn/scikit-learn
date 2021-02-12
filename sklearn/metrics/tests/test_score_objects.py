@@ -63,7 +63,7 @@ REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'mean_absolute_percentage_error',
                       'mean_squared_error', 'median_absolute_error',
                       'max_error', 'neg_mean_poisson_deviance',
-                      'neg_mean_gamma_deviance', 'neg_pinball_loss']
+                      'neg_mean_gamma_deviance']
 
 CLF_SCORERS = ['accuracy', 'balanced_accuracy', 'top_k_accuracy',
                'f1', 'f1_weighted', 'f1_macro', 'f1_micro',

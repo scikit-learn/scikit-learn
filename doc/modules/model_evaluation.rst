@@ -101,7 +101,6 @@ Scoring                                Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'neg_pinball_loss'                     :func:`metrics.pinball_loss`
 ====================================   ==============================================     ==================================
 
 
