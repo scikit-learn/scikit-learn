@@ -352,3 +352,11 @@ def test_works_with_sparse_data():
                                      random_state=1).fit(sp.csr_matrix(data))
         assert_array_almost_equal(densify(rp_dense.components_),
                                   densify(rp_sparse.components_))
+
+
+def test_johnson_lindenstrauss_min_dim():
+    """Test Johnson-Lindenstrauss for small eps.
+
+    Regression test for #17111: before #19374, 32-bit systems would fail.
+    """
+    assert johnson_lindenstrauss_min_dim(100, eps=1e-5) == 368416070986
