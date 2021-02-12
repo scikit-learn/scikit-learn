@@ -2373,14 +2373,19 @@ is set to 0.5.
 Here is a small example of usage of the :func:`pinball_loss` function::
 
   >>> from sklearn.metrics import pinball_loss
-  >>> y_true = [3, -0.5, 2, 7]
-  >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> pinball_loss(y_true, y_pred)
-  0.25
-  >>> y_true = [3, -0.5, 2, 7]
-  >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> pinball_loss(y_true, y_pred, alpha=0.1)
-  0.35
+  >>> y_true = [1, 2, 3]
+  >>> pinball_loss(y_true, [0, 2, 3], alpha=0.1)
+  0.03...
+  >>> pinball_loss(y_true, [1, 2, 4], alpha=0.1)
+  0.3...
+  >>> pinball_loss(y_true, [0, 2, 3], alpha=0.9)
+  0.3...
+  >>> pinball_loss(y_true, [1, 2, 4], alpha=0.9)
+  0.03...
+  >>> pinball_loss(y_true, [1, 2, 3], alpha=0.1)
+  0.0...
+  >>> pinball_loss(y_true, [1, 2, 3], alpha=0.9)
+  0.0...
 
 It is possible to build a scorer object with a specific choice of alpha to
 perform, for instance to evaluate a regressor of the 95th percentile::
