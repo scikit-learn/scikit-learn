@@ -602,6 +602,8 @@ def test_radius_neighbors_classifier_zero_distance():
                                                       algorithm=algorithm)
             clf.fit(X, y)
             with np.errstate(invalid="ignore"):
+                # Ignore the warning raised in _weight_func when making
+                # predictions with null distances resulting in np.inf values.
                 assert_array_equal(correct_labels1, clf.predict(z1))
 
 
