@@ -350,13 +350,39 @@ def test_mean_absolute_percentage_error():
     assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(0.2)
 
 
-def test_pinball_loss():
-    data = np.linspace(0, 1, 100)
-    th = 0.2
-    for constant_pred in range(0, 11):
-        alpha = constant_pred / 10
-        pbl = pinball_loss(data, alpha * np.ones(100), alpha=th)
-        err = ((alpha - data[data < alpha]).sum() * (1 - th) +
-               (data[data >= alpha] - alpha).sum() * th)
-        err /= data.shape[0]
-        assert_almost_equal(err, pbl)
+@pytest.mark.parametrize("distribution",
+                         ["normal", "lognormal", "exponential", "uniform"])
+@pytest.mark.parametrize("target_quantile", [0.05, 0.5, 0.75])
+def test_pinball_loss_on_constant_predictions(
+    distribution,
+    target_quantile
+):
+    # Check that the pinball loss is minimized
+    n_samples = 100
+    rng = np.random.RandomState(42)
+    data = getattr(rng, distribution)(size=n_samples)
+
+    # Compute the best possible pinball loss for any constant predictor:
+    best_pred = np.quantile(data, target_quantile)
+    best_pred = np.full(n_samples, fill_value=best_pred)
+    best_pbl = pinball_loss(data, best_pred, alpha=target_quantile)
+
+    candidate_predictions = np.quantile(data, np.linspace(0, 1, 100))
+    for pred in candidate_predictions:
+        # Compute the pinball loss of a constant predictor:
+        constant_pred = np.full(n_samples, fill_value=pred)
+        pbl = pinball_loss(data, constant_pred, alpha=target_quantile)
+
+        # Check that the loss of this constant predictor is greater or equal
+        # than the loss of using the optimal quantile (up to machine
+        # precision):
+        assert pbl >= best_pbl - np.finfo(best_pbl.dtype).eps
+
+        # Check that the value of the pinball loss matches the analytical
+        # formula.
+        expected_pbl = (
+            (pred - data[data < pred]).sum() * (1 - target_quantile) +
+            (data[data >= pred] - pred).sum() * target_quantile
+        )
+        expected_pbl /= n_samples
+        assert_almost_equal(expected_pbl, pbl)
