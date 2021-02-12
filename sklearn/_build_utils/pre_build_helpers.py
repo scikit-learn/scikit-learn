@@ -73,10 +73,16 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
                                       extra_preargs=extra_preargs,
                                       extra_postargs=extra_postargs)
 
-            # Run test program
-            # will raise a CalledProcessError if return code was non-zero
-            output = subprocess.check_output('./test_program')
-            output = output.decode(sys.stdout.encoding or 'utf-8').splitlines()
+            if "PYTHON_CROSSENV" not in os.environ:
+                # Run test program if not cross compiling
+                # will raise a CalledProcessError if return code was non-zero
+                output = subprocess.check_output('./test_program')
+                output = output.decode(
+                    sys.stdout.encoding or 'utf-8').splitlines()
+            else:
+                # Return an empty output if we are cross compiling
+                # as we cannot run the test_program
+                output = []
         except Exception:
             raise
         finally:
@@ -87,6 +93,9 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
 
 def basic_check_build():
     """Check basic compilation and linking of C code"""
+    if "PYODIDE_PACKAGE_ABI" in os.environ:
+        # The following check won't work in pyodide
+        return
     code = textwrap.dedent(
         """\
         #include <stdio.h>
