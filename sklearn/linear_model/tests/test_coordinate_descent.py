@@ -825,6 +825,7 @@ def test_precompute_invalid_argument():
         Lasso(precompute='auto').fit(X, y)
 
 
+
 def test_elasticnet_precompute_incorrect_gram():
     # check that passing an invalid precomputed Gram matrix will raise an
     # error.
