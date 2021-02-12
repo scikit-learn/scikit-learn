@@ -14,7 +14,6 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
@@ -823,7 +822,6 @@ def test_precompute_invalid_argument():
                        " be.*True.*False.*array-like.*"
                        "Got 'auto'"):
         Lasso(precompute='auto').fit(X, y)
-
 
 
 def test_elasticnet_precompute_incorrect_gram():
