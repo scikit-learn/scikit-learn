@@ -87,7 +87,7 @@ def test_error():
     msg = "is not a valid scoring value"
 
     with pytest.raises(ValueError, match=msg):
-        LogisticRegression(scoring='bad-scorer', cv=2).fit(X, Y1)
+        LogisticRegressionCV(scoring='bad-scorer', cv=2).fit(X, Y1)
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
