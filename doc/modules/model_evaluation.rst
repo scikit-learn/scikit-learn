@@ -1961,8 +1961,8 @@ Regression metrics
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
-:func:`mean_absolute_error`, :func:`explained_variance_score` and
-:func:`r2_score`, :func:`pinball_loss`.
+:func:`mean_absolute_error`, :func:`explained_variance_score`,
+:func:`r2_score` and :func:`pinball_loss`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -2360,11 +2360,10 @@ sensitive to relative errors.
 Pinball loss
 ------------
 
-The :func:`pinball_loss` function is mostly used
-to evaluate the predictive performance of quantile
-regression models. The `pinball loss <https://en.wikipedia.org/wiki/
-Quantile_regression#Computation>`_ is equivalent to
-:func:`mean_absolute_error` when the quantile parameter ``alpha``
+The :func:`pinball_loss` function is mostly used to evaluate the predictive
+performance of quantile regression models. The `pinball loss
+<https://en.wikipedia.org/wiki/ Quantile_regression#Computation>`_ is
+equivalent to :func:`mean_absolute_error` when the quantile parameter ``alpha``
 is set to 0.5.
 
 .. math::
@@ -2382,6 +2381,38 @@ Here is a small example of usage of the :func:`pinball_loss` function::
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> pinball_loss(y_true, y_pred, alpha=0.1)
   0.35
+
+It is possible to build a scorer object with a specific choice of alpha to
+perform, for instance to evaluate a regressor of the 95th percentile::
+
+  >>> from sklearn.metrics import make_scorer
+  >>> pinball_loss_95p = make_scorer(pinball_loss, alpha=0.95)
+
+Such a scorer can be used in a cross-validation loop:
+
+  >>> from sklearn.datasets import make_regression
+  >>> from sklearn.model_selection import cross_val_score
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>>
+  >>> X, y = make_regression(n_samples=100, random_state=0)
+  >>> estimator = GradientBoostingRegressor(
+  ...     loss="quantile",
+  ...     alpha=0.95,
+  ...     random_state=0,
+  ... )
+  >>> cross_val_score(estimator, X, y, cv=5, scoring=pinball_loss_95p)
+  array([11.1..., 10.4... , 24.4...,  9.2..., 12.9...])
+
+It is also possible to build scorer objects for hyper-parameter tuning, in
+which case the sign of the loss must be switched to ensure that greater means
+better as explain in the example linked below.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+    for an example of using a the pinball loss to evaluate and tune the
+    hyper-parameters of quantile regression models on data with non-symmetric
+    noise and outliers.
 
 
 .. _clustering_metrics:
