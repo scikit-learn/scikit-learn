@@ -66,7 +66,7 @@ def test_perceptron_correctness():
 def test_undefined_methods():
     clf = Perceptron(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba"):
-        with pytest.raises(ValueError):
+        with pytest.raises(AttributeError):
             getattr(clf, meth)
 
 
