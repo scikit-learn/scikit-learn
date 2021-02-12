@@ -36,7 +36,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         to select. If float between 0 and 1, it is the fraction of features to
         select.
 
-    direction: {'forward', 'backward'}, default='forward'
+    direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
 
     scoring : str, callable, list/tuple or dict, default=None
