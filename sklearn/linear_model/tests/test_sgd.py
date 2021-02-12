@@ -232,7 +232,6 @@ def test_input_format(klass):
     Y_ = np.array(Y)[:, np.newaxis]
 
     Y_ = np.c_[Y_, Y_]
-
     with pytest.raises(ValueError):
         clf.fit(X, Y_)
 
@@ -337,7 +336,6 @@ def test_late_onset_averaging_reached(klass):
 def test_sgd_bad_alpha_for_optimal_learning_rate(klass):
     # Check whether expected ValueError on bad alpha, i.e. 0
     # since alpha is used to compute the optimal learning rate
-
     with pytest.raises(ValueError):
         klass(alpha=0, learning_rate="optimal")
 
@@ -499,7 +497,7 @@ def test_sgd_n_iter_no_change(klass):
 def test_argument_coef(klass):
     # Checks coef_init not allowed as model argument (only fit)
     # Provided coef_ does not match dataset
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         klass(coef_init=np.zeros((3,)))
 
 
@@ -577,7 +575,6 @@ def test_set_intercept_to_intercept(klass):
 def test_sgd_at_least_two_labels(klass):
     # Target must have at least two labels
     clf = klass(alpha=0.01, max_iter=20)
-
     with pytest.raises(ValueError):
         clf.fit(X2, np.ones(9))
 
@@ -664,7 +661,6 @@ def test_set_coef_multiclass(klass):
     # problems
     # Provided coef_ does not match dataset
     clf = klass()
-
     with pytest.raises(ValueError):
         clf.fit(X2, Y2, coef_init=np.zeros((2, 2)))
 
@@ -673,7 +669,6 @@ def test_set_coef_multiclass(klass):
 
     # Provided intercept_ does not match dataset
     clf = klass()
-
     with pytest.raises(ValueError):
         clf.fit(X2, Y2, intercept_init=np.zeros((1,)))
 
@@ -851,7 +846,6 @@ def test_equal_class_weight(klass):
 def test_wrong_class_weight_label(klass):
     # ValueError due to not existing class label.
     clf = klass(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
-
     with pytest.raises(ValueError):
         clf.fit(X, Y)
 
@@ -860,7 +854,6 @@ def test_wrong_class_weight_label(klass):
 def test_wrong_class_weight_format(klass):
     # ValueError due to wrong class_weight argument type.
     clf = klass(alpha=0.1, max_iter=1000, class_weight=[0.5])
-
     with pytest.raises(ValueError):
         clf.fit(X, Y)
 
@@ -1401,9 +1394,7 @@ def test_underflow_or_overlow():
         msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
                      " Scaling input data with StandardScaler or MinMaxScaler"
                      " might help.")
-
-        with pytest.raises(ValueError, match=msg_regxp):
-            model.fit(X3, y)
+        assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
 
 
 def test_numerical_stability_large_gradient():

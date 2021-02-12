@@ -128,7 +128,7 @@ def test_classifier_correctness(loss):
 def test_classifier_undefined_methods():
     clf = PassiveAggressiveClassifier(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba", "transform"):
-        with pytest.raises(ValueError):
+        with pytest.raises(AttributeError):
             getattr(clf, meth)
 
 
@@ -268,7 +268,7 @@ def test_regressor_correctness(loss):
 def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     for meth in ("transform",):
-        with pytest.raises(ValueError):
+        with pytest.raises(AttributeError):
             getattr(reg, meth)
 
 

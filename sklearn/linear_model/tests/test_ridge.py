@@ -9,6 +9,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns
 
@@ -56,8 +57,8 @@ X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
 
 
-def DENSE_FILTER(X): X
-def SPARSE_FILTER(X): sp.csr_matrix(X)
+DENSE_FILTER = lambda X: X
+SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
 
 def _accuracy_callable(y_test, y_pred):
@@ -192,14 +193,14 @@ def test_ridge_sample_weights():
             W = np.diag(sample_weight)
             if intercept is False:
                 X_aug = X
-                matrix = np.eye(n_features)
+                I = np.eye(n_features)
             else:
                 dummy_column = np.ones(shape=(n_samples, 1))
                 X_aug = np.concatenate((dummy_column, X), axis=1)
-                matrix = np.eye(n_features + 1)
-                matrix[0, 0] = 0
+                I = np.eye(n_features + 1)
+                I[0, 0] = 0
 
-            cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * matrix,
+            cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * I,
                                     X_aug.T.dot(W).dot(y))
 
             if intercept is False:
@@ -317,7 +318,6 @@ def test_ridge_individual_penalties():
 
     # Test error is raised when number of targets and penalties do not match.
     ridge = Ridge(alpha=penalties[:-1])
-
     with pytest.raises(ValueError):
         ridge.fit(X, y)
 
@@ -609,7 +609,7 @@ def _test_ridge_loo(filter_):
     assert ridge_gcv2.alpha_ == pytest.approx(alpha_)
 
     # check that we get same best alpha with custom score_func
-    def func(x, y): -mean_squared_error(x, y)
+    func = lambda x, y: -mean_squared_error(x, y)
     scoring = make_scorer(func)
     ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
@@ -867,8 +867,7 @@ def test_ridge_sparse_svd():
     X = sp.csc_matrix(rng.rand(100, 10))
     y = rng.rand(100)
     ridge = Ridge(solver='svd', fit_intercept=False)
-
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ridge.fit(X, y)
 
 
@@ -981,8 +980,7 @@ def test_ridgecv_store_cv_values(scoring):
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
     r = RidgeCV(cv=3, store_cv_values=True, scoring=scoring)
-
-    with pytest.raises(ValueError, match="cv!=None and store_cv_values"):
+    with pytest.raises(ValueError, match='cv!=None and store_cv_values'):
         r.fit(x, y)
 
 
@@ -1070,12 +1068,10 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
         def fit_ridge_not_ok_2():
             ridge.fit(X, y, sample_weights_not_OK_2)
 
-        with pytest.raises(ValueError, match="Sample weights"
-                           "must be 1D array or scalar"):
-            fit_ridge_not_ok
+        with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+            fit_ridge_not_ok()
 
-        with pytest.raises(ValueError, match="Sample weights"
-                           "must be 1D array or scalar"):
+        with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
             fit_ridge_not_ok_2()
 
 
@@ -1127,13 +1123,11 @@ def test_ridgecv_negative_alphas():
 
     # Negative integers
     ridge = RidgeCV(alphas=(-1, -10, -100))
-
     with pytest.raises(ValueError, match="alphas must be strictly positive"):
         ridge.fit(X, y)
 
     # Negative floats
     ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
-
     with pytest.raises(ValueError, match="alphas must be strictly positive"):
         ridge.fit(X, y)
 
@@ -1153,8 +1147,8 @@ def test_raises_value_error_if_solver_not_supported():
         y = np.ones(3)
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
-    with pytest.raises(exception, match=message):
-        func()
+        with pytest.raises(exception, match=message):
+            func()
 
 
 def test_sparse_cg_max_iter():
@@ -1264,21 +1258,21 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
     alpha, atol, tol = 1e-3, 1e-4, 1e-6
 
     if solver not in ['sag', 'auto'] and return_intercept:
-
-        with pytest.raises(ValueError, match="In Ridge, only 'sag' solver"):
+        with pytest.raises(ValueError, match= "In Ridge, only 'sag' solver"):
             ridge_regression(X_testing, y,
-                             alpha=alpha,
-                             solver=solver,
-                             sample_weight=sample_weight,
-                             return_intercept=return_intercept,
-                             tol=tol)
+                            alpha=alpha,
+                            solver=solver,
+                            sample_weight=sample_weight,
+                            return_intercept=return_intercept,
+                            tol=tol)
         return
 
     out = ridge_regression(X_testing, y, alpha=alpha,
                            solver=solver,
                            sample_weight=sample_weight,
                            return_intercept=return_intercept,
-                           tol=tol)
+                           tol=tol,
+                           )
 
     if return_intercept:
         coef, intercept = out
@@ -1290,7 +1284,6 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
 
 def test_ridge_classifier_no_support_multilabel():
     X, y = make_multilabel_classification(n_samples=10, random_state=0)
-
     with pytest.raises(ValueError):
         RidgeClassifier().fit(X, y)
 
