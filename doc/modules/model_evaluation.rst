@@ -2382,10 +2382,10 @@ Here is a small example of usage of the :func:`pinball_loss` function::
   0.3...
   >>> pinball_loss(y_true, [1, 2, 4], alpha=0.9)
   0.03...
-  >>> pinball_loss(y_true, [1, 2, 3], alpha=0.1)
-  0.0...
-  >>> pinball_loss(y_true, [1, 2, 3], alpha=0.9)
-  0.0...
+  >>> pinball_loss(y_true, y_true, alpha=0.1)
+  0.0
+  >>> pinball_loss(y_true, y_true, alpha=0.9)
+  0.0
 
 It is possible to build a scorer object with a specific choice of alpha to
 perform, for instance to evaluate a regressor of the 95th percentile::
