@@ -475,9 +475,7 @@ class.
 
     >>> from sklearn.neighbors import KDTree
     >>> print(sorted(KDTree.valid_metrics))
-     ['chebyshev' 'cityblock' 'euclidean' 'infinity' 'l1' 'l2' 'manhattan'
-     'minkowski' 'p']
-
+    ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
 
 .. _nearest_centroid_classifier:
 
