@@ -363,11 +363,15 @@ def test_ransac_multi_dimensional_targets():
 
 
 def test_ransac_residual_loss():
-    loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred),
-                                                axis=1)
-    loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+    def loss_multi1(y_true, y_pred):
+        return np.sum(np.abs(y_true - y_pred), axis=1)
 
-    loss_mono = lambda y_true, y_pred: np.abs(y_true - y_pred)
+    def loss_multi2(y_true, y_pred):
+        return np.sum((y_true - y_pred) ** 2, axis=1)
+
+    def loss_mono(y_true, y_pred):
+        return np.abs(y_true - y_pred)
+
     yyy = np.column_stack([y, y, y])
 
     base_estimator = LinearRegression()
