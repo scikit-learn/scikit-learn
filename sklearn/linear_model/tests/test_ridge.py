@@ -9,7 +9,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns
 
@@ -1068,10 +1067,12 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
         def fit_ridge_not_ok_2():
             ridge.fit(X, y, sample_weights_not_OK_2)
 
-        with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        with pytest.raises(ValueError, match="Sample weights must be "
+                                             "1D array or scalar"):
             fit_ridge_not_ok()
 
-        with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        with pytest.raises(ValueError, match="Sample weights must be 1D "
+                                             "array or scalar"):
             fit_ridge_not_ok_2()
 
 
@@ -1258,13 +1259,13 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
     alpha, atol, tol = 1e-3, 1e-4, 1e-6
 
     if solver not in ['sag', 'auto'] and return_intercept:
-        with pytest.raises(ValueError, match= "In Ridge, only 'sag' solver"):
+        with pytest.raises(ValueError, match="In Ridge, only 'sag' solver"):
             ridge_regression(X_testing, y,
-                            alpha=alpha,
-                            solver=solver,
-                            sample_weight=sample_weight,
-                            return_intercept=return_intercept,
-                            tol=tol)
+                             alpha=alpha,
+                             solver=solver,
+                             sample_weight=sample_weight,
+                             return_intercept=return_intercept,
+                             tol=tol)
         return
 
     out = ridge_regression(X_testing, y, alpha=alpha,
