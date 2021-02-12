@@ -378,6 +378,18 @@ def test_countvectorizer_custom_token_pattern_with_several_group():
         vectorizer.fit(corpus)
 
 
+def test_countvectorizer_uppercase_in_vocab():
+    vocabulary = ['Sample', 'Upper', 'Case' 'Vocabulary']
+    message = ("Upper case characters found in"
+               " vocabulary while 'lowercase'"
+               " is True. These entries will not"
+               " be matched with any documents")
+
+    vectorizer = CountVectorizer(lowercase=True, vocabulary=vocabulary)
+    assert_warns_message(UserWarning, message,
+                         vectorizer.fit_transform, vocabulary)
+
+
 def test_tf_idf_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],

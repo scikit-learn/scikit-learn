@@ -266,7 +266,6 @@ def test_search_cv(estimator, check, request):
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
     'compose',
-    'covariance',
     'ensemble',
     'feature_extraction',
     'isotonic',
