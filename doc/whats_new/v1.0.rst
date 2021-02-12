@@ -115,6 +115,10 @@ Changelog
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
+- |Enhancement| Raise a `ValueError` if a model other than `LinearRegression`
+  is used for `RANSACRegressor` and no `min_samples` is provided. :pr:`19390`
+  by :user:`Shao Yang Hong <hongshaoyang>`.
+
 - |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
   :pr:`19055` by `Thomas Fan`_.
 
