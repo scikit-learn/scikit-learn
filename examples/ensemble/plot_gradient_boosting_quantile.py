@@ -18,7 +18,7 @@ def f(x):
     return x * np.sin(x)
 
 
-rng = np.random.RandomState(42)
+rng = np.random.RandomState(0)
 X = np.atleast_2d(rng.uniform(0, 10.0, size=1000)).T
 X = X.astype(np.float32)
 y = f(X).ravel()
@@ -26,12 +26,13 @@ y = f(X).ravel()
 # %%
 # To make the problem interesting, add centered `log-normal distributed
 # <https://en.wikipedia.org/wiki/Log-normal_distribution>`_ random noise to the
-# target variable.
+# target variable. To make this even more interesting we consider
+# heteroschedastic noise where the parameter sigma depends on the input x.
 #
 # The lognormal distribution is very skewed, meaning that it is likely to get
 # large outliers but impossible to observe small outliers.
-sigma = 1.2
-noise = rng.lognormal(sigma=sigma, size=y.shape) - np.exp(sigma ** 2 / 2)
+sigma = 0.5 + X.ravel() / 10
+noise = rng.lognormal(sigma=sigma) - np.exp(sigma ** 2 / 2)
 y += noise
 
 # %%
@@ -91,7 +92,7 @@ y_lower = all_models['q 0.05'].predict(xx)
 y_upper = all_models['q 0.95'].predict(xx)
 y_med = all_models['q 0.50'].predict(xx)
 
-fig = plt.figure()
+fig = plt.figure(figsize=(10, 10))
 plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
 plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
 plt.plot(xx, y_med, 'r-', label='Predicted median', color="orange")
@@ -102,7 +103,7 @@ plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.5,
                  label='Predicted 90% interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
-plt.ylim(-10, 20)
+plt.ylim(-10, 30)
 plt.legend(loc='upper left')
 plt.show()
 
@@ -166,6 +167,13 @@ DataFrame(results).set_index('model')
 # shows the minimum of a metric is obtained when the model is trained by
 # minimizing this same metric.
 #
+# Note that the conditional median estimator is competitive with the least
+# squares estimator in terms of MSE on the test set: this can be explained by
+# the fact the least squares estimator is very sensitive to large outliers
+# which can cause significant overfitting. This can be seen on the right hand
+# side of the previous plot. The conditional median estimator is naturally
+# robust to outliers and overfits less.
+#
 # Tuning the hyper-parameters of the quantile regressors
 # ------------------------------------------------------
 #
@@ -199,8 +207,9 @@ neg_pinball_loss_05p_scorer = make_scorer(
     alpha=alpha,
     greater_is_better=False,  # maximize the negative loss
 )
+gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, random_state=0)
 search_05p = RandomizedSearchCV(
-    GradientBoostingRegressor(loss="quantile", alpha=alpha),
+    gbr,
     param_grid,
     n_iter=10,  # increase this if computational budget allows
     scoring=neg_pinball_loss_05p_scorer,
@@ -214,10 +223,10 @@ pprint(search_05p.best_params_)
 # to get a good fit for the 5th percentile regressor. Deeper trees are more
 # expressive and less likely to underfit.
 #
-# Let's do another hyper-parameter tuning session for the 95th percentile
-# regressor. We need to redefine the `scoring` metric used to select the best
-# model, along with adjusting the alpha parameter of the inner gradient
-# boosting estimator itself:
+# Let's now tune the hyper-parameters for the 95th percentile regressor. We
+# need to redefine the `scoring` metric used to select the best model, along
+# with adjusting the alpha parameter of the inner gradient boosting estimator
+# itself:
 from sklearn.base import clone
 
 alpha = 0.95
@@ -246,7 +255,7 @@ pprint(search_95p.best_params_)
 y_lower = search_05p.predict(xx)
 y_upper = search_95p.predict(xx)
 
-fig = plt.figure()
+fig = plt.figure(figsize=(10, 10))
 plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
 plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
 plt.plot(xx, y_upper, 'k-')
@@ -255,7 +264,7 @@ plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.5,
                  label='Predicted 90% interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
-plt.ylim(-10, 20)
+plt.ylim(-10, 30)
 plt.legend(loc='upper left')
 plt.title("Prediction with tuned hyper-parameters")
 plt.show()
