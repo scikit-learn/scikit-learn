@@ -3000,7 +3000,7 @@ def check_outliers_fit_predict(name, estimator_orig, strict_mode=True):
 
         # raises error when contamination is a scalar and not in [0,1]
         msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, 2.3]:
+        for contamination in [-0.5, -0.001, 0.5001, 2.3]:
             estimator.set_params(contamination=contamination)
             with raises(ValueError, match=msg):
                 estimator.fit_predict(X)
