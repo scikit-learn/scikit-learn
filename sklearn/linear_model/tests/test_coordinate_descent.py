@@ -807,20 +807,17 @@ def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
-        with pytest.raises(ValueError, match=".*should "
-                           "be.*True.*False.*auto.* "
-                           "array-like.*Got 'invalid'"):
+        err_msg = ".*should be.*True.*False.*auto.* array-like.*Got 'invalid'"
+        with pytest.raises(ValueError, match=err_msg):
             clf.fit(X, y)
 
     # Precompute = 'auto' is not supported for ElasticNet and Lasso
-    with pytest.raises(ValueError, match=".*should"
-                       " be.*True.*False.*array-like.*"
-                       "Got 'auto'"):
+    err_msg =  ".*should be.*True.*False.*array-like.*Got 'auto'"
+    with pytest.raises(ValueError, match=err_msg):
         ElasticNet(precompute='auto').fit(X, y)
 
-    with pytest.raises(ValueError, match=".*should"
-                       " be.*True.*False.*array-like.*"
-                       "Got 'auto'"):
+    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
+    with pytest.raises(ValueError, match=err_msg):
         Lasso(precompute='auto').fit(X, y)
 
 

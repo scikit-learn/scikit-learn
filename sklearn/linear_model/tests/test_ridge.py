@@ -1073,12 +1073,12 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
         def fit_ridge_not_ok_2():
             ridge.fit(X, y, sample_weights_not_OK_2)
 
-        with pytest.raises(ValueError, match="Sample weights must be "
-                                             "1D array or scalar"):
+        err_msg = "Sample weights must be 1D array or scalar"
+        with pytest.raises(ValueError, match=err_msg):
             fit_ridge_not_ok()
 
-        with pytest.raises(ValueError, match="Sample weights must be 1D "
-                                             "array or scalar"):
+        err_msg = "Sample weights must be 1D array or scalar"
+        with pytest.raises(ValueError, match=err_msg):
             fit_ridge_not_ok_2()
 
 

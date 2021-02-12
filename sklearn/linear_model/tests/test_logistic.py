@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
@@ -213,8 +214,8 @@ def test_multinomial_validation(solver):
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
 
-    msg = ("Logistic Regression supports only solvers in ['liblinear', "
-           "'newton-cg', 'lbfgs', 'sag', 'saga'], got wrong_name.")
+    msg = ["Logistic Regression supports only solvers in ['liblinear', "
+           "'newton-cg', 'lbfgs', 'sag', 'saga'], got wrong_name."]
     lr = LR(solver="wrong_name", multi_class="ovr")
     with pytest.raises(ValueError, match=msg):
         lr.fit(X, y)
@@ -443,7 +444,7 @@ def test_liblinear_dual_random_state():
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
     # different results for different random states
     msg = "Arrays are not almost equal to 6 decimals"
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(AssertionError, match=msg):
         assert_array_almost_equal(lr1.coef_, lr3.coef_)
 
 
@@ -1638,7 +1639,7 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
 @pytest.mark.parametrize('l1_ratio', (-1, 2, None, 'something_wrong'))
 def test_l1_ratio_param(l1_ratio):
 
-    msg = "l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio
+    msg = ("l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio)
     with pytest.raises(ValueError, match=msg):
         LogisticRegression(penalty='elasticnet', solver='saga',
                            l1_ratio=l1_ratio).fit(X, Y1)
@@ -1657,7 +1658,8 @@ def test_l1_ratios_param(l1_ratios):
 
     msg = ("l1_ratios must be a list of numbers between 0 and 1; got "
            "(l1_ratios=%r)" % l1_ratios)
-    with pytest.raises(ValueError, match=msg):
+
+    with pytest.raises(ValueError, match=re.escape(msg)):
         LogisticRegressionCV(penalty='elasticnet',
                              solver='saga',
                              l1_ratios=l1_ratios, cv=2).fit(X, Y1)
@@ -1782,8 +1784,11 @@ def test_penalty_none(solver):
     assert_array_equal(pred_none, pred_l2_C_inf)
 
     lr = LogisticRegressionCV(penalty='none')
-    with pytest.raises(TypeError, "penalty='none' is not useful and "
-                                  "not supported by LogisticRegressionCV"):
+    err_msg = (
+        "penalty='none' is not useful and not supported by "
+        "LogisticRegressionCV"
+    )
+    with pytest.raises(TypeError, match=err_msg):
         lr.fit(X, y)
 
 
