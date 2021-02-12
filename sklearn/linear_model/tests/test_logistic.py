@@ -1869,7 +1869,7 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     .. [1] Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
     penalized logistic regression". Biostatistics 5 3 (2004): 427-43.
     https://doi.org/10.1093/biostatistics%2Fkxg046
-    
+
     .. [2] Powers, Scott, Trevor J. Hastie and Robert Tibshirani. "Nuclear
     penalized multinomial regression with an application to predicting at bat
     outcomes in baseball." Statistical modelling 18 5-6 (2017): 388-410 .
