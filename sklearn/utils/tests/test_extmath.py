@@ -30,7 +30,6 @@ from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
-from sklearn.utils.extmath import _incremental_weighted_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
@@ -464,8 +463,8 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mult = 10
     X = rng.rand(1000, 20).astype(dtype)*mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_weighted_mean_and_var(X, sample_weight,
-                                                      0, 0, 0)
+    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0,
+                                             sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = np.average(X**2, weights=sample_weight, axis=0) - \
@@ -488,11 +487,9 @@ def test_incremental_weighted_mean_and_variance(mean, var, weight_loc,
             last_mean, last_weight_sum, last_var = 0, 0, 0
             for batch in gen_batches(n, chunk_size):
                 last_mean, last_var, last_weight_sum = \
-                    _incremental_weighted_mean_and_var(X[batch],
-                                                       sample_weight[batch],
-                                                       last_mean,
-                                                       last_var,
-                                                       last_weight_sum)
+                    _incremental_mean_and_var(
+                        X[batch], last_mean, last_var, last_weight_sum,
+                        sample_weight=sample_weight[batch])
             assert_allclose(last_mean, expected_mean)
             assert_allclose(last_var, expected_var, atol=1e-6)
 
@@ -532,17 +529,17 @@ def test_incremental_weighted_mean_and_variance_ignore_nan(dtype):
                       [300, 300, 300, np.nan]]).astype(dtype)
 
     X_means, X_variances, X_count = \
-        _incremental_weighted_mean_and_var(X,
-                                           sample_weights_X,
-                                           old_means,
-                                           old_variances,
-                                           old_weight_sum)
+        _incremental_mean_and_var(X,
+                                  old_means,
+                                  old_variances,
+                                  old_weight_sum,
+                                  sample_weight=sample_weights_X)
     X_nan_means, X_nan_variances, X_nan_count = \
-        _incremental_weighted_mean_and_var(X_nan,
-                                           sample_weights_X_nan,
-                                           old_means,
-                                           old_variances,
-                                           old_weight_sum)
+        _incremental_mean_and_var(X_nan,
+                                  old_means,
+                                  old_variances,
+                                  old_weight_sum,
+                                  sample_weight=sample_weights_X_nan)
 
     assert_allclose(X_nan_means, X_means)
     assert_allclose(X_nan_variances, X_variances)

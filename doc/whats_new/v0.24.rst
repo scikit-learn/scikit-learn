@@ -2,6 +2,31 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_24_2:
+
+Version 0.24.2
+==============
+
+**TBD 2021**
+
+Changelog
+---------
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixed a bug in :class:`ensemble.HistGradientBoostingRegressor` `fit`
+  with `sample_weight` parameter and `least_absolute_deviation` loss function.
+  :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Validate the constructor parameter `handle_unknown` in
+  :class:`preprocessing.OrdinalEncoder` to only allow for `'error'` and
+  `'use_encoded_value'` strategies.
+  :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_0_24_1:
 
 Version 0.24.1
@@ -213,10 +238,6 @@ Changelog
 .......................
 
 - |Feature| :func:`datasets.fetch_openml` now validates md5 checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
-
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
   files downloaded or cached to ensure data integrity.
   :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
@@ -634,6 +655,12 @@ Changelog
   :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
+
+- |Enhancement| :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV` and
+  :func:`model_selection.cross_validate` support `scoring` being a callable
+  returning a dictionary of of multiple metric names/values association.
+  :pr:`15126` by `Thomas Fan`_.
 
 :mod:`sklearn.multiclass`
 .........................
