@@ -1,6 +1,7 @@
 from itertools import product
 
 import pytest
+import re
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix, issparse)
@@ -19,9 +20,6 @@ from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import sp_version, parse_version
@@ -559,7 +557,8 @@ def test_radius_neighbors_classifier_outlier_labeling():
         clf = RNC(radius=1, outlier_label=4)
         clf.fit(X, y)
         clf.predict_proba([[1], [15]])
-    assert_warns(UserWarning, check_warning)
+    with pytest.warns(UserWarning):
+        check_warning()
 
     # test multi output same outlier label
     y_multi = [[0, 1], [2, 1], [2, 2], [1, 2], [1, 2],
@@ -938,10 +937,8 @@ def test_radius_neighbors_regressor(n_samples=40,
         X_test_nan = np.full((1, n_features), -1.)
         empty_warning_msg = ("One or more samples have no neighbors "
                              "within specified radius; predicting NaN.")
-        pred = assert_warns_message(UserWarning,
-                                    empty_warning_msg,
-                                    neigh.predict,
-                                    X_test_nan)
+        with pytest.warns(UserWarning, match=re.escape(empty_warning_msg)):
+            pred = neigh.predict(X_test_nan)
         assert np.all(np.isnan(pred))
 
 
@@ -1196,10 +1193,9 @@ def test_neighbors_badargs():
 
         nbrs = cls(metric='haversine', algorithm='brute')
         nbrs.fit(X3, y)
-        assert_raise_message(ValueError,
-                             "Haversine distance only valid in 2 dimensions",
-                             nbrs.predict,
-                             X3)
+        msg = "Haversine distance only valid in 2 dimensions"
+        with pytest.raises(ValueError, match=msg):
+            nbrs.predict(X3)
 
         nbrs = cls()
         with pytest.raises(ValueError):
@@ -1362,8 +1358,8 @@ def test_valid_brute_metric_for_auto_algorithm():
 
 
 def test_metric_params_interface():
-    assert_warns(SyntaxWarning, neighbors.KNeighborsClassifier,
-                 metric_params={'p': 3})
+    with pytest.warns(SyntaxWarning):
+        neighbors.KNeighborsClassifier(metric_params={'p': 3})
 
 
 def test_predict_sparse_ball_kd_tree():

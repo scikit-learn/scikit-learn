@@ -17,7 +17,6 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 
 
 def test_n_samples_leaves_roots():
@@ -92,7 +91,8 @@ def test_n_clusters():
 
     # Test that a small number of clusters raises a warning.
     brc4 = Birch(threshold=10000.)
-    assert_warns(ConvergenceWarning, brc4.fit, X)
+    with pytest.warns(ConvergenceWarning):
+        brc4.fit(X)
 
 
 def test_sparse_X():

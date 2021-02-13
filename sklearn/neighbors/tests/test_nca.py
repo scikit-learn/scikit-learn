@@ -15,8 +15,6 @@ from scipy.optimize import check_grad
 from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import (assert_raise_message,
-                                    assert_warns_message)
 from sklearn.datasets import load_iris, make_classification, make_blobs
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
@@ -139,31 +137,27 @@ def test_params_validation():
         NCA(warm_start=1).fit(X, y)
 
     # ValueError
-    assert_raise_message(ValueError,
-                         "`init` must be 'auto', 'pca', 'lda', 'identity', "
-                         "'random' or a numpy array of shape "
-                         "(n_components, n_features).",
-                         NCA(init=1).fit, X, y)
-    assert_raise_message(ValueError,
-                         '`max_iter`= -1, must be >= 1.',
-                         NCA(max_iter=-1).fit, X, y)
-
+    msg = r"`init` must be 'auto', 'pca', 'lda', 'identity', "
+    msg += r"'random' or a numpy array of shape "
+    msg += r"(n_components, n_features)."
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        NCA(init=1).fit(X, y)
+    with pytest.raises(ValueError, match='`max_iter`= -1, must be >= 1.'):
+        NCA(max_iter=-1).fit(X, y)
     init = rng.rand(5, 3)
-    assert_raise_message(ValueError,
-                         'The output dimensionality ({}) of the given linear '
-                         'transformation `init` cannot be greater than its '
-                         'input dimensionality ({}).'
-                         .format(init.shape[0], init.shape[1]),
-                         NCA(init=init).fit, X, y)
-
+    msg = 'The output dimensionality ({}) '.format(init.shape[0])
+    msg += 'of the given linear '
+    msg += 'transformation `init` cannot be greater than its '
+    msg += 'input dimensionality ({}).'.format(init.shape[1])
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        NCA(init=init).fit(X, y)
     n_components = 10
-    assert_raise_message(ValueError,
-                         'The preferred dimensionality of the '
-                         'projected space `n_components` ({}) cannot '
-                         'be greater than the given data '
-                         'dimensionality ({})!'
-                         .format(n_components, X.shape[1]),
-                         NCA(n_components=n_components).fit, X, y)
+    msg = 'The preferred dimensionality of the '
+    msg += 'projected space `n_components` ({}) cannot '.format(n_components)
+    msg += 'be greater than the given data '
+    msg += 'dimensionality ({})!'.format(X.shape[1])
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        NCA(n_components=n_components).fit(X, y)
 
 
 def test_transformation_dimensions():
@@ -197,24 +191,22 @@ def test_n_components():
     # n_components = X.shape[1] != transformation.shape[0]
     n_components = X.shape[1]
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
-    assert_raise_message(ValueError,
-                         'The preferred dimensionality of the '
-                         'projected space `n_components` ({}) does not match '
-                         'the output dimensionality of the given '
-                         'linear transformation `init` ({})!'
-                         .format(n_components, init.shape[0]),
-                         nca.fit, X, y)
+    msg = 'The preferred dimensionality of the '
+    msg += 'projected space `n_components` ({}) '.format(n_components)
+    msg += 'does not match the output dimensionality of the given '
+    msg += 'linear transformation `init` ({})!'.format(init.shape[0])
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        nca.fit(X, y)
 
     # n_components > X.shape[1]
     n_components = X.shape[1] + 2
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
-    assert_raise_message(ValueError,
-                         'The preferred dimensionality of the '
-                         'projected space `n_components` ({}) cannot '
-                         'be greater than the given data '
-                         'dimensionality ({})!'
-                         .format(n_components, X.shape[1]),
-                         nca.fit, X, y)
+    msg = 'The preferred dimensionality of the '
+    msg += 'projected space `n_components` ({}) cannot '.format(n_components)
+    msg += 'be greater than the given data '
+    msg += 'dimensionality ({})!'.format(X.shape[1])
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        nca.fit(X, y)
 
     # n_components < X.shape[1]
     nca = NeighborhoodComponentsAnalysis(n_components=2, init='identity')
@@ -252,34 +244,31 @@ def test_init_transformation():
     # init.shape[1] must match X.shape[1]
     init = rng.rand(X.shape[1], X.shape[1] + 1)
     nca = NeighborhoodComponentsAnalysis(init=init)
-    assert_raise_message(ValueError,
-                         'The input dimensionality ({}) of the given '
-                         'linear transformation `init` must match the '
-                         'dimensionality of the given inputs `X` ({}).'
-                         .format(init.shape[1], X.shape[1]),
-                         nca.fit, X, y)
+    msg = 'The input dimensionality ({}) of the given '.format(init.shape[1])
+    msg += 'linear transformation `init` must match the '
+    msg += 'dimensionality of the given inputs `X` ({}).'.format(X.shape[1])
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        nca.fit(X, y)
 
     # init.shape[0] must be <= init.shape[1]
     init = rng.rand(X.shape[1] + 1, X.shape[1])
     nca = NeighborhoodComponentsAnalysis(init=init)
-    assert_raise_message(ValueError,
-                         'The output dimensionality ({}) of the given '
-                         'linear transformation `init` cannot be '
-                         'greater than its input dimensionality ({}).'
-                         .format(init.shape[0], init.shape[1]),
-                         nca.fit, X, y)
+    msg = 'The output dimensionality ({}) of the given '.format(init.shape[0])
+    msg += 'linear transformation `init` cannot be '
+    msg += 'greater than its input dimensionality ({}).'.format(init.shape[1])
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        nca.fit(X, y)
 
     # init.shape[0] must match n_components
     init = rng.rand(X.shape[1], X.shape[1])
     n_components = X.shape[1] - 2
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
-    assert_raise_message(ValueError,
-                         'The preferred dimensionality of the '
-                         'projected space `n_components` ({}) does not match '
-                         'the output dimensionality of the given '
-                         'linear transformation `init` ({})!'
-                         .format(n_components, init.shape[0]),
-                         nca.fit, X, y)
+    msg = 'The preferred dimensionality of the '
+    msg += 'projected space `n_components` ({}) '.format(n_components)
+    msg += 'does not match the output dimensionality of the given '
+    msg += 'linear transformation `init` ({})!'.format(init.shape[0])
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        nca.fit(X, y)
 
 
 @pytest.mark.parametrize('n_samples', [3, 5, 7, 11])
@@ -328,13 +317,13 @@ def test_warm_start_validation():
     X_less_features, y = make_classification(n_samples=30, n_features=4,
                                              n_classes=4, n_redundant=0,
                                              n_informative=4, random_state=0)
-    assert_raise_message(ValueError,
-                         'The new inputs dimensionality ({}) does not '
-                         'match the input dimensionality of the '
-                         'previously learned transformation ({}).'
-                         .format(X_less_features.shape[1],
-                                 nca.components_.shape[1]),
-                         nca.fit, X_less_features, y)
+    msg = 'The new inputs '
+    msg += 'dimensionality ({}) '.format(X_less_features.shape[1])
+    msg += 'does not match the input dimensionality of the '
+    msg += 'previously learned '
+    msg += 'transformation ({}).'.format(nca.components_.shape[1])
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        nca.fit(X_less_features, y)
 
 
 def test_warm_start_effectiveness():
@@ -519,9 +508,9 @@ def test_expected_transformation_shape():
 def test_convergence_warning():
     nca = NeighborhoodComponentsAnalysis(max_iter=2, verbose=1)
     cls_name = nca.__class__.__name__
-    assert_warns_message(ConvergenceWarning,
-                         '[{}] NCA did not converge'.format(cls_name),
-                         nca.fit, iris_data, iris_target)
+    msg = '[{}] NCA did not converge'.format(cls_name)
+    with pytest.warns(ConvergenceWarning, match=re.escape(msg)):
+        nca.fit(iris_data, iris_target)
 
 
 @pytest.mark.parametrize('param, value', [('n_components', np.int32(3)),
