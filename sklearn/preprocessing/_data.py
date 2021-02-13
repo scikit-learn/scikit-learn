@@ -62,7 +62,7 @@ __all__ = [
 
 
 def _handle_zeros_in_scale(scale, copy=True):
-    """Makes sure that whenever scale is zero, we handle it correctly.	
+    """Makes sure that whenever scale is zero, we handle it correctly.
 
     This happens in most scalers when we have constant features.
     """
