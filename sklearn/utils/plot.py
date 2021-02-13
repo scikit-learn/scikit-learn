@@ -76,7 +76,7 @@ def plot_heatmap(
             or None
         Array of matplotlib axes. `None` if `include_values` is false.
     """
-    check_matplotlib_support("util.plot.plot_heatmap")
+    check_matplotlib_support("utils.plot.plot_heatmap")
     import matplotlib.pyplot as plt
 
     if ax is None:
