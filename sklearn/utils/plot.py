@@ -27,30 +27,30 @@ def plot_heatmap(
     ----------
     data : array-like
         Data to plot the heatmap.
-        
+
     ylabel : str
         Label for y-axis.
-        
+
     xlabel : str
         Label for x-axis.
-        
+
     ytick_labels : array-like of str
         Labels for y-axis ticks.
-        
+
     xtick_labels : array-like of str
         Labels for x-axis ticks.
-        
+
     xticks_rotation : {'vertical', 'horizontal'} or float, \
                      default='horizontal'
         Rotation of xtick labels.
-        
+
     ax : matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is
         created.
 
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.
-    
+
     include_values : bool, default=True
         Includes values in confusion matrix.
 
