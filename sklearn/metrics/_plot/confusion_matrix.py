@@ -1,5 +1,3 @@
-from itertools import product
-
 import numpy as np
 
 from .. import confusion_matrix
