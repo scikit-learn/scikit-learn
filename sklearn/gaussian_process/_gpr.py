@@ -8,12 +8,13 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve_triangular
 import scipy.optimize
+from scipy.linalg import cholesky, cho_solve, solve_triangular
 
+from .kernels import RBF, ConstantKernel as C
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
-from .kernels import RBF, ConstantKernel as C
+from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _deprecate_positional_args
@@ -200,7 +201,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             self._y_train_std = np.std(y, axis=0)
 
             # Remove mean and make unit variance
-            y = (y - self._y_train_mean) / np.where(self._y_train_std, self._y_train_std, 1)
+            y = (y - self._y_train_mean) / \
+                _handle_zeros_in_scale(self._y_train_std, copy=False)
 
         else:
             self._y_train_mean = np.zeros(1)
