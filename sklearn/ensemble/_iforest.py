@@ -70,7 +70,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             - If 'auto', the threshold is determined as in the
               original paper.
-            - If float, the contamination should be in the range [0, 0.5].
+            - If float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -249,6 +249,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
+
+        if self.contamination != 'auto':
+            if not(0. < self.contamination <= .5):
+                raise ValueError("contamination must be in (0, 0.5], "
+                                 "got: %f" % self.contamination)
 
         if isinstance(self.max_samples, str):
             if self.max_samples == 'auto':
