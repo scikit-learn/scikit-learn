@@ -6,6 +6,7 @@ from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
 from ...utils.multiclass import unique_labels
+from ...utils.plot import plot_heatmap
 from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
@@ -110,61 +111,31 @@ class ConfusionMatrixDisplay:
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
         """
-        check_matplotlib_support("ConfusionMatrixDisplay.plot")
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots()
-        else:
-            fig = ax.figure
-
         cm = self.confusion_matrix
         n_classes = cm.shape[0]
-        self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
-        self.text_ = None
-        cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(256)
-
-        if include_values:
-            self.text_ = np.empty_like(cm, dtype=object)
-
-            # print text with appropriate color depending on background
-            thresh = (cm.max() + cm.min()) / 2.0
-
-            for i, j in product(range(n_classes), range(n_classes)):
-                color = cmap_max if cm[i, j] < thresh else cmap_min
-
-                if values_format is None:
-                    text_cm = format(cm[i, j], '.2g')
-                    if cm.dtype.kind != 'f':
-                        text_d = format(cm[i, j], 'd')
-                        if len(text_d) < len(text_cm):
-                            text_cm = text_d
-                else:
-                    text_cm = format(cm[i, j], values_format)
-
-                self.text_[i, j] = ax.text(
-                    j, i, text_cm,
-                    ha="center", va="center",
-                    color=color)
-
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
         else:
             display_labels = self.display_labels
-        if colorbar:
-            fig.colorbar(self.im_, ax=ax)
-        ax.set(xticks=np.arange(n_classes),
-               yticks=np.arange(n_classes),
-               xticklabels=display_labels,
-               yticklabels=display_labels,
-               ylabel="True label",
-               xlabel="Predicted label")
-
+        fig, ax, im, text = plot_heatmap(
+            cm,
+            "True label",
+            "Predicted label",
+            display_labels,
+            display_labels,
+            xticks_rotation=xticks_rotation,
+            ax=ax,
+            cmap=cmap,
+            include_values=include_values,
+            values_format=values_format,
+            colorbar=colorbar
+        )
         ax.set_ylim((n_classes - 0.5, -0.5))
-        plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
 
         self.figure_ = fig
         self.ax_ = ax
+        self.im_ = im
+        self.text_ = text
         return self
 
     @classmethod

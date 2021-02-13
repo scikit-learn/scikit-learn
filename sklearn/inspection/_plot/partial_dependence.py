@@ -15,6 +15,7 @@ from ...utils import check_random_state
 from ...utils import _safe_indexing
 from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
+from ...utils.plot import plot_heatmap
 
 
 @_deprecate_positional_args
@@ -888,18 +889,17 @@ class PartialDependenceDisplay:
         """
         if categorical:
             heatmap_idx = np.unravel_index(pd_plot_idx, self.heatmaps_.shape)
-            self.heatmaps_[heatmap_idx] = ax.imshow(
-                avg_preds[self.target_idx].T, **heatmap_kw
+            _, _, im, _ = plot_heatmap(
+                avg_preds[self.target_idx].T,
+                self.feature_names[feature_idx[1]],
+                self.feature_names[feature_idx[0]],
+                feature_values[0],
+                feature_values[1],
+                xticks_rotation='vertical',
+                ax=ax,
+                values_format='.2f'
             )
-
-            ax.set_xticks(np.arange(len(feature_values[0])))
-            ax.set_yticks(np.arange(len(feature_values[1])))
-
-            ax.set_xticklabels(feature_values[0])
-            ax.set_yticklabels(feature_values[1])
-            ax.tick_params(axis='x', rotation=90)
-
-            ax.figure.colorbar(self.heatmaps_[heatmap_idx], ax=ax)
+            self.heatmaps_[heatmap_idx] = im
         else:
             from matplotlib import transforms  # noqa
 
@@ -946,10 +946,10 @@ class PartialDependenceDisplay:
             ax.set_xlim(xlim)
             ax.set_ylim(ylim)
 
-        # set xlabel if it is not already set
-        if not ax.get_xlabel():
-            ax.set_xlabel(self.feature_names[feature_idx[0]])
-        ax.set_ylabel(self.feature_names[feature_idx[1]])
+            # set xlabel if it is not already set
+            if not ax.get_xlabel():
+                ax.set_xlabel(self.feature_names[feature_idx[0]])
+            ax.set_ylabel(self.feature_names[feature_idx[1]])
 
     @_deprecate_positional_args(version="1.1")
     def plot(
