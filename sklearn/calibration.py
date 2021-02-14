@@ -599,7 +599,7 @@ class _CalibratedClassifier:
 
         .. deprecated:: 0.24
            `calibrators_` is deprecated from 0.24 and will be removed in
-           0.26. Use `calibrators` instead.
+           1.1 (renaming of 0.26). Use `calibrators` instead.
     """
     def __init__(self, base_estimator, calibrators, *, classes,
                  method='sigmoid'):
@@ -608,11 +608,11 @@ class _CalibratedClassifier:
         self.classes = classes
         self.method = method
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "calibrators_ is deprecated in 0.24 and will be removed in 0.26. "
-        "Use calibrators instead."
+        "calibrators_ is deprecated in 0.24 and will be removed in 1.1"
+        "(renaming of 0.26). Use calibrators instead."
     )
     @property
     def calibrators_(self):
@@ -656,10 +656,13 @@ class _CalibratedClassifier:
         if n_classes == 2:
             proba[:, 0] = 1. - proba[:, 1]
         else:
-            proba /= np.sum(proba, axis=1)[:, np.newaxis]
-
-        # XXX : for some reason all probas can be 0
-        proba[np.isnan(proba)] = 1. / n_classes
+            denominator = np.sum(proba, axis=1)[:, np.newaxis]
+            # In the edge case where for each class calibrator returns a null
+            # probability for a given sample, use the uniform distribution
+            # instead.
+            uniform_proba = np.full_like(proba, 1 / n_classes)
+            proba = np.divide(proba, denominator, out=uniform_proba,
+                              where=denominator != 0)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0

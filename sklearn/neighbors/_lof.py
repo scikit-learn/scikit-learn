@@ -104,7 +104,7 @@ class LocalOutlierFactor(KNeighborsMixin,
 
         - if 'auto', the threshold is determined as in the
           original paper,
-        - if a float, the contamination should be in the range [0, 0.5].
+        - if a float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1

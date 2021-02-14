@@ -14,18 +14,15 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
 
@@ -205,6 +202,24 @@ def test_enet_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
+def test_lasso_dual_gap():
+    """
+    Check that Lasso.dual_gap_ matches its objective formulation, with the
+    datafit normalized by n_samples
+    """
+    X, y, _, _ = build_dataset(n_samples=10, n_features=30)
+    n_samples = len(y)
+    alpha = 0.01 * np.max(np.abs(X.T @ y)) / n_samples
+    clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
+    w = clf.coef_
+    R = y - X @ w
+    primal = 0.5 * np.mean(R ** 2) + clf.alpha * np.sum(np.abs(w))
+    # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
+    R /= np.max(np.abs(X.T @ R) / (n_samples * alpha))
+    dual = 0.5 * (np.mean(y ** 2) - np.mean((y - R) ** 2))
+    assert_allclose(clf.dual_gap_, primal - dual)
+
+
 def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
                   n_targets=1):
     """
@@ -283,6 +298,8 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
@@ -300,7 +317,7 @@ def test_lasso_cv_positive_constraint():
      (Lars, {}),
      (LinearRegression, {}),
      (LassoLarsIC, {})]
- )
+)
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # Test that linear models (LinearModel) set with normalize set to True are
     # doing the same as the same linear model preceeded by StandardScaler
@@ -315,7 +332,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
         LinearModel(normalize=False, fit_intercept=True, **params)
     )
 
-    is_multitask = model_normalize._get_tags().get("multioutput_only", False)
+    is_multitask = model_normalize._get_tags()["multioutput_only"]
 
     # prepare the data
     n_samples, n_features = 100, 2
@@ -366,6 +383,60 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     assert_allclose(y_pred_normalize, y_pred_standardize)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.parametrize(
+    "estimator, is_sparse, with_mean",
+    [(LinearRegression, True, False),
+     (LinearRegression, False, True),
+     (LinearRegression, False, False)]
+)
+def test_linear_model_sample_weights_normalize_in_pipeline(
+        estimator, is_sparse, with_mean
+):
+    # Test that the results for running linear regression LinearRegression with
+    # sample_weight set and with normalize set to True gives similar results as
+    # LinearRegression with no normalize in a pipeline with a StandardScaler
+    # and set sample_weight.
+    rng = np.random.RandomState(0)
+    X, y = make_regression(n_samples=20, n_features=5, noise=1e-2,
+                           random_state=rng)
+    # make sure the data is not centered to make the problem more
+    # difficult
+    X += 10
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
+                                                        random_state=rng)
+    if is_sparse:
+        X_train = sparse.csr_matrix(X_train)
+        X_test = _convert_container(X_train, 'sparse')
+
+    sample_weight = rng.rand(X_train.shape[0])
+
+    # linear estimator with explicit sample_weight
+    reg_with_normalize = estimator(normalize=True)
+    reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
+
+    # linear estimator in a pipeline
+    reg_with_scaler = make_pipeline(
+        StandardScaler(with_mean=with_mean),
+        estimator(normalize=False)
+    )
+    kwargs = {reg_with_scaler.steps[-1][0] + '__sample_weight':
+              sample_weight}
+    reg_with_scaler.fit(X_train, y_train, **kwargs)
+
+    y_pred_norm = reg_with_normalize.predict(X_test)
+    y_pred_pip = reg_with_scaler.predict(X_test)
+
+    assert_allclose(
+        reg_with_normalize.coef_ * reg_with_scaler[0].scale_,
+        reg_with_scaler[1].coef_
+    )
+    assert_allclose(y_pred_norm, y_pred_pip)
+
+
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
@@ -660,7 +731,8 @@ def test_multioutput_enetcv_error():
     X = rng.randn(10, 2)
     y = rng.randn(10, 2)
     clf = ElasticNetCV()
-    assert_raises(ValueError, clf.fit, X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
 
 
 def test_multitask_enet_and_lasso_cv():
@@ -735,12 +807,57 @@ def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
-        assert_raises_regex(ValueError, ".*should be.*True.*False.*auto.*"
-                            "array-like.*Got 'invalid'", clf.fit, X, y)
+        err_msg = ".*should be.*True.*False.*auto.* array-like.*Got 'invalid'"
+        with pytest.raises(ValueError, match=err_msg):
+            clf.fit(X, y)
 
-    # Precompute = 'auto' is not supported for ElasticNet
-    assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
-                        "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
+    # Precompute = 'auto' is not supported for ElasticNet and Lasso
+    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
+    with pytest.raises(ValueError, match=err_msg):
+        ElasticNet(precompute='auto').fit(X, y)
+
+    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
+    with pytest.raises(ValueError, match=err_msg):
+        Lasso(precompute='auto').fit(X, y)
+
+
+def test_elasticnet_precompute_incorrect_gram():
+    # check that passing an invalid precomputed Gram matrix will raise an
+    # error.
+    X, y, _, _ = build_dataset()
+
+    rng = np.random.RandomState(0)
+
+    X_centered = X - np.average(X, axis=0)
+    garbage = rng.standard_normal(X.shape)
+    precompute = np.dot(garbage.T, garbage)
+
+    clf = ElasticNet(alpha=0.01, precompute=precompute)
+    msg = "Gram matrix.*did not pass validation.*"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X_centered, y)
+
+
+def test_elasticnet_precompute_gram_weighted_samples():
+    # check the equivalence between passing a precomputed Gram matrix and
+    # internal computation using sample weights.
+    X, y, _, _ = build_dataset()
+
+    rng = np.random.RandomState(0)
+    sample_weight = rng.lognormal(size=y.shape)
+
+    w_norm = sample_weight * (y.shape / np.sum(sample_weight))
+    X_c = (X - np.average(X, axis=0, weights=w_norm))
+    X_r = X_c * np.sqrt(w_norm)[:, np.newaxis]
+    gram = np.dot(X_r.T, X_r)
+
+    clf1 = ElasticNet(alpha=0.01, precompute=gram)
+    clf1.fit(X_c, y, sample_weight=sample_weight)
+
+    clf2 = ElasticNet(alpha=0.01, precompute=False)
+    clf2.fit(X, y, sample_weight=sample_weight)
+
+    assert_allclose(clf1.coef_, clf2.coef_)
 
 
 def test_warm_start_convergence():
@@ -830,7 +947,8 @@ def test_random_descent():
 
     # Raise error when selection is not in cyclic or random.
     clf_random = ElasticNet(selection='invalid')
-    assert_raises(ValueError, clf_random.fit, X, y)
+    with pytest.raises(ValueError):
+        clf_random.fit(X, y)
 
 
 def test_enet_path_positive():
@@ -847,7 +965,8 @@ def test_enet_path_positive():
     # For multi output, positive parameter is not allowed
     # Test that an error is raised
     for path in [enet_path, lasso_path]:
-        assert_raises(ValueError, path, X, Y, positive=True)
+        with pytest.raises(ValueError):
+            path(X, Y, positive=True)
 
 
 def test_sparse_dense_descent_paths():
@@ -875,7 +994,8 @@ def test_check_input_false():
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
-    assert_raises(ValueError, clf.fit, X, y, check_input=False)
+    with pytest.raises(ValueError):
+        clf.fit(X, y, check_input=False)
 
 
 @pytest.mark.parametrize("check_input", [True, False])
@@ -989,10 +1109,11 @@ def test_enet_l1_ratio():
     X = np.array([[1, 2, 4, 5, 8], [3, 5, 7, 7, 8]]).T
     y = np.array([12, 10, 11, 21, 5])
 
-    assert_raise_message(ValueError, msg, ElasticNetCV(
-        l1_ratio=0, random_state=42).fit, X, y)
-    assert_raise_message(ValueError, msg, MultiTaskElasticNetCV(
-        l1_ratio=0, random_state=42).fit, X, y[:, None])
+    with pytest.raises(ValueError, match=msg):
+        ElasticNetCV(l1_ratio=0, random_state=42).fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        MultiTaskElasticNetCV(l1_ratio=0, random_state=42).fit(X, y[:, None])
 
     # Test that l1_ratio=0 is allowed if we supply a grid manually
     alphas = [0.1, 10]
@@ -1214,3 +1335,22 @@ def test_linear_models_cv_fit_for_all_backends(backend, estimator):
 
     with joblib.parallel_backend(backend=backend):
         estimator(n_jobs=2, cv=3).fit(X, y)
+
+
+@pytest.mark.parametrize("check_input", [True, False])
+def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
+    """Check that ElasticNet does not overwrite sample_weights."""
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+
+    sample_weight_1_25 = 1.25 * np.ones_like(y)
+    sample_weight = sample_weight_1_25.copy()
+
+    reg = ElasticNet()
+    reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
+
+    assert_array_equal(sample_weight, sample_weight_1_25)

@@ -26,6 +26,7 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.fixes import sp_version, parse_version
 
 import joblib
 
@@ -600,7 +601,10 @@ def test_radius_neighbors_classifier_zero_distance():
                                                       weights=weights,
                                                       algorithm=algorithm)
             clf.fit(X, y)
-            assert_array_equal(correct_labels1, clf.predict(z1))
+            with np.errstate(invalid="ignore"):
+                # Ignore the warning raised in _weight_func when making
+                # predictions with null distances resulting in np.inf values.
+                assert_array_equal(correct_labels1, clf.predict(z1))
 
 
 def test_neighbors_regressors_zero_distance():
@@ -1244,6 +1248,9 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
+        if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
+            # wminkowski will be removed in SciPy 1.8.0
+            continue
         results = {}
         p = metric_params.pop('p', 2)
         for algorithm in algorithms:
@@ -1265,8 +1272,16 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                           if metric == 'haversine' else slice(None))
 
             neigh.fit(X[:, feature_sl])
-            results[algorithm] = neigh.kneighbors(test[:, feature_sl],
-                                                  return_distance=True)
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if (metric == "wminkowski" and algorithm == 'brute'
+                    and sp_version >= parse_version("1.6.0")):
+                ExceptionToAssert = DeprecationWarning
+
+            with pytest.warns(ExceptionToAssert):
+                results[algorithm] = neigh.kneighbors(test[:, feature_sl],
+                                                      return_distance=True)
 
         assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
         assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
@@ -1733,7 +1748,7 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @pytest.mark.parametrize("NearestNeighbors", [neighbors.KNeighborsClassifier,
                                               neighbors.KNeighborsRegressor,
                                               neighbors.NearestNeighbors])

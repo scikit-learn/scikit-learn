@@ -196,6 +196,9 @@ def test_discretize(n_samples):
 # https://github.com/scikit-learn/scikit-learn/issues/15913
 @pytest.mark.filterwarnings(
     "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
+# TODO: Remove when pyamg removes the use of np.float
+@pytest.mark.filterwarnings(
+    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*")
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py
@@ -268,7 +271,7 @@ def test_verbose(assign_labels, capsys):
         assert re.search(r"Iteration [0-9]+, inertia", captured.out)
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @pytest.mark.parametrize("affinity", ["precomputed",
                                       "precomputed_nearest_neighbors"])
 def test_pairwise_is_deprecated(affinity):

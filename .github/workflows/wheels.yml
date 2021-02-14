@@ -7,28 +7,30 @@ on:
     - cron: "42 3 */1 * *"
   push:
     branches:
-      - master
+      - main
       # Release branches
       - "[0-9]+.[0-9]+.X"
   pull_request:
     branches:
-      - master
+      - main
       - "[0-9]+.[0-9]+.X"
-
-env:
-  SCIKIT_LEARN_VERSION: 0.24.dev0
+  # Manual run
+  workflow_dispatch:
 
 jobs:
   # Check whether to build the wheels and the source tarball
   check_build_trigger:
     name: Check build trigger
     runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - id: check_build_trigger
         name: Check build trigger
@@ -36,7 +38,7 @@ jobs:
 
   # Build the wheels for Linux, Windows and macOS for Python 3.6 and newer
   build_wheels:
-    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}
+    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
@@ -48,6 +50,7 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python: [36, 37, 38, 39]
         bitness: [32, 64]
+        manylinux_image: [manylinux1, manylinux2010]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
           - os: windows-latest
@@ -68,6 +71,12 @@ jobs:
         exclude:
           - os: macos-latest
             bitness: 32
+          # Remove manylinux1 from the windows and osx build matrix since
+          # manylinux_image is not used for these platforms
+          - os: windows-latest
+            manylinux_image: manylinux1
+          - os: macos-latest
+            manylinux_image: manylinux1
 
     steps:
       - name: Checkout scikit-learn
@@ -78,23 +87,21 @@ jobs:
 
       - name: Build and test wheels
         env:
-          # Set the directory where the wheel is unpacked
-          CIBW_ENVIRONMENT: WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
-                            OMP_NUM_THREADS=2
+          CONFTEST_PATH: ${{ github.workspace }}/conftest.py
+          CONFTEST_NAME: conftest.py
+          CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
+                            MACOSX_DEPLOYMENT_TARGET=10.13
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
+          CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
+          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
-          # Test that there are no links to system libraries
-          CIBW_TEST_COMMAND: pytest --pyargs sklearn &&
-                             python -m threadpoolctl -i sklearn
-          # By default, the Windows wheels are not repaired.
-          # In this case, we need to vendor the vcomp140.dll
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: wheel unpack {wheel} &&
-                                             python build_tools/github/vendor_vcomp140.py %WHEEL_DIRNAME% &&
-                                             wheel pack %WHEEL_DIRNAME% -d {dest_dir} &&
-                                             rmdir /s /q %WHEEL_DIRNAME%
+          CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
+          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ matrix.bitness }}
 
         run: bash build_tools/github/build_wheels.sh
 
@@ -117,8 +124,17 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
 
-      - name: Build and test source distribution
+      - name: Build source distribution
         run: bash build_tools/github/build_source.sh
+        env:
+          SKLEARN_BUILD_PARALLEL: 3
+
+      - name: Test source distribution
+        run: bash build_tools/github/test_source.sh
+        env:
+          OMP_NUM_THREADS: 2
+          OPENBLAS_NUM_THREADS: 2
+          SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
@@ -130,7 +146,7 @@ jobs:
     name: Upload to Anaconda
     runs-on: ubuntu-latest
     needs: [build_wheels, build_sdist]
-    # The artifacts are not be uploaded on PRs
+    # The artifacts cannot be uploaded on PRs
     if: github.event_name != 'pull_request'
 
     steps:
