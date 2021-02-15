@@ -324,7 +324,7 @@ coverage_fraction(y_train,
 coverage_fraction(y_test,
                   search_05p.predict(X_test),
                   search_95p.predict(X_test))
-
+# %%
 # The calibration of the tuned pair is sadly not better on the test set: the
 # width of the estimated confidence interval is still too narrow.
 #
