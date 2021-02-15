@@ -213,7 +213,7 @@ coverage_fraction(y_test,
 
 # %%
 # On the test set, the estimated confidence interval is slightly too narrow.
-# Note however that we would need to wrap those metrics in a cross-validation
+# Note, however, that we would need to wrap those metrics in a cross-validation
 # loop to assess their variability under data resampling.
 #
 # Tuning the hyper-parameters of the quantile regressors
