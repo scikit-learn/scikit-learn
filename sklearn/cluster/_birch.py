@@ -13,6 +13,7 @@ from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils.extmath import row_norms
+from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
@@ -304,27 +305,35 @@ class _CFSubcluster:
         new_ls = self.linear_sum_ + nominee_cluster.linear_sum_
         new_n = self.n_samples_ + nominee_cluster.n_samples_
         new_centroid = (1 / new_n) * new_ls
-        new_norm = np.dot(new_centroid, new_centroid)
-        dot_product = (-2 * new_n) * new_norm
-        sq_radius = (new_ss + dot_product) / new_n + new_norm
+        new_sq_norm = np.dot(new_centroid, new_centroid)
+
+        # The squared radius of the cluster is defined:
+        #   r^2  = sum_i ||x_i - c||^2 / n
+        # with x_i the n points assigned to the cluster and c its centroid:
+        #   c = sum_i x_i / n
+        # This can be expanded to:
+        #   r^2 = sum_i ||x_i||^2 / n - 2 < sum_i x_i / n, c> + n ||c||^2 / n
+        # and therefore simplifies to:
+        #   r^2 = sum_i ||x_i||^2 / n - ||c||^2
+        sq_radius = new_ss / new_n - new_sq_norm
+
         if sq_radius <= threshold ** 2:
             (self.n_samples_, self.linear_sum_, self.squared_sum_,
              self.centroid_, self.sq_norm_) = \
-                new_n, new_ls, new_ss, new_centroid, new_norm
+                new_n, new_ls, new_ss, new_centroid, new_sq_norm
             return True
         return False
 
     @property
     def radius(self):
         """Return radius of the subcluster"""
-        dot_product = -2 * np.dot(self.linear_sum_, self.centroid_)
-        return sqrt(
-            ((self.squared_sum_ + dot_product) / self.n_samples_) +
-            self.sq_norm_)
+        # Because of numerical issues, this could become negative
+        sq_radius = self.squared_sum_ / self.n_samples_ - self.sq_norm_
+        return sqrt(max(0, sq_radius))
 
 
 class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
-    """Implements the Birch clustering algorithm.
+    """Implements the BIRCH clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
     alternative to :class:`MiniBatchKMeans`. It constructs a tree
@@ -440,6 +449,24 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self.compute_labels = compute_labels
         self.copy = copy
 
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "fit_ is deprecated in 1.0 and will be removed in 1.2"
+    )
+    @property
+    def fit_(self):
+        return self._deprecated_fit
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "partial_fit_ is deprecated in 1.0 and will be removed in 1.2"
+    )
+    @property
+    def partial_fit_(self):
+        return self._deprecated_partial_fit
+
     def fit(self, X, y=None):
         """
         Build a CF Tree for the input data.
@@ -457,12 +484,13 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        self.fit_, self.partial_fit_ = True, False
-        return self._fit(X)
+        # TODO: Remove deprected flags in 1.2
+        self._deprecated_fit, self._deprecated_partial_fit = True, False
+        return self._fit(X, partial=False)
 
-    def _fit(self, X):
+    def _fit(self, X, partial):
         has_root = getattr(self, 'root_', None)
-        first_call = self.fit_ or self.partial_fit and not has_root
+        first_call = not (partial and has_root)
 
         X = self._validate_data(X, accept_sparse='csr', copy=self.copy,
                                 reset=first_call)
@@ -552,13 +580,14 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        self.partial_fit_, self.fit_ = True, False
+        # TODO: Remove deprected flags in 1.2
+        self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()
             return self
         else:
-            return self._fit(X)
+            return self._fit(X, partial=True)
 
     def _check_fit(self, X):
         check_is_fitted(self)
@@ -645,7 +674,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             self.subcluster_labels_ = np.arange(len(centroids))
             if not_enough_centroids:
                 warnings.warn(
-                    "Number of subclusters found (%d) by Birch is less "
+                    "Number of subclusters found (%d) by BIRCH is less "
                     "than (%d). Decrease the threshold."
                     % (len(centroids), self.n_clusters), ConvergenceWarning)
         else:
