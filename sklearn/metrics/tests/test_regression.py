@@ -361,7 +361,7 @@ def test_pinball_loss_on_constant_predictions(
         pytest.skip("This test requires a more recent version of numpy "
                     "with support for np.quantile.")
 
-    # Check that the pinball loss is minimized
+    # Check that the pinball loss is minimized by the empirical quantile.
     n_samples = 100
     rng = np.random.RandomState(42)
     data = getattr(rng, distribution)(size=n_samples)

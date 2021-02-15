@@ -254,9 +254,9 @@ def pinball_loss(y_true, y_pred, *,
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
-    diff = y_pred - y_true
+    diff = y_true - y_pred
     sign = (diff >= 0).astype(diff.dtype)
-    loss = diff * sign * (1 - alpha) - diff * (1 - sign) * alpha
+    loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
     output_errors = np.average(loss, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
