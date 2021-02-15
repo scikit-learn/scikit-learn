@@ -999,8 +999,8 @@ class RandomForestClassifier(ForestClassifier):
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate
-        the generalization accuracy.
+        Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1322,8 +1322,8 @@ class RandomForestRegressor(ForestRegressor):
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        whether to use out-of-bag samples to estimate
-        the R^2 on unseen data.
+        Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1605,8 +1605,8 @@ class ExtraTreesClassifier(ForestClassifier):
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate
-        the generalization accuracy.
+        Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1924,7 +1924,8 @@ class ExtraTreesRegressor(ForestRegressor):
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate the R^2 on unseen data.
+        Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
