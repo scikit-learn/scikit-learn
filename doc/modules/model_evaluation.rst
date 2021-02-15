@@ -416,7 +416,7 @@ defined as
 
 .. math::
 
-   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
+  \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -2367,7 +2367,7 @@ to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
 
 .. math::
 
-\text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+  \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
 
 Here is a small example of usage of the :func:`mean_pinball_loss` function::
 
