@@ -64,7 +64,7 @@ def test_kernel_gradient(kernel):
         return K
 
     K_gradient_approx = \
-        _approx_fprime(kernel.theta, eval_kernel_for_theta, 1e-5)
+        _approx_fprime(kernel.theta, eval_kernel_for_theta, 1e-10)
 
     assert_almost_equal(K_gradient, K_gradient_approx, 4)
 
