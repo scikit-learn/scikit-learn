@@ -370,7 +370,8 @@ def test_mean_pinball_loss_on_constant_predictions(
     # Compute the best possible pinball loss for any constant predictor:
     best_pred = np.quantile(data, target_quantile)
     best_constant_pred = np.full(n_samples, fill_value=best_pred)
-    best_pbl = mean_pinball_loss(data, best_constant_pred, alpha=target_quantile)
+    best_pbl = mean_pinball_loss(data, best_constant_pred,
+                                 alpha=target_quantile)
 
     # Evaluate the loss on a grid of quantiles
     candidate_predictions = np.quantile(data, np.linspace(0, 1, 100))
