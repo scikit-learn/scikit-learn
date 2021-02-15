@@ -63,7 +63,7 @@ from ..datasets import (
     load_iris,
     make_blobs,
     make_multilabel_classification,
-    make_regression,
+    make_regression
 )
 
 REGRESSION_DATASET = None
@@ -645,6 +645,9 @@ def _set_checking_parameters(estimator):
 
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
+
+    if name in CROSS_DECOMPOSITION:
+        estimator.set_params(n_components=1)
 
 
 class _NotAnArray:
@@ -2071,9 +2074,10 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
+        msg = r"contamination must be in \(0, 0.5]"
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
-            with raises(ValueError):
+            with raises(ValueError, match=msg):
                 estimator.fit(X)
 
 
@@ -2907,16 +2911,19 @@ def check_decision_proba_consistency(name, estimator_orig):
     centers = [(2, 2), (4, 4)]
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
                       centers=centers, cluster_std=1.0, shuffle=True)
-    X_test = np.random.randn(20, 2) + 4
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
+                                                        random_state=0)
     estimator = clone(estimator_orig)
 
     if (hasattr(estimator, "decision_function") and
             hasattr(estimator, "predict_proba")):
 
-        estimator.fit(X, y)
+        estimator.fit(X_train, y_train)
         # Since the link function from decision_function() to predict_proba()
         # is sometimes not precise enough (typically expit), we round to the
-        # 10th decimal to avoid numerical issues.
+        # 10th decimal to avoid numerical issues: we compare the rank
+        # with deterministic ties rather than get platform specific rank
+        # inversions in case of machine level differences.
         a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
         b = estimator.decision_function(X_test).round(decimals=10)
         assert_array_equal(rankdata(a), rankdata(b))
@@ -2964,9 +2971,10 @@ def check_outliers_fit_predict(name, estimator_orig):
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
-        for contamination in [-0.5, 2.3]:
+        msg = r"contamination must be in \(0, 0.5]"
+        for contamination in [-0.5, -0.001, 0.5001, 2.3]:
             estimator.set_params(contamination=contamination)
-            with raises(ValueError):
+            with raises(ValueError, match=msg):
                 estimator.fit_predict(X)
 
 
@@ -3119,9 +3127,11 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if 'warm_start' in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 100
-    X = rng.normal(loc=100, size=(n_samples, 2))
+    n_samples = 150
+    X = rng.normal(size=(n_samples, 8))
+    X = _enforce_estimator_tags_x(estimator, X)
     X = _pairwise_estimator_convert_X(X, estimator)
+
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
@@ -3133,7 +3143,7 @@ def check_n_features_in_after_fitting(name, estimator_orig):
 
     # check methods will check n_features_in_
     check_methods = ["predict", "transform", "decision_function",
-                     "predict_proba"]
+                     "predict_proba", "score"]
     X_bad = X[:, [1]]
 
     msg = (f"X has 1 features, but \\w+ is expecting {X.shape[1]} "
@@ -3141,8 +3151,13 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     for method in check_methods:
         if not hasattr(estimator, method):
             continue
+
+        callable_method = getattr(estimator, method)
+        if method == "score":
+            callable_method = partial(callable_method, y=y)
+
         with raises(ValueError, match=msg):
-            getattr(estimator, method)(X_bad)
+            callable_method(X_bad)
 
     # partial_fit will check in the second call
     if not hasattr(estimator, "partial_fit"):
