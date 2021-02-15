@@ -2386,13 +2386,13 @@ Here is a small example of usage of the :func:`mean_pinball_loss` function::
   >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
   0.0
 
-It is possible to build a scorer object with a specific choice of alpha to
-perform, for instance to evaluate a regressor of the 95th percentile::
+It is possible to build a scorer object with a specific choice of alpha::
 
   >>> from sklearn.metrics import make_scorer
   >>> mean_pinball_loss_95p = make_scorer(mean_pinball_loss, alpha=0.95)
 
-Such a scorer can be used in a cross-validation loop:
+Such a scorer can be used to evaluate the generalization performance of a
+quantile regressor via cross-validation:
 
   >>> from sklearn.datasets import make_regression
   >>> from sklearn.model_selection import cross_val_score
@@ -2407,9 +2407,9 @@ Such a scorer can be used in a cross-validation loop:
   >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
   array([11.1..., 10.4... , 24.4...,  9.2..., 12.9...])
 
-It is also possible to build scorer objects for hyper-parameter tuning, in
-which case the sign of the loss must be switched to ensure that greater means
-better as explained in the example linked below.
+It is also possible to build scorer objects for hyper-parameter tuning. The
+sign of the loss must be switched to ensure that greater means better as
+explained in the example linked below.
 
 .. topic:: Example:
 
