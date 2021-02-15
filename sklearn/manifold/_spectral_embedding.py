@@ -187,7 +187,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         :term:`Glossary <random_state>`).
 
         .. note::
-            When using `eigen_solver` == 'amg'`,
+            When using `eigen_solver == 'amg'`,
             it is necessary to also fix the global numpy seed with
             `np.random.seed(int)` to get deterministic results. See
             https://github.com/pyamg/pyamg/issues/139 for further
@@ -413,7 +413,7 @@ class SpectralEmbedding(BaseEstimator):
         :term:`Glossary <random_state>`).
 
         .. note::
-            When using `eigen_solver` == 'amg'`,
+            When using `eigen_solver == 'amg'`,
             it is necessary to also fix the global numpy seed with
             `np.random.seed(int)` to get deterministic results. See
             https://github.com/pyamg/pyamg/issues/139 for further
