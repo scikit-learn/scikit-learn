@@ -480,7 +480,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
                              fit_intercept=False, eps=eps, n_alphas=n_alphas,
                              normalize=False, copy_X=False)
-    else:
+    elif len(alphas) > 1:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
