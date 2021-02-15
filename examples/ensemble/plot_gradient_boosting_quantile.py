@@ -173,6 +173,7 @@ for name, gbr in sorted(all_models.items()):
 
 pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 
+
 # %%
 # Errors are higher meaning the models slightly overfitted the data. It still
 # shows that the best test metric is obtained when the model is trained by
@@ -185,6 +186,35 @@ pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 # side of the previous plot. The conditional median estimator is biased
 # (underestimation for this asymetric noise) but is also naturally robust to
 # outliers and overfits less.
+#
+# Calibration of the confidence interval
+# --------------------------------------
+#
+# We can also evaluate the ability of the two extreme quantile estimators at
+# producing a well-calibrated conditational 90%-confidence interval.
+#
+# To do this we can compute the fraction of observations that fall between the
+# predictions:
+def coverage_fraction(y, y_low, y_high):
+    return np.mean(np.logical_and(y >= y_low, y <= y_high))
+
+
+coverage_fraction(y_train,
+                  all_models['q 0.05'].predict(X_train),
+                  all_models['q 0.95'].predict(X_train))
+
+# %%
+# On the training set the calibration is very close to the expected coverage
+# value for a 90% confidence interval.
+coverage_fraction(y_test,
+                  all_models['q 0.05'].predict(X_test),
+                  all_models['q 0.95'].predict(X_test))
+
+
+# %%
+# On the test set, the estimated confidence interval is slightly too narrow.
+# Note however that we would need to wrap those metrics in a cross-validation
+# loop to assess their variability under data resampling.
 #
 # Tuning the hyper-parameters of the quantile regressors
 # ------------------------------------------------------
@@ -280,3 +310,23 @@ plt.ylim(-10, 25)
 plt.legend(loc='upper left')
 plt.title("Prediction with tuned hyper-parameters")
 plt.show()
+
+# %%
+# The plot looks qualitatively better than for the untuned models, especially
+# for the shape of the of lower quantile.
+#
+# We now quantitatively evaluate the joint-calibration of the pair of
+# estimators:
+coverage_fraction(y_train,
+                  search_05p.predict(X_train),
+                  search_95p.predict(X_train))
+# %%
+coverage_fraction(y_test,
+                  search_05p.predict(X_test),
+                  search_95p.predict(X_test))
+
+# The calibration of the tuned pair is sadly not better on the test set: the
+# width of the estimated confidence interval is still too narrow.
+#
+# Again, we would need to wrap this study in a cross-validation loop to
+# better assess the variability of those estimates.
