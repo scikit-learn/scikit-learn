@@ -406,7 +406,7 @@ def test_randomized_svd_sign_flip_with_transpose():
 
     # Without transpose
     u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True,
-        random_state=0)
+                                             random_state=0)
     u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
     assert u_based
     assert not v_based
