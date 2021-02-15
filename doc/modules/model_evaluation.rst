@@ -2361,13 +2361,13 @@ Pinball loss
 
 The :func:`pinball_loss` function is mostly used to evaluate the predictive
 performance of quantile regression models. The `pinball loss
-<https://en.wikipedia.org/wiki/ Quantile_regression#Computation>`_ is
+<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is
 equivalent to :func:`mean_absolute_error` when the quantile parameter ``alpha``
 is set to 0.5.
 
 .. math::
 
-  \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left( \alpha (y_i - \hat{y}_i)^+ - (1 - \alpha) (y_i - \hat{y}_i)^- \right)
+\text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
 
 Here is a small example of usage of the :func:`pinball_loss` function::
 
@@ -2409,7 +2409,7 @@ Such a scorer can be used in a cross-validation loop:
 
 It is also possible to build scorer objects for hyper-parameter tuning, in
 which case the sign of the loss must be switched to ensure that greater means
-better as explain in the example linked below.
+better as explained in the example linked below.
 
 .. topic:: Example:
 
