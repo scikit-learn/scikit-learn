@@ -1,5 +1,6 @@
 
 import numpy as np
+from scipy import optimize
 from numpy.testing import assert_allclose
 from itertools import product
 import pytest
@@ -362,15 +363,16 @@ def test_pinball_loss_on_constant_predictions(
                     "with support for np.quantile.")
 
     # Check that the pinball loss is minimized by the empirical quantile.
-    n_samples = 100
+    n_samples = 1000
     rng = np.random.RandomState(42)
     data = getattr(rng, distribution)(size=n_samples)
 
     # Compute the best possible pinball loss for any constant predictor:
     best_pred = np.quantile(data, target_quantile)
-    best_pred = np.full(n_samples, fill_value=best_pred)
-    best_pbl = pinball_loss(data, best_pred, alpha=target_quantile)
+    best_constant_pred = np.full(n_samples, fill_value=best_pred)
+    best_pbl = pinball_loss(data, best_constant_pred, alpha=target_quantile)
 
+    # Evaluate the loss on a grid of quantiles
     candidate_predictions = np.quantile(data, np.linspace(0, 1, 100))
     for pred in candidate_predictions:
         # Compute the pinball loss of a constant predictor:
@@ -390,3 +392,19 @@ def test_pinball_loss_on_constant_predictions(
         )
         expected_pbl /= n_samples
         assert_almost_equal(expected_pbl, pbl)
+
+    # Check that we can actually recover the target_quantile by minimizing the
+    # pinball loss w.r.t. the constant prediction quantile.
+    def objective_func(x):
+        if x < 0 or x > 1:
+            return np.inf
+        pred = np.quantile(data, x)
+        constant_pred = np.full(n_samples, fill_value=pred)
+        return pinball_loss(data, constant_pred, alpha=target_quantile)
+
+    result = optimize.minimize(objective_func, 0.5, method="Nelder-Mead")
+    assert result.success
+    assert result.fun == pytest.approx(best_pbl)
+
+    # The minimum is not unique with limited data, hence the tolerance.
+    assert result.x == pytest.approx(target_quantile, abs=1e-3)
