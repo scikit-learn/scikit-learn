@@ -27,6 +27,12 @@ Changelog
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Better contains the CSS provided by :func:`utils.estimator_html_repr`
+  by giving CSS ids to the html representation. :pr:`19417` by `Thomas Fan`_.
+
 .. _changes_0_24_1:
 
 Version 0.24.1
