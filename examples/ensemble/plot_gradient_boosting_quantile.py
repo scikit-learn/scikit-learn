@@ -7,8 +7,8 @@ This example shows how quantile regression can be used to create prediction
 intervals.
 """
 # %%
-# Generate some data for a synthetic regression problem by applying the f
-# function to uniformly sampled random inputs.
+# Generate some data for a synthetic regression problem by applying the
+# function f to uniformly sampled random inputs.
 import numpy as np
 from sklearn.model_selection import train_test_split
 
