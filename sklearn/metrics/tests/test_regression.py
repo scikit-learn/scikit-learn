@@ -28,7 +28,7 @@ from sklearn.exceptions import UndefinedMetricWarning
 def test_regression_metrics(n_samples=50):
     y_true = np.arange(n_samples)
     y_pred = y_true + 1
-    y_pred_ = y_true - 1
+    y_pred_2 = y_true - 1
 
     assert_almost_equal(mean_squared_error(y_true, y_pred), 1.)
     assert_almost_equal(mean_squared_log_error(y_true, y_pred),
@@ -36,9 +36,9 @@ def test_regression_metrics(n_samples=50):
                                            np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(pinball_loss(y_true, y_pred), 0.5)
-    assert_almost_equal(pinball_loss(y_true, y_pred_), 0.5)
+    assert_almost_equal(pinball_loss(y_true, y_pred_2), 0.5)
     assert_almost_equal(pinball_loss(y_true, y_pred, alpha=0.4), 0.6)
-    assert_almost_equal(pinball_loss(y_true, y_pred_, alpha=0.4), 0.4)
+    assert_almost_equal(pinball_loss(y_true, y_pred_2, alpha=0.4), 0.4)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
     mape = mean_absolute_percentage_error(y_true, y_pred)
     assert np.isfinite(mape)
