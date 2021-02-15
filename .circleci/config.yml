@@ -104,6 +104,9 @@ jobs:
   pypy3:
     docker:
       - image: condaforge/miniforge3
+    environment:
+      # Avoid the interactive dialog when installing tzdata
+      - DEBIAN_FRONTEND: noninteractive
     steps:
       - restore_cache:
           keys:
@@ -155,13 +158,13 @@ workflows:
       - deploy:
           requires:
             - doc
-  pypy:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - pypy3
+  # pypy:
+  #  triggers:
+  #    - schedule:
+  #        cron: "0 0 * * *"
+  #        filters:
+  #          branches:
+  #            only:
+  #              - master
+  #  jobs:
+  #    - pypy3
