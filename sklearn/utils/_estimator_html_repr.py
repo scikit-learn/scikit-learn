@@ -1,6 +1,7 @@
 from contextlib import closing
 from contextlib import suppress
 from io import StringIO
+from string import Template
 import uuid
 import html
 
@@ -146,14 +147,17 @@ def _write_estimator_html(out, estimator, estimator_label,
 
 
 _STYLE = """
-div.sk-top-container {
+#$id {
   color: black;
   background-color: white;
 }
-div.sk-toggleable {
+#$id pre{
+  padding: 0;
+}
+#$id div.sk-toggleable {
   background-color: white;
 }
-label.sk-toggleable__label {
+#$id label.sk-toggleable__label {
   cursor: pointer;
   display: block;
   width: 100%;
@@ -162,31 +166,31 @@ label.sk-toggleable__label {
   box-sizing: border-box;
   text-align: center;
 }
-div.sk-toggleable__content {
+#$id div.sk-toggleable__content {
   max-height: 0;
   max-width: 0;
   overflow: hidden;
   text-align: left;
   background-color: #f0f8ff;
 }
-div.sk-toggleable__content pre {
+#$id div.sk-toggleable__content pre {
   margin: 0.2em;
   color: black;
   border-radius: 0.25em;
   background-color: #f0f8ff;
 }
-input.sk-toggleable__control:checked~div.sk-toggleable__content {
+#$id input.sk-toggleable__control:checked~div.sk-toggleable__content {
   max-height: 200px;
   max-width: 100%;
   overflow: auto;
 }
-div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
+#$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
   background-color: #d4ebff;
 }
-div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
+#$id div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
   background-color: #d4ebff;
 }
-input.sk-hidden--visually {
+#$id input.sk-hidden--visually {
   border: 0;
   clip: rect(1px 1px 1px 1px);
   clip: rect(1px, 1px, 1px, 1px);
@@ -197,7 +201,7 @@ input.sk-hidden--visually {
   position: absolute;
   width: 1px;
 }
-div.sk-estimator {
+#$id div.sk-estimator {
   font-family: monospace;
   background-color: #f0f8ff;
   margin: 0.25em 0.25em;
@@ -205,19 +209,19 @@ div.sk-estimator {
   border-radius: 0.25em;
   box-sizing: border-box;
 }
-div.sk-estimator:hover {
+#$id div.sk-estimator:hover {
   background-color: #d4ebff;
 }
-div.sk-parallel-item::after {
+#$id div.sk-parallel-item::after {
   content: "";
   width: 100%;
   border-bottom: 1px solid gray;
   flex-grow: 1;
 }
-div.sk-label:hover label.sk-toggleable__label {
+#$id div.sk-label:hover label.sk-toggleable__label {
   background-color: #d4ebff;
 }
-div.sk-serial::before {
+#$id div.sk-serial::before {
   content: "";
   position: absolute;
   border-left: 1px solid gray;
@@ -226,39 +230,39 @@ div.sk-serial::before {
   bottom: 0;
   left: 50%;
 }
-div.sk-serial {
+#$id div.sk-serial {
   display: flex;
   flex-direction: column;
   align-items: center;
   background-color: white;
 }
-div.sk-item {
+#$id div.sk-item {
   z-index: 1;
 }
-div.sk-parallel {
+#$id div.sk-parallel {
   display: flex;
   align-items: stretch;
   justify-content: center;
   background-color: white;
 }
-div.sk-parallel-item {
+#$id div.sk-parallel-item {
   display: flex;
   flex-direction: column;
   position: relative;
   background-color: white;
 }
-div.sk-parallel-item:first-child::after {
+#$id div.sk-parallel-item:first-child::after {
   align-self: flex-end;
   width: 50%;
 }
-div.sk-parallel-item:last-child::after {
+#$id div.sk-parallel-item:last-child::after {
   align-self: flex-start;
   width: 50%;
 }
-div.sk-parallel-item:only-child::after {
+#$id div.sk-parallel-item:only-child::after {
   width: 0;
 }
-div.sk-dashed-wrapped {
+#$id div.sk-dashed-wrapped {
   border: 1px dashed gray;
   margin: 0.2em;
   box-sizing: border-box;
@@ -266,19 +270,19 @@ div.sk-dashed-wrapped {
   background-color: white;
   position: relative;
 }
-div.sk-label label {
+#$id div.sk-label label {
   font-family: monospace;
   font-weight: bold;
   background-color: white;
   display: inline-block;
   line-height: 1.2em;
 }
-div.sk-label-container {
+#$id div.sk-label-container {
   position: relative;
   z-index: 2;
   text-align: center;
 }
-div.sk-container {
+#$id div.sk-container {
   display: inline-block;
   position: relative;
 }
@@ -301,8 +305,12 @@ def estimator_html_repr(estimator):
         HTML representation of estimator.
     """
     with closing(StringIO()) as out:
-        out.write(f'<style>{_STYLE}</style>'
-                  f'<div class="sk-top-container"><div class="sk-container">')
+        container_id = "sk-" + str(uuid.uuid4())
+        style_template = Template(_STYLE)
+        style_with_id = style_template.substitute(id=container_id)
+        out.write(f'<style>{style_with_id}</style>'
+                  f'<div id="{container_id}" class"sk-top-container">'
+                  '<div class="sk-container">')
         _write_estimator_html(out, estimator, estimator.__class__.__name__,
                               str(estimator), first_call=True)
         out.write('</div></div>')
