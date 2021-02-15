@@ -245,7 +245,7 @@ def randomized_range_finder(A, *, size, n_iter,
 @_deprecate_positional_args
 def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state=0):
+                   flip_sign=True, random_state='warn'):
     """Computes a truncated randomized SVD.
 
     Parameters
@@ -296,11 +296,19 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default=0
-        The seed of the pseudo random number generator to use when shuffling
-        the data, i.e. getting the random vectors to initialize the algorithm.
-        Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`.
+        random_state : int, RandomState instance or None, default='warn'
+            The seed of the pseudo random number generator to use when shuffling
+            the data, i.e. getting the random vectors to initialize the algorithm.
+            Pass an int for reproducible results across multiple function calls.
+            See :term:`Glossary <random_state>`.
+            During the deprecation cycle this will set to zero and afterwards
+            it will be set to None.
+            The previous behavior (`random_state=0`) is deprecated, and
+            from v1.2 the default value will be `random_state=None`. Set
+            the value of `random_state` explicitly to suppress the deprecation
+            warning.
+            
+            .. versionchanged:: 1.2
 
     Notes
     -----
