@@ -488,7 +488,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
-        the generalization error.
+        the generalization error. Only available if bootstrap=True.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit
@@ -897,7 +897,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
-        the generalization error.
+        the generalization error. Only available if bootstrap=True.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit
