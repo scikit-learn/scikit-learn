@@ -919,17 +919,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 raise ValueError(
                     "Cannot uncenter sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
-            if not sparse.isspmatrix_csr(X):
-                X = X.tocsr()
-                copy = False
-            if copy:
-                X = X.copy()
             if self.scale_ is not None:
                 inplace_column_scale(X, self.scale_)
         else:
-            X = np.asarray(X)
-            if copy:
-                X = X.copy()
             if self.with_std:
                 X *= self.scale_
             if self.with_mean:
