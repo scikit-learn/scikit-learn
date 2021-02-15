@@ -315,6 +315,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Remap output
         self.n_features_ = X.shape[1]
 
+        # add input validation for poisson criterion
+        if (self.criterion == "poisson" and np.any(y < 0)):
+            raise ValueError("Some value(s) of y are negative which is"
+                             " not allowed for Poisson regression."
+                             )
+
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
             warn("A column-vector y was passed when a 1d array was"
@@ -1298,14 +1304,15 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"mse", "mae"}, default="mse"
+    criterion : {"mse", "mae", "poisson"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        reduction as feature selection criterion, "mae" for the mean
+        absolute error, and "poisson" which uses reduction in
+        Poisson deviance to find splits.
 
-        .. versionadded:: 0.18
-           Mean Absolute Error (MAE) criterion.
+        .. versionadded:: 0.19
+           Poisson ("poisson") criterion.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
