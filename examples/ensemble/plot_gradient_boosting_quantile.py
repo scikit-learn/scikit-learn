@@ -18,26 +18,27 @@ def f(x):
     return x * np.sin(x)
 
 
-rng = np.random.RandomState(0)
+rng = np.random.RandomState(42)
 X = np.atleast_2d(rng.uniform(0, 10.0, size=1000)).T
-X = X.astype(np.float32)
-y = f(X).ravel()
+expected_y = f(X).ravel()
 
 # %%
-# To make the problem interesting, add centered `log-normal distributed
-# <https://en.wikipedia.org/wiki/Log-normal_distribution>`_ random noise to the
-# target variable. To make this even more interesting we consider
-# heteroschedastic noise where the parameter sigma depends on the input x.
+# To make the problem interesting, we generate observations of the target y as
+# the sum of deterministic term computed by the function f and a random noise
+# term that follows a centered `log-normal
+# <https://en.wikipedia.org/wiki/Log-normal_distribution>`_. To make this even
+# more interesting we consider the case where the amplitude of the noise
+# depends on the input variable x (heteroscedastic noise).
 #
-# The lognormal distribution is very skewed, meaning that it is likely to get
-# large outliers but impossible to observe small outliers.
+# The lognormal distribution is non-symmetric and long tailed: observing large
+# outliers is likely but it is impossible to observe small outliers.
 sigma = 0.5 + X.ravel() / 10
 noise = rng.lognormal(sigma=sigma) - np.exp(sigma ** 2 / 2)
-y += noise
+y = expected_y + noise
 
 # %%
 # Split into train, test datasets:
-X_train, X_test, y_train, y_test = train_test_split(X, y)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 # %%
 # Fitting non-linear quantile and least squares regressors
@@ -76,12 +77,12 @@ gbr_ls = GradientBoostingRegressor(loss='ls', **common_params)
 all_models["ls"] = gbr_ls.fit(X_train, y_train)
 
 # %%
-# Create an evenly spaced set of input values spanning the [0, 10] range.
+# Create an evenly spaced evaluation set of input values spanning the [0, 10]
+# range.
 xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
-xx = xx.astype(np.float32)
 
 # %%
-# Plot the true function (expected mean), the prediction of the conditional
+# Plot the true conditional mean function f, the prediction of the conditional
 # mean (least squares loss), the conditional median and the conditional 90%
 # interval (from 5th to 95th conditional percentiles).
 import matplotlib.pyplot as plt
@@ -93,24 +94,25 @@ y_upper = all_models['q 0.95'].predict(xx)
 y_med = all_models['q 0.50'].predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
+plt.plot(xx, f(xx), 'g:', linewidth=3, label=r'$f(x) = x\,\sin(x)$')
 plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
 plt.plot(xx, y_med, 'r-', label='Predicted median', color="orange")
 plt.plot(xx, y_pred, 'r-', label='Predicted mean')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
-plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.5,
+plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.4,
                  label='Predicted 90% interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
-plt.ylim(-10, 30)
+plt.ylim(-10, 25)
 plt.legend(loc='upper left')
 plt.show()
 
 # %%
-# Note that the predicted median is on average below the predicted mean as the
-# noise is skewed towards high values (large outliers). Also note that the
-# median estimate is smoother because of its natural robustness to outliers.
+# Comparing the predicted median with the predicted mean, we note that the
+# median is on average below the mean as the noise is skewed towards high
+# values (large outliers). The median estimate also seems to be smoother
+# because of its natural robustness to outliers.
 #
 # Also observe that the inductive bias of gradient boosting trees is
 # unfortunately preventing our 0.05 quantile to fully capture the sinoisoidal
@@ -120,9 +122,16 @@ plt.show()
 # Analysis of the error metrics
 # -----------------------------
 #
-# Measure the models with :func:`mean_square_error` and :func:`pinball_loss`
+# Measure the models with :func:`mean_squared_error` and :func:`pinball_loss`
 # metrics on the training dataset.
-from pandas import DataFrame
+import pandas as pd
+
+
+def highlight_min(x):
+    x_min = x.min()
+    return ['font-weight: bold' if v == x_min else ''
+            for v in x]
+
 
 results = []
 for name, gbr in sorted(all_models.items()):
@@ -133,7 +142,8 @@ for name, gbr in sorted(all_models.items()):
             y_train, y_pred, alpha=alpha)
     metrics['MSE'] = mean_squared_error(y_train, y_pred)
     results.append(metrics)
-DataFrame(results).set_index('model')
+
+pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 
 # %%
 # One column shows all models evaluated by the same metric. The minimum number
@@ -141,14 +151,14 @@ DataFrame(results).set_index('model')
 # the same metric. This should be always the case on the training set if the
 # training converged.
 #
-# Note that because the target noise is skewed by the presence of large
-# outliers, the expected conditional mean and conditional median are
-# signficiantly different and therefore one could not use the least squares
-# model get a good estimation of the conditional median nor the converse.
+# Note that because the target distribution is asymmetric, the expected
+# conditional mean and conditional median are signficiantly different and
+# therefore one could not use the least squares model get a good estimation of
+# the conditional median nor the converse.
 #
-# If the target distribution were symmetric and had no outliers (e.g. with
-# a Gaussian noise), then median estimator and the least squares estimator
-# would have yielded similar predictions.
+# If the target distribution were symmetric and had no outliers (e.g. with a
+# Gaussian noise), then median estimator and the least squares estimator would
+# have yielded similar predictions.
 #
 # We then do the same on the test set.
 results = []
@@ -160,11 +170,12 @@ for name, gbr in sorted(all_models.items()):
             y_test, y_pred, alpha=alpha)
     metrics['MSE'] = mean_squared_error(y_test, y_pred)
     results.append(metrics)
-DataFrame(results).set_index('model')
+
+pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 
 # %%
 # Errors are higher meaning the models slightly overfitted the data. It still
-# shows the minimum of a metric is obtained when the model is trained by
+# shows that the best test metric is obtained when the model is trained by
 # minimizing this same metric.
 #
 # Note that the conditional median estimator is competitive with the least
@@ -184,7 +195,7 @@ DataFrame(results).set_index('model')
 # median regressor and there is no reason than the same hyper-parameters are
 # suitable for the 5th percentile regressor.
 #
-# To confirm this hypothesis, we tuned the hyper-parameters of a new regressor
+# To confirm this hypothesis, we tune the hyper-parameters of a new regressor
 # of the 5th percentile by selecting the best model parameters by
 # cross-validation on the pinball loss with alpha=0.05:
 
@@ -256,15 +267,15 @@ y_lower = search_05p.predict(xx)
 y_upper = search_95p.predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
+plt.plot(xx, f(xx), 'g:', linewidth=3, label=r'$f(x) = x\,\sin(x)$')
 plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
-plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.5,
+plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.4,
                  label='Predicted 90% interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
-plt.ylim(-10, 30)
+plt.ylim(-10, 25)
 plt.legend(loc='upper left')
 plt.title("Prediction with tuned hyper-parameters")
 plt.show()
