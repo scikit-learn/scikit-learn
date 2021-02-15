@@ -8,6 +8,8 @@ import pytest
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.dummy import DummyRegressor
+from sklearn.model_selection import GridSearchCV
 
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
@@ -19,6 +21,7 @@ from sklearn.metrics import max_error
 from sklearn.metrics import mean_pinball_loss
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
+from sklearn.metrics import make_scorer
 
 from sklearn.metrics._regression import _check_reg_targets
 
@@ -409,3 +412,30 @@ def test_mean_pinball_loss_on_constant_predictions(
 
     # The minimum is not unique with limited data, hence the tolerance.
     assert result.x == pytest.approx(target_quantile, abs=1e-3)
+
+
+def test_dummy_quantile_parameter_tuning():
+    # Integration test to check that it is possible to use the pinball loss to
+    # tune the hyperparameter of a quantile regressor. This is conceptually
+    # similar to the previous test but using the scikit-learn estimator and
+    # scoring API instead.
+    n_samples = 1000
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(n_samples, 5))  # Ignored
+    y = rng.exponential(size=n_samples)
+
+    all_quantiles = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
+    for alpha in all_quantiles:
+        neg_mean_pinball_loss = make_scorer(
+            mean_pinball_loss,
+            alpha=alpha,
+            greater_is_better=False,
+        )
+        regressor = DummyRegressor(strategy="quantile", quantile=0.25)
+        grid_search = GridSearchCV(
+            regressor,
+            param_grid=dict(quantile=all_quantiles),
+            scoring=neg_mean_pinball_loss,
+        ).fit(X, y)
+
+        assert grid_search.best_params_["quantile"] == pytest.approx(alpha)
