@@ -24,7 +24,7 @@ expected_y = f(X).ravel()
 
 # %%
 # To make the problem interesting, we generate observations of the target y as
-# the sum of deterministic term computed by the function f and a random noise
+# the sum of a deterministic term computed by the function f and a random noise
 # term that follows a centered `log-normal
 # <https://en.wikipedia.org/wiki/Log-normal_distribution>`_. To make this even
 # more interesting we consider the case where the amplitude of the noise
@@ -182,8 +182,9 @@ pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 # squares estimator in terms of MSE on the test set: this can be explained by
 # the fact the least squares estimator is very sensitive to large outliers
 # which can cause significant overfitting. This can be seen on the right hand
-# side of the previous plot. The conditional median estimator is naturally
-# robust to outliers and overfits less.
+# side of the previous plot. The conditional median estimator is biased
+# (underestimation for this asymetric noise) but is also naturally robust to
+# outliers and overfits less.
 #
 # Tuning the hyper-parameters of the quantile regressors
 # ------------------------------------------------------
