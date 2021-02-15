@@ -43,7 +43,7 @@ __ALL__ = [
     "mean_squared_log_error",
     "median_absolute_error",
     "mean_absolute_percentage_error",
-    "pinball_loss",
+    "mean_pinball_loss",
     "r2_score",
     "explained_variance_score",
     "mean_tweedie_deviance",
@@ -195,10 +195,10 @@ def mean_absolute_error(y_true, y_pred, *,
     return np.average(output_errors, weights=multioutput)
 
 
-def pinball_loss(y_true, y_pred, *,
-                 sample_weight=None,
-                 alpha=0.5,
-                 multioutput='uniform_average'):
+def mean_pinball_loss(y_true, y_pred, *,
+                      sample_weight=None,
+                      alpha=0.5,
+                      multioutput='uniform_average'):
     """Pinball loss for quantile regression.
 
     Read more in the :ref:`User Guide <pinball_loss>`.
@@ -241,14 +241,14 @@ def pinball_loss(y_true, y_pred, *,
 
     Examples
     --------
-    >>> from sklearn.metrics import pinball_loss
+    >>> from sklearn.metrics import mean_pinball_loss
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> pinball_loss(y_true, y_pred)
+    >>> mean_pinball_loss(y_true, y_pred)
     0.25
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> pinball_loss(y_true, y_pred, alpha=0.1)
+    >>> mean_pinball_loss(y_true, y_pred, alpha=0.1)
     0.35
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(

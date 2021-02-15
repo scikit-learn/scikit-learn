@@ -16,7 +16,7 @@ from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import max_error
-from sklearn.metrics import pinball_loss
+from sklearn.metrics import mean_pinball_loss
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
 
@@ -35,10 +35,10 @@ def test_regression_metrics(n_samples=50):
                         mean_squared_error(np.log(1 + y_true),
                                            np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
-    assert_almost_equal(pinball_loss(y_true, y_pred), 0.5)
-    assert_almost_equal(pinball_loss(y_true, y_pred_2), 0.5)
-    assert_almost_equal(pinball_loss(y_true, y_pred, alpha=0.4), 0.6)
-    assert_almost_equal(pinball_loss(y_true, y_pred_2, alpha=0.4), 0.4)
+    assert_almost_equal(mean_pinball_loss(y_true, y_pred), 0.5)
+    assert_almost_equal(mean_pinball_loss(y_true, y_pred_2), 0.5)
+    assert_almost_equal(mean_pinball_loss(y_true, y_pred, alpha=0.4), 0.6)
+    assert_almost_equal(mean_pinball_loss(y_true, y_pred_2, alpha=0.4), 0.4)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
     mape = mean_absolute_percentage_error(y_true, y_pred)
     assert np.isfinite(mape)
@@ -97,7 +97,7 @@ def test_multioutput_regression():
     error = mean_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. + 2. / 3) / 4.)
 
-    error = pinball_loss(y_true, y_pred)
+    error = mean_pinball_loss(y_true, y_pred)
     assert_almost_equal(error, (1. + 2. / 3) / 8.)
 
     error = np.around(mean_absolute_percentage_error(y_true, y_pred),
@@ -118,7 +118,7 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(mean_squared_error([0.], [0.], squared=False), 0.0)
     assert_almost_equal(mean_squared_log_error([0.], [0.]), 0.0)
     assert_almost_equal(mean_absolute_error([0.], [0.]), 0.0)
-    assert_almost_equal(pinball_loss([0.], [0.]), 0.0)
+    assert_almost_equal(mean_pinball_loss([0.], [0.]), 0.0)
     assert_almost_equal(mean_absolute_percentage_error([0.], [0.]), 0.0)
     assert_almost_equal(median_absolute_error([0.], [0.]), 0.0)
     assert_almost_equal(max_error([0.], [0.]), 0.0)
@@ -221,8 +221,8 @@ def test_regression_multioutput_array():
     err_msg = ("multioutput is expected to be 'raw_values' "
                "or 'uniform_average' but we got 'variance_weighted' instead.")
     with pytest.raises(ValueError, match=err_msg):
-        pinball_loss(y_true, y_pred, multioutput='variance_weighted')
-    pbl = pinball_loss(y_true, y_pred, multioutput='raw_values')
+        mean_pinball_loss(y_true, y_pred, multioutput='variance_weighted')
+    pbl = mean_pinball_loss(y_true, y_pred, multioutput='raw_values')
     mape = mean_absolute_percentage_error(y_true, y_pred,
                                           multioutput='raw_values')
     r = r2_score(y_true, y_pred, multioutput='raw_values')
@@ -241,7 +241,7 @@ def test_regression_multioutput_array():
     y_pred = [[1, 1]]*4
     mse = mean_squared_error(y_true, y_pred, multioutput='raw_values')
     mae = mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-    pbl = pinball_loss(y_true, y_pred, multioutput='raw_values')
+    pbl = mean_pinball_loss(y_true, y_pred, multioutput='raw_values')
     r = r2_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(mse, [1., 1.], decimal=2)
     assert_array_almost_equal(mae, [1., 1.], decimal=2)
@@ -354,7 +354,7 @@ def test_mean_absolute_percentage_error():
 @pytest.mark.parametrize("distribution",
                          ["normal", "lognormal", "exponential", "uniform"])
 @pytest.mark.parametrize("target_quantile", [0.05, 0.5, 0.75])
-def test_pinball_loss_on_constant_predictions(
+def test_mean_pinball_loss_on_constant_predictions(
     distribution,
     target_quantile
 ):
@@ -370,14 +370,14 @@ def test_pinball_loss_on_constant_predictions(
     # Compute the best possible pinball loss for any constant predictor:
     best_pred = np.quantile(data, target_quantile)
     best_constant_pred = np.full(n_samples, fill_value=best_pred)
-    best_pbl = pinball_loss(data, best_constant_pred, alpha=target_quantile)
+    best_pbl = mean_pinball_loss(data, best_constant_pred, alpha=target_quantile)
 
     # Evaluate the loss on a grid of quantiles
     candidate_predictions = np.quantile(data, np.linspace(0, 1, 100))
     for pred in candidate_predictions:
         # Compute the pinball loss of a constant predictor:
         constant_pred = np.full(n_samples, fill_value=pred)
-        pbl = pinball_loss(data, constant_pred, alpha=target_quantile)
+        pbl = mean_pinball_loss(data, constant_pred, alpha=target_quantile)
 
         # Check that the loss of this constant predictor is greater or equal
         # than the loss of using the optimal quantile (up to machine
@@ -400,7 +400,7 @@ def test_pinball_loss_on_constant_predictions(
             return np.inf
         pred = np.quantile(data, x)
         constant_pred = np.full(n_samples, fill_value=pred)
-        return pinball_loss(data, constant_pred, alpha=target_quantile)
+        return mean_pinball_loss(data, constant_pred, alpha=target_quantile)
 
     result = optimize.minimize(objective_func, 0.5, method="Nelder-Mead")
     assert result.success

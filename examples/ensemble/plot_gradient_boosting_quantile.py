@@ -54,7 +54,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # average, there should be the same number of target observations above and
 # below the predicted values.
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import pinball_loss, mean_squared_error
+from sklearn.metrics import mean_pinball_loss, mean_squared_error
 
 
 all_models = {}
@@ -122,8 +122,8 @@ plt.show()
 # Analysis of the error metrics
 # -----------------------------
 #
-# Measure the models with :func:`mean_squared_error` and :func:`pinball_loss`
-# metrics on the training dataset.
+# Measure the models with :func:`mean_squared_error` and
+# :func:`mean_pinball_loss` metrics on the training dataset.
 import pandas as pd
 
 
@@ -138,7 +138,7 @@ for name, gbr in sorted(all_models.items()):
     metrics = {'model': name}
     y_pred = gbr.predict(X_train)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = pinball_loss(
+        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(
             y_train, y_pred, alpha=alpha)
     metrics['MSE'] = mean_squared_error(y_train, y_pred)
     results.append(metrics)
@@ -166,7 +166,7 @@ for name, gbr in sorted(all_models.items()):
     metrics = {'model': name}
     y_pred = gbr.predict(X_test)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = pinball_loss(
+        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(
             y_test, y_pred, alpha=alpha)
     metrics['MSE'] = mean_squared_error(y_test, y_pred)
     results.append(metrics)
@@ -244,8 +244,8 @@ param_grid = dict(
     min_samples_split=[2, 5, 10, 20, 30, 50],
 )
 alpha = 0.05
-neg_pinball_loss_05p_scorer = make_scorer(
-    pinball_loss,
+neg_mean_pinball_loss_05p_scorer = make_scorer(
+    mean_pinball_loss,
     alpha=alpha,
     greater_is_better=False,  # maximize the negative loss
 )
@@ -254,7 +254,7 @@ search_05p = RandomizedSearchCV(
     gbr,
     param_grid,
     n_iter=10,  # increase this if computational budget allows
-    scoring=neg_pinball_loss_05p_scorer,
+    scoring=neg_mean_pinball_loss_05p_scorer,
     n_jobs=2,
     random_state=0,
 ).fit(X_train, y_train)
@@ -272,14 +272,14 @@ pprint(search_05p.best_params_)
 from sklearn.base import clone
 
 alpha = 0.95
-neg_pinball_loss_95p_scorer = make_scorer(
-    pinball_loss,
+neg_mean_pinball_loss_95p_scorer = make_scorer(
+    mean_pinball_loss,
     alpha=alpha,
     greater_is_better=False,  # maximize the negative loss
 )
 search_95p = clone(search_05p).set_params(
     estimator__alpha=alpha,
-    scoring=neg_pinball_loss_95p_scorer,
+    scoring=neg_mean_pinball_loss_95p_scorer,
 )
 search_95p.fit(X_train, y_train)
 pprint(search_95p.best_params_)

@@ -134,9 +134,9 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
-- |Feature| :func:`metrics.pinball_loss` exposes the pinball loss for
-  quantile regression. :pr:`19415`
-  by :user:`Xavier Dupré <sdpython>` and :user:`Oliver Grisel <ogrisel>`.
+- |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
+  quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
+  and :user:`Oliver Grisel <ogrisel>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................

@@ -69,7 +69,7 @@ from ._regression import mean_squared_error
 from ._regression import mean_squared_log_error
 from ._regression import median_absolute_error
 from ._regression import mean_absolute_percentage_error
-from ._regression import pinball_loss
+from ._regression import mean_pinball_loss
 from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
@@ -134,6 +134,7 @@ __all__ = [
     'mean_absolute_error',
     'mean_squared_error',
     'mean_squared_log_error',
+    'mean_pinball_loss',
     'mean_poisson_deviance',
     'mean_gamma_deviance',
     'mean_tweedie_deviance',
@@ -153,7 +154,6 @@ __all__ = [
     'plot_det_curve',
     'plot_precision_recall_curve',
     'plot_roc_curve',
-    'pinball_loss',
     'PrecisionRecallDisplay',
     'precision_recall_curve',
     'precision_recall_fscore_support',

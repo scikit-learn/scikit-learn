@@ -8,7 +8,7 @@ import pytest
 from pytest import approx
 
 from sklearn.utils import check_random_state
-from sklearn.metrics import pinball_loss
+from sklearn.metrics import mean_pinball_loss
 from sklearn.ensemble._gb_losses import RegressionLossFunction
 from sklearn.ensemble._gb_losses import LeastSquaresError
 from sklearn.ensemble._gb_losses import LeastAbsoluteError
@@ -116,8 +116,9 @@ def test_quantile_loss_function():
     y_found = QuantileLossFunction(0.9)(x, np.zeros_like(x))
     y_expected = np.asarray([0.1, 0.0, 0.9]).mean()
     np.testing.assert_allclose(y_found, y_expected)
-    y_found_p = pinball_loss(x, np.zeros_like(x), alpha=0.9)
+    y_found_p = mean_pinball_loss(x, np.zeros_like(x), alpha=0.9)
     np.testing.assert_allclose(y_found, y_found_p)
+
 
 def test_sample_weight_deviance():
     # Test if deviance supports sample weights.
@@ -316,7 +317,7 @@ def test_lad_equals_quantiles(seed, alpha):
     ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
     if alpha == 0.5:
         assert lad_weighted_loss == approx(2 * ql_weighted_loss)
-    pbl_weighted_loss = pinball_loss(y_true, raw_predictions,
-                                     sample_weight=weights,
-                                     alpha=alpha)
+    pbl_weighted_loss = mean_pinball_loss(y_true, raw_predictions,
+                                          sample_weight=weights,
+                                          alpha=alpha)
     assert pbl_weighted_loss == approx(ql_weighted_loss)

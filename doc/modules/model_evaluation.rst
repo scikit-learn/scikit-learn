@@ -1961,7 +1961,7 @@ The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
 :func:`mean_absolute_error`, :func:`explained_variance_score`,
-:func:`r2_score` and :func:`pinball_loss`.
+:func:`r2_score` and :func:`mean_pinball_loss`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -2359,38 +2359,38 @@ sensitive to relative errors.
 Pinball loss
 ------------
 
-The :func:`pinball_loss` function is mostly used to evaluate the predictive
-performance of quantile regression models. The `pinball loss
-<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is
-equivalent to :func:`mean_absolute_error` when the quantile parameter ``alpha``
-is set to 0.5.
+The :func:`mean_pinball_loss` function is mostly used to evaluate the
+predictive performance of quantile regression models. The `pinball loss
+<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is equivalent
+to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
+0.5.
 
 .. math::
 
 \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
 
-Here is a small example of usage of the :func:`pinball_loss` function::
+Here is a small example of usage of the :func:`mean_pinball_loss` function::
 
-  >>> from sklearn.metrics import pinball_loss
+  >>> from sklearn.metrics import mean_pinball_loss
   >>> y_true = [1, 2, 3]
-  >>> pinball_loss(y_true, [0, 2, 3], alpha=0.1)
+  >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
   0.03...
-  >>> pinball_loss(y_true, [1, 2, 4], alpha=0.1)
+  >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
   0.3...
-  >>> pinball_loss(y_true, [0, 2, 3], alpha=0.9)
+  >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
   0.3...
-  >>> pinball_loss(y_true, [1, 2, 4], alpha=0.9)
+  >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
   0.03...
-  >>> pinball_loss(y_true, y_true, alpha=0.1)
+  >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
   0.0
-  >>> pinball_loss(y_true, y_true, alpha=0.9)
+  >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
   0.0
 
 It is possible to build a scorer object with a specific choice of alpha to
 perform, for instance to evaluate a regressor of the 95th percentile::
 
   >>> from sklearn.metrics import make_scorer
-  >>> pinball_loss_95p = make_scorer(pinball_loss, alpha=0.95)
+  >>> mean_pinball_loss_95p = make_scorer(mean_pinball_loss, alpha=0.95)
 
 Such a scorer can be used in a cross-validation loop:
 
@@ -2404,7 +2404,7 @@ Such a scorer can be used in a cross-validation loop:
   ...     alpha=0.95,
   ...     random_state=0,
   ... )
-  >>> cross_val_score(estimator, X, y, cv=5, scoring=pinball_loss_95p)
+  >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
   array([11.1..., 10.4... , 24.4...,  9.2..., 12.9...])
 
 It is also possible to build scorer objects for hyper-parameter tuning, in
