@@ -113,16 +113,16 @@ def test_multioutput_regression():
 
 
 def test_regression_metrics_at_limits():
-    assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(mean_squared_error([0.], [0.], squared=False), 0.00, 2)
-    assert_almost_equal(mean_squared_log_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(pinball_loss([0.], [0.]), 0.00, 2)
-    assert_almost_equal(mean_absolute_percentage_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(median_absolute_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(max_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
-    assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
+    assert_almost_equal(mean_squared_error([0.], [0.]), 0.0)
+    assert_almost_equal(mean_squared_error([0.], [0.], squared=False), 0.0)
+    assert_almost_equal(mean_squared_log_error([0.], [0.]), 0.0)
+    assert_almost_equal(mean_absolute_error([0.], [0.]), 0.0)
+    assert_almost_equal(pinball_loss([0.], [0.]), 0.0)
+    assert_almost_equal(mean_absolute_percentage_error([0.], [0.]), 0.0)
+    assert_almost_equal(median_absolute_error([0.], [0.]), 0.0)
+    assert_almost_equal(max_error([0.], [0.]), 0.0)
+    assert_almost_equal(explained_variance_score([0.], [0.]), 1.0)
+    assert_almost_equal(r2_score([0., 1], [0., 1]), 1.0)
     err_msg = ("Mean Squared Logarithmic Error cannot be used when targets "
                "contain negative values.")
     with pytest.raises(ValueError, match=err_msg):
