@@ -18,6 +18,8 @@ def test_feature_agglomeration():
                                         pooling_func=np.median)
     with pytest.warns(None) as record:
         agglo_mean.fit(X)
+    assert not len(record)
+    with pytest.warns(None) as record:
         agglo_median.fit(X)
     assert not len(record)
     assert np.size(np.unique(agglo_mean.labels_)) == n_clusters
