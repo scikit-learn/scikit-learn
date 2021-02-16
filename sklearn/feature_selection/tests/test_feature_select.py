@@ -4,6 +4,7 @@ Todo: cross-check the F-value with stats model
 import itertools
 import warnings
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy import stats, sparse
 
 import pytest
@@ -115,6 +116,20 @@ def test_f_regression():
     F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
     assert_array_almost_equal(F_sparse, F)
     assert_array_almost_equal(pv_sparse, pv)
+
+
+def test_f_regression_r_regression_consistency():
+    # Test the equivalence of f_regression and abs_r_regression for variable
+    # selection using the returned values ordering
+    X, y = make_regression(n_samples=200, n_features=1000,
+                           shuffle=False, random_state=0)
+
+    Fs, _ = f_regression(X, y)
+
+    assert_array_equal(Fs.argsort(), abs_r_regression(X, y).argsort())
+
+    # Test consistency of definition
+    assert_allclose(abs_r_regression(X, y), np.abs(r_regression(X, y)))
 
 
 def test_f_regression_input_dtype():
