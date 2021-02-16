@@ -231,7 +231,8 @@ def chi2(X, y):
 
 @_deprecate_positional_args
 def r_regression(X, y, *, center=True):
-    """Compute Pearson R correlation coefficients of features.
+    """Compute Pearson R correlation coefficients between the features and
+    the target
 
     Linear model for testing the individual effect of each of many regressors.
     This is a scoring function to be used in a feature selection procedure, not
@@ -366,7 +367,7 @@ def abs_r_regression(X, y, center=True):
     """Absolute value of Pearson R from univariate linear regressions.
 
     This convenience wrapper is to be used with SelectKBest and other models
-    that require a statistic which is increases with significance of
+    that require a statistic which is increased with significance of
     association.
 
     See Also
