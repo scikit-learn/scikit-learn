@@ -6,55 +6,65 @@ from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
 
 
 @pytest.mark.parametrize('seed', range(4))
-def test_montonic_constraints(seed):
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=0)
-    train = np.arange(90)
-    test = np.arange(90, 100)
+@pytest.mark.parametrize('depth_first', (True, False))
+def test_montonic_constraints(seed, depth_first):
+    n_samples = 1000
+    n_samples_train = 900
+    X, y = datasets.make_hastie_10_2(n_samples=n_samples, random_state=0)
+    train = np.arange(n_samples_train)
+    test = np.arange(n_samples_train, n_samples)
     X_train = X[train]
     y_train = y[train]
-    X_test_0 = np.copy(X[test])
-    X_test_1 = np.copy(X_test_0)
-    X_test_1[:, 0] += 10
-    X_test_2 = np.copy(X_test_0)
-    X_test_2[:, 1] += 10
+    X_test = np.copy(X[test])
+
+    X_test_incr = np.copy(X_test)
+    X_test_decr = np.copy(X_test)
+    X_test_incr[:, 0] += 10
+    X_test_decr[:, 1] += 10
     monotonic_cst = np.zeros(X.shape[1])
-    monotonic_cst[0] = -1
-    monotonic_cst[1] = 1
+    monotonic_cst[0] = 1
+    monotonic_cst[1] = -1
 
     for name, TreeRegressor in REG_TREES.items():
-        est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
+        if depth_first:
+            est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
+        else:
+            est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst,
+                                max_leaf_nodes=n_samples_train)
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": seed})
         est.fit(X_train, y_train)
-
-        y0 = est.predict(X_test_0)
-        # decreasing constraint
-        y1 = est.predict(X_test_1)
-        # y1 should always be lower than y0
-        assert(np.max(y1 - y0) <= 0)
-
+        y = est.predict(X_test)
         # increasing constraint
-        y2 = est.predict(X_test_2)
-        # y2 should always be greater than y0
-        assert(np.min(y2 - y0) >= 0)
+        y_incr = est.predict(X_test_incr)
+        # y_incr should always be greater than y
+        assert np.all(y_incr >= y)
+
+        # decreasing constraint
+        y_decr = est.predict(X_test_decr)
+        # y_decr should always be lower than y
+        assert np.all(y_decr <= y)
 
     for name, TreeClassifier in CLF_TREES.items():
-        est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
+        if depth_first:
+            est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
+        else:
+            est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst,
+                                 max_leaf_nodes=n_samples_train)
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": seed})
         est.fit(X_train, y_train)
-
-        y0 = est.predict_proba(X_test_0)[:, 0]
-
-        # decreasing constraint
-        y1 = est.predict_proba(X_test_1)[:, 0]
-        # y1 should always be lower than y0
-        assert(np.max(y1 - y0) <= 0)
+        y = est.predict_proba(X_test)[:, 0]
 
         # increasing constraint
-        y2 = est.predict_proba(X_test_2)[:, 0]
-        # y2 should always be greater than y0
-        assert(np.min(y2 - y0) >= 0)
+        y_incr = est.predict_proba(X_test_incr)[:, 0]
+        # y_incr should always be greater than y
+        assert np.all(y_incr >= y)
+
+        # decreasing constraint
+        y_decr = est.predict_proba(X_test_decr)[:, 0]
+        # y_decr should always be lower than y
+        assert np.all(y_decr <= y)
 
 
 def test_multiclass_raises():
