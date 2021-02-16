@@ -239,7 +239,7 @@ def r_regression(X, y, *, center=True):
 
     The cross correlation between each regressor and the target is computed,
     that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
-       std(y)).
+    std(y)).
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
