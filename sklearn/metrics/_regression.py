@@ -242,14 +242,19 @@ def mean_pinball_loss(y_true, y_pred, *,
     Examples
     --------
     >>> from sklearn.metrics import mean_pinball_loss
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> mean_pinball_loss(y_true, y_pred)
-    0.25
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> mean_pinball_loss(y_true, y_pred, alpha=0.1)
-    0.35
+    >>> y_true = [1, 2, 3]
+    >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
+    0.03...
+    >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
+    0.3...
+    >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
+    0.3...
+    >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
+    0.03...
+    >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
+    0.0
+    >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
+    0.0
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
