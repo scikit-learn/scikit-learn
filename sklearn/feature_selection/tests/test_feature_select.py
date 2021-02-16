@@ -78,18 +78,20 @@ def test_r_regression(coeff):
     X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
                            shuffle=False, random_state=0)
 
-    pearson_r = coeff(X, y)
-    assert ((pearson_r < 1).all())
+    correlation_coeffs = coeff(X, y)
+    if coeff == r_regression:
+        assert ((correlation_coeffs > -1).all())
+    assert ((correlation_coeffs < 1).all())
 
     # with centering, compare with sparse
-    pearson_r = coeff(X, y, center=True)
-    pearson_r_sparse = coeff(sparse.csr_matrix(X), y, center=True)
-    assert_array_almost_equal(pearson_r_sparse, pearson_r)
+    correlation_coeffs = coeff(X, y, center=True)
+    correlation_coeffs_sparse = coeff(sparse.csr_matrix(X), y, center=True)
+    assert_array_almost_equal(correlation_coeffs_sparse, correlation_coeffs)
 
     # again without centering, compare with sparse
-    pearson_r = coeff(X, y, center=False)
-    pearson_r_sparse = coeff(sparse.csr_matrix(X), y, center=False)
-    assert_array_almost_equal(pearson_r_sparse, pearson_r)
+    correlation_coeffs = coeff(X, y, center=False)
+    correlation_coeffs_sparse = coeff(sparse.csr_matrix(X), y, center=False)
+    assert_array_almost_equal(correlation_coeffs_sparse, correlation_coeffs)
 
 
 def test_f_regression():
