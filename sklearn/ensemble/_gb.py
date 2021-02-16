@@ -1105,7 +1105,7 @@ shape (n_estimators, ``loss_.K``)
             min_impurity_split=min_impurity_split,
             warm_start=warm_start, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
-            monotonic_cst = monotonic_cst)
+            monotonic_cst=monotonic_cst)
 
     def _validate_y(self, y, sample_weight):
         check_classification_targets(y)

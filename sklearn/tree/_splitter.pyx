@@ -82,6 +82,10 @@ cdef class Splitter:
 
         random_state : object
             The user inputted random state to be used for pseudo-randomness
+
+        monotonic_cst : INT32_t*
+            Monotonicity constraints
+
         """
 
         self.criterion = criterion
@@ -422,6 +426,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
+                            # Reject if monotonicity constraints are not satisfied
                             if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                                 continue
 
@@ -748,6 +753,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
+                    # Reject if monotonicity constraints are not satisfied
                     if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                         continue
 
@@ -1301,6 +1307,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
+                            # Reject if monotonicity constraints are not satisfied
                             if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                                 continue
 
@@ -1539,6 +1546,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
+                    # Reject if monotonicity constraints are not satisfied
                     if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                         continue
 
