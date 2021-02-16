@@ -7,6 +7,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
+from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import LeaveOneOut, train_test_split
 
 from sklearn.utils._testing import (assert_array_almost_equal,
@@ -26,7 +27,7 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import CalibratedClassifierCV
+from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
@@ -273,6 +274,29 @@ def test_calibration_multiclass(method, ensemble, seed):
     calibrated_brier = multiclass_brier(y_test, cal_clf_probs,
                                         n_classes=n_classes)
     assert calibrated_brier < 1.1 * uncalibrated_brier
+
+
+def test_calibration_zero_probability():
+    # Test an edge case where _CalibratedClassifier avoids numerical errors
+    # in the multiclass normalization step if all the calibrators output
+    # are zero all at once for a given sample and instead fallback to uniform
+    # probabilities.
+    class ZeroCalibrator():
+        # This function is called from _CalibratedClassifier.predict_proba.
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+    X, y = make_blobs(n_samples=50, n_features=10, random_state=7,
+                      centers=10, cluster_std=15.0)
+    clf = DummyClassifier().fit(X, y)
+    calibrator = ZeroCalibrator()
+    cal_clf = _CalibratedClassifier(
+        base_estimator=clf, calibrators=[calibrator], classes=clf.classes_)
+
+    probas = cal_clf.predict_proba(X)
+
+    # Check that all probabilities are uniformly 1. / clf.n_classes_
+    assert_allclose(probas, 1. / clf.n_classes_)
 
 
 def test_calibration_prefit():

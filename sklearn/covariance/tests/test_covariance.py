@@ -303,3 +303,13 @@ def test_oas():
     oa.fit(X)
     assert_almost_equal(oa.score(X), score_, 4)
     assert(oa.precision_ is None)
+
+
+def test_EmpiricalCovariance_validates_mahalanobis():
+    """Checks that EmpiricalCovariance validates data with mahalanobis."""
+    cov = EmpiricalCovariance().fit(X)
+
+    msg = (f"X has 2 features, but \\w+ is expecting {X.shape[1]} "
+           "features as input")
+    with pytest.raises(ValueError, match=msg):
+        cov.mahalanobis(X[:, :2])

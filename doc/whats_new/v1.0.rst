@@ -102,6 +102,13 @@ Changelog
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Allow multiple scorers input to
+  :func:`~sklearn.inspection.permutation_importance`.
+  :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
