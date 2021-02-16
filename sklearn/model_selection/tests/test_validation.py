@@ -855,8 +855,8 @@ def test_cross_val_predict():
 
     X, y = load_iris(return_X_y=True)
 
-    warning_message = ('Number of classes in training fold \\(2\\) does '
-                       'not match total number of classes \\(3\\). '
+    warning_message = (r'Number of classes in training fold \(2\) does '
+                       'not match total number of classes \(3\). '
                        'Results may not be appropriate for your use case.')
     with pytest.warns(RuntimeWarning, match=warning_message):
         cross_val_predict(LogisticRegression(solver="liblinear"),
@@ -1209,7 +1209,7 @@ def test_learning_curve_remove_duplicate_sample_sizes():
     estimator = MockImprovingEstimator(2)
     warning_message = (
         "Removed duplicate entries from 'train_sizes'. Number of ticks "
-        "will be less than the size of 'train_sizes' 2 instead of 3\\)."
+        "will be less than the size of 'train_sizes': 2 instead of 3."
     )
     with pytest.warns(RuntimeWarning, match=warning_message):
         train_sizes, _, _ = learning_curve(
