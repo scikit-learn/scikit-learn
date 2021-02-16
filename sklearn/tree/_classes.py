@@ -1705,6 +1705,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
+
     Attributes
     ----------
     max_features_ : int
