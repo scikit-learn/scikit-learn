@@ -231,7 +231,7 @@ def chi2(X, y):
 
 @_deprecate_positional_args
 def r_regression(X, y, *, center=True):
-    """Univariate linear regression tests returning Pearson R.
+    """Compute Pearson R correlation coefficients of features.
 
     Linear model for testing the individual effect of each of many regressors.
     This is a scoring function to be used in a feature selection procedure, not
@@ -261,17 +261,13 @@ def r_regression(X, y, *, center=True):
 
     See Also
     --------
+    abs_r_regression: Absolute value of Pearson R between label and features
+        for regression tasks.
     f_regression: Univariate linear regression tests returning f-statistic
         and p-values
     mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    SelectKBest: Select features based on the k highest scores.
-    SelectFpr: Select features based on a false positive rate test.
-    SelectFdr: Select features based on an estimated false discovery rate.
-    SelectFwe: Select features based on family-wise error rate.
-    SelectPercentile: Select features based on percentile of the highest
-        scores.
     """
     X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                      dtype=np.float64)
@@ -313,6 +309,14 @@ def f_regression(X, y, *, center=True):
        std(y)) using r_regression function.
     2. It is converted to an F score and then to a p-value.
 
+    If p-values are not needed, r_regression can be used to rank features as
+    a slightly cheaper alternative to f_regression. Note however that
+    contrary to f_regression, r_regression values lie in [-1, 1] and can thus
+    be negative.
+
+    Alternatively, `abs_r_regression` can be used to rank features by
+    correlation magnitude instead.
+
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
@@ -336,9 +340,17 @@ def f_regression(X, y, *, center=True):
 
     See Also
     --------
-    r_regression: Univariate linear regression tests returning Pearson R.
+    abs_r_regression: Absolute value of Pearson R between label and features
+        for regression tasks.
+    r_regression: Pearson R between label/feature for regression tasks.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     """
 
     # compute the correlation
@@ -360,6 +372,7 @@ def abs_r_regression(X, y, center=True):
     See Also
     --------
     r_regression: Univariate linear regression tests returning Pearson R.
+    SelectKBest: Select features based on the k highest scores.
     """
     # compute the correlation
     corr = r_regression(X, y, center=center)
@@ -562,8 +575,8 @@ class SelectKBest(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    abs_r_regression: absolute value of Pearson R between label/feature for
-        regression tasks.
+    abs_r_regression: Absolute value of Pearson R between label and features
+        for regression tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest
