@@ -1779,10 +1779,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_samples_leaf=1,
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
-                 max_leaf_nodes=None,
+                 random_state=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 random_state=None,
+                 max_leaf_nodes=None,
                  ccp_alpha=0.0,
                  monotonic_cst=None):
         super().__init__(
