@@ -12,6 +12,13 @@ Version 0.24.2
 Changelog
 ---------
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixed a bug in :class:`ensemble.HistGradientBoostingRegressor` `fit`
+  with `sample_weight` parameter and `least_absolute_deviation` loss function.
+  :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -19,6 +26,12 @@ Changelog
   :class:`preprocessing.OrdinalEncoder` to only allow for `'error'` and
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Better contains the CSS provided by :func:`utils.estimator_html_repr`
+  by giving CSS ids to the html representation. :pr:`19417` by `Thomas Fan`_.
 
 .. _changes_0_24_1:
 
@@ -231,10 +244,6 @@ Changelog
 .......................
 
 - |Feature| :func:`datasets.fetch_openml` now validates md5 checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
-
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
   files downloaded or cached to ensure data integrity.
   :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 

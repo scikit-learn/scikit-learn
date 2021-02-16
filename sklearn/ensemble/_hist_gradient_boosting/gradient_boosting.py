@@ -82,7 +82,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError(
                 'validation_fraction={} must be strictly '
                 'positive, or None.'.format(self.validation_fraction))
-        if self.tol is not None and self.tol < 0:
+        if self.tol < 0:
             raise ValueError('tol={} '
                              'must not be smaller than 0.'.format(self.tol))
 
@@ -646,8 +646,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # harder for subsequent iteration to be considered an improvement upon
         # the reference score, and therefore it is more likely to early stop
         # because of the lack of significant improvement.
-        tol = 0 if self.tol is None else self.tol
-        reference_score = scores[-reference_position] + tol
+        reference_score = scores[-reference_position] + self.tol
         recent_scores = scores[-reference_position + 1:]
         recent_improvements = [score > reference_score
                                for score in recent_scores]
@@ -941,14 +940,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
-
     categorical_features : array-like of {bool, int} of shape (n_features) \
             or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
@@ -964,6 +955,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
@@ -992,7 +991,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. Only used if early stopping is performed.
-    tol : float or None, default=1e-7
+    tol : float, default=1e-7
         The absolute tolerance to use when comparing scores during early
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
@@ -1194,14 +1193,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
-
     categorical_features : array-like of {bool, int} of shape (n_features) \
             or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
@@ -1217,6 +1208,14 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1245,7 +1244,7 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. Only used if early stopping is performed.
-    tol : float or None, default=1e-7
+    tol : float, default=1e-7
         The absolute tolerance to use when comparing scores. The higher the
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
