@@ -1433,7 +1433,7 @@ def test_grid_search_failing_classifier():
                       refit=False, error_score=0.0)
     warning_message = (
         "Estimator fit failed. The score on this train-test partition "
-        "for these parameters will be set to 0.000000."
+        "for these parameters will be set to 0.0.*."
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
