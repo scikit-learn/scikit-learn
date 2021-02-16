@@ -238,7 +238,8 @@ def test_random_starts():
         last_lml = lml
 
 
-@pytest.mark.parametrize('kernel,y', list(product(kernels, [y, y_with_zero_std])))
+@pytest.mark.parametrize('kernel,y',
+                         list(product(kernels, [y, y_with_zero_std])))
 def test_y_normalization(kernel, y):
     """
     Test normalization of the target values in GP
