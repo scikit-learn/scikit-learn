@@ -5,6 +5,8 @@
 # License: BSD 3 clause
 
 import sys
+from itertools import product
+
 import numpy as np
 import warnings
 
@@ -18,6 +20,7 @@ from sklearn.gaussian_process.kernels \
 from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.preprocessing._data import _handle_zeros_in_scale
 
 from sklearn.utils._testing \
     import (assert_array_less,
@@ -33,6 +36,7 @@ def f(x):
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
+y_with_zero_std = np.ones(X.shape[0])
 
 fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")
 kernels = [RBF(length_scale=1.0), fixed_kernel,
@@ -234,8 +238,8 @@ def test_random_starts():
         last_lml = lml
 
 
-@pytest.mark.parametrize('kernel', kernels)
-def test_y_normalization(kernel):
+@pytest.mark.parametrize('kernel,y', list(product(kernels, [y, y_with_zero_std])))
+def test_y_normalization(kernel, y):
     """
     Test normalization of the target values in GP
 
@@ -248,7 +252,7 @@ def test_y_normalization(kernel):
 
     y_mean = np.mean(y)
     y_std = np.std(y)
-    y_norm = (y - y_mean) / y_std
+    y_norm = (y - y_mean) / _handle_zeros_in_scale(y_std, copy=False)
 
     # Fit non-normalizing GP on normalized y
     gpr = GaussianProcessRegressor(kernel=kernel)
@@ -547,10 +551,8 @@ def test_bound_check_fixed_hyperparameter():
 
 def test_handling_zeros_in_std():
     # Test that zero std is handled properly
-    X = [[0.75], [0.125]]
-    y = np.array([1, 1])
-    gpr = GaussianProcessRegressor(normalize_y=True).fit(X, y)
+    gpr = GaussianProcessRegressor(normalize_y=True).fit(X, y_with_zero_std)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
 
-    assert_almost_equal(y_pred, y)
+    assert_almost_equal(y_pred, y_with_zero_std)
     assert_almost_equal(np.diag(y_cov), 0.)
