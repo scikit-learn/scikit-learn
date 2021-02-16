@@ -99,8 +99,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 monotonic_cst=None,
-                 ccp_alpha=0.0):
+                 ccp_alpha=0.0,
+                 monotonic_cst=None):
 
         self.criterion = criterion
         self.splitter = splitter
@@ -114,8 +114,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
-        self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -777,7 +777,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
         and 0 respectively correspond to a positive constraint, negative
-        constraint and no constraint..
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -874,8 +874,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 monotonic_cst=None,
-                 ccp_alpha=0.0):
+                 ccp_alpha=0.0,
+                 monotonic_cst=None):
 
         super().__init__(
             criterion=criterion,
@@ -1462,6 +1462,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
