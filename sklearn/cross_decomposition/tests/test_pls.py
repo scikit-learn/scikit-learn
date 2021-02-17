@@ -116,10 +116,8 @@ def test_sanity_check_pls_regression_constant_column_Y():
     # from the R-package plsdepot
     d = load_linnerud()
     X = d.data
-
     Y = d.target
     Y[:, 0] = 1
-
     pls = PLSRegression(n_components=X.shape[1])
     pls.fit(X, Y)
 
