@@ -141,9 +141,8 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
-- |Fix| The numerical precision in `manifold._utils._binary_search_perplexity`
-  was changed from `float` to `double` to prevent underflow issues
-  during affinity matrix computation for t-SNE.
+- |Fix| Change numerical precision to prevent underflow issues
+  during affinity matrix computation for :class:`TSNE`.
   :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
 
 :mod:`sklearn.metrics`
