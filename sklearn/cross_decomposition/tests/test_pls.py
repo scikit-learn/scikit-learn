@@ -116,8 +116,10 @@ def test_sanity_check_pls_regression_constant_column_Y():
     # from the R-package plsdepot
     d = load_linnerud()
     X = d.data
+
     Y = d.target
     Y[:, 0] = 1
+
     pls = PLSRegression(n_components=X.shape[1])
     pls.fit(X, Y)
 
@@ -148,7 +150,10 @@ def test_sanity_check_pls_regression_constant_column_Y():
 
     x_loadings_sign_flip = np.sign(expected_x_loadings / pls.x_loadings_)
     x_weights_sign_flip = np.sign(expected_x_weights / pls.x_weights_)
-    y_loadings_sign_flip = np.sign(expected_y_loadings / pls.y_loadings_)
+
+    y_loadings_sign_flip = np.sign(expected_y_loadings[1:] / pls.y_loadings_[1:])
+    y_loadings_sign_flip = np.insert(y_loadings_sign_flip, 0, 0, axis=0)
+
     assert_array_equal(x_loadings_sign_flip, x_weights_sign_flip)
     assert_array_equal(x_loadings_sign_flip[1:], y_loadings_sign_flip[1:])
 
