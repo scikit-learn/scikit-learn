@@ -195,7 +195,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
                                        ensure_2d=False, dtype=None)
 
         # Normalize target value
-        if self.normalize_y:
+        if self.normalize_y and len(y) > 1:
             self._y_train_mean = np.mean(y, axis=0)
             self._y_train_std = np.std(y, axis=0)
 
