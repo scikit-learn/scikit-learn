@@ -573,3 +573,11 @@ def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
     sc = SparseCoder(d)
     assert sc.n_features_in_ == d.shape[1]
+
+
+@pytest.mark.parametrize("Estimator", [DictionaryLearning,
+                                       MiniBatchDictionaryLearning])
+def test_warning_default_transform_alpha(Estimator):
+    dl = Estimator(alpha=0.1)
+    with pytest.warns(FutureWarning, match="default transform_alpha"):
+        dl.fit_transform(X)

@@ -483,6 +483,9 @@ def compute_optics_graph(X, *, min_samples, max_eps, metric, p, metric_params,
                                                working_memory=None)
     # OPTICS puts an upper limit on these, use inf for undefined.
     core_distances_[core_distances_ > max_eps] = np.inf
+    np.around(core_distances_,
+              decimals=np.finfo(core_distances_.dtype).precision,
+              out=core_distances_)
 
     # Main OPTICS loop. Not parallelizable. The order that entries are
     # written to the 'ordering_' list is important!
@@ -543,6 +546,7 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
                                    **_params).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])
+    np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
     improved = np.where(rdists < np.take(reachability_, unproc))
     reachability_[unproc[improved]] = rdists[improved]
     predecessor_[unproc[improved]] = point_index
