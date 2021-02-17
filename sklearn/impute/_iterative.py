@@ -68,8 +68,8 @@ class IterativeImputer(_BaseImputer):
         Maximum number of imputation rounds to perform before returning the
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values. The stopping criterion
-        is met once `max(abs(X_t - X_{t-1}))/max(abs(X[known_vals]))` < tol,
-        where `X_t` is `X` at iteration `t. Note that early stopping is only
+        is met once `max(abs(X_t - X_{t-1}))/max(abs(X[known_vals])) < tol`,
+        where `X_t` is `X` at iteration `t`. Note that early stopping is only
         applied if ``sample_posterior=False``.
 
     tol : float, default=1e-3
