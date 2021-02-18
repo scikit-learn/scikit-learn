@@ -115,6 +115,7 @@ def test_binary_search():
                                for i in range(P.shape[0])])
     assert_almost_equal(mean_perplexity, desired_perplexity, decimal=3)
 
+
 def test_binary_search_underflow(): 
     # Test if the binary search finds Gaussians with desired perplexity.
     # A more challenging case than the one above, producing numeric
