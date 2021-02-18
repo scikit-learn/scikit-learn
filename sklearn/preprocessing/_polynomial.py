@@ -60,8 +60,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         splines at minimum and maximum value of the features is used as
         constant extrapolation. If 'linear', a linear extrapolation is used.
         If 'continue', the splines are extrapolated as is, i.e. option
-        `extrapolate=True` in :class:`scipy.interpolate.BSpline`. If 'periodic',
-        periodic splines are used.
+        `extrapolate=True` in :class:`scipy.interpolate.BSpline`. If
+        'periodic', periodic splines are used.
 
     include_bias : bool, default=True
         If True (default), then the last spline element inside the data range
@@ -84,8 +84,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     n_features_out_ : int
         The total number of output features, which is computed as
         `n_features * n_splines`, where `n_splines` is
-        the number of bases elements of the B-splines, `n_knots + degree - 1` for
-        non-periodic splines and `n_knots - 1` else.
+        the number of bases elements of the B-splines,
+        `n_knots + degree - 1` for non-periodic splines and
+        `n_knots - 1` else.
         If `include_bias=False`, then it is only
         `n_features * (n_splines - 1)`.
 
@@ -265,7 +266,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_knots = base_knots.shape[0]
         # number of splines basis functions
         # periodic splines have self.degree less degrees of freedom
-        n_splines = n_knots + (1 - (self.extrapolation == "periodic")) * self.degree - 1
+        if self.extrapolation != "periodic":
+            n_splines = n_knots + self.degree - 1
+        else:
+            n_splines = n_knots - 1
+
         degree = self.degree
         n_out = n_features * n_splines
         # We have to add degree number of knots below, and degree number knots
@@ -278,16 +283,16 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         # Meaning we do not:
         # knots = np.r_[np.tile(base_knots.min(axis=0), reps=[degree, 1]),
         #              base_knots,
-        #              np.tile(base_knots.min(axis=0), reps=[degree, 1])
+        #              np.tile(base_knots.max(axis=0), reps=[degree, 1])
         #              ]
         # Instead, we reuse the distance of the 2 fist/last knots.
         dist_min = base_knots[1] - base_knots[0]
         dist_max = base_knots[-1] - base_knots[-2]
 
-        # For periodic splines the spacing of the first / last degree knots needs to
-        # be equal
+        # For periodic splines the spacing of the first / last degree knots
+        # needs to be equal
         if self.extrapolation == "periodic":
-            dist_min = dist_max =  (dist_min + dist_max) / 2
+            dist_min = dist_max = (dist_min + dist_max) / 2
 
         knots = np.r_[
             linspace(
