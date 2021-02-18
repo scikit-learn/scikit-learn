@@ -149,3 +149,87 @@ def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
 
     assert_1d_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_sign)
     assert_1d_reg_monotonic(clf, monotonic_sign, np.min(X), np.max(X), 100)
+
+
+def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
+    upper_bound = np.full(tree_.node_count, np.inf)
+    lower_bound = np.full(tree_.node_count, -np.inf)
+    for i in range(tree_.node_count):
+        feature = tree_.feature[i]
+        assert tree_.value[i] <= upper_bound[i]
+        assert tree_.value[i] >= lower_bound[i]
+        if feature < 0:
+            # leaf: nothing to do
+            continue
+        else:
+            i_left = tree_.children_left[i]
+            i_right = tree_.children_right[i]
+            if monotonic_cst[feature] == 0:
+                # unconstrained feature: propagate bounds down the tree
+                upper_bound[i_left] = upper_bound[i]
+                lower_bound[i_left] = lower_bound[i]
+                upper_bound[i_right] = upper_bound[i]
+                lower_bound[i_right] = lower_bound[i]
+            else:
+                # constrained feature
+                # check montonicity
+                assert float(monotonic_cst[feature] * tree_.value[i_left]) \
+                       <= float(monotonic_cst[feature] * tree_.value[i_right])
+                # update and propagate bounds down the tree
+                if monotonic_cst[feature] == 1:
+                    upper_bound[i_left] = tree_.value[i]
+                    lower_bound[i_left] = lower_bound[i]
+                    upper_bound[i_right] = upper_bound[i]
+                    lower_bound[i_right] = tree_.value[i]
+                else:
+                    upper_bound[i_left] = upper_bound[i]
+                    lower_bound[i_left] = tree_.value[i]
+                    upper_bound[i_right] = tree_.value[i]
+                    lower_bound[i_right] = lower_bound[i]
+
+
+@pytest.mark.parametrize('monotonic_sign', (-1, 1))
+@pytest.mark.parametrize('splitter', ("best", "random"))
+@pytest.mark.parametrize('depth_first', (True, False))
+@pytest.mark.parametrize('seed', range(4))
+def test_nd_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
+    # Build tree with several features, and make sure the nodes
+    # values respect the monotonic constraints.
+
+    # Considering the following tree with a monotonic POS constraint on X[0],
+    # we should have:
+    #
+    #            root
+    #           X[0]<=t
+    #          /       \
+    #         a         b
+    #     X[0]<=u   X[1]<=v
+    #    /       \   /     \
+    #   c        d  e       f
+    #
+    # i)   a <= root <= b
+    # ii)  c <= a <= d <= root
+    # iii) root <= min(e,f)
+    # For iii) we check that each node value is within the proper lower and
+    # upper bounds.
+
+    rng = np.random.RandomState(seed)
+    n_samples = 10000
+    n_features = 2
+    monotonic_cst = [monotonic_sign, 0]
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+
+    if depth_first:
+        # No max_leaf_nodes, default depth first tree builder
+        clf = DecisionTreeRegressor(splitter=splitter,
+                                    monotonic_cst=monotonic_cst,
+                                    random_state=seed)
+    else:
+        # max_leaf_nodes triggers best first tree builder
+        clf = DecisionTreeRegressor(splitter=splitter,
+                                    monotonic_cst=monotonic_cst,
+                                    max_leaf_nodes=n_samples,
+                                    random_state=seed)
+    clf.fit(X, y)
+    assert_nd_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_cst)
