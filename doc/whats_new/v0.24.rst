@@ -41,6 +41,12 @@ Changelog
   :class:`~sklearn.semi_supervised.LabelPropagation`.
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Better contains the CSS provided by :func:`utils.estimator_html_repr`
+  by giving CSS ids to the html representation. :pr:`19417` by `Thomas Fan`_.
+
 .. _changes_0_24_1:
 
 Version 0.24.1
