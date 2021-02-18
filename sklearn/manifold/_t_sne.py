@@ -663,7 +663,7 @@ class TSNE(BaseEstimator):
 
     @_deprecate_positional_args
     def __init__(self, n_components=2, *, perplexity=30.0,
-                 early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
+                 early_exaggeration=12.0, learning_rate="warn", n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="warn", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
@@ -693,7 +693,11 @@ class TSNE(BaseEstimator):
             warnings.warn("The default initialization will change from "
                           "random to PCA in 1.01.", FutureWarning)
             self.init = 'random'
-
+        if self.learning_rate == 'warn':
+            # See issue #18018
+            warnings.warn("The default learning rate will change from "
+                          "200.0 to 'auto' in 1.01.", FutureWarning)
+            self.learning_rate = 200.0
         if self.method not in ['barnes_hut', 'exact']:
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
@@ -703,6 +707,7 @@ class TSNE(BaseEstimator):
         if self.learning_rate == 'auto':
             # See issue #18018
             self.learning_rate = X.shape[0] / self.early_exaggeration / 4
+            self.learning_rate = np.max(self.learning_rate, 50)
         else:
             if not (self.learning_rate > 0):
                 raise ValueError("'learning_rate' must be a positive number "
