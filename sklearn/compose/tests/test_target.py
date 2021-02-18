@@ -53,8 +53,8 @@ def test_transform_target_regressor_invertible():
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       func=np.sqrt, inverse_func=np.log,
                                       check_inverse=True)
-    with pytest.warns(UserWarning, match="The provided functions or transformer"
-                      " are not strictly inverse of each other."):
+    with pytest.warns(UserWarning, match="The provided functions or"
+                      " transformer are not strictly inverse of each other."):
         regr.fit(X, y)
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       func=np.sqrt, inverse_func=np.log)
