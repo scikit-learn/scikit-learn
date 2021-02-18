@@ -114,7 +114,7 @@ def test_binary_search():
     mean_perplexity = np.mean([np.exp(-np.sum(P[i] * np.log(P[i])))
                                for i in range(P.shape[0])])
     assert_almost_equal(mean_perplexity, desired_perplexity, decimal=3)
-    
+
     # A more challenging case that produces numeric underflow
     # in float precision.
     random_state = check_random_state(42)
