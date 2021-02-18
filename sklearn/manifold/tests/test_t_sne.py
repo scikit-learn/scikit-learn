@@ -116,7 +116,7 @@ def test_binary_search():
     assert_almost_equal(mean_perplexity, desired_perplexity, decimal=3)
 
 
-def test_binary_search_underflow(): 
+def test_binary_search_underflow():
     # Test if the binary search finds Gaussians with desired perplexity.
     # A more challenging case than the one above, producing numeric
     # underflow in float precision (see issue #19471 and PR #19472).
