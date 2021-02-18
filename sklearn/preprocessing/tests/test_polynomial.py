@@ -48,18 +48,18 @@ def test_polynomial_and_spline_array_order(est):
         ({"knots": [[2], [1]]}, "knots must be sorted without duplicates."),
         (
             {"extrapolation": None},
-            "extrapolation must be one of 'error', 'constant', 'linear' or "
-            "'continue'.",
+            "extrapolation must be one of 'error', 'constant', 'linear', "
+            "'continue' or 'periodic'.",
         ),
         (
             {"extrapolation": 1},
-            "extrapolation must be one of 'error', 'constant', 'linear' or "
-            "'continue'.",
+            "extrapolation must be one of 'error', 'constant', 'linear', "
+            "'continue' or 'periodic'.",
         ),
         (
             {"extrapolation": "string"},
-            "extrapolation must be one of 'error', 'constant', 'linear' or "
-            "'continue'.",
+            "extrapolation must be one of 'error', 'constant', 'linear', "
+            "'continue' or 'periodic'.",
         ),
         ({"include_bias": None}, "include_bias must be bool."),
         ({"include_bias": 1}, "include_bias must be bool."),
@@ -166,6 +166,34 @@ def test_spline_transformer_linear_regression(bias, intercept):
     )
     pipe.fit(X, y)
     assert_allclose(pipe.predict(X), y, rtol=1e-3)
+
+
+@pytest.mark.parametrize(["bias", "intercept"], [(True, False) , (False, True)])
+def test_spline_transformer_periodic_linear_regression(bias, intercept):
+    """Test that B-splines fit a periodic curve pretty well."""
+    # +2 to avoid the value 0 in assert_allclose
+    f = lambda x: np.sin(2*np.pi*x) + np.sin(6*np.pi*x) - np.sin(8*np.pi*x) + 2
+    X = np.linspace(0, 1, 101)[:, None]
+    pipe = Pipeline(
+        steps=[
+            (
+                "spline",
+                SplineTransformer(
+                    n_knots=35,
+                    degree=3,
+                    include_bias=bias,
+                    extrapolation="periodic",
+                ),
+            ),
+            ("ols", LinearRegression(fit_intercept=intercept)),
+        ]
+    )
+    pipe.fit(X, f(X[:, 0]))
+
+    # Generate larger array to check periodic extrapolation
+    X_ = np.linspace(-1, 2, 301)[:, None]
+
+    assert_allclose(pipe.predict(X_), f(X_[:, 0]), rtol=1e-2)
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
