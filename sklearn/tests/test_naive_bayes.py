@@ -57,7 +57,11 @@ def test_gnb():
     # Test whether label mismatch between target y and classes raises
     # an Error
     # FIXME Remove this test once the more general partial_fit tests are merged
-    assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
+    with pytest.raises(
+        ValueError,
+        match="The target label.* in y do not exist in the initial classes"
+    ):
+        GaussianNB().partial_fit(X, y, classes=[0, 1])
 
 
 # TODO remove in 1.2 once sigma_ attribute is removed (GH #18842)
@@ -74,7 +78,7 @@ def test_gnb_prior():
     clf = GaussianNB().fit(X, y)
     assert_array_almost_equal(np.array([3, 3]) / 6.0,
                               clf.class_prior_, 8)
-    clf.fit(X1, y1)
+    clf = GaussianNB().fit(X1, y1)
     # Check that the class priors sum to 1
     assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
@@ -171,16 +175,6 @@ def test_gnb_check_update_with_no_data():
     assert tvar == var
 
 
-def test_gnb_pfit_wrong_nb_features():
-    """Test whether an error is raised when the number of feature changes
-    between two partial fit"""
-    clf = GaussianNB()
-    # Fit for the first time the GNB
-    clf.fit(X, y)
-    # Partial fit a second time with an incoherent X
-    assert_raises(ValueError, clf.partial_fit, np.hstack((X, X)), y)
-
-
 def test_gnb_partial_fit():
     clf = GaussianNB().fit(X, y)
     clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
@@ -272,37 +266,22 @@ def test_discretenb_partial_fit(DiscreteNaiveBayes):
 
 
 @pytest.mark.parametrize('NaiveBayes', ALL_NAIVE_BAYES_CLASSES)
-def test_naive_bayes_input_check_fit(NaiveBayes):
-    # Test input checks for the fit method
-
-    # check shape consistency for number of samples at fit time
-    assert_raises(ValueError, NaiveBayes().fit, X2, y2[:-1])
-
-    # check shape consistency for number of input features at predict time
-    clf = NaiveBayes().fit(X2, y2)
-    assert_raises(ValueError, clf.predict, X2[:, :-1])
-
-
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
-def test_discretenb_input_check_partial_fit(DiscreteNaiveBayes):
-    # check shape consistency
-    assert_raises(ValueError, DiscreteNaiveBayes().partial_fit, X2, y2[:-1],
-                  classes=np.unique(y2))
-
+def test_NB_partial_fit_no_first_classes(NaiveBayes):
     # classes is required for first call to partial fit
-    assert_raises(ValueError, DiscreteNaiveBayes().partial_fit, X2, y2)
+    with pytest.raises(
+        ValueError,
+        match="classes must be passed on the first call to partial_fit."
+    ):
+        NaiveBayes().partial_fit(X2, y2)
 
     # check consistency of consecutive classes values
-    clf = DiscreteNaiveBayes()
+    clf = NaiveBayes()
     clf.partial_fit(X2, y2, classes=np.unique(y2))
-    assert_raises(ValueError, clf.partial_fit, X2, y2,
-                  classes=np.arange(42))
-
-    # check consistency of input shape for partial_fit
-    assert_raises(ValueError, clf.partial_fit, X2[:, :-1], y2)
-
-    # check consistency of input shape for predict
-    assert_raises(ValueError, clf.predict, X2[:, :-1])
+    with pytest.raises(
+        ValueError,
+        match="is not the same as on last call to partial_fit"
+    ):
+        clf.partial_fit(X2, y2, classes=np.arange(42))
 
 
 # TODO: Remove in version 1.1
@@ -725,11 +704,6 @@ def test_categoricalnb():
     assert_raise_message(ValueError, error_msg, clf.predict, X)
     assert_raise_message(ValueError, error_msg, clf.fit, X, y)
 
-    # Check error is raised for incorrect X
-    X = np.array([[1, 4, 1], [2, 5, 6]])
-    msg = "Expected input with 2 features, got 3 instead"
-    assert_raise_message(ValueError, msg, clf.predict, X)
-
     # Test alpha
     X3_test = np.array([[2, 5]])
     # alpha=1 increases the count of all categories by one so the final
@@ -941,3 +915,16 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert scores.mean() > 0.86
+
+
+# FIXME: remove in 1.2
+@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
+def test_n_features_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `n_features_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+        est.n_features_
