@@ -1048,8 +1048,7 @@ def test_neighbors_iris():
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm)
         rgs.fit(iris.data, iris.target)
-        assert (np.mean(rgs.predict(iris.data).round() == iris.target) >
-                       0.95)
+        assert (np.mean(rgs.predict(iris.data).round() == iris.target) > 0.95)
 
 
 def test_neighbors_digits():
@@ -1259,7 +1258,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                     metric not in neighbors.KDTree.valid_metrics):
                 with pytest.raises(ValueError):
                     neighbors.NearestNeighbors(algorithm=algorithm,
-                                               metric=metric, 
+                                               metric=metric,
                                                metric_params=metric_params)
                 continue
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
@@ -1408,14 +1407,14 @@ def test_non_euclidean_kneighbors():
     X_nbrs = neighbors.NearestNeighbors(n_neighbors=3, metric='manhattan')
     X_nbrs.fit(X)
     with pytest.raises(ValueError):
-        neighbors.kneighbors_graph(X_nbrs, 
+        neighbors.kneighbors_graph(X_nbrs,
                                    3,
                                    metric='euclidean')
     X_nbrs = neighbors.NearestNeighbors(radius=radius, metric='manhattan')
     X_nbrs.fit(X)
     with pytest.raises(ValueError):
         neighbors.radius_neighbors_graph(X_nbrs,
-                                         radius, 
+                                         radius,
                                          metric='euclidean')
 
 

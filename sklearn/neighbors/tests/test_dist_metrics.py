@@ -206,7 +206,8 @@ def test_bad_pyfunc_metric():
         return "1"
 
     X = np.ones((5, 2))
-    with pytest.raises(TypeError, match="Custom distance function must accept two vectors"):
+    msg = "Custom distance function must accept two vectors"
+    with pytest.raises(TypeError, match=msg):
         BallTree(X, metric=wrong_distance)
 
 
