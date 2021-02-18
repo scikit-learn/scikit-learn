@@ -173,7 +173,7 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     """Test that B-splines fit a periodic curve pretty well."""
     # +2 to avoid the value 0 in assert_allclose
     def f(x):
-        return np.sin(2*np.pi*x) + np.sin(6*np.pi*x) - np.sin(8*np.pi*x) + 2
+        return np.sin(2*np.pi*x) - np.sin(8*np.pi*x) + 3
 
     X = np.linspace(0, 1, 101)[:, None]
     pipe = Pipeline(
@@ -181,7 +181,7 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
             (
                 "spline",
                 SplineTransformer(
-                    n_knots=35,
+                    n_knots=20,
                     degree=3,
                     include_bias=bias,
                     extrapolation="periodic",
@@ -194,8 +194,7 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
 
     # Generate larger array to check periodic extrapolation
     X_ = np.linspace(-1, 2, 301)[:, None]
-
-    assert_allclose(pipe.predict(X_), f(X_[:, 0]), rtol=1e-2)
+    assert_allclose(pipe.predict(X_), f(X_[:, 0]), atol=0.01, rtol=0.01)
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
