@@ -97,7 +97,7 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model export for production**
 
-- `onnxmltools <https://github.com/onnx/onnxmltools>`_ Serializes many
+- `sklearn-onnx <https://github.com/onnx/sklearn-onnx>`_ Serialization of many
   Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
   prediction.
 
