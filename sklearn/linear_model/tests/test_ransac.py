@@ -4,7 +4,6 @@ from scipy import sparse
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-import pytest
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_warns
