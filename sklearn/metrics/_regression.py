@@ -1,10 +1,10 @@
-"""Metrics to assess performance on regression task
+"""Metrics to assess performance on regression task.
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
-the better
+the better.
 
 Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
-the lower the better
+the lower the better.
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -20,6 +20,7 @@ the lower the better
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
+#          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -29,6 +30,9 @@ from .._loss.glm_distribution import TweedieDistribution
 from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _check_sample_weight
+from ..utils.stats import _weighted_percentile
 from ..exceptions import UndefinedMetricWarning
 
 
@@ -38,6 +42,7 @@ __ALL__ = [
     "mean_squared_error",
     "mean_squared_log_error",
     "median_absolute_error",
+    "mean_absolute_percentage_error",
     "r2_score",
     "explained_variance_score",
     "mean_tweedie_deviance",
@@ -47,7 +52,7 @@ __ALL__ = [
 
 
 def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
-    """Check that y_true and y_pred belong to the same regression task
+    """Check that y_true and y_pred belong to the same regression task.
 
     Parameters
     ----------
@@ -63,7 +68,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     -------
     type_true : one of {'continuous', continuous-multioutput'}
         The type of the true target data, as output by
-        'utils.multiclass.type_of_target'
+        'utils.multiclass.type_of_target'.
 
     y_true : array-like of shape (n_samples, n_outputs)
         Ground truth (correct) target values.
@@ -76,9 +81,9 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
-    dtype: str or list, default="numeric"
-        the dtype argument passed to check_array
 
+    dtype : str or list, default="numeric"
+        the dtype argument passed to check_array.
     """
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -117,10 +122,11 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     return y_type, y_true, y_pred, multioutput
 
 
-def mean_absolute_error(y_true, y_pred,
+@_deprecate_positional_args
+def mean_absolute_error(y_true, y_pred, *,
                         sample_weight=None,
                         multioutput='uniform_average'):
-    """Mean absolute error regression loss
+    """Mean absolute error regression loss.
 
     Read more in the :ref:`User Guide <mean_absolute_error>`.
 
@@ -132,11 +138,11 @@ def mean_absolute_error(y_true, y_pred,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average']
-        or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
 
@@ -188,10 +194,88 @@ def mean_absolute_error(y_true, y_pred,
     return np.average(output_errors, weights=multioutput)
 
 
-def mean_squared_error(y_true, y_pred,
+def mean_absolute_percentage_error(y_true, y_pred,
+                                   sample_weight=None,
+                                   multioutput='uniform_average'):
+    """Mean absolute percentage error regression loss.
+
+    Note here that we do not represent the output as a percentage in range
+    [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
+    :ref:`User Guide <mean_absolute_percentage_error>`.
+
+    .. versionadded:: 0.24
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+        If input is list then the shape must be (n_outputs,).
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float or ndarray of floats in the range [0, 1/eps]
+        If multioutput is 'raw_values', then mean absolute percentage error
+        is returned for each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average of all output errors is returned.
+
+        MAPE output is non-negative floating point. The best value is 0.0.
+        But note the fact that bad predictions can lead to arbitarily large
+        MAPE values, especially if some y_true values are very close to zero.
+        Note that we return a large value instead of `inf` when y_true is zero.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_absolute_percentage_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_absolute_percentage_error(y_true, y_pred)
+    0.3273...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> mean_absolute_percentage_error(y_true, y_pred)
+    0.5515...
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.6198...
+    """
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    epsilon = np.finfo(np.float64).eps
+    mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
+    output_errors = np.average(mape,
+                               weights=sample_weight, axis=0)
+    if isinstance(multioutput, str):
+        if multioutput == 'raw_values':
+            return output_errors
+        elif multioutput == 'uniform_average':
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
+@_deprecate_positional_args
+def mean_squared_error(y_true, y_pred, *,
                        sample_weight=None,
                        multioutput='uniform_average', squared=True):
-    """Mean squared error regression loss
+    """Mean squared error regression loss.
 
     Read more in the :ref:`User Guide <mean_squared_error>`.
 
@@ -203,11 +287,11 @@ def mean_squared_error(y_true, y_pred,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average']
-        or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
 
@@ -217,7 +301,7 @@ def mean_squared_error(y_true, y_pred,
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : boolean value, optional (default = True)
+    squared : bool, default=True
         If True returns MSE value, if False returns RMSE value.
 
     Returns
@@ -241,32 +325,37 @@ def mean_squared_error(y_true, y_pred,
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)
     0.708...
+    >>> mean_squared_error(y_true, y_pred, squared=False)
+    0.822...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0,
                                weights=sample_weight)
+
+    if not squared:
+        output_errors = np.sqrt(output_errors)
+
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
-            return output_errors if squared else np.sqrt(output_errors)
+            return output_errors
         elif multioutput == 'uniform_average':
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    mse = np.average(output_errors, weights=multioutput)
-    return mse if squared else np.sqrt(mse)
+    return np.average(output_errors, weights=multioutput)
 
 
-def mean_squared_log_error(y_true, y_pred,
+@_deprecate_positional_args
+def mean_squared_log_error(y_true, y_pred, *,
                            sample_weight=None,
                            multioutput='uniform_average'):
-    """Mean squared logarithmic error regression loss
+    """Mean squared logarithmic error regression loss.
 
     Read more in the :ref:`User Guide <mean_squared_log_error>`.
 
@@ -278,11 +367,11 @@ def mean_squared_log_error(y_true, y_pred,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average'] \
-            or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
 
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
@@ -315,7 +404,6 @@ def mean_squared_log_error(y_true, y_pred,
     array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -326,11 +414,14 @@ def mean_squared_log_error(y_true, y_pred,
                          "targets contain negative values.")
 
     return mean_squared_error(np.log1p(y_true), np.log1p(y_pred),
-                              sample_weight, multioutput)
+                              sample_weight=sample_weight,
+                              multioutput=multioutput)
 
 
-def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
-    """Median absolute error regression loss
+@_deprecate_positional_args
+def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
+                          sample_weight=None):
+    """Median absolute error regression loss.
 
     Median absolute error output is non-negative floating point. The best value
     is 0.0. Read more in the :ref:`User Guide <median_absolute_error>`.
@@ -343,8 +434,8 @@ def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
     y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
         Estimated target values.
 
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape
-        (n_outputs,)
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values. Array-like value defines
         weights used to average errors.
 
@@ -353,6 +444,11 @@ def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -377,11 +473,15 @@ def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
     array([0.5, 1. ])
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
-    output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+    if sample_weight is None:
+        output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+    else:
+        sample_weight = _check_sample_weight(sample_weight, y_pred)
+        output_errors = _weighted_percentile(np.abs(y_pred - y_true),
+                                             sample_weight=sample_weight)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
@@ -392,10 +492,11 @@ def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
     return np.average(output_errors, weights=multioutput)
 
 
-def explained_variance_score(y_true, y_pred,
+@_deprecate_positional_args
+def explained_variance_score(y_true, y_pred, *,
                              sample_weight=None,
                              multioutput='uniform_average'):
-    """Explained variance regression score function
+    """Explained variance regression score function.
 
     Best possible score is 1.0, lower values are worse.
 
@@ -409,11 +510,11 @@ def explained_variance_score(y_true, y_pred,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average', \
-                'variance_weighted'] or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average', 'variance_weighted'} or \
+            array-like of shape (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
 
@@ -447,7 +548,6 @@ def explained_variance_score(y_true, y_pred,
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='uniform_average')
     0.983...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -484,7 +584,8 @@ def explained_variance_score(y_true, y_pred,
     return np.average(output_scores, weights=avg_weights)
 
 
-def r2_score(y_true, y_pred, sample_weight=None,
+@_deprecate_positional_args
+def r2_score(y_true, y_pred, *, sample_weight=None,
              multioutput="uniform_average"):
     """R^2 (coefficient of determination) regression score function.
 
@@ -503,11 +604,11 @@ def r2_score(y_true, y_pred, sample_weight=None,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average', \
-'variance_weighted'] or None or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average', 'variance_weighted'}, \
+            array-like of shape (n_outputs,) or None, default='uniform_average'
 
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
@@ -655,7 +756,8 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
-def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
+@_deprecate_positional_args
+def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
@@ -719,7 +821,8 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
     return np.average(dev, weights=sample_weight)
 
 
-def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
+@_deprecate_positional_args
+def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
     Poisson deviance is equivalent to the Tweedie deviance with
@@ -756,7 +859,8 @@ def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
     )
 
 
-def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
+@_deprecate_positional_args
+def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
 
     Gamma deviance is equivalent to the Tweedie deviance with

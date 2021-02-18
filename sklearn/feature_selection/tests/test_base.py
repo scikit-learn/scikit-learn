@@ -15,7 +15,7 @@ class StepSelector(SelectorMixin, BaseEstimator):
         self.step = step
 
     def fit(self, X, y=None):
-        X = check_array(X, 'csc')
+        X = check_array(X, accept_sparse='csc')
         self.n_input_feats = X.shape[1]
         return self
 

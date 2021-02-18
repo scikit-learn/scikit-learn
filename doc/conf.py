@@ -16,7 +16,10 @@ import sys
 import os
 import warnings
 import re
+from datetime import datetime
 from packaging.version import parse
+from pathlib import Path
+from io import StringIO
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -38,7 +41,9 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
-    'sphinx_issues'
+    'sphinx_issues',
+    'add_toctree_functions',
+    'sphinx-prompt',
 ]
 
 # this is needed for some reason...
@@ -74,12 +79,14 @@ source_suffix = '.rst'
 # The encoding of source files.
 #source_encoding = 'utf-8'
 
-# The master toctree document.
-master_doc = 'contents'
+# The main toctree document.
+main_doc = 'contents'
 
 # General information about the project.
 project = 'scikit-learn'
-copyright = '2007 - 2019, scikit-learn developers (BSD License)'
+copyright = (
+    f'2007 - {datetime.now().year}, scikit-learn developers (BSD License)'
+)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -208,6 +215,23 @@ htmlhelp_basename = 'scikit-learndoc'
 # If true, the reST sources are included in the HTML build as _sources/name.
 html_copy_source = True
 
+# Adds variables into templates
+html_context = {}
+# finds latest release highlights and places it into HTML context for
+# index.html
+release_highlights_dir = Path("..") / "examples" / "release_highlights"
+# Finds the highlight with the latest version number
+latest_highlights = sorted(release_highlights_dir.glob(
+                           "plot_release_highlights_*.py"))[-1]
+latest_highlights = latest_highlights.with_suffix('').name
+html_context["release_highlights"] = \
+    f"auto_examples/release_highlights/{latest_highlights}"
+
+# get version from higlight name assuming highlights have the form
+# plot_release_highlights_0_22_0
+highlight_version = ".".join(latest_highlights.split("_")[-3:-1])
+html_context["release_highlights_version"] = highlight_version
+
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -220,6 +244,8 @@ latex_elements = {
     'preamble': r"""
         \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}
         \usepackage{morefloats}\usepackage{enumitem} \setlistdepth{10}
+        \let\oldhref\href
+        \renewcommand{\href}[2]{\oldhref{#1}{\hbox{#2}}}
         """
 }
 
@@ -245,7 +271,7 @@ trim_doctests_flags = True
 intersphinx_mapping = {
     'python': ('https://docs.python.org/{.major}'.format(
         sys.version_info), None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
@@ -260,7 +286,7 @@ if v.release is None:
         'PEP440'.format(version))
 
 if v.is_devrelease:
-    binder_branch = 'master'
+    binder_branch = 'main'
 else:
     major, minor = v.release[:2]
     binder_branch = '{}.{}.X'.format(major, minor)
@@ -281,6 +307,11 @@ class SubSectionTitleOrder:
 
     def __call__(self, directory):
         src_path = os.path.normpath(os.path.join(self.src_dir, directory))
+
+        # Forces Release Highlights to the top
+        if os.path.basename(src_path) == "release_highlights":
+            return "0"
+
         readme = os.path.join(src_path, "README.txt")
 
         try:
@@ -314,6 +345,7 @@ sphinx_gallery_conf = {
     },
     # avoid generating too many cross links
     'inspect_global_variables': False,
+    'remove_config_comments': True,
 }
 
 
@@ -328,6 +360,7 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600}
 # discovered properly by sphinx
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
 
 
 def make_carousel_thumbs(app, exception):
@@ -365,13 +398,98 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
+def generate_min_dependency_table(app):
+    """Generate min dependency table for docs."""
+    from sklearn._min_dependencies import dependent_packages
+
+    # get length of header
+    package_header_len = max(len(package)
+                             for package in dependent_packages) + 4
+    version_header_len = len('Minimum Version') + 4
+    tags_header_len = max(len(tags)
+                          for _, tags in dependent_packages.values()) + 4
+
+    output = StringIO()
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+    dependency_title = "Dependency"
+    version_title = "Minimum Version"
+    tags_title = "Purpose"
+
+    output.write(f'{dependency_title:<{package_header_len}} '
+                 f'{version_title:<{version_header_len}} '
+                 f'{tags_title}\n')
+
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+
+    for package, (version, tags) in dependent_packages.items():
+        output.write(f'{package:<{package_header_len}} '
+                     f'{version:<{version_header_len}} '
+                     f'{tags}\n')
+
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+    output = output.getvalue()
+
+    with (Path('.') / 'min_dependency_table.rst').open('w') as f:
+        f.write(output)
+
+
+def generate_min_dependency_substitutions(app):
+    """Generate min dependency substitutions for docs."""
+    from sklearn._min_dependencies import dependent_packages
+
+    output = StringIO()
+
+    for package, (version, _) in dependent_packages.items():
+        package = package.capitalize()
+        output.write(f'.. |{package}MinVersion| replace:: {version}')
+        output.write('\n')
+
+    output = output.getvalue()
+
+    with (Path('.') / 'min_dependency_substitutions.rst').open('w') as f:
+        f.write(output)
+
+
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
 issues_github_path = 'scikit-learn/scikit-learn'
 
+# Hack to get kwargs to appear in docstring #18434
+# TODO: Remove when https://github.com/sphinx-doc/sphinx/pull/8234 gets
+# merged
+from sphinx.util import inspect  # noqa
+from sphinx.ext.autodoc import ClassDocumenter  # noqa
+
+
+class PatchedClassDocumenter(ClassDocumenter):
+
+    def _get_signature(self):
+        old_signature = inspect.signature
+
+        def patch_signature(subject, bound_method=False, follow_wrapped=True):
+            # changes the default of follow_wrapped to True
+            return old_signature(subject, bound_method=bound_method,
+                                 follow_wrapped=follow_wrapped)
+        inspect.signature = patch_signature
+        result = super()._get_signature()
+        inspect.signature = old_signature
+        return result
+
 
 def setup(app):
+    app.registry.documenters['class'] = PatchedClassDocumenter
+    app.connect('builder-inited', generate_min_dependency_table)
+    app.connect('builder-inited', generate_min_dependency_substitutions)
     # to hide/show the prompt in code examples:
     app.connect('build-finished', make_carousel_thumbs)
     app.connect('build-finished', filter_search_index)
@@ -387,5 +505,11 @@ warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
 
-# Reduces the output of estimators
-sklearn.set_config(print_changed_only=True)
+
+# maps functions with a class name that is indistinguishable when case is
+# ignore to another filename
+autosummary_filename_map = {
+    "sklearn.cluster.dbscan": "dbscan-function",
+    "sklearn.covariance.oas": "oas-function",
+    "sklearn.decomposition.fastica": "fastica-function",
+}

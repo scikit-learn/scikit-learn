@@ -13,7 +13,7 @@ this project as part of his thesis.
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
-following a ~3 month cycle, and a thriving international community has
+following a ~ 3-month cycle, and a thriving international community has
 been leading the development.
 
 Governance
@@ -38,8 +38,18 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
+Triage Team
+-----------
+
+The following people are active contributors who also help with
+:ref:`triaging issues <bug_triaging>`, PRs, and general
+maintenance:
+
+.. include:: triage_team.rst
+
 Emeritus Core Developers
 ------------------------
+
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
@@ -97,7 +107,7 @@ Artwork
 -------
 
 High quality PNG and SVG logos are available in the `doc/logos/
-<https://github.com/scikit-learn/scikit-learn/tree/master/doc/logos>`_
+<https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
 source directory.
 
 .. image:: images/scikit-learn-logo-notext.png
@@ -108,7 +118,7 @@ Funding
 Scikit-Learn is a community driven project, however institutional and private
 grants help to assure its sustainability.
 
-The project would like to thank the following funders. 
+The project would like to thank the following funders.
 
 ...................................
 
@@ -146,14 +156,6 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    :width: 100pt
    :target: https://www.fujitsu.com/global/
 
-.. |intel| image:: images/intel.png
-   :width: 70pt
-   :target: https://www.intel.com/
-
-.. |nvidia| image:: images/nvidia.png
-   :width: 70pt
-   :target: https://www.nvidia.com/
-
 .. |dataiku| image:: images/dataiku.png
    :width: 70pt
    :target: https://www.dataiku.com/
@@ -171,17 +173,17 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    :class: sk-sponsor-table align-default
 
    +---------+----------+
-   | |msn|   |  |bcg|   |
+   |       |bcg|        |
    +---------+----------+
    |                    |
-   +---------+----------+ 
+   +---------+----------+
    |  |axa|  |   |bnp|  |
    +---------+----------+
-   ||fujitsu||  |intel| |
+   ||fujitsu||  |msn|   |
    +---------+----------+
    |                    |
    +---------+----------+
-   ||dataiku|| |nvidia| |
+   |     |dataiku|      |
    +---------+----------+
    |                    |
    +---------+----------+
@@ -193,7 +195,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-........  
+........
 
 .. raw:: html
 
@@ -208,7 +210,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/columbia.png 
+.. image:: themes/scikit-learn/static/img/columbia.png
    :width: 50pt
    :align: center
    :target: https://www.columbia.edu/
@@ -222,7 +224,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">   
+   <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
 Andreas Müller received a grant to improve scikit-learn from the
@@ -271,14 +273,15 @@ July 2017.
    </div>
    </div>
 
-............
+...........
 
 .. raw:: html
 
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since 2019.
+`Zalando SE <https://corporate.zalando.com/en>`_ funds Adrin Jalali since
+August 2020.
 
 .. raw:: html
 
@@ -286,10 +289,10 @@ July 2017.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/anaconda.png
+.. image:: images/zalando_logo.png
    :width: 100pt
    :align: center
-   :target: https://sydney.edu.au/
+   :target: https://corporate.zalando.com/en
 
 .. raw:: html
 
@@ -347,6 +350,31 @@ time of Joris van den Bossche (2017-2018).
    :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/anaconda.png
+   :width: 100pt
+   :align: center
+   :target: https://www.anaconda.com/
 
 .. raw:: html
 
@@ -502,38 +530,23 @@ budget of the project [#f1]_.
 
 .. raw :: html
 
-    </br></br>
-    <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
-    target="_top">
-    <input type="hidden" name="cmd" value="_s-xclick">
-    <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
-    <input type="image"
-    src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
-    border="0" name="submit" alt="PayPal - The safer, easier way to pay
-    online!" style="position: relative;
-    left: 40%;">
-    <img alt="" border="0"
-    src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
-    height="1">
-    </form>
-    </br>
+   </br></br>
+   <div style="text-align: center;">
+   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
+   </div>
+   </br>
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget in particular, we might use some of
+.. [#f1] Regarding the organization budget, in particular, we might use some of
          the donated funds to pay for other project expenses such as DNS,
          hosting or continuous integration services.
 
 Infrastructure support
 ----------------------
 
-- We would like to thank `Rackspace <https://www.rackspace.com>`_ for providing
-  us with a free `Rackspace Cloud <https://www.rackspace.com/cloud/>`_ account
-  to automatically build the documentation and the example gallery from for the
-  development version of scikit-learn using `this tool
-  <https://github.com/scikit-learn/sklearn-docbuilder>`_.
-
 - We would also like to thank `Microsoft Azure
   <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
   `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
-  Integration servers.
+  Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_ for the
+  storage they provide for our staging and nightly builds.

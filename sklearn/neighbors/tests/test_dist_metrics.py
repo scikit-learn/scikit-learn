@@ -6,13 +6,12 @@ from numpy.testing import assert_array_almost_equal
 
 import pytest
 
-from distutils.version import LooseVersion
-from scipy import __version__ as scipy_version
 from scipy.spatial.distance import cdist
 from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils.fixes import sp_version, parse_version
 
 
 def dist_func(x1, x2, p):
@@ -56,7 +55,19 @@ def test_cdist(metric):
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        D_true = cdist(X1, X2, metric, **kwargs)
+        if metric == "wminkowski":
+            if sp_version >= parse_version("1.8.0"):
+                pytest.skip("wminkowski will be removed in SciPy 1.8.0")
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if sp_version >= parse_version("1.6.0"):
+                ExceptionToAssert = DeprecationWarning
+            with pytest.warns(ExceptionToAssert):
+                D_true = cdist(X1, X2, metric, **kwargs)
+        else:
+            D_true = cdist(X1, X2, metric, **kwargs)
+
         check_cdist(metric, kwargs, D_true)
 
 
@@ -84,7 +95,19 @@ def test_pdist(metric):
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        D_true = cdist(X1, X1, metric, **kwargs)
+        if metric == "wminkowski":
+            if sp_version >= parse_version("1.8.0"):
+                pytest.skip("wminkowski will be removed in SciPy 1.8.0")
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if sp_version >= parse_version("1.6.0"):
+                ExceptionToAssert = DeprecationWarning
+            with pytest.warns(ExceptionToAssert):
+                D_true = cdist(X1, X1, metric, **kwargs)
+        else:
+            D_true = cdist(X1, X1, metric, **kwargs)
+
         check_pdist(metric, kwargs, D_true)
 
 
@@ -106,7 +129,7 @@ def check_pdist_bool(metric, D_true):
     # Based on https://github.com/scipy/scipy/pull/7373
     # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
     # was changed to return 0, instead of nan.
-    if metric == 'jaccard' and LooseVersion(scipy_version) < '1.2.0':
+    if metric == 'jaccard' and sp_version < parse_version('1.2.0'):
         D_true[np.isnan(D_true)] = 0
     assert_array_almost_equal(D12, D_true)
 

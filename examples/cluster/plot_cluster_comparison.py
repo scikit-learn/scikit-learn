@@ -143,7 +143,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ('AgglomerativeClustering', average_linkage),
         ('DBSCAN', dbscan),
         ('OPTICS', optics),
-        ('Birch', birch),
+        ('BIRCH', birch),
         ('GaussianMixture', gmm)
     )
 
@@ -167,7 +167,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
         t1 = time.time()
         if hasattr(algorithm, 'labels_'):
-            y_pred = algorithm.labels_.astype(np.int)
+            y_pred = algorithm.labels_.astype(int)
         else:
             y_pred = algorithm.predict(X)
 

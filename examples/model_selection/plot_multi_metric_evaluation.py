@@ -29,7 +29,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 print(__doc__)
 
-###############################################################################
+# %%
 # Running ``GridSearchCV`` using multiple evaluation metrics
 # ----------------------------------------------------------
 #
@@ -51,7 +51,7 @@ gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
 gs.fit(X, y)
 results = gs.cv_results_
 
-###############################################################################
+# %%
 # Plotting the result
 # -------------------
 

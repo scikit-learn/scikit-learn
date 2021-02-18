@@ -16,13 +16,14 @@ from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import all_estimators
-from sklearn.utils.estimator_checks import _safe_tags
+from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 
 import pytest
 
@@ -32,8 +33,10 @@ import pytest
 with warnings.catch_warnings():
     warnings.simplefilter('ignore', FutureWarning)
     PUBLIC_MODULES = set([
-        pckg[1] for pckg in walk_packages(prefix='sklearn.',
-                                          path=sklearn.__path__)
+        pckg[1] for pckg in walk_packages(
+            prefix='sklearn.',
+            # mypy error: Module has no attribute "__path__"
+            path=sklearn.__path__)  # type: ignore  # mypy issue #1422
         if not ("._" in pckg[1] or ".tests." in pckg[1])
     ])
 
@@ -80,8 +83,9 @@ def test_docstring_parameters():
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
-        # Exclude imported classes
-        classes = [cls for cls in classes if cls[1].__module__ == name]
+        # Exclude non-scikit-learn classes
+        classes = [cls for cls in classes
+                   if cls[1].__module__.startswith('sklearn')]
         for cname, cls in classes:
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
@@ -167,6 +171,44 @@ def test_tabs():
                                     % modname)
 
 
+def _construct_searchcv_instance(SearchCV):
+    return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
+
+
+N_FEATURES_MODULES_TO_IGNORE = {
+    'calibration',
+    'cluster',
+    'compose',
+    'covariance',
+    'decomposition',
+    'discriminant_analysis',
+    'dummy',
+    'ensemble',
+    'feature_extraction',
+    'feature_selection',
+    'gaussian_process',
+    'impute',
+    'isotonic',
+    'kernel_approximation',
+    'kernel_ridge',
+    'linear_model',
+    'manifold',
+    'mixture',
+    'model_selection',
+    'multiclass',
+    'multioutput',
+    'naive_bayes',
+    'neighbors',
+    'neural_network',
+    'pipeline',
+    'preprocessing',
+    'random_projection',
+    'semi_supervised',
+    'svm',
+    'tree'
+}
+
+
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -176,26 +218,42 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
-               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
-               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+    IGNORED = {'ClassifierChain', 'ColumnTransformer',
+               'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
+               'GaussianRandomProjection',
+               'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
-               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
-               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
+               'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
+               'RegressorChain', 'SelectFromModel',
+               'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor'}
+               'VotingRegressor', 'SequentialFeatureSelector',
+               'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    est = Estimator()
+    if Estimator.__name__ in ("RandomizedSearchCV", "GridSearchCV"):
+        est = _construct_searchcv_instance(Estimator)
+    else:
+        est = _construct_instance(Estimator)
 
     if Estimator.__name__ == 'SelectKBest':
         est.k = 2
 
     if Estimator.__name__ == 'DummyClassifier':
         est.strategy = "stratified"
+
+    if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
+        est.n_components = 1  # default = 2 is invalid for single target.
+
+    # FIXME: TO BE REMOVED for 1.0 (avoid FutureWarning)
+    if Estimator.__name__ == 'AffinityPropagation':
+        est.random_state = 63
+
+    # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
+    if Estimator.__name__ == 'NMF':
+        est.init = 'nndsvda'
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
@@ -204,14 +262,19 @@ def test_fit_docstring_attributes(name, Estimator):
     y = _enforce_estimator_tags_y(est, y)
     X = _enforce_estimator_tags_x(est, X)
 
-    if '1dlabels' in _safe_tags(est, 'X_types'):
+    if '1dlabels' in est._get_tags()['X_types']:
         est.fit(y)
-    elif '2dlabels' in _safe_tags(est, 'X_types'):
+    elif '2dlabels' in est._get_tags()['X_types']:
         est.fit(np.c_[y, y])
     else:
         est.fit(X, y)
 
-    skipped_attributes = {'n_features_in_'}
+    skipped_attributes = {'x_scores_',  # For PLS, TODO remove in 1.1
+                          'y_scores_'}  # For PLS, TODO remove in 1.1
+
+    module = est.__module__.split(".")[1]
+    if module in N_FEATURES_MODULES_TO_IGNORE:
+        skipped_attributes.add("n_features_in_")
 
     for attr in attributes:
         if attr.name in skipped_attributes:
@@ -220,29 +283,18 @@ def test_fit_docstring_attributes(name, Estimator):
         # As certain attributes are present "only" if a certain parameter is
         # provided, this checks if the word "only" is present in the attribute
         # description, and if not the attribute is required to be present.
-        if 'only ' not in desc:
+        if 'only ' in desc:
+            continue
+        # ignore deprecation warnings
+        with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV', 'GaussianProcessClassifier',
-               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor', 'IsolationForest',
-               'KNeighborsClassifier', 'KNeighborsRegressor',
-               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
-               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
-               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OAS', 'OneClassSVM', 'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
-               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
-               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler'}
+    IGNORED = {'Birch', 'LarsCV', 'Lasso',
+               'OrthogonalMatchingPursuit'}
+
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
-            reason="Classifier has too many undocumented attributes.")
+            reason="Estimator has too many undocumented attributes.")
 
     fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
                 and not k.startswith('_')]

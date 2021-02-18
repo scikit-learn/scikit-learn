@@ -28,6 +28,6 @@ correlation coefficient
 for predicting to unseen data. The predictions of :class:`IsotonicRegression`
 thus form a function that is piecewise linear:
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_isotonic_regression_001.png
-   :target: ../auto_examples/plot_isotonic_regression.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_isotonic_regression_001.png
+   :target: ../auto_examples/miscellaneous/plot_isotonic_regression.html
    :align: center

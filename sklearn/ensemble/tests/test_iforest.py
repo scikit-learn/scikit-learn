@@ -12,8 +12,6 @@ import numpy as np
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_allclose
 
@@ -21,7 +19,7 @@ from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
 from sklearn.ensemble._iforest import _average_path_length
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import load_diabetes, load_iris
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
@@ -37,12 +35,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+diabetes = load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 
 def test_iforest():
@@ -63,8 +61,8 @@ def test_iforest():
 def test_iforest_sparse():
     """Check IForest for various parameter settings on sparse input."""
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
+                                                        diabetes.target[:50],
                                                         random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
                           "bootstrap": [True, False]})
@@ -92,18 +90,18 @@ def test_iforest_error():
     X = iris.data
 
     # Test max_samples
-    assert_raises(ValueError,
-                  IsolationForest(max_samples=-1).fit, X)
-    assert_raises(ValueError,
-                  IsolationForest(max_samples=0.0).fit, X)
-    assert_raises(ValueError,
-                  IsolationForest(max_samples=2.0).fit, X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples=-1).fit(X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples=0.0).fit(X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples=2.0).fit(X)
     # The dataset has less than 256 samples, explicitly setting
     # max_samples > n_samples should result in a warning. If not set
     # explicitly there should be no warning
-    assert_warns_message(UserWarning,
-                         "max_samples will be set to n_samples for estimation",
-                         IsolationForest(max_samples=1000).fit, X)
+    warn_msg = "max_samples will be set to n_samples for estimation"
+    with pytest.warns(UserWarning, match=warn_msg):
+        IsolationForest(max_samples=1000).fit(X)
     # note that assert_no_warnings does not apply since it enables a
     # PendingDeprecationWarning triggered by scipy.sparse's use of
     # np.matrix. See issue #11251.
@@ -118,16 +116,14 @@ def test_iforest_error():
                      if issubclass(each.category, UserWarning)]
     assert len(user_warnings) == 0
 
-    assert_raises(ValueError, IsolationForest(max_samples='foobar').fit, X)
-    assert_raises(ValueError, IsolationForest(max_samples=1.5).fit, X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples='foobar').fit(X)
+    with pytest.raises(ValueError):
+        IsolationForest(max_samples=1.5).fit(X)
 
     # test X_test n_features match X_train one:
-    assert_raises(ValueError, IsolationForest().fit(X).predict, X[:, 1:])
-
-    # test that behaviour='old' will raise an error
-    msg = "The old behaviour of IsolationForest is not implemented anymore."
-    with pytest.raises(NotImplementedError, match=msg):
-        IsolationForest(behaviour='old').fit(X)
+    with pytest.raises(ValueError):
+        IsolationForest().fit(X).predict(X[:, 1:])
 
 
 def test_recalculate_max_depth():
@@ -144,9 +140,9 @@ def test_max_samples_attribute():
     assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=500)
-    assert_warns_message(UserWarning,
-                         "max_samples will be set to n_samples for estimation",
-                         clf.fit, X)
+    warn_msg = "max_samples will be set to n_samples for estimation"
+    with pytest.warns(UserWarning, match=warn_msg):
+        clf.fit(X)
     assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=0.4).fit(X)
@@ -157,8 +153,8 @@ def test_iforest_parallel_regression():
     """Check parallel regression."""
     rng = check_random_state(0)
 
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     ensemble = IsolationForest(n_jobs=3,
@@ -226,8 +222,8 @@ def test_max_samples_consistency():
 def test_iforest_subsampled_features():
     # It tests non-regression for #5732 which failed at predict.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
+                                                        diabetes.target[:50],
                                                         random_state=rng)
     clf = IsolationForest(max_features=0.8)
     clf.fit(X_train, y_train)
@@ -315,13 +311,6 @@ def test_iforest_chunks_works2(
 ):
     test_iforest_works(contamination)
     assert mocked_get_chunk.call_count == n_predict_calls
-
-
-def test_iforest_deprecation():
-    iforest = IsolationForest(behaviour='new')
-    warn_msg = "'behaviour' is deprecated in 0.22 and will be removed in 0.24"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        iforest.fit(iris.data)
 
 
 def test_iforest_with_uniform_data():

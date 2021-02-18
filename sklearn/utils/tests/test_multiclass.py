@@ -3,7 +3,6 @@ import numpy as np
 import scipy.sparse as sp
 from itertools import product
 import pytest
-from distutils.version import LooseVersion
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -16,6 +15,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
+from sklearn.utils.fixes import parse_version
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
@@ -38,10 +38,10 @@ EXAMPLES = {
         [[0, 1], [1, 0]],
         [[0, 1]],
         csr_matrix(np.array([[0, 1], [1, 0]])),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.bool)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=bool)),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.int8)),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.uint8)),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=float)),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float32)),
         csr_matrix(np.array([[0, 0], [0, 0]])),
         csr_matrix(np.array([[0, 1]])),
@@ -56,7 +56,7 @@ EXAMPLES = {
         np.array([1, 0, 2]),
         np.array([1, 0, 2], dtype=np.int8),
         np.array([1, 0, 2], dtype=np.uint8),
-        np.array([1, 0, 2], dtype=np.float),
+        np.array([1, 0, 2], dtype=float),
         np.array([1, 0, 2], dtype=np.float32),
         np.array([[1], [0], [2]]),
         _NotAnArray(np.array([1, 0, 2])),
@@ -72,7 +72,7 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.int8),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.uint8),
-        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=float),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
         np.array([['a', 'b'], ['c', 'd']]),
         np.array([['a', 'b'], ['c', 'd']]),
@@ -86,10 +86,10 @@ EXAMPLES = {
         [],
         [0],
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1]),
-        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.bool),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=bool),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.int8),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.uint8),
-        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=float),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
         np.array([[0], [1]]),
         _NotAnArray(np.array([[0], [1]])),
@@ -307,7 +307,7 @@ def test_type_of_target():
 def test_type_of_target_pandas_sparse():
     pd = pytest.importorskip("pandas")
 
-    if LooseVersion(pd.__version__) >= '0.25':
+    if parse_version(pd.__version__) >= parse_version('0.25'):
         pd_sparse_array = pd.arrays.SparseArray
     else:
         pd_sparse_array = pd.SparseArray
