@@ -83,14 +83,9 @@ def test_multiclass_raises():
             est.fit(X, y)
 
 
-def is_monotonic(a, cst):
-    return (cst * np.diff(a) >= 0.0).all()
-
-
-def assert_children_values_monotonic_bounded(tree_, monotonic_cst):
-    # Flip values so that only need to check for increasing constraint
-    values = monotonic_cst * tree_.value
-
+def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
+    # Flip values to always check for increasing constraint
+    values = monotonic_sign * tree_.value
     for i in range(tree_.node_count):
         if tree_.children_left[i] > i and tree_.children_right[i] > i:
             # Check monotonicity
@@ -107,17 +102,17 @@ def assert_children_values_monotonic_bounded(tree_, monotonic_cst):
                 assert(val_middle <= float(values[i_right_left]))
 
 
-def assert_tree_monotonic(clf, monotonic_cst):
-    X_grid = np.arange(0, 1, 0.01).reshape(-1, 1)
+def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
+    X_grid = np.arange(min_x, max_x, (max_x-min_x)/n_steps).reshape(-1, 1)
     y_pred_grid = clf.predict(X_grid)
-    assert is_monotonic(y_pred_grid, monotonic_cst)
+    assert (monotonic_sign * np.diff(y_pred_grid) >= 0.0).all()
 
 
-@pytest.mark.parametrize('monotonic_cst', (-1, 1))
+@pytest.mark.parametrize('monotonic_sign', (-1, 1))
 @pytest.mark.parametrize('splitter', ("best", "random"))
 @pytest.mark.parametrize('depth_first', (True, False))
 @pytest.mark.parametrize('seed', range(4))
-def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
+def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
     # Adaptation from test_nodes_values in test_montonic_constraints.py
     # Build a single tree with only one feature, and make sure the nodes
     # values respect the monotonic constraints.
@@ -131,7 +126,7 @@ def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
     #    / \    /  \
     #   a   b  c    d
     #
-    # a <= b <= root <= c <= d (assert_children_values_monotonic_bounded)
+    # a <= b <= root <= c <= d
 
     rng = np.random.RandomState(seed)
     n_samples = 1000
@@ -142,15 +137,15 @@ def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
         clf = DecisionTreeRegressor(splitter=splitter,
-                                    monotonic_cst=[monotonic_cst],
+                                    monotonic_cst=[monotonic_sign],
                                     random_state=seed)
     else:
-        # max_leaf_nodes triggers depth first tree builder
+        # max_leaf_nodes triggers best first tree builder
         clf = DecisionTreeRegressor(splitter=splitter,
-                                    monotonic_cst=[monotonic_cst],
+                                    monotonic_cst=[monotonic_sign],
                                     max_leaf_nodes=n_samples,
                                     random_state=seed)
     clf.fit(X, y)
 
-    assert_children_values_monotonic_bounded(clf.tree_, monotonic_cst)
-    assert_tree_monotonic(clf, monotonic_cst)
+    assert_1d_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_sign)
+    assert_1d_reg_monotonic(clf, monotonic_sign, np.min(X), np.max(X), 100)
