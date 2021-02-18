@@ -115,8 +115,10 @@ def test_binary_search():
                                for i in range(P.shape[0])])
     assert_almost_equal(mean_perplexity, desired_perplexity, decimal=3)
 
-    # A more challenging case that produces numeric underflow
-    # in float precision.
+def test_binary_search_underflow(): 
+    # Test if the binary search finds Gaussians with desired perplexity.
+    # A more challenging case than the one above, producing numeric
+    # underflow in float precision (see issue #19471 and PR #19472).
     random_state = check_random_state(42)
     data = random_state.randn(1, 90).astype(np.float32) + 100
     desired_perplexity = 30.0
