@@ -149,8 +149,8 @@ def test_affinity_propagation_predict_non_convergence():
 
     # Force non-convergence by allowing only a single iteration
     with pytest.warns(ConvergenceWarning):
-        af = AffinityPropagation(preference=-10, max_iter=1,
-                                 random_state=75).fit(X)
+        af = AffinityPropagation(preference=-10,
+                                 max_iter=1, random_state=75).fit(X)
 
     # At prediction time, consider new samples as noise since there are no
     # clusters
@@ -216,7 +216,6 @@ def test_affinity_propagation_random_state_warning():
     match = "'random_state' has been introduced in 0.23."
     with pytest.warns(FutureWarning, match=match):
         AffinityPropagation().fit(X)
-
 
 @pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
                                      np.zeros((1, 10))])

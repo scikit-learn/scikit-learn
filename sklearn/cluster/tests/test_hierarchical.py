@@ -95,7 +95,6 @@ def test_unstructured_linkage_tree():
             with pytest.warns(UserWarning):
                 children, n_nodes, n_leaves, parent = ward_tree(
                     this_X.T, n_clusters=10)
-
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
 
@@ -105,7 +104,6 @@ def test_unstructured_linkage_tree():
                 with pytest.warns(UserWarning):
                     children, n_nodes, n_leaves, parent = tree_builder(
                         this_X.T, n_clusters=10)
-
             n_nodes = 2 * X.shape[1] - 1
             assert len(children) + n_leaves == n_nodes
 
