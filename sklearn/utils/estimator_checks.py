@@ -2074,9 +2074,10 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
+        msg = r"contamination must be in \(0, 0.5]"
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
-            with raises(ValueError):
+            with raises(ValueError, match=msg):
                 estimator.fit(X)
 
 
@@ -2970,9 +2971,10 @@ def check_outliers_fit_predict(name, estimator_orig):
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
-        for contamination in [-0.5, 2.3]:
+        msg = r"contamination must be in \(0, 0.5]"
+        for contamination in [-0.5, -0.001, 0.5001, 2.3]:
             estimator.set_params(contamination=contamination)
-            with raises(ValueError):
+            with raises(ValueError, match=msg):
                 estimator.fit_predict(X)
 
 
@@ -3141,7 +3143,7 @@ def check_n_features_in_after_fitting(name, estimator_orig):
 
     # check methods will check n_features_in_
     check_methods = ["predict", "transform", "decision_function",
-                     "predict_proba"]
+                     "predict_proba", "score"]
     X_bad = X[:, [1]]
 
     msg = (f"X has 1 features, but \\w+ is expecting {X.shape[1]} "
@@ -3149,8 +3151,13 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     for method in check_methods:
         if not hasattr(estimator, method):
             continue
+
+        callable_method = getattr(estimator, method)
+        if method == "score":
+            callable_method = partial(callable_method, y=y)
+
         with raises(ValueError, match=msg):
-            getattr(estimator, method)(X_bad)
+            callable_method(X_bad)
 
     # partial_fit will check in the second call
     if not hasattr(estimator, "partial_fit"):
