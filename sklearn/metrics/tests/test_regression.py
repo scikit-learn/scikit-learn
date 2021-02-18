@@ -406,7 +406,7 @@ def test_mean_pinball_loss_on_constant_predictions(
     result = optimize.minimize(objective_func, data.mean(),
                                method="Nelder-Mead")
     assert result.success
-    # The minimum is not unique with limited data, hence the tolerance.
+    # The minimum is not unique with limited data, hence the large tolerance.
     assert result.x == pytest.approx(best_pred, rel=1e-2)
     assert result.fun == pytest.approx(best_pbl)
 
