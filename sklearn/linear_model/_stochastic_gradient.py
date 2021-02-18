@@ -827,6 +827,8 @@ class SGDClassifier(BaseSGDClassifier):
         The stopping criterion. If it is not None, training will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
         epochs.
+        Convergence is checked against the training loss or the
+        validation loss depending on the `early_stopping` parameter.
 
         .. versionadded:: 0.19
 
@@ -898,7 +900,10 @@ class SGDClassifier(BaseSGDClassifier):
             Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
+        Number of iterations with no improvement to wait before stopping
+        fitting.
+        Convergence is checked against the training loss or the
+        validation loss depending on the `early_stopping` parameter.
 
         .. versionadded:: 0.20
             Added 'n_iter_no_change' option
@@ -1451,6 +1456,8 @@ class SGDRegressor(BaseSGDRegressor):
         The stopping criterion. If it is not None, training will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
         epochs.
+        Convergence is checked against the training loss or the
+        validation loss depending on the `early_stopping` parameter.
 
         .. versionadded:: 0.19
 
@@ -1515,7 +1522,10 @@ class SGDRegressor(BaseSGDRegressor):
             Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
+        Number of iterations with no improvement to wait before stopping
+        fitting.
+        Convergence is checked against the training loss or the
+        validation loss depending on the `early_stopping` parameter.
 
         .. versionadded:: 0.20
             Added 'n_iter_no_change' option
