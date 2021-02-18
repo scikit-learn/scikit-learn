@@ -517,13 +517,20 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, default=200.0
+    learning_rate : float or 'auto', default=200.0
         The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
         the learning rate is too high, the data may look like a 'ball' with any
         point approximately equidistant from its nearest neighbours. If the
         learning rate is too low, most points may look compressed in a dense
         cloud with few outliers. If the cost function gets stuck in a bad local
         minimum increasing the learning rate may help.
+        Note that many other t-SNE implementations (bhtsne, FIt-SNE, openTSNE,
+        etc.) use a definition of learning_rate that is 4 times smaller than
+        ours. So our learning_rate=200 corresponds to learning_rate=800 in
+        those other implementations.
+        The 'auto' option sets the learning_rate to N / early_exaggeration / 4,
+        where N is the sample size, following Belkina et al. 2019 and
+        Kobak et al. 2019, Nature Communications.
 
     n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
@@ -693,6 +700,13 @@ class TSNE(BaseEstimator):
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.square_distances not in [True, 'legacy']:
             raise ValueError("'square_distances' must be True or 'legacy'.")
+        if self.learning_rate == 'auto':
+            # See issue #18018
+            self.learning_rate = X.shape[0] / self.early_exaggeration / 4
+        else:
+            if not (self.learning_rate > 0):
+                raise ValueError("'learning_rate' must be a positive number "
+                                 "or 'auto'.")
         if self.metric != "euclidean" and self.square_distances is not True:
             warnings.warn(
                 "'square_distances' has been introduced in 0.24 to help phase "
