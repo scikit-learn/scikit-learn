@@ -22,7 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-
+- |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
+  affinity matrix computation.
 
 Details are listed in the changelog below.
 
@@ -133,6 +134,13 @@ Changelog
   make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Change numerical precision to prevent underflow issues
+  during affinity matrix computation for :class:`manifold.TSNE`.
+  :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
 
 :mod:`sklearn.metrics`
 ......................
