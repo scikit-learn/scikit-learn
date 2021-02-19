@@ -856,7 +856,7 @@ def test_cross_val_predict():
     X, y = load_iris(return_X_y=True)
 
     warning_message = (r'Number of classes in training fold \(2\) does '
-                       'not match total number of classes \(3\). '
+                       r'not match total number of classes \(3\). '
                        'Results may not be appropriate for your use case.')
     with pytest.warns(RuntimeWarning, match=warning_message):
         cross_val_predict(LogisticRegression(solver="liblinear"),
