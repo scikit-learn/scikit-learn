@@ -478,8 +478,7 @@ def test_preprocess_data_weighted(is_sparse):
     # better check the impact of feature scaling.
     X[:, 0] *= 10
     # Constant non-zero feature
-    # X[:, 2] = 1. # this edge case is not passing for sparse data because of
-    # the roundoff error and should be addressed elsewhere
+    X[:, 2] = 1.
     # Constant zero feature (non-materialized in the sparse case)
     X[:, 3] = 0.
     y = rng.rand(n_samples)
@@ -494,8 +493,8 @@ def test_preprocess_data_weighted(is_sparse):
                                      axis=0)
     expected_X_scale = np.sqrt(X_sample_weight_var) * np.sqrt(n_samples)
 
-    # near constant fetures should not be scaled
-    expected_X_scale[expected_X_scale < 1e-15] = 1
+    # near constant features should not be scaled
+    expected_X_scale[expected_X_scale < 10 * np.finfo(np.float64).eps] = 1
 
     if is_sparse:
         X = sparse.csr_matrix(X)

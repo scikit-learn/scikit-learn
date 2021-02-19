@@ -232,7 +232,6 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             X_offset, X_var = mean_variance_axis(
                 X, axis=0, weights=sample_weight
             )
-
             if not return_mean:
                 X_offset[:] = X.dtype.type(0)
         else:
@@ -249,9 +248,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         if normalize:
             X_var *= X.shape[0]
             X_scale = np.sqrt(X_var, out=X_var)
-            near_zero_mask = X_scale < np.finfo(X_scale.dtype).eps
-            if np.any(near_zero_mask):
-                X_scale[near_zero_mask] = 1
+            X_scale[X_scale < 10 * np.finfo(X_scale.dtype).eps] = 1.
             if sp.issparse(X):
                 inplace_column_scale(X, 1. / X_scale)
             else:
