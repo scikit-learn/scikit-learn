@@ -99,8 +99,9 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
     is_data_valid : callable, default=None
         This function is called with the randomly selected data before the
-        model is fitted to it: `is_data_valid(X, y, subset_idxs)`. If its return value is
-        False the current randomly chosen sub-sample is skipped.
+        model is fitted to it: `is_data_valid(X, y, subset_idxs)`.
+        If its return value is False the current randomly chosen sub-sample
+        is skipped.
 
     is_model_valid : callable, default=None
         This function is called with the estimated model and the randomly
