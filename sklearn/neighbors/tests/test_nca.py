@@ -137,25 +137,28 @@ def test_params_validation():
         NCA(warm_start=1).fit(X, y)
 
     # ValueError
-    msg = r"`init` must be 'auto', 'pca', 'lda', 'identity', "
-    msg += r"'random' or a numpy array of shape "
-    msg += r"(n_components, n_features)."
+    msg = (
+        r"`init` must be 'auto', 'pca', 'lda', 'identity', 'random' or a "
+        r"numpy array of shape (n_components, n_features)."
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         NCA(init=1).fit(X, y)
     with pytest.raises(ValueError, match='`max_iter`= -1, must be >= 1.'):
         NCA(max_iter=-1).fit(X, y)
     init = rng.rand(5, 3)
-    msg = 'The output dimensionality ({}) '.format(init.shape[0])
-    msg += 'of the given linear '
-    msg += 'transformation `init` cannot be greater than its '
-    msg += 'input dimensionality ({}).'.format(init.shape[1])
+    msg = (
+        f"The output dimensionality ({init.shape[0]}) "
+        "of the given linear transformation `init` cannot be "
+        f"greater than its input dimensionality ({init.shape[1]})."
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         NCA(init=init).fit(X, y)
     n_components = 10
-    msg = 'The preferred dimensionality of the '
-    msg += 'projected space `n_components` ({}) cannot '.format(n_components)
-    msg += 'be greater than the given data '
-    msg += 'dimensionality ({})!'.format(X.shape[1])
+    msg = (
+        "The preferred dimensionality of the projected space "
+        f"`n_components` ({n_components}) cannot be greater "
+        f"than the given data dimensionality ({X.shape[1]})!"
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         NCA(n_components=n_components).fit(X, y)
 
@@ -191,20 +194,23 @@ def test_n_components():
     # n_components = X.shape[1] != transformation.shape[0]
     n_components = X.shape[1]
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
-    msg = 'The preferred dimensionality of the '
-    msg += 'projected space `n_components` ({}) '.format(n_components)
-    msg += 'does not match the output dimensionality of the given '
-    msg += 'linear transformation `init` ({})!'.format(init.shape[0])
+    msg = (
+        "The preferred dimensionality of the projected space "
+        f"`n_components` ({n_components}) does not match the output "
+        "dimensionality of the given linear transformation "
+        f"`init` ({init.shape[0]})!"
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         nca.fit(X, y)
 
     # n_components > X.shape[1]
     n_components = X.shape[1] + 2
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
-    msg = 'The preferred dimensionality of the '
-    msg += 'projected space `n_components` ({}) cannot '.format(n_components)
-    msg += 'be greater than the given data '
-    msg += 'dimensionality ({})!'.format(X.shape[1])
+    msg = (
+        "The preferred dimensionality of the projected space "
+        f"`n_components` ({n_components}) cannot be greater than "
+        f"the given data dimensionality ({X.shape[1]})!"
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         nca.fit(X, y)
 
@@ -244,18 +250,22 @@ def test_init_transformation():
     # init.shape[1] must match X.shape[1]
     init = rng.rand(X.shape[1], X.shape[1] + 1)
     nca = NeighborhoodComponentsAnalysis(init=init)
-    msg = 'The input dimensionality ({}) of the given '.format(init.shape[1])
-    msg += 'linear transformation `init` must match the '
-    msg += 'dimensionality of the given inputs `X` ({}).'.format(X.shape[1])
+    msg = (
+        f"The input dimensionality ({init.shape[1]}) of the given "
+        "linear transformation `init` must match the "
+        f"dimensionality of the given inputs `X` ({X.shape[1]})."
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         nca.fit(X, y)
 
     # init.shape[0] must be <= init.shape[1]
     init = rng.rand(X.shape[1] + 1, X.shape[1])
     nca = NeighborhoodComponentsAnalysis(init=init)
-    msg = 'The output dimensionality ({}) of the given '.format(init.shape[0])
-    msg += 'linear transformation `init` cannot be '
-    msg += 'greater than its input dimensionality ({}).'.format(init.shape[1])
+    msg = (
+        f"The output dimensionality ({init.shape[0]}) of the given "
+        "linear transformation `init` cannot be "
+        f"greater than its input dimensionality ({init.shape[1]})."
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         nca.fit(X, y)
 
@@ -263,10 +273,12 @@ def test_init_transformation():
     init = rng.rand(X.shape[1], X.shape[1])
     n_components = X.shape[1] - 2
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
-    msg = 'The preferred dimensionality of the '
-    msg += 'projected space `n_components` ({}) '.format(n_components)
-    msg += 'does not match the output dimensionality of the given '
-    msg += 'linear transformation `init` ({})!'.format(init.shape[0])
+    msg = (
+        "The preferred dimensionality of the "
+        f"projected space `n_components` ({n_components}) "
+        "does not match the output dimensionality of the given "
+        f"linear transformation `init` ({init.shape[0]})!"
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         nca.fit(X, y)
 
@@ -317,11 +329,11 @@ def test_warm_start_validation():
     X_less_features, y = make_classification(n_samples=30, n_features=4,
                                              n_classes=4, n_redundant=0,
                                              n_informative=4, random_state=0)
-    msg = 'The new inputs '
-    msg += 'dimensionality ({}) '.format(X_less_features.shape[1])
-    msg += 'does not match the input dimensionality of the '
-    msg += 'previously learned '
-    msg += 'transformation ({}).'.format(nca.components_.shape[1])
+    msg = (
+        f"The new inputs dimensionality ({X_less_features.shape[1]}) "
+        "does not match the input dimensionality of the previously learned "
+        f"transformation ({nca.components_.shape[1]})."
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         nca.fit(X_less_features, y)
 
