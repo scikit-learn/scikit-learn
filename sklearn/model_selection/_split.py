@@ -795,6 +795,15 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0 1 2] TEST: [3]
     TRAIN: [0 1 2 3] TEST: [4]
     TRAIN: [0 1 2 3 4] TEST: [5]
+    >>> # Split using group
+    >>> tscv = TimeSeriesSplit(n_splits=2)
+    >>> groups = np.array([1, 1, 2, 3, 4, 4])
+    >>> for train_index, test_index in tscv.split(X, groups=groups):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0 1 2] TEST: [3]
+    TRAIN: [0 1 2 3] TEST: [4 5]
     >>> # Fix test_size to 2 with 12 samples
     >>> X = np.random.randn(12, 2)
     >>> y = np.random.randint(0, 2, 12)
