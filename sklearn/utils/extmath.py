@@ -337,6 +337,19 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                           type(M).__name__),
                       sparse.SparseEfficiencyWarning)
 
+    if random_state == 'warn':
+        warnings.warn(
+            "If 'random_state' is not supplied, the current default "
+            "is to use 0 as a fixed seed. This will change to  "
+            "None in version 1.2 leading to non-deterministic results "
+            "that better reflect nature of the randomized_svd solver. "
+            "If you want to silence this warning, set 'random_state' "
+            "to an integer seed or to None explicitly depending "
+            "if you want your code to be deterministic or not.",
+            FutureWarning
+        )
+        random_state = 0
+
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
