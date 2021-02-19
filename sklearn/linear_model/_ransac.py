@@ -366,7 +366,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
                 if len(s_data_valid.parameters) == 2:
                     is_valid = self.is_data_valid(X_subset, y_subset)
                 else:
-                    is_valid = self.is_data_valid(X_subset, y_subset, subset_idxs)
+                    is_valid = self.is_data_valid(X_subset, y_subset,
+                                                  subset_idxs)
                 if is_valid is False:
                     self.n_skips_invalid_data_ += 1
                     continue
