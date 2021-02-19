@@ -3,7 +3,7 @@
 # Author: Johannes Schönberger
 #
 # License: BSD 3 clause
-
+from inspect import signature
 import numpy as np
 import warnings
 
@@ -99,7 +99,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
     is_data_valid : callable, default=None
         This function is called with the randomly selected data before the
-        model is fitted to it: `is_data_valid(X, y)`. If its return value is
+        model is fitted to it: `is_data_valid(X, y, subset_idxs)`. If its return value is
         False the current randomly chosen sub-sample is skipped.
 
     is_model_valid : callable, default=None
@@ -361,10 +361,15 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             y_subset = y[subset_idxs]
 
             # check if random sample set is valid
-            if (self.is_data_valid is not None
-                    and not self.is_data_valid(X_subset, y_subset)):
-                self.n_skips_invalid_data_ += 1
-                continue
+            if self.is_data_valid is not None:
+                s_data_valid = signature(self.is_data_valid)
+                if len(s_data_valid.parameters) == 2:
+                    is_valid = self.is_data_valid(X_subset, y_subset)
+                else:
+                    is_valid = self.is_data_valid(X_subset, y_subset, subset_idxs)
+                if is_valid is False:
+                    self.n_skips_invalid_data_ += 1
+                    continue
 
             # fit model for current random sample set
             if sample_weight is None:
