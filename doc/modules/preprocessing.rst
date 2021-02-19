@@ -878,8 +878,9 @@ three middle diagonals are non-zero for ``degree=2``. The higher the degree,
 the more overlapping of the splines.
 
 Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
-:class:`~sklearn.preprocessing.KBinsDiscretizer` with ``encode='onehot-dense``
-and ``n_bins = n_knots - 1`` if ``knots = strategy``.
+:class:`~sklearn.preprocessing.KBinsDiscretizer` with
+``encode='onehot-dense'`` and ``n_bins = n_knots - 1`` if
+``knots = strategy``.
 
 .. topic:: Examples:
 
