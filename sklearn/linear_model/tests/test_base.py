@@ -535,7 +535,7 @@ def test_preprocess_data_weighted(is_sparse):
     # _preprocess_data with normalize=True scales the data by the feature-wise
     # euclidean norms while StandardScaler scales the data by the feature-wise
     # standard deviations.
-    # The two are equivalent up to a ration of np.sqrt(n_samples)
+    # The two are equivalent up to a ratio of np.sqrt(n_samples)
     if is_sparse:
         scaler = StandardScaler(with_mean=False).fit(
             X, sample_weight=sample_weight)
