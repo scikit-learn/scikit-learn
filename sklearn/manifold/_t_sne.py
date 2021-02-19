@@ -695,8 +695,8 @@ class TSNE(BaseEstimator):
             self.init = 'random'
         if self.learning_rate == 'warn':
             # See issue #18018
-            warnings.warn("The default learning rate will change from "
-                          "200.0 to 'auto' in 1.01.", FutureWarning)
+            warnings.warn("The default learning rate in TSNE will change "
+                          "from 200.0 to 'auto' in 1.2.", FutureWarning)
             self.learning_rate = 200.0
         if self.method not in ['barnes_hut', 'exact']:
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
