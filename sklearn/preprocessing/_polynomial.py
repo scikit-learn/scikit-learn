@@ -372,7 +372,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # This is equivalent to BSpline(.., extrapolate="periodic")
                     # for scipy>=1.6.1.
                     n = spl.t.size - spl.k - 1
-                    import ipdb; ipdb.set_trace()
                     X[:, i] = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
                         spl.t[n] - spl.t[spl.k]
                     )
