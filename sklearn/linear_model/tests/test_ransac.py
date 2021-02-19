@@ -156,8 +156,8 @@ def test_ransac_resid_thresh_no_inliers():
     # ValueError with a message should be raised
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
-                                       residual_threshold=float('nan'), random_state=0,
-                                       max_trials=5)
+                                       residual_threshold=float('nan'),
+                                       random_state=0, max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
