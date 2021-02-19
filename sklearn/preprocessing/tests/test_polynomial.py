@@ -171,7 +171,7 @@ def test_spline_transformer_linear_regression(bias, intercept):
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
 def test_spline_transformer_periodic_linear_regression(bias, intercept):
     """Test that B-splines fit a periodic curve pretty well."""
-    # +2 to avoid the value 0 in assert_allclose
+    # "+ 3" to avoid the value 0 in assert_allclose
     def f(x):
         return np.sin(2*np.pi*x) - np.sin(8*np.pi*x) + 3
 
