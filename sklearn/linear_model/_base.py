@@ -244,21 +244,18 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             X_offset = X_offset.astype(X.dtype)
             X -= X_offset
 
-        X_var = X_var.astype(X.dtype)
+        X_var = X_var.astype(X.dtype, copy=False)
 
         if normalize:
             X_var *= X.shape[0]
-            X_scale = np.sqrt(X_var, X_var)
-            if np.any(X_scale == 0):
-                X_scale_ = X_scale.copy()
-                X_scale_[X_scale_ == 0] = 1
-            else:
-                X_scale_ = X_scale
+            X_scale = np.sqrt(X_var, out=X_var)
+            near_zero_mask = X_scale < np.finfo(X_scale.dtype).eps
+            if np.any(near_zero_mask):
+                X_scale[near_zero_mask] = 1
             if sp.issparse(X):
-                # import pdb; pdb.set_trace()
-                inplace_column_scale(X, 1. / X_scale_)
+                inplace_column_scale(X, 1. / X_scale)
             else:
-                X /= X_scale_
+                X /= X_scale
         else:
             X_scale = np.ones(X.shape[1], dtype=X.dtype)
 
