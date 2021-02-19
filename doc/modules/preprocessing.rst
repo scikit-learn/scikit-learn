@@ -791,7 +791,8 @@ In some cases, only interaction terms among features are required, and it can be
            [  1.,   3.,   4.,   5.,  12.,  15.,  20.,  60.],
            [  1.,   6.,   7.,   8.,  42.,  48.,  56., 336.]])
 
-The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
+The features of X have been transformed from :math:`(X_1, X_2, X_3)` to
+:math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
 Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`, :class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
