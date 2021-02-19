@@ -135,16 +135,16 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         n_components=params['n_clusters'], covariance_type='full')
 
     clustering_algorithms = (
-        ('MiniBatchKMeans', two_means),
-        ('AffinityPropagation', affinity_propagation),
+        ('MiniBatch\nKMeans', two_means),
+        ('Affinity\nPropagation', affinity_propagation),
         ('MeanShift', ms),
-        ('SpectralClustering', spectral),
+        ('Spectral\nClustering', spectral),
         ('Ward', ward),
-        ('AgglomerativeClustering', average_linkage),
+        ('Agglomerative\nClustering', average_linkage),
         ('DBSCAN', dbscan),
         ('OPTICS', optics),
         ('BIRCH', birch),
-        ('GaussianMixture', gmm)
+        ('Gaussian\nMixture', gmm)
     )
 
     for name, algorithm in clustering_algorithms:
@@ -173,7 +173,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
         plt.subplot(len(datasets), len(clustering_algorithms), plot_num)
         if i_dataset == 0:
-            plt.title(name, size=18)
+            plt.title(name, size=16)
 
         colors = np.array(list(islice(cycle(['#377eb8', '#ff7f00', '#4daf4a',
                                              '#f781bf', '#a65628', '#984ea3',
