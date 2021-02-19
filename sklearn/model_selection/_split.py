@@ -761,17 +761,19 @@ class TimeSeriesSplit(_BaseKFold):
 
     max_train_size : int, default=None
         Maximum size for a single training set.
+        or maximum number of data groups when group is supplied
 
     test_size : int, default=None
         Used to limit the size of the test set. Defaults to
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
-        with ``gap=0``.
+        with ``gap=0``
+        or numer of data groups when group is supplied
 
         .. versionadded:: 0.24
 
     gap : int, default=0
-        Number of samples to exclude from the end of each train set before
-        the test set.
+        Number of samples or groups to exclude from the end of each train set
+        before the test set.
 
         .. versionadded:: 0.24
 
@@ -845,8 +847,9 @@ class TimeSeriesSplit(_BaseKFold):
         y : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
 
-        groups : array-like of shape (n_samples,)
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
 
         Yields
         ------
@@ -856,7 +859,18 @@ class TimeSeriesSplit(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
-        X, y, groups = indexable(X, y, groups)
+        samples, y, groups = indexable(X, y, groups)
+
+        if groups is None:
+            X = samples
+            cv_type = "samples"
+        else:
+            _, count_index, count = np.unique(groups, return_counts=True,
+                                              return_index=True)
+            X = np.argsort(count_index)
+            cum_count = np.concatenate(([0], np.cumsum(count[X])))
+            cv_type = "groups"
+
         n_samples = _num_samples(X)
         n_splits = self.n_splits
         n_folds = n_splits + 1
@@ -868,24 +882,38 @@ class TimeSeriesSplit(_BaseKFold):
         if n_folds > n_samples:
             raise ValueError(
                 (f"Cannot have number of folds={n_folds} greater"
-                 f" than the number of samples={n_samples}."))
+                 f" than the number of {cv_type}={n_samples}."))
         if n_samples - gap - (test_size * n_splits) <= 0:
             raise ValueError(
-                (f"Too many splits={n_splits} for number of samples"
+                (f"Too many splits={n_splits} for number of {cv_type}"
                  f"={n_samples} with test_size={test_size} and gap={gap}."))
 
-        indices = np.arange(n_samples)
+        if groups is None:
+            indices = np.arange(n_samples)
+        else:
+            indices = np.arange(_num_samples(samples))
         test_starts = range(n_samples - n_splits * test_size,
                             n_samples, test_size)
 
         for test_start in test_starts:
             train_end = test_start - gap
             if self.max_train_size and self.max_train_size < train_end:
-                yield (indices[train_end - self.max_train_size:train_end],
-                       indices[test_start:test_start + test_size])
+                if groups is None:
+                    yield (indices[train_end - self.max_train_size:train_end],
+                           indices[test_start:test_start + test_size])
+                else:
+                    yield (indices[cum_count[train_end - self.max_train_size]:
+                           cum_count[train_end]],
+                           indices[cum_count[test_start]:
+                           cum_count[test_start + test_size]])
             else:
-                yield (indices[:train_end],
-                       indices[test_start:test_start + test_size])
+                if groups is None:
+                    yield (indices[:train_end],
+                           indices[test_start:test_start + test_size])
+                else:
+                    yield (indices[:cum_count[train_end]],
+                           indices[cum_count[test_start]:
+                           cum_count[test_start + test_size]])
 
 
 class LeaveOneGroupOut(BaseCrossValidator):

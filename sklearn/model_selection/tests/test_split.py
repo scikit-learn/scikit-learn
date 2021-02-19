@@ -138,7 +138,8 @@ def test_2d_y():
                  ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
                  GroupShuffleSplit(), LeaveOneGroupOut(),
                  LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
-                 TimeSeriesSplit(), PredefinedSplit(test_fold=groups)]
+                 TimeSeriesSplit(2),
+                 PredefinedSplit(test_fold=groups)]
     for splitter in splitters:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
@@ -1381,6 +1382,7 @@ def test_group_kfold():
 
 def test_time_series_cv():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
+    groups = np.array([1, 1, 2, 2, 3, 4, 5])
 
     # Should fail if there are more folds than samples
     assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
@@ -1410,8 +1412,33 @@ def test_time_series_cv():
     assert_array_equal(train, [0, 1, 2, 3, 4])
     assert_array_equal(test, [5, 6])
 
+    # ordering on toy datasets with group
+    splits = tscv.split(X[:-1], groups=groups[:-1])
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [5])
+
+    splits = TimeSeriesSplit(2).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [5, 6])
+
     # Check get_n_splits returns the correct number of splits
     splits = TimeSeriesSplit(2).split(X)
+    n_splits_actual = len(list(splits))
+    assert n_splits_actual == tscv.get_n_splits()
+    assert n_splits_actual == 2
+
+    splits = TimeSeriesSplit(2).split(X, groups=groups)
     n_splits_actual = len(list(splits))
     assert n_splits_actual == tscv.get_n_splits()
     assert n_splits_actual == 2
@@ -1427,21 +1454,39 @@ def _check_time_series_max_train_size(splits, check_splits, max_train_size):
 
 def test_time_series_max_train_size():
     X = np.zeros((6, 1))
+    groups = np.array([3, 4, 5, 1, 2, 2])
     splits = TimeSeriesSplit(n_splits=3).split(X)
+    group_splits = TimeSeriesSplit(n_splits=3).split(X, groups=groups)
+
     check_splits = TimeSeriesSplit(n_splits=3, max_train_size=3).split(X)
     _check_time_series_max_train_size(splits, check_splits, max_train_size=3)
+
+    check_splits = TimeSeriesSplit(n_splits=3, max_train_size=3) \
+        .split(X, groups=groups)
+    _check_time_series_max_train_size(group_splits,
+                                      check_splits, max_train_size=3)
 
     # Test for the case where the size of a fold is greater than max_train_size
     check_splits = TimeSeriesSplit(n_splits=3, max_train_size=2).split(X)
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
+    check_splits = TimeSeriesSplit(n_splits=2, max_train_size=2) \
+        .split(X, groups=groups)
+    _check_time_series_max_train_size(group_splits,
+                                      check_splits, max_train_size=2)
+
     # Test for the case where the size of each fold is less than max_train_size
     check_splits = TimeSeriesSplit(n_splits=3, max_train_size=5).split(X)
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
+    check_splits = TimeSeriesSplit(n_splits=3, max_train_size=5).split(X)
+    _check_time_series_max_train_size(group_splits,
+                                      check_splits, max_train_size=2)
+
 
 def test_time_series_test_size():
     X = np.zeros((10, 1))
+    groups = np.array([6, 7, 1, 1, 1, 2, 2, 3, 4, 5])
 
     # Test alone
     splits = TimeSeriesSplit(n_splits=3, test_size=3).split(X)
@@ -1458,6 +1503,21 @@ def test_time_series_test_size():
     assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6])
     assert_array_equal(test, [7, 8, 9])
 
+    # Test alone with groups
+    splits = TimeSeriesSplit(n_splits=3, test_size=2).split(X, groups=groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0])
+    assert_array_equal(test, [1, 2, 3, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [5, 6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
+    assert_array_equal(test, [8, 9])
+
     # Test with max_train_size
     splits = TimeSeriesSplit(n_splits=2, test_size=2,
                              max_train_size=4).split(X)
@@ -1470,14 +1530,31 @@ def test_time_series_test_size():
     assert_array_equal(train, [4, 5, 6, 7])
     assert_array_equal(test, [8, 9])
 
+    # Test with max_train_size and groups
+    splits = TimeSeriesSplit(n_splits=2, test_size=2,
+                             max_train_size=2).split(X, groups=groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [1, 2, 3, 4])
+    assert_array_equal(test, [5, 6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [5, 6, 7])
+    assert_array_equal(test, [8, 9])
+
     # Should fail with not enough data points for configuration
     with pytest.raises(ValueError, match="Too many splits.*with test_size"):
         splits = TimeSeriesSplit(n_splits=5, test_size=2).split(X)
+        next(splits)
+    with pytest.raises(ValueError, match="Too many splits.*with test_size"):
+        splits = TimeSeriesSplit(n_splits=5, test_size=2) \
+            .split(X, groups=groups)
         next(splits)
 
 
 def test_time_series_gap():
     X = np.zeros((10, 1))
+    groups = np.array([6, 7, 1, 1, 1, 2, 2, 3, 4, 5])
 
     # Test alone
     splits = TimeSeriesSplit(n_splits=2, gap=2).split(X)
@@ -1489,6 +1566,17 @@ def test_time_series_gap():
     train, test = next(splits)
     assert_array_equal(train, [0, 1, 2, 3, 4])
     assert_array_equal(test, [7, 8, 9])
+
+    # Test alone with groups
+    splits = TimeSeriesSplit(n_splits=2, gap=2).split(X, groups=groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0])
+    assert_array_equal(test, [5, 6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [8, 9])
 
     # Test with max_train_size
     splits = TimeSeriesSplit(n_splits=3, gap=2, max_train_size=2).split(X)
@@ -1505,6 +1593,22 @@ def test_time_series_gap():
     assert_array_equal(train, [4, 5])
     assert_array_equal(test, [8, 9])
 
+    # Test with max_train_size and groups
+    splits = TimeSeriesSplit(n_splits=3, gap=2,
+                             max_train_size=2).split(X, groups=groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [1, 2, 3, 4])
+    assert_array_equal(test, [8])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3, 4, 5, 6])
+    assert_array_equal(test, [9])
+
     # Test with test_size
     splits = TimeSeriesSplit(n_splits=2, gap=2,
                              max_train_size=4, test_size=2).split(X)
@@ -1515,6 +1619,18 @@ def test_time_series_gap():
 
     train, test = next(splits)
     assert_array_equal(train, [2, 3, 4, 5])
+    assert_array_equal(test, [8, 9])
+
+    # Test with test_size and groups
+    splits = TimeSeriesSplit(n_splits=2, gap=2, max_train_size=4, test_size=2)\
+        .split(X, groups=groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0])
+    assert_array_equal(test, [5, 6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
     assert_array_equal(test, [8, 9])
 
     # Test with additional test_size
@@ -1531,6 +1647,9 @@ def test_time_series_gap():
     # Verify proper error is thrown
     with pytest.raises(ValueError, match="Too many splits.*and gap"):
         splits = TimeSeriesSplit(n_splits=4, gap=2).split(X)
+        next(splits)
+    with pytest.raises(ValueError, match="Too many splits.*and gap"):
+        splits = TimeSeriesSplit(n_splits=5, gap=2).split(X, groups=groups)
         next(splits)
 
 
