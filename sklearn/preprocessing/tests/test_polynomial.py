@@ -194,7 +194,9 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
 
     # Generate larger array to check periodic extrapolation
     X_ = np.linspace(-1, 2, 301)[:, None]
-    assert_allclose(pipe.predict(X_), f(X_[:, 0]), atol=0.01, rtol=0.01)
+    predictions = pipe.predict(X_)
+    assert_allclose(predictions, f(X_[:, 0]), atol=0.01, rtol=0.01)
+    assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])

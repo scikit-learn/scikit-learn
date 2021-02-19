@@ -315,12 +315,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if self.extrapolation == "periodic":
             coef = np.concatenate((coef, coef[:degree, :]))
 
-        if self.extrapolation == "continue":
-            extrapolate = True
-        elif self.extrapolation == "periodic":
-            extrapolate = "periodic"
-        else:
-            extrapolate = False
+        extrapolate = self.extrapolation in ["periodic", "continue"]
 
         bsplines = [
             BSpline.construct_fast(
@@ -370,6 +365,18 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             spl = self.bsplines_[i]
 
             if self.extrapolation in ("continue", "error", "periodic"):
+
+                if self.extrapolation == "periodic":
+                    # With periodic extrapolation we map x to the segment
+                    # [spl.t[k], spl.t[n]].
+                    # This is equivalent to BSpline(.., extrapolate="periodic")
+                    # for scipy>=1.6.1.
+                    n = spl.t.size - spl.k - 1
+                    import ipdb; ipdb.set_trace()
+                    X[:, i] = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
+                        spl.t[n] - spl.t[spl.k]
+                    )
+
                 XBS[:, (i * n_splines):((i + 1) * n_splines)] = spl(X[:, i])
             else:
                 xmin = spl.t[degree]
