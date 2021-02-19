@@ -690,8 +690,8 @@ class TSNE(BaseEstimator):
 
         if self.init == 'warn':
             # See issue #18018
-            warnings.warn("The default initialization will change from "
-                          "random to PCA in 1.01.", FutureWarning)
+            warnings.warn("The default initialization in TSNE will change "
+                          "from 'random' to 'pca' in 1.2.", FutureWarning)
             self.init = 'random'
         if self.learning_rate == 'warn':
             # See issue #18018
