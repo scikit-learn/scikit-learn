@@ -5,6 +5,7 @@ from math import ceil
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
+from joblib import Parallel, effective_n_jobs
 
 from .. import partial_dependence
 from ...base import is_regressor
@@ -13,6 +14,7 @@ from ...utils import check_matplotlib_support  # noqa
 from ...utils import check_random_state
 from ...utils import _safe_indexing
 from ...utils.validation import _deprecate_positional_args
+from ...utils.fixes import delayed
 
 
 @_deprecate_positional_args
@@ -340,17 +342,31 @@ def plot_partial_dependence(
             )
 
     # compute predictions and/or averaged predictions
-    pd_results = [
-        partial_dependence(estimator, X, fxs,
-                           response_method=response_method,
-                           method=method,
-                           grid_resolution=grid_resolution,
-                           percentiles=percentiles,
-                           kind=kind,
-                           n_jobs=n_jobs,
-                           verbose=verbose)
-        for fxs in features
-    ]
+    less_features_than_jobs = len(features) < effective_n_jobs(n_jobs)
+    if less_features_than_jobs:
+        # Pass n_jobs to partial_dependence: parallelize among grid
+        pd_results = [
+            partial_dependence(estimator, X, fxs,
+                               response_method=response_method,
+                               method=method,
+                               grid_resolution=grid_resolution,
+                               percentiles=percentiles,
+                               kind=kind,
+                               n_jobs=n_jobs,
+                               verbose=verbose)
+            for fxs in features
+        ]
+    else:
+        # Parallelize among features
+        pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
+            delayed(partial_dependence)(
+                estimator, X, fxs,
+                response_method=response_method,
+                method=method,
+                grid_resolution=grid_resolution,
+                percentiles=percentiles,
+                kind=kind)
+            for fxs in features)
 
     # For multioutput regression, we can only check the validity of target
     # now that we have the predictions.
