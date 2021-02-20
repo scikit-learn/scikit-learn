@@ -92,7 +92,9 @@ def test_spline_transformer_input_validation(params, err_msg):
 
 
 def test_spline_transformer_manual_knot_input():
-    """Test that array-like knot positions in SplineTransformer are accepted."""
+    """
+    Test that array-like knot positions in SplineTransformer are accepted.
+    """
     X = np.arange(20).reshape(10, 2)
     knots = [[0.5, 1], [1.5, 2], [5, 10]]
     st1 = SplineTransformer(degree=3, knots=knots).fit(X)
@@ -303,7 +305,9 @@ def test_spline_transformer_kbindiscretizer():
     )
     splines = splt.fit_transform(X)
 
-    kbd = KBinsDiscretizer(n_bins=n_bins, encode="onehot-dense", strategy="quantile")
+    kbd = KBinsDiscretizer(
+        n_bins=n_bins, encode="onehot-dense", strategy="quantile"
+    )
     kbins = kbd.fit_transform(X)
 
     # Though they should be exactly equal, we test approximately with high
