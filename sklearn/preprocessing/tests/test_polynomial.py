@@ -73,6 +73,14 @@ def test_polynomial_and_spline_array_order(est):
         ({"include_bias": None}, "include_bias must be bool."),
         ({"include_bias": 1}, "include_bias must be bool."),
         ({"include_bias": "string"}, "include_bias must be bool."),
+        (
+            {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
+            "Periodic splines require degree < n_knots."
+        ),
+        (
+            {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
+            "Periodic splines require degree < n_knots."
+        )
     ],
 )
 def test_spline_transformer_input_validation(params, err_msg):
