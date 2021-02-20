@@ -1006,7 +1006,7 @@ class GridSearchCV(BaseSearchCV):
         - a single string (see :ref:`scoring_parameter`);
         - a callable (see :ref:`scoring`) that returns a single value.
 
-        If `scoring` reprents multiple scores, one can use:
+        If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
@@ -1346,7 +1346,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - a single string (see :ref:`scoring_parameter`);
         - a callable (see :ref:`scoring`) that returns a single value.
 
-        If `scoring` reprents multiple scores, one can use:
+        If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
