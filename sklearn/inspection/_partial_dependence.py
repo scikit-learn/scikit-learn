@@ -305,7 +305,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         for more details.
 
     verbose : int, default=0
-        Verbose output during PD computations.
+        Verbose output during partial dependence computations.
 
     kind : {'legacy', 'average', 'individual', 'both'}, default='legacy'
         Whether to return the partial dependence averaged across all the
