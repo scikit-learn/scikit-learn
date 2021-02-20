@@ -264,6 +264,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         # number of knots for base interval
         n_knots = base_knots.shape[0]
+
+        if self.extrapolation == "periodic" and n_knots <= self.degree:
+            raise ValueError(
+                "Periodic splines require degree < knots.shape[0]."
+            )
+
         # number of splines basis functions
         # periodic splines have self.degree less degrees of freedom
         if self.extrapolation != "periodic":
@@ -372,11 +378,15 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # This is equivalent to BSpline(.., extrapolate="periodic")
                     # for scipy>=1.6.1.
                     n = spl.t.size - spl.k - 1
-                    X[:, i] = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
+                    # Assign to new array to avoid inplace operation
+                    x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
                         spl.t[n] - spl.t[spl.k]
                     )
+                else:
+                    x = X[:, i]
 
-                XBS[:, (i * n_splines):((i + 1) * n_splines)] = spl(X[:, i])
+                XBS[:, (i * n_splines):((i + 1) * n_splines)] = spl(x)
+
             else:
                 xmin = spl.t[degree]
                 xmax = spl.t[-degree - 1]

@@ -1,10 +1,19 @@
-import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
-import pytest
+from distutils.version import LooseVersion
 
+import numpy as np
+import pytest
+from numpy.testing import assert_allclose, assert_array_equal
+from scipy.interpolate import BSpline
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import KBinsDiscretizer, SplineTransformer
+from sklearn.utils.fixes import sp_version
+
+try:
+    from pkg_resources import parse_version  # type: ignore
+except ImportError:
+    # setuptools not installed
+    parse_version = LooseVersion  # type: ignore
 
 
 # TODO: add PolynomialFeatures if it moves to _polynomial.py
@@ -75,8 +84,7 @@ def test_spline_transformer_input_validation(params, err_msg):
 
 
 def test_spline_transformer_manual_knot_input():
-    """Test that array-like knot positions in SplineTransformer are accepted.
-    """
+    """Test that array-like knot positions in SplineTransformer are accepted."""
     X = np.arange(20).reshape(10, 2)
     knots = [[0.5, 1], [1.5, 2], [5, 10]]
     st1 = SplineTransformer(degree=3, knots=knots).fit(X)
@@ -173,7 +181,7 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     """Test that B-splines fit a periodic curve pretty well."""
     # +2 to avoid the value 0 in assert_allclose
     def f(x):
-        return np.sin(2*np.pi*x) - np.sin(8*np.pi*x) + 3
+        return np.sin(2 * np.pi * x) - np.sin(8 * np.pi * x) + 3
 
     X = np.linspace(0, 1, 101)[:, None]
     pipe = Pipeline(
@@ -197,6 +205,27 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     predictions = pipe.predict(X_)
     assert_allclose(predictions, f(X_[:, 0]), atol=0.01, rtol=0.01)
     assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
+
+
+@pytest.mark.skipif(
+    sp_version < parse_version("1.0.0"),
+    reason="Periodic extrapolation not yet implemented for BSpline.",
+)
+def test_spline_transformer_periodic_spline_backport():
+    """Test that the backport of extrapolate="periodic" works correctly"""
+    X = np.linspace(-2, 3.5, 10)[:, None]
+
+    # Use periodic extrapolation backport in SplineTransformer
+    transformer = SplineTransformer(
+        degree=2, extrapolation="periodic", knots=[[-1], [0], [1]]
+    )
+    Xt = transformer.fit_transform(X)
+
+    # Use periodic extrapolation in BSpline
+    coef = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.0, 1.0]])
+    spl = BSpline(np.arange(-3, 4), coef, 2, "periodic")
+    Xspl = spl(X[:, 0])
+    assert_allclose(Xt, Xspl)
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
@@ -266,9 +295,7 @@ def test_spline_transformer_kbindiscretizer():
     )
     splines = splt.fit_transform(X)
 
-    kbd = KBinsDiscretizer(
-        n_bins=n_bins, encode="onehot-dense", strategy="quantile"
-    )
+    kbd = KBinsDiscretizer(n_bins=n_bins, encode="onehot-dense", strategy="quantile")
     kbins = kbd.fit_transform(X)
 
     # Though they should be exactly equal, we test approximately with high
