@@ -39,7 +39,7 @@ from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import LeaveOneOut
 
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
 
@@ -427,8 +427,10 @@ def test_solver_consistency(
         bias=10, n_features=30, proportion_nonzero=proportion_nonzero,
         noise=noise, random_state=seed, n_samples=n_samples)
     if not normalize:
-        # Manually scale the data to avoid pathological cases.
-        X = scale(X, with_mean=False)
+        # Manually scale the data to avoid pathological cases. We use
+        # minmax_scale to deal with the sparse case without breaking
+        # the sparsity pattern.
+        X = minmax_scale(X)
     svd_ridge = Ridge(
         solver='svd', normalize=normalize, alpha=alpha).fit(X, y)
     X = X.astype(dtype, copy=False)
