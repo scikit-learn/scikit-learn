@@ -83,8 +83,9 @@ def test_docstring_parameters():
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
-        # Exclude imported classes
-        classes = [cls for cls in classes if cls[1].__module__ == name]
+        # Exclude non-scikit-learn classes
+        classes = [cls for cls in classes
+                   if cls[1].__module__.startswith('sklearn')]
         for cname, cls in classes:
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
@@ -174,6 +175,40 @@ def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
 
+N_FEATURES_MODULES_TO_IGNORE = {
+    'calibration',
+    'cluster',
+    'compose',
+    'covariance',
+    'decomposition',
+    'discriminant_analysis',
+    'dummy',
+    'ensemble',
+    'feature_extraction',
+    'feature_selection',
+    'gaussian_process',
+    'impute',
+    'isotonic',
+    'kernel_approximation',
+    'kernel_ridge',
+    'linear_model',
+    'manifold',
+    'mixture',
+    'model_selection',
+    'multiclass',
+    'multioutput',
+    'naive_bayes',
+    'neighbors',
+    'neural_network',
+    'pipeline',
+    'preprocessing',
+    'random_projection',
+    'semi_supervised',
+    'svm',
+    'tree'
+}
+
+
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -234,9 +269,12 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    skipped_attributes = {'n_features_in_',
-                          'x_scores_',  # For PLS, TODO remove in 1.1
+    skipped_attributes = {'x_scores_',  # For PLS, TODO remove in 1.1
                           'y_scores_'}  # For PLS, TODO remove in 1.1
+
+    module = est.__module__.split(".")[1]
+    if module in N_FEATURES_MODULES_TO_IGNORE:
+        skipped_attributes.add("n_features_in_")
 
     for attr in attributes:
         if attr.name in skipped_attributes:

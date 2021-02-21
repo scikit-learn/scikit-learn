@@ -50,50 +50,19 @@ conda update --yes conda
 conda create -n testenv --yes python=3.7
 
 source activate testenv
-
-if [[ $TRAVIS_CPU_ARCH == amd64 ]]; then
-    echo "Upgrading pip and setuptools."
-    pip install --upgrade pip setuptools
-    echo "Installing numpy, scipy and pandas master wheels."
-    dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
-    echo "Installing cython pre-release wheels."
-    pip install --pre cython
-    echo "Installing joblib master."
-    pip install https://github.com/joblib/joblib/archive/master.zip
-    echo "Installing pillow master."
-    pip install https://github.com/python-pillow/Pillow/archive/master.zip
-else
-    conda install -y scipy numpy pandas cython
-    pip install joblib threadpoolctl
-fi
+conda install -y scipy numpy pandas cython
+pip install joblib threadpoolctl
 
 pip install $(get_dep pytest $PYTEST_VERSION) pytest-xdist
 
-# Build scikit-learn in this script to collapse the 
+# Build scikit-learn in this script to collapse the
 # verbose build output in the Travis output when it
 # succeeds
 python --version
 python -c "import numpy; print(f'numpy {numpy.__version__}')"
 python -c "import scipy; print(f'scipy {scipy.__version__}')"
 
-if [[ $BUILD_WITH_ICC == true ]]; then
-    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
-    sudo apt-get update
-    sudo apt-get install intel-oneapi-icc
-    source /opt/intel/oneapi/setvars.sh
-
-    # The "build_clib" command is implicitly used to build "libsvm-skl".
-    # To compile with a different compiler, we also need to specify the
-    # compiler for this command
-    python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
-else
-    pip install -e .
-fi
-
+pip install -e .
 python setup.py develop
 
 ccache --show-stats
