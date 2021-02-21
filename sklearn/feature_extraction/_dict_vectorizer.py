@@ -224,6 +224,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                                                fitting=fitting,
                                                transforming=transforming,
                                                indices=indices, values=values)
+                else:
+                    raise TypeError(f'Unsupported value Type {type(v)} '
+                                    f'for {f}: {v}.\n'
+                                    f'{type(v)} objects are not supported.')
 
                 if feature_name is not None:
                     if fitting and feature_name not in vocab:
