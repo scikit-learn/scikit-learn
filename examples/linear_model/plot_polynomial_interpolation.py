@@ -145,3 +145,60 @@ plt.show()
 # function has local support and is continued as a constant beyond the fitted
 # range. This extrapolating behaviour could be changed by the argument
 # ``extrapolation``.
+
+# %%
+# ## Periodic Splines
+# In the previous example we saw that polynomials and splines are not well
+# suited for extrapolation beyond the range of training observations. In some
+# settings, e.g. with seasonal effects, we expect periodic continuation of
+# the underlying signal. Such effects can be modelled using periodic splines,
+# which have equal intercepts and derivatives at the first and last knot.
+# This example shows how periodic splines provide a better fit both within and
+# outside of the range of training data given the additional information of
+# periodicity.
+
+
+# %%
+def g(x):
+    """Function to be approximated by periodic spline interpolation."""
+    return np.sin(x) - 0.7 * np.cos(x * 3)
+
+
+y_train = g(x_train)
+
+lw = 2
+fig, ax = plt.subplots()
+ax.set_prop_cycle(color=["black", "tomato", "teal"])
+ax.plot(x_plot, g(x_plot), linewidth=lw, label="ground truth")
+ax.scatter(x_train, y_train, label="training points")
+
+for transformer, label in [
+  (SplineTransformer(degree=3, n_knots=10), "spline"),
+  (SplineTransformer(
+      degree=3,
+      knots=np.linspace(0, 2 * np.pi, 10)[:, None],
+      extrapolation="periodic"
+  ), "periodic spline")
+]:
+    model = make_pipeline(transformer, Ridge(alpha=1e-3))
+    model.fit(X_train, y_train)
+    y_plot = model.predict(X_plot)
+    ax.plot(x_plot, y_plot, label=label)
+
+ax.legend()
+fig.show()
+
+# %% We again plot the underlying splines.
+fig, ax = plt.subplots()
+knots = np.linspace(0, 2 * np.pi, 4)
+splt = SplineTransformer(
+  knots=knots[:, None],
+  degree=3,
+  extrapolation="periodic"
+).fit(X_train)
+ax.plot(x_plot, splt.transform(X_plot))
+ax.legend(ax.lines, [f"spline {n}" for n in range(3)])
+
+# plot knots of spline
+ax.vlines(knots, ymin=0, ymax=0.8, linestyles='dashed')
+plt.show()
