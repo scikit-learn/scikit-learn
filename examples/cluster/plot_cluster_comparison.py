@@ -63,8 +63,8 @@ varied = datasets.make_blobs(n_samples=n_samples,
 # ============
 # Set up cluster parameters
 # ============
-plt.figure(figsize=(9 * 2 + 3, 12.5))
-plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
+plt.figure(figsize=(9 * 2 + 3, 13))
+plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.95, wspace=.05,
                     hspace=.01)
 
 plot_num = 1
@@ -173,7 +173,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
         plt.subplot(len(datasets), len(clustering_algorithms), plot_num)
         if i_dataset == 0:
-            plt.title(name, size=16)
+            plt.title(name, size=18)
 
         colors = np.array(list(islice(cycle(['#377eb8', '#ff7f00', '#4daf4a',
                                              '#f781bf', '#a65628', '#984ea3',
