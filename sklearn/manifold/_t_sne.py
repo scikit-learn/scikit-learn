@@ -530,7 +530,8 @@ class TSNE(BaseEstimator):
         those other implementations.
         The 'auto' option sets the learning_rate to N / early_exaggeration / 4,
         where N is the sample size, following Belkina et al. 2019 and
-        Kobak et al. 2019, Nature Communications.
+        Kobak et al. 2019, Nature Communications (or to 50.0, if 
+        N / early_exaggeration / 4 < 50). This will become default in 1.2.
 
     n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
@@ -566,7 +567,8 @@ class TSNE(BaseEstimator):
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
-        usually more globally stable than random initialization.
+        usually more globally stable than random initialization. It will 
+        become default in 1.2.
 
     verbose : int, default=0
         Verbosity level.
@@ -692,24 +694,29 @@ class TSNE(BaseEstimator):
             # See issue #18018
             warnings.warn("The default initialization in TSNE will change "
                           "from 'random' to 'pca' in 1.2.", FutureWarning)
-            self.init = 'random'
+            self._init = 'random'
+        else:
+            self._init = self.init
         if self.learning_rate == 'warn':
             # See issue #18018
             warnings.warn("The default learning rate in TSNE will change "
                           "from 200.0 to 'auto' in 1.2.", FutureWarning)
-            self.learning_rate = 200.0
+            self._learning_rate = 200.0
+        else:
+            self._learning_rate = self.learning_rate
+
         if self.method not in ['barnes_hut', 'exact']:
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.square_distances not in [True, 'legacy']:
             raise ValueError("'square_distances' must be True or 'legacy'.")
-        if self.learning_rate == 'auto':
+        if self._learning_rate == 'auto':
             # See issue #18018
-            self.learning_rate = X.shape[0] / self.early_exaggeration / 4
-            self.learning_rate = np.max(self.learning_rate, 50)
+            self._learning_rate = X.shape[0] / self.early_exaggeration / 4
+            self._learning_rate = np.max(self._learning_rate, 50)
         else:
-            if not (self.learning_rate > 0):
+            if not (self._learning_rate > 0):
                 raise ValueError("'learning_rate' must be a positive number "
                                  "or 'auto'.")
         if self.metric != "euclidean" and self.square_distances is not True:
@@ -731,7 +738,7 @@ class TSNE(BaseEstimator):
             X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
                                     dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
-            if isinstance(self.init, str) and self.init == 'pca':
+            if isinstance(self._init, str) and self._init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
@@ -842,9 +849,9 @@ class TSNE(BaseEstimator):
             P = _joint_probabilities_nn(distances_nn, self.perplexity,
                                         self.verbose)
 
-        if isinstance(self.init, np.ndarray):
-            X_embedded = self.init
-        elif self.init == 'pca':
+        if isinstance(self._init, np.ndarray):
+            X_embedded = self._init
+        elif self._init == 'pca':
             pca = PCA(n_components=self.n_components, svd_solver='randomized',
                       random_state=random_state)
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
@@ -855,7 +862,7 @@ class TSNE(BaseEstimator):
                           "in 1.2. This will ensure better convergence.",
                           FutureWarning)
             # X_embedded = X_embedded / np.std(X_embedded[:, 0]) * 1e-4
-        elif self.init == 'random':
+        elif self._init == 'random':
             # The embedding is initialized with iid samples from Gaussians with
             # standard deviation 1e-4.
             X_embedded = 1e-4 * random_state.randn(
@@ -889,7 +896,7 @@ class TSNE(BaseEstimator):
             "it": 0,
             "n_iter_check": self._N_ITER_CHECK,
             "min_grad_norm": self.min_grad_norm,
-            "learning_rate": self.learning_rate,
+            "learning_rate": self._learning_rate,
             "verbose": self.verbose,
             "kwargs": dict(skip_num_points=skip_num_points),
             "args": [P, degrees_of_freedom, n_samples, self.n_components],
