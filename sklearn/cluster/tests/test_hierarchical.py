@@ -17,7 +17,6 @@ from scipy.cluster import hierarchy
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
@@ -33,7 +32,6 @@ from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster._hierarchical_fast import average_merge, max_merge
 from sklearn.utils._fast_dict import IntFloatDict
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
 
 
@@ -94,17 +92,18 @@ def test_unstructured_linkage_tree():
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
         with ignore_warnings():
-            children, n_nodes, n_leaves, parent = assert_warns(
-                UserWarning, ward_tree, this_X.T, n_clusters=10)
+            with pytest.warns(UserWarning):
+                children, n_nodes, n_leaves, parent = ward_tree(
+                    this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
             with ignore_warnings():
-                children, n_nodes, n_leaves, parent = assert_warns(
-                    UserWarning, tree_builder, this_X.T, n_clusters=10)
-
+                with pytest.warns(UserWarning):
+                    children, n_nodes, n_leaves, parent = tree_builder(
+                        this_X.T, n_clusters=10)
             n_nodes = 2 * X.shape[1] - 1
             assert len(children) + n_leaves == n_nodes
 
@@ -140,7 +139,8 @@ def test_zero_cosine_linkage_tree():
     X = np.array([[0, 1],
                   [0, 0]])
     msg = 'Cosine affinity cannot be used when X contains zero vectors'
-    assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
+    with pytest.raises(ValueError, match=msg):
+        linkage_tree(X, affinity='cosine')
 
 
 @pytest.mark.parametrize('n_clusters, distance_threshold',
@@ -550,7 +550,8 @@ def test_connectivity_fixing_non_lil():
     m = np.array([[True, False], [False, True]])
     c = grid_to_graph(n_x=2, n_y=2, mask=m)
     w = AgglomerativeClustering(connectivity=c, linkage='ward')
-    assert_warns(UserWarning, w.fit, x)
+    with pytest.warns(UserWarning):
+        w.fit(x)
 
 
 def test_int_float_dict():
@@ -643,7 +644,8 @@ def test_agg_n_clusters():
         agc = AgglomerativeClustering(n_clusters=n_clus)
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
-        assert_raise_message(ValueError, msg, agc.fit, X)
+        with pytest.raises(ValueError, match=msg):
+            agc.fit(X)
 
 
 def test_affinity_passed_to_fix_connectivity():
