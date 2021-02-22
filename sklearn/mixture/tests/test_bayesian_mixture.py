@@ -20,6 +20,7 @@ from sklearn.mixture import BayesianGaussianMixture
 
 from sklearn.mixture.tests.test_gaussian_mixture import RandomData
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.utils.extmath import fast_logdet
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -487,7 +488,7 @@ def test_bayesian_mixture_predict_predict_proba():
             assert_array_equal(Y_pred, Y_pred_proba)
             assert adjusted_rand_score(Y, Y_pred) >= .95
 
-def test_gaussian_mixture_aic_bic():
+def test_bgmm_aic_bic():
     # Test the aic and bic criteria
     rng = np.random.RandomState(0)
     n_samples, n_features, n_components = 50, 3, 2
@@ -502,12 +503,12 @@ def test_gaussian_mixture_aic_bic():
             random_state=rng, 
             max_iter=200)
         bgmm.fit(X)
-        aic = 2 * n_samples * sgh + 2 * g._n_parameters(X)
+        aic = 2 * n_samples * sgh + 2 * bgmm._n_parameters(X)
         bic = (2 * n_samples * sgh +
-               np.log(n_samples) * g._n_parameters(X))
+               np.log(n_samples) * bgmm._n_parameters(X))
         bound = n_features / np.sqrt(n_samples)
-        assert (g.aic(X) - aic) / n_samples < bound
-        assert (g.bic(X) - bic) / n_samples < bound
+        assert (bgmm.aic(X) - aic) / n_samples < bound
+        assert (bgmm.bic(X) - bic) / n_samples < bound
 
 def test_bic_1d_1component():
     # Test all of the covariance_types return the same BIC score for
