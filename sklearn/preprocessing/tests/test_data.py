@@ -4,7 +4,6 @@
 #
 # License: BSD 3 clause
 
-from inspect import signature
 import warnings
 import itertools
 
