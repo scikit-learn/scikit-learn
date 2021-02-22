@@ -133,8 +133,8 @@ for name, estimator, center in estimators:
         # these should be perfect because they correspond to "the closest
         # training samples in the feature space".
         #
-        # do not use the dual coef_ as they may not take into account kernel
-        # centering ?
+        # do not use the dual coefficients as they may not take into account
+        # kernel centering
         # components_ = estimator.dual_coef_
         components_ = estimator.inverse_transform(estimator.alphas_)
 
