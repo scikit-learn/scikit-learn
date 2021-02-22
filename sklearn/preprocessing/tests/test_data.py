@@ -752,14 +752,14 @@ def test_standard_scaler_trasform_with_partial_fit(sample_weight):
 
 def test_standard_check_array_of_inverse_transform():
     # Check if StandardScaler inverse_transform is
-    # converting the array to float
+    # converting the integer array to float
     x = np.array([
         [1, 1, 1, 0, 1, 0],
         [1, 1, 1, 0, 1, 0],
         [0, 8, 0, 1, 0, 0],
         [1, 4, 1, 1, 0, 0],
         [0, 1, 0, 0, 1, 0],
-        [0, 4, 0, 1, 0, 1]])
+        [0, 4, 0, 1, 0, 1]], dtype=np.int32)
 
     scaler = StandardScaler()
     scaler.fit(x)
