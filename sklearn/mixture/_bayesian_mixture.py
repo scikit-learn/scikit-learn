@@ -792,21 +792,22 @@ class BayesianGaussianMixture(BaseMixture):
                                       self.precisions_cholesky_.T)
         else:
             self.precisions_ = self.precisions_cholesky_ ** 2
-    
+
     def _n_parameters(self, X):
         """Return the number of free parameters in the model."""
         _, n_features = self.means_.shape
-        n_effective_components = len(np.unique(self.predict(X)))
+        # Number of effective components equals the number of unique labels
+        n_effect_comp = len(np.unique(self.predict(X)))
         if self.covariance_type == 'full':
-            cov_params = n_effective_components * n_features * (n_features + 1) / 2.
+            cov_params = n_effect_comp * n_features * (n_features + 1) / 2.
         elif self.covariance_type == 'diag':
-            cov_params = n_effective_components * n_features
+            cov_params = n_effect_comp * n_features
         elif self.covariance_type == 'tied':
             cov_params = n_features * (n_features + 1) / 2.
         elif self.covariance_type == 'spherical':
-            cov_params = n_effective_components
-        mean_params = n_features * n_effective_components
-        return int(cov_params + mean_params + n_effective_components - 1)
+            cov_params = n_effect_comp
+        mean_params = n_features * n_effect_comp
+        return int(cov_params + mean_params + n_effect_comp - 1)
 
     def bic(self, X):
         """Bayesian information criterion for the current model on the input X.
