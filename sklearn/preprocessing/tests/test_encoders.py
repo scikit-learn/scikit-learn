@@ -920,8 +920,9 @@ def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
     X = np.array([[np.nan, 3.0, 1.0, 3.0]]).T
     oe = OrdinalEncoder(dtype=np.int32)
 
-    msg = ("There are missing values in feature 0. For OrdinalEncoder to "
-           "passthrough missing values, the dtype parameter must be a float")
+    msg = (r"There are missing values in features \[0\]. For OrdinalEncoder "
+           "to passthrough missing values, the dtype parameter must be a "
+           "float")
     with pytest.raises(ValueError, match=msg):
         oe.fit(X)
 
@@ -953,7 +954,7 @@ def test_ordinal_encoder_passthrough_missing_values_object_only_none_errors(
     """Test ordinal encoder with None will error. """
     oe = OrdinalEncoder()
     msg = ("None is an unsupported missing value indicator and was found in "
-           "feature 0. Please convert these values to np.nan")
+           r"feature 0. Please convert these values to np.nan")
     with pytest.raises(ValueError, match=msg):
         oe.fit(X_train)
 
