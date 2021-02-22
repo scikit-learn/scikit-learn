@@ -1274,6 +1274,36 @@ class RandomForestClassifier(ForestClassifier):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
+    
+    def proximity_matrix(self, X, normalize=True):
+        """Return the proximity matrix.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples.
+        normalize : boolean, default=True
+            Normalization of the matrix, if True, then it will be normalized.
+
+        Returns
+        -------
+        proximity_matrix : ndarray of shape (n_estimators, n_estimators)
+            The proximity matrix of X.
+
+        """
+        terminals = self.apply(X)
+        n_trees = terminals.shape[1]
+
+        a = terminals[:, 0]
+        proximity_matrix = 1 * np.equal.outer(a, a)
+
+        for i in range(1, n_trees):
+            a = terminals[:, i]
+            proximity_matrix += 1 * np.equal.outer(a, a)
+        if normalize:
+            proximity_matrix = proximity_matrix / n_trees
+
+        return proximity_matrix
 
 
 class RandomForestRegressor(ForestRegressor):
