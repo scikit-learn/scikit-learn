@@ -63,11 +63,9 @@ varied = datasets.make_blobs(n_samples=n_samples,
 # ============
 # Set up cluster parameters
 # ============
-plt.figure(figsize=(9 * 2 + 3, 12.5))
-plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
-                    hspace=.01)
-
-plot_num = 1
+plt.figure(figsize=(12.5, 9 * 2 + 3))
+plt.subplots_adjust(left=.05, right=.95, bottom=.001, top=.96, wspace=.03,
+                    hspace=.03)
 
 default_base = {'quantile': .3,
                 'eps': .3,
@@ -91,7 +89,7 @@ datasets = [
     (blobs, {}),
     (no_structure, {})]
 
-for i_dataset, (dataset, algo_params) in enumerate(datasets):
+for dataset_cnt, (dataset, algo_params) in enumerate(datasets):
     # update parameters with dataset-specific values
     params = default_base.copy()
     params.update(algo_params)
@@ -147,7 +145,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ('GaussianMixture', gmm)
     )
 
-    for name, algorithm in clustering_algorithms:
+    for clustering_cnt, (name, algorithm) in enumerate(clustering_algorithms):
         t0 = time.time()
 
         # catch warnings related to kneighbors_graph
@@ -171,9 +169,11 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         else:
             y_pred = algorithm.predict(X)
 
-        plt.subplot(len(datasets), len(clustering_algorithms), plot_num)
-        if i_dataset == 0:
-            plt.title(name, size=18)
+        plot_num = clustering_cnt * len(datasets) + dataset_cnt + 1
+
+        plt.subplot(len(clustering_algorithms), len(datasets), plot_num)
+        if dataset_cnt == 0:
+            plt.ylabel(name, size=12)
 
         colors = np.array(list(islice(cycle(['#377eb8', '#ff7f00', '#4daf4a',
                                              '#f781bf', '#a65628', '#984ea3',
@@ -190,6 +190,5 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         plt.text(.99, .01, ('%.2fs' % (t1 - t0)).lstrip('0'),
                  transform=plt.gca().transAxes, size=15,
                  horizontalalignment='right')
-        plot_num += 1
 
 plt.show()
