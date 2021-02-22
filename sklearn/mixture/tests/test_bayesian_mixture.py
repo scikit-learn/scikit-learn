@@ -486,3 +486,40 @@ def test_bayesian_mixture_predict_predict_proba():
             Y_pred_proba = bgmm.predict_proba(X).argmax(axis=1)
             assert_array_equal(Y_pred, Y_pred_proba)
             assert adjusted_rand_score(Y, Y_pred) >= .95
+
+def test_gaussian_mixture_aic_bic():
+    # Test the aic and bic criteria
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_components = 50, 3, 2
+    X = rng.randn(n_samples, n_features)
+    # standard gaussian entropy
+    sgh = 0.5 * (fast_logdet(np.cov(X.T, bias=1)) +
+                 n_features * (1 + np.log(2 * np.pi)))
+    for cv_type in COVARIANCE_TYPE:
+        bgmm = BayesianGaussianMixture(
+            n_components=n_components, 
+            covariance_type=cv_type, 
+            random_state=rng, 
+            max_iter=200)
+        bgmm.fit(X)
+        aic = 2 * n_samples * sgh + 2 * g._n_parameters(X)
+        bic = (2 * n_samples * sgh +
+               np.log(n_samples) * g._n_parameters(X))
+        bound = n_features / np.sqrt(n_samples)
+        assert (g.aic(X) - aic) / n_samples < bound
+        assert (g.bic(X) - bic) / n_samples < bound
+
+def test_bic_1d_1component():
+    # Test all of the covariance_types return the same BIC score for
+    # 1-dimensional, 1 component fits.
+    rng = np.random.RandomState(0)
+    n_samples, n_dim, n_components = 100, 1, 1
+    X = rng.randn(n_samples, n_dim)
+    bic_full = BayesianGaussianMixture(n_components=n_components,
+                               covariance_type='full',
+                               random_state=rng).fit(X).bic(X)
+    for covariance_type in ['tied', 'diag', 'spherical']:
+        bic = BayesianGaussianMixture(n_components=n_components,
+                              covariance_type=covariance_type,
+                              random_state=rng).fit(X).bic(X)
+        assert_almost_equal(bic_full, bic)

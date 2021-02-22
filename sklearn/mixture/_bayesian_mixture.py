@@ -792,3 +792,47 @@ class BayesianGaussianMixture(BaseMixture):
                                       self.precisions_cholesky_.T)
         else:
             self.precisions_ = self.precisions_cholesky_ ** 2
+    
+    def _n_parameters(self, X):
+        """Return the number of free parameters in the model."""
+        _, n_features = self.means_.shape
+        n_effective_components = len(np.unique(self.predict(X)))
+        if self.covariance_type == 'full':
+            cov_params = n_effective_components * n_features * (n_features + 1) / 2.
+        elif self.covariance_type == 'diag':
+            cov_params = n_effective_components * n_features
+        elif self.covariance_type == 'tied':
+            cov_params = n_features * (n_features + 1) / 2.
+        elif self.covariance_type == 'spherical':
+            cov_params = n_effective_components
+        mean_params = n_features * n_effective_components
+        return int(cov_params + mean_params + n_effective_components - 1)
+
+    def bic(self, X):
+        """Bayesian information criterion for the current model on the input X.
+
+        Parameters
+        ----------
+        X : array of shape (n_samples, n_dimensions)
+
+        Returns
+        -------
+        bic : float
+            The lower the better.
+        """
+        return (-2 * self.score(X) * X.shape[0] +
+                self._n_parameters(X) * np.log(X.shape[0]))
+
+    def aic(self, X):
+        """Akaike information criterion for the current model on the input X.
+
+        Parameters
+        ----------
+        X : array of shape (n_samples, n_dimensions)
+
+        Returns
+        -------
+        aic : float
+            The lower the better.
+        """
+        return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters(X)
