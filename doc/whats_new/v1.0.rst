@@ -37,13 +37,20 @@ Changelog
 ..
     Entries should be grouped by module (in alphabetic order) and prefixed with
     one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
-    |Fix| or |API| (see whats_new.rst for descriptions).
+    |Fix| or |API| (see changelog_legend.inc for descriptions).
     Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
     Changes not specific to a module should be listed under *Multiple Modules*
     or *Miscellaneous*.
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Enhancement| :class:`CalibratedClassifierCV` now supports one-dimensional
+  and non-numeric input. :pr:`13060` by
+  :user:`Connor Brinton <connorbrinton>`.
 
 :mod:`sklearn.cluster`
 ......................

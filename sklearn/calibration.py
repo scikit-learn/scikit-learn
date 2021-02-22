@@ -272,7 +272,8 @@ class CalibratedClassifierCV(ClassifierMixin,
         else:
             X, y = self._validate_data(
                 X, y, accept_sparse=['csc', 'csr', 'coo'],
-                force_all_finite=False, allow_nd=True
+                force_all_finite=False, allow_nd=True, dtype=None,
+                ensure_2d=False, multi_output=True
             )
             # Set `classes_` using all `y`
             label_encoder_ = LabelEncoder().fit(y)
@@ -354,11 +355,12 @@ class CalibratedClassifierCV(ClassifierMixin,
         """
         check_is_fitted(self)
         X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
-                        force_all_finite=False)
+                        force_all_finite=False, allow_nd=True, dtype=None,
+                        ensure_2d=False)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        mean_proba = np.zeros((X.shape[0], len(self.classes_)))
-        for calibrated_classifier in self.calibrated_classifiers_:
+        mean_proba = self.calibrated_classifiers_[0].predict_proba(X)
+        for calibrated_classifier in self.calibrated_classifiers_[1:]:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
 

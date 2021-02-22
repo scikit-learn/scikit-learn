@@ -17,6 +17,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
 from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
@@ -485,6 +486,27 @@ def test_calibration_less_classes(ensemble):
         else:
             # Check `proba` are all 1/n_classes
             assert np.allclose(proba, 1 / proba.shape[0])
+
+
+@pytest.mark.parametrize('ensemble', [True, False])
+def test_calibration_text_input(ensemble):
+    """Test calibration of a classifier accepting 1D input"""
+    X = ["apple", "apple", "pear", "pear"]
+    y = [1, 1, 0, 0]
+    pipeline = Pipeline([
+        ('vectorizer', TfidfVectorizer()),
+        ('classifier', LinearSVC())
+    ])
+    cal_clf = CalibratedClassifierCV(
+        pipeline, method="sigmoid", cv=2, ensemble=ensemble,
+    )
+    cal_clf.fit(X, y)
+
+    for i, calibrated_classifier in \
+            enumerate(cal_clf.calibrated_classifiers_):
+        proba = calibrated_classifier.predict_proba(X)
+        assert proba.shape == (len(y), 2)
+        assert np.all(proba >= 0) and np.all(proba <= 1)
 
 
 @ignore_warnings(category=FutureWarning)
