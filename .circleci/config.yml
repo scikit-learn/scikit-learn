@@ -158,13 +158,13 @@ workflows:
       - deploy:
           requires:
             - doc
-  # pypy:
-  #  triggers:
-  #    - schedule:
-  #        cron: "0 0 * * *"
-  #        filters:
-  #          branches:
-  #            only:
-  #              - main
-  #  jobs:
-  #    - pypy3
+  pypy:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - pypy3
