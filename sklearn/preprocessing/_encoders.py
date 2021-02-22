@@ -767,6 +767,7 @@ class OrdinalEncoder(_BaseEncoder):
                             f"got {self.unknown_value}.")
 
         self._fit(X, force_all_finite='allow-nan')
+
         if self.handle_unknown == 'use_encoded_value':
             for feature_cats in self.categories_:
                 if 0 <= self.unknown_value < len(feature_cats):
