@@ -22,7 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-
+- |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
+  affinity matrix computation.
 
 Details are listed in the changelog below.
 
@@ -59,8 +60,31 @@ Changelog
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.fetch_openml` now supports categories with
+  missing values when returning a pandas dataframe. :pr:`19365` by
+  `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
+  :user:`EL-ATEIF Sara <elateifsara>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |API| In :class:`decomposition.DictionaryLearning`,
+  :class:`decomposition.MiniBatchDictionaryLearning`,
+  :func:`dict_learning` and :func:`dict_learning_online`,
+  `transform_alpha` will be equal to `alpha` instead of 1.0 by default
+  starting from version 1.2
+  :pr:`19159` by :user:`Benoît Malézieux <bmalezieux>`.
+
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
+
+- |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
+  ensure determinism of the output. Achieved by flipping signs of the SVD
+  output which is used to initialize the code.
+  :pr:`18433` by :user:`Bruno Charron <brcharron>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -78,6 +102,13 @@ Changelog
 - |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Allow multiple scorers input to
+  :func:`~sklearn.inspection.permutation_importance`.
+  :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -104,6 +135,19 @@ Changelog
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
+- |Fix|: `sample_weight` are now fully taken into account in linear models
+  when `normalize=True` for both feature centering and feature
+  scaling.
+  :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
+  :user:`Maria Telenczuk <maikia>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Change numerical precision to prevent underflow issues
+  during affinity matrix computation for :class:`manifold.TSNE`.
+  :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -114,6 +158,10 @@ Changelog
   :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
+
+- |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
+  quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
+  and :user:`Oliver Grisel <ogrisel>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................

@@ -7,7 +7,6 @@ import numpy as np
 
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
@@ -70,16 +69,16 @@ def test_notfitted():
     ereg = VotingRegressor([('dr', DummyRegressor())])
     msg = ("This %s instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this estimator.")
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.predict, X)
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.predict_proba, X)
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.transform, X)
-    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
-                         ereg.predict, X_r)
-    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
-                         ereg.transform, X_r)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.predict(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.predict_proba(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.transform(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingRegressor'):
+        ereg.predict(X_r)
+    with pytest.raises(NotFittedError, match=msg % 'VotingRegressor'):
+        ereg.transform(X_r)
 
 
 def test_majority_label_iris():
