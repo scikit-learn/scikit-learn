@@ -1037,7 +1037,7 @@ def test_ordinal_encoder_specified_categories_missing_passthrough(
 def test_ordinal_encoder_handle_missing_and_unknown(
         X, expected_X_trans, X_test
 ):
-    """Test the interaction between handle_missing and handle_unknown"""
+    """Test the interaction between missing values and handle_unknown"""
 
     oe = OrdinalEncoder(handle_unknown="use_encoded_value",
                         unknown_value=-1)

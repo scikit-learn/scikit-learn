@@ -817,7 +817,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         for cat_idx, categories_for_idx in enumerate(self.categories_):
             missing_indices = [i for i, v in enumerate(categories_for_idx)
-                               if is_scalar_nan(v) or v is None]
+                               if is_scalar_nan(v)]
             for missing_idx in missing_indices:
                 X_missing_mask = X_int[:, cat_idx] == missing_idx
                 X_trans[X_missing_mask, cat_idx] = np.nan
@@ -862,10 +862,10 @@ class OrdinalEncoder(_BaseEncoder):
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
 
-            # place values of X[:, i] that were nan with actual indices
+            # replace values of X[:, i] that were nan with actual indices
             categories_for_idx = self.categories_[i]
             missing_indices = [i for i, v in enumerate(categories_for_idx)
-                               if is_scalar_nan(v) or v is None]
+                               if is_scalar_nan(v)]
 
             # get nan mask only if missing values exists in categories
             if missing_indices:
