@@ -530,7 +530,7 @@ class TSNE(BaseEstimator):
         those other implementations.
         The 'auto' option sets the learning_rate to N / early_exaggeration / 4,
         where N is the sample size, following Belkina et al. 2019 and
-        Kobak et al. 2019, Nature Communications (or to 50.0, if 
+        Kobak et al. 2019, Nature Communications (or to 50.0, if
         N / early_exaggeration / 4 < 50). This will become default in 1.2.
 
     n_iter : int, default=1000
@@ -567,7 +567,7 @@ class TSNE(BaseEstimator):
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
-        usually more globally stable than random initialization. It will 
+        usually more globally stable than random initialization. It will
         become default in 1.2.
 
     verbose : int, default=0
