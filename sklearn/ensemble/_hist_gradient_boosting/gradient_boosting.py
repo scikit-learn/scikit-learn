@@ -8,7 +8,7 @@ import numpy as np
 from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
-from ...utils import check_random_state, check_array, resample
+from ...utils import check_random_state, resample
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length,
                                  _check_sample_weight,
@@ -733,7 +733,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         is_binned = getattr(self, '_in_fit', False)
         dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
-        X = check_array(X, dtype=dtype, force_all_finite=False)
+        X = self._validate_data(X, dtype=dtype, force_all_finite=False,
+                                reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -789,7 +790,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predictions of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
-        X = check_array(X, dtype=X_DTYPE, force_all_finite=False)
+        X = self._validate_data(X, dtype=X_DTYPE, force_all_finite=False,
+                                reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
