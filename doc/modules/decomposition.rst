@@ -327,10 +327,6 @@ an alternate way to get an approximate decomposition. In practice, this method
 only provides reasonable execution times when the number of components to find
 is extremely small.
 
-.. topic:: Examples:
-
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca_approximate.py`
-
 .. topic:: References:
 
     * *dense* solver:
