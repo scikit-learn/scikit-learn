@@ -13,15 +13,12 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
@@ -29,6 +26,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
+from sklearn.utils.sparsefuncs import mean_variance_axis
 
 from sklearn.linear_model import (
     ARDRegression,
@@ -302,7 +300,33 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
-# FIXME: 'normalize' to be removed in 1.2
+def _scale_alpha_inplace(estimator, n_samples):
+    """Rescale the parameter alpha from when the estimator is evoked with
+    normalize set to True to when it is evoked in a Pipeline with normalize set
+    to False and with a StandardScaler.
+    """
+    if 'alpha' not in estimator.get_params():
+        return
+
+    if isinstance(estimator, (Lasso, LassoLars, MultiTaskLasso)):
+        alpha = estimator.alpha * np.sqrt(n_samples)
+    if isinstance(estimator, (Ridge, RidgeClassifier)):
+        alpha = estimator.alpha * n_samples
+    if isinstance(estimator, (ElasticNet, MultiTaskElasticNet)):
+        if estimator.l1_ratio == 1:
+            alpha = estimator.alpha * np.sqrt(n_samples)
+        elif estimator.l1_ratio == 0:
+            alpha = estimator.alpha * n_samples
+        else:
+            # To avoid silent errors in case of refactoring
+            raise NotImplementedError
+
+    estimator.set_params(alpha=alpha)
+
+
+# FIXME: 'normalize' to be removed in 1.2 for all the models excluding:
+# OrthogonalMatchingPursuit, Lars, LassoLars, LarsCV, LassoLarsCV
+# for which it is to be removed in 1.4
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
@@ -328,7 +352,6 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # in the pipeline and with normalize set to False
 
     # normalize is True
-    model_name = LinearModel.__name__
     model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
 
     pipeline = make_pipeline(
@@ -355,22 +378,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    if 'alpha' in params:
-        model_normalize.set_params(alpha=params['alpha'])
-        if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
-            new_params = dict(
-                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
-        if model_name in ['Ridge', 'RidgeClassifier']:
-            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
-    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
-        if params['l1_ratio'] == 1:
-            new_params = dict(
-                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
-        if params['l1_ratio'] == 0:
-            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
-
-    if 'new_params' in locals():
-        pipeline[1].set_params(**new_params)
+    _scale_alpha_inplace(pipeline[1], X_train.shape[0])
 
     model_normalize.fit(X_train, y_train)
     y_pred_normalize = model_normalize.predict(X_test)
@@ -390,24 +398,47 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 # FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
-    "estimator, is_sparse, with_mean",
-    [(LinearRegression, True, False),
-     (LinearRegression, False, True),
-     (LinearRegression, False, False)]
+    "estimator, params",
+    [
+         (Lasso, {"tol": 1e-16, "alpha": 0.1}),
+         (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+         (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+         (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+         (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+         (LinearRegression, {}),
+     ]
+)
+@pytest.mark.parametrize(
+    "is_sparse, with_mean", [
+        (False, True),
+        (False, False),
+        (True, False)
+        # No need to test sparse and with_mean=True
+    ]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(
-        estimator, is_sparse, with_mean
+        is_sparse, with_mean, estimator, params
 ):
-    # Test that the results for running linear regression LinearRegression with
-    # sample_weight set and with normalize set to True gives similar results as
-    # LinearRegression with no normalize in a pipeline with a StandardScaler
-    # and set sample_weight.
+    # Test that the results for running linear model with sample_weight
+    # and with normalize set to True gives similar results as the same linear
+    # model with normalize set to False in a pipeline with
+    # a StandardScaler and sample_weight.
+    model_name = estimator.__name__
+
+    if model_name in ['Lasso', 'ElasticNet'] and is_sparse:
+        pytest.skip(f'{model_name} does not support sample_weight with sparse')
+
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=20, n_features=5, noise=1e-2,
                            random_state=rng)
+
+    if is_classifier(estimator):
+        y = np.sign(y)
+
     # make sure the data is not centered to make the problem more
-    # difficult
-    X += 10
+    # difficult + add 0s for the sparse case
+    X[X < 0] = 0
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
                                                         random_state=rng)
     if is_sparse:
@@ -416,27 +447,41 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     sample_weight = rng.rand(X_train.shape[0])
 
-    # linear estimator with explicit sample_weight
-    reg_with_normalize = estimator(normalize=True)
+    # linear estimator with built-in feature normalization
+    reg_with_normalize = estimator(normalize=True, fit_intercept=True,
+                                   **params)
     reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
 
-    # linear estimator in a pipeline
-    reg_with_scaler = make_pipeline(
-        StandardScaler(with_mean=with_mean),
-        estimator(normalize=False)
-    )
-    kwargs = {reg_with_scaler.steps[-1][0] + '__sample_weight':
-              sample_weight}
-    reg_with_scaler.fit(X_train, y_train, **kwargs)
+    # linear estimator in a pipeline with a StandardScaler, normalize=False
+    linear_regressor = estimator(normalize=False, fit_intercept=True, **params)
+    _scale_alpha_inplace(linear_regressor, X_train.shape[0])  # rescale alpha
+    reg_with_scaler = Pipeline([
+        ("scaler", StandardScaler(with_mean=with_mean)),
+        ("linear_regressor", linear_regressor)
+    ])
 
-    y_pred_norm = reg_with_normalize.predict(X_test)
-    y_pred_pip = reg_with_scaler.predict(X_test)
+    fit_params = {
+        "scaler__sample_weight":  sample_weight,
+        "linear_regressor__sample_weight": sample_weight,
+    }
 
-    assert_allclose(
-        reg_with_normalize.coef_ * reg_with_scaler[0].scale_,
-        reg_with_scaler[1].coef_
-    )
-    assert_allclose(y_pred_norm, y_pred_pip)
+    reg_with_scaler.fit(X_train, y_train, **fit_params)
+
+    # Check that the 2 regressions models are exactly equivalent in the
+    # sense that they predict exactly the same outcome.
+    y_pred_normalize = reg_with_normalize.predict(X_test)
+    y_pred_scaler = reg_with_scaler.predict(X_test)
+    assert_allclose(y_pred_normalize,  y_pred_scaler)
+    # Check intercept computation when normalize is True
+    y_train_mean = np.average(y_train, weights=sample_weight)
+    if is_sparse:
+        X_train_mean, _ = mean_variance_axis(X_train, axis=0,
+                                             weights=sample_weight)
+    else:
+        X_train_mean = np.average(X_train, weights=sample_weight, axis=0)
+    assert (reg_with_normalize.intercept_ ==
+            pytest.approx(y_train_mean -
+                          reg_with_normalize.coef_.dot(X_train_mean)))
 
 
 # FIXME: 'normalize' to be removed in 1.2
@@ -735,7 +780,8 @@ def test_multioutput_enetcv_error():
     X = rng.randn(10, 2)
     y = rng.randn(10, 2)
     clf = ElasticNetCV()
-    assert_raises(ValueError, clf.fit, X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
 
 
 def test_multitask_enet_and_lasso_cv():
@@ -810,12 +856,18 @@ def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
-        assert_raises_regex(ValueError, ".*should be.*True.*False.*auto.*"
-                            "array-like.*Got 'invalid'", clf.fit, X, y)
+        err_msg = ".*should be.*True.*False.*auto.* array-like.*Got 'invalid'"
+        with pytest.raises(ValueError, match=err_msg):
+            clf.fit(X, y)
 
-    # Precompute = 'auto' is not supported for ElasticNet
-    assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
-                        "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
+    # Precompute = 'auto' is not supported for ElasticNet and Lasso
+    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
+    with pytest.raises(ValueError, match=err_msg):
+        ElasticNet(precompute='auto').fit(X, y)
+
+    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
+    with pytest.raises(ValueError, match=err_msg):
+        Lasso(precompute='auto').fit(X, y)
 
 
 def test_elasticnet_precompute_incorrect_gram():
@@ -944,7 +996,8 @@ def test_random_descent():
 
     # Raise error when selection is not in cyclic or random.
     clf_random = ElasticNet(selection='invalid')
-    assert_raises(ValueError, clf_random.fit, X, y)
+    with pytest.raises(ValueError):
+        clf_random.fit(X, y)
 
 
 def test_enet_path_positive():
@@ -961,7 +1014,8 @@ def test_enet_path_positive():
     # For multi output, positive parameter is not allowed
     # Test that an error is raised
     for path in [enet_path, lasso_path]:
-        assert_raises(ValueError, path, X, Y, positive=True)
+        with pytest.raises(ValueError):
+            path(X, Y, positive=True)
 
 
 def test_sparse_dense_descent_paths():
@@ -989,7 +1043,8 @@ def test_check_input_false():
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
-    assert_raises(ValueError, clf.fit, X, y, check_input=False)
+    with pytest.raises(ValueError):
+        clf.fit(X, y, check_input=False)
 
 
 @pytest.mark.parametrize("check_input", [True, False])
@@ -1103,10 +1158,11 @@ def test_enet_l1_ratio():
     X = np.array([[1, 2, 4, 5, 8], [3, 5, 7, 7, 8]]).T
     y = np.array([12, 10, 11, 21, 5])
 
-    assert_raise_message(ValueError, msg, ElasticNetCV(
-        l1_ratio=0, random_state=42).fit, X, y)
-    assert_raise_message(ValueError, msg, MultiTaskElasticNetCV(
-        l1_ratio=0, random_state=42).fit, X, y[:, None])
+    with pytest.raises(ValueError, match=msg):
+        ElasticNetCV(l1_ratio=0, random_state=42).fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        MultiTaskElasticNetCV(l1_ratio=0, random_state=42).fit(X, y[:, None])
 
     # Test that l1_ratio=0 is allowed if we supply a grid manually
     alphas = [0.1, 10]
