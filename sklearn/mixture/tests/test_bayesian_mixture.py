@@ -488,6 +488,7 @@ def test_bayesian_mixture_predict_predict_proba():
             assert_array_equal(Y_pred, Y_pred_proba)
             assert adjusted_rand_score(Y, Y_pred) >= .95
 
+
 def test_bgmm_aic_bic():
     # Test the aic and bic criteria
     rng = np.random.RandomState(0)
@@ -509,6 +510,7 @@ def test_bgmm_aic_bic():
         bound = n_features / np.sqrt(n_samples)
         assert (bgmm.aic(X) - aic) / n_samples < bound
         assert (bgmm.bic(X) - bic) / n_samples < bound
+
 
 def test_bic_1d_1component():
     # Test all of the covariance_types return the same BIC score for
