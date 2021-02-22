@@ -498,9 +498,9 @@ def test_bgmm_aic_bic():
                  n_features * (1 + np.log(2 * np.pi)))
     for cv_type in COVARIANCE_TYPE:
         bgmm = BayesianGaussianMixture(
-            n_components=n_components, 
-            covariance_type=cv_type, 
-            random_state=rng, 
+            n_components=n_components,
+            covariance_type=cv_type,
+            random_state=rng,
             max_iter=200)
         bgmm.fit(X)
         aic = 2 * n_samples * sgh + 2 * bgmm._n_parameters(X)
@@ -517,10 +517,10 @@ def test_bic_1d_1component():
     n_samples, n_dim, n_components = 100, 1, 1
     X = rng.randn(n_samples, n_dim)
     bic_full = BayesianGaussianMixture(n_components=n_components,
-                               covariance_type='full',
-                               random_state=rng).fit(X).bic(X)
+                                       covariance_type='full',
+                                       random_state=rng).fit(X).bic(X)
     for covariance_type in ['tied', 'diag', 'spherical']:
         bic = BayesianGaussianMixture(n_components=n_components,
-                              covariance_type=covariance_type,
-                              random_state=rng).fit(X).bic(X)
+                                      covariance_type=covariance_type,
+                                      random_state=rng).fit(X).bic(X)
         assert_almost_equal(bic_full, bic)
