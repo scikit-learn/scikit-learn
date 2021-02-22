@@ -783,9 +783,9 @@ class OrdinalEncoder(_BaseEncoder):
             for i, cat in enumerate(categories_for_idx):
                 if cat is None:
                     raise ValueError(
-                        "None is an unsupported missing value indicator and was "
-                        f"found in feature {cat_idx}. Please convert these "
-                        "values to np.nan")
+                        "None is an unsupported missing value indicator and "
+                        f"was found in feature {cat_idx}. Please convert "
+                        "these values to np.nan")
 
                 if is_scalar_nan(cat):
                     self._missing_indices[cat_idx] = i
