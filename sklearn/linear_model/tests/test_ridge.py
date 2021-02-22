@@ -82,7 +82,7 @@ def _mean_squared_error_callable(y_test, y_pred):
     'normalize, n_warnings, warning',
     [(True, 1, FutureWarning),
      (False, 1, FutureWarning),
-     ("deprecate", 0, None)]
+     ("deprecated", 0, None)]
 )
 def test_assure_warning_when_normalize(RidgeModel,
                                        normalize, n_warnings, warning):
