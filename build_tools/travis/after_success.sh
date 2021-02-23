@@ -18,7 +18,7 @@ if [[ $BUILD_WHEEL == true && $TRAVIS_EVENT_TYPE != pull_request ]]; then
         ANACONDA_TOKEN="$SCIKIT_LEARN_STAGING_UPLOAD_TOKEN"
     fi
 
-    pip install git+https://github.com/Anaconda-Server/anaconda-client
+    pip install git+https://github.com/Anaconda-Platform/anaconda-client
 
     # Force a replacement if the remote file already exists
     anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG wheelhouse/*.whl
