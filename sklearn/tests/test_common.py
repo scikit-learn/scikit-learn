@@ -273,7 +273,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'model_selection',
     'multiclass',
     'multioutput',
-    'naive_bayes',
     'pipeline',
     'random_projection',
 }
