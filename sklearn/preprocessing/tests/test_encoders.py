@@ -943,22 +943,6 @@ def test_ordinal_encoder_passthrough_missing_values_float():
     assert_allclose(X_inverse, X)
 
 
-@pytest.mark.parametrize("X_train", [
-    np.array([[None, 3.0, 1.0, 3.0]], dtype=object).T,
-    np.array([[None, "b", "b", "a"]], dtype=object).T,
-    np.array([[None, "b", "a", np.nan, "b"]], dtype=object).T
-])
-def test_ordinal_encoder_passthrough_missing_values_object_only_none_errors(
-    X_train
-):
-    """Test ordinal encoder with None will error. """
-    oe = OrdinalEncoder()
-    msg = ("None is an unsupported missing value indicator and was found in "
-           r"feature 0. Please convert these values to np.nan")
-    with pytest.raises(ValueError, match=msg):
-        oe.fit(X_train)
-
-
 @pytest.mark.parametrize('pd_nan_type', ['pd.NA', 'np.nan'])
 def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
     """Check ordinal encoder is compatible with pandas."""

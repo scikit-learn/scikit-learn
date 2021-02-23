@@ -782,12 +782,6 @@ class OrdinalEncoder(_BaseEncoder):
         # Check for None values in categories
         for cat_idx, categories_for_idx in enumerate(self.categories_):
             for i, cat in enumerate(categories_for_idx):
-                if cat is None:
-                    raise ValueError(
-                        "None is an unsupported missing value indicator and "
-                        f"was found in feature {cat_idx}. Please convert "
-                        "these values to np.nan")
-
                 if is_scalar_nan(cat):
                     self._missing_indices[cat_idx] = i
                     continue
