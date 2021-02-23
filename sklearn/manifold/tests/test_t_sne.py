@@ -483,7 +483,7 @@ def test_n_components_range():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
-@ignore_warnings(category=FutureWarning)
+@ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_early_exaggeration_used():
     # check that the ``early_exaggeration`` parameter has an effect
     random_state = check_random_state(0)
@@ -982,7 +982,7 @@ def test_tsne_square_distances_futurewarning(metric, square_distances):
         assert not record
 
 
-@pytest.mark.parametrize('learning_rate', [None, '200.0'])
+@pytest.mark.parametrize('learning_rate', [None, 200.0])
 @pytest.mark.parametrize('init', [None, 'random', 'pca'])
 # This test can be deleted in 1.2
 def test_tsne_init_and_learning_rate_futurewarnings(learning_rate, init):
