@@ -982,6 +982,43 @@ def test_tsne_square_distances_futurewarning(metric, square_distances):
         assert not record
 
 
+@pytest.mark.parametrize('learning_rate', [None, '200.0'])
+@pytest.mark.parametrize('init', [None, 'random', 'pca'])
+# This test can be deleted in 1.2
+def test_tsne_init_and_learning_rate_futurewarnings(learning_rate, init):
+    # Make sure that a FutureWarning is only raised when the learning rate
+    # is not specified or the init is not specified or is 'pca'
+    random_state = check_random_state(0)
+
+    X = random_state.randn(5, 2)
+    tsne = TSNE(metric=metric, square_distances=square_distances,
+                learning_rate=learning_rate, init=init)
+
+    if init is None:
+        with pytest.warns(FutureWarning, match="The default initialization.*"):
+            tsne.fit_transform(X)
+    elif learning_rate is None:
+        with pytest.warns(FutureWarning, match="The default learning rate.*"):
+            tsne.fit_transform(X)
+    elif init == 'pca':
+        with pytest.warns(FutureWarning, match="The PCA initialization.*"):
+            tsne.fit_transform(X)
+    else:
+        with pytest.warns(None) as record:
+            tsne.fit_transform(X)
+        assert not record
+
+
+@ignore_warnings(category=FutureWarning)  # Delete in 1.2
+def test_auto_learning_rate():
+    """Make sure learning_rate='auto' is set correctly"""
+    random_state = check_random_state(0)
+    X = random_state.randn(500, 10)
+    X1 = TSNE(learning_rate='auto').fit_transform(X)
+    X2 = TSNE(learning_rate=500/12*4).fit_transform(X)
+    assert_allclose(X1, X2)
+
+
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 @ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_tsne_n_jobs(method):
