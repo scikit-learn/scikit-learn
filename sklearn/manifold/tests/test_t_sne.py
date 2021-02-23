@@ -262,6 +262,7 @@ def test_preserve_trustworthiness_approximately(method, init):
     assert t > 0.85
 
 
+@ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_optimization_minimizes_kl_divergence():
     """t-SNE should give a lower KL divergence with more iterations."""
     random_state = check_random_state(0)
@@ -277,6 +278,7 @@ def test_optimization_minimizes_kl_divergence():
 
 
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+@ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_fit_csr_matrix(method):
     # X can be a sparse matrix.
     rng = check_random_state(0)
@@ -290,6 +292,7 @@ def test_fit_csr_matrix(method):
                     1.0, rtol=1.1e-1)
 
 
+@ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
