@@ -714,7 +714,7 @@ class TSNE(BaseEstimator):
         if self._learning_rate == 'auto':
             # See issue #18018
             self._learning_rate = X.shape[0] / self.early_exaggeration / 4
-            self._learning_rate = np.max(self._learning_rate, 50)
+            self._learning_rate = np.maximum(self._learning_rate, 50)
         else:
             if not (self._learning_rate > 0):
                 raise ValueError("'learning_rate' must be a positive number "
