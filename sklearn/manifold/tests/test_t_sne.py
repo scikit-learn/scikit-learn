@@ -1032,7 +1032,7 @@ def test_auto_learning_rate(sample_size):
     random_state = check_random_state(0)
     X = random_state.randn(sample_size, 10)
     X1 = TSNE(learning_rate='auto', random_state=42).fit_transform(X)
-    tsne_auto = TSNE(learning_rate=np.max(50.0, sample_size / 12 / 4),
+    tsne_auto = TSNE(learning_rate=np.maximum(50.0, sample_size / 12 / 4),
                      random_state=42)
     X2 = tsne_auto.fit_transform(X)
     assert_allclose(X1, X2)
