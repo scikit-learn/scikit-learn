@@ -982,25 +982,40 @@ def test_tsne_square_distances_futurewarning(metric, square_distances):
         assert not record
 
 
-@pytest.mark.parametrize('learning_rate', [None, 200.0])
 @pytest.mark.parametrize('init', [None, 'random', 'pca'])
 # This test can be deleted in 1.2
-def test_tsne_init_and_learning_rate_futurewarnings(learning_rate, init):
-    # Make sure that a FutureWarning is only raised when the learning rate
-    # is not specified or the init is not specified or is 'pca'
+def test_tsne_init__futurewarnings(init):
+    # Make sure that a FutureWarning is only raised when the
+    # init is not specified or is 'pca'
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
-    tsne = TSNE(learning_rate=learning_rate, init=init)
+    tsne = TSNE(learning_rate=200.0, init=init)
 
     if init is None:
         with pytest.warns(FutureWarning, match="The default initialization.*"):
             tsne.fit_transform(X)
-    elif learning_rate is None:
-        with pytest.warns(FutureWarning, match="The default learning rate.*"):
-            tsne.fit_transform(X)
     elif init == 'pca':
         with pytest.warns(FutureWarning, match="The PCA initialization.*"):
+            tsne.fit_transform(X)
+    else:
+        with pytest.warns(None) as record:
+            tsne.fit_transform(X)
+        assert not record
+
+
+@pytest.mark.parametrize('learning_rate', [None, 200.0])
+# This test can be deleted in 1.2
+def test_tsne_init_and_learning_rate_futurewarnings(learning_rate):
+    # Make sure that a FutureWarning is only raised when the learning rate
+    # is not specified
+    random_state = check_random_state(0)
+
+    X = random_state.randn(5, 2)
+    tsne = TSNE(learning_rate=learning_rate, init='random')
+
+    if learning_rate is None:
+        with pytest.warns(FutureWarning, match="The default learning rate.*"):
             tsne.fit_transform(X)
     else:
         with pytest.warns(None) as record:
