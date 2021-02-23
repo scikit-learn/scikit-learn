@@ -221,7 +221,7 @@ class GaussianNB(_BaseNB):
                                  sample_weight=sample_weight)
 
     def _check_X(self, X):
-        """Validate X, used only in non-fit methods."""
+        """Validate X, used only in predict* methods."""
         return self._validate_data(X, reset=False)
 
     @staticmethod
@@ -370,7 +370,10 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
-        first_call = not hasattr(self, "classes_")
+        if _refit:
+            self.classes_ = None
+
+        first_call = _check_partial_fit_first_call(self, classes)
         X, y = self._validate_data(X, y, reset=first_call)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -381,10 +384,7 @@ class GaussianNB(_BaseNB):
         # deviation of the largest dimension.
         self.epsilon_ = self.var_smoothing * np.var(X, axis=0).max()
 
-        if _refit:
-            self.classes_ = None
-
-        if _check_partial_fit_first_call(self, classes):
+        if first_call:
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
@@ -492,7 +492,7 @@ class _BaseDiscreteNB(_BaseNB):
     """
 
     def _check_X(self, X):
-        """Validate X, used only in non-fit methods."""
+        """Validate X, used only in predict* methods."""
         return self._validate_data(X, accept_sparse='csr', reset=False)
 
     def _check_X_y(self, X, y, reset=True):
@@ -1056,7 +1056,7 @@ class BernoulliNB(_BaseDiscreteNB):
         self.class_prior = class_prior
 
     def _check_X(self, X):
-        """Validate X, used only in non-fit methods."""
+        """Validate X, used only in predict* methods."""
         X = super()._check_X(X)
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
@@ -1264,7 +1264,7 @@ class CategoricalNB(_BaseDiscreteNB):
         return {'requires_positive_X': True}
 
     def _check_X(self, X):
-        """Validate X, used only in non-fit methods."""
+        """Validate X, used only in predict* methods."""
         X = self._validate_data(X, dtype='int', accept_sparse=False,
                                 force_all_finite=True, reset=False)
         check_non_negative(X, "CategoricalNB (input X)")
