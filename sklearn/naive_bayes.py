@@ -30,7 +30,7 @@ from .preprocessing import label_binarize
 from .utils import deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
+from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
 
@@ -57,7 +57,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     def _check_X(self, X):
         """To be overridden in subclasses with the actual checks.
 
-        Only used in non-fit methods.
+        Only used in predict* methods.
         """
 
     def predict(self, X):
@@ -372,7 +372,6 @@ class GaussianNB(_BaseNB):
         """
         first_call = not hasattr(self, "classes_")
         X, y = self._validate_data(X, y, reset=first_call)
-        y = column_or_1d(y, warn=True)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
