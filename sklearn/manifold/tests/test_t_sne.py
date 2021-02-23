@@ -990,7 +990,8 @@ def test_tsne_init_futurewarning(init):
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
-    tsne = TSNE(learning_rate=200.0, init=init)
+    kwargs = dict(learning_rate=200.0, init=init)
+    tsne = TSNE(**{k: v for k, v in kwargs.items() if v is not None})
 
     if init is None:
         with pytest.warns(FutureWarning, match="The default initialization.*"):
@@ -1012,7 +1013,8 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
-    tsne = TSNE(learning_rate=learning_rate, init='random')
+    kwargs = dict(learning_rate=learning_rate, init='random')
+    tsne = TSNE(**{k: v for k, v in kwargs.items() if v is not None})
 
     if learning_rate is None:
         with pytest.warns(FutureWarning, match="The default learning rate.*"):
