@@ -984,7 +984,7 @@ def test_tsne_square_distances_futurewarning(metric, square_distances):
 
 @pytest.mark.parametrize('init', [None, 'random', 'pca'])
 # This test can be deleted in 1.2
-def test_tsne_init__futurewarnings(init):
+def test_tsne_init_futurewarning(init):
     # Make sure that a FutureWarning is only raised when the
     # init is not specified or is 'pca'
     random_state = check_random_state(0)
@@ -1006,7 +1006,7 @@ def test_tsne_init__futurewarnings(init):
 
 @pytest.mark.parametrize('learning_rate', [None, 200.0])
 # This test can be deleted in 1.2
-def test_tsne_init_and_learning_rate_futurewarnings(learning_rate):
+def test_tsne_learning_rate_futurewarning(learning_rate):
     # Make sure that a FutureWarning is only raised when the learning rate
     # is not specified
     random_state = check_random_state(0)
