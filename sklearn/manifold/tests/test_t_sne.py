@@ -1025,13 +1025,15 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
         assert not record
 
 
+@pytest.mark.parametrize('sample_size', [500, 10000])
 @ignore_warnings(category=FutureWarning)  # Delete in 1.2
-def test_auto_learning_rate():
+def test_auto_learning_rate(sample_size):
     """Make sure learning_rate='auto' is set correctly"""
     random_state = check_random_state(0)
-    X = random_state.randn(500, 10)
+    X = random_state.randn(sample_size, 10)
     X1 = TSNE(learning_rate='auto').fit_transform(X)
-    X2 = TSNE(learning_rate=500/12*4).fit_transform(X)
+    tsne_auto = TSNE(learning_rate=np.max(50.0, sample_size / 12 / 4))
+    X2 = tsne_auto.fit_transform(X)
     assert_allclose(X1, X2)
 
 
