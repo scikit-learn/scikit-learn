@@ -29,7 +29,7 @@ def test_img_to_graph():
 def test_img_to_graph_sparse():
     # Check that the edges are in the right position
     #  when using a sparse image with a singleton component
-    mask = np.zeros((2, 3), dtype=np.bool)
+    mask = np.zeros((2, 3), dtype=bool)
     mask[0, 0] = 1
     mask[:, 2] = 1
     x = np.zeros((2, 3))
@@ -55,7 +55,7 @@ def test_grid_to_graph():
     assert connected_components(A)[0] == 2
 
     # check ordering
-    mask = np.zeros((2, 3), dtype=np.bool)
+    mask = np.zeros((2, 3), dtype=bool)
     mask[0, 0] = 1
     mask[:, 2] = 1
     graph = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
