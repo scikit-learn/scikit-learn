@@ -991,8 +991,7 @@ def test_tsne_init_and_learning_rate_futurewarnings(learning_rate, init):
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
-    tsne = TSNE(metric=metric, square_distances=square_distances,
-                learning_rate=learning_rate, init=init)
+    tsne = TSNE(learning_rate=learning_rate, init=init)
 
     if init is None:
         with pytest.warns(FutureWarning, match="The default initialization.*"):
