@@ -11,8 +11,10 @@ else
     ANACONDA_TOKEN="$SCIKIT_LEARN_STAGING_UPLOAD_TOKEN"
 fi
 
-pip install git+https://github.com/Anaconda-Platform/anaconda-project
-pip install git+https://github.com/Anaconda-Platform/anaconda-client
+export PATH=$CONDA/bin:$PATH
+conda create -n upload -y python
+source activate upload
+conda install -y anaconda-client
 
 # Force a replacement if the remote file already exists
 anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG dist/artifact/*

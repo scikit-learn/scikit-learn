@@ -18,8 +18,15 @@ if [[ $BUILD_WHEEL == true && $TRAVIS_EVENT_TYPE != pull_request ]]; then
         ANACONDA_TOKEN="$SCIKIT_LEARN_STAGING_UPLOAD_TOKEN"
     fi
 
-    pip install git+https://github.com/Anaconda-Platform/anaconda-project
-    pip install git+https://github.com/Anaconda-Platform/anaconda-client
+    MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh"
+    wget $MINICONDA_URL -O miniconda.sh
+    MINICONDA_PATH=$HOME/miniconda
+    chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+
+    export PATH=$MINICONDA_PATH/bin:$PATH
+    conda create -n upload -y python
+    source activate upload
+    conda install -y anaconda-client
 
     # Force a replacement if the remote file already exists
     anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG wheelhouse/*.whl
