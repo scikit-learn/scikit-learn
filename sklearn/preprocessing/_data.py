@@ -61,9 +61,18 @@ __all__ = [
 
 
 def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
-    """Makes sure that whenever scale is zero, we handle it correctly.
+    """Set scales of near constant features to 1.
 
-    This happens in most scalers when we have constant features.
+    The goal is to avoid division by very small or zero values.
+
+    Near constant features are detected automatically by identifying
+    scales close to machine precision unless they are precomputed by
+    the caller and passed with the `constant_mask` kwarg.
+    
+    Typically for standard scaling, the scales are the standard
+    deviation while near constant features are better detected on the
+    computed variances which are closer to machine precision by
+    construction.
     """
     # if we are fitting on 1D arrays, scale might be a scalar
     if np.isscalar(scale):
