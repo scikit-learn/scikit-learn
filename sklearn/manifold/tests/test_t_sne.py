@@ -249,7 +249,7 @@ def test_trustworthiness():
 
 @pytest.mark.parametrize("method", ['exact', 'barnes_hut'])
 @pytest.mark.parametrize("init", ('random', 'pca'))
-@ignore_warnings(category=FutureWarning) # Delete in 1.2
+@ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_preserve_trustworthiness_approximately(method, init):
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
