@@ -111,6 +111,7 @@ def test_isomap():
     assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
+@ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_tsne():
     # Test chaining KNeighborsTransformer and TSNE
     n_iter = 250
