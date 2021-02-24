@@ -2,9 +2,10 @@ from typing import NamedTuple
 
 import numpy as np
 from . import is_scalar_nan
+from collections import Counter
 
 
-def _unique(values, *, return_inverse=False):
+def _unique(values, *, return_inverse=False, return_counts=False, cats=None):
     """Helper function to find unique values with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
@@ -18,22 +19,53 @@ def _unique(values, *, return_inverse=False):
     return_inverse : bool, default=False
         If True, also return the indices of the unique values.
 
+    return_counts: bool, default=False
+        If True, also return count of the unique values.
+
+    cats: list of array-like, default=False
+        List of specified categories. Will add zero count categories.
     Returns
     -------
     unique : ndarray
-        The sorted unique values.
+        The sorted unique values or cats if `cats` specified.
 
     unique_inverse : ndarray
         The indices to reconstruct the original array from the unique array.
         Only provided if `return_inverse` is True.
+
+    counts : ndarray
+        Count of each value. Indicies match unique.
+        Only provided if `return_counts` is True.
     """
-    if values.dtype == object:
-        return _unique_python(values, return_inverse=return_inverse)
+
+    if cats is not None:
+        cat_zero_count = []
+        for cat in cats:
+            if cat not in values:
+                # add values to be counted to be set to 0 later
+                values = np.append(values, cat)
+                cat_zero_count.append(cat)
+
+    if values.dtype == object and cats is not None:
+        uniques, counts = _unique_python(values,
+                                         return_inverse=return_inverse,
+                                         return_counts=return_counts)
+        uniques, counts = _zero_counts(uniques, counts, cat_zero_count)
+        counts = _reindex_specified_cats(uniques, cats, counts)
+        return cats, counts
+    elif values.dtype == object:
+        return _unique_python(values,
+                              return_inverse=return_inverse,
+                              return_counts=return_counts)
     # numerical
-    out = np.unique(values, return_inverse=return_inverse)
+    out = np.unique(values,
+                    return_inverse=return_inverse,
+                    return_counts=return_counts)
 
     if return_inverse:
         uniques, inverse = out
+    elif return_counts:
+        uniques, counts = out
     else:
         uniques = out
 
@@ -44,10 +76,53 @@ def _unique(values, *, return_inverse=False):
         uniques = uniques[:nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
+        if return_counts:
+            counts[counts > nan_idx] = nan_idx
 
     if return_inverse:
         return uniques, inverse
+    elif return_counts and cats is not None:
+        uniques, counts = out
+        uniques, counts = _zero_counts(uniques, counts, cat_zero_count)
+        counts = _reindex_specified_cats(uniques, cats, counts)
+        return cats, counts
+    elif return_counts:
+        return uniques, counts
     return uniques
+
+
+def _reindex_specified_cats(uniques, cats, counts):
+    """Reindex counts by specified categories"""
+    nan_idx_sorted = [idx for idx, cat in enumerate(uniques)
+                      if is_scalar_nan(cat) or cat is None]
+    nan_idx_cats = [idx for idx, cat in enumerate(cats)
+                    if is_scalar_nan(cat) or cat is None]
+
+    if len(nan_idx_cats) != 0:
+        nan_cats = cats[nan_idx_cats]
+        nan_counts = counts[nan_idx_sorted]
+
+        cats = np.delete(cats, nan_idx_cats)
+        counts = np.delete(counts, nan_idx_sorted)
+
+    idx = np.argsort(cats)
+    idx_2 = np.argsort(idx)
+    counts = counts[idx_2]
+
+    if len(nan_idx_cats) != 0:
+        cats = np.append(cats, nan_cats)
+        counts = np.insert(counts, nan_idx_cats, nan_counts)
+
+    return counts
+
+
+def _zero_counts(uniques, counts, cat_zero_count):
+    """Set added specified categories count to 0"""
+    for cat in cat_zero_count:
+        idx = np.where(uniques == cat)
+        if len(idx) != 0:
+            counts[idx[0]] = 0
+    return uniques, counts
 
 
 class MissingValues(NamedTuple):
@@ -123,7 +198,7 @@ def _map_to_integer(values, uniques):
     return np.array([table[v] for v in values])
 
 
-def _unique_python(values, *, return_inverse):
+def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
@@ -137,10 +212,18 @@ def _unique_python(values, *, return_inverse):
                        for t in set(type(v) for v in values))
         raise TypeError("Encoders require their input to be uniformly "
                         f"strings or numbers. Got {types}")
-
-    if return_inverse:
+    if return_inverse and not return_counts:
         return uniques, _map_to_integer(values, uniques)
-
+    if return_counts:
+        ctr_all = Counter(values)
+        ctr = {k: ctr_all[k] for k in uniques_set}
+        ctr = dict(sorted(ctr.items()))
+        if len(missing_values.to_list()) != 0:
+            ctr_missing = {k: ctr_all[k] for k in missing_values.to_list()}
+            ctr.update(ctr_missing)
+        uniques = np.array(list(ctr.keys()), dtype=values.dtype)
+        counts = np.array(list(ctr.values()), dtype=int)
+        return uniques, counts
     return uniques
 
 
