@@ -269,7 +269,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'feature_extraction',
     'isotonic',
     'manifold',
-    'mixture',
     'model_selection',
     'multiclass',
     'multioutput',
