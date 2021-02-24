@@ -4,6 +4,7 @@ name: Check Changelog
 # To bypass this check, label the PR with "No Changelog Needed".
 on:
   pull_request:
+    types: [opened, edited, labeled, unlabeled, synchronized]
 
 jobs:
   check:
