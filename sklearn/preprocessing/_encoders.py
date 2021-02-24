@@ -753,7 +753,7 @@ class OrdinalEncoder(_BaseEncoder):
                 if np.dtype(self.dtype).kind != 'f':
                     raise ValueError(
                         f"When unknown_value is np.nan, the dtype "
-                        "parameter should be "
+                        f"parameter should be "
                         f"a float dtype. Got {self.dtype}."
                     )
             elif not isinstance(self.unknown_value, numbers.Integral):
