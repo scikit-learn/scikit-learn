@@ -20,7 +20,7 @@ jobs:
       - name: Check the changelog
         run: |
           set -xe
-          changed_files=$(git diff --name-only origin/master)
+          changed_files=$(git diff --name-only origin/main)
           # Changelog should be updated only if tests have been modified
           if [[ ! "$changed_files" =~ tests ]]
           then
