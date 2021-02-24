@@ -17,7 +17,6 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 
 
 def test_n_samples_leaves_roots():
@@ -92,7 +91,8 @@ def test_n_clusters():
 
     # Test that a small number of clusters raises a warning.
     brc4 = Birch(threshold=10000.)
-    assert_warns(ConvergenceWarning, brc4.fit, X)
+    with pytest.warns(ConvergenceWarning):
+        brc4.fit(X)
 
 
 def test_sparse_X():
@@ -179,3 +179,15 @@ def test_birch_n_clusters_long_int():
     X, _ = make_blobs(random_state=0)
     n_clusters = np.int64(5)
     Birch(n_clusters=n_clusters).fit(X)
+
+
+# TODO: Remove in 1.2
+@pytest.mark.parametrize("attribute", ["fit_", "partial_fit_"])
+def test_birch_fit_attributes_deprecated(attribute):
+    """Test that fit_ and partial_fit_ attributes are deprecated."""
+    msg = f"{attribute} is deprecated in 1.0 and will be removed in 1.2"
+    X, y = make_blobs(n_samples=10)
+    brc = Birch().fit(X, y)
+
+    with pytest.warns(FutureWarning, match=msg):
+        getattr(brc, attribute)

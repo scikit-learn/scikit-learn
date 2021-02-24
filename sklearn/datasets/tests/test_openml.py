@@ -1,14 +1,16 @@
 """Test the openml loader.
 """
 import gzip
+import warnings
 import json
-import numpy as np
 import os
 import re
+from io import BytesIO
+
+import numpy as np
 import scipy.sparse
 import sklearn
 import pytest
-
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
 from sklearn.datasets._openml import (_open_openml_url,
@@ -95,7 +97,11 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     # Please note that cache=False is crucial, as the monkey patched files are
     # not consistent with reality
-    fetch_openml(name=data_name, cache=False, as_frame=False)
+    with warnings.catch_warnings():
+        # See discussion in PR #19373
+        # Catching UserWarnings about multiple versions of dataset
+        warnings.simplefilter("ignore", category=UserWarning)
+        fetch_openml(name=data_name, cache=False, as_frame=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
 
@@ -203,21 +209,26 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.json'))
 
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
+
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_download_data(url, has_gzip_header):
@@ -227,10 +238,12 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.arff'))
 
         if has_gzip_header and gzip_response:
-            fp = open(path, 'rb')
+            with open(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(path, 'rb')
+            with read_fn(path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_list(url, has_gzip_header):
@@ -247,10 +260,12 @@ def _monkey_patch_webbased_functions(context,
                             hdrs=None, fp=None)
 
         if has_gzip_header:
-            fp = open(json_file_path, 'rb')
+            with open(json_file_path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, True)
         else:
-            fp = read_fn(json_file_path, 'rb')
+            with read_fn(json_file_path, 'rb') as f:
+                fp = BytesIO(f.read())
             return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen(request):
@@ -513,12 +528,12 @@ def test_fetch_openml_as_frame_auto(monkeypatch):
 
     data_id = 61  # iris dataset version 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    data = fetch_openml(data_id=data_id, as_frame='auto')
+    data = fetch_openml(data_id=data_id, as_frame='auto', cache=False)
     assert isinstance(data.data, pd.DataFrame)
 
     data_id = 292  # Australian dataset version 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    data = fetch_openml(data_id=data_id, as_frame='auto')
+    data = fetch_openml(data_id=data_id, as_frame='auto', cache=False)
     assert isinstance(data.data, scipy.sparse.csr_matrix)
 
 
@@ -755,11 +770,6 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     # classification dataset with numeric only columns
     data_id = 61
     data_name = 'iris'
-    data_version = 1
-    target_column = 'class'
-    expected_observations = 150
-    expected_features = 4
-    expected_missing = 0
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_warns_message(
@@ -767,17 +777,9 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
         "Multiple active versions of the dataset matching the name"
         " iris exist. Versions may be fundamentally different, "
         "returning version 1.",
-        _fetch_dataset_from_openml,
-        **{'data_id': data_id, 'data_name': data_name,
-           'data_version': data_version,
-           'target_column': target_column,
-           'expected_observations': expected_observations,
-           'expected_features': expected_features,
-           'expected_missing': expected_missing,
-           'expect_sparse': False,
-           'expected_data_dtype': np.float64,
-           'expected_target_dtype': object,
-           'compare_default_target': True}
+        fetch_openml,
+        name=data_name,
+        as_frame=False
     )
 
 
@@ -1311,3 +1313,18 @@ def test_convert_arff_data_type():
     msg = r"arff\['data'\] must be a generator when converting to pd.DataFrame"
     with pytest.raises(ValueError, match=msg):
         _convert_arff_data_dataframe(arff, ['a'], {})
+
+
+def test_missing_values_pandas(monkeypatch):
+    """check that missing values in categories are compatible with pandas
+    categorical"""
+    pytest.importorskip('pandas')
+
+    data_id = 42585
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    penguins = fetch_openml(data_id=data_id, cache=False, as_frame=True)
+
+    cat_dtype = penguins.data.dtypes['sex']
+    # there are nans in the categorical
+    assert penguins.data['sex'].isna().any()
+    assert_array_equal(cat_dtype.categories, ['FEMALE', 'MALE', '_'])

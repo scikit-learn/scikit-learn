@@ -19,7 +19,6 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
-from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
@@ -320,12 +319,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 "'passthrough', or estimator. '%s' was passed instead" %
                 self.remainder)
 
-        # Make it possible to check for reordered named columns on transform
-        self._has_str_cols = any(_determine_key_type(cols) == 'str'
-                                 for cols in self._columns)
-        if hasattr(X, 'columns'):
-            self._df_columns = X.columns
-
         self._n_features = X.shape[1]
         cols = []
         for columns in self._columns:
@@ -362,12 +355,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     hasattr(column, '__len__') and not len(column)):
                 continue
             if trans == 'passthrough':
-                if hasattr(self, '_df_columns'):
+                if self._feature_names_in is not None:
                     if ((not isinstance(column, slice))
                             and all(isinstance(col, str) for col in column)):
                         feature_names.extend(column)
                     else:
-                        feature_names.extend(self._df_columns[column])
+                        feature_names.extend(self._feature_names_in[column])
                 else:
                     indices = np.arange(self._n_features)
                     feature_names.extend(['x%d' % i for i in indices[column]])
@@ -441,7 +434,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     message_clsname='ColumnTransformer',
                     message=self._log_message(name, idx, len(transformers)))
                 for idx, (name, trans, column, weight) in enumerate(
-                        self._iter(fitted=fitted, replace_strings=True), 1))
+                    transformers, 1))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN) from e
@@ -606,9 +599,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             transformers = self.transformers
         elif hasattr(self, "_remainder"):
             remainder_columns = self._remainder[2]
-            if hasattr(self, '_df_columns'):
+            if self._feature_names_in is not None:
                 remainder_columns = (
-                    self._df_columns[remainder_columns].tolist()
+                    self._feature_names_in[remainder_columns].tolist()
                 )
             transformers = chain(self.transformers,
                                  [('remainder', self.remainder,
@@ -816,6 +809,14 @@ class make_column_selector:
         self.dtype_exclude = dtype_exclude
 
     def __call__(self, df):
+        """Callable for column selection to be used by a
+        :class:`ColumnTransformer`.
+
+        Parameters
+        ----------
+        df : dataframe of shape (n_features, n_samples)
+            DataFrame to select columns from.
+        """
         if not hasattr(df, 'iloc'):
             raise ValueError("make_column_selector can only be applied to "
                              "pandas dataframes")

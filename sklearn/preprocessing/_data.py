@@ -22,8 +22,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.extmath import row_norms
-from ..utils.extmath import (_incremental_mean_and_var,
-                             _incremental_weighted_mean_and_var)
+from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -245,7 +244,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
-    clip: bool, default=False
+    clip : bool, default=False
         Set to True to clip transformed values of held-out data to
         provided `feature range`.
 
@@ -838,16 +837,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.var_ = None
                 self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
 
-            elif sample_weight is not None:
-                self.mean_, self.var_, self.n_samples_seen_ = \
-                    _incremental_weighted_mean_and_var(X, sample_weight,
-                                                       self.mean_,
-                                                       self.var_,
-                                                       self.n_samples_seen_)
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,
-                                              self.n_samples_seen_)
+                                              self.n_samples_seen_,
+                                              sample_weight=sample_weight)
 
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
@@ -1620,6 +1614,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         features is computed by iterating over all suitably sized combinations
         of input features.
 
+    See Also
+    --------
+    SplineTransformer : Transformer that generates univariate B-spline bases
+        for features
+
     Notes
     -----
     Be aware that the number of features in the output array scales
@@ -1711,7 +1710,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Transform data to polynomial features
+        """Transform data to polynomial features.
 
         Parameters
         ----------

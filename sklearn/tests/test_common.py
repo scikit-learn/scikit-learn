@@ -266,23 +266,15 @@ def test_search_cv(estimator, check, request):
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
     'compose',
-    'covariance',
-    'cross_decomposition',
-    'discriminant_analysis',
-    'ensemble',
     'feature_extraction',
-    'feature_selection',
     'isotonic',
     'manifold',
     'mixture',
     'model_selection',
     'multiclass',
     'multioutput',
-    'naive_bayes',
-    'neighbors',
     'pipeline',
     'random_projection',
-    'semi_supervised',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
