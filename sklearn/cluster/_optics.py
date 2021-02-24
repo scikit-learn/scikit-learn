@@ -14,6 +14,8 @@ License: BSD 3 clause
 import warnings
 import numpy as np
 
+from ..exceptions import DataConversionWarning
+from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
@@ -46,7 +48,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     ----------
     min_samples : int > 1 or float between 0 and 1, default=5
         The number of samples in a neighborhood for a point to be considered as
-        a core point. Also, up and down steep regions can't have more then
+        a core point. Also, up and down steep regions can't have more than
         ``min_samples`` consecutive non-steep points. Expressed as an absolute
         number or a fraction of the number of samples (rounded to be at least
         2).
@@ -243,7 +245,15 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : instance of OPTICS
             The instance.
         """
-        X = self._validate_data(X, dtype=float)
+
+        dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
+        if dtype == bool and X.dtype != bool:
+            msg = (f"Data will be converted to boolean for"
+                   f" metric {self.metric}, to avoid this warning,"
+                   f" you may convert the data prior to calling fit.")
+            warnings.warn(msg, DataConversionWarning)
+
+        X = self._validate_data(X, dtype=dtype)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"

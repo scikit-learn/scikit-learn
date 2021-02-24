@@ -75,6 +75,14 @@ def check_as_frame(bunch, dataset_func,
     if expected_target_dtype is not None:
         assert np.all(frame_bunch.target.dtypes == expected_target_dtype)
 
+    # Test for return_X_y and as_frame=True
+    frame_X, frame_y = dataset_func(as_frame=True, return_X_y=True)
+    assert isinstance(frame_X, pd.DataFrame)
+    if frame_y.ndim > 1:
+        assert isinstance(frame_X, pd.DataFrame)
+    else:
+        assert isinstance(frame_y, pd.Series)
+
 
 def _skip_network_tests():
     return os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '1'

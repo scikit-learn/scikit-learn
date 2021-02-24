@@ -41,6 +41,8 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
+from ._base import _check_pos_label_consistency
+
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
@@ -253,7 +255,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         Confusion matrix whose i-th row and j-th
         column entry indicates the number of
         samples with true label being i-th class
-        and prediced label being j-th class.
+        and predicted label being j-th class.
 
     See Also
     --------
@@ -2437,9 +2439,14 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
         Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class.
-        Defaults to the greater label unless y_true is all 0 or all -1
-        in which case pos_label defaults to 1.
+        Label of the positive class. `pos_label` will be infered in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitely specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
 
     Returns
     -------
@@ -2473,25 +2480,27 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
-    labels = np.unique(y_true)
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Labels in y_true: %s." % labels)
+    y_type = type_of_target(y_true)
+    if y_type != "binary":
+        raise ValueError(
+            f"Only binary classification is supported. The type of the target "
+            f"is {y_type}."
+        )
+
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
-    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
-    # otherwise pos_label is set to the greater label
-    # (different from precision_recall_curve/roc_curve,
-    # the purpose is to keep backward compatibility).
-    if pos_label is None:
-        if (np.array_equal(labels, [0]) or
-                np.array_equal(labels, [-1])):
-            pos_label = 1
+    try:
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ('O', 'U', 'S'):
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
+            pos_label = classes[-1]
         else:
-            pos_label = y_true.max()
+            raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)

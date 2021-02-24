@@ -480,7 +480,7 @@ Example of Leave-2-Out on a dataset with 4 samples::
   [0 1] [2 3]
 
 
-.. _shuffle_split:
+.. _ShuffleSplit:
 
 Random permutations cross-validation a.k.a. Shuffle & Split
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -517,6 +517,8 @@ Here is a visualization of the cross-validation behavior. Note that
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
+
+.. _stratification:
 
 Cross-validation iterators with stratification based on class labels.
 ---------------------------------------------------------------------
@@ -863,6 +865,9 @@ to shuffle the data indices before splitting them. Note that:
   iterated. However, ``GridSearchCV`` will use the same shuffling for each set
   of parameters validated by a single call to its ``fit`` method.
 * To get identical results for each split, set ``random_state`` to an integer.
+
+For more details on how to control the randomness of cv splitters and avoid
+common pitfalls, see :ref:`randomness`.
 
 Cross validation and model selection
 ====================================

@@ -398,7 +398,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
         """
         if self.criterion == 'mae':
-            # TODO: This should raise an error from 0.26
+            # TODO: This should raise an error from 1.1
             self._warn_mae_for_criterion()
 
         # if not warmstart - clear the estimator state
@@ -812,8 +812,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         .. versionadded:: 0.18
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
-            0.26. Use `criterion='friedman_mse'` or `'mse'` instead, as trees
-            should use a least-square criterion in Gradient Boosting.
+            1.1 (renaming of 0.26). Use `criterion='friedman_mse'` or `'mse'`
+            instead, as trees should use a least-square criterion in
+            Gradient Boosting.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -878,7 +879,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1112,9 +1114,9 @@ shape (n_estimators, ``loss_.K``)
         return y
 
     def _warn_mae_for_criterion(self):
-        # TODO: This should raise an error from 0.26
+        # TODO: This should raise an error from 1.1
         warnings.warn("criterion='mae' was deprecated in version 0.24 and "
-                      "will be removed in version 0.26. Use "
+                      "will be removed in version 1.1 (renaming of 0.26). Use "
                       "criterion='friedman_mse' or 'mse' instead, as trees "
                       "should use a least-square criterion in Gradient "
                       "Boosting.", FutureWarning)
@@ -1339,8 +1341,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         .. versionadded:: 0.18
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
-            0.26. The correct way of minimizing the absolute error is to use
-            `loss='lad'` instead.
+            1.1 (renaming of 0.26). The correct way of minimizing the absolute
+            error is to use `loss='lad'` instead.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1405,7 +1407,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1535,7 +1538,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. deprecated:: 0.24
             Attribute ``n_classes_`` was deprecated in version 0.24 and
-            will be removed in 0.26.
+            will be removed in 1.1 (renaming of 0.26).
 
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
@@ -1623,11 +1626,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         return y
 
     def _warn_mae_for_criterion(self):
-        # TODO: This should raise an error from 0.26
+        # TODO: This should raise an error from 1.1
         warnings.warn("criterion='mae' was deprecated in version 0.24 and "
-                      "will be removed in version 0.26. The correct way of "
-                      "minimizing the absolute error is to use loss='lad' "
-                      "instead.", FutureWarning)
+                      "will be removed in version 1.1 (renaming of 0.26). The "
+                      "correct way of minimizing the absolute error is to use "
+                      " loss='lad' instead.", FutureWarning)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1692,10 +1695,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
 
-    # FIXME: to be removed in 0.26
+    # FIXME: to be removed in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
-                "in version 0.24 and will be removed in 0.26.")
+                "in version 0.24 and will be removed in 1.1 "
+                "(renaming of 0.26).")
     @property
     def n_classes_(self):
         try:
