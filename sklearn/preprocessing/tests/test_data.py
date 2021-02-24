@@ -427,10 +427,11 @@ def test_standard_scaler_constant_features(
         scaler, add_sample_weight, sparse_constructor, dtype, constant):
     if (isinstance(scaler, StandardScaler)
             and constant > 1
-            and sparse_constructor is not None
+            and sparse_constructor is not np.asarray
             and add_sample_weight):
+        # https://github.com/scikit-learn/scikit-learn/issues/19546
         pytest.xfail("Computation of weighted variance is numerically unstable"
-                     " for sparse data")
+                     " for sparse data. See: #19546.")
 
     if isinstance(scaler, RobustScaler) and add_sample_weight:
         pytest.skip(f"{scaler.__class__.__name__} does not yet support"
