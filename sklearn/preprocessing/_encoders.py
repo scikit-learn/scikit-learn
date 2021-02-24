@@ -778,8 +778,6 @@ class OrdinalEncoder(_BaseEncoder):
 
         # stories the missing indices per category
         self._missing_indices = {}
-
-        # Check for None values in categories
         for cat_idx, categories_for_idx in enumerate(self.categories_):
             for i, cat in enumerate(categories_for_idx):
                 if is_scalar_nan(cat):
