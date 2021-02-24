@@ -776,7 +776,7 @@ class OrdinalEncoder(_BaseEncoder):
                                      f"values already used for encoding the "
                                      f"seen categories.")
 
-        # stories the missing indices per category
+        # stores the missing indices per category
         self._missing_indices = {}
         for cat_idx, categories_for_idx in enumerate(self.categories_):
             for i, cat in enumerate(categories_for_idx):
