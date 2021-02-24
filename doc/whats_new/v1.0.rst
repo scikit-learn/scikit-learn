@@ -123,6 +123,12 @@ Changelog
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
+  missing values by default. :pr:`19069` by `Thomas Fan`_.
+
 - |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
   is deprecated and will be removed in 1.2.
   Motivation for this deprecation: ``normalize`` parameter did not take any
