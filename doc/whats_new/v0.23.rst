@@ -721,10 +721,6 @@ Changelog
   `probB_`, are now deprecated as they were not useful. :pr:`15558` by
   `Thomas Fan`_.
 
-- |Feature| Added the :class:`svm.SVDD` class for novelty detection based on
-  soft minimal volume hypersphere around the sample data.
-  :user:`Ivan Nazarov <ivannz>`.
-
 :mod:`sklearn.tree`
 ...................
 

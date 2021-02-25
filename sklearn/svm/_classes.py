@@ -1837,7 +1837,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     Read more in the :ref:`User Guide <svm_outlier_detection>`.
 
-    ..versionadded: 0.23
+    ..versionadded: 1.0
 
     Parameters
     ----------
