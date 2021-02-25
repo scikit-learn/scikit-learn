@@ -9,7 +9,6 @@ is too big to use in unit-testing.
 from functools import partial
 import pytest
 
-from sklearn.datasets import fetch_kddcup99
 from sklearn.datasets.tests.test_common import check_as_frame
 from sklearn.datasets.tests.test_common import check_pandas_dependency_message
 from sklearn.datasets.tests.test_common import check_return_X_y
@@ -58,4 +57,4 @@ def test_fetch_kddcup99_shuffle(fetch_kddcup99_fxt):
 
 
 def test_pandas_dependency_message(fetch_kddcup99_fxt, hide_available_pandas):
-    check_pandas_dependency_message(fetch_kddcup99)
+    check_pandas_dependency_message(fetch_kddcup99_fxt)

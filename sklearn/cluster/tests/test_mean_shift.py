@@ -11,7 +11,6 @@ from scipy import sparse
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_allclose
 
 from sklearn.cluster import MeanShift
@@ -73,7 +72,8 @@ def test_estimate_bandwidth_with_sparse_matrix():
     # Test estimate_bandwidth with sparse matrix
     X = sparse.lil_matrix((1000, 1000))
     msg = "A sparse matrix was passed, but dense data is required."
-    assert_raise_message(TypeError, msg, estimate_bandwidth, X)
+    with pytest.raises(TypeError, match=msg):
+        estimate_bandwidth(X)
 
 
 def test_parallel():
@@ -103,7 +103,8 @@ def test_meanshift_all_orphans():
     # init away from the data, crash with a sensible warning
     ms = MeanShift(bandwidth=0.1, seeds=[[-9, -9], [-10, -10]])
     msg = "No point was within bandwidth=0.1"
-    assert_raise_message(ValueError, msg, ms.fit, X,)
+    with pytest.raises(ValueError, match=msg):
+        ms.fit(X,)
 
 
 def test_unfitted():

@@ -29,8 +29,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import (assert_almost_equal,
-                                    assert_warns_message, assert_raise_message,
-                                    assert_no_warnings,
+                                    assert_raise_message,
                                     fails_if_pypy,
                                     assert_allclose_dense_sparse,
                                     skip_if_32bit)
@@ -341,6 +340,55 @@ def test_fit_countvectorizer_twice():
     assert X1.shape[1] != X2.shape[1]
 
 
+def test_countvectorizer_custom_token_pattern():
+    """Check `get_feature_names()` when a custom token pattern is passed.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12971
+    """
+    corpus = [
+        'This is the 1st document in my corpus.',
+        'This document is the 2nd sample.',
+        'And this is the 3rd one.',
+        'Is this the 4th document?',
+    ]
+    token_pattern = r"[0-9]{1,3}(?:st|nd|rd|th)\s\b(\w{2,})\b"
+    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    vectorizer.fit_transform(corpus)
+    expected = ['document', 'one', 'sample']
+    assert vectorizer.get_feature_names() == expected
+
+
+def test_countvectorizer_custom_token_pattern_with_several_group():
+    """Check that we raise an error if token pattern capture several groups.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12971
+    """
+    corpus = [
+        'This is the 1st document in my corpus.',
+        'This document is the 2nd sample.',
+        'And this is the 3rd one.',
+        'Is this the 4th document?',
+    ]
+
+    token_pattern = r"([0-9]{1,3}(?:st|nd|rd|th))\s\b(\w{2,})\b"
+    err_msg = "More than 1 capturing group in token pattern"
+    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    with pytest.raises(ValueError, match=err_msg):
+        vectorizer.fit(corpus)
+
+
+def test_countvectorizer_uppercase_in_vocab():
+    vocabulary = ['Sample', 'Upper', 'Case' 'Vocabulary']
+    message = ("Upper case characters found in"
+               " vocabulary while 'lowercase'"
+               " is True. These entries will not"
+               " be matched with any documents")
+
+    vectorizer = CountVectorizer(lowercase=True, vocabulary=vocabulary)
+    with pytest.warns(UserWarning, match=message):
+        vectorizer.fit_transform(vocabulary)
+
+
 def test_tf_idf_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],
@@ -380,8 +428,8 @@ def test_tfidf_no_smoothing():
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
     in_warning_message = 'divide by zero'
-    assert_warns_message(RuntimeWarning, in_warning_message,
-                         tr.fit_transform, X).toarray()
+    with pytest.warns(RuntimeWarning, match=in_warning_message):
+        tr.fit_transform(X).toarray()
 
 
 def test_sublinear_tf():
@@ -736,17 +784,29 @@ def test_vectorizer_inverse_transform(Vectorizer):
     vectorizer = Vectorizer()
     transformed_data = vectorizer.fit_transform(data)
     inversed_data = vectorizer.inverse_transform(transformed_data)
+    assert isinstance(inversed_data, list)
+
     analyze = vectorizer.build_analyzer()
     for doc, inversed_terms in zip(data, inversed_data):
         terms = np.sort(np.unique(analyze(doc)))
         inversed_terms = np.sort(np.unique(inversed_terms))
         assert_array_equal(terms, inversed_terms)
 
-    # Test that inverse_transform also works with numpy arrays
-    transformed_data = transformed_data.toarray()
-    inversed_data2 = vectorizer.inverse_transform(transformed_data)
+    assert sparse.issparse(transformed_data)
+    assert transformed_data.format == "csr"
+
+    # Test that inverse_transform also works with numpy arrays and
+    # scipy
+    transformed_data2 = transformed_data.toarray()
+    inversed_data2 = vectorizer.inverse_transform(transformed_data2)
     for terms, terms2 in zip(inversed_data, inversed_data2):
         assert_array_equal(np.sort(terms), np.sort(terms2))
+
+    # Check that inverse_transform also works on non CSR sparse data:
+    transformed_data3 = transformed_data.tocsc()
+    inversed_data3 = vectorizer.inverse_transform(transformed_data3)
+    for terms, terms3 in zip(inversed_data, inversed_data3):
+        assert_array_equal(np.sort(terms), np.sort(terms3))
 
 
 def test_count_vectorizer_pipeline_grid_selection():
@@ -1152,27 +1212,29 @@ def _check_stop_words_consistency(estimator):
 
 @fails_if_pypy
 def test_vectorizer_stop_words_inconsistent():
-    lstr = "['and', 'll', 've']"
+    lstr = r"\['and', 'll', 've'\]"
     message = ('Your stop_words may be inconsistent with your '
                'preprocessing. Tokenizing the stop words generated '
                'tokens %s not in stop_words.' % lstr)
     for vec in [CountVectorizer(),
                 TfidfVectorizer(), HashingVectorizer()]:
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
-        assert_warns_message(UserWarning, message, vec.fit_transform,
-                             ['hello world'])
+        with pytest.warns(UserWarning, match=message):
+            vec.fit_transform(['hello world'])
         # reset stop word validation
         del vec._stop_words_id
         assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
-    assert_no_warnings(vec.fit_transform, ['hello world'])
+    with pytest.warns(None) as record:
+        vec.fit_transform(['hello world'])
+    assert not len(record)
     assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment
     vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
-    assert_warns_message(UserWarning, message, vec.fit_transform,
-                         ['hello world'])
+    with pytest.warns(UserWarning, match=message):
+        vec.fit_transform(['hello world'])
 
 
 @skip_if_32bit
@@ -1348,3 +1410,11 @@ def test_tie_breaking_sample_order_invariance():
     vocab1 = vec.fit(['hello', 'world']).vocabulary_
     vocab2 = vec.fit(['world', 'hello']).vocabulary_
     assert vocab1 == vocab2
+
+
+@fails_if_pypy
+def test_nonnegative_hashing_vectorizer_result_indices():
+    # add test for pr 19035
+    hashing = HashingVectorizer(n_features=1000000, ngram_range=(2, 3))
+    indices = hashing.transform(['22pcs efuture']).indices
+    assert indices[0] >= 0

@@ -35,6 +35,8 @@ from ._label import MultiLabelBinarizer
 
 from ._discretization import KBinsDiscretizer
 
+from ._polynomial import SplineTransformer
+
 
 __all__ = [
     'Binarizer',
@@ -52,6 +54,7 @@ __all__ = [
     'OrdinalEncoder',
     'PowerTransformer',
     'RobustScaler',
+    'SplineTransformer',
     'StandardScaler',
     'add_dummy_feature',
     'PolynomialFeatures',
