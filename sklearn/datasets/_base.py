@@ -12,7 +12,7 @@ import os
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
-from os.path import dirname, exists, expanduser, isdir, join, splitext
+from os.path import dirname, expanduser, isdir, join, splitext
 
 from ..utils import Bunch
 from ..utils import check_random_state
