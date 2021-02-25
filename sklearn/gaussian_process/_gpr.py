@@ -15,7 +15,6 @@ from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
-from ..utils.validation import check_array
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _deprecate_positional_args
 
@@ -45,8 +44,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
     ----------
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
-        the kernel's hyperparameters are optimized during fitting.
+        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed"
+        * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
+        the kernel hyperparameters are optimized during fitting unless the
+        bounds are marked as "fixed".
 
     alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
@@ -318,9 +319,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 "returning full covariance.")
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = check_array(X, ensure_2d=True, dtype="numeric")
+            X = self._validate_data(X, ensure_2d=True, dtype="numeric",
+                                    reset=False)
         else:
-            X = check_array(X, ensure_2d=False, dtype=None)
+            X = self._validate_data(X, ensure_2d=False, dtype=None,
+                                    reset=False)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:

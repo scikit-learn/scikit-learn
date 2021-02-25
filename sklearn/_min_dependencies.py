@@ -6,7 +6,7 @@ import argparse
 # numpy scipy and cython should by in sync with pyproject.toml
 if platform.python_implementation() == 'PyPy':
     SCIPY_MIN_VERSION = '1.1.0'
-    NUMPY_MIN_VERSION = '1.14.0'
+    NUMPY_MIN_VERSION = '1.19.0'
 else:
     SCIPY_MIN_VERSION = '0.19.1'
     NUMPY_MIN_VERSION = '1.13.3'
@@ -40,6 +40,7 @@ dependent_packages = {
     'sphinx-gallery': ('0.7.0', 'docs'),
     'numpydoc': ('1.0.0', 'docs'),
     'Pillow': ('7.1.2', 'docs'),
+    'sphinx-prompt': ('1.3.0', 'docs'),
 }
 
 

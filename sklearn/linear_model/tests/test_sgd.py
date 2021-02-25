@@ -8,7 +8,6 @@ import joblib
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
@@ -169,22 +168,24 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
                                    SGDRegressor, SparseSGDRegressor])
 def test_sgd_bad_alpha(klass):
     # Check whether expected ValueError on bad alpha
-    assert_raises(ValueError, klass, alpha=-.1)
+    with pytest.raises(ValueError):
+        klass(alpha=-.1)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
                                    SGDRegressor, SparseSGDRegressor])
 def test_sgd_bad_penalty(klass):
     # Check whether expected ValueError on bad penalty
-    assert_raises(ValueError, klass, penalty='foobar',
-                  l1_ratio=0.85)
+    with pytest.raises(ValueError):
+        klass(penalty='foobar', l1_ratio=0.85)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
                                    SGDRegressor, SparseSGDRegressor])
 def test_sgd_bad_loss(klass):
     # Check whether expected ValueError on bad loss
-    assert_raises(ValueError, klass, loss="foobar")
+    with pytest.raises(ValueError):
+        klass(loss="foobar")
 
 
 def _test_warm_start(klass, X, Y, lr):
@@ -231,7 +232,8 @@ def test_input_format(klass):
     Y_ = np.array(Y)[:, np.newaxis]
 
     Y_ = np.c_[Y_, Y_]
-    assert_raises(ValueError, clf.fit, X, Y_)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y_)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -269,7 +271,7 @@ def test_plain_has_no_average_attr(klass):
     assert not hasattr(clf, '_standard_coef')
 
 
-# TODO: remove in 0.25
+# TODO: remove in 1.0
 @pytest.mark.parametrize('klass', [SGDClassifier, SGDRegressor])
 def test_sgd_deprecated_attr(klass):
     est = klass(average=True, eta0=.01)
@@ -334,8 +336,8 @@ def test_late_onset_averaging_reached(klass):
 def test_sgd_bad_alpha_for_optimal_learning_rate(klass):
     # Check whether expected ValueError on bad alpha, i.e. 0
     # since alpha is used to compute the optimal learning rate
-    assert_raises(ValueError, klass,
-                  alpha=0, learning_rate="optimal")
+    with pytest.raises(ValueError):
+        klass(alpha=0, learning_rate="optimal")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -438,80 +440,88 @@ def test_sgd_clf(klass):
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_bad_l1_ratio(klass):
     # Check whether expected ValueError on bad l1_ratio
-    assert_raises(ValueError, klass, l1_ratio=1.1)
+    with pytest.raises(ValueError):
+        klass(l1_ratio=1.1)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_bad_learning_rate_schedule(klass):
     # Check whether expected ValueError on bad learning_rate
-    assert_raises(ValueError, klass, learning_rate="<unknown>")
+    with pytest.raises(ValueError):
+        klass(learning_rate="<unknown>")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_bad_eta0(klass):
     # Check whether expected ValueError on bad eta0
-    assert_raises(ValueError, klass, eta0=0,
-                  learning_rate="constant")
+    with pytest.raises(ValueError):
+        klass(eta0=0, learning_rate="constant")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_max_iter_param(klass):
     # Test parameter validity check
-    assert_raises(ValueError, klass, max_iter=-10000)
+    with pytest.raises(ValueError):
+        klass(max_iter=-10000)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_shuffle_param(klass):
     # Test parameter validity check
-    assert_raises(ValueError, klass, shuffle="false")
+    with pytest.raises(ValueError):
+        klass(shuffle="false")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_early_stopping_param(klass):
     # Test parameter validity check
-    assert_raises(ValueError, klass, early_stopping="false")
+    with pytest.raises(ValueError):
+        klass(early_stopping="false")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_validation_fraction(klass):
     # Test parameter validity check
-    assert_raises(ValueError, klass, validation_fraction=-.1)
+    with pytest.raises(ValueError):
+        klass(validation_fraction=-.1)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_n_iter_no_change(klass):
     # Test parameter validity check
-    assert_raises(ValueError, klass, n_iter_no_change=0)
+    with pytest.raises(ValueError):
+        klass(n_iter_no_change=0)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_argument_coef(klass):
     # Checks coef_init not allowed as model argument (only fit)
     # Provided coef_ does not match dataset
-    assert_raises(TypeError, klass, coef_init=np.zeros((3,)))
+    with pytest.raises(TypeError):
+        klass(coef_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_provide_coef(klass):
     # Checks coef_init shape for the warm starts
     # Provided coef_ does not match dataset.
-    assert_raises(ValueError, klass().fit,
-                  X, Y, coef_init=np.zeros((3,)))
+    with pytest.raises(ValueError):
+        klass().fit(X, Y, coef_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_set_intercept(klass):
     # Checks intercept_ shape for the warm starts
     # Provided intercept_ does not match dataset.
-    assert_raises(ValueError, klass().fit,
-                  X, Y, intercept_init=np.zeros((3,)))
+    with pytest.raises(ValueError):
+        klass().fit(X, Y, intercept_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_early_stopping_with_partial_fit(klass):
     # Test parameter validity check
-    assert_raises(ValueError,
-                  klass(early_stopping=True).partial_fit, X, Y)
+    with pytest.raises(ValueError):
+        klass(early_stopping=True).partial_fit(X, Y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -565,7 +575,8 @@ def test_set_intercept_to_intercept(klass):
 def test_sgd_at_least_two_labels(klass):
     # Target must have at least two labels
     clf = klass(alpha=0.01, max_iter=20)
-    assert_raises(ValueError, clf.fit, X2, np.ones(9))
+    with pytest.raises(ValueError):
+        clf.fit(X2, np.ones(9))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -650,15 +661,16 @@ def test_set_coef_multiclass(klass):
     # problems
     # Provided coef_ does not match dataset
     clf = klass()
-    assert_raises(ValueError, clf.fit, X2, Y2, coef_init=np.zeros((2, 2)))
+    with pytest.raises(ValueError):
+        clf.fit(X2, Y2, coef_init=np.zeros((2, 2)))
 
     # Provided coef_ does match dataset
     clf = klass().fit(X2, Y2, coef_init=np.zeros((3, 2)))
 
     # Provided intercept_ does not match dataset
     clf = klass()
-    assert_raises(ValueError, clf.fit, X2, Y2,
-                  intercept_init=np.zeros((1,)))
+    with pytest.raises(ValueError):
+        clf.fit(X2, Y2, intercept_init=np.zeros((1,)))
 
     # Provided intercept_ does match dataset.
     clf = klass().fit(X2, Y2, intercept_init=np.zeros((3,)))
@@ -834,14 +846,16 @@ def test_equal_class_weight(klass):
 def test_wrong_class_weight_label(klass):
     # ValueError due to not existing class label.
     clf = klass(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
-    assert_raises(ValueError, clf.fit, X, Y)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_wrong_class_weight_format(klass):
     # ValueError due to wrong class_weight argument type.
     clf = klass(alpha=0.1, max_iter=1000, class_weight=[0.5])
-    assert_raises(ValueError, clf.fit, X, Y)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -936,14 +950,16 @@ def test_wrong_sample_weights(klass):
     # Test if ValueError is raised if sample_weight has wrong shape
     clf = klass(alpha=0.1, max_iter=1000, fit_intercept=False)
     # provided sample_weight too long
-    assert_raises(ValueError, clf.fit, X, Y, sample_weight=np.arange(7))
+    with pytest.raises(ValueError):
+        clf.fit(X, Y, sample_weight=np.arange(7))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_partial_fit_exception(klass):
     clf = klass(alpha=0.01)
     # classes was not specified
-    assert_raises(ValueError, clf.partial_fit, X3, Y3)
+    with pytest.raises(ValueError):
+        clf.partial_fit(X3, Y3)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -1434,118 +1450,124 @@ def test_tol_parameter():
     assert model_3.n_iter_ == 3
 
 
-def _test_gradient_common(loss_function, cases):
-    # Test gradient of different loss functions
+def _test_loss_common(loss_function, cases):
+    # Test the different loss functions
     # cases is a list of (p, y, expected)
-    for p, y, expected in cases:
-        assert_almost_equal(loss_function.py_dloss(p, y), expected)
+    for p, y, expected_loss, expected_dloss in cases:
+        assert_almost_equal(loss_function.py_loss(p, y), expected_loss)
+        assert_almost_equal(loss_function.py_dloss(p, y), expected_dloss)
 
 
-def test_gradient_hinge():
+def test_loss_hinge():
     # Test Hinge (hinge / perceptron)
     # hinge
     loss = sgd_fast.Hinge(1.0)
     cases = [
-        # (p, y, expected)
-        (1.1, 1.0, 0.0), (-2.0, -1.0, 0.0),
-        (1.0, 1.0, -1.0), (-1.0, -1.0, 1.0), (0.5, 1.0, -1.0),
-        (2.0, -1.0, 1.0), (-0.5, -1.0, 1.0), (0.0, 1.0, -1.0)
+        # (p, y, expected_loss, expected_dloss)
+        (1.1, 1.0, 0.0, 0.0), (-2.0, -1.0, 0.0, 0.0),
+        (1.0, 1.0, 0.0, -1.0), (-1.0, -1.0, 0.0, 1.0), (0.5, 1.0, 0.5, -1.0),
+        (2.0, -1.0, 3.0, 1.0), (-0.5, -1.0, 0.5, 1.0), (0.0, 1.0, 1, -1.0)
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
 
     # perceptron
     loss = sgd_fast.Hinge(0.0)
     cases = [
-        # (p, y, expected)
-        (1.0, 1.0, 0.0), (-0.1, -1.0, 0.0),
-        (0.0, 1.0, -1.0), (0.0, -1.0, 1.0), (0.5, -1.0, 1.0),
-        (2.0, -1.0, 1.0), (-0.5, 1.0, -1.0), (-1.0, 1.0, -1.0),
+        # (p, y, expected_loss, expected_dloss)
+        (1.0, 1.0, 0.0, 0.0), (-0.1, -1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0, -1.0), (0.0, -1.0, 0.0, 1.0), (0.5, -1.0, 0.5, 1.0),
+        (2.0, -1.0, 2.0, 1.0), (-0.5, 1.0, 0.5, -1.0), (-1.0, 1.0, 1.0, -1.0),
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
 
 
 def test_gradient_squared_hinge():
     # Test SquaredHinge
     loss = sgd_fast.SquaredHinge(1.0)
     cases = [
-        # (p, y, expected)
-        (1.0, 1.0, 0.0), (-2.0, -1.0, 0.0), (1.0, -1.0, 4.0),
-        (-1.0, 1.0, -4.0), (0.5, 1.0, -1.0), (0.5, -1.0, 3.0)
+        # (p, y, expected_loss, expected_dloss)
+        (1.0, 1.0, 0.0, 0.0), (-2.0, -1.0, 0.0, 0.0), (1.0, -1.0, 4.0, 4.0),
+        (-1.0, 1.0, 4.0, -4.0), (0.5, 1.0, 0.25, -1.0), (0.5, -1.0, 2.25, 3.0)
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
 
 
-def test_gradient_log():
+def test_loss_log():
     # Test Log (logistic loss)
     loss = sgd_fast.Log()
     cases = [
-        # (p, y, expected)
-        (1.0, 1.0, -1.0 / (np.exp(1.0) + 1.0)),
-        (1.0, -1.0, 1.0 / (np.exp(-1.0) + 1.0)),
-        (-1.0, -1.0, 1.0 / (np.exp(1.0) + 1.0)),
-        (-1.0, 1.0, -1.0 / (np.exp(-1.0) + 1.0)),
-        (0.0, 1.0, -0.5), (0.0, -1.0, 0.5),
-        (17.9, -1.0, 1.0), (-17.9, 1.0, -1.0),
+        # (p, y, expected_loss, expected_dloss)
+        (1.0, 1.0, np.log(1.0 + np.exp(-1.0)), -1.0 / (np.exp(1.0) + 1.0)),
+        (1.0, -1.0, np.log(1.0 + np.exp(1.0)), 1.0 / (np.exp(-1.0) + 1.0)),
+        (-1.0, -1.0, np.log(1.0 + np.exp(-1.0)), 1.0 / (np.exp(1.0) + 1.0)),
+        (-1.0, 1.0, np.log(1.0 + np.exp(1.0)), -1.0 / (np.exp(-1.0) + 1.0)),
+        (0.0, 1.0, np.log(2), -0.5), (0.0, -1.0, np.log(2), 0.5),
+        (17.9, -1.0, 17.9, 1.0), (-17.9, 1.0, 17.9, -1.0),
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
     assert_almost_equal(loss.py_dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
+    assert_almost_equal(loss.py_loss(18.1, 1.0), np.exp(-18.1), 16)
     assert_almost_equal(loss.py_dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
+    assert_almost_equal(loss.py_loss(-18.1, 1.0), 18.1, 16)
 
 
-def test_gradient_squared_loss():
+def test_loss_squared_loss():
     # Test SquaredLoss
     loss = sgd_fast.SquaredLoss()
     cases = [
-        # (p, y, expected)
-        (0.0, 0.0, 0.0), (1.0, 1.0, 0.0), (1.0, 0.0, 1.0),
-        (0.5, -1.0, 1.5), (-2.5, 2.0, -4.5)
+        # (p, y, expected_loss, expected_dloss)
+        (0.0, 0.0, 0.0, 0.0), (1.0, 1.0, 0.0, 0.0), (1.0, 0.0, 0.5, 1.0),
+        (0.5, -1.0, 1.125, 1.5), (-2.5, 2.0, 10.125, -4.5)
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
 
 
-def test_gradient_huber():
+def test_loss_huber():
     # Test Huber
     loss = sgd_fast.Huber(0.1)
     cases = [
-        # (p, y, expected)
-        (0.0, 0.0, 0.0), (0.1, 0.0, 0.1), (0.0, 0.1, -0.1),
-        (3.95, 4.0, -0.05), (5.0, 2.0, 0.1), (-1.0, 5.0, -0.1)
+        # (p, y, expected_loss, expected_dloss)
+        (0.0, 0.0, 0.0, 0.0), (0.1, 0.0, 0.005, 0.1), (0.0, 0.1, 0.005, -0.1),
+        (3.95, 4.0, 0.00125, -0.05), (5.0, 2.0, 0.295, 0.1),
+        (-1.0, 5.0, 0.595, -0.1)
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
 
 
-def test_gradient_modified_huber():
-    # Test ModifiedHuber
+def test_loss_modified_huber():
+    # (p, y, expected_loss, expected_dloss)
     loss = sgd_fast.ModifiedHuber()
     cases = [
-        # (p, y, expected)
-        (1.0, 1.0, 0.0), (-1.0, -1.0, 0.0), (2.0, 1.0, 0.0),
-        (0.0, 1.0, -2.0), (-1.0, 1.0, -4.0), (0.5, -1.0, 3.0),
-        (0.5, -1.0, 3.0), (-2.0, 1.0, -4.0), (-3.0, 1.0, -4.0)
+        # (p, y, expected_loss, expected_dloss)
+        (1.0, 1.0, 0.0, 0.0), (-1.0, -1.0, 0.0, 0.0), (2.0, 1.0, 0.0, 0.0),
+        (0.0, 1.0, 1.0, -2.0), (-1.0, 1.0, 4.0, -4.0), (0.5, -1.0, 2.25, 3.0),
+        (-2.0, 1.0, 8, -4.0), (-3.0, 1.0, 12, -4.0)
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
 
 
-def test_gradient_epsilon_insensitive():
+def test_loss_epsilon_insensitive():
     # Test EpsilonInsensitive
     loss = sgd_fast.EpsilonInsensitive(0.1)
     cases = [
-        (0.0, 0.0, 0.0), (0.1, 0.0, 0.0), (-2.05, -2.0, 0.0),
-        (3.05, 3.0, 0.0), (2.2, 2.0, 1.0), (2.0, -1.0, 1.0),
-        (2.0, 2.2, -1.0), (-2.0, 1.0, -1.0)
+        # (p, y, expected_loss, expected_dloss)
+        (0.0, 0.0, 0.0, 0.0), (0.1, 0.0, 0.0, 0.0), (-2.05, -2.0, 0.0, 0.0),
+        (3.05, 3.0, 0.0, 0.0), (2.2, 2.0, 0.1, 1.0), (2.0, -1.0, 2.9, 1.0),
+        (2.0, 2.2, 0.1, -1.0), (-2.0, 1.0, 2.9, -1.0)
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
 
 
-def test_gradient_squared_epsilon_insensitive():
+def test_loss_squared_epsilon_insensitive():
     # Test SquaredEpsilonInsensitive
     loss = sgd_fast.SquaredEpsilonInsensitive(0.1)
     cases = [
-        (0.0, 0.0, 0.0), (0.1, 0.0, 0.0), (-2.05, -2.0, 0.0),
-        (3.05, 3.0, 0.0), (2.2, 2.0, 0.2), (2.0, -1.0, 5.8),
-        (2.0, 2.2, -0.2), (-2.0, 1.0, -5.8)
+        # (p, y, expected_loss, expected_dloss)
+        (0.0, 0.0, 0.0, 0.0), (0.1, 0.0, 0.0, 0.0), (-2.05, -2.0, 0.0, 0.0),
+        (3.05, 3.0, 0.0, 0.0), (2.2, 2.0, 0.01, 0.2), (2.0, -1.0, 8.41, 5.8),
+        (2.0, 2.2, 0.01, -0.2), (-2.0, 1.0, 8.41, -5.8)
     ]
-    _test_gradient_common(loss, cases)
+    _test_loss_common(loss, cases)
 
 
 def test_multi_thread_multi_class_and_early_stopping():

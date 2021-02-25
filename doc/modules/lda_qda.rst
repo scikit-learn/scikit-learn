@@ -136,7 +136,7 @@ Mathematical formulation of LDA dimensionality reduction
 
 First note that the K means :math:`\mu_k` are vectors in
 :math:`\mathcal{R}^d`, and they lie in an affine subspace :math:`H` of
-dimension at least :math:`K - 1` (2 points lie on a line, 3 points lie on a
+dimension at most :math:`K - 1` (2 points lie on a line, 3 points lie on a
 plane, etc).
 
 As mentioned above, we can interpret LDA as assigning :math:`x` to the class

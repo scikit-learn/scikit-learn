@@ -817,7 +817,7 @@ class TimeSeriesSplit(_BaseKFold):
     Notes
     -----
     The training set has size ``i * n_samples // (n_splits + 1)
-    + n_samples % (n_splits + 1)`` in the ``i``th split,
+    + n_samples % (n_splits + 1)`` in the ``i`` th split,
     with a test set of size ``n_samples//(n_splits + 1)`` by default,
     where ``n_samples`` is the number of samples.
     """
@@ -1425,7 +1425,7 @@ class ShuffleSplit(BaseShuffleSplit):
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
 
-    Read more in the :ref:`User Guide <shuffle_split>`.
+    Read more in the :ref:`User Guide <ShuffleSplit>`.
 
     Parameters
     ----------
@@ -2120,6 +2120,7 @@ def train_test_split(*arrays,
     stratify : array-like, default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
+        Read more in the :ref:`User Guide <stratification>`.
 
     Returns
     -------

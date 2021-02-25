@@ -14,6 +14,7 @@ from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
 from ..utils import column_or_1d
 from ..utils import compute_class_weight
+from ..utils.deprecation import deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
@@ -102,6 +103,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.random_state = random_state
 
+    def _more_tags(self):
+        # Used by cross_val_score.
+        return {'pairwise': self.kernel == 'precomputed'}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # Used by cross_val_score.
@@ -462,8 +471,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if not callable(self.kernel):
-            X = check_array(X, accept_sparse='csr', dtype=np.float64,
-                            order="C", accept_large_sparse=False)
+            X = self._validate_data(X, accept_sparse='csr', dtype=np.float64,
+                                    order="C", accept_large_sparse=False,
+                                    reset=False)
 
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
@@ -480,10 +490,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
-        elif not callable(self.kernel) and X.shape[1] != self.shape_fit_[1]:
-            raise ValueError("X.shape[1] = %d should be equal to %d, "
-                             "the number of features at training time" %
-                             (X.shape[1], self.shape_fit_[1]))
         return X
 
     @property
