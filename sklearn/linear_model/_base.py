@@ -246,9 +246,13 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         X_var = X_var.astype(X.dtype, copy=False)
 
         if normalize:
+            # Detect constant features on the computed variance, before taking
+            # the np.sqrt. Otherwise constant features cannot be detected with
+            # sample_weights.
+            constant_mask = X_var < 10 * np.finfo(X.dtype).eps
             X_var *= X.shape[0]
             X_scale = np.sqrt(X_var, out=X_var)
-            X_scale[X_scale < 10 * np.finfo(X_scale.dtype).eps] = 1.
+            X_scale[constant_mask] = 1.
             if sp.issparse(X):
                 inplace_column_scale(X, 1. / X_scale)
             else:
