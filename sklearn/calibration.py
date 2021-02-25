@@ -141,6 +141,9 @@ class CalibratedClassifierCV(ClassifierMixin,
     classes_ : ndarray of shape (n_classes,)
         The class labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
             or `ensemble=False`)
         The list of classifier and calibrator pairs.
