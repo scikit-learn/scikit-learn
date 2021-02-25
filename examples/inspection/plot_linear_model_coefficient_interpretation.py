@@ -1,6 +1,6 @@
 """
 ==================================================================
-Common pitfalls in interpretation of coefficients of linear models
+Common pitfalls in the interpretation of coefficients of linear models
 ==================================================================
 
 In linear models, the target value is modeled as
