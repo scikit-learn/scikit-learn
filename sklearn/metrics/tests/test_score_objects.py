@@ -359,7 +359,9 @@ def test_classification_binary_scores(scorer_name, metric):
     ('jaccard_weighted', partial(jaccard_score, average='weighted')),
     ('jaccard_macro', partial(jaccard_score, average='macro')),
     ('jaccard_micro', partial(jaccard_score, average='micro')),
-    ('specificity', specificity_score)
+    ('specificity_weighted', partial(specificity_score, average='weighted')),
+    ('specificity_macro', partial(specificity_score, average='macro')),
+    ('specificity_micro', partial(specificity_score, average='micro'))
 ])
 def test_classification_multiclass_scores(scorer_name, metric):
     # check consistency between score and scorer for scores supporting
