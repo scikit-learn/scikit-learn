@@ -1036,7 +1036,7 @@ def test_tsne_negative_learning_rate(learning_rate):
     X = random_state.randn(5, 2)
     if_value_error = False
     try:
-        X_tr = TSNE(learning_rate=learning_rate).fit_transform(X)
+        TSNE(learning_rate=learning_rate).fit_transform(X)
     except ValueError:
         if_value_error = True
     assert (learning_rate <= 0) == if_value_error
