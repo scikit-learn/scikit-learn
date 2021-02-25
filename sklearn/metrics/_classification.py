@@ -1984,7 +1984,8 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
 
 
 def specificity_score(y_true, y_pred, *, labels=None, pos_label=1,
-                 average='binary', sample_weight=None, zero_division="warn"):
+                      average='binary', sample_weight=None,
+                      zero_division="warn"):
     """Compute specificity, also known as true negative rate.
 
     The specificity is the ratio ``tn / (tn + fp)`` where ``tn`` is the number

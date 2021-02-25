@@ -28,7 +28,7 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error,
                mean_poisson_deviance, mean_gamma_deviance, accuracy_score,
                top_k_accuracy_score, f1_score, roc_auc_score,
-               average_precision_score, precision_score, recall_score, 
+               average_precision_score, precision_score, recall_score,
                log_loss, balanced_accuracy_score, explained_variance_score,
                brier_score_loss, jaccard_score, mean_absolute_percentage_error,
                specificity_score)
