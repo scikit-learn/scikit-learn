@@ -100,7 +100,10 @@ The BIC criterion can be used to select the number of components in a Gaussian
 Mixture in an efficient way. In theory, it recovers the true number of
 components only in the asymptotic regime (i.e. if much data is available and
 assuming that the data was actually generated i.i.d. from a mixture of Gaussian
-distribution). Note that using a :ref:`Variational Bayesian Gaussian mixture <bgmm>`
+distribution). Automatically selecting the best Gaussian Mixture model based on
+BIC can be achieved via :class:`GaussianMixtureIC`. It compares models of different
+initializations and parameters such as the number of components and selects the
+one with the lowest BIC. Note that using a :ref:`Variational Bayesian Gaussian mixture <bgmm>`
 avoids the specification of the number of components for a Gaussian mixture
 model.
 
