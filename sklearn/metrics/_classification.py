@@ -1543,7 +1543,6 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     return precision, recall, f_score, true_sum
 
 
-@_deprecate_positional_args
 def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
                            average=None, warn_for=('tpr', 'fpr',
                                                    'tnr', 'fnr'),
@@ -1984,7 +1983,6 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     return r
 
 
-@_deprecate_positional_args
 def specificity_score(y_true, y_pred, *, labels=None, pos_label=1,
                  average='binary', sample_weight=None, zero_division="warn"):
     """Compute specificity, also known as true negative rate.
@@ -2061,7 +2059,8 @@ def specificity_score(y_true, y_pred, *, labels=None, pos_label=1,
     See Also
     --------
     classification_report, precision_recall_fscore_support, recall_score,
-    balanced_accuracy_score, multilabel_confusion_matrix, tpr_fpr_tnr_fnr_scores
+    balanced_accuracy_score, multilabel_confusion_matrix,
+    tpr_fpr_tnr_fnr_scores
 
     Notes
     -----
@@ -2086,12 +2085,12 @@ def specificity_score(y_true, y_pred, *, labels=None, pos_label=1,
     >>> specificity_score(y_true, y_pred, average='weighted')
     0.66...
     >>> specificity_score(y_true, y_pred, average=None)
-    array([0.75, 0.5, 0.75])
+    array([0.75, 0.5 , 0.75])
     >>> y_true = [0, 0, 0, 0, 0, 0]
     >>> specificity_score(y_true, y_pred, average=None)
-    array([0., 0.66..., 0.83...])
+    array([0. , 0.66..., 0.83...])
     >>> specificity_score(y_true, y_pred, average=None, zero_division=1)
-    array([1., 0.66..., 0.83...])
+    array([1. , 0.66..., 0.83...])
     """
     _, _, tnr, _ = tpr_fpr_tnr_fnr_scores(y_true, y_pred,
                                           labels=labels,

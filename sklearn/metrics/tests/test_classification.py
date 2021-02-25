@@ -1049,7 +1049,7 @@ def test_zero_precision_recall():
         assert_almost_equal(f1_score(y_true, y_pred, average='macro'),
                             0.0, 2)
         assert_almost_equal(specificity_score(y_true, y_pred, average='macro'),
-                            0.0, 2)
+                            0.5, 2)
 
     finally:
         np.seterr(**old_error_settings)
@@ -2118,7 +2118,7 @@ def test_specificity_warnings(zero_division):
         if zero_division == "warn":
             assert (str(record.pop().message) ==
                     'Tnr is ill-defined and '
-                    'being set to 0.0 due to no true samples.'
+                    'being set to 0.0 due to no negative samples.'
                     ' Use `zero_division` parameter to control'
                     ' this behavior.')
         else:
@@ -2128,7 +2128,7 @@ def test_specificity_warnings(zero_division):
         if zero_division == "warn":
             assert (str(record.pop().message) ==
                     'Tnr is ill-defined and '
-                    'being set to 0.0 due to no true samples.'
+                    'being set to 0.0 due to no negative samples.'
                     ' Use `zero_division` parameter to control'
                     ' this behavior.')
 

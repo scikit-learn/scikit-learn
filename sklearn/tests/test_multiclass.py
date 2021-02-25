@@ -24,6 +24,7 @@ from sklearn.utils import (
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+from sklearn.metrics import specificity_score
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
@@ -309,7 +310,9 @@ def test_ovr_fit_predict_svc():
 
 def test_ovr_multilabel_dataset():
     base_clf = MultinomialNB(alpha=1)
-    for au, prec, recall in zip((True, False), (0.51, 0.66), (0.51, 0.80)):
+    for au, prec, recall, specificity in zip(
+            (True, False), (0.51, 0.66), (0.51, 0.80)
+            ):
         X, Y = datasets.make_multilabel_classification(n_samples=100,
                                                        n_features=20,
                                                        n_classes=5,
@@ -328,6 +331,9 @@ def test_ovr_multilabel_dataset():
                             decimal=2)
         assert_almost_equal(recall_score(Y_test, Y_pred, average="micro"),
                             recall,
+                            decimal=2)
+        assert_almost_equal(specificity_score(Y_test, Y_pred, average="micro"),
+                            specificity,
                             decimal=2)
 
 
