@@ -1028,6 +1028,20 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
         assert not record
 
 
+@pytest.mark.parametrize('learning_rate', [50.0,-50.0])
+@ignore_warnings(category=FutureWarning)  # Delete in 1.2
+def test_tsne_negative_learning_rate(learning_rate):
+    # Make sure that negative learning rate results in a ValueError
+    random_state = check_random_state(0)
+    X = random_state.randn(5, 2)
+    if_value_error = False
+    try:
+        X_tr = TSNE(learning_rate=learning_rate).fit_transform(X)
+    except ValueError:
+        if_value_error = True
+    assert (learning_rate <= 0) == if_value_error
+
+
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 @ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_tsne_n_jobs(method):
