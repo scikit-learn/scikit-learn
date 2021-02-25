@@ -1028,7 +1028,7 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
         assert not record
 
 
-@pytest.mark.parametrize('learning_rate', [50.0,-50.0])
+@pytest.mark.parametrize('learning_rate', [50.0, -50.0])
 @ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_tsne_negative_learning_rate(learning_rate):
     # Make sure that negative learning rate results in a ValueError
