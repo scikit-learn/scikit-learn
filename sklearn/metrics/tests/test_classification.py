@@ -43,6 +43,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import tpr_fpr_tnr_fnr_scores
+from sklearn.metrics import specificity_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
@@ -1047,6 +1048,8 @@ def test_zero_precision_recall():
         assert_almost_equal(recall_score(y_true, y_pred, average='macro'),
                             0.0, 2)
         assert_almost_equal(f1_score(y_true, y_pred, average='macro'),
+                            0.0, 2)
+        assert_almost_equal(specificity_score(y_true, y_pred, average='macro'),
                             0.0, 2)
 
     finally:
@@ -2100,6 +2103,35 @@ def test_fscore_warnings(zero_division):
                         'control this behavior.')
             else:
                 assert len(record) == 0
+
+
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_specificity_warnings(zero_division):
+    assert_no_warnings(specificity_score,
+                       np.array([[1, 1], [1, 1]]),
+                       np.array([[0, 0], [0, 0]]),
+                       average='micro', zero_division=zero_division)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        specificity_score(np.array([[0, 0], [0, 0]]),
+                          np.array([[1, 1], [1, 1]]),
+                          average='micro', zero_division=zero_division)
+        if zero_division == "warn":
+            assert (str(record.pop().message) ==
+                    'Tnr is ill-defined and '
+                    'being set to 0.0 due to no true samples.'
+                    ' Use `zero_division` parameter to control'
+                    ' this behavior.')
+        else:
+            assert len(record) == 0
+
+        specificity_score([1, 1], [1, 1])
+        if zero_division == "warn":
+            assert (str(record.pop().message) ==
+                    'Tnr is ill-defined and '
+                    'being set to 0.0 due to no true samples.'
+                    ' Use `zero_division` parameter to control'
+                    ' this behavior.')
 
 
 def test_prf_average_binary_data_non_binary():

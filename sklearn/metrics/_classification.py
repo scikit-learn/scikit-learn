@@ -1864,7 +1864,7 @@ def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
 @_deprecate_positional_args
 def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
                  sample_weight=None, zero_division="warn"):
-    """Compute the recall.
+    """Compute the recall, also known as sensitivity or true positive rate.
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
     true positives and ``fn`` the number of false negatives. The recall is
@@ -1977,6 +1977,125 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
                                                  sample_weight=sample_weight,
                                                  zero_division=zero_division)
     return r
+
+
+@_deprecate_positional_args
+def specificity_score(y_true, y_pred, *, labels=None, pos_label=1,
+                 average='binary', sample_weight=None, zero_division="warn"):
+    """Compute specificity, also known as true negative rate.
+
+    The specificity is the ratio ``tn / (tn + fp)`` where ``tn`` is the number
+    of true negatives and ``fp`` is the number of false positives.
+    The specificity is intuitively the ability of the classifier to find
+    all the negative samples.
+
+    The best value is 1 and the worst value is 0.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Estimated targets as returned by a classifier.
+
+    labels : array-like, default=None
+        The set of labels to include when ``average != 'binary'``, and their
+        order if ``average is None``. Labels present in the data can be
+        excluded, for example to calculate a multiclass average ignoring a
+        majority negative class, while labels not present in the data will
+        result in 0 components in a macro average. For multilabel targets,
+        labels are column indices. By default, all labels in ``y_true`` and
+        ``y_pred`` are used in sorted order.
+
+    pos_label : str or int, default=1
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
+
+    average : str, {None, 'binary', 'micro', 'macro', 'samples', 'weighted'} \
+            default='binary'
+        This parameter is required for multiclass/multilabel targets.
+        If ``None``, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+
+        ``'binary'``:
+            Only report results for the class specified by ``pos_label``.
+            This is applicable only if targets (``y_{true,pred}``) are binary.
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
+
+    Returns
+    -------
+    specificity : float (if average is not None) or array of float of shape
+        (n_unique_labels,)
+        Specificity of the positive class in binary classification or weighted
+        average of the specificity of each class for the multiclass task.
+
+    See Also
+    --------
+    classification_report, precision_recall_fscore_support, recall_score,
+    balanced_accuracy_score, multilabel_confusion_matrix, tpr_fpr_tnr_fnr_scores
+
+    Notes
+    -----
+    When ``true negative + false positive == 0``, specificity returns 0 and
+    raises ``UndefinedMetricWarning``. This behavior can be modified with
+    ``zero_division``.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for sensitivity and specificity
+           <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import specificity_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> specificity_score(y_true, y_pred, average='macro')
+    0.66...
+    >>> specificity_score(y_true, y_pred, average='micro')
+    0.66...
+    >>> specificity_score(y_true, y_pred, average='weighted')
+    0.66...
+    >>> specificity_score(y_true, y_pred, average=None)
+    array([0.75, 0.5 , 0.75])
+    >>> y_true = [0, 0, 0, 0, 0, 0]
+    >>> specificity_score(y_true, y_pred, average=None)
+    array([0.        , 0.66666667, 0.83333333])
+    >>> specificity_score(y_true, y_pred, average=None, zero_division=1)
+    array([1.        , 0.66666667, 0.83333333])
+    """
+    _, _, tnr, _ = tpr_fpr_tnr_fnr_scores(y_true, y_pred,
+                                          labels=labels,
+                                          pos_label=pos_label,
+                                          average=average,
+                                          warn_for=('tnr',),
+                                          sample_weight=sample_weight,
+                                          zero_division=zero_division)
+    return tnr
 
 
 @_deprecate_positional_args
