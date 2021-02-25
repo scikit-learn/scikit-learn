@@ -690,113 +690,16 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     return result
 
 
-def _incremental_weighted_mean_and_var(X, sample_weight,
-                                       last_mean,
-                                       last_variance,
-                                       last_weight_sum):
-    """Calculate weighted mean and weighted variance incremental update.
-
-    .. versionadded:: 0.24
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-        Data to use for mean and variance update.
-
-    sample_weight : array-like of shape (n_samples,) or None
-        Sample weights. If None, then samples are equally weighted.
-
-    last_mean : array-like of shape (n_features,)
-        Mean before the incremental update.
-
-    last_variance : array-like of shape (n_features,) or None
-        Variance before the incremental update.
-        If None, variance update is not computed (in case scaling is not
-        required).
-
-    last_weight_sum : array-like of shape (n_features,)
-        Sum of weights before the incremental update.
-
-    Returns
-    -------
-    updated_mean : array of shape (n_features,)
-
-    updated_variance : array of shape (n_features,) or None
-        If None, only mean is computed.
-
-    updated_weight_sum : array of shape (n_features,)
-
-    Notes
-    -----
-    NaNs in `X` are ignored.
-
-    `last_mean` and `last_variance` are statistics computed at the last step
-    by the function. Both must be initialized to 0.0.
-    The mean is always required (`last_mean`) and returned (`updated_mean`),
-    whereas the variance can be None (`last_variance` and `updated_variance`).
-
-    For further details on the algorithm to perform the computation in a
-    numerically stable way, see [Finch2009]_, Sections 4 and 5.
-
-    References
-    ----------
-    .. [Finch2009] `Tony Finch,
-       "Incremental calculation of weighted mean and variance",
-       University of Cambridge Computing Service, February 2009.
-       <https://fanf2.user.srcf.net/hermes/doc/antiforgery/stats.pdf>`_
-
-    """
-    # last = stats before the increment
-    # new = the current increment
-    # updated = the aggregated stats
-    if sample_weight is None:
-        return _incremental_mean_and_var(X, last_mean, last_variance,
-                                         last_weight_sum)
-    nan_mask = np.isnan(X)
-    sample_weight_T = np.reshape(sample_weight, (1, -1))
-    # new_weight_sum with shape (n_features,)
-    new_weight_sum = np.dot(sample_weight_T,
-                            ~nan_mask).ravel().astype(np.float64)
-    total_weight_sum = _safe_accumulator_op(np.sum, sample_weight, axis=0)
-
-    X_0 = np.where(nan_mask, 0, X)
-    new_mean = np.average(X_0,
-                          weights=sample_weight, axis=0).astype(np.float64)
-    new_mean *= total_weight_sum / new_weight_sum
-    updated_weight_sum = last_weight_sum + new_weight_sum
-    updated_mean = (
-            (last_weight_sum * last_mean + new_weight_sum * new_mean)
-            / updated_weight_sum)
-
-    if last_variance is None:
-        updated_variance = None
-    else:
-        X_0 = np.where(nan_mask, 0, (X-new_mean)**2)
-        new_variance =\
-            _safe_accumulator_op(
-                np.average, X_0, weights=sample_weight, axis=0)
-        new_variance *= total_weight_sum / new_weight_sum
-        new_term = (
-                new_weight_sum *
-                (new_variance +
-                 (new_mean - updated_mean) ** 2))
-        last_term = (
-                last_weight_sum *
-                (last_variance +
-                 (last_mean - updated_mean) ** 2))
-        updated_variance = (new_term + last_term) / updated_weight_sum
-
-    return updated_mean, updated_variance, updated_weight_sum
-
-
-def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
+def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
+                              sample_weight=None):
     """Calculate mean update and a Youngs and Cramer variance update.
 
-    last_mean and last_variance are statistics computed at the last step by the
-    function. Both must be initialized to 0.0. In case no scaling is required
-    last_variance can be None. The mean is always required and returned because
-    necessary for the calculation of the variance. last_n_samples_seen is the
-    number of samples encountered until now.
+    If sample_weight is given, the weighted mean and variance is computed.
+
+    Update a given mean and (possibly) variance according to new data given
+    in X. last_mean is always required to compute the new mean.
+    If last_variance is None, no variance is computed and None return for
+    updated_variance.
 
     From the paper "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
@@ -811,13 +714,19 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     last_variance : array-like of shape (n_features,)
 
     last_sample_count : array-like of shape (n_features,)
+        The number of samples encountered until now if sample_weight is None.
+        If sample_weight is not None, this is the sum of sample_weight
+        encountered.
+
+    sample_weight : array-like of shape (n_samples,) or None
+        Sample weights. If None, compute the unweighted mean/variance.
 
     Returns
     -------
     updated_mean : ndarray of shape (n_features,)
 
     updated_variance : ndarray of shape (n_features,)
-        If None, only mean is computed.
+        None if last_variance was None.
 
     updated_sample_count : ndarray of shape (n_features,)
 
@@ -839,9 +748,15 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
+    if sample_weight is not None:
+        new_sum = _safe_accumulator_op(np.nansum, X * sample_weight[:, None],
+                                       axis=0)
+        new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X)),
+                                  axis=0)
+    else:
+        new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
+        new_sample_count = np.sum(~np.isnan(X), axis=0)
 
-    new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
@@ -849,8 +764,12 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = (
-            _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
+        T = new_sum / new_sample_count
+        if sample_weight is not None:
+            new_unnormalized_variance = np.nansum(sample_weight[:, None] *
+                                                  (X - T)**2, axis=0)
+        else:
+            new_unnormalized_variance = np.nansum((X - T)**2, axis=0)
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):
