@@ -478,10 +478,8 @@ def test_preprocess_data_weighted(is_sparse):
     # better check the impact of feature scaling.
     X[:, 0] *= 10
 
-    # Constant non-zero feature: this edge-case is currently not handled
-    # correctly for sparse data, see:
-    # https://github.com/scikit-learn/scikit-learn/issues/19450
-    # X[:, 2] = 1.
+    # Constant non-zero feature.
+    X[:, 2] = 1.
 
     # Constant zero feature (non-materialized in the sparse case)
     X[:, 3] = 0.
@@ -495,10 +493,12 @@ def test_preprocess_data_weighted(is_sparse):
     X_sample_weight_var = np.average((X - X_sample_weight_avg)**2,
                                      weights=sample_weight,
                                      axis=0)
+    constant_mask = X_sample_weight_var < 10 * np.finfo(X.dtype).eps
+    assert_array_equal(constant_mask, [0, 0, 1, 1])
     expected_X_scale = np.sqrt(X_sample_weight_var) * np.sqrt(n_samples)
 
     # near constant features should not be scaled
-    expected_X_scale[expected_X_scale < 10 * np.finfo(np.float64).eps] = 1
+    expected_X_scale[constant_mask] = 1
 
     if is_sparse:
         X = sparse.csr_matrix(X)
@@ -538,14 +538,22 @@ def test_preprocess_data_weighted(is_sparse):
     # _preprocess_data with normalize=True scales the data by the feature-wise
     # euclidean norms while StandardScaler scales the data by the feature-wise
     # standard deviations.
-    # The two are equivalent up to a ratio of np.sqrt(n_samples)
+    # The two are equivalent up to a ratio of np.sqrt(n_samples).
     if is_sparse:
         scaler = StandardScaler(with_mean=False).fit(
             X, sample_weight=sample_weight)
 
+        # Non-constant features are scaled similarly with np.sqrt(n_samples)
         assert_array_almost_equal(
-            scaler.transform(X).toarray() / np.sqrt(n_samples), Xt.toarray()
-            )
+            scaler.transform(X).toarray()[:, :2] / np.sqrt(n_samples),
+            Xt.toarray()[:, :2]
+        )
+
+        # Constant features go through un-scaled.
+        assert_array_almost_equal(
+            scaler.transform(X).toarray()[:, 2:],
+            Xt.toarray()[:, 2:]
+        )
     else:
         scaler = StandardScaler(with_mean=True).fit(
             X, sample_weight=sample_weight)
