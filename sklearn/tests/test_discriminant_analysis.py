@@ -538,24 +538,35 @@ def test_qda_store_covariance():
     )
 
 
-@pytest.mark.filterwarnings()
 def test_qda_regularization():
     # the default is reg_param=0. and will cause issues
     # when there is a constant variable
+    # UserWarning will raised due to the constant variable
+    # Runtime warning will be raised due to unregularized
+    # constant variable in the covariance matrix.
     clf = QuadraticDiscriminantAnalysis()
-    y_pred = clf.fit(X2, y6).predict(X2)
+    with (pytest.warns(UserWarning) and
+          pytest.warns(RuntimeWarning)):
+        y_pred = clf.fit(X2, y6)
+        y_pred = clf.predict(X2)
     assert np.any(y_pred != y6)
 
     # adding a little regularization fixes the problem
+    # No Runtime Warning will be raised with regularization
+    # But UserWarning will persist
     clf = QuadraticDiscriminantAnalysis(reg_param=0.01)
-    clf.fit(X2, y6)
-    y_pred = clf.predict(X2)
+    with pytest.warns(UserWarning):
+        clf.fit(X2, y6)
+        y_pred = clf.predict(X2)
     assert_array_equal(y_pred, y6)
 
     # Case n_samples_in_a_class < n_features
+    # UserWarning should persist
+    # No RuntimeWarning should be seen
     clf = QuadraticDiscriminantAnalysis(reg_param=0.1)
-    clf.fit(X5, y5)
-    y_pred5 = clf.predict(X5)
+    with pytest.warns(UserWarning):
+        clf.fit(X5, y5)
+        y_pred5 = clf.predict(X5)
     assert_array_equal(y_pred5, y5)
 
 
