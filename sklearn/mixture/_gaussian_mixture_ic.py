@@ -5,7 +5,8 @@
 
 
 import numpy as np
-from joblib import Parallel, delayed
+from joblib import Parallel
+from ..utils.fixes import delayed
 import warnings
 
 from . import GaussianMixture
