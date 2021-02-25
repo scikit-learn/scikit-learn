@@ -2107,13 +2107,13 @@ def test_fscore_warnings(zero_division):
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
 def test_specificity_warnings(zero_division):
     assert_no_warnings(specificity_score,
-                       np.array([[1, 1], [1, 1]]),
                        np.array([[0, 0], [0, 0]]),
+                       np.array([[1, 1], [1, 1]]),
                        average='micro', zero_division=zero_division)
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
-        specificity_score(np.array([[0, 0], [0, 0]]),
-                          np.array([[1, 1], [1, 1]]),
+        specificity_score(np.array([[1, 1], [1, 1]]),
+                          np.array([[0, 0], [0, 0]]),
                           average='micro', zero_division=zero_division)
         if zero_division == "warn":
             assert (str(record.pop().message) ==
