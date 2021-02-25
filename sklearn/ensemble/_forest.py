@@ -302,6 +302,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             raise ValueError(
                 "sparse multilabel-indicator for y is not supported."
             )
+        # Validate y to be non-negative for poisson regression
+        if (any(i<0 for i in y) and self.criterion == "poisson"):
+            raise ValueError(
+                "non-negative values for y is not supported for poisson regression."
+            )
+
         X, y = self._validate_data(X, y, multi_output=True,
                                    accept_sparse="csc", dtype=DTYPE)
         if sample_weight is not None:

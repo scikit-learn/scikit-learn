@@ -1444,6 +1444,13 @@ def test_forest_y_sparse():
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
+def test_forest_y_poisson_negative():
+    X = [[1, 2, 3]]
+    y = [1, -1, 3]
+    rf = RandomForestRegressor(criterion="poisson", random_state=4)
+    msg = "non-negative values for y is not supported for poisson regression."
+    with pytest.raises(ValueError, match=msg):
+        rf.fit(X, y)
 
 @pytest.mark.parametrize(
     'ForestClass', [RandomForestClassifier, RandomForestRegressor]
