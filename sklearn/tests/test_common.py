@@ -272,7 +272,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'multiclass',
     'multioutput',
     'pipeline',
-    'random_projection',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
