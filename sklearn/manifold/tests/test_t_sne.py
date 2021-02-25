@@ -1029,7 +1029,7 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
 
 
 @ignore_warnings(category=FutureWarning)  # Delete in 1.2
-def test_tsne_negative_learning_rate(learning_rate):
+def test_tsne_negative_learning_rate():
     # Make sure that negative learning rate results in a ValueError
     random_state = check_random_state(0)
     X = random_state.randn(5, 2)
