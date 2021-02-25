@@ -30,7 +30,8 @@ from sklearn.metrics import (
     r2_score,
     recall_score,
     roc_auc_score,
-    top_k_accuracy_score
+    top_k_accuracy_score,
+    specificity_score
 )
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
@@ -73,7 +74,8 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy', 'top_k_accuracy',
                'neg_log_loss', 'neg_brier_score',
                'jaccard', 'jaccard_weighted', 'jaccard_macro',
                'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo',
-               'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted']
+               'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted',
+               'specificity']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -87,7 +89,7 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
                    "fowlkes_mallows_score"]
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
-                           'jaccard_samples']
+                           'jaccard_samples', 'specificity_samples']
 
 REQUIRE_POSITIVE_Y_SCORERS = ['neg_mean_poisson_deviance',
                               'neg_mean_gamma_deviance']
@@ -326,6 +328,7 @@ def test_make_scorer():
     ('jaccard_macro', partial(jaccard_score, average='macro')),
     ('jaccard_micro', partial(jaccard_score, average='micro')),
     ('top_k_accuracy', top_k_accuracy_score),
+    ('specificity', specificity_score)
 ])
 def test_classification_binary_scores(scorer_name, metric):
     # check consistency between score and scorer for scores supporting
@@ -355,6 +358,7 @@ def test_classification_binary_scores(scorer_name, metric):
     ('jaccard_weighted', partial(jaccard_score, average='weighted')),
     ('jaccard_macro', partial(jaccard_score, average='macro')),
     ('jaccard_micro', partial(jaccard_score, average='micro')),
+    ('specificity', specificity_score)
 ])
 def test_classification_multiclass_scores(scorer_name, metric):
     # check consistency between score and scorer for scores supporting
@@ -950,7 +954,8 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
 
 
 @pytest.mark.parametrize(
-    "score_func", [f1_score, precision_score, recall_score, jaccard_score]
+    "score_func", [f1_score, precision_score, recall_score, jaccard_score,
+                   specificity_score]
 )
 def test_non_symmetric_metric_pos_label(
     score_func, string_labeled_classification_problem
