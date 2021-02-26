@@ -3001,6 +3001,10 @@ def check_estimator_sparse_dense(name, estimator_orig,
                 if hasattr(estimator, method):
                     pred = getattr(estimator, method)(X_converted)
                     pred_sp = getattr(estimator_sp, method)(X_sp_converted)
+                    # estimators accepting sparse inputs can also return sparse
+                    # outputs, so we convert everything to dense for comparison:
+                    pred_sp = pred_sp.A if sparse.issparse(pred_sp) else pred_sp
+                    pred = pred.A if sparse.issparse(pred) else pred
                     assert_allclose(pred, pred_sp)
             if hasattr(estimator, "score"):
                 score = estimator.score(X_converted, y)
