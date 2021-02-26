@@ -423,7 +423,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         self.random_state = random_state
 
     def _fit(self, X, compute_sources=False):
-        """Fit the model
+        """Fit the model.
 
         Parameters
         ----------
