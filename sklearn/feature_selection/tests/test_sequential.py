@@ -6,10 +6,11 @@ from numpy.testing import assert_array_equal
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.datasets import make_regression
+from sklearn.datasets import make_regression, make_blobs
 from sklearn.linear_model import LinearRegression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.cluster import KMeans
 
 
 @pytest.mark.parametrize('n_features_to_select', (0, 5, 0., -1, 1.1))
@@ -132,3 +133,12 @@ def test_pipeline_support():
     pipe = make_pipeline(StandardScaler(), sfs)
     pipe.fit(X, y)
     pipe.transform(X)
+
+
+@pytest.mark.parametrize('n_features_to_select', (2, 3, 4))
+def test_unsupervised_model_fit(n_features_to_select):
+    X, y = make_blobs(n_features=6)
+    sfs = SequentialFeatureSelector(KMeans(),
+                                    n_features_to_select=n_features_to_select)
+    sfs.fit(X)
+    assert(sfs.transform(X).shape[1] == n_features_to_select)
