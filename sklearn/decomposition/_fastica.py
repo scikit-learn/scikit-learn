@@ -554,7 +554,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if self.whiten:
             if self.whiten == 'unit-variance':
-                S = np.dot(np.dot(W, K), X).T
+                S = np.linalg.multi_dot([W, K, X]).T
                 S_std = np.std(S, axis=0, keepdims=True)
                 S /= S_std
                 W /= S_std.T
