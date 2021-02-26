@@ -396,7 +396,8 @@ class FastICA(TransformerMixin, BaseEstimator):
     >>> from sklearn.decomposition import FastICA
     >>> X, _ = load_digits(return_X_y=True)
     >>> transformer = FastICA(n_components=7,
-    ...         random_state=0)
+    ...         random_state=0,
+    ...         whiten='unit-variance')
     >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
     (1797, 7)
