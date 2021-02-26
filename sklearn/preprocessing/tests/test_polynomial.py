@@ -243,3 +243,18 @@ def test_spline_transformer_kbindiscretizer():
     # Though they should be exactly equal, we test approximately with high
     # accuracy.
     assert_allclose(splines, kbins, rtol=1e-13)
+
+
+@pytest.mark.parametrize("include_bias", [True, False])
+@pytest.mark.parametrize("degree", [3, 5])
+def test_spline_transformer_n_features_out(include_bias, degree):
+    """Test that transform results in n_features_out_ features."""
+    splt = SplineTransformer(
+        n_knots=5,
+        degree=degree,
+        include_bias=include_bias
+    )
+    X = np.linspace(0, 1, 10)[:, None]
+    splt.fit(X)
+
+    assert splt.transform(X).shape[1] == splt.n_features_out_
