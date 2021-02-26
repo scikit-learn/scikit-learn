@@ -6,7 +6,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
@@ -232,8 +231,14 @@ def test_ransac_warn_exceed_max_skips():
                                        is_data_valid=is_data_valid,
                                        max_skips=3,
                                        max_trials=5)
-
-    assert_warns(ConvergenceWarning, ransac_estimator.fit, X, y)
+    warning_message = (
+        "RANSAC found a valid consensus set but exited "
+        "early due to skipping more iterations than "
+        "`max_skips`. See estimator attributes for "
+        "diagnostics."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 4
     assert ransac_estimator.n_skips_invalid_model_ == 0
