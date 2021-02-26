@@ -315,6 +315,7 @@ def test_fastica_whiten_default_value_deprecation():
         with pytest.warns(FutureWarning,
                           match=r"From version 1.1 whiten="):
             ica.fit(X)
+            assert ica.whiten_ == 'arbitrary-variance'
 
 
 def test_fastica_whiten_backwards_compatibility():

@@ -377,6 +377,9 @@ class FastICA(TransformerMixin, BaseEstimator):
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
+    whiten_ : string or boolean
+        The whitening strategy used during fit.
+
     whitening_ : ndarray of shape (n_components, n_features)
         Only set if whiten is 'True'. This is the pre-whitening matrix
         that projects data onto the first `n_components` principal components.
@@ -437,23 +440,25 @@ class FastICA(TransformerMixin, BaseEstimator):
             X_new : ndarray of shape (n_samples, n_components)
         """
 
-        if self.whiten is None:
+        self.whiten_ = self.whiten
+
+        if self.whiten_ is None:
             warnings.warn(
                 "From version 1.1 whiten='unit-variance' will be used "
                 "by default.",
                 FutureWarning)
-            self.whiten = 'arbitrary-variance'
+            self.whiten_ = 'arbitrary-variance'
 
-        if self.whiten is True:
+        if self.whiten_ is True:
             warnings.warn(
                 "From version 1.1 whiten=True should be specified as "
                 "whiten='arbitrary-variance' (its current behaviour). This "
                 "behavior is deprecated in 1.0 and will be removed in 1.1.",
                 FutureWarning, stacklevel=2
             )
-            self.whiten = 'arbitrary-variance'
+            self.whiten_ = 'arbitrary-variance'
 
-        X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+        X = self._validate_data(X, copy=self.whiten_, dtype=FLOAT_DTYPES,
                                 ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
@@ -482,7 +487,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         n_samples, n_features = X.shape
 
         n_components = self.n_components
-        if not self.whiten and n_components is not None:
+        if not self.whiten_ and n_components is not None:
             n_components = None
             warnings.warn('Ignoring n_components with whiten=False.')
 
@@ -495,7 +500,7 @@ class FastICA(TransformerMixin, BaseEstimator):
                 % n_components
             )
 
-        if self.whiten:
+        if self.whiten_:
             # Centering the columns (ie the variables)
             X_mean = X.mean(axis=-1)
             X -= X_mean[:, np.newaxis]
@@ -543,7 +548,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         del X1
 
         if compute_sources:
-            if self.whiten:
+            if self.whiten_:
                 S = np.linalg.multi_dot([W, K, X]).T
             else:
                 S = np.dot(W, X).T
@@ -552,8 +557,8 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         self.n_iter_ = n_iter
 
-        if self.whiten:
-            if self.whiten == 'unit-variance':
+        if self.whiten_:
+            if self.whiten_ == 'unit-variance':
                 S = np.linalg.multi_dot([W, K, X]).T
                 S_std = np.std(S, axis=0, keepdims=True)
                 S /= S_std
@@ -623,9 +628,9 @@ class FastICA(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, copy=(copy and self.whiten),
+        X = self._validate_data(X, copy=(copy and self.whiten_),
                                 dtype=FLOAT_DTYPES, reset=False)
-        if self.whiten or self.whiten == 'unit-variance':
+        if self.whiten_ or self.whiten == 'unit-variance':
             X -= self.mean_
 
         return np.dot(X, self.components_.T)
@@ -647,9 +652,9 @@ class FastICA(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=(copy and self.whiten_), dtype=FLOAT_DTYPES)
         X = np.dot(X, self.mixing_.T)
-        if self.whiten:
+        if self.whiten_:
             X += self.mean_
 
         return X
