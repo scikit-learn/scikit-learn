@@ -147,13 +147,14 @@ plt.show()
 # ``extrapolation``.
 
 # %%
-# ## Periodic Splines
-# In the previous example we saw that polynomials and splines are not well
-# suited for extrapolation beyond the range of training observations. In some
+# Periodic Splines
+# ----------------
+# In the previous example we saw the limitations of polynomials and splines for
+# extrapolation beyond the range of the training observations. In some
 # settings, e.g. with seasonal effects, we expect periodic continuation of
 # the underlying signal. Such effects can be modelled using periodic splines,
 # which have equal intercepts and derivatives at the first and last knot.
-# This example shows how periodic splines provide a better fit both within and
+# In the following case we show how periodic splines provide a better fit both within and
 # outside of the range of training data given the additional information of
 # periodicity.
 

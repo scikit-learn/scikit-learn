@@ -86,7 +86,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         `n_features * n_splines`, where `n_splines` is
         the number of bases elements of the B-splines,
         `n_knots + degree - 1` for non-periodic splines and
-        `n_knots - 1` else.
+        `n_knots - 1` for periodic ones.
         If `include_bias=False`, then it is only
         `n_features * (n_splines - 1)`.
 
