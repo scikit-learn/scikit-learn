@@ -77,13 +77,12 @@ Changelog
   starting from version 1.2
   :pr:`19159` by :user:`Benoît Malézieux <bmalezieux>`.
 
-- |API| The default value of the :code:`whiten` argument in
-  :func:`decomposition.FastICA` will change from
-  :code:`True` to :code:`'unit-variance` in version 0.22.
-  A FutureWarning is raised when the default value is used.
-  :issue:`13056` by :user:`Facundo Ferrin <fferrin>`. Thanks to
-  :user:`<adrinjalali>`, :user:`<JesseLivezey>` and :user:`<jnothman>` for
-  help me with my first PR.
+- |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
+  The default value of its :code:`whiten` argument in will change from
+  :code:`True` (which behaves like :code:`'arbitrary-variance'`) to
+  :code:`'unit-variance'` in version 1.1.
+  :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
+  :user:`Julien Jerphanion <jjerphan>`
 
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
