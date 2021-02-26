@@ -148,7 +148,7 @@ def _cube(x, fun_args):
 
 
 @_deprecate_positional_args
-def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
+def fastica(X, n_components=None, *, algorithm="parallel", whiten=None,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
             random_state=None, return_X_mean=False, compute_sources=True,
             return_n_iter=False):
@@ -169,12 +169,18 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Apply a parallel or deflational FASTICA algorithm.
 
-    whiten : bool, default=True
-        If True perform an initial whitening of the data.
-        If False, the data is assumed to have already been
-        preprocessed: it should be centered, normed and white.
-        Otherwise you will get incorrect results.
-        In this case the parameter n_components will be ignored.
+    whiten : string or boolean, default=None
+        Specify the whitening strategy to use.
+        If 'arbitrary-variance', a whitening with variance arbitrary is used.
+        If 'unit-variance', the whitening variance is adjusted to be unitary.
+        If False, the data is already considered to be whitened, and no
+        whitening is performed.
+        If None (default), 'arbitrary-variance' is used.
+
+        .. deprecated:: 1.0
+            From version 1.1 whiten='unit-variance' will be used by default.
+            `whiten=True` is deprecated from 1.0 and will be removed in 1.1.
+            Use `whiten=arbitrary-variance` instead.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
         The functional form of the G function used in the
@@ -274,7 +280,7 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
                   random_state=random_state)
     sources = est._fit(X, compute_sources=compute_sources)
 
-    if whiten:
+    if est.whiten_ in ['unitary-variance', 'arbitrary-variance']:
         if return_X_mean:
             if return_n_iter:
                 return (est.whitening_, est._unmixing, sources, est.mean_,
@@ -313,7 +319,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Apply parallel or deflational algorithm for FastICA.
 
-    whiten : string or boolean, optional, default=None
+    whiten : string or boolean, default=None
         Specify the whitening strategy to use.
         If 'arbitrary-variance', a whitening with variance arbitrary is used.
         If 'unit-variance', the whitening variance is adjusted to be unitary.
