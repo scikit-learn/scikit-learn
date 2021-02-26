@@ -304,30 +304,29 @@ def test_fastica_whiten_unit_variance():
     assert_almost_equal(np.var(Xt), 1.0)
 
 
-def test_fastica_whiten_default_value_raise_warning():
-    """Test FastICA warns when using default value.
+def test_fastica_whiten_default_value_deprecation():
+    """Test FastICA whiten default value deprecation.
 
-    Bug #13056
+    Regression test for #19490
     """
     rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 1))
-    n_components = X.shape[1]
-    ica = FastICA(n_components=n_components, random_state=0)
-    with pytest.warns(FutureWarning,
-                      match="From version 0.24, whiten='unit-variance' by "
-                            "default."):
-        _ = ica.fit_transform(X)
+    X = rng.random_sample((100, 10))
+    for ica in [FastICA(), FastICA(whiten=True)]:
+        with pytest.warns(FutureWarning,
+                          match=r"From version 1.1 whiten="):
+            ica.fit(X)
 
 
-def test_fastica_whiten_true_preserves_bad_old_behaviour():
-    """
+def test_fastica_whiten_backwards_compatibility():
+    """Test previous behavior for FastICA whitening (whiten=True)
 
-    Bug #13056
+    Regression test for #19490
     """
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     n_components = X.shape[1]
-    ica = FastICA(n_components=n_components, whiten='true',
+    ica = FastICA(n_components=n_components,
+                  whiten=True,
                   random_state=0)
     Xt = ica.fit_transform(X)
 
