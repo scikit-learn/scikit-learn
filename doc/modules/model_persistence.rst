@@ -80,7 +80,7 @@ same range as before.
 Aside for a few exceptions, pickled models should be portable across
 architectures assuming the same versions of dependencies and Python are used.
 If you encounter an estimator that is not portable please open an issue on
-Github. Pickled models are often deployed in production using containers, like
+GitHub. Pickled models are often deployed in production using containers, like
 Docker, in order to freeze the environment and dependencies.
 
 If you want to know more about these issues and explore other possible
