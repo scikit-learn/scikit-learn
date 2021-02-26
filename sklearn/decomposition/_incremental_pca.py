@@ -350,6 +350,8 @@ class IncrementalPCA(_BasePCA):
         if sparse.issparse(X):
             n_samples = X.shape[0]
             output = []
+            if type(X) in [sparse.bsr_matrix, sparse.coo_matrix, sparse.dia_matrix]:
+                 X = X.tocsr(copy=True)
             for batch in gen_batches(n_samples, self.batch_size_,
                                      min_batch_size=self.n_components or 0):
                 output.append(super().transform(X[batch].toarray()))
