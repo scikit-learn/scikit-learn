@@ -313,10 +313,18 @@ class FastICA(TransformerMixin, BaseEstimator):
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Apply parallel or deflational algorithm for FastICA.
 
-    whiten : string or boolean, optional (default='unit-variance')
-        If whiten is True or 'unit-variance', whitening is performed.
-        If not, the data is already considered to be whitened, and no
+    whiten : string or boolean, optional, default=None
+        Specify the whitening strategy to use.
+        If 'arbitrary-variance', a whitening with variance arbitrary is used.
+        If 'unit-variance', the whitening variance is adjusted to be unitary.
+        If False, the data is already considered to be whitened, and no
         whitening is performed.
+        If None (default), 'arbitrary-variance' is used.
+
+        .. deprecated:: 1.0
+            From version 1.1 whiten='unit-variance' will be used by default.
+            `whiten=True` is deprecated from 1.0 and will be removed in 1.1.
+            Use `whiten=arbitrary-variance` instead.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
         The functional form of the G function used in the
@@ -395,7 +403,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, algorithm='parallel',
-                 whiten='unit-variance', fun='logcosh', fun_args=None,
+                 whiten=None, fun='logcosh', fun_args=None,
                  max_iter=200, tol=1e-4, w_init=None, random_state=None):
         super().__init__()
         if max_iter < 1:
@@ -429,6 +437,22 @@ class FastICA(TransformerMixin, BaseEstimator):
             X_new : ndarray of shape (n_samples, n_components)
         """
 
+        if self.whiten is None:
+            warnings.warn(
+                "From version 1.1 whiten='unit-variance' will be used "
+                "by default.",
+                FutureWarning)
+            self.whiten = 'arbitrary-variance'
+
+        if self.whiten is True:
+            warnings.warn(
+                "From version 1.1 whiten=True should be specified as "
+                "whiten='arbitrary-variance' (its current behaviour). This "
+                "behavior is deprecated in 1.0 and will be removed in 1.1.",
+                FutureWarning, stacklevel=2
+            )
+            self.whiten = 'arbitrary-variance'
+
         X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
                                 ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
@@ -454,10 +478,6 @@ class FastICA(TransformerMixin, BaseEstimator):
                 " should be one of 'logcosh', 'exp', 'cube' or callable"
                 % self.fun
             )
-        if self.whiten == 'unit-variance':
-            warnings.warn(
-                "From version 0.24, whiten='unit-variance' by default.",
-                FutureWarning)
 
         n_samples, n_features = X.shape
 
