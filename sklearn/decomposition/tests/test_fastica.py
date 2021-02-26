@@ -116,7 +116,8 @@ def test_fastica_simple(add_noise, seed):
     # Test FastICA class
     _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo,
                                 random_state=seed)
-    ica = FastICA(fun=nl, algorithm=algo, random_state=seed, whiten=True)
+    ica = FastICA(fun=nl, algorithm=algo, random_state=seed,
+                  whiten='arbitrary-variance')
     sources = ica.fit_transform(m.T)
     assert ica.components_.shape == (2, 2)
     assert sources.shape == (1000, 2)
@@ -329,12 +330,15 @@ def test_fastica_whiten_backwards_compatibility():
     ica = FastICA(n_components=n_components,
                   whiten=True,
                   random_state=0)
-    Xt = ica.fit_transform(X)
+    with pytest.warns(FutureWarning):
+        Xt = ica.fit_transform(X)
 
     assert_almost_equal(np.var(Xt), 1.0 / 100)
 
 
-@pytest.mark.parametrize('whiten', [True, False])
+@pytest.mark.parametrize('whiten', ['arbitrary-variance',
+                                    'unitary-variance',
+                                    False])
 @pytest.mark.parametrize('return_X_mean', [True, False])
 @pytest.mark.parametrize('return_n_iter', [True, False])
 def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
