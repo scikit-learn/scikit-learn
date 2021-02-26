@@ -78,7 +78,7 @@ def test_fastica_simple(add_noise, seed):
 
     algos = ['parallel', 'deflation']
     nls = ['logcosh', 'exp', 'cube', g_test]
-    whitening = [True, False]
+    whitening = ['arbitrary-variance', 'unitary-variance', False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
             k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
@@ -192,7 +192,8 @@ def test_non_square_fastica(add_noise):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica(m.T, n_components=2, random_state=rng)
+    k_, mixing_, s_ = fastica(m.T, n_components=2, random_state=rng,
+                              whiten='arbitrary-variance')
     s_ = s_.T
 
     # Check that the mixing model described in the docstring holds:
