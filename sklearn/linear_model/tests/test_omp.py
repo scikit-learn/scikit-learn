@@ -78,8 +78,8 @@ def test_unreachable_accuracy():
         orthogonal_mp(X, y, n_nonzero_coefs=n_features))
     warning_message = (
         "Orthogonal matching pursuit ended prematurely "
-        "due to linear\ndependence in the dictionary. "
-        "The requested precision might not have been met.\n"
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
     )
     with pytest.warns(RuntimeWarning, match=warning_message):
         assert_array_almost_equal(
@@ -161,8 +161,8 @@ def test_identical_regressors():
     newy = np.dot(newX, gamma)
     warning_message = (
         "Orthogonal matching pursuit ended prematurely "
-        "due to linear\ndependence in the dictionary. "
-        "The requested precision might not have been met.\n"
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
     )
     with pytest.warns(RuntimeWarning, match=warning_message):
         orthogonal_mp(newX, newy, 2)
