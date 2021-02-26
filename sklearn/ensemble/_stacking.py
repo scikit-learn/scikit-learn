@@ -250,6 +250,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         names, estimators = zip(*self.estimators)
         parallel = _VisualBlock('parallel', estimators, names=names,
                                 dash_wrapped=False)
+
+        # final estimator is wrapped in a parallel block to show the label:
+        # 'final_estimator' in the html repr
         final_block = _VisualBlock('parallel', [final_estimator],
                                    names=['final_estimator'],
                                    dash_wrapped=False)
