@@ -125,7 +125,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         X : array-like of shape (n_samples, n_features)
             Training vectors.
         y : array-like of shape (n_samples,), default=None
-            Target values. This parameter may be ignored for unsupervised learning.
+            Target values. This parameter may be ignored for 
+            unsupervised learning.
 
         Returns
         -------
@@ -208,8 +209,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         return self.support_
 
     def _more_tags(self):
-        # unsupervised_models = [model.__class__ for model in ]
-        # if self.__class__ in
         return {
             'allow_nan': _safe_tags(self.estimator, key="allow_nan"),
             'requires_y': True,
