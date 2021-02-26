@@ -151,12 +151,13 @@ plt.show()
 # ----------------
 # In the previous example we saw the limitations of polynomials and splines for
 # extrapolation beyond the range of the training observations. In some
-# settings, e.g. with seasonal effects, we expect periodic continuation of
+# settings, e.g. with seasonal effects, we expect a periodic continuation of
 # the underlying signal. Such effects can be modelled using periodic splines,
-# which have equal intercepts and derivatives at the first and last knot.
-# In the following case we show how periodic splines provide a better fit both within and
-# outside of the range of training data given the additional information of
-# periodicity.
+# which have equal function value and equal derivatives at the first and last
+# knot. In the following case we show how periodic splines provide a better fit
+# both within and outside of the range of training data given the additional
+# information of periodicity. The splines periodicity is the distance between
+# the first and last knot, which we specify manually.
 
 
 # %%
@@ -199,7 +200,4 @@ splt = SplineTransformer(
 ).fit(X_train)
 ax.plot(x_plot, splt.transform(X_plot))
 ax.legend(ax.lines, [f"spline {n}" for n in range(3)])
-
-# plot knots of spline
-ax.vlines(knots, ymin=0, ymax=0.8, linestyles='dashed')
 plt.show()

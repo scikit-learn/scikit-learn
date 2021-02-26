@@ -61,7 +61,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         constant extrapolation. If 'linear', a linear extrapolation is used.
         If 'continue', the splines are extrapolated as is, i.e. option
         `extrapolate=True` in :class:`scipy.interpolate.BSpline`. If
-        'periodic', periodic splines are used.
+        'periodic', periodic splines, which enforce equal function value
+        and derivatives at the first and last knots, are used.
 
     include_bias : bool, default=True
         If True (default), then the last spline element inside the data range
@@ -269,10 +270,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             raise ValueError("Periodic splines require degree < n_knots.")
 
         # number of splines basis functions
-        # periodic splines have self.degree less degrees of freedom
         if self.extrapolation != "periodic":
             n_splines = n_knots + self.degree - 1
         else:
+            # periodic splines have self.degree less degrees of freedom
             n_splines = n_knots - 1
 
         degree = self.degree
@@ -374,7 +375,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # With periodic extrapolation we map x to the segment
                     # [spl.t[k], spl.t[n]].
                     # This is equivalent to BSpline(.., extrapolate="periodic")
-                    # for scipy>=1.6.1.
+                    # for scipy>=1.0.0.
                     n = spl.t.size - spl.k - 1
                     # Assign to new array to avoid inplace operation
                     x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
