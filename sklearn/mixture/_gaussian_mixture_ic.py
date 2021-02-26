@@ -257,10 +257,18 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self.max_agglom_size = max_agglom_size
         self.n_jobs = n_jobs
 
-    def _check_multi_comp_inputs(self, input, name):
+    def _check_multi_comp_inputs(self, input, name, default):
         if isinstance(input, (np.ndarray, list)):
             input = np.unique(input)
         elif isinstance(input, str):
+            if input not in default:
+                msg = (
+                    name
+                    + " must be one of "
+                    + str(default)
+                    + " not {}".format(input)
+                )
+                raise ValueError(msg)
             if input != "all":
                 input = [input]
         else:
@@ -285,17 +293,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         )
 
         self.affinity = self._check_multi_comp_inputs(
-            self.affinity, "affinity"
+            self.affinity,
+            "affinity",
+            ["euclidean", "manhattan", "cosine", "none", "all"],
         )
-
-        for aff in [self.affinity]:
-            if aff not in ["euclidean", "manhattan", "cosine", "none", "all"]:
-                msg = (
-                    "affinity must be one of "
-                    + '["euclidean", "manhattan", "cosine", "none", "all]'
-                )
-                msg += " not {}".format(aff)
-                raise ValueError(msg)
 
         if ("ward" in self.linkage) and not ("euclidean" in self.affinity):
             msg = (
@@ -304,29 +305,17 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             )
             raise ValueError(msg)
 
-        self.linkage = self._check_multi_comp_inputs(self.linkage, "linkage")
-
-        for link in [self.linkage]:
-            if link not in ["ward", "complete", "average", "single", "all"]:
-                msg = (
-                    "linkage must be one of "
-                    + '["ward", "complete", "average", "single", "all]'
-                )
-                msg += " not {}".format(link)
-                raise ValueError(msg)
-
-        self.covariance_type = self._check_multi_comp_inputs(
-            self.covariance_type, "covariance_type"
+        self.linkage = self._check_multi_comp_inputs(
+            self.linkage,
+            "linkage",
+            ["ward", "complete", "average", "single", "all"],
         )
 
-        for cov in [self.covariance_type]:
-            if cov not in ["spherical", "diag", "tied", "full", "all"]:
-                msg = (
-                    "covariance structure must be one of "
-                    + '["spherical", "diag", "tied", "full", "all]'
-                )
-                msg += " not {}".format(cov)
-                raise ValueError(msg)
+        self.covariance_type = self._check_multi_comp_inputs(
+            self.covariance_type,
+            "covariance_type",
+            ["spherical", "diag", "tied", "full", "all"],
+        )
 
         if isinstance(self.label_init, list):
             self.label_init = np.array(self.label_init)
