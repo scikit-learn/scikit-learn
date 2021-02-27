@@ -41,7 +41,6 @@ print(__doc__)
 #         Christian Lorentzen
 #         Malte Londschien
 # License: BSD 3 clause
-# %%
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -60,10 +60,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         splines at minimum and maximum value of the features is used as
         constant extrapolation. If 'linear', a linear extrapolation is used.
         If 'continue', the splines are extrapolated as is, i.e. option
-        `extrapolate=True` in :class:`scipy.interpolate.BSpline`. If 'periodic',
-        periodic splines with a periodicity equal to the distance between the
-        first and last knot are used. Periodic splines enforce equal function
-        values and derivatives at the first and last knot.
+        `extrapolate=True` in :class:`scipy.interpolate.BSpline`. If
+        'periodic', periodic splines with a periodicity equal to the distance
+        between the first and last knot are used. Periodic splines enforce
+        equal function values and derivatives at the first and last knot.
 
     include_bias : bool, default=True
         If True (default), then the last spline element inside the data range
@@ -120,7 +120,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.08, 0.74, 0.18],
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
-
     def __init__(
         self,
         n_knots=5,
