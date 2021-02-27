@@ -135,6 +135,19 @@ Changelog
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
+- |Fix| :class:`RANSACRegressor` Points with a residual equal to 
+  ``residual_threshold`` member are considered as an inlier.
+  Motivation for this change: We want a perfect dataset to be considered as 
+  inliers, specifically with default parameters or ``residual_threshold`` 
+  equal to zero.
+  Previously the code launched an exceptions with perfect model.
+  Such a comportement also happen with MAD and half of the 
+  points perfect.
+  With this definition, ``residual_threshold`` set to zero no longer set all 
+  points to outliers. Now you can do that by setting ``residual_threshold`` to 
+  nan.
+  :pr:`19499` by :user:`Gregory Strubel <gregorystrubel>`.
+
 :mod:`sklearn.manifold`
 .......................
 

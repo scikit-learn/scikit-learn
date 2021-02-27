@@ -534,6 +534,7 @@ def test_ransac_final_model_fit_sample_weight():
 
 
 def test_perfect_horizontal_line():
+    # regression test for issue #19497
     X = np.arange(100)[:, None]
     y = np.zeros((100, ))
 
