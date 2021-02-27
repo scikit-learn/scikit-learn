@@ -1,7 +1,6 @@
 """
 Testing for the nearest centroid module.
 """
-import pytest
 import numpy as np
 import pytest
 from scipy import sparse as sp
