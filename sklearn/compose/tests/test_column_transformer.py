@@ -1425,7 +1425,7 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
 @pytest.mark.parametrize("selector", [[], [False, False]])
 def test_get_feature_names_empty_selection(selector):
     """Test that get_feature_names is only called for transformers that
-    were selected.
+    were selected. Non-regression test for #19550.
     """
     ct = ColumnTransformer([('ohe', OneHotEncoder(drop='first'), selector)])
     ct.fit([[1, 2], [3, 4]])
