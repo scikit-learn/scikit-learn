@@ -264,6 +264,28 @@ def test_spline_transformer_periodic_splines_periodicity():
     assert_allclose(Xt_1, Xt_2[:, [4, 0, 1, 2, 3]])
 
 
+@pytest.mark.parametrize("degree", [3, 5])
+def test_spline_transformer_periodic_splines_smoothness(degree):
+    """Test that spline transformation is smooth at first / last knot."""
+    X = np.linspace(0, 10, 1000)[:, None]
+
+    transformer = SplineTransformer(
+        degree=degree,
+        extrapolation="periodic",
+        knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]]
+    )
+
+    Xt = transformer.fit_transform(X)
+
+    tol = 0.02
+
+    for d in range(1, degree + 1):
+        Xt = Xt[1:, :] - Xt[:-1, :]
+        assert (np.abs(Xt) < (tol ** d)).all()
+
+    assert np.abs(Xt[1:, :] - Xt[:-1, :]).max() > tol ** (degree + 1)
+
+
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
 @pytest.mark.parametrize("degree", [1, 2, 3, 4, 5])
 def test_spline_transformer_extrapolation(bias, intercept, degree):
