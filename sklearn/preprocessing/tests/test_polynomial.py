@@ -1,5 +1,3 @@
-from distutils.version import LooseVersion
-
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -9,11 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import KBinsDiscretizer, SplineTransformer
 from sklearn.utils.fixes import sp_version
 
-try:
-    from pkg_resources import parse_version  # type: ignore
-except ImportError:
-    # setuptools not installed
-    parse_version = LooseVersion  # type: ignore
+from pkg_resources import parse_version
 
 
 # TODO: add PolynomialFeatures if it moves to _polynomial.py
@@ -274,7 +268,6 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
         extrapolation="periodic",
         knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]]
     )
-
     Xt = transformer.fit_transform(X)
 
     tol = 0.02

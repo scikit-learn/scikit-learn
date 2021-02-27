@@ -267,7 +267,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_knots = base_knots.shape[0]
 
         if self.extrapolation == "periodic" and n_knots <= self.degree:
-            raise ValueError("Periodic splines require degree < n_knots.")
+            raise ValueError(
+                "Periodic splines require degree < n_knots. Got n_knots="
+                f"{self.n_knots} and degree={self.degree}."
+            )
 
         # number of splines basis functions
         if self.extrapolation != "periodic":
