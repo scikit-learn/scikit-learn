@@ -137,6 +137,9 @@ def test_pipeline_support():
 
 @pytest.mark.parametrize('n_features_to_select', (2, 3, 4))
 def test_unsupervised_model_fit(n_features_to_select):
+    # Make sure that models without classification labels are not being
+    # validated
+
     X, y = make_blobs(n_features=6)
     sfs = SequentialFeatureSelector(
         KMeans(),
@@ -144,3 +147,16 @@ def test_unsupervised_model_fit(n_features_to_select):
     )
     sfs.fit(X)
     assert(sfs.transform(X).shape[1] == n_features_to_select)
+
+@pytest.mark.parametrize('y', ('no_validation', 1j, 99.9, np.nan, 3))
+def test_no_y_validation_model_fit(y):
+    # Make sure that other non-conventional y labels are not accepted
+
+    X, clusters = make_blobs(n_features=6)
+    sfs = SequentialFeatureSelector(
+        KMeans(),
+        n_features_to_select=3,
+    )
+
+    with pytest.raises((TypeError, ValueError)):
+        sfs.fit(X, y)
