@@ -292,7 +292,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 base_knots[-(degree + 1): -1] - period,
                 base_knots,
                 base_knots[1: (degree + 1)] + period
-            ]
+            ].astype(np.float)
 
         else:
             # Eilers & Marx in "Flexible smoothing with B-splines and
