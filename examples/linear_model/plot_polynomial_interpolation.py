@@ -41,6 +41,7 @@ print(__doc__)
 #         Christian Lorentzen
 #         Malte Londschien
 # License: BSD 3 clause
+# %%
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -169,10 +170,14 @@ def g(x):
 
 y_train = g(x_train)
 
+# Extend the test data into the future:
+x_plot_ext = np.linspace(-1, 21, 200)
+X_plot_ext = x_plot_ext[:, np.newaxis]
+
 lw = 2
 fig, ax = plt.subplots()
 ax.set_prop_cycle(color=["black", "tomato", "teal"])
-ax.plot(x_plot, g(x_plot), linewidth=lw, label="ground truth")
+ax.plot(x_plot_ext, g(x_plot_ext), linewidth=lw, label="ground truth")
 ax.scatter(x_train, y_train, label="training points")
 
 for transformer, label in [
@@ -185,8 +190,8 @@ for transformer, label in [
 ]:
     model = make_pipeline(transformer, Ridge(alpha=1e-3))
     model.fit(X_train, y_train)
-    y_plot = model.predict(X_plot)
-    ax.plot(x_plot, y_plot, label=label)
+    y_plot_ext = model.predict(X_plot_ext)
+    ax.plot(x_plot_ext, y_plot_ext, label=label)
 
 ax.legend()
 fig.show()
@@ -199,6 +204,6 @@ splt = SplineTransformer(
   degree=3,
   extrapolation="periodic"
 ).fit(X_train)
-ax.plot(x_plot, splt.transform(X_plot))
+ax.plot(x_plot_ext, splt.transform(X_plot_ext))
 ax.legend(ax.lines, [f"spline {n}" for n in range(3)])
 plt.show()
