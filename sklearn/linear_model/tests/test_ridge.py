@@ -39,6 +39,7 @@ from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import LeaveOneOut
 
+from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
 
@@ -415,24 +416,32 @@ def _make_sparse_offset_regression(
 @pytest.mark.parametrize(
     'n_samples,dtype,proportion_nonzero',
     [(20, 'float32', .1), (40, 'float32', 1.), (20, 'float64', .2)])
+@pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('seed', np.arange(3))
 def test_solver_consistency(
-        solver, proportion_nonzero, n_samples, dtype, sparse_X, seed):
+        solver, proportion_nonzero, n_samples, dtype, sparse_X, seed,
+        normalize):
     alpha = 1.
     noise = 50. if proportion_nonzero > .9 else 500.
     X, y = _make_sparse_offset_regression(
         bias=10, n_features=30, proportion_nonzero=proportion_nonzero,
         noise=noise, random_state=seed, n_samples=n_samples)
+    if not normalize:
+        # Manually scale the data to avoid pathological cases. We use
+        # minmax_scale to deal with the sparse case without breaking
+        # the sparsity pattern.
+        X = minmax_scale(X)
     svd_ridge = Ridge(
-        solver='svd', normalize=True, alpha=alpha).fit(X, y)
+        solver='svd', normalize=normalize, alpha=alpha).fit(X, y)
     X = X.astype(dtype, copy=False)
     y = y.astype(dtype, copy=False)
     if sparse_X:
         X = sp.csr_matrix(X)
     if solver == 'ridgecv':
-        ridge = RidgeCV(alphas=[alpha], normalize=True)
+        ridge = RidgeCV(alphas=[alpha], normalize=normalize)
     else:
-        ridge = Ridge(solver=solver, tol=1e-10, normalize=True, alpha=alpha)
+        ridge = Ridge(solver=solver, tol=1e-10, normalize=normalize,
+                      alpha=alpha)
     ridge.fit(X, y)
     assert_allclose(
         ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
