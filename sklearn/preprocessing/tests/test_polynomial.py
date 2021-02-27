@@ -238,6 +238,30 @@ def test_spline_transformer_periodic_spline_backport():
     assert_allclose(Xt, Xspl)
 
 
+def test_spline_transformer_periodic_splines_periodicity():
+    """
+    Test if shifted knots result in the same transformation up to permutation.
+    """
+    X = np.linspace(0, 10, 101)[:, None]
+
+    transformer_1 = SplineTransformer(
+        degree=3,
+        extrapolation="periodic",
+        knots=[[0], [1], [2], [3], [4], [5]]
+    )
+    transformer_2 = SplineTransformer(
+        degree=3,
+        extrapolation="periodic",
+        knots=[[1], [2], [3], [4], [5], [6]]
+    )
+
+    Xt_1 = transformer_1.fit_transform(X)
+    Xt_2 = transformer_2.fit_transform(X)
+
+    assert_allclose(Xt_1, Xt_2[:, [4, 0, 1, 2, 3]])
+    assert_allclose(Xt_1[:91, :], Xt_2[10:, :])
+
+
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
 @pytest.mark.parametrize("degree", [1, 2, 3, 4, 5])
 def test_spline_transformer_extrapolation(bias, intercept, degree):
