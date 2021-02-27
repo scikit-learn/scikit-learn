@@ -41,7 +41,7 @@ y = expected_y + noise
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 # %%
-# Fitting non-linear quantile and squared error regressors
+# Fitting non-linear quantile and least squares regressors
 # --------------------------------------------------------
 #
 # Fit gradient boosting models trained with the quantile loss and
@@ -157,7 +157,7 @@ pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 # the conditional median nor the converse.
 #
 # If the target distribution were symmetric and had no outliers (e.g. with a
-# Gaussian noise), then median estimator and the squared error estimator would
+# Gaussian noise), then median estimator and the least squares estimator would
 # have yielded similar predictions.
 #
 # We then do the same on the test set.

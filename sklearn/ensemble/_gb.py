@@ -368,10 +368,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _warn_mae_for_criterion(self):
         pass
 
-    @abstractmethod
-    def _warn_mse_for_criterion(self):
-        pass
-
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -413,7 +409,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.criterion == 'mse':
             # TODO: Remove in v1.2. By then it should raise an error.
-            self._warn_mse_for_criterion()
+            warnings.warn(
+                "Criterion 'mse' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use `criterion='squared_error'` "
+                "which is equivalent.",
+                FutureWarning
+            )
 
         # if not warmstart - clear the estimator state
         if not self.warm_start:
@@ -1141,15 +1142,6 @@ shape (n_estimators, ``loss_.K``)
                       " trees should use a squared error criterion in Gradient"
                       " Boosting.", FutureWarning)
 
-    def _warn_mse_for_criterion(self):
-        # TODO: Remove in v1.2. By then, it should raise an error.
-        warnings.warn(
-            "Criterion 'mse' was deprecated in v1.0 and will be "
-            "removed in version 1.2. Use `criterion='squared_error'` "
-            "which is equivalent.",
-            FutureWarning
-        )
-
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -1674,15 +1666,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
                       "will be removed in version 1.1 (renaming of 0.26). The "
                       "correct way of minimizing the absolute error is to use "
                       " loss='lad' instead.", FutureWarning)
-
-    def _warn_mse_for_criterion(self):
-        # TODO: Remove in v1.2. By then, it should raise an error.
-        warnings.warn(
-            "Criterion 'mse' was deprecated in v1.0 and will be "
-            "removed in version 1.2. Use `criterion='squared_error'` "
-            "which is equivalent.",
-            FutureWarning
-        )
 
     def predict(self, X):
         """Predict regression target for X.

@@ -301,7 +301,7 @@ class _BaseTreeExporter:
                 criterion = "friedman_mse"
             elif (isinstance(criterion, _criterion.MSE)
                   or criterion == "squared_error"):
-                criterion = "mse"
+                criterion = "squared_error"
             elif not isinstance(criterion, str):
                 criterion = "impurity"
             if labels:

@@ -744,7 +744,7 @@ the parameter ``loss``:
 
   * Regression
 
-    * Squares error (``'squared_error'``): The natural choice for regression
+    * Squared error (``'squared_error'``): The natural choice for regression
       due to its superior computational properties. The initial model is
       given by the mean of the target values.
     * Least absolute deviation (``'lad'``): A robust loss function for
@@ -953,7 +953,7 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'lsquared_error',
+Available losses for regression are 'squared_error',
 'least_absolute_deviation', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
