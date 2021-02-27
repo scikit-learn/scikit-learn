@@ -280,38 +280,46 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_out = n_features * n_splines
         # We have to add degree number of knots below, and degree number knots
         # above the base knots in order to make the spline basis complete.
-        # Eilers & Marx in "Flexible smoothing with B-splines and  penalties"
-        # https://doi.org/10.1214/ss/1038425655 advice against repeating first
-        # and last knot several times, which would have inferior behaviour at
-        # boundaries if combined with a penalty (hence P-Spline). We follow
-        # this advice even if our splines are unpenalized.
-        # Meaning we do not:
-        # knots = np.r_[np.tile(base_knots.min(axis=0), reps=[degree, 1]),
-        #              base_knots,
-        #              np.tile(base_knots.max(axis=0), reps=[degree, 1])
-        #              ]
-        # Instead, we reuse the distance of the 2 fist/last knots.
-        dist_min = base_knots[1] - base_knots[0]
-        dist_max = base_knots[-1] - base_knots[-2]
 
-        # For periodic splines the spacing of the first / last degree knots
-        # needs to be equal
         if self.extrapolation == "periodic":
-            dist_min = dist_max = (dist_min + dist_max) / 2
+            # For periodic splines the spacing of the first / last degree knots
+            # needs to a continuation of the base_knot spacing.
+            period = base_knots[-1] - base_knots[0]
+            knots = np.r_[
+                base_knots[-(degree + 1) : -1] - period,
+                base_knots,
+                base_knots[1 : (degree + 1)] + period
+            ]
 
-        knots = np.r_[
-            linspace(
-                base_knots[0] - degree * dist_min,
-                base_knots[0] - dist_min,
-                num=degree,
-            ),
-            base_knots,
-            linspace(
-                base_knots[-1] + dist_max,
-                base_knots[-1] + degree * dist_max,
-                num=degree,
-            ),
-        ]
+        else:
+            # Eilers & Marx in "Flexible smoothing with B-splines and  penalties"
+            # https://doi.org/10.1214/ss/1038425655 advice against repeating first
+            # and last knot several times, which would have inferior behaviour at
+            # boundaries if combined with a penalty (hence P-Spline). We follow
+            # this advice even if our splines are unpenalized.
+            # Meaning we do not:
+            # knots = np.r_[
+            #     np.tile(base_knots.min(axis=0), reps=[degree, 1]),
+            #     base_knots,
+            #     np.tile(base_knots.max(axis=0), reps=[degree, 1])
+            # ]
+            # Instead, we reuse the distance of the 2 fist/last knots.
+            dist_min = base_knots[1] - base_knots[0]
+            dist_max = base_knots[-1] - base_knots[-2]
+
+            knots = np.r_[
+                linspace(
+                    base_knots[0] - degree * dist_min,
+                    base_knots[0] - dist_min,
+                    num=degree,
+                ),
+                base_knots,
+                linspace(
+                    base_knots[-1] + dist_max,
+                    base_knots[-1] + degree * dist_max,
+                    num=degree,
+                ),
+            ]
 
         # With a diagonal coefficient matrix, we get back the spline basis
         # elements, i.e. the design matrix of the spline.
