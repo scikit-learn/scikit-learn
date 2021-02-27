@@ -270,7 +270,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if self.extrapolation == "periodic" and n_knots <= self.degree:
             raise ValueError(
                 "Periodic splines require degree < n_knots. Got n_knots="
-                f"{self.n_knots} and degree={self.degree}."
+                f"{n_knots} and degree={self.degree}."
             )
 
         # number of splines basis functions
@@ -290,18 +290,18 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # needs to a continuation of the base_knot spacing.
             period = base_knots[-1] - base_knots[0]
             knots = np.r_[
-                base_knots[-(degree + 1) : -1] - period,
+                base_knots[-(degree + 1): -1] - period,
                 base_knots,
-                base_knots[1 : (degree + 1)] + period
+                base_knots[1: (degree + 1)] + period
             ]
 
         else:
-            # Eilers & Marx in "Flexible smoothing with B-splines and  penalties"
-            # https://doi.org/10.1214/ss/1038425655 advice against repeating first
-            # and last knot several times, which would have inferior behaviour at
-            # boundaries if combined with a penalty (hence P-Spline). We follow
-            # this advice even if our splines are unpenalized.
-            # Meaning we do not:
+            # Eilers & Marx in "Flexible smoothing with B-splines and
+            # penalties" https://doi.org/10.1214/ss/1038425655 advice
+            # against repeating first and last knot several times, which
+            # would have inferior behaviour at boundaries if combined with
+            # a penalty (hence P-Spline). We follow this advice even if our
+            # splines are unpenalized. Meaning we do not:
             # knots = np.r_[
             #     np.tile(base_knots.min(axis=0), reps=[degree, 1]),
             #     base_knots,
