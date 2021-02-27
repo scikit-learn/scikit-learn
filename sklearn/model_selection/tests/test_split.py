@@ -14,7 +14,6 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
@@ -193,8 +192,8 @@ def test_kfold_valueerrors():
     y = np.array([3, 3, -1, -1, 3])
 
     skf_3 = StratifiedKFold(3)
-    assert_warns_message(Warning, "The least populated class",
-                         next, skf_3.split(X2, y))
+    with pytest.warns(Warning, match="The least populated class"):
+        next(skf_3.split(X2, y))
 
     # Check that despite the warning the folds are still computed even
     # though all the classes are not necessarily represented at on each
