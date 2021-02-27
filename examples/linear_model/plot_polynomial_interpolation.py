@@ -39,6 +39,7 @@ print(__doc__)
 # Author: Mathieu Blondel
 #         Jake Vanderplas
 #         Christian Lorentzen
+#         Malte Londschien
 # License: BSD 3 clause
 
 import numpy as np
