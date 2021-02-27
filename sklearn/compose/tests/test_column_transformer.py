@@ -1420,3 +1420,13 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.names == ('scale', 'remainder')
     assert visual_block.name_details == ([0, 2], [1])
     assert visual_block.estimators == (scaler, remainder)
+
+
+@pytest.mark.parametrize("selector", [[], [False, False]])
+def test_get_feature_names_empty_selection(selector):
+    """Test that get_feature_names is only called for transformers that
+    were selected. Non-regression test for #19550.
+    """
+    ct = ColumnTransformer([('ohe', OneHotEncoder(drop='first'), selector)])
+    ct.fit([[1, 2], [3, 4]])
+    assert ct.get_feature_names() == []
