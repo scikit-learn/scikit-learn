@@ -6,7 +6,7 @@ from math import sqrt
 
 import numpy as np
 from sklearn import neighbors
-
+import re
 import pytest
 from numpy.testing import assert_array_equal
 
@@ -15,7 +15,6 @@ from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_outlier_corruption
 
@@ -123,9 +122,9 @@ def test_n_neighbors_attribute():
     assert clf.n_neighbors_ == X.shape[0] - 1
 
     clf = neighbors.LocalOutlierFactor(n_neighbors=500)
-    assert_warns_message(UserWarning,
-                         "n_neighbors will be set to (n_samples - 1)",
-                         clf.fit, X)
+    msg = "n_neighbors will be set to (n_samples - 1)"
+    with pytest.warns(UserWarning, match=re.escape(msg)):
+        clf.fit(X)
     assert clf.n_neighbors_ == X.shape[0] - 1
 
 

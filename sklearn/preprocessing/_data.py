@@ -60,22 +60,36 @@ __all__ = [
 ]
 
 
-def _handle_zeros_in_scale(scale, copy=True):
-    """Makes sure that whenever scale is zero, we handle it correctly.
+def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
+    """Set scales of near constant features to 1.
 
-    This happens in most scalers when we have constant features.
+    The goal is to avoid division by very small or zero values.
+
+    Near constant features are detected automatically by identifying
+    scales close to machine precision unless they are precomputed by
+    the caller and passed with the `constant_mask` kwarg.
+
+    Typically for standard scaling, the scales are the standard
+    deviation while near constant features are better detected on the
+    computed variances which are closer to machine precision by
+    construction.
     """
-
     # if we are fitting on 1D arrays, scale might be a scalar
     if np.isscalar(scale):
         if scale == .0:
             scale = 1.
         return scale
     elif isinstance(scale, np.ndarray):
+        if constant_mask is None:
+            # Detect near constant values to avoid dividing by a very small
+            # value that could lead to suprising results and numerical
+            # stability issues.
+            constant_mask = scale < 10 * np.finfo(scale.dtype).eps
+
         if copy:
             # New array to avoid side-effects
             scale = scale.copy()
-        scale[scale == 0.0] = 1.0
+        scale[constant_mask] = 1.0
         return scale
 
 
@@ -408,7 +422,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         data_range = data_max - data_min
         self.scale_ = ((feature_range[1] - feature_range[0]) /
-                       _handle_zeros_in_scale(data_range))
+                       _handle_zeros_in_scale(data_range, copy=True))
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_min_ = data_min
         self.data_max_ = data_max
@@ -850,7 +864,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
-            self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))
+            # Extract the list of near constant features on the raw variances,
+            # before taking the square root.
+            constant_mask = self.var_ < 10 * np.finfo(X.dtype).eps
+            self.scale_ = _handle_zeros_in_scale(
+                np.sqrt(self.var_), copy=False, constant_mask=constant_mask)
         else:
             self.scale_ = None
 
@@ -1078,7 +1096,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             self.n_samples_seen_ += X.shape[0]
 
         self.max_abs_ = max_abs
-        self.scale_ = _handle_zeros_in_scale(max_abs)
+        self.scale_ = _handle_zeros_in_scale(max_abs, copy=True)
         return self
 
     def transform(self, X):

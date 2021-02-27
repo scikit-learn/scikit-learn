@@ -17,7 +17,6 @@ from scipy.cluster import hierarchy
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
@@ -140,7 +139,8 @@ def test_zero_cosine_linkage_tree():
     X = np.array([[0, 1],
                   [0, 0]])
     msg = 'Cosine affinity cannot be used when X contains zero vectors'
-    assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
+    with pytest.raises(ValueError, match=msg):
+        linkage_tree(X, affinity='cosine')
 
 
 @pytest.mark.parametrize('n_clusters, distance_threshold',
@@ -644,7 +644,8 @@ def test_agg_n_clusters():
         agc = AgglomerativeClustering(n_clusters=n_clus)
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
-        assert_raise_message(ValueError, msg, agc.fit, X)
+        with pytest.raises(ValueError, match=msg):
+            agc.fit(X)
 
 
 def test_affinity_passed_to_fix_connectivity():
