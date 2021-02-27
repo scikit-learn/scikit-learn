@@ -227,7 +227,9 @@ def test_spline_transformer_periodic_spline_backport():
 
     # Use periodic extrapolation backport in SplineTransformer
     transformer = SplineTransformer(
-        degree=2, extrapolation="periodic", knots=[[-1], [0], [1]]
+        degree=2,
+        extrapolation="periodic",
+        knots=[[-1.0], [0.0], [1.0]]
     )
     Xt = transformer.fit_transform(X)
 
@@ -247,19 +249,19 @@ def test_spline_transformer_periodic_splines_periodicity():
     transformer_1 = SplineTransformer(
         degree=3,
         extrapolation="periodic",
-        knots=[[0], [1], [2], [3], [4], [5]]
+        knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]]
     )
+
     transformer_2 = SplineTransformer(
         degree=3,
         extrapolation="periodic",
-        knots=[[1], [2], [3], [4], [5], [6]]
+        knots=[[1.0], [3.0], [4.0], [5.0], [8.0], [9.0]]
     )
 
     Xt_1 = transformer_1.fit_transform(X)
     Xt_2 = transformer_2.fit_transform(X)
 
     assert_allclose(Xt_1, Xt_2[:, [4, 0, 1, 2, 3]])
-    assert_allclose(Xt_1[:91, :], Xt_2[10:, :])
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
