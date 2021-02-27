@@ -33,6 +33,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
@@ -40,7 +41,6 @@ from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
 
 from ..utils.fixes import delayed
-from ..preprocessing import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -229,33 +229,37 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
     if fit_intercept:
         if sp.issparse(X):
-            X_offset, X_var = mean_variance_axis(X, axis=0)
+            X_offset, X_var = mean_variance_axis(
+                X, axis=0, weights=sample_weight
+            )
             if not return_mean:
                 X_offset[:] = X.dtype.type(0)
+        else:
+            X_offset, X_var, _ = _incremental_mean_and_var(
+                X, last_mean=0., last_variance=0., last_sample_count=0.,
+                sample_weight=sample_weight
+            )
 
-            if normalize:
+            X_offset = X_offset.astype(X.dtype)
+            X -= X_offset
 
-                # TODO: f_normalize could be used here as well but the function
-                # inplace_csr_row_normalize_l2 must be changed such that it
-                # can return also the norms computed internally
+        X_var = X_var.astype(X.dtype, copy=False)
 
-                # transform variance to norm in-place
-                X_var *= X.shape[0]
-                X_scale = np.sqrt(X_var, X_var)
-                del X_var
-                X_scale[X_scale == 0] = 1
+        if normalize:
+            # Detect constant features on the computed variance, before taking
+            # the np.sqrt. Otherwise constant features cannot be detected with
+            # sample_weights.
+            constant_mask = X_var < 10 * np.finfo(X.dtype).eps
+            X_var *= X.shape[0]
+            X_scale = np.sqrt(X_var, out=X_var)
+            X_scale[constant_mask] = 1.
+            if sp.issparse(X):
                 inplace_column_scale(X, 1. / X_scale)
             else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
-
+                X /= X_scale
         else:
-            X_offset = np.average(X, axis=0, weights=sample_weight)
-            X -= X_offset
-            if normalize:
-                X, X_scale = f_normalize(X, axis=0, copy=False,
-                                         return_norm=True)
-            else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
+            X_scale = np.ones(X.shape[1], dtype=X.dtype)
+
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y = y - y_offset
     else:
