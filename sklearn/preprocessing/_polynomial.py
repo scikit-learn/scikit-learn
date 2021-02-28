@@ -285,7 +285,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_out = n_features * n_splines
         # We have to add degree number of knots below, and degree number knots
         # above the base knots in order to make the spline basis complete.
-
         if self.extrapolation == "periodic":
             # For periodic splines the spacing of the first / last degree knots
             # needs to be a continuation of the spacing of the last / first base
