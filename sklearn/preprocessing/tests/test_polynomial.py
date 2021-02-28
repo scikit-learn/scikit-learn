@@ -285,14 +285,16 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     )
     Xt = transformer.fit_transform(X)
 
-    tol = 0.02
+    delta = (X.max() - X.min()) / len(X)
+    tol = 10
+
     dXt = Xt
 
     for d in range(1, degree + 1):
         dXt = dXt[1:, :] - dXt[:-1, :]
-        assert (np.abs(dXt) < (tol ** d)).all()
+        assert (np.abs(dXt) < tol * (delta ** d)).all()
 
-    assert np.abs(dXt[1:, :] - dXt[:-1, :]).max() > tol ** (degree + 1)
+    assert np.abs(dXt[1:, :] - dXt[:-1, :]).max() > tol * delta ** (degree + 1)
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
