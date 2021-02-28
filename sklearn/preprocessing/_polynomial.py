@@ -240,7 +240,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 X, n_knots=self.n_knots, knots=self.knots
             )
         else:
-            base_knots = check_array(self.knots)
+            base_knots = check_array(self.knots, dtype=np.float64)
             if base_knots.shape[0] < 2:
                 raise ValueError(
                     "Number of knots, knots.shape[0], must be >= " "2."
@@ -294,7 +294,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 base_knots[-(degree + 1): -1] - period,
                 base_knots,
                 base_knots[1: (degree + 1)] + period
-            ].astype(np.float64)
+            ]
 
         else:
             # Eilers & Marx in "Flexible smoothing with B-splines and
