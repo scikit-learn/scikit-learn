@@ -157,8 +157,12 @@ plt.show()
 # which have equal function value and equal derivatives at the first and last
 # knot. In the following case we show how periodic splines provide a better fit
 # both within and outside of the range of training data given the additional
-# information of periodicity. The splines periodicity is the distance between
+# information of periodicity. The splines period is the distance between
 # the first and last knot, which we specify manually.
+#
+# Periodic splines can also be useful for naturally periodic features (such as
+# day of the year), as the smoothness at the boundary knots prevents a jump in
+# the transformed values (e.g. from Dec 31st to Jan 1st).
 
 
 # %%
