@@ -121,6 +121,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.08, 0.74, 0.18],
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
+
     def __init__(
         self,
         n_knots=5,
@@ -287,7 +288,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         if self.extrapolation == "periodic":
             # For periodic splines the spacing of the first / last degree knots
-            # needs to a continuation of the base_knot spacing.
+            # needs to be a continuation of the spacing of the last / first base
+            # knots.
             period = base_knots[-1] - base_knots[0]
             knots = np.r_[
                 base_knots[-(degree + 1): -1] - period,
