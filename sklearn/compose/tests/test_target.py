@@ -199,6 +199,8 @@ def test_transform_target_regressor_2d_transformer_multioutput():
 
 
 def test_transform_target_regressor_3d_target():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/18866
     # Check with a 3D target with a transformer that reshapes the target
     X = friedman[0]
     y = np.tile(friedman[1].reshape(-1, 1, 1), [1, 3, 2])
