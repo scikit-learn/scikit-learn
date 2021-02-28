@@ -287,8 +287,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         # above the base knots in order to make the spline basis complete.
         if self.extrapolation == "periodic":
             # For periodic splines the spacing of the first / last degree knots
-            # needs to be a continuation of the spacing of the last / first base
-            # knots.
+            # needs to be a continuation of the spacing of the last / first
+            # base knots.
             period = base_knots[-1] - base_knots[0]
             knots = np.r_[
                 base_knots[-(degree + 1): -1] - period,
