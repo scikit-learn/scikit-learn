@@ -23,8 +23,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     """Generate univariate B-spline bases for features.
 
     Generate a new feature matrix consisting of
-    `n_splines=n_knots + degree - 1` spline basis functions (B-splines) of
-    polynomial order=`degree` for each feature.
+    `n_splines=n_knots + degree - 1` (`n_knots - 1` for
+    `extrapolation="periodic"`) spline basis functions
+    (B-splines) of polynomial order=`degree` for each feature.
 
     Read more in the :ref:`User Guide <spline_transformer>`.
 
