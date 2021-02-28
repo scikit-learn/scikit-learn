@@ -103,8 +103,8 @@ def test_spline_transformer_manual_knot_input():
 @pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
 def test_spline_transformer_integer_knots(extrapolation):
     """Test that SplineTransformer accepts integer value knot positions."""
-    X = np.arange(20)[:, None]
-    knots = [[0], [1], [5], [11], [12]]
+    X = np.arange(20).reshape(10, 2)
+    knots = [[0, 1], [1, 2], [5, 5], [11, 10], [12, 11]]
     _ = SplineTransformer(
         degree=3,
         knots=knots,

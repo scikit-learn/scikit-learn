@@ -367,7 +367,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         )
 
         n_samples, n_features = X.shape
-        n_splines = self.bsplines_[0].c.shape[0]
+        n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
         # Note that scipy BSpline returns float64 arrays and converts input
