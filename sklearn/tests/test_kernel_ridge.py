@@ -87,7 +87,7 @@ def test_kernel_ridge_multi_output():
     assert_array_almost_equal(pred2, pred3)
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 def test_kernel_ridge_pairwise_is_deprecated():
     k_ridge = KernelRidge(kernel='precomputed')
     msg = r"Attribute _pairwise was deprecated in version 0\.24"

@@ -181,6 +181,9 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 # https://github.com/scikit-learn/scikit-learn/issues/15913
 @pytest.mark.filterwarnings(
     "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
+# TODO: Remove when pyamg removes the use of np.float
+@pytest.mark.filterwarnings(
+    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*")
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
     pytest.importorskip('pyamg')
@@ -216,6 +219,9 @@ def test_spectral_embedding_amg_solver(seed=36):
 # https://github.com/scikit-learn/scikit-learn/issues/15913
 @pytest.mark.filterwarnings(
     "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
+# TODO: Remove when pyamg removes the use of np.float
+@pytest.mark.filterwarnings(
+    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*")
 def test_spectral_embedding_amg_solver_failure():
     # Non-regression test for amg solver failure (issue #13393 on github)
     pytest.importorskip('pyamg')
@@ -347,7 +353,7 @@ def test_spectral_embedding_first_eigen_vector():
         assert np.std(embedding[:, 1]) > 1e-3
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @pytest.mark.parametrize("affinity", ["precomputed",
                                       "precomputed_nearest_neighbors"])
 def test_spectral_embedding_pairwise_deprecated(affinity):

@@ -8,7 +8,6 @@ from sklearn.base import TransformerMixin
 from sklearn.dummy import DummyRegressor
 
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
@@ -54,9 +53,9 @@ def test_transform_target_regressor_invertible():
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       func=np.sqrt, inverse_func=np.log,
                                       check_inverse=True)
-    assert_warns_message(UserWarning, "The provided functions or transformer"
-                         " are not strictly inverse of each other.",
-                         regr.fit, X, y)
+    with pytest.warns(UserWarning, match="The provided functions or"
+                      " transformer are not strictly inverse of each other."):
+        regr.fit(X, y)
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       func=np.sqrt, inverse_func=np.log)
     regr.set_params(check_inverse=False)

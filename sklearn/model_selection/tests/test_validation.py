@@ -17,8 +17,6 @@ from sklearn.model_selection.tests.test_search import FailingClassifier
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -857,13 +855,12 @@ def test_cross_val_predict():
 
     X, y = load_iris(return_X_y=True)
 
-    warning_message = ('Number of classes in training fold (2) does '
-                       'not match total number of classes (3). '
+    warning_message = (r'Number of classes in training fold \(2\) does '
+                       r'not match total number of classes \(3\). '
                        'Results may not be appropriate for your use case.')
-    assert_warns_message(RuntimeWarning, warning_message,
-                         cross_val_predict,
-                         LogisticRegression(solver="liblinear"),
-                         X, y, method='predict_proba', cv=KFold(2))
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        cross_val_predict(LogisticRegression(solver="liblinear"),
+                          X, y, method='predict_proba', cv=KFold(2))
 
 
 def test_cross_val_predict_decision_function_shape():
@@ -1210,9 +1207,13 @@ def test_learning_curve_remove_duplicate_sample_sizes():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(2)
-    train_sizes, _, _ = assert_warns(
-        RuntimeWarning, learning_curve, estimator, X, y, cv=3,
-        train_sizes=np.linspace(0.33, 1.0, 3))
+    warning_message = (
+        "Removed duplicate entries from 'train_sizes'. Number of ticks "
+        "will be less than the size of 'train_sizes': 2 instead of 3."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        train_sizes, _, _ = learning_curve(
+            estimator, X, y, cv=3, train_sizes=np.linspace(0.33, 1.0, 3))
     assert_array_equal(train_sizes, [1, 2])
 
 
@@ -1753,8 +1754,13 @@ def test_fit_and_score_failing():
     # passing error score to trigger the warning message
     fit_and_score_kwargs = {'error_score': 0}
     # check if the warning message type is as expected
-    assert_warns(FitFailedWarning, _fit_and_score, *fit_and_score_args,
-                 **fit_and_score_kwargs)
+    warning_message = (
+        "Estimator fit failed. The score on this train-test partition for "
+        "these parameters will be set to %f."
+        % (fit_and_score_kwargs['error_score'])
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     # since we're using FailingClassfier, our error will be the following
     error_message = "ValueError: Failing classifier failed as required"
     # the warning message we're expecting to see
@@ -1769,8 +1775,13 @@ def test_fit_and_score_failing():
         mtb = split[0] + '\n' + split[-1]
         return warning_message in mtb
     # check traceback is included
-    assert_warns_message(FitFailedWarning, test_warn_trace, _fit_and_score,
-                         *fit_and_score_args, **fit_and_score_kwargs)
+    warning_message = (
+        "Estimator fit failed. The score on this train-test partition for "
+        "these parameters will be set to %f."
+        % (fit_and_score_kwargs['error_score'])
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
 
     fit_and_score_kwargs = {'error_score': 'raise'}
     # check if exception was raised, with default error_score='raise'
@@ -1962,7 +1973,7 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
         assert "test_{}".format(name) in cv_results
 
 
-# TODO: Remove in 0.26 when the _pairwise attribute is removed
+# TODO: Remove in 1.1 when the _pairwise attribute is removed
 def test_validation_pairwise():
     # checks the interactions between the pairwise estimator tag
     # and the _pairwise attribute
@@ -1981,19 +1992,6 @@ def test_validation_pairwise():
             return {'pairwise': False}
 
     svm = IncorrectTagSVM(kernel='precomputed')
-    msg = ("_pairwise was deprecated in 0.24 and will be removed in 0.26. "
-           "Set the estimator tags of your estimator instead")
-    with pytest.warns(FutureWarning, match=msg):
-        cross_validate(svm, linear_kernel, y, cv=2)
-
-    # the _pairwise attribute is present and set to True while the pairwise
-    # tag is not present
-    class NoEstimatorTagSVM(SVC):
-        def _get_tags(self):
-            tags = super()._get_tags()
-            del tags['pairwise']
-            return tags
-
-    svm = NoEstimatorTagSVM(kernel='precomputed')
+    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         cross_validate(svm, linear_kernel, y, cv=2)
