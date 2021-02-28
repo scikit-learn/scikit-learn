@@ -28,36 +28,16 @@ def test_n_components():
     # max_components < min_components
     _test_inputs(X, ValueError, max_components=0)
 
-    # # max_components integer
+    # max_components integer
     _test_inputs(X, TypeError, max_components="1")
 
-    # min_cluster > n_samples when max_cluster is None
-    with pytest.raises(ValueError):
-        gmIC = GaussianMixtureIC(1000)
-        gmIC.fit(X)
+    # max_components > n_samples
+    _test_inputs(X, ValueError, max_components=101)
 
-    # max_cluster > n_samples when max_cluster is not None
+    # min_components > n_samples
     _test_inputs(
-        X, ValueError, **{"min_components": 10, "max_components": 101}
+        X, ValueError, **{"min_components": 101, "max_components": 102}
     )
-
-    # max_cluster > n_samples when max_cluster is None
-    with pytest.raises(ValueError):
-        gmIC = GaussianMixtureIC(1000)
-        gmIC.fit(X)
-
-    with pytest.raises(ValueError):
-        gmIC = GaussianMixtureIC(10, 1001)
-        gmIC.fit_predict(X)
-
-    # min_cluster > n_samples when max_cluster is not None
-    with pytest.raises(ValueError):
-        gmIC = GaussianMixtureIC(1000, 1001)
-        gmIC.fit(X)
-
-    with pytest.raises(ValueError):
-        gmIC = GaussianMixtureIC(1000, 1001)
-        gmIC.fit_predict(X)
 
 
 def test_input_param():
@@ -85,7 +65,7 @@ def test_input_param():
     # euclidean is not an affinity option when ward is a linkage option
     _test_inputs(X, ValueError, **{"affinity": "manhattan", "linkage": "ward"})
 
-    # criter = cic
+    # criterion is not "aic" or "bic"
     _test_inputs(X, ValueError, criterion="cic")
 
 
@@ -145,7 +125,7 @@ def test_cosine_with_0():
         gmIC.fit(X)
 
 
-def _test_two_class(AIC=False, **kws):
+def _test_two_class(**kws):
     """
     Easily separable two gaussian problem.
     """
@@ -159,37 +139,33 @@ def _test_two_class(AIC=False, **kws):
     X = np.vstack((X1, X2))
     y = np.repeat([0, 1], n)
 
-    gmIC = GaussianMixtureIC(max_components=5, **kws)
+    # test BIC
+    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", **kws)
     gmIC.fit(X, y)
-
     n_components = gmIC.n_components_
 
-    if AIC is False:
-        # Assert that the two cluster model is the best
-        assert_equal(n_components, 2)
+    # Assert that the two cluster model is the best
+    assert_equal(n_components, 2)
 
-        # Asser that we get perfect clustering
-        ari = adjusted_rand_score(y, gmIC.fit_predict(X))
-        assert_allclose(ari, 1)
-    else:
-        # AIC gets the number of components wrong
-        assert_equal(n_components >= 1, True)
-        assert_equal(n_components <= 5, True)
+    # Asser that we get perfect clustering
+    ari = adjusted_rand_score(y, gmIC.fit_predict(X))
+    assert_allclose(ari, 1)
 
+    # test AIC
+    gmIC = GaussianMixtureIC(max_components=5, criterion="aic", **kws)
+    gmIC.fit(X, y)
+    n_components = gmIC.n_components_
 
-def test_two_class():
-    _test_two_class(AIC=False)
+    # AIC gets the number of components wrong
+    assert_equal(n_components >= 1, True)
+    assert_equal(n_components <= 5, True)
 
 
 def test_two_class_parallel():
     _test_two_class(n_jobs=2)
 
 
-def test_two_class_aic():
-    _test_two_class(AIC=True)
-
-
-def _test_five_class(AIC=False, **kws):
+def test_five_class():
     """
     Easily separable five gaussian problem.
     """
@@ -201,25 +177,27 @@ def _test_five_class(AIC=False, **kws):
 
     X = np.vstack([np.random.multivariate_normal(mu, cov, n) for mu in mus])
 
+    # test BIC
     gmIC = GaussianMixtureIC(
-        min_components=3, max_components=10, covariance_type="all", **kws
+        min_components=3,
+        max_components=10,
+        covariance_type="all",
+        criterion="bic",
     )
     gmIC.fit(X)
+    assert_equal(gmIC.n_components_, 5)
 
-    if AIC is False:
-        assert_equal(gmIC.n_components_, 5)
-    else:
-        # AIC fails often so there is no assertion here
-        assert_equal(gmIC.n_components_ >= 3, True)
-        assert_equal(gmIC.n_components_ <= 10, True)
-
-
-def test_five_class():
-    _test_five_class(AIC=False)
-
-
-def test_five_class_aic():
-    _test_five_class(AIC=True)
+    # test AIC
+    gmIC = GaussianMixtureIC(
+        min_components=3,
+        max_components=10,
+        covariance_type="all",
+        criterion="aic",
+    )
+    gmIC.fit(X)
+    # AIC fails often so there is no assertion here
+    assert_equal(gmIC.n_components_ >= 3, True)
+    assert_equal(gmIC.n_components_ <= 10, True)
 
 
 def test_covariances():

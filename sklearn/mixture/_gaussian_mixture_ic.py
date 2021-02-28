@@ -18,6 +18,7 @@ from ..cluster import AgglomerativeClustering
 from ..model_selection import ParameterGrid
 from ..utils import check_scalar, check_array
 from ..utils.validation import check_is_fitted
+from ..preprocessing import OneHotEncoder
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 
@@ -126,7 +127,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         The maximum number of EM iterations to perform.
 
     criterion : str {"bic" or "aic"}, optional, (default="bic")
-        select the best model based on Bayesian Information Criterion (bic) or
+        Select the best model based on Bayesian Information Criterion (bic) or
         Aikake Information Criterion (aic)
 
     verbose : int, optional (default = 0)
@@ -150,25 +151,6 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    results_ : dict
-        Contains exhaustive information about all the clustering runs.
-        Keys are:
-
-        'model' : GaussianMixture object
-            GMM clustering fit to the data
-        'bic/aic' : float
-            Bayesian Information Criterion
-        'n_components' : int
-            number of clusters
-        'affinity' : {'euclidean','manhattan','cosine','none'}
-            affinity used in Agglomerative Clustering
-        'linkage' : {'ward','complete','average','single'}
-            linkage used in Agglomerative Clustering
-        'covariance_type' : {'full', 'tied', 'diag', 'spherical'}
-            covariance type used in GMM
-        'reg_covar' : float
-            regularization used in GMM
-
     best_criterion_ : float
         the best (lowest) Bayesian or Aikake Information Criterion
 
@@ -196,6 +178,26 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     n_iter_ : int
         number of step used by the best fit of EM for the best model
         to reach the convergence
+
+    results_ : list
+        Contains exhaustive information about all the clustering runs.
+        Each item represents a class object storing the results
+        for a single run with the following attributes:
+
+        model : GaussianMixture object
+            GMM clustering fit to the data
+        criterion_score : float
+            Bayesian or Aikake Information Criterion score
+        n_components : int
+            number of clusters
+        affinity : {'euclidean','manhattan','cosine','none'}
+            affinity used in Agglomerative Clustering
+        linkage : {'ward','complete','average','single'}
+            linkage used in Agglomerative Clustering
+        covariance_type : {'full', 'tied', 'diag', 'spherical'}
+            covariance type used in GMM
+        reg_covar : float
+            regularization used in GMM
 
     Examples
     --------
@@ -357,7 +359,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         )
 
     def _init_gm_params(self, X, labels, params):
-        onehot = _labels_to_onehot(labels)
+        labels = labels.reshape(-1, 1)
+        enc = OneHotEncoder()
+        enc.fit(labels)
+        onehot = enc.fit_transform(labels).toarray()
         weights_init, means_init, precisions_init = _onehot_to_initial_params(
             X, onehot, params[1]["covariance_type"]
         )
@@ -412,22 +417,16 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 criter = model.aic(X)
             break
 
-        results = {
-            "model": model,
-            "bic/aic": criter,
-            "n_components": gm_params["n_components"],
-            "affinity": params[0]["affinity"],
-            "linkage": params[0]["linkage"],
-            "covariance_type": gm_params["covariance_type"],
-            "reg_covar": gm_params["reg_covar"],
-        }
+        results = _CollectResults(model, criter, gm_params, params[0])
         return results
 
     def fit(self, X, y=None):
         """
-        Fits Gaussian mixture model to the data.
+        Fit several Gaussian mixture models to the data.
         Initialize with agglomerative clustering then
         estimate model parameters with EM algorithm.
+        Select the best model according to the chosen
+        information criterion.
 
         Parameters
         ----------
@@ -523,9 +522,11 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                     ag_labels.append(hierarchical_labels)
 
         def _fit_for_data(p):
-            n_clusters = p[1]["n_components"]
-            if (p[0]["affinity"] != "none") and (self.label_init is None):
-                index = param_grid_ag.index(p[0])
+            ag_params = p[0]
+            gm_params = p[1]
+            n_clusters = gm_params["n_components"]
+            if (ag_params["affinity"] != "none") and (self.label_init is None):
+                index = param_grid_ag.index(ag_params)
                 agg_clustering = ag_labels[index][
                     :, n_clusters - self.min_components
                 ]
@@ -536,27 +537,18 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_fit_for_data)(p) for p in param_grid
         )
-        best_idx = np.argmin(
-            [results[i]["bic/aic"] for i in range(len(results))]
-        )
+        best_idx = np.argmin([result.criterion_score for result in results])
 
-        self.best_criterion_ = results[best_idx]["bic/aic"]
-        self.n_components_ = results[best_idx]["n_components"]
-        self.covariance_type_ = results[best_idx]["covariance_type"]
-        self.affinity_ = results[best_idx]["affinity"]
-        self.linkage_ = results[best_idx]["linkage"]
-        self.reg_covar_ = results[best_idx]["reg_covar"]
-        self.best_model_ = results[best_idx]["model"]
-        self.n_iter_ = results[best_idx]["model"].n_iter_
-        self.labels_ = results[best_idx]["model"].predict(X)
-
-        results_dict = results[0].copy()
-        for key in results_dict:
-            for sub in range(1, len(results)):
-                results_dict[key] = np.append(
-                    results_dict[key], results[sub][key]
-                )
-        self.results_ = results_dict
+        self.best_criterion_ = results[best_idx].criterion_score
+        self.n_components_ = results[best_idx].n_components
+        self.covariance_type_ = results[best_idx].covariance_type
+        self.affinity_ = results[best_idx].affinity
+        self.linkage_ = results[best_idx].linkage
+        self.reg_covar_ = results[best_idx].reg_covar
+        self.best_model_ = results[best_idx].model
+        self.n_iter_ = results[best_idx].model.n_iter_
+        self.labels_ = results[best_idx].model.predict(X)
+        self.results_ = results
 
         return self
 
@@ -621,7 +613,7 @@ def _increase_reg(reg):
     if reg == 0:
         reg = 1e-06
     else:
-        reg = reg * 10
+        reg *= 10
     return reg
 
 
@@ -657,28 +649,6 @@ def _onehot_to_initial_params(X, onehot, cov_type):
         precisions = [np.dot(c, c.T) for c in precisions_cholesky_]
 
     return weights, means, precisions
-
-
-def _labels_to_onehot(labels):
-    """
-    Converts labels to one-hot format.
-
-    Parameters
-    ----------
-    labels : ndarray, shape (n_samples,)
-        Cluster labels
-
-    Returns
-    -------
-    onehot : ndarray, shape (n_samples, n_clusters)
-        Each row has a single one indicating cluster membership.
-        All other entries are zero.
-    """
-    n = len(labels)
-    k = max(labels) + 1
-    onehot = np.zeros([n, k])
-    onehot[np.arange(n), labels] = 1
-    return onehot
 
 
 def _process_paramgrid(paramgrid):
@@ -756,3 +726,44 @@ def _hierarchical_labels(children, min_components, max_components):
         )
 
     return hierarchical_labels[:, ::-1]
+
+
+class _CollectResults:
+    """
+    Represents the intermediary results for a single GMM clustering run
+    of ``GaussianMixtureIC``
+
+    Attributes
+    ----------
+
+    model : GaussianMixture object
+        GMM clustering fit to the data
+
+    criterion_score : float
+        Bayesian or Aikake Information Criterion score
+
+    n_components : int
+        number of clusters
+
+    affinity : {'euclidean','manhattan','cosine','none'}
+        affinity used in Agglomerative Clustering
+
+    linkage : {'ward','complete','average','single'}
+        linkage used in Agglomerative Clustering
+
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+        covariance type used in GMM
+
+    reg_covar : float
+        regularization used in GMM
+
+    """
+
+    def __init__(self, model, criter, gm_params, ag_params):
+        self.model = model
+        self.criterion_score = criter
+        self.n_components = gm_params["n_components"]
+        self.affinity = ag_params["affinity"]
+        self.linkage = ag_params["linkage"]
+        self.covariance_type = gm_params["covariance_type"]
+        self.reg_covar = gm_params["reg_covar"]

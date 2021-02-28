@@ -256,7 +256,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
             self._print_verbose_msg_init_end(lower_bound)
 
-            if (lower_bound > max_lower_bound) or (max_lower_bound == -np.inf):
+            if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
                 max_lower_bound = lower_bound
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
