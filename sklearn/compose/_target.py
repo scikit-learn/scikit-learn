@@ -8,7 +8,7 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
-from ..utils import _safe_indexing
+from ..utils import check_array, _safe_indexing
 from ..preprocessing import FunctionTransformer
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
@@ -175,7 +175,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         -------
         self : object
         """
-        y = np.asarray(y)
+        y = check_array(y, accept_sparse=False, force_all_finite=True,
+                        ensure_2d=False, dtype='numeric', allow_nd=True)
 
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
