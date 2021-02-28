@@ -34,7 +34,7 @@ def test_polynomial_and_spline_array_order(est):
         ({"n_knots": 1}, "n_knots must be a positive integer >= 2."),
         ({"n_knots": 2.5}, "n_knots must be a positive integer >= 2."),
         ({"n_knots": "string"}, "n_knots must be a positive integer >= 2."),
-        ({"knots": "string"}, "Expected 2D array, got scalar array instead:"),
+        ({"knots": 1}, "Expected 2D array, got scalar array instead:"),
         ({"knots": [1, 2]}, "Expected 2D array, got 1D array instead:"),
         (
             {"knots": [[1]]},
