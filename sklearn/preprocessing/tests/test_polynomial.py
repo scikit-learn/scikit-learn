@@ -229,10 +229,11 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
 def test_spline_transformer_periodic_spline_backport():
     """Test that the backport of extrapolate="periodic" works correctly"""
     X = np.linspace(-2, 3.5, 10)[:, None]
+    degree = 2
 
     # Use periodic extrapolation backport in SplineTransformer
     transformer = SplineTransformer(
-        degree=2,
+        degree=degree,
         extrapolation="periodic",
         knots=[[-1.0], [0.0], [1.0]]
     )
@@ -240,7 +241,7 @@ def test_spline_transformer_periodic_spline_backport():
 
     # Use periodic extrapolation in BSpline
     coef = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.0, 1.0]])
-    spl = BSpline(np.arange(-3, 4), coef, 2, "periodic")
+    spl = BSpline(np.arange(-3, 4), coef, degree, "periodic")
     Xspl = spl(X[:, 0])
     assert_allclose(Xt, Xspl)
 
@@ -287,7 +288,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
         Xt = Xt[1:, :] - Xt[:-1, :]
         assert (np.abs(Xt) < (tol ** d)).all()
 
-    assert np.abs(Xt[1:, :] - Xt[:-1, :]).max() > tol ** (degree + 1)
+    assert np.abs(dXt[1:, :] - dXt[:-1, :]).max() > tol ** (degree + 1)
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
