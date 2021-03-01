@@ -130,19 +130,21 @@ def _deprecate_normalize(normalize, default, estimator_name):
         str_on_alpha = (
             'Set parameter alpha to original_alpha * np.sqrt(n_samples) if'
             'l1_ratio is 1 and original_alpha * n_samples if l1_ratio is 0. '
+        )
     else:
         str_on_alpha = ""
 
     if default and normalize == 'deprecated':
         warnings.warn(
             "The default of 'normalize' will be set to False in version 1.2 "
-            "and deprecated in version 1.4.\n" + common_if_notfalse,
+            "and deprecated in version 1.4.\n" +
+            str_on_pipeline + str_on_alpha + str_on_params,
             FutureWarning
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
             "'normalize' was deprecated in version 1.0 and will be "
-            "removed in 1.2.\n" +\
+            "removed in 1.2.\n" +
             str_on_pipeline + str_on_alpha + str_on_params, FutureWarning
         )
     elif not normalize and not default:
