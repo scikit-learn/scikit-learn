@@ -101,41 +101,32 @@ def _deprecate_normalize(normalize, default, estimator_name):
     else:
         _normalize = normalize
 
+    common_if_notfalse = (
+        "If you still wish to normalize use Pipeline with a StandardScaler "
+        "in a preprocessing stage. To reproduce the previous behavior:\n\n"
+        "from sklearn.pipeline import make_pipeline\n"
+        "model = make_pipeline(StandardScaler(with_mean=False), "
+        f"{estimator_name}()). \n"
+        "If you wish to use additional parameters in "
+        "the fit() you can include them as follows:\n\n"
+        "kwargs = {\n"
+        "    model.steps[0][0] + '__<your_param_name>': "
+        "<your_param_value>,\n"
+        "    model.steps[-1][0] + '__<your_param_name>': "
+        "<your_param_value>\n}\n"
+        "model.fit(X, y, **kwargs)"
+    )
+
     if default and normalize == 'deprecated':
         warnings.warn(
             "The default of 'normalize' will be set to False in version 1.2 "
-            "and deprecated in version 1.4.\nPass normalize=False and use "
-            "Pipeline with a StandardScaler in a preprocessing stage if you "
-            "wish to reproduce the previous behavior:\n"
-            "from sklearn.pipeline import make_pipeline\n\n"
-            "model = make_pipeline(StandardScaler(with_mean=False), \n"
-            f"{estimator_name}(normalize=False))\n"
-            "If you wish to use additional parameters in "
-            "the fit() you can include them as follows:\n\n"
-            "kwargs = \n"
-            "    model.steps[0][0] + '__<your_param_name>': "
-            "<your_param_value>,\n"
-            "    model.steps[-1][0] + '__<your_param_name>': "
-            "<your_param_value>\n}\n"
-            "model.fit(X, y, **kwargs)", FutureWarning
+            "and deprecated in version 1.4.\n" + common_if_notfalse,
+            FutureWarning
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
             "'normalize' was deprecated in version 1.0 and will be "
-            "removed in 1.2.\nIf you still wish to normalize use "
-            "Pipeline with a StandardScaler in a preprocessing stage. "
-            "To reproduce the previous behavior:\n\n"
-            "from sklearn.pipeline import make_pipeline\n"
-            "model = make_pipeline(StandardScaler(with_mean=False), "
-            f"{estimator_name}()). \n"
-            "If you wish to use additional parameters in "
-            "the fit() you can include them as follows:\n\n"
-            "kwargs = {\n"
-            "    model.steps[0][0] + '__<your_param_name>': "
-            "<your_param_value>,\n"
-            "    model.steps[-1][0] + '__<your_param_name>': "
-            "<your_param_value>\n}\n"
-            "model.fit(X, y, **kwargs)", FutureWarning
+            "removed in 1.2.\n" + common_if_notfalse, FutureWarning
         )
     elif not normalize and not default:
         warnings.warn(
