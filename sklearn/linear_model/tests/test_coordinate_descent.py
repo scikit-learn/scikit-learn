@@ -414,6 +414,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
          (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
          (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
          (LinearRegression, {}),
+         (RidgeCV, {"alphas": [0.1, 0.4]}),
+         (RidgeClassifierCV, {"alphas": [0.1, 0.4]})
      ]
 )
 @pytest.mark.parametrize(
@@ -504,7 +506,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.01}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
      (LinearRegression, {}),
-     (RidgeCV, {})]
+     (RidgeCV, {}),
+     (RidgeClassifierCV, {})]
  )
 def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     # Test that linear model preceeded by StandardScaler in the pipeline and
