@@ -224,8 +224,8 @@ def _check_string_param(solver, regularization, beta_loss, init, batch_size):
             ' = %r' % (solver, beta_loss))
 
     if batch_size is not None and solver == 'cd':
-            raise ValueError("Invalid solver 'cd' not supported "
-                             "when batch_size is not None.")
+        raise ValueError("Invalid solver 'cd' not supported "
+                         "when batch_size is not None.")
 
     if solver == 'mu' and init == 'nndsvd':
         warnings.warn("The multiplicative update ('mu') solver cannot update "
@@ -886,12 +886,12 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     n_samples = X.shape[0]
 
-    if batch_size is None: # NMF
+    if batch_size is None:  # NMF
         batch_size = n_samples
         A = None
         B = None
 
-    else: # MiniBatchNMF
+    else:  # MiniBatchNMF
         if batch_size > n_samples:
             batch_size = n_samples
 
@@ -962,7 +962,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             previous_error = error
 
     # do not print if we have already printed in the convergence test
-    if verbose and (tol == 0 or n_iter % 10 != 0):
+    if verbose and (tol == 0 or n_i % 10 != 0):
         end_time = time.time()
         print("Epoch %02d reached after %.3f seconds." %
               (n_i, end_time - start_time))

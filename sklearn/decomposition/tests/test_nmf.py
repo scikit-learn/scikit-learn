@@ -676,7 +676,6 @@ def test_nmf_is_minibatch_nmf():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
     max_iter = 1
-    solver = 'mu'
     beta_loss = 'kullback-leibler'
     init = 'nndsvda'  # FIXME : should be removed in 1.1
     nmf = NMF(5, solver='mu', init=init, random_state=0,
