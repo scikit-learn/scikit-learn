@@ -223,10 +223,8 @@ def _check_string_param(solver, regularization, beta_loss, init, batch_size):
             'Invalid beta_loss parameter: solver %r does not handle beta_loss'
             ' = %r' % (solver, beta_loss))
 
-    if batch_size is not None:
-        if beta_loss in (2, 'frobenius') or solver == 'cd':
-            raise ValueError("Invalid beta_loss parameter 'frobenius' "
-                             "or invalid solver 'cd' not supported "
+    if batch_size is not None and solver == 'cd':
+            raise ValueError("Invalid solver 'cd' not supported "
                              "when batch_size is not None.")
 
     if solver == 'mu' and init == 'nndsvd':
