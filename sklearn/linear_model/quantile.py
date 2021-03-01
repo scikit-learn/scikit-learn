@@ -2,13 +2,10 @@
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
-from ..utils import check_X_y
-from ..utils import check_consistent_length
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _check_sample_weight
 from ..utils.extmath import safe_sparse_dot
