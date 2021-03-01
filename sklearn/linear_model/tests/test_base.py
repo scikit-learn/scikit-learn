@@ -1,5 +1,6 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#         Maria Telenczuk <https://github.com/maikia>
 #
 # License: BSD 3 clause
 
@@ -24,6 +25,7 @@ from sklearn.linear_model._base import make_dataset
 from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
 
 rng = np.random.RandomState(0)
 rtol = 1e-6
@@ -407,31 +409,31 @@ def test_preprocess_data():
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     expected_X_mean = np.mean(X, axis=0)
-    expected_X_norm = np.std(X, axis=0) * np.sqrt(X.shape[0])
+    expected_X_scale = np.std(X, axis=0) * np.sqrt(X.shape[0])
     expected_y_mean = np.mean(y, axis=0)
 
-    Xt, yt, X_mean, y_mean, X_norm = \
+    Xt, yt, X_mean, y_mean, X_scale = \
         _preprocess_data(X, y, fit_intercept=False, normalize=False)
     assert_array_almost_equal(X_mean, np.zeros(n_features))
     assert_array_almost_equal(y_mean, 0)
-    assert_array_almost_equal(X_norm, np.ones(n_features))
+    assert_array_almost_equal(X_scale, np.ones(n_features))
     assert_array_almost_equal(Xt, X)
     assert_array_almost_equal(yt, y)
 
-    Xt, yt, X_mean, y_mean, X_norm = \
+    Xt, yt, X_mean, y_mean, X_scale = \
         _preprocess_data(X, y, fit_intercept=True, normalize=False)
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(X_norm, np.ones(n_features))
+    assert_array_almost_equal(X_scale, np.ones(n_features))
     assert_array_almost_equal(Xt, X - expected_X_mean)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
-    Xt, yt, X_mean, y_mean, X_norm = \
+    Xt, yt, X_mean, y_mean, X_scale = \
         _preprocess_data(X, y, fit_intercept=True, normalize=True)
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(X_norm, expected_X_norm)
-    assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_norm)
+    assert_array_almost_equal(X_scale, expected_X_scale)
+    assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_scale)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
@@ -461,36 +463,102 @@ def test_preprocess_data_multioutput():
         assert_array_almost_equal(yt, y - y_mean)
 
 
-def test_preprocess_data_weighted():
+@pytest.mark.parametrize("is_sparse", [False, True])
+def test_preprocess_data_weighted(is_sparse):
     n_samples = 200
-    n_features = 2
+    n_features = 4
+    # Generate random data with 50% of zero values to make sure
+    # that the sparse variant of this test is actually sparse. This also
+    # shifts the mean value for each columns in X further away from
+    # zero.
     X = rng.rand(n_samples, n_features)
+    X[X < 0.5] = 0.
+
+    # Scale the first feature of X to be 10 larger than the other to
+    # better check the impact of feature scaling.
+    X[:, 0] *= 10
+
+    # Constant non-zero feature.
+    X[:, 2] = 1.
+
+    # Constant zero feature (non-materialized in the sparse case)
+    X[:, 3] = 0.
     y = rng.rand(n_samples)
+
     sample_weight = rng.rand(n_samples)
     expected_X_mean = np.average(X, axis=0, weights=sample_weight)
     expected_y_mean = np.average(y, axis=0, weights=sample_weight)
 
-    # XXX: if normalize=True, should we expect a weighted standard deviation?
-    #      Currently not weighted, but calculated with respect to weighted mean
-    expected_X_norm = (np.sqrt(X.shape[0]) *
-                       np.mean((X - expected_X_mean) ** 2, axis=0) ** .5)
+    X_sample_weight_avg = np.average(X, weights=sample_weight, axis=0)
+    X_sample_weight_var = np.average((X - X_sample_weight_avg)**2,
+                                     weights=sample_weight,
+                                     axis=0)
+    constant_mask = X_sample_weight_var < 10 * np.finfo(X.dtype).eps
+    assert_array_equal(constant_mask, [0, 0, 1, 1])
+    expected_X_scale = np.sqrt(X_sample_weight_var) * np.sqrt(n_samples)
 
-    Xt, yt, X_mean, y_mean, X_norm = \
+    # near constant features should not be scaled
+    expected_X_scale[constant_mask] = 1
+
+    if is_sparse:
+        X = sparse.csr_matrix(X)
+
+    # normalize is False
+    Xt, yt, X_mean, y_mean, X_scale = \
         _preprocess_data(X, y, fit_intercept=True, normalize=False,
-                         sample_weight=sample_weight)
+                         sample_weight=sample_weight, return_mean=True)
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(X_norm, np.ones(n_features))
-    assert_array_almost_equal(Xt, X - expected_X_mean)
+    assert_array_almost_equal(X_scale, np.ones(n_features))
+    if is_sparse:
+        assert_array_almost_equal(Xt.toarray(), X.toarray())
+    else:
+        assert_array_almost_equal(Xt, X - expected_X_mean)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
-    Xt, yt, X_mean, y_mean, X_norm = \
+    # normalize is True
+    Xt, yt, X_mean, y_mean, X_scale = \
         _preprocess_data(X, y, fit_intercept=True, normalize=True,
-                         sample_weight=sample_weight)
+                         sample_weight=sample_weight, return_mean=True)
+
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(X_norm, expected_X_norm)
-    assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_norm)
+    assert_array_almost_equal(X_scale, expected_X_scale)
+
+    if is_sparse:
+        # X is not centered
+        assert_array_almost_equal(
+            Xt.toarray(), X.toarray() / expected_X_scale
+        )
+    else:
+        assert_array_almost_equal(
+            Xt, (X - expected_X_mean) / expected_X_scale
+        )
+
+    # _preprocess_data with normalize=True scales the data by the feature-wise
+    # euclidean norms while StandardScaler scales the data by the feature-wise
+    # standard deviations.
+    # The two are equivalent up to a ratio of np.sqrt(n_samples).
+    if is_sparse:
+        scaler = StandardScaler(with_mean=False).fit(
+            X, sample_weight=sample_weight)
+
+        # Non-constant features are scaled similarly with np.sqrt(n_samples)
+        assert_array_almost_equal(
+            scaler.transform(X).toarray()[:, :2] / np.sqrt(n_samples),
+            Xt.toarray()[:, :2]
+        )
+
+        # Constant features go through un-scaled.
+        assert_array_almost_equal(
+            scaler.transform(X).toarray()[:, 2:],
+            Xt.toarray()[:, 2:]
+        )
+    else:
+        scaler = StandardScaler(with_mean=True).fit(
+            X, sample_weight=sample_weight)
+        assert_array_almost_equal(scaler.mean_, X_mean)
+        assert_array_almost_equal(scaler.transform(X) / np.sqrt(n_samples), Xt)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
@@ -502,33 +570,33 @@ def test_sparse_preprocess_data_with_return_mean():
     X = X.tolil()
     y = rng.rand(n_samples)
     XA = X.toarray()
-    expected_X_norm = np.std(XA, axis=0) * np.sqrt(X.shape[0])
+    expected_X_scale = np.std(XA, axis=0) * np.sqrt(X.shape[0])
 
-    Xt, yt, X_mean, y_mean, X_norm = \
+    Xt, yt, X_mean, y_mean, X_scale = \
         _preprocess_data(X, y, fit_intercept=False, normalize=False,
                          return_mean=True)
     assert_array_almost_equal(X_mean, np.zeros(n_features))
     assert_array_almost_equal(y_mean, 0)
-    assert_array_almost_equal(X_norm, np.ones(n_features))
+    assert_array_almost_equal(X_scale, np.ones(n_features))
     assert_array_almost_equal(Xt.A, XA)
     assert_array_almost_equal(yt, y)
 
-    Xt, yt, X_mean, y_mean, X_norm = \
+    Xt, yt, X_mean, y_mean, X_scale = \
         _preprocess_data(X, y, fit_intercept=True, normalize=False,
                          return_mean=True)
     assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
     assert_array_almost_equal(y_mean, np.mean(y, axis=0))
-    assert_array_almost_equal(X_norm, np.ones(n_features))
+    assert_array_almost_equal(X_scale, np.ones(n_features))
     assert_array_almost_equal(Xt.A, XA)
     assert_array_almost_equal(yt, y - np.mean(y, axis=0))
 
-    Xt, yt, X_mean, y_mean, X_norm = \
+    Xt, yt, X_mean, y_mean, X_scale = \
         _preprocess_data(X, y, fit_intercept=True, normalize=True,
                          return_mean=True)
     assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
     assert_array_almost_equal(y_mean, np.mean(y, axis=0))
-    assert_array_almost_equal(X_norm, expected_X_norm)
-    assert_array_almost_equal(Xt.A, XA / expected_X_norm)
+    assert_array_almost_equal(X_scale, expected_X_scale)
+    assert_array_almost_equal(Xt.A, XA / expected_X_scale)
     assert_array_almost_equal(yt, y - np.mean(y, axis=0))
 
 
@@ -577,19 +645,19 @@ def test_dtype_preprocess_data():
     for fit_intercept in [True, False]:
         for normalize in [True, False]:
 
-            Xt_32, yt_32, X_mean_32, y_mean_32, X_norm_32 = _preprocess_data(
+            Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
                 X_32, y_32, fit_intercept=fit_intercept, normalize=normalize,
                 return_mean=True)
 
-            Xt_64, yt_64, X_mean_64, y_mean_64, X_norm_64 = _preprocess_data(
+            Xt_64, yt_64, X_mean_64, y_mean_64, X_scale_64 = _preprocess_data(
                 X_64, y_64, fit_intercept=fit_intercept, normalize=normalize,
                 return_mean=True)
 
-            Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_norm_3264 = (
+            Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264 = (
                 _preprocess_data(X_32, y_64, fit_intercept=fit_intercept,
                                  normalize=normalize, return_mean=True))
 
-            Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_norm_6432 = (
+            Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432 = (
                 _preprocess_data(X_64, y_32, fit_intercept=fit_intercept,
                                  normalize=normalize, return_mean=True))
 
@@ -597,25 +665,25 @@ def test_dtype_preprocess_data():
             assert yt_32.dtype == np.float32
             assert X_mean_32.dtype == np.float32
             assert y_mean_32.dtype == np.float32
-            assert X_norm_32.dtype == np.float32
+            assert X_scale_32.dtype == np.float32
 
             assert Xt_64.dtype == np.float64
             assert yt_64.dtype == np.float64
             assert X_mean_64.dtype == np.float64
             assert y_mean_64.dtype == np.float64
-            assert X_norm_64.dtype == np.float64
+            assert X_scale_64.dtype == np.float64
 
             assert Xt_3264.dtype == np.float32
             assert yt_3264.dtype == np.float32
             assert X_mean_3264.dtype == np.float32
             assert y_mean_3264.dtype == np.float32
-            assert X_norm_3264.dtype == np.float32
+            assert X_scale_3264.dtype == np.float32
 
             assert Xt_6432.dtype == np.float64
             assert yt_6432.dtype == np.float64
             assert X_mean_6432.dtype == np.float64
             assert y_mean_6432.dtype == np.float64
-            assert X_norm_6432.dtype == np.float64
+            assert X_scale_6432.dtype == np.float64
 
             assert X_32.dtype == np.float32
             assert y_32.dtype == np.float32
@@ -626,7 +694,7 @@ def test_dtype_preprocess_data():
             assert_array_almost_equal(yt_32, yt_64)
             assert_array_almost_equal(X_mean_32, X_mean_64)
             assert_array_almost_equal(y_mean_32, y_mean_64)
-            assert_array_almost_equal(X_norm_32, X_norm_64)
+            assert_array_almost_equal(X_scale_32, X_scale_64)
 
 
 @pytest.mark.parametrize('n_targets', [None, 2])

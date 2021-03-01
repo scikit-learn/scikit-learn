@@ -23,7 +23,6 @@ from sklearn.exceptions import FitFailedWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.base import BiclusterMixin
 
 from sklearn.decomposition import PCA
 from sklearn.linear_model._base import LinearClassifierMixin
@@ -73,8 +72,6 @@ def test_get_check_estimator_ids(val, expected):
 
 def _tested_estimators():
     for name, Estimator in all_estimators():
-        if issubclass(Estimator, BiclusterMixin):
-            continue
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
@@ -266,19 +263,12 @@ def test_search_cv(estimator, check, request):
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
     'compose',
-    'covariance',
-    'ensemble',
     'feature_extraction',
-    'feature_selection',
-    'isotonic',
-    'manifold',
     'mixture',
     'model_selection',
     'multiclass',
     'multioutput',
-    'naive_bayes',
     'pipeline',
-    'random_projection',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [

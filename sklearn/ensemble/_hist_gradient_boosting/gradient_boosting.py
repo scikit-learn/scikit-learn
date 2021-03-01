@@ -8,7 +8,7 @@ import numpy as np
 from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
-from ...utils import check_random_state, check_array, resample
+from ...utils import check_random_state, resample
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length,
                                  _check_sample_weight,
@@ -733,7 +733,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         is_binned = getattr(self, '_in_fit', False)
         dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
-        X = check_array(X, dtype=dtype, force_all_finite=False)
+        X = self._validate_data(X, dtype=dtype, force_all_finite=False,
+                                reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -789,7 +790,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predictions of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
-        X = check_array(X, dtype=X_DTYPE, force_all_finite=False)
+        X = self._validate_data(X, dtype=X_DTYPE, force_all_finite=False,
+                                reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -940,14 +942,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
-
     categorical_features : array-like of {bool, int} of shape (n_features) \
             or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
@@ -963,6 +957,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1193,14 +1195,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
-
     categorical_features : array-like of {bool, int} of shape (n_features) \
             or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
@@ -1216,6 +1210,14 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit

@@ -22,7 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-
+- |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
+  affinity matrix computation.
 
 Details are listed in the changelog below.
 
@@ -59,6 +60,14 @@ Changelog
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.fetch_openml` now supports categories with
+  missing values when returning a pandas dataframe. :pr:`19365` by
+  `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
+  :user:`EL-ATEIF Sara <elateifsara>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -94,6 +103,13 @@ Changelog
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Allow multiple scorers input to
+  :func:`~sklearn.inspection.permutation_importance`.
+  :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -107,9 +123,11 @@ Changelog
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
 
-- |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
-  sample_weight object is not modified anymore. :pr:`19182` by
-  :user:`Yosuke KOBAYASHI <m7142yosuke>`.
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
+  missing values by default. :pr:`19069` by `Thomas Fan`_.
 
 - |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
   is deprecated and will be removed in 1.2.
@@ -123,6 +141,19 @@ Changelog
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
+- |Fix|: `sample_weight` are now fully taken into account in linear models
+  when `normalize=True` for both feature centering and feature
+  scaling.
+  :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
+  :user:`Maria Telenczuk <maikia>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Change numerical precision to prevent underflow issues
+  during affinity matrix computation for :class:`manifold.TSNE`.
+  :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -133,6 +164,10 @@ Changelog
   :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
+
+- |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
+  quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
+  and :user:`Oliver Grisel <ogrisel>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -158,19 +193,19 @@ Changelog
   positioning strategy ``knots``.
   :pr:`18368` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
+  and similar scalers detect near-constant features to avoid scaling them to
+  very large values. This problem happens in particular when using a scaler on
+  sparse data with a constant column with sample weights, in which case
+  centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
+  <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
+
 :mod:`sklearn.tree`
 ...................
 
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
-
-:mod:`sklearn.semi_supervised`
-.................................
-
-- |Fix| Avoid NaN during label propagation in
-  :class:`~sklearn.semi_supervised.LabelPropagation`.
-  :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
 Code and Documentation Contributors
 -----------------------------------

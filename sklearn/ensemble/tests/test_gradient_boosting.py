@@ -27,10 +27,6 @@ from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
@@ -70,7 +66,8 @@ def test_classification_toy(loss):
     clf = GradientBoostingClassifier(loss=loss, n_estimators=10,
                                      random_state=1)
 
-    assert_raises(ValueError, clf.predict, T)
+    with pytest.raises(ValueError):
+        clf.predict(T)
 
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
@@ -285,7 +282,8 @@ def test_probability_log():
     # Predict probabilities.
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
-    assert_raises(ValueError, clf.predict_proba, T)
+    with pytest.raises(ValueError):
+        clf.predict_proba(T)
 
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
@@ -319,15 +317,12 @@ def test_check_inputs_predict_stages():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(x, y)
     score = np.zeros((y.shape)).reshape(-1, 1)
-    assert_raise_message(ValueError,
-                         "When X is a sparse matrix, a CSR format is expected",
-                         predict_stages, clf.estimators_, x_sparse_csc,
-                         clf.learning_rate, score)
+    err_msg = "When X is a sparse matrix, a CSR format is expected"
+    with pytest.raises(ValueError, match=err_msg):
+        predict_stages(clf.estimators_, x_sparse_csc, clf.learning_rate, score)
     x_fortran = np.asfortranarray(x)
-    assert_raise_message(ValueError,
-                         "X should be C-ordered np.ndarray",
-                         predict_stages, clf.estimators_, x_fortran,
-                         clf.learning_rate, score)
+    with pytest.raises(ValueError, match="X should be C-ordered np.ndarray"):
+        predict_stages(clf.estimators_, x_fortran, clf.learning_rate, score)
 
 
 def test_max_feature_regression():
@@ -416,8 +411,8 @@ def test_staged_predict():
     X_test = X[200:]
     clf = GradientBoostingRegressor()
     # test raise ValueError if not fitted
-    assert_raises(ValueError, lambda X: np.fromiter(
-        clf.staged_predict(X), dtype=np.float64), X_test)
+    with pytest.raises(ValueError):
+        np.fromiter(clf.staged_predict(X_test), dtype=np.float64)
 
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
@@ -437,9 +432,9 @@ def test_staged_predict_proba():
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingClassifier(n_estimators=20)
-    # test raise NotFittedError if not fitted
-    assert_raises(NotFittedError, lambda X: np.fromiter(
-        clf.staged_predict_proba(X), dtype=np.float64), X_test)
+    # test raise NotFittedError if not
+    with pytest.raises(NotFittedError):
+        np.fromiter(clf.staged_predict_proba(X_test), dtype=np.float64)
 
     clf.fit(X_train, y_train)
 
@@ -501,7 +496,8 @@ def test_degenerate_targets():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
     # classifier should raise exception
-    assert_raises(ValueError, clf.fit, X, np.ones(len(X)))
+    with pytest.raises(ValueError):
+        clf.fit(X, np.ones(len(X)))
 
     clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
     clf.fit(X, np.ones(len(X)))
@@ -560,7 +556,13 @@ def test_shape_y():
     # This will raise a DataConversionWarning that we want to
     # "always" raise, elsewhere the warnings gets ignored in the
     # later tests, and the tests that check for this warning fail
-    assert_warns(DataConversionWarning, clf.fit, X, y_)
+    warn_msg = (
+        "A column-vector y was passed when a 1d array was expected. "
+        "Please change the shape of y to \\(n_samples, \\), for "
+        "example using ravel()."
+    )
+    with pytest.warns(DataConversionWarning, match=warn_msg):
+        clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert 100 == len(clf.estimators_)
 
@@ -611,7 +613,8 @@ def test_oob_improvement_raise():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
                                      subsample=1.0)
     clf.fit(X, y)
-    assert_raises(AttributeError, lambda: clf.oob_improvement_)
+    with pytest.raises(AttributeError):
+        clf.oob_improvement_
 
 
 def test_oob_multilcass_iris():
@@ -754,7 +757,8 @@ def test_warm_start_zero_n_estimators(Cls):
     est = Cls(n_estimators=100, max_depth=1, warm_start=True)
     est.fit(X, y)
     est.set_params(n_estimators=0)
-    assert_raises(ValueError, est.fit, X, y)
+    with pytest.raises(ValueError):
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize('Cls', GRADIENT_BOOSTING_ESTIMATORS)
@@ -764,7 +768,8 @@ def test_warm_start_smaller_n_estimators(Cls):
     est = Cls(n_estimators=100, max_depth=1, warm_start=True)
     est.fit(X, y)
     est.set_params(n_estimators=99)
-    assert_raises(ValueError, est.fit, X, y)
+    with pytest.raises(ValueError):
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize('Cls', GRADIENT_BOOSTING_ESTIMATORS)
@@ -949,7 +954,8 @@ def test_zero_estimator_reg():
 
     est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
                                     random_state=1, init='foobar')
-    assert_raises(ValueError, est.fit, X_reg, y_reg)
+    with pytest.raises(ValueError):
+        est.fit(X_reg, y_reg)
 
 
 def test_zero_estimator_clf():
@@ -974,7 +980,8 @@ def test_zero_estimator_clf():
 
     est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
                                      random_state=1, init='foobar')
-    assert_raises(ValueError, est.fit, X, y)
+    with pytest.raises(ValueError):
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize('GBEstimator', GRADIENT_BOOSTING_ESTIMATORS)
@@ -1000,9 +1007,8 @@ def test_min_impurity_split(GBEstimator):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
     est = GBEstimator(min_impurity_split=0.1)
-    est = assert_warns_message(FutureWarning,
-                               "min_impurity_decrease",
-                               est.fit, X, y)
+    with pytest.warns(FutureWarning, match="min_impurity_decrease"):
+        est = est.fit(X, y)
     for tree in est.estimators_.flat:
         assert tree.min_impurity_split == 0.1
 
@@ -1034,7 +1040,8 @@ def test_probability_exponential():
     clf = GradientBoostingClassifier(loss='exponential',
                                      n_estimators=100, random_state=1)
 
-    assert_raises(ValueError, clf.predict_proba, T)
+    with pytest.raises(ValueError):
+        clf.predict_proba(T)
 
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
@@ -1346,3 +1353,19 @@ def test_criterion_mae_deprecation(estimator):
            "will be removed in version 1.1")
     with pytest.warns(FutureWarning, match=msg):
         estimator.fit(X, y)
+
+
+# FIXME: remove in 1.2
+@pytest.mark.parametrize(
+    "Estimator",
+    [GradientBoostingClassifier, GradientBoostingRegressor]
+)
+def test_n_features_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `n_features_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+        est.n_features_
