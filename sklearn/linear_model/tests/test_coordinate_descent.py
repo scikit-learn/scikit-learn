@@ -17,13 +17,14 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import _convert_container
+
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.sparsefuncs import mean_variance_axis

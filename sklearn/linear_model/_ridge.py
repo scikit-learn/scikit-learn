@@ -1643,7 +1643,6 @@ class _BaseRidgeCV(LinearModel):
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
-
         cv = self.cv
         if cv is None:
             estimator = _RidgeGCV(self.alphas,
@@ -1967,7 +1966,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
-
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
