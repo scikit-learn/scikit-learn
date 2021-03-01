@@ -886,13 +886,15 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     n_samples = X.shape[0]
 
-    A = None
-    B = None
-
-    if batch_size is None:
+    if batch_size is None: # NMF
         batch_size = n_samples
+        A = None
+        B = None
 
-    if batch_size < n_samples:
+    else: # MiniBatchNMF
+        if batch_size > n_samples:
+            batch_size = n_samples
+
         # Initialize auxiliary matrices
         A = H.copy()
         B = np.ones(H.shape)

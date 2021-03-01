@@ -408,7 +408,8 @@ def test_special_sparse_dot():
 
 
 @ignore_warnings(category=ConvergenceWarning)
-def test_nmf_multiplicative_update_sparse():
+@pytest.mark.parametrize('batch_size', [None, 10])
+def test_nmf_multiplicative_update_sparse(batch_size):
     # Compare sparse and dense input in multiplicative update NMF
     # Also test continuity of the results with respect to beta_loss parameter
     n_samples = 20
@@ -432,14 +433,16 @@ def test_nmf_multiplicative_update_sparse():
         W1, H1, _, _ = non_negative_factorization(
             X, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
-            l1_ratio=l1_ratio, regularization='both', random_state=42)
+            l1_ratio=l1_ratio, regularization='both', random_state=42,
+            batch_size=batch_size)
 
         # Compare with sparse X
         W, H = W0.copy(), H0.copy()
         W2, H2, _, _ = non_negative_factorization(
             X_csr, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
-            l1_ratio=l1_ratio, regularization='both', random_state=42)
+            l1_ratio=l1_ratio, regularization='both', random_state=42,
+            batch_size=batch_size)
 
         assert_array_almost_equal(W1, W2, decimal=7)
         assert_array_almost_equal(H1, H2, decimal=7)
@@ -451,13 +454,15 @@ def test_nmf_multiplicative_update_sparse():
         W3, H3, _, _ = non_negative_factorization(
             X_csr, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
-            l1_ratio=l1_ratio, regularization='both', random_state=42)
+            l1_ratio=l1_ratio, regularization='both', random_state=42,
+            batch_size=batch_size)
 
         assert_array_almost_equal(W1, W3, decimal=4)
         assert_array_almost_equal(H1, H3, decimal=4)
 
 
-def test_nmf_negative_beta_loss():
+@pytest.mark.parametrize('batch_size', [None, 3])
+def test_nmf_negative_beta_loss(batch_size):
     # Test that an error is raised if beta_loss < 0 and X contains zeros.
     # Test that the output has not NaN values when the input contains zeros.
     n_samples = 6
@@ -472,7 +477,8 @@ def test_nmf_negative_beta_loss():
     def _assert_nmf_no_nan(X, beta_loss):
         W, H, _, _ = non_negative_factorization(
             X, init='random', n_components=n_components, solver='mu',
-            beta_loss=beta_loss, random_state=0, max_iter=1000)
+            beta_loss=beta_loss, random_state=0, max_iter=1000,
+            batch_size=batch_size)
         assert not np.any(np.isnan(W))
         assert not np.any(np.isnan(H))
 
@@ -543,7 +549,8 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
 
 
 @ignore_warnings(category=ConvergenceWarning)
-def test_nmf_decreasing():
+@pytest.mark.parametrize('batch_size', [None, 10])
+def test_nmf_decreasing(batch_size):
     # test that the objective function is decreasing at each iteration
     n_samples = 20
     n_features = 15
@@ -570,6 +577,7 @@ def test_nmf_decreasing():
                 # one more iteration starting from the previous results
                 W, H, _, _ = non_negative_factorization(
                     X, W, H, beta_loss=beta_loss, init='custom',
+                    batch_size=batch_size,
                     n_components=n_components, max_iter=1, alpha=alpha,
                     solver=solver, tol=tol, l1_ratio=l1_ratio, verbose=0,
                     regularization='both', random_state=0, update_H=True)
@@ -657,6 +665,25 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
+def test_nmf_is_minibatch_nmf():
+    # Test that the standard nmf is the minibatch nmf after 1 iteration
+    # with batch_size = n_samples and forget_factor = None
+    rng = np.random.mtrand.RandomState(42)
+    X = np.abs(rng.randn(48, 5))
+    max_iter = 1
+    solver = 'mu'
+    beta_loss = 'kullback-leibler'
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
+    nmf = NMF(5, solver='mu', init=init, random_state=0,
+              max_iter=max_iter, beta_loss=beta_loss)
+    mbnmf = MiniBatchNMF(5, solver='mu', init=init, random_state=0,
+                         max_iter=max_iter, beta_loss=beta_loss,
+                         batch_size=48, forget_factor=None)
+    W = nmf.fit_transform(X)
+    mbW = mbnmf.fit_transform(X)
+    assert_array_equal(W, mbW)
+
+
 @pytest.mark.parametrize('batch_size', [24, 32, 48])
 def test_nmf_close_minibatch_nmf(batch_size):
     # Test that the decomposition with standard and minibatch nmf
@@ -674,7 +701,7 @@ def test_nmf_close_minibatch_nmf(batch_size):
                          batch_size=batch_size)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW, decimal=1)
+    assert_array_almost_equal(W, mbW, decimal=2)
 
 
 def test_minibatch_nmf_partial_fit():
