@@ -335,7 +335,7 @@ class SimpleImputer(_BaseImputer):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
-            # for constant strategy, self.statistcs_ is used to store
+            # for constant strategy, self.statistics_ is used to store
             # fill_value in each column
             statistics.fill(fill_value)
         else:
