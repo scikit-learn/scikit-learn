@@ -1,5 +1,3 @@
-import re
-
 import numpy as np
 
 import pytest
@@ -546,7 +544,7 @@ def test_qda_regularization():
     collinear_msg = "Variables are collinear"
     clf = QuadraticDiscriminantAnalysis()
     with pytest.warns(UserWarning, match=collinear_msg):
-            y_pred = clf.fit(X2, y6)
+        y_pred = clf.fit(X2, y6)
 
     # XXX: RuntimeWarning is also raised at predict time because of divisions
     # by zero when the model is fit with a constant feature and without
