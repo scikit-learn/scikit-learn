@@ -9,6 +9,8 @@ from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
 from ..utils import check_X_y
 from ..utils import check_consistent_length
+from ..utils.optimize import _check_optimize_result
+from ..utils.validation import _check_sample_weight
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -85,7 +87,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <quantile_regression>`
 
-    .. versionadded:: 0.21
+    .. versionadded:: 0.25
 
     Parameters
     ----------
@@ -221,11 +223,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        if sample_weight is not None:
-            sample_weight = np.array(sample_weight)
-            check_consistent_length(y, sample_weight)
-        else:
-            sample_weight = np.ones_like(y)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.quantile >= 1.0 or self.quantile <= 0.0:
             raise ValueError(
@@ -295,10 +293,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # do I really need to issue this warning?
         # Its reason is lineSearchError, which cannot be easily fixed
         if not result['success']:
-            warnings.warn("QuantileRegressor did not converge:" +
-                          " Scipy solver terminated with '%s'."
-                          % str(result['message'])
-                          )
+            _check_optimize_result('lbfgs', result)
         self.n_iter_ = sum(total_iter)
         self.gamma_ = gamma
         self.total_iter_ = total_iter

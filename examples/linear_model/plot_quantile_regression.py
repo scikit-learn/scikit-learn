@@ -11,7 +11,6 @@ but variance is not constant.
 The right figure shows example of an asymmetric error distribution
 (namely, Pareto).
 """
-from __future__ import division
 print(__doc__)
 
 import numpy as np

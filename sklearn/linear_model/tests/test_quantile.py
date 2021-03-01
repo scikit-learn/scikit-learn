@@ -3,6 +3,8 @@
 
 import pytest
 import numpy as np
+
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose, assert_raises
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
@@ -159,10 +161,8 @@ def test_quantile_convergence():
                            noise=1.0)
 
     # check that for small n_iter, warning is thrown
-    with pytest.warns(None) as record:
+    with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
         QuantileRegressor(max_iter=1).fit(X, y)
-        assert len(record) == 1
-        assert 'QuantileRegressor did not converge' in str(record[-1].message)
 
     # check that for large n_iter, it is not thrown
     with pytest.warns(None) as record:
