@@ -1388,9 +1388,9 @@ def test_group_kfold():
     groups = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(groups))
     with pytest.raises(
-                            ValueError,
-                            match="Cannot have number of splits.*greater"
-                        ):
+        ValueError,
+        match="Cannot have number of splits.*greater"
+    ):
         next(GroupKFold(n_splits=3).split(X, y, groups))
 
 
@@ -1399,9 +1399,9 @@ def test_time_series_cv():
 
     # Should fail if there are more folds than samples
     with pytest.raises(
-                        ValueError,
-                        match="Cannot have number of folds.*greater"
-                       ):
+        ValueError,
+        match="Cannot have number of folds.*greater"
+    ):
         next(TimeSeriesSplit(n_splits=7).split(X))
 
     tscv = TimeSeriesSplit(2)
