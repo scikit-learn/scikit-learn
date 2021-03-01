@@ -427,8 +427,7 @@ def test_init_ndarray_precomputed():
     # Initialize TSNE with ndarray and metric 'precomputed'
     # Make sure no FutureWarning is thrown from _fit
     tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed",
-                square_distances=True, init='random', random_state=42,
-                learning_rate=50.0)
+                square_distances=True, learning_rate=50.0)
     tsne.fit(np.zeros((100, 100)))
 
 
