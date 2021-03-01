@@ -691,7 +691,7 @@ class TSNE(BaseEstimator):
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
 
-        if self.init == 'warn':
+        if isinstance(self.init, str) and self.init == 'warn':
             # See issue #18018
             warnings.warn("The default initialization in TSNE will change "
                           "from 'random' to 'pca' in 1.2.", FutureWarning)
