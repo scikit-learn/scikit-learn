@@ -51,6 +51,7 @@ from sklearn.linear_model import (
     OrthogonalMatchingPursuit,
     Ridge,
     RidgeClassifier,
+    RidgeClassifierCV,
     RidgeCV,
 )
 
@@ -306,9 +307,13 @@ def _scale_alpha_inplace(estimator, n_samples):
     normalize set to True to when it is evoked in a Pipeline with normalize set
     to False and with a StandardScaler.
     """
-    if 'alpha' not in estimator.get_params():
+    if (('alpha' not in estimator.get_params()) and
+            ('alphas' not in estimator.get_params())):
         return
 
+    if isinstance(estimator, (RidgeCV, RidgeClassifierCV)):
+        alphas = estimator.alphas * n_samples
+        return estimator.set_params(alphas=alphas)
     if isinstance(estimator, (Lasso, LassoLars, MultiTaskLasso)):
         alpha = estimator.alpha * np.sqrt(n_samples)
     if isinstance(estimator, (Ridge, RidgeClassifier)):
@@ -345,7 +350,9 @@ def _scale_alpha_inplace(estimator, n_samples):
      (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
      (Lars, {}),
      (LinearRegression, {}),
-     (LassoLarsIC, {})]
+     (LassoLarsIC, {}),
+     (RidgeCV, {"alphas": [0.1, 0.4]}),
+     (RidgeClassifierCV, {"alphas": [0.1, 0.4]})]
 )
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # Test that linear models (LinearModel) set with normalize set to True are
