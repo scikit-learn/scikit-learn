@@ -35,6 +35,7 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn import svm
+from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 
 iris = datasets.load_iris()
@@ -47,22 +48,30 @@ n_classes = 3
 
 def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    assert_raises(ValueError, ovr.predict, [])
+
+    # test predicting without fitting
+    with pytest.raises(NotFittedError):
+        ovr.predict([])
 
     # Fail on multioutput data
-    assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
-                  np.array([[1, 0], [0, 1]]),
-                  np.array([[1, 2], [3, 1]]))
-    assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
-                  np.array([[1, 0], [0, 1]]),
-                  np.array([[1.5, 2.4], [3.1, 0.8]]))
+    msg = "Multioutput target data is not supported with label binarization"
+    with pytest.raises(ValueError, match=msg):
+        X = np.array([[1, 0], [0, 1]])
+        y = np.array([[1, 2], [3, 1]])
+        OneVsRestClassifier(MultinomialNB()).fit(X ,y)
+    
+    with pytest.raises(ValueError, match=msg):
+        X = np.array([[1, 0], [0, 1]])
+        y = np.array([[1.5, 2.4], [3.1, 0.8]])
+        OneVsRestClassifier(MultinomialNB()).fit(X, y)
 
 
 def test_check_classification_targets():
     # Test that check_classification_target return correct type. #5782
     y = np.array([0.0, 1.1, 2.0, 3.0])
     msg = type_of_target(y)
-    assert_raise_message(ValueError, msg, check_classification_targets, y)
+    with pytest.raises(ValueError):
+        check_classification_targets(y)
 
 
 def test_ovr_fit_predict():
@@ -120,12 +129,12 @@ def test_ovr_partial_fit_exceptions():
     X = np.abs(np.random.randn(14, 2))
     y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
     ovr.partial_fit(X[:7], y[:7], np.unique(y))
-    # A new class value which was not in the first call of partial_fit
-    # It should raise ValueError
+    # If a new class that was not in the first call of partial fit is seen
+    # It should raise Value Error
     y1 = [5] + y[7:-1]
-    assert_raises_regexp(ValueError, r"Mini-batch contains \[.+\] while "
-                                     r"classes must be subset of \[.+\]",
-                         ovr.partial_fit, X=X[7:], y=y1)
+    msg = r"Mini-batch contains \[.+\] while classes must be subset of \[.+\]"
+    with pytest.raises(ValueError, match=msg):
+        ovr.partial_fit(X=X[7:], y=y1)
 
 
 def test_ovr_ovo_regressor():
@@ -201,7 +210,9 @@ def test_ovr_always_present():
     y[:, 2] = 1
 
     ovr = OneVsRestClassifier(LogisticRegression())
-    assert_warns(UserWarning, ovr.fit, X, y)
+    msg = r'Label .+ is present in all training examples'
+    with pytest.warns(UserWarning, match=msg):
+        ovr.fit(X, y)
     y_pred = ovr.predict(X)
     assert_array_equal(np.array(y_pred), np.array(y))
     y_pred = ovr.decision_function(X)
@@ -213,7 +224,11 @@ def test_ovr_always_present():
     y = np.zeros((10, 2))
     y[5:, 0] = 1  # variable label
     ovr = OneVsRestClassifier(LogisticRegression())
-    assert_warns(UserWarning, ovr.fit, X, y)
+    
+    # the warning message could be improved
+    msg = r'Label not 1 is present in all training examples'
+    with pytest.warns(UserWarning, match=msg):
+        ovr.fit(X, y)
     y_pred = ovr.predict_proba(X)
     assert_array_equal(y_pred[:, -1], np.zeros(X.shape[0]))
 
@@ -468,12 +483,16 @@ def test_ovr_coef_exceptions():
     # Not fitted exception!
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     # lambda is needed because we don't want coef_ to be evaluated right away
-    assert_raises(ValueError, lambda x: ovr.coef_, None)
+    with pytest.raises(ValueError):
+        func = lambda x: ovr.coef_
+        func(None)
 
     # Doesn't have coef_ exception!
     ovr = OneVsRestClassifier(DecisionTreeClassifier())
     ovr.fit(iris.data, iris.target)
-    assert_raises(AttributeError, lambda x: ovr.coef_, None)
+    with pytest.raises(AttributeError):
+        func = lambda x: ovr.coef_
+        func(None)
 
 
 # TODO: Remove this test in version 1.1 when
