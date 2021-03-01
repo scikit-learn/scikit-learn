@@ -26,7 +26,7 @@ from sklearn.utils import check_random_state
     "estimator",
     [LinearRegression, Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV]
 )
-# FIXME remove test in 1.4
+# FIXME remove test in 1.2
 def test_linear_model_normalize_deprecation_message(
      estimator,
      normalize, n_warnings, warning
