@@ -6,10 +6,6 @@ from re import escape
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
@@ -513,7 +509,8 @@ def test_ovr_deprecated_coef_intercept():
 
 def test_ovo_exceptions():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
-    assert_raises(ValueError, ovo.predict, [])
+    with pytest.raises(NotFittedError):
+        ovo.predict([])
 
 
 def test_ovo_fit_on_list():
@@ -582,8 +579,8 @@ def test_ovo_partial_fit_predict():
     message_re = escape("Mini-batch contains {0} while "
                         "it must be subset of {1}".format(np.unique(error_y),
                                                           np.unique(y)))
-    assert_raises_regexp(ValueError, message_re, ovo.partial_fit, X[:7],
-                         error_y, np.unique(y))
+    with pytest.raises(ValueError, match=message_re):
+        ovo.partial_fit(X[:7], error_y, np.unique(y))
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsOneClassifier(SVC())
@@ -701,7 +698,9 @@ def test_ovo_one_class():
     y = np.array(['a'] * 4)
 
     ovo = OneVsOneClassifier(LinearSVC())
-    assert_raise_message(ValueError, "when only one class", ovo.fit, X, y)
+    msg = "when only one class"
+    with pytest.raises(ValueError, match=msg):
+        ovo.fit(X, y)
 
 
 def test_ovo_float_y():
@@ -710,12 +709,15 @@ def test_ovo_float_y():
     y = iris.data[:, 0]
 
     ovo = OneVsOneClassifier(LinearSVC())
-    assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
+    msg = "Unknown label type"
+    with pytest.raises(ValueError, match=msg):
+        ovo.fit(X, y)
 
 
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
-    assert_raises(ValueError, ecoc.predict, [])
+    with pytest.raises(NotFittedError):
+        ecoc.predict([])
 
 
 def test_ecoc_fit_predict():
@@ -747,10 +749,14 @@ def test_ecoc_float_y():
     y = iris.data[:, 0]
 
     ovo = OutputCodeClassifier(LinearSVC())
-    assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
+    msg = "Unknown label type"
+    with pytest.raises(ValueError, match=msg):
+        ovo.fit(X, y)
+
     ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
-    assert_raise_message(ValueError, "code_size should be greater than 0,"
-                         " got -1", ovo.fit, X, y)
+    msg = "code_size should be greater than 0, got -1"
+    with pytest.raises(ValueError, match=msg):
+        ovo.fit(X, y)
 
 
 def test_ecoc_delegate_sparse_base_estimator():
