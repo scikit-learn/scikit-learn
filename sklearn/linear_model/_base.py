@@ -131,6 +131,8 @@ def _deprecate_normalize(normalize, default, estimator_name):
             'Set parameter alpha to original_alpha * np.sqrt(n_samples) if'
             'l1_ratio is 1 and original_alpha * n_samples if l1_ratio is 0. '
         )
+    elif estimator_name == 'RidgeCV' or estimator_name == 'RidgeClassifierCV':
+        str_on_alpha = 'Set parameter alphas to: original_alphas * n_samples. '
     else:
         str_on_alpha = ""
 
