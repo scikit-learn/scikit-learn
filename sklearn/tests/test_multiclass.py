@@ -54,8 +54,8 @@ def test_ovr_exceptions():
     with pytest.raises(ValueError, match=msg):
         X = np.array([[1, 0], [0, 1]])
         y = np.array([[1, 2], [3, 1]])
-        OneVsRestClassifier(MultinomialNB()).fit(X ,y)
-    
+        OneVsRestClassifier(MultinomialNB()).fit(X, y)
+
     with pytest.raises(ValueError, match=msg):
         X = np.array([[1, 0], [0, 1]])
         y = np.array([[1.5, 2.4], [3.1, 0.8]])
@@ -66,7 +66,7 @@ def test_check_classification_targets():
     # Test that check_classification_target return correct type. #5782
     y = np.array([0.0, 1.1, 2.0, 3.0])
     msg = type_of_target(y)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         check_classification_targets(y)
 
 
@@ -220,7 +220,7 @@ def test_ovr_always_present():
     y = np.zeros((10, 2))
     y[5:, 0] = 1  # variable label
     ovr = OneVsRestClassifier(LogisticRegression())
-    
+
     # the warning message could be improved
     msg = r'Label not 1 is present in all training examples'
     with pytest.warns(UserWarning, match=msg):
@@ -277,7 +277,7 @@ def test_ovr_binary():
             probabilities = clf.predict_proba(X_test)
             assert 2 == len(probabilities[0])
             assert (clf.classes_[np.argmax(probabilities, axis=1)] ==
-                         clf.predict(X_test))
+                    clf.predict(X_test))
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
@@ -401,7 +401,7 @@ def test_ovr_single_label_predict_proba():
     assert_almost_equal(Y_proba.sum(axis=1), 1.0)
     # predict assigns a label if the probability that the
     # sample has the label is greater than 0.5.
-    pred = np.array([l.argmax() for l in Y_proba])
+    pred = np.array([label.argmax() for label in Y_proba])
     assert not (pred - Y_pred).any()
 
 
@@ -469,26 +469,31 @@ def test_ovr_coef_():
             assert shape[1] == iris.data.shape[1]
             # don't densify sparse coefficients
             assert (sp.issparse(ovr.estimators_[0].coef_) ==
-                         sp.issparse(ovr.coef_))
+                    sp.issparse(ovr.coef_))
 
 
 # TODO: Remove this test in version 1.1
 # when the coef_ attribute is removed
 @ignore_warnings(category=FutureWarning)
 def test_ovr_coef_exceptions():
+
+    # An eval function is defined because we don't
+    # want coef_ to be evaluated right away
+    def coef_eval(est, x):
+        return est.coef_(x)
+
     # Not fitted exception!
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    # lambda is needed because we don't want coef_ to be evaluated right away
-    with pytest.raises(ValueError):
-        func = lambda x: ovr.coef_
-        func(None)
+
+    with pytest.raises(NotFittedError):
+        coef_eval(ovr, None)
 
     # Doesn't have coef_ exception!
     ovr = OneVsRestClassifier(DecisionTreeClassifier())
     ovr.fit(iris.data, iris.target)
-    with pytest.raises(AttributeError):
-        func = lambda x: ovr.coef_
-        func(None)
+    msg = "Base estimator doesn't have a coef_ attribute"
+    with pytest.raises(AttributeError, match=msg):
+        coef_eval(ovr, None)
 
 
 # TODO: Remove this test in version 1.1 when
@@ -798,7 +803,7 @@ def test_pairwise_indices():
 
     for idx in precomputed_indices:
         assert (idx.shape[0] * n_estimators / (n_estimators - 1) ==
-                     linear_kernel.shape[0])
+                linear_kernel.shape[0])
 
 
 @ignore_warnings(category=FutureWarning)
