@@ -6,7 +6,7 @@ import warnings
 from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
-from .base import LinearModel
+from ._base import LinearModel
 from ..utils import check_X_y
 from ..utils import check_consistent_length
 from ..utils.extmath import safe_sparse_dot

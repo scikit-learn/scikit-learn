@@ -3,7 +3,7 @@
 
 import pytest
 import numpy as np
-from sklearn.utils.testing import assert_allclose, assert_raises
+from sklearn.utils._testing import assert_allclose, assert_raises
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.model_selection import cross_val_score
