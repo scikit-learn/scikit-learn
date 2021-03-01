@@ -208,7 +208,7 @@ Changelog
   and :user:`wstates <wstates>`.
 
 :mod:`sklearn.feature_selection`
-.......................
+................................
 
 - |Fix| Change :func:`feature_selection.SequentialFeatureSelection` to
   allow for unsupervised modelling so that the `fit` signature need not
