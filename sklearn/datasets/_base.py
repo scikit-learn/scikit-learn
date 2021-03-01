@@ -12,7 +12,7 @@ import os
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
-from os.path import dirname, exists, expanduser, isdir, join, splitext
+from os.path import dirname, expanduser, isdir, join, splitext
 
 from ..utils import Bunch
 from ..utils import check_random_state
@@ -52,8 +52,7 @@ def get_data_home(data_home=None) -> str:
         data_home = environ.get('SCIKIT_LEARN_DATA',
                                 join('~', 'scikit_learn_data'))
     data_home = expanduser(data_home)
-    if not exists(data_home):
-        makedirs(data_home)
+    makedirs(data_home, exist_ok=True)
     return data_home
 
 

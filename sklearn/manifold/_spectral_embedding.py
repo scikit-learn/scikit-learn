@@ -335,7 +335,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
             # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
-            _, diffusion_map = eigh(laplacian)
+            _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 embedding = embedding / dd
@@ -472,10 +472,10 @@ class SpectralEmbedding(BaseEstimator):
         return {'pairwise': self.affinity in ["precomputed",
                                               "precomputed_nearest_neighbors"]}
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.affinity in ["precomputed",

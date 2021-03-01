@@ -1,0 +1,216 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_1_0:
+
+Version 1.0.0
+=============
+
+**In Development**
+
+
+.. include:: changelog_legend.inc
+
+Put the changes in their relevant module.
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
+  affinity matrix computation.
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
+  settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Efficiency| :class:`cluster.KMeans` with `algorithm='elkan'` is now faster
+  in multicore settings. :pr:`19052` by
+  :user:`Yusuke Nagasaka <YusukeNagasaka>`.
+
+- |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
+  deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.fetch_openml` now supports categories with
+  missing values when returning a pandas dataframe. :pr:`19365` by
+  `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
+  :user:`EL-ATEIF Sara <elateifsara>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |API| In :class:`decomposition.DictionaryLearning`,
+  :class:`decomposition.MiniBatchDictionaryLearning`,
+  :func:`dict_learning` and :func:`dict_learning_online`,
+  `transform_alpha` will be equal to `alpha` instead of 1.0 by default
+  starting from version 1.2
+  :pr:`19159` by :user:`Benoît Malézieux <bmalezieux>`.
+
+- |Fix| Fixes incorrect multiple data-conversion warnings when clustering
+  boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
+
+- |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
+  ensure determinism of the output. Achieved by flipping signs of the SVD
+  output which is used to initialize the code.
+  :pr:`18433` by :user:`Bruno Charron <brcharron>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Do not allow to compute out-of-bag (OOB) score in
+  :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.ExtraTreesClassifier` with multiclass-multioutput target
+  since scikit-learn does not provide any metric supporting this type of
+  target. Additional private refactoring was performed.
+  :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
+  input strings would result in negative indices in the transformed data.
+  :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Allow multiple scorers input to
+  :func:`~sklearn.inspection.permutation_importance`.
+  :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| Validate user-supplied gram matrix passed to linear models
+  via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
+
+- |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
+  :pr:`19055` by `Thomas Fan`_.
+
+- |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
+  not corresponding to their objective. :pr:`19172` by
+  :user:`Mathurin Massias <mathurinm>`
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
+  missing values by default. :pr:`19069` by `Thomas Fan`_.
+
+- |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
+  is deprecated and will be removed in 1.2.
+  Motivation for this deprecation: ``normalize`` parameter did not take any
+  effect if ``fit_intercept`` was set to False and therefore was deemed
+  confusing.
+  The behavior of the deprecated LinearRegression(normalize=True) can be
+  reproduced with :class:`~sklearn.pipeline.Pipeline` with
+  :class:`~sklearn.preprocessing.StandardScaler`as follows:
+  make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
+  :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
+
+- |Fix|: `sample_weight` are now fully taken into account in linear models
+  when `normalize=True` for both feature centering and feature
+  scaling.
+  :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
+  :user:`Maria Telenczuk <maikia>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Change numerical precision to prevent underflow issues
+  during affinity matrix computation for :class:`manifold.TSNE`.
+  :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |API| :class:`metrics.ConfusionMatrixDisplay` exposes two class methods
+  :func:`~metrics.ConfusionMatrixDisplay.from_estimator` and
+  :func:`~metrics.ConfusionMatrixDisplay.from_predictions` allowing to create
+  a confusion matrix plot using an estimator or the predictions.
+  :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
+  class methods and will be removed in 1.2.
+  :pr:`18543` by `Guillaume Lemaitre`_.
+
+- |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
+  quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
+  and :user:`Oliver Grisel <ogrisel>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Fix| The `fit` and `partial_fit` methods of the discrete naive Bayes
+  classifiers (:class:`naive_bayes.BernoulliNB`,
+  :class:`naive_bayes.CategoricalNB`, :class:`naive_bayes.ComplementNB`,
+  and :class:`naive_bayes.MultinomialNB`) now correctly handle the degenerate
+  case of a single class in the training set.
+  :pr:`18925` by :user:`David Poznik <dpoznik>`.
+
+- |API| The attribute ``sigma_`` is now deprecated in
+  :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
+  Use ``var_`` instead.
+  :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| The new :class:`preprocessing.SplineTransformer` is a feature
+  preprocessing tool for the generation of B-splines, parametrized by the
+  polynomial ``degree`` of the splines, number of knots ``n_knots`` and knot
+  positioning strategy ``knots``.
+  :pr:`18368` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
+  and similar scalers detect near-constant features to avoid scaling them to
+  very large values. This problem happens in particular when using a scaler on
+  sparse data with a constant column with sample weights, in which case
+  centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
+  <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
+  for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
+  and :user:`wstates <wstates>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 0.24, including:
+
+TODO: update at the time of the release.

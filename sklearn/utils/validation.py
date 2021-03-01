@@ -32,7 +32,7 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(func=None, *, version="0.25"):
+def _deprecate_positional_args(func=None, *, version="1.0 (renaming of 0.25)"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -42,7 +42,7 @@ def _deprecate_positional_args(func=None, *, version="0.25"):
     ----------
     func : callable, default=None
         Function to check arguments on.
-    version : callable, default="0.25"
+    version : callable, default="1.0 (renaming of 0.25)"
         The version when positional arguments will result in error.
     """
     def _inner_deprecate_positional_args(f):
@@ -642,12 +642,13 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind in "OUSV":
-            warnings.warn("Arrays of bytes/strings is being converted to "
-                          "decimal numbers if dtype='numeric'. This behavior "
-                          "is deprecated in 0.24 and will be removed in 0.26 "
-                          "Please convert your data to numeric values "
-                          "explicitly instead.",
-                          FutureWarning, stacklevel=2)
+            warnings.warn(
+                "Arrays of bytes/strings is being converted to decimal "
+                "numbers if dtype='numeric'. This behavior is deprecated in "
+                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
+                "convert your data to numeric values explicitly instead.",
+                FutureWarning, stacklevel=2
+            )
             try:
                 array = array.astype(np.float64)
             except ValueError as e:
@@ -1272,7 +1273,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     return lambdas
 
 
-def _check_sample_weight(sample_weight, X, dtype=None):
+def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
@@ -1295,6 +1296,9 @@ def _check_sample_weight(sample_weight, X, dtype=None):
        is be allocated.  If `dtype` is not one of `float32`, `float64`,
        `None`, the output will be of dtype `float64`.
 
+    copy : bool, default=False
+        If True, a copy of sample_weight will be created.
+
     Returns
     -------
     sample_weight : ndarray of shape (n_samples,)
@@ -1314,7 +1318,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
             sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
-            order="C"
+            order="C", copy=copy
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")

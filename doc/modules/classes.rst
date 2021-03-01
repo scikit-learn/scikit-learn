@@ -992,6 +992,7 @@ details.
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
+   metrics.mean_pinball_loss
 
 Multilabel ranking metrics
 --------------------------
@@ -1415,6 +1416,7 @@ details.
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
+   preprocessing.SplineTransformer
    preprocessing.StandardScaler
 
 .. autosummary::
@@ -1638,5 +1640,5 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.25
----------------------
+To be removed in 1.0 (renaming of 0.25)
+---------------------------------------

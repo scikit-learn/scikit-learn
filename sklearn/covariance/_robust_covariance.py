@@ -632,8 +632,8 @@ class MinCovDet(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y: Ignored
-            Not used, present for API consistence purpose.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------

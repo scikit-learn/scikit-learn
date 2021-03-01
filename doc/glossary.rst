@@ -255,6 +255,13 @@ General Concepts
         or vectorizing.  Our estimators do not work with struct arrays, for
         instance.
 
+        Our documentation can sometimes give information about the dtype
+        precision, e.g. `np.int32`, `np.int64`, etc. When the precision is
+        provided, it refers to the NumPy dtype. If an arbitrary precision is
+        used, the documentation will refer to dtype `integer` or `floating`.
+        Note that in this case, the precision can be platform dependent.
+        The `numeric` dtype refers to accepting both `integer` and `floating`.
+
         TODO: Mention efficiency and precision issues; casting policy.
 
     duck typing
@@ -389,9 +396,9 @@ General Concepts
 
                 .. deprecated:: 0.24
 
-                    The _pairwise attribute is deprecated in 0.24. From 0.26
-                    onward, the `pairwise` estimator tag should be used
-                    instead.
+                    The _pairwise attribute is deprecated in 0.24. From 1.1
+                    (renaming of 0.26) onward, the `pairwise` estimator tag
+                    should be used instead.
 
         For more detailed info, see :ref:`estimator_tags`.
 
