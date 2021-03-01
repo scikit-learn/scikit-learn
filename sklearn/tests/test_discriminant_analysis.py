@@ -539,40 +539,36 @@ def test_qda_store_covariance():
 
 
 def test_qda_regularization():
-    # the default is reg_param=0. and will cause issues
-    # when there is a constant variable
+    # The default is reg_param=0. and will cause issues when there is a
+    # constant variable.
 
-    # UserWarning will raised due to the constant variable
-    constant_msg = re.escape(
-        "Variables are collinear"
-    )
-
-    # Runtime warning will be raised due to unregularized
-    # constant variable in the covariance matrix.
-    covariance_msg = re.escape(
-        "divide by zero encountered in lag"
-    )
+    # Fitting on data with constant variable triggers an UserWarning.
+    collinear_msg = "Variables are collinear"
     clf = QuadraticDiscriminantAnalysis()
-    with (pytest.warns(UserWarning, match=constant_msg) and
-          pytest.warns(RuntimeWarning, match=covariance_msg)):
-        y_pred = clf.fit(X2, y6)
-    y_pred = clf.predict(X2)
+    with pytest.warns(UserWarning, match=collinear_msg):
+            y_pred = clf.fit(X2, y6)
+
+    # XXX: RuntimeWarning is also raised at predict time because of divisions
+    # by zero when the model is fit with a constant feature and without
+    # regularization: should this be considered a bug? Either by the fit-time
+    # message more informative, raising and exception instead of a warning in
+    # this case or somehow changing predict to avoid division by zero.
+    with pytest.warns(RuntimeWarning, match="divide by zero"):
+        y_pred = clf.predict(X2)
     assert np.any(y_pred != y6)
 
-    # adding a little regularization fixes the problem
-    # No Runtime Warning will be raised with regularization
-    # But UserWarning will persist
+    # Adding a little regularization fixes the division by zero at predict
+    # time. But UserWarning will persist at fit time.
     clf = QuadraticDiscriminantAnalysis(reg_param=0.01)
-    with pytest.warns(UserWarning, match=constant_msg):
+    with pytest.warns(UserWarning, match=collinear_msg):
         clf.fit(X2, y6)
     y_pred = clf.predict(X2)
     assert_array_equal(y_pred, y6)
 
-    # Case n_samples_in_a_class < n_features
-    # UserWarning should persist
-    # No RuntimeWarning should be seen
+    # UserWarning should also be there for the n_samples_in_a_class <
+    # n_features case.
     clf = QuadraticDiscriminantAnalysis(reg_param=0.1)
-    with pytest.warns(UserWarning, match=constant_msg):
+    with pytest.warns(UserWarning, match=collinear_msg):
         clf.fit(X5, y5)
     y_pred5 = clf.predict(X5)
     assert_array_equal(y_pred5, y5)
