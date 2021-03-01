@@ -1059,7 +1059,7 @@ def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true, y_pred, zero_division=1)
     1.0...
-	>>> # multilabel classification
+    >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> f1_score(y_true, y_pred, average=None)
@@ -1656,7 +1656,7 @@ def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
     array([0.33..., 0.        , 0.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
     array([0.33..., 1.        , 1.        ])
-	>>> # multilabel classification
+    >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> precision_score(y_true, y_pred, average=None)
@@ -1779,7 +1779,7 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     array([0.5, 0. , 0. ])
     >>> recall_score(y_true, y_pred, average=None, zero_division=1)
     array([0.5, 1. , 1. ])
-	>>> # multilabel classification
+    >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> recall_score(y_true, y_pred, average=None)
