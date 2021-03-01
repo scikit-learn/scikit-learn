@@ -221,7 +221,6 @@ def test_ovr_always_present():
     y[5:, 0] = 1  # variable label
     ovr = OneVsRestClassifier(LogisticRegression())
 
-    # the warning message could be improved
     msg = r'Label not 1 is present in all training examples'
     with pytest.warns(UserWarning, match=msg):
         ovr.fit(X, y)
