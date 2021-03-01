@@ -1059,6 +1059,10 @@ def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true, y_pred, zero_division=1)
     1.0...
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> f1_score(y_true, y_pred, average=None)
+    array([0.66666667, 1.        , 0.66666667])
 
     Notes
     -----
@@ -1651,7 +1655,10 @@ def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
     array([0.33..., 0.        , 0.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
     array([0.33..., 1.        , 1.        ])
-
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> precision_score(y_true, y_pred, average=None)
+    array([0.5, 1. , 1. ])
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -1770,6 +1777,10 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     array([0.5, 0. , 0. ])
     >>> recall_score(y_true, y_pred, average=None, zero_division=1)
     array([0.5, 1. , 1. ])
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> recall_score(y_true, y_pred, average=None)
+    array([1. , 1. , 0.5])
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
