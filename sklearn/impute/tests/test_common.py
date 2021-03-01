@@ -30,6 +30,7 @@ def test_imputation_missing_value_in_test_array(imputer):
     imputer.fit(train).transform(test)
 
 
+# TODO: changes shape
 # ConvergenceWarning will be raised by the IterativeImputer
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("marker", [np.nan, -1, 0])
@@ -58,6 +59,7 @@ def test_imputers_add_indicator(marker, imputer):
     assert_allclose(X_trans[:, :-4], X_trans_no_indicator)
 
 
+# TODO: changes shape
 # ConvergenceWarning will be raised by the IterativeImputer
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("marker", [np.nan, -1])
@@ -86,6 +88,7 @@ def test_imputers_add_indicator_sparse(imputer, marker):
     assert_allclose_dense_sparse(X_trans[:, :-4], X_trans_no_indicator)
 
 
+# TODO: changes shape
 # ConvergenceWarning will be raised by the IterativeImputer
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("imputer", IMPUTERS)

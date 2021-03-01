@@ -71,9 +71,11 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     It adds automatically support for `add_indicator`.
     """
 
-    def __init__(self, *, missing_values=np.nan, add_indicator=False):
+    def __init__(self, *, missing_values=np.nan, add_indicator=False,
+                 keep_missing_features=False):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
+        self.keep_missing_features = keep_missing_features
 
     def _fit_indicator(self, X):
         """Fit a MissingIndicator."""
@@ -176,6 +178,10 @@ class SimpleImputer(_BaseImputer):
         the missing indicator even if there are missing values at
         transform/test time.
 
+    keep_missing_features : boolean, default=False
+        If true, features whose all values are missing during fit/train time
+        are not removed during transform/test time.
+
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -213,10 +219,12 @@ class SimpleImputer(_BaseImputer):
     """
     @_deprecate_positional_args
     def __init__(self, *, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose=0, copy=True, add_indicator=False):
+                 fill_value=None, verbose=0, copy=True, add_indicator=False,
+                 keep_missing_features=False):
         super().__init__(
             missing_values=missing_values,
-            add_indicator=add_indicator
+            add_indicator=add_indicator,
+            keep_missing_features=keep_missing_features,
         )
         self.strategy = strategy
         self.fill_value = fill_value
@@ -439,8 +447,8 @@ class SimpleImputer(_BaseImputer):
         # compute mask before eliminating invalid features
         missing_mask = _get_mask(X, self.missing_values)
 
-        # Delete the invalid columns if strategy is not constant
-        if self.strategy == "constant":
+        # Decide whether to keep missing features
+        if self.strategy == "constant" or self.keep_missing_features:
             valid_statistics = statistics
             valid_statistics_indexes = None
         else:
