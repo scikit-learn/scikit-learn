@@ -332,7 +332,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     For multi-output tasks it is::
 
-        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        (1 / (2 * n_samples)) * ||Y - XW||_Fro^2
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
@@ -939,12 +939,11 @@ class Lasso(ElasticNet):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : 'auto', bool or array-like of shape (n_features, n_features),\
+    precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument. For sparse input
-        this option is always ``False`` to preserve sparsity.
+        calculations. The Gram matrix can also be passed as argument.
+        For sparse input this option is always ``False`` to preserve sparsity.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.

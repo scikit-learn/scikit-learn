@@ -1,14 +1,13 @@
 """
 Testing for the nearest centroid module.
 """
-
 import numpy as np
+import pytest
 from scipy import sparse as sp
 from numpy.testing import assert_array_equal
 
 from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
-from sklearn.utils._testing import assert_raises
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -56,7 +55,7 @@ def test_classification_toy():
 
 def test_precomputed():
     clf = NearestCentroid(metric='precomputed')
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         clf.fit(X, y)
 
 
@@ -158,5 +157,5 @@ def test_features_zero_var():
     y[0] = 1
 
     clf = NearestCentroid(shrink_threshold=0.1)
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         clf.fit(X, y)

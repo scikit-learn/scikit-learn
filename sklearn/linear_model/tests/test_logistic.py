@@ -1,5 +1,5 @@
 import os
-import sys
+import re
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
@@ -19,8 +19,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns_message
@@ -80,24 +78,33 @@ def test_predict_2_classes():
 def test_error():
     # Test for appropriate exception on errors
     msg = "Penalty term must be positive"
-    assert_raise_message(ValueError, msg,
-                         LogisticRegression(C=-1).fit, X, Y1)
-    assert_raise_message(ValueError, msg,
-                         LogisticRegression(C="test").fit, X, Y1)
+
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegression(C=-1).fit(X, Y1)
+
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegression(C="test").fit(X, Y1)
 
     msg = "is not a valid scoring value"
-    assert_raise_message(ValueError, msg,
-                         LogisticRegressionCV(scoring='bad-scorer', cv=2).fit,
-                         X, Y1)
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegressionCV(scoring='bad-scorer', cv=2).fit(X, Y1)
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
-        assert_raise_message(ValueError, msg, LR(tol=-1).fit, X, Y1)
-        assert_raise_message(ValueError, msg, LR(tol="test").fit, X, Y1)
+
+        with pytest.raises(ValueError, match=msg):
+            LR(tol=-1).fit(X, Y1)
+
+        with pytest.raises(ValueError, match=msg):
+            LR(tol="test").fit(X, Y1)
 
         msg = "Maximum number of iteration must be positive"
-        assert_raise_message(ValueError, msg, LR(max_iter=-1).fit, X, Y1)
-        assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
+
+        with pytest.raises(ValueError, match=msg):
+            LR(max_iter=-1).fit(X, Y1)
+
+        with pytest.raises(ValueError, match=msg):
+            LR(max_iter="test").fit(X, Y1)
 
 
 def test_logistic_cv_mock_scorer():
@@ -197,39 +204,46 @@ def test_predict_iris():
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
 def test_multinomial_validation(solver):
     lr = LogisticRegression(C=-1, solver=solver, multi_class='multinomial')
-    assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
+
+    with pytest.raises(ValueError):
+        lr.fit([[0, 1], [1, 0]], [0, 1])
 
 
 @pytest.mark.parametrize('LR', [LogisticRegression, LogisticRegressionCV])
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
 
-    msg = ("Logistic Regression supports only solvers in ['liblinear', "
-           "'newton-cg', 'lbfgs', 'sag', 'saga'], got wrong_name.")
+    msg = (r"Logistic Regression supports only solvers in \['liblinear', "
+           r"'newton-cg', 'lbfgs', 'sag', 'saga'\], got wrong_name.")
     lr = LR(solver="wrong_name", multi_class="ovr")
-    assert_raise_message(ValueError, msg, lr.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        lr.fit(X, y)
 
     msg = ("multi_class should be 'multinomial', 'ovr' or 'auto'. "
            "Got wrong_name")
     lr = LR(solver='newton-cg', multi_class="wrong_name")
-    assert_raise_message(ValueError, msg, lr.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        lr.fit(X, y)
 
     # only 'liblinear' solver
     msg = "Solver liblinear does not support a multinomial backend."
     lr = LR(solver='liblinear', multi_class='multinomial')
-    assert_raise_message(ValueError, msg, lr.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        lr.fit(X, y)
 
     # all solvers except 'liblinear' and 'saga'
     for solver in ['newton-cg', 'lbfgs', 'sag']:
         msg = ("Solver %s supports only 'l2' or 'none' penalties," %
                solver)
         lr = LR(solver=solver, penalty='l1', multi_class='ovr')
-        assert_raise_message(ValueError, msg, lr.fit, X, y)
+        with pytest.raises(ValueError, match=msg):
+            lr.fit(X, y)
     for solver in ['newton-cg', 'lbfgs', 'sag', 'saga']:
         msg = ("Solver %s supports only dual=False, got dual=True" %
                solver)
         lr = LR(solver=solver, dual=True, multi_class='ovr')
-        assert_raise_message(ValueError, msg, lr.fit, X, y)
+        with pytest.raises(ValueError, match=msg):
+            lr.fit(X, y)
 
     # only saga supports elasticnet. We only test for liblinear because the
     # error is raised before for the other solvers (solver %s supports only l2
@@ -238,12 +252,14 @@ def test_check_solver_option(LR):
         msg = ("Only 'saga' solver supports elasticnet penalty, got "
                "solver={}.".format(solver))
         lr = LR(solver=solver, penalty='elasticnet')
-        assert_raise_message(ValueError, msg, lr.fit, X, y)
+        with pytest.raises(ValueError, match=msg):
+            lr.fit(X, y)
 
     # liblinear does not support penalty='none'
     msg = "penalty='none' is not supported for the liblinear solver"
     lr = LR(penalty='none', solver='liblinear')
-    assert_raise_message(ValueError, msg, lr.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        lr.fit(X, y)
 
 
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
@@ -319,11 +335,13 @@ def test_inconsistent_input():
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
-    assert_raises(ValueError, clf.fit, X, y_wrong)
+
+    with pytest.raises(ValueError):
+        clf.fit(X, y_wrong)
 
     # Wrong dimensions for test data
-    assert_raises(ValueError, clf.fit(X_, y_).predict,
-                  rng.random_sample((3, 12)))
+    with pytest.raises(ValueError):
+        clf.fit(X_, y_).predict(rng.random_sample((3, 12)))
 
 
 def test_write_parameters():
@@ -341,7 +359,9 @@ def test_nan():
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
     logistic = LogisticRegression(random_state=0)
-    assert_raises(ValueError, logistic.fit, Xnan, Y1)
+
+    with pytest.raises(ValueError):
+        logistic.fit(Xnan, Y1)
 
 
 def test_consistency_path():
@@ -423,8 +443,8 @@ def test_liblinear_dual_random_state():
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
     # different results for different random states
     msg = "Arrays are not almost equal to 6 decimals"
-    assert_raise_message(AssertionError, msg,
-                         assert_array_almost_equal, lr1.coef_, lr3.coef_)
+    with pytest.raises(AssertionError, match=msg):
+        assert_array_almost_equal(lr1.coef_, lr3.coef_)
 
 
 def test_logistic_loss_and_grad():
@@ -1043,7 +1063,8 @@ def test_logreg_intercept_scaling():
         msg = ('Intercept scaling is %r but needs to be greater than 0.'
                ' To disable fitting an intercept,'
                ' set fit_intercept=False.' % clf.intercept_scaling)
-        assert_raise_message(ValueError, msg, clf.fit, X, Y1)
+        with pytest.raises(ValueError, match=msg):
+            clf.fit(X, Y1)
 
 
 def test_logreg_intercept_scaling_zero():
@@ -1617,14 +1638,15 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
 @pytest.mark.parametrize('l1_ratio', (-1, 2, None, 'something_wrong'))
 def test_l1_ratio_param(l1_ratio):
 
-    msg = "l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio
-    assert_raise_message(ValueError, msg,
-                         LogisticRegression(penalty='elasticnet',
-                                            solver='saga',
-                                            l1_ratio=l1_ratio).fit, X, Y1)
+    msg = r"l1_ratio must be between 0 and 1; got \(l1_ratio=%r\)" % l1_ratio
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegression(penalty='elasticnet', solver='saga',
+                           l1_ratio=l1_ratio).fit(X, Y1)
+
     if l1_ratio is not None:
         msg = ("l1_ratio parameter is only used when penalty is 'elasticnet'."
                " Got (penalty=l1)")
+
         assert_warns_message(UserWarning, msg,
                              LogisticRegression(penalty='l1', solver='saga',
                                                 l1_ratio=l1_ratio).fit, X, Y1)
@@ -1635,11 +1657,12 @@ def test_l1_ratios_param(l1_ratios):
 
     msg = ("l1_ratios must be a list of numbers between 0 and 1; got "
            "(l1_ratios=%r)" % l1_ratios)
-    assert_raise_message(ValueError, msg,
-                         LogisticRegressionCV(penalty='elasticnet',
-                                              solver='saga',
-                                              l1_ratios=l1_ratios, cv=2).fit,
-                         X, Y1)
+
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        LogisticRegressionCV(penalty='elasticnet',
+                             solver='saga',
+                             l1_ratios=l1_ratios, cv=2).fit(X, Y1)
+
     if l1_ratios is not None:
         msg = ("l1_ratios parameter is only used when penalty is "
                "'elasticnet'. Got (penalty=l1)")
@@ -1691,9 +1714,9 @@ def test_logistic_regression_path_coefs_multinomial():
 
 
 @pytest.mark.parametrize('est',
-                         [LogisticRegression(random_state=0),
+                         [LogisticRegression(random_state=0, max_iter=500),
                           LogisticRegressionCV(random_state=0, cv=3,
-                                               Cs=3, tol=1e-3)],
+                                               Cs=3, tol=1e-3, max_iter=500)],
                          ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
                                     'saga'])
@@ -1703,8 +1726,9 @@ def test_logistic_regression_multi_class_auto(est, solver):
     def fit(X, y, **kw):
         return clone(est).set_params(**kw).fit(X, y)
 
-    X = iris.data[::10]
-    X2 = iris.data[1::10]
+    scaled_data = scale(iris.data)
+    X = scaled_data[::10]
+    X2 = scaled_data[1::10]
     y_multi = iris.target[::10]
     y_bin = y_multi == 0
     est_auto_bin = fit(X, y_bin, multi_class='auto', solver=solver)
@@ -1722,10 +1746,6 @@ def test_logistic_regression_multi_class_auto(est, solver):
     else:
         est_multi_multi = fit(X, y_multi, multi_class='multinomial',
                               solver=solver)
-        if sys.platform == 'darwin' and solver == 'lbfgs':
-            pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
-                         'multi_class="multinomial") is nondeterministic on '
-                         'MacOS.')
         assert_allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert_allclose(est_auto_multi.predict_proba(X2),
                         est_multi_multi.predict_proba(X2))
@@ -1760,12 +1780,12 @@ def test_penalty_none(solver):
     assert_array_equal(pred_none, pred_l2_C_inf)
 
     lr = LogisticRegressionCV(penalty='none')
-    assert_raise_message(
-        ValueError,
+    err_msg = (
         "penalty='none' is not useful and not supported by "
-        "LogisticRegressionCV",
-        lr.fit, X, y
+        "LogisticRegressionCV"
     )
+    with pytest.raises(ValueError, match=err_msg):
+        lr.fit(X, y)
 
 
 @pytest.mark.parametrize(
