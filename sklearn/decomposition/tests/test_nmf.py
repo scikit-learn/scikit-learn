@@ -201,7 +201,7 @@ def test_nmf_inverse_transform(Estimator, solver, regularization):
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
     m = Estimator(solver=solver, n_components=4, init='random', random_state=0,
-                  regularization=regularization, max_iter=1000, tol=1e-6)
+                  regularization=regularization, max_iter=5000, tol=1e-6)
     ft = m.fit_transform(A)
     A_new = m.inverse_transform(ft)
     assert_array_almost_equal(A, A_new, decimal=2)
@@ -242,8 +242,8 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     H1 = est1.components_
     H2 = est2.components_
 
-    assert_array_almost_equal(W1, W2)
-    assert_array_almost_equal(H1, H2)
+    assert_array_almost_equal(W1, W2, decimal=4)
+    assert_array_almost_equal(H1, H2, decimal=4)
 
 
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
@@ -275,15 +275,17 @@ def test_non_negative_factorization_consistency(Estimator, init, beta_loss,
                                                 solver, regularization):
     # Test that the function is called in the same way, either directly
     # or through the NMF class
+    max_iter = 500
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
     W_nmf, H, _, _ = non_negative_factorization(
-        A, init=init, solver=solver, beta_loss=beta_loss,
+        A, init=init, solver=solver, beta_loss=beta_loss, max_iter=max_iter,
         regularization=regularization, random_state=1, tol=1e-2)
     W_nmf_2, _, _, _ = non_negative_factorization(
         A, H=H, update_H=False, init=init, solver=solver, beta_loss=beta_loss,
+        max_iter=max_iter,
         regularization=regularization, random_state=1, tol=1e-2)
 
     model_class = Estimator(init=init, solver=solver, beta_loss=beta_loss,
@@ -571,6 +573,9 @@ def test_nmf_decreasing(batch_size):
             if solver != 'mu' and beta_loss != 2:
                 # not implemented
                 continue
+            if solver == 'cd' and batch_size is not None:
+                # not allowed
+                continue
             W, H = W0.copy(), H0.copy()
             previous_loss = None
             for _ in range(30):
@@ -678,10 +683,10 @@ def test_nmf_is_minibatch_nmf():
               max_iter=max_iter, beta_loss=beta_loss)
     mbnmf = MiniBatchNMF(5, solver='mu', init=init, random_state=0,
                          max_iter=max_iter, beta_loss=beta_loss,
-                         batch_size=48, forget_factor=None)
+                         batch_size=X.shape[0], forget_factor=None)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_equal(W, mbW)
+    assert_array_almost_equal(W, mbW, decimal=14)
 
 
 @pytest.mark.parametrize('batch_size', [24, 32, 48])
@@ -690,7 +695,7 @@ def test_nmf_close_minibatch_nmf(batch_size):
     # gives close results
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
-    max_iter = 100000
+    max_iter = 1000
     solver = 'mu'
     beta_loss = 'kullback-leibler'
     init = 'nndsvda'  # FIXME : should be removed in 1.1
