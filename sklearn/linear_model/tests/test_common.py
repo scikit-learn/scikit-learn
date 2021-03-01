@@ -9,6 +9,7 @@ from scipy import sparse
 
 from sklearn.datasets import make_regression
 
+from sklearn.base import is_classifier
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import RidgeCV
@@ -28,7 +29,7 @@ from sklearn.utils._testing import _convert_container
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "estimator",
-    [LinearRegression, Ridge] #, RidgeCV, RidgeClassifier, RidgeClassifierCV]
+    [LinearRegression, Ridge]  #, RidgeCV, RidgeClassifier, RidgeClassifierCV]
 )
 @pytest.mark.parametrize(
     "is_sparse, with_mean",
@@ -99,13 +100,15 @@ def test_linear_model_normalize_deprecation_message(
      normalize, n_warnings, warning
 ):
     # check that we issue a FutureWarning when normalize was set in
-    # LinearRegression
+    # linear model
     rng = check_random_state(0)
     n_samples = 200
     n_features = 2
     X = rng.randn(n_samples, n_features)
     X[X < 0.1] = 0.0
     y = rng.rand(n_samples)
+    if is_classifier(estimator):
+        y = np.sign(y)
 
     model = estimator(normalize=normalize)
     with pytest.warns(warning) as record:

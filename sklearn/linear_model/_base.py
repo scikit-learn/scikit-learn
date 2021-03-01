@@ -120,7 +120,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
         "model.fit(X, y, **kwargs)"
     )
 
-    if 'Ridge' in estimator_name:
+    if estimator_name == 'Ridge' or estimator_name == 'RidgeClassifier':
         str_on_alpha = 'Set parameter alpha to: original_alpha * n_samples. '
     elif 'Lasso' in estimator_name:
         str_on_alpha = (
@@ -357,7 +357,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         """Set the intercept_
         """
         if self.fit_intercept:
-            print(X_scale)
             self.coef_ = self.coef_ / X_scale
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:

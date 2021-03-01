@@ -73,37 +73,6 @@ def _mean_squared_error_callable(y_test, y_pred):
     return ((y_test - y_pred) ** 2).mean()
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.parametrize('RidgeModel', [Ridge,
-                                        RidgeClassifier,
-                                        RidgeCV,
-                                        RidgeClassifierCV])
-@pytest.mark.parametrize(
-    'normalize, n_warnings, warning',
-    [(True, 1, FutureWarning),
-     (False, 1, FutureWarning),
-     ("deprecated", 0, None)]
-)
-def test_assure_warning_when_normalize(RidgeModel,
-                                       normalize, n_warnings, warning):
-    # check that we issue a FutureWarning when normalize was set
-    rng = check_random_state(0)
-    n_samples = 200
-    n_features = 2
-    X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.
-    y = rng.rand(n_samples)
-
-    if 'Classifier' in RidgeModel.__name__:
-        y[y < 0.5] = 0
-        y[y > 0] = 1
-
-    model = RidgeModel(normalize=normalize)
-    with pytest.warns(warning) as record:
-        model.fit(X, y)
-    assert len(record) == n_warnings
-
-
 @pytest.mark.parametrize('solver',
                          ("svd", "sparse_cg", "cholesky", "lsqr", "sag"))
 def test_ridge(solver):
