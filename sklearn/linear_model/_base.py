@@ -101,12 +101,15 @@ def _deprecate_normalize(normalize, default, estimator_name):
     else:
         _normalize = normalize
 
-    common_if_notfalse = (
+    str_on_pipeline = (
         "If you still wish to normalize use Pipeline with a StandardScaler "
         "in a preprocessing stage. To reproduce the previous behavior:\n\n"
         "from sklearn.pipeline import make_pipeline\n"
         "model = make_pipeline(StandardScaler(with_mean=False), "
-        f"{estimator_name}()). \n"
+        f"{estimator_name}()).\n"
+    )
+
+    str_on_params = (
         "If you wish to use additional parameters in "
         "the fit() you can include them as follows:\n\n"
         "kwargs = {\n"
@@ -117,6 +120,19 @@ def _deprecate_normalize(normalize, default, estimator_name):
         "model.fit(X, y, **kwargs)"
     )
 
+    if 'Ridge' in estimator_name:
+        str_on_alpha = 'Set parameter alpha to: original_alpha * n_samples. '
+    elif 'Lasso' in estimator_name:
+        str_on_alpha = (
+            'Set parameter alpha to: original_alpha * np.sqrt(n_samples). '
+        )
+    elif 'ElasticNet' in estimator_name:
+        str_on_alpha = (
+            'Set parameter alpha to original_alpha * np.sqrt(n_samples) if'
+            'l1_ratio is 1 and original_alpha * n_samples if l1_ratio is 0. '
+    else:
+        str_on_alpha = ""
+
     if default and normalize == 'deprecated':
         warnings.warn(
             "The default of 'normalize' will be set to False in version 1.2 "
@@ -126,7 +142,8 @@ def _deprecate_normalize(normalize, default, estimator_name):
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
             "'normalize' was deprecated in version 1.0 and will be "
-            "removed in 1.2.\n" + common_if_notfalse, FutureWarning
+            "removed in 1.2.\n" +\
+            str_on_pipeline + str_on_alpha + str_on_params, FutureWarning
         )
     elif not normalize and not default:
         warnings.warn(
