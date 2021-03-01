@@ -216,8 +216,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        X, y = check_X_y(
-            X, y, copy=False, accept_sparse=['csr'], y_numeric=True)
+
+        X, y = self._validate_data(X, y, accept_sparse=['csr'],
+                                   y_numeric=True, multi_output=False)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
