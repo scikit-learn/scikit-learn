@@ -162,7 +162,10 @@ plt.show()
 #
 # Periodic splines can also be useful for naturally periodic features (such as
 # day of the year), as the smoothness at the boundary knots prevents a jump in
-# the transformed values (e.g. from Dec 31st to Jan 1st).
+# the transformed values (e.g. from Dec 31st to Jan 1st). For such naturally
+# periodic features or more generally features where the period is known, it is
+# advised to explicitly pass this information to the `SplineTransformer` by
+# setting the knots manually.
 
 
 # %%
