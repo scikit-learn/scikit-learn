@@ -303,7 +303,7 @@ def test_spline_transformer_periodic_splines_periodicity():
 @pytest.mark.parametrize("degree", [3, 5])
 def test_spline_transformer_periodic_splines_smoothness(degree):
     """Test that spline transformation is smooth at first / last knot."""
-    X = np.linspace(-2, 10, 1000)[:, None]
+    X = np.linspace(-2, 10, 10_000)[:, None]
 
     transformer = SplineTransformer(
         degree=degree,
@@ -313,7 +313,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     Xt = transformer.fit_transform(X)
 
     delta = (X.max() - X.min()) / len(X)
-    tol = 10
+    tol = 1e-2
 
     dXt = Xt
     # We expect splines of degree `degree` to be (`degree`-1) times
@@ -322,18 +322,21 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     # numerical derivative is reasonably small (smaller than `tol` in absolute
     # value). We thus compute d-th numeric derivatives for d = 1, ..., `degree`
     # and compare them to `tol`.
-    # Note that the 0-th derivative is the function itself, such that
-    # we are also checking its continuity.
+    #
+    # Note that the 0-th derivative is the function itself, such that we are
+    # also checking its continuity.
     for d in range(1, degree + 1):
-        dXt = np.diff(dXt, axis=0) / delta  # Compute d-th numeric derivative
         # Check continuity of the (d-1)-th derivative
-        assert (np.abs(dXt) < tol).all()
+        diff = np.diff(dXt, axis=0)
+        assert np.abs(diff).max() < tol
+        # Compute d-th numeric derivative
+        dXt = diff / delta
 
     # As degree `degree` splines are not `degree` times continously
     # differentiable at the knots, the `degree + 1`-th numeric derivative
     # should have spikes at the knots.
-    dXt = np.diff(dXt, axis=0) / delta
-    assert (np.abs(dXt).max() > tol).any()
+    diff = np.diff(dXt, axis=0)
+    assert np.abs(diff).max() > 100 * tol
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
