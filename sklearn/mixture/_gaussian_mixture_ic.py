@@ -4,24 +4,6 @@
 # Modified by Benjamin Pedigo <bpedigo@jhu,edu>, Tingshan Liu <tliu68@jhmi.edu>
 
 
-# import numpy as np
-# from joblib import Parallel
-# from ..utils.fixes import delayed
-# import warnings
-
-# from . import GaussianMixture
-# from ._gaussian_mixture import (
-#     _compute_precision_cholesky,
-#     _estimate_gaussian_parameters,
-# )
-# from ..cluster import AgglomerativeClustering
-# from ..model_selection import ParameterGrid
-# from ..utils import check_scalar, check_array
-# from ..utils.validation import check_is_fitted
-# from ..preprocessing import OneHotEncoder
-# from ..exceptions import ConvergenceWarning
-# from ..base import BaseEstimator, ClusterMixin
-
 import numpy as np
 from joblib import Parallel, delayed
 import warnings
