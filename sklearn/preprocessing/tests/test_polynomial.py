@@ -5,7 +5,7 @@ from scipy.interpolate import BSpline
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import KBinsDiscretizer, SplineTransformer
-from sklearn.utils.fixes import sp_version
+from sklearn.utils.fixes import linspace, sp_version
 
 from pkg_resources import parse_version
 
@@ -207,8 +207,8 @@ def test_spline_transformer_periodicity_of_extrapolation(
     knots, n_knots, degree
 ):
     """Test that the SplineTransformer is periodic for multiple features."""
-    X_1 = np.linspace((-1, 0), (1, 5), 10)
-    X_2 = np.linspace((1, 5), (3, 10), 10)
+    X_1 = linspace((-1, 0), (1, 5), 10)
+    X_2 = linspace((1, 5), (3, 10), 10)
 
     splt = SplineTransformer(
         knots=knots,
