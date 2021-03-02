@@ -74,7 +74,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         - a single string (see :ref:`scoring_parameter`);
         - a callable (see :ref:`scoring`) that returns a single value.
 
-        If `scoring` reprents multiple scores, one can use:
+        If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
@@ -1473,7 +1473,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     if n_ticks > train_sizes_abs.shape[0]:
         warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
                       "of ticks will be less than the size of "
-                      "'train_sizes' %d instead of %d)."
+                      "'train_sizes': %d instead of %d."
                       % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
 
     return train_sizes_abs

@@ -1,40 +1,81 @@
 """
 ==================
-Pipeline Anova SVM
+Pipeline ANOVA SVM
 ==================
 
-Simple usage of Pipeline that runs successively a univariate
-feature selection with anova and then a SVM of the selected features.
+This example shows how a feature selection can be easily integrated within
+a machine learning pipeline.
 
-Using a sub-pipeline, the fitted coefficients can be mapped back into
-the original feature space.
+We also show that you can easily introspect part of the pipeline.
 """
-from sklearn import svm
-from sklearn.datasets import make_classification
-from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
 
 print(__doc__)
+from sklearn import set_config
+set_config(display='diagram')
 
-# import some data to play with
+# %%
+# We will start by generating a binary classification dataset. Subsequently, we
+# will divide the dataset into two subsets.
+
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+
 X, y = make_classification(
-    n_features=20, n_informative=3, n_redundant=0, n_classes=4,
-    n_clusters_per_class=2)
-
+    n_features=20, n_informative=3, n_redundant=0, n_classes=2,
+    n_clusters_per_class=2, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-# ANOVA SVM-C
-# 1) anova filter, take 3 best ranked features
-anova_filter = SelectKBest(f_classif, k=3)
-# 2) svm
-clf = svm.LinearSVC()
+# %%
+# A common mistake done with feature selection is to search a subset of
+# discriminative features on the full dataset instead of only using the
+# training set. The usage of scikit-learn :func:`~sklearn.pipeline.Pipeline`
+# prevents to make such mistake.
+#
+# Here, we will demonstrate how to build a pipeline where the first step will
+# be the feature selection.
+#
+# When calling `fit` on the training data, a subset of feature will be selected
+# and the index of these selected features will be stored. The feature selector
+# will subsequently reduce the number of feature and pass this subset to the
+# classifier which will be trained.
 
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import LinearSVC
+
+anova_filter = SelectKBest(f_classif, k=3)
+clf = LinearSVC()
 anova_svm = make_pipeline(anova_filter, clf)
 anova_svm.fit(X_train, y_train)
+
+# %%
+# Once the training accomplished, we can predict on new unseen samples. In this
+# case, the feature selector will only select the most discriminative features
+# based on the information stored during training. Then, the data will be
+# passed to the classifier which will make the prediction.
+#
+# Here, we report the final metrics via a classification report.
+
+from sklearn.metrics import classification_report
+
 y_pred = anova_svm.predict(X_test)
 print(classification_report(y_test, y_pred))
 
-coef = anova_svm[:-1].inverse_transform(anova_svm['linearsvc'].coef_)
-print(coef)
+# %%
+# Be aware that you can inspect a step in the pipeline. For instance, we might
+# be interested about the parameters of the classifier. Since we selected
+# three features, we expect to have three coefficients.
+
+anova_svm[-1].coef_
+
+# %%
+# However, we do not know which features where selected from the original
+# dataset. We could proceed by several manner. Here, we will inverse the
+# transformation of these coefficients to get information about the original
+# space.
+
+anova_svm[:-1].inverse_transform(anova_svm[-1].coef_)
+
+# %%
+# We can see that the first three features where the selected features by
+# the first step.

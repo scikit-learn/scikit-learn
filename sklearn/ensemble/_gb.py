@@ -273,25 +273,25 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 if is_classifier(self):
-                    max_features = max(1, int(np.sqrt(self.n_features_)))
+                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
                 else:
-                    max_features = self.n_features_
+                    max_features = self.n_features_in_
             elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self.n_features_)))
+                max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
-                max_features = max(1, int(np.log2(self.n_features_)))
+                max_features = max(1, int(np.log2(self.n_features_in_)))
             else:
                 raise ValueError("Invalid value for max_features: %r. "
                                  "Allowed string values are 'auto', 'sqrt' "
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
-            max_features = self.n_features_
+            max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
                 max_features = max(int(self.max_features *
-                                       self.n_features_), 1)
+                                       self.n_features_in_), 1)
             else:
                 raise ValueError("max_features must be in (0, n_features]")
 
@@ -411,7 +411,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    dtype=DTYPE, multi_output=True)
-        n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
 
@@ -608,9 +607,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check input and compute raw predictions of the init estimator."""
         self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
-        if X.shape[1] != self.n_features_:
-            raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
-                self.n_features_, X.shape[1]))
         if self.init_ == 'zero':
             raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                        dtype=np.float64)
@@ -647,7 +643,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, order="C", accept_sparse='csr',
+                                reset=False)
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate,
@@ -681,7 +678,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                           if tree.tree_.node_count > 1]
         if not relevant_trees:
             # degenerate case where all trees have only one node
-            return np.zeros(shape=self.n_features_, dtype=np.float64)
+            return np.zeros(shape=self.n_features_in_, dtype=np.float64)
 
         relevant_feature_importances = [
             tree.tree_.compute_feature_importances(normalize=False)
@@ -763,6 +760,16 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 leaves[:, i, j] = estimator.apply(X, check_input=False)
 
         return leaves
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use 'n_features_in_' instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
@@ -1005,7 +1012,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Set via the ``init`` argument or ``loss.init_estimator``.
 
     estimators_ : ndarray of DecisionTreeRegressor of \
-shape (n_estimators, ``loss_.K``)
+            shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
@@ -1014,6 +1021,10 @@ shape (n_estimators, ``loss_.K``)
 
     n_features_ : int
         The number of data features.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_classes_ : int
         The number of classes.
@@ -1140,7 +1151,8 @@ shape (n_estimators, ``loss_.K``)
             :term:`classes_`. Regression and binary classification produce an
             array of shape (n_samples,).
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, order="C", accept_sparse='csr',
+                                reset=False)
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
             return raw_predictions.ravel()
@@ -1548,6 +1560,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     n_features_ : int
         The number of data features.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     max_features_ : int
         The inferred value of max_features.
 
@@ -1647,7 +1663,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         y : ndarray of shape (n_samples,)
             The predicted values.
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, order="C", accept_sparse='csr',
+                                reset=False)
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
 

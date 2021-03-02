@@ -59,7 +59,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
-from ..utils import Bunch
+from ..utils import Bunch, deprecated
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
@@ -353,9 +353,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # ensemble sorts the indices.
             X.sort_indices()
 
-        # Remap output
-        self.n_features_ = X.shape[1]
-
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
             warn("A column-vector y was passed when a 1d array was"
@@ -504,7 +501,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         )
         if not all_importances:
             return np.zeros(
-                shape=(self.n_features_, 1), dtype=np.float64
+                shape=(self.n_features_in_, 1), dtype=np.float64
             )
         return np.transpose(all_importances)
 
@@ -587,7 +584,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 (n_samples, 1, n_outputs)
             The OOB predictions.
         """
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse='csr',
+                                reset=False)
 
         n_samples = X.shape[0]
         n_outputs = self.n_outputs_
@@ -680,6 +678,16 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # avoid division by zero
             return importances
         return importances / importances.sum()
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use 'n_features_in_' instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -1236,6 +1244,7 @@ class RandomForestClassifier(ForestClassifier):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1338,6 +1347,10 @@ class RandomForestClassifier(ForestClassifier):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1596,6 +1609,7 @@ class RandomForestRegressor(ForestRegressor):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1693,6 +1707,10 @@ class RandomForestRegressor(ForestRegressor):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1915,6 +1933,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2050,6 +2069,10 @@ class ExtraTreesClassifier(ForestClassifier):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -2271,6 +2294,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2372,6 +2396,10 @@ class ExtraTreesRegressor(ForestRegressor):
 
     n_features_ : int
         The number of features.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
         The number of outputs.
@@ -2611,6 +2639,10 @@ class RandomTreesEmbedding(BaseForest):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -2740,7 +2772,7 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        X = check_array(X, accept_sparse=['csc'])
+        X = self._validate_data(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
