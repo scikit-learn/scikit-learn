@@ -23,7 +23,6 @@ from ._data import minmax_scale
 from ._data import quantile_transform
 from ._data import power_transform
 from ._data import PowerTransformer
-from ._data import PolynomialFeatures
 
 from ._encoders import OneHotEncoder
 from ._encoders import OrdinalEncoder
