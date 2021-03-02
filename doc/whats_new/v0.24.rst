@@ -198,9 +198,6 @@ Changelog
   of a warning, following the deprecation cycle.
   :pr:`18256` by :user:`Madhura Jayratne <madhuracj>`.
 
-- |Fix| :class:`compose.TransformedTargetRegressor` now takes nD targets with
-  an adequate transformer. :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`
-
 :mod:`sklearn.covariance`
 .........................
 

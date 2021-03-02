@@ -60,6 +60,12 @@ Changelog
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.TransformedTargetRegressor` now takes nD targets with
+  an adequate transformer. :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`
+
 :mod:`sklearn.datasets`
 .......................
 
