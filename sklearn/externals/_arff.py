@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # =============================================================================
 # Federal University of Rio Grande do Sul (UFRGS)
 # Connectionist Artificial Intelligence Laboratory (LIAC)
@@ -98,7 +97,7 @@ and have the following keys:
 The above keys must follow the case which were described, i.e., the keys are
 case sensitive. The attribute type ``attribute_type`` must be one of these
 strings (they are not case sensitive): ``NUMERIC``, ``INTEGER``, ``REAL`` or
-``STRING``. For nominal attributes, the ``attribute_type`` must be a list of
+``STRING``. For nominal attributes, the ``atribute_type`` must be a list of
 strings.
 
 In this format, the XOR dataset presented above can be represented as a python
@@ -138,7 +137,7 @@ This module provides several features, including:
 - Supports read and write the descriptions of files;
 - Supports missing values and names with spaces;
 - Supports unicode values and names;
-- Fully compatible with Python 2.7+, Python 3.3+, pypy and pypy3;
+- Fully compatible with Python 2.7+, Python 3.5+, pypy and pypy3;
 - Under `MIT License <http://opensource.org/licenses/MIT>`_
 
 '''
@@ -148,12 +147,11 @@ __author_email__ = ('renato.ppontes@gmail.com, '
                     'joel.nothman@gmail.com')
 __version__ = '2.4.0'
 
-from typing import TYPE_CHECKING
-from typing import Optional, List, Dict, Any, Iterator, Union, Tuple
-
 import re
 import sys
 import csv
+import typing
+from typing import Optional, List, Dict, Any, Iterator, Union, Tuple
 
 # CONSTANTS ===================================================================
 _SIMPLE_TYPES = ['NUMERIC', 'REAL', 'INTEGER', 'STRING']
@@ -166,7 +164,6 @@ _TK_DATA        = '@DATA'
 
 _RE_RELATION     = re.compile(r'^([^\{\}%,\s]*|\".*\"|\'.*\')$', re.UNICODE)
 _RE_ATTRIBUTE    = re.compile(r'^(\".*\"|\'.*\'|[^\{\}%,\s]*)\s+(.+)$', re.UNICODE)
-_RE_TYPE_NOMINAL = re.compile(r'^\{\s*((\".*\"|\'.*\'|\S*)\s*,\s*)*(\".*\"|\'.*\'|\S*)\s*\}$', re.UNICODE)
 _RE_QUOTE_CHARS = re.compile(r'["\'\\\s%,\000-\031]', re.UNICODE)
 _RE_ESCAPE_CHARS = re.compile(r'(?=["\'\\%])|[\n\r\t\000-\031]')
 _RE_SPARSE_LINE = re.compile(r'^\s*\{.*\}\s*$', re.UNICODE)
@@ -176,7 +173,7 @@ ArffDenseDataType = Iterator[List]
 ArffSparseDataType = Tuple[List, ...]
 
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     # typing_extensions is available when mypy is installed
     from typing_extensions import TypedDict
 
@@ -218,10 +215,10 @@ def _build_re_values():
     dense = re.compile(r'''(?x)
         ,                # may follow ','
         \s*
-        ((?=,)|$|%(value_re)s)  # empty or value
+        ((?=,)|$|{value_re})  # empty or value
         |
         (\S.*)           # error
-        ''' % {'value_re': value_re})
+        '''.format(value_re=value_re))
 
     # This captures (key, value) groups and will have an empty key/value
     # in case of syntax errors.
@@ -238,6 +235,7 @@ def _build_re_values():
         \S.*           # error
         ''' % {'value_re': value_re})
     return dense, sparse
+
 
 
 _RE_DENSE_VALUES, _RE_SPARSE_KEY_VALUES = _build_re_values()
@@ -265,10 +263,10 @@ def _escape_sub_callback(match):
     if len(s) == 2:
         try:
             return _ESCAPE_SUB_MAP[s]
-        except KeyError as e:
-            raise ValueError('Unsupported escape sequence: %s' % s) from e
+        except KeyError:
+            raise ValueError('Unsupported escape sequence: %s' % s)
     if s[1] == 'u':
-        return unichr(int(s[2:], 16))
+        return chr(int(s[2:], 16))
     else:
         return chr(int(s[1:], 8))
 
@@ -303,8 +301,8 @@ def _parse_values(s):
             # an ARFF syntax error in sparse data
             for match in _RE_SPARSE_KEY_VALUES.finditer(s):
                 if not match.group(1):
-                    raise BadLayout('Error parsing %r' % match.group()) from exc
-            raise BadLayout('Unknown parsing error') from exc
+                    raise BadLayout('Error parsing %r' % match.group())
+            raise BadLayout('Unknown parsing error')
     else:
         # an ARFF syntax error
         for match in _RE_DENSE_VALUES.finditer(s):
@@ -321,24 +319,10 @@ DENSE_GEN = 3 # Generator of dictionaries
 LOD_GEN = 4   # Generator of dictionaries
 _SUPPORTED_DATA_STRUCTURES = [DENSE, COO, LOD, DENSE_GEN, LOD_GEN]
 
-# =============================================================================
-
-# COMPATIBILITY WITH PYTHON 3 =================================================
-PY3 = sys.version_info[0] == 3
-if PY3:
-    unicode = str
-    basestring = str
-    xrange = range
-    unichr = chr
-# COMPABILITY WITH PYTHON 2 ===================================================
-# =============================================================================
-PY2 = sys.version_info[0] == 2
-if PY2:
-    from itertools import izip as zip
 
 # EXCEPTIONS ==================================================================
 class ArffException(Exception):
-    message : Optional[str] = None
+    message: Optional[str] = None
 
     def __init__(self):
         self.line = -1
@@ -357,7 +341,7 @@ class BadAttributeFormat(ArffException):
 class BadDataFormat(ArffException):
     '''Error raised when some data instance is in an invalid format.'''
     def __init__(self, value):
-        super(BadDataFormat, self).__init__()
+        super().__init__()
         self.message = (
             'Bad @DATA instance format in line %d: ' +
             ('%s' % value)
@@ -373,7 +357,7 @@ class BadAttributeName(ArffException):
     declaration.'''
 
     def __init__(self, value, value2):
-        super(BadAttributeName, self).__init__()
+        super().__init__()
         self.message = (
             ('Bad @ATTRIBUTE name %s at line' % value) +
             ' %d, this name is already in use in line' +
@@ -385,7 +369,7 @@ class BadNominalValue(ArffException):
     declared into it respective attribute declaration.'''
 
     def __init__(self, value):
-        super(BadNominalValue, self).__init__()
+        super().__init__()
         self.message = (
             ('Data value %s not found in nominal declaration, ' % value)
             + 'at line %d.'
@@ -394,7 +378,7 @@ class BadNominalValue(ArffException):
 class BadNominalFormatting(ArffException):
     '''Error raised when a nominal value with space is not properly quoted.'''
     def __init__(self, value):
-        super(BadNominalFormatting, self).__init__()
+        super().__init__()
         self.message = (
             ('Nominal data value "%s" not properly quoted in line ' % value) +
             '%d.'
@@ -414,7 +398,7 @@ class BadLayout(ArffException):
     message = 'Invalid layout of the ARFF file, at line %d.'
 
     def __init__(self, msg=''):
-        super(BadLayout, self).__init__()
+        super().__init__()
         if msg:
             self.message = BadLayout.message + ' ' + msg.replace('%', '%%')
 
@@ -437,11 +421,11 @@ def _unescape_sub_callback(match):
 
 def encode_string(s):
     if _RE_QUOTE_CHARS.search(s):
-        return u"'%s'" % _RE_ESCAPE_CHARS.sub(_unescape_sub_callback, s)
+        return "'%s'" % _RE_ESCAPE_CHARS.sub(_unescape_sub_callback, s)
     return s
 
 
-class EncodedNominalConversor(object):
+class EncodedNominalConversor:
     def __init__(self, values):
         self.values = {v: i for i, v in enumerate(values)}
         self.values[0] = 0
@@ -449,11 +433,11 @@ class EncodedNominalConversor(object):
     def __call__(self, value):
         try:
             return self.values[value]
-        except KeyError as e:
-            raise BadNominalValue(value) from e
+        except KeyError:
+            raise BadNominalValue(value)
 
 
-class NominalConversor(object):
+class NominalConversor:
     def __init__(self, values):
         self.values = set(values)
         self.zero_value = values[0]
@@ -467,10 +451,10 @@ class NominalConversor(object):
                 # with EncodedNominalConversor.
                 return self.zero_value
             raise BadNominalValue(value)
-        return unicode(value)
+        return str(value)
 
 
-class DenseGeneratorData(object):
+class DenseGeneratorData:
     '''Internal helper class to allow for different matrix types without
     making the code a huge collection of if statements.'''
 
@@ -483,7 +467,7 @@ class DenseGeneratorData(object):
                     raise BadDataFormat(row)
                 # XXX: int 0 is used for implicit values, not '0'
                 values = [values[i] if i in values else 0 for i in
-                          xrange(len(conversors))]
+                          range(len(conversors))]
             else:
                 if len(values) != len(conversors):
                     raise BadDataFormat(row)
@@ -498,7 +482,7 @@ class DenseGeneratorData(object):
                       in zip(conversors, values)]
         except ValueError as exc:
             if 'float: ' in str(exc):
-                raise BadNumericalValue from exc
+                raise BadNumericalValue()
         return values
 
     def encode_data(self, data, attributes):
@@ -522,27 +506,27 @@ class DenseGeneratorData(object):
 
             new_data = []
             for value in inst:
-                if value is None or value == u'' or value != value:
+                if value is None or value == '' or value != value:
                     s = '?'
                 else:
-                    s = encode_string(unicode(value))
+                    s = encode_string(str(value))
                 new_data.append(s)
 
             current_row += 1
-            yield u','.join(new_data)
+            yield ','.join(new_data)
 
 
-class _DataListMixin(object):
+class _DataListMixin:
     """Mixin to return a list from decode_rows instead of a generator"""
     def decode_rows(self, stream, conversors):
-        return list(super(_DataListMixin, self).decode_rows(stream, conversors))
+        return list(super().decode_rows(stream, conversors))
 
 
 class Data(_DataListMixin, DenseGeneratorData):
     pass
 
 
-class COOData(object):
+class COOData:
     def decode_rows(self, stream, conversors):
         data, rows, cols = [], [], []
         for i, row in enumerate(stream):
@@ -557,11 +541,11 @@ class COOData(object):
                           for key, value in zip(row_cols, values)]
             except ValueError as exc:
                 if 'float: ' in str(exc):
-                    raise BadNumericalValue from exc
+                    raise BadNumericalValue()
                 raise
-            except IndexError as e:
+            except IndexError:
                 # conversor out of range
-                raise BadDataFormat(row) from e
+                raise BadDataFormat(row)
 
             data.extend(values)
             rows.extend([i] * len(values))
@@ -579,7 +563,7 @@ class COOData(object):
         data = data.data
 
         # Check if the rows are sorted
-        if not all(row[i] <= row[i + 1] for i in xrange(len(row) - 1)):
+        if not all(row[i] <= row[i + 1] for i in range(len(row) - 1)):
             raise ValueError("liac-arff can only output COO matrices with "
                              "sorted rows.")
 
@@ -587,7 +571,7 @@ class COOData(object):
             if row > current_row:
                 # Add empty rows if necessary
                 while current_row < row:
-                    yield " ".join([u"{", u','.join(new_data), u"}"])
+                    yield " ".join(["{", ','.join(new_data), "}"])
                     new_data = []
                     current_row += 1
 
@@ -597,15 +581,15 @@ class COOData(object):
                     (current_row, col + 1, num_attributes)
                 )
 
-            if v is None or v == u'' or v != v:
+            if v is None or v == '' or v != v:
                 s = '?'
             else:
-                s = encode_string(unicode(v))
+                s = encode_string(str(v))
             new_data.append("%d %s" % (col, s))
 
-        yield " ".join([u"{", u','.join(new_data), u"}"])
+        yield " ".join(["{", ','.join(new_data), "}"])
 
-class LODGeneratorData(object):
+class LODGeneratorData:
     def decode_rows(self, stream, conversors):
         for row in stream:
             values = _parse_values(row)
@@ -617,11 +601,11 @@ class LODGeneratorData(object):
                        for key, value in values.items()}
             except ValueError as exc:
                 if 'float: ' in str(exc):
-                    raise BadNumericalValue from exc
+                    raise BadNumericalValue()
                 raise
-            except IndexError as e:
+            except IndexError:
                 # conversor out of range
-                raise BadDataFormat(row) from e
+                raise BadDataFormat(row)
 
     def encode_data(self, data, attributes):
         current_row = 0
@@ -638,14 +622,14 @@ class LODGeneratorData(object):
 
             for col in sorted(row):
                 v = row[col]
-                if v is None or v == u'' or v != v:
+                if v is None or v == '' or v != v:
                     s = '?'
                 else:
-                    s = encode_string(unicode(v))
+                    s = encode_string(str(v))
                 new_data.append("%d %s" % (col, s))
 
             current_row += 1
-            yield " ".join([u"{", u','.join(new_data), u"}"])
+            yield " ".join(["{", ','.join(new_data), "}"])
 
 class LODData(_DataListMixin, LODGeneratorData):
     pass
@@ -680,7 +664,7 @@ def _get_data_object_for_encoding(matrix):
 # =============================================================================
 
 # ADVANCED INTERFACE ==========================================================
-class ArffDecoder(object):
+class ArffDecoder:
     '''An ARFF decoder.'''
 
     def __init__(self):
@@ -724,7 +708,7 @@ class ArffDecoder(object):
         if not _RE_RELATION.match(v):
             raise BadRelationFormat()
 
-        res = unicode(v.strip('"\''))
+        res = str(v.strip('"\''))
         return res
 
     def _decode_attribute(self, s):
@@ -766,20 +750,20 @@ class ArffDecoder(object):
         name, type_ = m.groups()
 
         # Extracts the final name
-        name = unicode(name.strip('"\''))
+        name = str(name.strip('"\''))
 
         # Extracts the final type
-        if _RE_TYPE_NOMINAL.match(type_):
+        if type_[:1] == "{" and type_[-1:] == "}":
             try:
                 type_ = _parse_values(type_.strip('{} '))
-            except Exception as e:
-                raise BadAttributeType from e
+            except Exception:
+                raise BadAttributeType()
             if isinstance(type_, dict):
                 raise BadAttributeType()
 
         else:
             # If not nominal, verify the type name
-            type_ = unicode(type_).upper()
+            type_ = str(type_).upper()
             if type_ not in ['NUMERIC', 'REAL', 'INTEGER', 'STRING']:
                 raise BadAttributeType()
 
@@ -792,15 +776,15 @@ class ArffDecoder(object):
         self._current_line = 0
 
         # If string, convert to a list of lines
-        if isinstance(s, basestring):
+        if isinstance(s, str):
             s = s.strip('\r\n ').replace('\r\n', '\n').split('\n')
 
         # Create the return object
         obj: ArffContainerType = {
-            u'description': u'',
-            u'relation': u'',
-            u'attributes': [],
-            u'data': []
+            'description': '',
+            'relation': '',
+            'attributes': [],
+            'data': []
         }
         attribute_names = {}
 
@@ -852,7 +836,7 @@ class ArffDecoder(object):
                     else:
                         conversor = NominalConversor(attr[1])
                 else:
-                    CONVERSOR_MAP = {'STRING': unicode,
+                    CONVERSOR_MAP = {'STRING': str,
                                      'INTEGER': lambda x: int(float(x)),
                                      'NUMERIC': float,
                                      'REAL': float}
@@ -915,7 +899,7 @@ class ArffDecoder(object):
             raise e
 
 
-class ArffEncoder(object):
+class ArffEncoder:
     '''An ARFF encoder.'''
 
     def _encode_comment(self, s=''):
@@ -931,9 +915,9 @@ class ArffEncoder(object):
         :return: a string with the encoded comment line.
         '''
         if s:
-            return u'%s %s'%(_TK_COMMENT, s)
+            return '%s %s'%(_TK_COMMENT, s)
         else:
-            return u'%s' % _TK_COMMENT
+            return '%s' % _TK_COMMENT
 
     def _encode_relation(self, name):
         '''(INTERNAL) Decodes a relation line.
@@ -949,7 +933,7 @@ class ArffEncoder(object):
                 name = '"%s"'%name
                 break
 
-        return u'%s %s'%(_TK_RELATION, name)
+        return '%s %s'%(_TK_RELATION, name)
 
     def _encode_attribute(self, name, type_):
         '''(INTERNAL) Encodes an attribute line.
@@ -980,20 +964,20 @@ class ArffEncoder(object):
                 break
 
         if isinstance(type_, (tuple, list)):
-            type_tmp = [u'%s' % encode_string(type_k) for type_k in type_]
-            type_ = u'{%s}'%(u', '.join(type_tmp))
+            type_tmp = ['%s' % encode_string(type_k) for type_k in type_]
+            type_ = '{%s}'%(', '.join(type_tmp))
 
-        return u'%s %s %s'%(_TK_ATTRIBUTE, name, type_)
+        return '%s %s %s'%(_TK_ATTRIBUTE, name, type_)
 
     def encode(self, obj):
         '''Encodes a given object to an ARFF file.
 
         :param obj: the object containing the ARFF information.
-        :return: the ARFF file as an unicode string.
+        :return: the ARFF file as an string.
         '''
         data = [row for row in self.iter_encode(obj)]
 
-        return u'\n'.join(data)
+        return '\n'.join(data)
 
     def iter_encode(self, obj):
         '''The iterative version of `arff.ArffEncoder.encode`.
@@ -1002,7 +986,7 @@ class ArffEncoder(object):
         lines of the ARFF file.
 
         :param obj: the object containing the ARFF information.
-        :return: (yields) the ARFF file as unicode strings.
+        :return: (yields) the ARFF file as strings.
         '''
         # DESCRIPTION
         if obj.get('description', None):
@@ -1014,7 +998,7 @@ class ArffEncoder(object):
             raise BadObject('Relation name not found or with invalid value.')
 
         yield self._encode_relation(obj['relation'])
-        yield u''
+        yield ''
 
         # ATTRIBUTES
         if not obj.get('attributes'):
@@ -1025,10 +1009,10 @@ class ArffEncoder(object):
             # Verify for bad object format
             if not isinstance(attr, (tuple, list)) or \
                len(attr) != 2 or \
-               not isinstance(attr[0], basestring):
+               not isinstance(attr[0], str):
                 raise BadObject('Invalid attribute declaration "%s"'%str(attr))
 
-            if isinstance(attr[1], basestring):
+            if isinstance(attr[1], str):
                 # Verify for invalid types
                 if attr[1] not in _SIMPLE_TYPES:
                     raise BadObject('Invalid attribute type "%s"'%str(attr))
@@ -1045,17 +1029,16 @@ class ArffEncoder(object):
                 attribute_names.add(attr[0])
 
             yield self._encode_attribute(attr[0], attr[1])
-        yield u''
+        yield ''
         attributes = obj['attributes']
 
         # DATA
         yield _TK_DATA
         if 'data' in obj:
             data = _get_data_object_for_encoding(obj.get('data'))
-            for line in data.encode_data(obj.get('data'), attributes):
-                yield line
+            yield from data.encode_data(obj.get('data'), attributes)
 
-        yield u''
+        yield ''
 
 # =============================================================================
 
@@ -1108,7 +1091,7 @@ def dump(obj, fp):
 
     last_row = next(generator)
     for row in generator:
-        fp.write(last_row + u'\n')
+        fp.write(last_row + '\n')
         last_row = row
     fp.write(last_row)
 
