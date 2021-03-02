@@ -48,6 +48,16 @@ Changelog
   :class:`~sklearn.semi_supervised.LabelPropagation`.
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
+:mod:`sklearn.tree`
+.......................
+
+- |Fix| Fix a bug in `fit` of :class:`tree.BaseDecisionTree` that caused
+  segmentation faults under certain conditions. `fit` now deep copies the
+  `Criterion` object to prevent shared concurrent accesses.
+  :pr:`19580` by :user:`Samuel Brice <samdbrice>` and
+  :user:`Alex Adamson <aadamson>` and
+  :user:`Wil Yegelwel <wyegelwel>`.
+
 :mod:`sklearn.utils`
 ....................
 
