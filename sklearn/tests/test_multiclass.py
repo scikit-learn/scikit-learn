@@ -485,7 +485,7 @@ def test_ovr_coef_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
 
     with pytest.raises(NotFittedError):
-        coef_eval(ovr, None)
+        ovr.coef_
 
     # Doesn't have coef_ exception!
     ovr = OneVsRestClassifier(DecisionTreeClassifier())
