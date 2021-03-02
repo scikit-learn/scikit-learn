@@ -705,7 +705,8 @@ class IterativeImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
+        X, Xt, mask_missing_values, complete_mask = (
+            self._initial_imputation(X, in_fit=False))
 
         X_indicator = super()._transform_indicator(complete_mask)
 
