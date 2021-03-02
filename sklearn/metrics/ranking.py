@@ -787,7 +787,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 def cumulative_gain_curve(y_true, y_score, pos_label=None):
     """Compute Cumulative Gain for each ten percent of the sample
     Note: This implementation is restricted to the binary classification task.
-    
+
     Parameters
     ----------
 
@@ -811,10 +811,10 @@ def cumulative_gain_curve(y_true, y_score, pos_label=None):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn import metrics
+    >>> from sklearn.metrics import cumulative_gain_curve
     >>> y_true = [0, 1, 1, 0, 0, 0, 1, 1, 0, 0]
     >>> y_pred = [0.1, 0.8, 0.9, 0,3, 0.4, 0.6, 0.6, 0.6, 0.44]
-    >>> percentages, gains = metrics.cumulative_gain_curve(y_true, y_pred, pos_label=1)
+    >>> percentages, gains = cumulative_gain_curve(y_true, y_pred, pos_label=1)
     >>> percentages
     array([0. , 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ])
     >>> gains
@@ -1061,8 +1061,9 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
         true_at_reversed_rank = np.bincount(
             unique_inverse[y_true.indices[start:stop]],
             minlength=len(unique_scores))
-        all_at_reversed_rank = np.bincount(unique_inverse,
-                                        minlength=len(unique_scores))
+        all_at_reversed_rank = np.bincount(
+            unique_inverse,
+            minlength=len(unique_scores))
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 
         # if the scores are ordered, it's possible to count the number of

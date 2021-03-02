@@ -1005,13 +1005,13 @@ def roc_curve(
         tpr = tps / tps[-1]
 
     return fpr, tpr, thresholds
-    
+
 
 @_deprecate_positional_args
 def cumulative_gain_curve(y_true, y_score, pos_label=None):
     """Compute Cumulative Gain for each ten percent of the sample
     Note: This implementation is restricted to the binary classification task.
-    
+
     Parameters
     ----------
 
@@ -1035,10 +1035,10 @@ def cumulative_gain_curve(y_true, y_score, pos_label=None):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn import metrics
+    >>> from sklearn.metrics import cumulative_gain_curve
     >>> y_true = [0, 1, 1, 0, 0, 0, 1, 1, 0, 0]
     >>> y_pred = [0.1, 0.8, 0.9, 0,3, 0.4, 0.6, 0.6, 0.6, 0.44]
-    >>> percentages, gains = metrics.cumulative_gain_curve(y_true, y_pred, pos_label=1)
+    >>> percentages, gains = cumulative_gain_curve(y_true, y_pred, pos_label=1)
     >>> percentages
     array([0. , 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ])
     >>> gains
