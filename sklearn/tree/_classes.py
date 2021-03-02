@@ -16,6 +16,7 @@ randomized trees. Single and multi-output problems are both handled.
 
 import numbers
 import warnings
+import copy
 from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
@@ -359,6 +360,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "which is equivalent.",
                     FutureWarning
                 )
+        else:
+            # Make a deepcopy in case the criterion has mutable attributes that
+            # might be shared and modified concurrently during parallel fitting
+            criterion = copy.deepcopy(criterion)
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
