@@ -276,7 +276,7 @@ def test_spline_transformer_periodic_splines_periodicity():
 @pytest.mark.parametrize("degree", [3, 5])
 def test_spline_transformer_periodic_splines_smoothness(degree):
     """Test that spline transformation is smooth at first / last knot."""
-    X = np.linspace(0, 10, 1000)[:, None]
+    X = np.linspace(-2, 10, 1000)[:, None]
 
     transformer = SplineTransformer(
         degree=degree,
@@ -289,12 +289,24 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     tol = 10
 
     dXt = Xt
-
+    # We expect splines of degree `degree` to be (`degree`-1) times
+    # continuously differentiable. I.e. for d = 0, ..., `degree` - 1 the d-th
+    # derivative should be continous. This is the case if the (d+1)-th
+    # numerical derivative is reasonably small (smaller than `tol` in absolute
+    # value). We thus compute d-th numeric derivatives for d = 1, ..., `degree`
+    # and compare them to `tol`.
+    # Note that the 0-th derivative is the function itself, such that
+    # we are also checking its continuity.
     for d in range(1, degree + 1):
-        dXt = dXt[1:, :] - dXt[:-1, :]
-        assert (np.abs(dXt) < tol * (delta ** d)).all()
+        dXt = np.diff(dXt, axis=0) / delta  # Compute d-th numeric derivative
+        # Check continuity of the (d-1)-th derivative
+        assert (np.abs(dXt) < tol).all()
 
-    assert np.abs(dXt[1:, :] - dXt[:-1, :]).max() > tol * delta ** (degree + 1)
+    # As degree `degree` splines are not `degree` times continously
+    # differentiable at the knots, the `degree + 1`-th numeric derivative
+    # should have spikes at the knots.
+    dXt = np.diff(dXt, axis=0) / delta
+    assert (np.abs(dXt).max() > tol).any()
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
