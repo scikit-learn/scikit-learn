@@ -1559,3 +1559,26 @@ def test_simple_imputer_keep_missing_features(strategy):
         assert array_with_nan_equal(X_ft[:, X_missing], np.nan).all()
     else:
         assert (X_ft[:, X_missing] == 0).all()
+
+
+@pytest.mark.parametrize(
+    'initial_strategy', ['mean', 'median', 'most_frequent', 'constant'])
+def test_iterative_imputer_keep_missing_features(initial_strategy):
+    X = np.array([
+        [1, np.nan, 2],
+        [3, np.nan, np.nan]
+    ])
+    X_missing = np.array([1])
+
+    imputer = IterativeImputer(initial_strategy=initial_strategy,
+                               keep_missing_features=True)
+    X_ft = imputer.fit_transform(X)
+    X_t = imputer.fit(X).transform(X)
+
+    assert array_with_nan_equal(X_ft, X_t).all()
+    assert X.shape == X_ft.shape
+
+    if initial_strategy != 'constant':
+        assert array_with_nan_equal(X_ft[:, X_missing], np.nan).all()
+    else:
+        assert (X_ft[:, X_missing] == 0).all()
