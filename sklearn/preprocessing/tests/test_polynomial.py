@@ -194,6 +194,33 @@ def test_spline_transformer_linear_regression(bias, intercept):
     assert_allclose(pipe.predict(X), y, rtol=1e-3)
 
 
+@pytest.mark.parametrize("knots, n_knots, degree", [
+    ("uniform", 5, 3),
+    ("uniform", 12, 8),
+    (
+        [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
+        100,  # this gets ignored.
+        3
+    )
+])
+def test_spline_transformer_periodicity_of_extrapolation(
+    knots, n_knots, degree
+):
+    """Test that the SplineTransformer is periodic for multiple features."""
+    X_1 = np.linspace((-1, 0), (1, 5), 10)
+    X_2 = np.linspace((1, 5), (3, 10), 10)
+
+    splt = SplineTransformer(
+        knots=knots,
+        n_knots=n_knots,
+        degree=degree,
+        extrapolation="periodic"
+    )
+    splt.fit(X_1)
+
+    assert_allclose(splt.transform(X_1), splt.transform(X_2))
+
+
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
 def test_spline_transformer_periodic_linear_regression(bias, intercept):
     """Test that B-splines fit a periodic curve pretty well."""
