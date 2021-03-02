@@ -5,21 +5,22 @@
 
 
 import numpy as np
-from joblib import Parallel, delayed
+from joblib import Parallel
+from ..utils.fixes import delayed
 import warnings
 
-from sklearn.mixture import GaussianMixture
-from sklearn.mixture._gaussian_mixture import (
+from . import GaussianMixture
+from ._gaussian_mixture import (
     _compute_precision_cholesky,
     _estimate_gaussian_parameters,
 )
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.model_selection import ParameterGrid
-from sklearn.utils import check_scalar, check_array
-from sklearn.utils.validation import check_is_fitted
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.base import BaseEstimator, ClusterMixin
+from ..cluster import AgglomerativeClustering
+from ..model_selection import ParameterGrid
+from ..utils import check_scalar, check_array
+from ..utils.validation import check_is_fitted
+from ..preprocessing import OneHotEncoder
+from ..exceptions import ConvergenceWarning
+from ..base import BaseEstimator, ClusterMixin
 
 
 class GaussianMixtureIC(ClusterMixin, BaseEstimator):
