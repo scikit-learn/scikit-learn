@@ -257,6 +257,23 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                          loss="hinge", learning_rate=lr,
                          coef_init=coef_init, intercept_init=intercept_init)
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_estimator_sparse_dense':
+                    "PassiveAggressiveClassifier has a "
+                    "special intercept_decay for sparse inputs (see "
+                    "the constant "
+                    "`linear_model._base.SPARSE_INTERCEPT_DECAY`), "
+                    "which gives different results than the one for "
+                    "dense data. Therefore it is not tested in common "
+                    "tests but rather in `linear_model.test_sgd` (namely "
+                    "`test_sgd_sparse_dense_same_decay`), with the sparse "
+                    "intercept set to the same value between sparse and "
+                    "dense, on a toy example."
+            }
+        }
+
 
 class PassiveAggressiveRegressor(BaseSGDRegressor):
     """Passive Aggressive Regressor
@@ -480,7 +497,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                     "which gives different results than the one for "
                     "dense data. Therefore it is not tested in common "
                     "tests but rather in `linear_model.test_sgd` (namely "
-                    "`test_sgd_sparse_dense_default`), with the sparse "
+                    "`test_sgd_sparse_dense_same_decay`), with the sparse "
                     "intercept set to the same value between sparse and "
                     "dense, on a toy example."
             }

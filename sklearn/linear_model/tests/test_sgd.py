@@ -1624,7 +1624,10 @@ def test_SGDClassifier_fit_for_all_backends(backend):
 
 @pytest.mark.parametrize('estimator_orig',
                          [linear_model.SGDRegressor(),
-                          linear_model.PassiveAggressiveRegressor()])
+                          linear_model.PassiveAggressiveRegressor(),
+                          linear_model.SGDClassifier(),
+                          linear_model.Perceptron(),
+                          linear_model.PassiveAggressiveClassifier()])
 def test_sgd_sparse_dense_same_decay(estimator_orig):
     """Tests that with default parameters, estimators that inherit from
     `sklearn.linear_model._stochastic_gradient.BaseSGD`

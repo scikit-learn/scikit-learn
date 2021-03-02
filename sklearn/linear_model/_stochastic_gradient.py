@@ -1101,6 +1101,17 @@ class SGDClassifier(BaseSGDClassifier):
             '_xfail_checks': {
                 'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
+                'check_estimator_sparse_dense':
+                    "SGDClassifier has a "
+                    "special intercept_decay for sparse inputs (see "
+                    "the constant "
+                    "`linear_model._base.SPARSE_INTERCEPT_DECAY`), "
+                    "which gives different results than the one for "
+                    "dense data. Therefore it is not tested in common "
+                    "tests but rather in `linear_model.test_sgd` (namely "
+                    "`test_sgd_sparse_dense_same_decay`), with the sparse "
+                    "intercept set to the same value between sparse and "
+                    "dense, on a toy example."
             }
         }
 
@@ -1599,7 +1610,7 @@ class SGDRegressor(BaseSGDRegressor):
                     "which gives different results than the one for "
                     "dense data. Therefore it is not tested in common "
                     "tests but rather in `linear_model.test_sgd` (namely "
-                    "`test_sgd_sparse_dense_default`), with the sparse "
+                    "`test_sgd_sparse_dense_same_decay`), with the sparse "
                     "intercept set to the same value between sparse and "
                     "dense, on a toy example."
             }

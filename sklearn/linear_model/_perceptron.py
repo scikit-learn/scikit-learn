@@ -169,3 +169,20 @@ class Perceptron(BaseSGDClassifier):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, power_t=0.5,
             warm_start=warm_start, class_weight=class_weight, n_jobs=n_jobs)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_estimator_sparse_dense':
+                    "Perceptron has a "
+                    "special intercept_decay for sparse inputs (see "
+                    "the constant "
+                    "`linear_model._base.SPARSE_INTERCEPT_DECAY`), "
+                    "which gives different results than the one for "
+                    "dense data. Therefore it is not tested in common "
+                    "tests but rather in `linear_model.test_sgd` (namely "
+                    "`test_sgd_sparse_dense_same_decay`), with the sparse "
+                    "intercept set to the same value between sparse and "
+                    "dense, on a toy example."
+            }
+        }

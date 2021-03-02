@@ -59,7 +59,7 @@ from ..datasets import (
     load_iris,
     make_blobs,
     make_multilabel_classification,
-    make_regression,
+    make_regression
 )
 
 REGRESSION_DATASET = None
@@ -3002,10 +3002,12 @@ def check_estimator_sparse_dense(name, estimator_orig,
                     pred = getattr(estimator, method)(X_converted)
                     pred_sp = getattr(estimator_sp, method)(X_sp_converted)
                     # estimators accepting sparse inputs can also return sparse
-                    # outputs, so we convert everything to dense for comparison:
-                    pred_sp = pred_sp.A if sparse.issparse(pred_sp) else pred_sp
+                    # outputs, so we convert everything to dense for
+                    # comparison:
+                    pred_sp = (pred_sp.A if sparse.issparse(pred_sp) else
+                               pred_sp)
                     pred = pred.A if sparse.issparse(pred) else pred
-                    assert_allclose(pred, pred_sp)
+                    assert_allclose(pred, pred_sp, atol=1e-17)
             if hasattr(estimator, "score"):
                 score = estimator.score(X_converted, y)
                 score_sp = estimator_sp.score(X_sp_converted, y)
