@@ -126,7 +126,7 @@ def test_ovr_partial_fit_exceptions():
     y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
     ovr.partial_fit(X[:7], y[:7], np.unique(y))
     # If a new class that was not in the first call of partial fit is seen
-    # It should raise Value Error
+    # it should raise ValueError
     y1 = [5] + y[7:-1]
     msg = r"Mini-batch contains \[.+\] while classes must be subset of \[.+\]"
     with pytest.raises(ValueError, match=msg):
