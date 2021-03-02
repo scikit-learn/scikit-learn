@@ -104,6 +104,7 @@ def test_predict_without_fit():
 
 
 def test_cosine_with_0():
+    # Generate data that contains a zero vector
     X = np.array(
         [
             [0, 1, 0],
@@ -120,12 +121,18 @@ def test_cosine_with_0():
         ]
     )
 
+    # warning when there are valid affinity options other than "cosine"
     with pytest.warns(UserWarning):
         gmIC = GaussianMixtureIC(min_components=2, affinity="all")
         gmIC.fit(X)
 
+    # error when "cosine" is the only affinity option
+    with pytest.raises(ValueError):
+        gmIC = GaussianMixtureIC(min_components=2, affinity="cosine")
+        gmIC.fit(X)
 
-def _test_two_class(**kws):
+
+def test_two_class():
     """
     Easily separable two gaussian problem.
     """
@@ -140,29 +147,25 @@ def _test_two_class(**kws):
     y = np.repeat([0, 1], n)
 
     # test BIC
-    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", **kws)
+    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", n_jobs=2)
     gmIC.fit(X, y)
     n_components = gmIC.n_components_
 
     # Assert that the two cluster model is the best
     assert_equal(n_components, 2)
 
-    # Asser that we get perfect clustering
+    # Assert that we get perfect clustering
     ari = adjusted_rand_score(y, gmIC.fit_predict(X))
     assert_allclose(ari, 1)
 
     # test AIC
-    gmIC = GaussianMixtureIC(max_components=5, criterion="aic", **kws)
+    gmIC = GaussianMixtureIC(max_components=5, criterion="aic", n_jobs=2)
     gmIC.fit(X, y)
     n_components = gmIC.n_components_
 
     # AIC gets the number of components wrong
     assert_equal(n_components >= 1, True)
     assert_equal(n_components <= 5, True)
-
-
-def test_two_class_parallel():
-    _test_two_class(n_jobs=2)
 
 
 def test_five_class():
@@ -200,65 +203,55 @@ def test_five_class():
     assert_equal(gmIC.n_components_ <= 10, True)
 
 
-def test_covariances():
+# Generate random data for each of the four covariance types
+n = 100
+mu1 = [-10, 0]
+mu2 = [10, 0]
+
+# Spherical
+np.random.seed(1)
+cov1 = 2 * np.eye(2)
+cov2 = 2 * np.eye(2)
+X1 = np.random.multivariate_normal(mu1, cov1, n)
+X2 = np.random.multivariate_normal(mu2, cov2, n)
+X_spherical = np.concatenate((X1, X2))
+
+# Diagonal
+np.random.seed(10)
+cov1 = np.diag([1, 1])
+cov2 = np.diag([2, 1])
+X1 = np.random.multivariate_normal(mu1, cov1, n)
+X2 = np.random.multivariate_normal(mu2, cov2, n)
+X_diag = np.concatenate((X1, X2))
+
+# Tied
+cov1 = np.array([[2, 1], [1, 2]])
+cov2 = np.array([[2, 1], [1, 2]])
+X1 = np.random.multivariate_normal(mu1, cov1, n)
+X2 = np.random.multivariate_normal(mu2, cov2, n)
+X_tied = np.concatenate((X1, X2))
+
+# Full
+cov1 = np.array([[2, -1], [-1, 2]])
+cov2 = np.array([[2, 1], [1, 2]])
+X1 = np.random.multivariate_normal(mu1, cov1, n)
+X2 = np.random.multivariate_normal(mu2, cov2, n)
+X_full = np.concatenate((X1, X2))
+
+
+@pytest.mark.parametrize(
+    "test_data,expected_cov_type",
+    [
+        (X_spherical, "spherical"),
+        (X_diag, "diag"),
+        (X_tied, "tied"),
+        (X_full, "full"),
+    ],
+)
+def test_covariances(test_data, expected_cov_type):
     """
     Easily separable two gaussian problem.
     """
-    np.random.seed(1)
-
-    n = 100
-    mu1 = [-10, 0]
-    mu2 = [10, 0]
-
-    # Spherical
-    cov1 = 2 * np.eye(2)
-    cov2 = 2 * np.eye(2)
-
-    X1 = np.random.multivariate_normal(mu1, cov1, n)
-    X2 = np.random.multivariate_normal(mu2, cov2, n)
-
-    X = np.concatenate((X1, X2))
-
     gmIC = GaussianMixtureIC(min_components=2, covariance_type="all")
-    gmIC.fit(X)
-    assert_equal(gmIC.covariance_type_, "spherical")
-
-    # Diagonal
-    np.random.seed(10)
-    cov1 = np.diag([1, 1])
-    cov2 = np.diag([2, 1])
-
-    X1 = np.random.multivariate_normal(mu1, cov1, n)
-    X2 = np.random.multivariate_normal(mu2, cov2, n)
-
-    X = np.concatenate((X1, X2))
-
-    gmIC = GaussianMixtureIC(max_components=2, covariance_type="all")
-    gmIC.fit(X)
-    assert_equal(gmIC.covariance_type_, "diag")
-
-    # Tied
-    cov1 = np.array([[2, 1], [1, 2]])
-    cov2 = np.array([[2, 1], [1, 2]])
-
-    X1 = np.random.multivariate_normal(mu1, cov1, n)
-    X2 = np.random.multivariate_normal(mu2, cov2, n)
-
-    X = np.concatenate((X1, X2))
-
-    gmIC = GaussianMixtureIC(max_components=2, covariance_type="all")
-    gmIC.fit(X)
-    assert_equal(gmIC.covariance_type_, "tied")
-
-    # Full
-    cov1 = np.array([[2, -1], [-1, 2]])
-    cov2 = np.array([[2, 1], [1, 2]])
-
-    X1 = np.random.multivariate_normal(mu1, cov1, n)
-    X2 = np.random.multivariate_normal(mu2, cov2, n)
-
-    X = np.concatenate((X1, X2))
-
-    gmIC = GaussianMixtureIC(max_components=2, covariance_type="all")
-    gmIC.fit(X)
-    assert_equal(gmIC.covariance_type_, "full")
+    gmIC.fit(test_data)
+    assert_equal(gmIC.covariance_type_, expected_cov_type)

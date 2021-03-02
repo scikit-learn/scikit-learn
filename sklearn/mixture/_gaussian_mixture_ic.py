@@ -4,23 +4,40 @@
 # Modified by Benjamin Pedigo <bpedigo@jhu,edu>, Tingshan Liu <tliu68@jhmi.edu>
 
 
+# import numpy as np
+# from joblib import Parallel
+# from ..utils.fixes import delayed
+# import warnings
+
+# from . import GaussianMixture
+# from ._gaussian_mixture import (
+#     _compute_precision_cholesky,
+#     _estimate_gaussian_parameters,
+# )
+# from ..cluster import AgglomerativeClustering
+# from ..model_selection import ParameterGrid
+# from ..utils import check_scalar, check_array
+# from ..utils.validation import check_is_fitted
+# from ..preprocessing import OneHotEncoder
+# from ..exceptions import ConvergenceWarning
+# from ..base import BaseEstimator, ClusterMixin
+
 import numpy as np
-from joblib import Parallel
-from ..utils.fixes import delayed
+from joblib import Parallel, delayed
 import warnings
 
-from . import GaussianMixture
-from ._gaussian_mixture import (
+from sklearn.mixture import GaussianMixture
+from sklearn.mixture._gaussian_mixture import (
     _compute_precision_cholesky,
     _estimate_gaussian_parameters,
 )
-from ..cluster import AgglomerativeClustering
-from ..model_selection import ParameterGrid
-from ..utils import check_scalar, check_array
-from ..utils.validation import check_is_fitted
-from ..preprocessing import OneHotEncoder
-from ..exceptions import ConvergenceWarning
-from ..base import BaseEstimator, ClusterMixin
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.model_selection import ParameterGrid
+from sklearn.utils import check_scalar, check_array
+from sklearn.utils.validation import check_is_fitted
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.base import BaseEstimator, ClusterMixin
 
 
 class GaussianMixtureIC(ClusterMixin, BaseEstimator):
@@ -261,7 +278,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     def _check_multi_comp_inputs(self, input, name, default):
         if isinstance(input, (np.ndarray, list)):
-            input = np.unique(input)
+            input = list(np.unique(input))
         elif isinstance(input, str):
             if input not in default:
                 msg = (
@@ -358,28 +375,30 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             min_val=2,
         )
 
-    def _init_gm_params(self, X, labels, params):
+    def _init_gm_params(self, X, labels, gm_params):
         labels = labels.reshape(-1, 1)
         enc = OneHotEncoder()
         enc.fit(labels)
         onehot = enc.fit_transform(labels).toarray()
         weights_init, means_init, precisions_init = _onehot_to_initial_params(
-            X, onehot, params[1]["covariance_type"]
+            X, onehot, gm_params["covariance_type"]
         )
-        gm_params = params[1]
         gm_params["weights_init"] = weights_init
         gm_params["means_init"] = means_init
         gm_params["precisions_init"] = precisions_init
         return gm_params
 
-    def _fit_cluster(self, X, X_subset, y, params, agg_clustering):
+    def _fit_cluster(
+        self, X, X_subset, y, ag_params, gm_params, agg_clustering
+    ):
         label_init = self.label_init
         if label_init is not None:
-            gm_params = self._init_gm_params(X, label_init, params)
-        elif params[0]["affinity"] != "none":
-            gm_params = self._init_gm_params(X_subset, agg_clustering, params)
+            gm_params = self._init_gm_params(X, label_init, gm_params)
+        elif ag_params["affinity"] != "none":
+            gm_params = self._init_gm_params(
+                X_subset, agg_clustering, gm_params
+            )
         else:
-            gm_params = params[1]
             gm_params["init_params"] = "kmeans"
         gm_params["reg_covar"] = 0
         gm_params["max_iter"] = self.max_iter
@@ -417,7 +436,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 criter = model.aic(X)
             break
 
-        results = _CollectResults(model, criter, gm_params, params[0])
+        results = _CollectResults(model, criter, gm_params, ag_params)
         return results
 
     def fit(self, X, y=None):
@@ -455,20 +474,22 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 raise ValueError(msg)
 
         # check if X contains the 0 vector
-        if np.any(~X.any(axis=1)) and (
-            "cosine" in self.affinity or self.affinity == "all"
-        ):
-            if isinstance(self.affinity, np.ndarray):
-                self.affinity = np.delete(
-                    self.affinity, np.argwhere(self.affinity == "cosine")
+        if np.any(~X.any(axis=1)):
+            if "cosine" in self.affinity or self.affinity == "all":
+                if isinstance(self.affinity, np.ndarray):
+                    self.affinity = np.delete(
+                        self.affinity, np.argwhere(self.affinity == "cosine")
+                    )
+                if isinstance(self.affinity, list):
+                    self.affinity.remove("cosine")
+                if self.affinity == "all":
+                    self.affinity = ["euclidean", "manhattan", "none"]
+                warnings.warn(
+                    "X contains a zero vector, will not run cosine affinity."
                 )
-            if isinstance(self.affinity, list):
-                self.affinity.remove("cosine")
-            if self.affinity == "all":
-                self.affinity = ["euclidean", "manhattan", "none"]
-            warnings.warn(
-                "X contains a zero vector, will not run cosine affinity."
-            )
+            if self.affinity == "cosine":
+                msg = "X contains a zero vector, cannot run cosine affinity."
+                raise ValueError(msg)
 
         label_init = self.label_init
         if label_init is not None:
@@ -521,9 +542,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                     )
                     ag_labels.append(hierarchical_labels)
 
-        def _fit_for_data(p):
-            ag_params = p[0]
-            gm_params = p[1]
+        def _fit_for_data(ag_params, gm_params):
             n_clusters = gm_params["n_components"]
             if (ag_params["affinity"] != "none") and (self.label_init is None):
                 index = param_grid_ag.index(ag_params)
@@ -532,14 +551,17 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 ]
             else:
                 agg_clustering = []
-            return self._fit_cluster(X, X_subset, y, p, agg_clustering)
+            return self._fit_cluster(
+                X, X_subset, y, ag_params, gm_params, agg_clustering
+            )
 
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_fit_for_data)(p) for p in param_grid
+            delayed(_fit_for_data)(ag_params, gm_params)
+            for (ag_params, gm_params) in param_grid
         )
-        best_idx = np.argmin([result.criterion_score for result in results])
+        best_idx = np.argmin([result.criterion for result in results])
 
-        self.best_criterion_ = results[best_idx].criterion_score
+        self.best_criterion_ = results[best_idx].criterion
         self.n_components_ = results[best_idx].n_components
         self.covariance_type_ = results[best_idx].covariance_type
         self.affinity_ = results[best_idx].affinity
@@ -619,7 +641,7 @@ def _increase_reg(reg):
 
 def _onehot_to_initial_params(X, onehot, cov_type):
     """
-    Computes cluster weights, cluster means and cluster precisions from
+    Compute cluster weights, cluster means and cluster precisions from
     a given clustering.
 
     Parameters
@@ -653,7 +675,7 @@ def _onehot_to_initial_params(X, onehot, cov_type):
 
 def _process_paramgrid(paramgrid):
     """
-    Removes combinations of affinity and linkage that are not possible.
+    Remove combinations of affinity and linkage that are not possible.
 
     Parameters
     ----------
@@ -730,8 +752,8 @@ def _hierarchical_labels(children, min_components, max_components):
 
 class _CollectResults:
     """
-    Represents the intermediary results for a single GMM clustering run
-    of ``GaussianMixtureIC``
+    Represent the intermediary results for a single GMM clustering run
+    of :class:`sklearn.mixture.GaussianMixtureIC`
 
     Attributes
     ----------
@@ -739,11 +761,11 @@ class _CollectResults:
     model : GaussianMixture object
         GMM clustering fit to the data
 
-    criterion_score : float
-        Bayesian or Aikake Information Criterion score
+    criterion : float
+        Bayesian or Aikake Information Criterion
 
     n_components : int
-        number of clusters
+        number of components
 
     affinity : {'euclidean','manhattan','cosine','none'}
         affinity used in Agglomerative Clustering
@@ -761,7 +783,7 @@ class _CollectResults:
 
     def __init__(self, model, criter, gm_params, ag_params):
         self.model = model
-        self.criterion_score = criter
+        self.criterion = criter
         self.n_components = gm_params["n_components"]
         self.affinity = ag_params["affinity"]
         self.linkage = ag_params["linkage"]

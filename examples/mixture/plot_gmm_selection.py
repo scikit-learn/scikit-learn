@@ -17,7 +17,6 @@ In that case, the model with 2 components and full covariance
 
 import numpy as np
 import itertools
-import pandas as pd
 
 from scipy import linalg
 import matplotlib.pyplot as plt
@@ -36,15 +35,29 @@ C = np.array([[0., -0.1], [1.7, .4]])
 X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
           .7 * np.random.randn(n_samples, 2) + np.array([-6, 3])]
 
+bic = []
 n_components_range = range(1, 7)
 cv_types = ["spherical", "tied", "diag", "full"]
 
-gmIC = GaussianMixtureIC(min_components=1, max_components=6)
+# Fit Gaussian mixture with EM for a range of n_components and cv_types
+gmIC = GaussianMixtureIC(
+    min_components=1, max_components=6, covariance_type=cv_types
+)
 gmIC.fit(X)
-results = pd.DataFrame(gmIC.results_)
+results = gmIC.results_
+for cv_type in cv_types:
+    for n_components in n_components_range:
+        bic.append(min([
+            result.criterion
+            for result in results
+            if (result.covariance_type == cv_type)
+            & (result.n_components == n_components)
+        ]))
 
+bic = np.array(bic)
 color_iter = itertools.cycle(['navy', 'turquoise', 'cornflowerblue',
                               'darkorange'])
+
 clf = gmIC.best_model_
 bars = []
 
@@ -53,16 +66,9 @@ plt.figure(figsize=(8, 6))
 spl = plt.subplot(2, 1, 1)
 for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
     xpos = np.array(n_components_range) + .2 * (i - 2)
-    bic = np.array(
-        [
-            results.loc[
-                (results["n_components"] == n)
-                & (results["covariance_type"] == cv_type)
-            ]["bic/aic"].min()
-            for n in n_components_range
-        ]
-    )
-    bars.append(plt.bar(xpos, bic, width=.2, color=color))
+    bars.append(plt.bar(xpos, bic[i * len(n_components_range):
+                                  (i + 1) * len(n_components_range)],
+                        width=.2, color=color))
 plt.xticks(n_components_range)
 plt.ylim([bic.min() * 1.01 - .01 * bic.max(), bic.max()])
 plt.title("BIC score per model")
