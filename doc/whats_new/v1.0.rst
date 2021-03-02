@@ -144,7 +144,7 @@ Changelog
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
   Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV were deprecated in:
-  :pr: `17772` by :user:`Maria Telenczuk <maikia>` and
+  :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
 - |Fix|: `sample_weight` are now fully taken into account in linear models
