@@ -475,12 +475,6 @@ def test_ovr_coef_():
 # when the coef_ attribute is removed
 @ignore_warnings(category=FutureWarning)
 def test_ovr_coef_exceptions():
-
-    # An eval function is defined because we don't
-    # want coef_ to be evaluated right away
-    def coef_eval(est, x):
-        return est.coef_(x)
-
     # Not fitted exception!
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
 
