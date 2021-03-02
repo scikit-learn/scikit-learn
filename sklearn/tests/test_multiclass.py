@@ -399,7 +399,7 @@ def test_ovr_single_label_predict_proba():
 
     assert_almost_equal(Y_proba.sum(axis=1), 1.0)
     # predict assigns a label if the probability that the
-    # sample has the label is greater than 0.5.
+    # sample has the label with the greatest predictive probability.
     pred = Y_proba.argmax(axis=1)
     assert not (pred - Y_pred).any()
 
