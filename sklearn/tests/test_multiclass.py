@@ -486,7 +486,7 @@ def test_ovr_coef_exceptions():
     ovr.fit(iris.data, iris.target)
     msg = "Base estimator doesn't have a coef_ attribute"
     with pytest.raises(AttributeError, match=msg):
-        coef_eval(ovr, None)
+        ovr.coef_
 
 
 # TODO: Remove this test in version 1.1 when
