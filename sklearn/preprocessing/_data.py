@@ -29,7 +29,6 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 _check_sample_weight,
                                 FLOAT_DTYPES, _deprecate_positional_args)
-from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 from ._encoders import OneHotEncoder
 
