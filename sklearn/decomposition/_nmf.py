@@ -1266,12 +1266,12 @@ class NMF(TransformerMixin, BaseEstimator):
 
         if not isinstance(
             n_components, numbers.Integral
-            ) or n_components <= 0:
+        ) or n_components <= 0:
             raise ValueError("Number of components must be a positive integer;"
                              " got (n_components=%r)" % n_components)
         if not isinstance(
             self.max_iter, numbers.Integral
-            ) or self.max_iter < 0:
+        ) or self.max_iter < 0:
             raise ValueError("Maximum number of iterations must be a positive "
                              "integer; got (max_iter=%r)" % self.max_iter)
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
@@ -1312,12 +1312,13 @@ class NMF(TransformerMixin, BaseEstimator):
                 random_state=self.random_state)
         elif self.solver == 'mu':
             W, H, n_iter = _fit_multiplicative_update(
-                X, W, H, beta_loss, self.max_iter, self.tol, l1_reg_W, l1_reg_H,
-                l2_reg_W, l2_reg_H, self.update_H, self.verbose
+                X, W, H, beta_loss, self.max_iter, self.tol,
+                l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
+                self.update_H, self.verbose
             )
 
         else:
-            raise ValueError("Invalid solver parameter '%s'." % solver)
+            raise ValueError("Invalid solver parameter '%s'." % self.solver)
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn("Maximum number of iterations %d reached. Increase "
