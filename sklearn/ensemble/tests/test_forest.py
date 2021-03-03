@@ -31,9 +31,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel

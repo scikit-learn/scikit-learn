@@ -90,7 +90,8 @@ elapsed_time = time.time() - start_time
 print(f"Elapsed time to compute the importances: "
       f"{elapsed_time:.3f} seconds")
 
-forest_importances = pd.Series(forest.feature_importances_, index=feature_names)
+forest_importances = pd.Series(forest.feature_importances_, 
+                               index=feature_names)
 
 # %%
 # The permutation importances is more computationally costly. Indeed, it
