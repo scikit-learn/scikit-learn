@@ -1,8 +1,9 @@
 """
-========================================
-Feature importances with forest of trees
-========================================
-This example shows the use of forest of trees to evaluate the importance of
+==========================================
+Feature importances with a forest of trees
+==========================================
+
+This example shows the use of a forest of trees to evaluate the importance of
 features on an artificial classification task.
 We show two strategies to estimate the feature importances: (i) the
 impurity-based feature importances and (ii) the permutation feature
@@ -21,65 +22,75 @@ import matplotlib.pyplot as plt
 # explicitely not shuffle the dataset to ensure that the informative features
 # correspond to the three first columns of `X`.
 from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
 
 X, y = make_classification(
-    n_samples=1000, n_features=10, n_informative=3,
-    n_redundant=0, n_repeated=0, n_classes=2,
-    random_state=0, shuffle=False)
-feature_names = [f"#{i + 1}" for i in range(X.shape[1])]
+    n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
+    n_repeated=0, n_classes=2, random_state=0, shuffle=False)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, stratify=y, random_state=42)
 
 # %%
-# Impurity-based feature importances
-# ----------------------------------
-# We start by fitting a random-forest. We explicitely request to compute the
-# impurity-based feature importance. Note that this is the default value.
-import pandas as pd
-import time
+# A random forest classifier will be fitted to compute the feature importances.
 from sklearn.ensemble import RandomForestClassifier
 
-forest = RandomForestClassifier(
-    n_estimators=250, feature_importances="impurity", random_state=0)
+feature_names = [f'feature {i}' for i in range(X.shape[1])]
+forest = RandomForestClassifier(random_state=0)
+forest.fit(X_train, y_train)
+
+# %%
+# Feature importance based on mean decrease in impurity
+# -----------------------------------------------------
+# Feature importances are provided by the fitted attribute
+# `feature_importances_` and they are computed as the mean and standard
+# deviation of accumulation of the impurity decrease within each tree.
+#
+# .. warning::
+#     Impurity-based feature importances can be misleading for high cardinality
+#     features (many unique values). See :ref:`permutation_importance` as
+#     an alternative below.
+import time
+import numpy as np
 
 start_time = time.time()
-forest.fit(X, y)
-forest_importances = pd.Series(
-    forest.feature_importances_, index=feature_names)
+importances = forest.feature_importances_
+std = np.std([
+    tree.feature_importances_ for tree in forest.estimators_], axis=0)
 elapsed_time = time.time() - start_time
-print(f"Elapsed time to fit and compute the importances: "
+
+print(f"Elapsed time to compute the importances: "
       f"{elapsed_time:.3f} seconds")
 
 # %%
-# Impurity-based feature importances is relatively fast to compute. It only
-# requires to fit the forest and store information regarding the different
-# splits of trees. When the feature importances is requested, the splits of
-# all trees are introspected to compute the mean decrease in impurity (MDI).
-#
-# Let's plot the feature importances ranking.
-ax = forest_importances.plot.bar(yerr=forest.importances_.importances_std)
+# Let's plot the impurity-based importance.
+import pandas as pd
+forest_importances = pd.Series(importances, index=feature_names)
+
+fig, ax = plt.subplots()
+forest_importances.plot.bar(yerr=std, ax=ax)
 ax.set_title("Feature importances using MDI")
-_ = ax.set_ylabel("Mean impurity decrease")
+ax.set_ylabel("Mean decrease in impurity")
+fig.tight_layout()
 
 # %%
-# We observe that the three important features are reported correctly. We also
-# observe that non-informative features do not have a null importance. Indeed,
-# theses features have been used by some of the trees that tend to overfit on
-# some noisy samples.
+# We observe that, as expected, the three first features are found important.
 #
 # Feature permutation importances on OOB samples
 # ----------------------------------------------
 # We will an alternative to the impurity-based feature importances based on
 # feature permutation using the OOB samples. We fit a new random-forest where
 # we explicitely specify to compute the permutation feature importances on OOB.
-forest = RandomForestClassifier(
-    n_estimators=250, feature_importances="permutation_oob", random_state=0)
-
+feature_names = [f'feature {i}' for i in range(X.shape[1])]
+forest = RandomForestClassifier(feature_importances="permutation_oob",
+                                random_state=0)
 start_time = time.time()
-forest.fit(X, y)
-forest_importances = pd.Series(
-    forest.feature_importances_, index=feature_names)
+forest.fit(X_train, y_train)
 elapsed_time = time.time() - start_time
-print(f"Elapsed time to fit and compute the importances: "
+
+print(f"Elapsed time to compute the importances: "
       f"{elapsed_time:.3f} seconds")
+
+forest_importances = pd.Series(forest.feature_importances_, index=feature_names)
 
 # %%
 # The permutation importances is more computationally costly. Indeed, it
@@ -89,9 +100,11 @@ print(f"Elapsed time to fit and compute the importances: "
 # between of the two forests.
 #
 # We now plot the feature importance ranking.
-ax = forest_importances.plot.bar(yerr=forest.importances_.importances_std)
-ax.set_title("Feature importances using permutation on OOB")
+fig, ax = plt.subplots()
+forest_importances.plot.bar(yerr=forest.importances_.importances_std, ax=ax)
+ax.set_title("Feature importances using permutation on full model")
 ax.set_ylabel("Mean accuracy decrease")
+fig.tight_layout()
 plt.show()
 
 # %%
