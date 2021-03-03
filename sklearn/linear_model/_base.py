@@ -243,7 +243,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             else:
                 X_offset = np.average(X, axis=0, weights=sample_weight)
 
-            X_offset = X_offset.astype(X.dtype)
+            X_offset = X_offset.astype(X.dtype, copy=False)
             X -= X_offset
 
         if normalize:
