@@ -1,6 +1,7 @@
 from itertools import product
 
 import pytest
+import re
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix, issparse)
@@ -19,11 +20,6 @@ from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import sp_version, parse_version
@@ -128,18 +124,21 @@ def test_n_neighbors_datatype():
     msg = "Expected n_neighbors > 0. Got -3"
 
     neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.)
-    assert_raises_regex(TypeError, expected_msg, neighbors_.fit, X)
-    assert_raises_regex(ValueError, msg,
-                        neighbors_.kneighbors, X=X, n_neighbors=-3)
-    assert_raises_regex(TypeError, expected_msg,
-                        neighbors_.kneighbors, X=X, n_neighbors=3.)
+    with pytest.raises(TypeError, match=expected_msg):
+        neighbors_.fit(X)
+    with pytest.raises(ValueError, match=msg):
+        neighbors_.kneighbors(X=X, n_neighbors=-3)
+    with pytest.raises(TypeError, match=expected_msg):
+        neighbors_.kneighbors(X=X, n_neighbors=3.)
 
 
 def test_not_fitted_error_gets_raised():
     X = [[1]]
     neighbors_ = neighbors.NearestNeighbors()
-    assert_raises(NotFittedError, neighbors_.kneighbors_graph, X)
-    assert_raises(NotFittedError, neighbors_.radius_neighbors_graph, X)
+    with pytest.raises(NotFittedError):
+        neighbors_.kneighbors_graph(X)
+    with pytest.raises(NotFittedError):
+        neighbors_.radius_neighbors_graph(X)
 
 
 @ignore_warnings(category=EfficiencyWarning)
@@ -181,7 +180,8 @@ def check_precomputed(make_train_test, estimators):
         assert_array_almost_equal(ind_X, ind_D)
 
         # Must raise a ValueError if the matrix is not of correct shape
-        assert_raises(ValueError, getattr(nbrs_D, method), X)
+        with pytest.raises(ValueError):
+            getattr(nbrs_D, method)(X)
 
     target = np.arange(X.shape[0])
     for Est in estimators:
@@ -295,14 +295,15 @@ def test_precomputed_sparse_invalid():
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
     msg = "2 neighbors per samples are required, but some samples have only 1"
-    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=1)
+    with pytest.raises(ValueError, match=msg):
+        neigh.kneighbors(None, n_neighbors=1)
 
     # Checks error with inconsistent distance matrix
     dist = np.array([[5., 2., 1.], [-2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
     msg = "Negative values in data passed to precomputed distance matrix."
-    assert_raises_regex(ValueError, msg, neigh.kneighbors, dist_csr,
-                        n_neighbors=1)
+    with pytest.raises(ValueError, match=msg):
+        neigh.kneighbors(dist_csr, n_neighbors=1)
 
 
 def test_precomputed_cross_validation():
@@ -486,7 +487,8 @@ def test_radius_neighbors_classifier_when_no_neighbors():
                 assert_array_equal(np.array([1, 2]),
                                    clf.predict(z1))
                 if outlier_label is None:
-                    assert_raises(ValueError, clf.predict, z2)
+                    with pytest.raises(ValueError):
+                        clf.predict(z2)
 
 
 def test_radius_neighbors_classifier_outlier_labeling():
@@ -526,13 +528,15 @@ def test_radius_neighbors_classifier_outlier_labeling():
     def check_array_exception():
         clf = RNC(radius=1, outlier_label=[[5]])
         clf.fit(X, y)
-    assert_raises(TypeError, check_array_exception)
+    with pytest.raises(TypeError):
+        check_array_exception()
 
     # test invalid outlier_label dtype
     def check_dtype_exception():
         clf = RNC(radius=1, outlier_label='a')
         clf.fit(X, y)
-    assert_raises(TypeError, check_dtype_exception)
+    with pytest.raises(TypeError):
+        check_dtype_exception()
 
     # test most frequent
     clf = RNC(radius=1, outlier_label='most_frequent')
@@ -553,7 +557,8 @@ def test_radius_neighbors_classifier_outlier_labeling():
         clf = RNC(radius=1, outlier_label=4)
         clf.fit(X, y)
         clf.predict_proba([[1], [15]])
-    assert_warns(UserWarning, check_warning)
+    with pytest.warns(UserWarning):
+        check_warning()
 
     # test multi output same outlier label
     y_multi = [[0, 1], [2, 1], [2, 2], [1, 2], [1, 2],
@@ -580,7 +585,8 @@ def test_radius_neighbors_classifier_outlier_labeling():
     def check_exception():
         clf = RNC(radius=1, outlier_label=[0, 1, 2])
         clf.fit(X, y_multi)
-    assert_raises(ValueError, check_exception)
+    with pytest.raises(ValueError):
+        check_exception()
 
 
 def test_radius_neighbors_classifier_zero_distance():
@@ -601,7 +607,10 @@ def test_radius_neighbors_classifier_zero_distance():
                                                       weights=weights,
                                                       algorithm=algorithm)
             clf.fit(X, y)
-            assert_array_equal(correct_labels1, clf.predict(z1))
+            with np.errstate(invalid="ignore"):
+                # Ignore the warning raised in _weight_func when making
+                # predictions with null distances resulting in np.inf values.
+                assert_array_equal(correct_labels1, clf.predict(z1))
 
 
 def test_neighbors_regressors_zero_distance():
@@ -931,10 +940,8 @@ def test_radius_neighbors_regressor(n_samples=40,
         X_test_nan = np.full((1, n_features), -1.)
         empty_warning_msg = ("One or more samples have no neighbors "
                              "within specified radius; predicting NaN.")
-        pred = assert_warns_message(UserWarning,
-                                    empty_warning_msg,
-                                    neigh.predict,
-                                    X_test_nan)
+        with pytest.warns(UserWarning, match=re.escape(empty_warning_msg)):
+            pred = neigh.predict(X_test_nan)
         assert np.all(np.isnan(pred))
 
 
@@ -1041,8 +1048,7 @@ def test_neighbors_iris():
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm)
         rgs.fit(iris.data, iris.target)
-        assert (np.mean(rgs.predict(iris.data).round() == iris.target) >
-                       0.95)
+        assert (np.mean(rgs.predict(iris.data).round() == iris.target) > 0.95)
 
 
 def test_neighbors_digits():
@@ -1163,9 +1169,8 @@ def test_radius_neighbors_graph_sparse(seed=36):
 
 def test_neighbors_badargs():
     # Test bad argument values: these should all raise ValueErrors
-    assert_raises(ValueError,
-                  neighbors.NearestNeighbors,
-                  algorithm='blah')
+    with pytest.raises(ValueError):
+        neighbors.NearestNeighbors(algorithm='blah')
 
     X = rng.random_sample((10, 2))
     Xsparse = csr_matrix(X)
@@ -1176,49 +1181,45 @@ def test_neighbors_badargs():
                 neighbors.RadiusNeighborsClassifier,
                 neighbors.KNeighborsRegressor,
                 neighbors.RadiusNeighborsRegressor):
-        assert_raises(ValueError,
-                      cls,
-                      weights='blah')
-        assert_raises(ValueError,
-                      cls, p=-1)
-        assert_raises(ValueError,
-                      cls, algorithm='blah')
+        with pytest.raises(ValueError):
+            cls(weights='blah')
+        with pytest.raises(ValueError):
+            cls(p=-1)
+        with pytest.raises(ValueError):
+            cls(algorithm='blah')
 
         nbrs = cls(algorithm='ball_tree', metric='haversine')
-        assert_raises(ValueError,
-                      nbrs.predict,
-                      X)
-        assert_raises(ValueError,
-                      ignore_warnings(nbrs.fit),
-                      Xsparse, y)
+        with pytest.raises(ValueError):
+            nbrs.predict(X)
+        with pytest.raises(ValueError):
+            ignore_warnings(nbrs.fit(Xsparse, y))
 
         nbrs = cls(metric='haversine', algorithm='brute')
         nbrs.fit(X3, y)
-        assert_raise_message(ValueError,
-                             "Haversine distance only valid in 2 dimensions",
-                             nbrs.predict,
-                             X3)
+        msg = "Haversine distance only valid in 2 dimensions"
+        with pytest.raises(ValueError, match=msg):
+            nbrs.predict(X3)
 
         nbrs = cls()
-        assert_raises(ValueError,
-                      nbrs.fit,
-                      np.ones((0, 2)), np.ones(0))
-        assert_raises(ValueError,
-                      nbrs.fit,
-                      X[:, :, None], y)
+        with pytest.raises(ValueError):
+            nbrs.fit(np.ones((0, 2)), np.ones(0))
+        with pytest.raises(ValueError):
+            nbrs.fit(X[:, :, None], y)
         nbrs.fit(X, y)
-        assert_raises(ValueError,
-                      nbrs.predict,
-                      [[]])
+        with pytest.raises(ValueError):
+            nbrs.predict([[]])
         if (issubclass(cls, neighbors.KNeighborsClassifier) or
                 issubclass(cls, neighbors.KNeighborsRegressor)):
             nbrs = cls(n_neighbors=-1)
-            assert_raises(ValueError, nbrs.fit, X, y)
+            with pytest.raises(ValueError):
+                nbrs.fit(X, y)
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 
-    assert_raises(ValueError, nbrs.kneighbors_graph, X, mode='blah')
-    assert_raises(ValueError, nbrs.radius_neighbors_graph, X, mode='blah')
+    with pytest.raises(ValueError):
+        nbrs.kneighbors_graph(X, mode='blah')
+    with pytest.raises(ValueError):
+        nbrs.radius_neighbors_graph(X, mode='blah')
 
 
 def test_neighbors_metrics(n_samples=20, n_features=3,
@@ -1254,10 +1255,10 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
                     metric not in neighbors.KDTree.valid_metrics):
-                assert_raises(ValueError,
-                              neighbors.NearestNeighbors,
-                              algorithm=algorithm,
-                              metric=metric, metric_params=metric_params)
+                with pytest.raises(ValueError):
+                    neighbors.NearestNeighbors(algorithm=algorithm,
+                                               metric=metric,
+                                               metric_params=metric_params)
                 continue
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
@@ -1360,8 +1361,8 @@ def test_valid_brute_metric_for_auto_algorithm():
 
 
 def test_metric_params_interface():
-    assert_warns(SyntaxWarning, neighbors.KNeighborsClassifier,
-                 metric_params={'p': 3})
+    with pytest.warns(SyntaxWarning):
+        neighbors.KNeighborsClassifier(metric_params={'p': 3})
 
 
 def test_predict_sparse_ball_kd_tree():
@@ -1372,7 +1373,8 @@ def test_predict_sparse_ball_kd_tree():
     nbrs2 = neighbors.KNeighborsRegressor(1, algorithm='ball_tree')
     for model in [nbrs1, nbrs2]:
         model.fit(X, y)
-        assert_raises(ValueError, model.predict, csr_matrix(X))
+        with pytest.raises(ValueError):
+            model.predict(csr_matrix(X))
 
 
 def test_non_euclidean_kneighbors():
@@ -1403,12 +1405,12 @@ def test_non_euclidean_kneighbors():
     # Raise error when wrong parameters are supplied,
     X_nbrs = neighbors.NearestNeighbors(n_neighbors=3, metric='manhattan')
     X_nbrs.fit(X)
-    assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
-                  metric='euclidean')
+    with pytest.raises(ValueError):
+        neighbors.kneighbors_graph(X_nbrs, 3, metric='euclidean')
     X_nbrs = neighbors.NearestNeighbors(radius=radius, metric='manhattan')
     X_nbrs.fit(X)
-    assert_raises(ValueError, neighbors.radius_neighbors_graph, X_nbrs,
-                  radius, metric='euclidean')
+    with pytest.raises(ValueError):
+        neighbors.radius_neighbors_graph(X_nbrs, radius, metric='euclidean')
 
 
 def check_object_arrays(nparray, list_check):
