@@ -930,6 +930,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
 
+    update_H : bool, default=True
+        Set to True, both W and H will be estimated from initial guesses.
+        Set to False, only W will be estimated.
+
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
 
@@ -953,10 +957,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         matrix X cannot contain zeros. Used only in 'mu' solver.
 
         .. versionadded:: 0.19
-
-    update_H : bool, default=True
-        Set to True, both W and H will be estimated from initial guesses.
-        Set to False, only W will be estimated.
 
     tol : float, default=1e-4
         Tolerance of the stopping condition.
