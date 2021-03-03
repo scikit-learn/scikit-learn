@@ -1263,7 +1263,8 @@ class NMF(TransformerMixin, BaseEstimator):
         X = check_array(X, accept_sparse=('csr', 'csc'),
                         dtype=[np.float64, np.float32])
         check_non_negative(X, "NMF (input X)")
-        beta_loss = _check_string_param(solver, regularization, beta_loss, init)
+        beta_loss = _check_string_param(solver, regularization,
+                                        beta_loss, init)
 
         if X.min() == 0 and beta_loss <= 0:
             raise ValueError("When beta_loss <= 0 and X contains zeros, "
