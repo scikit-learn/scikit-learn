@@ -8,12 +8,13 @@ on:
   push:
     branches:
       - main
+      - fix_anaconda_upload
       # Release branches
       - "[0-9]+.[0-9]+.X"
-  pull_request:
-    branches:
-      - main
-      - "[0-9]+.[0-9]+.X"
+  # pull_request:
+  #  branches:
+  #    - main
+  #    - "[0-9]+.[0-9]+.X"
   # Manual run
   workflow_dispatch:
 
