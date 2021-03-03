@@ -574,24 +574,6 @@ def test_ordinal_encoder_inverse():
         enc.inverse_transform(X_tr)
 
 
-@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
-                               np.array([['a', np.nan]], dtype=object).T],
-                         ids=['numeric', 'object'])
-def test_ordinal_encoder_raise_missing(X):
-    ohe = OrdinalEncoder()
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
-
-    ohe.fit(X[:1, :])
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
-
-
 def test_ordinal_encoder_handle_unknowns_string():
     enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-2)
     X_fit = np.array([['a', 'x'], ['b', 'y'], ['c', 'z']], dtype=object)
@@ -930,3 +912,122 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
     assert len(ohe.categories_) == 1
     assert_array_equal(ohe.categories_[0][:-1], ['a', 'b', 'c'])
     assert np.isnan(ohe.categories_[0][-1])
+
+
+def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
+    """Test ordinal encoder with nan passthrough fails when dtype=np.int32."""
+
+    X = np.array([[np.nan, 3.0, 1.0, 3.0]]).T
+    oe = OrdinalEncoder(dtype=np.int32)
+
+    msg = (r"There are missing values in features \[0\]. For OrdinalEncoder "
+           "to passthrough missing values, the dtype parameter must be a "
+           "float")
+    with pytest.raises(ValueError, match=msg):
+        oe.fit(X)
+
+
+def test_ordinal_encoder_passthrough_missing_values_float():
+    """Test ordinal encoder with nan on float dtypes."""
+
+    X = np.array([[np.nan, 3.0, 1.0, 3.0]], dtype=np.float64).T
+    oe = OrdinalEncoder().fit(X)
+
+    assert len(oe.categories_) == 1
+    assert_allclose(oe.categories_[0], [1.0, 3.0, np.nan])
+
+    X_trans = oe.transform(X)
+    assert_allclose(X_trans, [[np.nan], [1.0], [0.0], [1.0]])
+
+    X_inverse = oe.inverse_transform(X_trans)
+    assert_allclose(X_inverse, X)
+
+
+@pytest.mark.parametrize('pd_nan_type', ['pd.NA', 'np.nan'])
+def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
+    """Check ordinal encoder is compatible with pandas."""
+    # checks pandas dataframe with categorical features
+    if pd_nan_type == 'pd.NA':
+        # pd.NA is in pandas 1.0
+        pd = pytest.importorskip('pandas', minversion="1.0")
+        pd_missing_value = pd.NA
+    else:  # np.nan
+        pd = pytest.importorskip('pandas')
+        pd_missing_value = np.nan
+
+    df = pd.DataFrame({
+        'col1': pd.Series(['c', 'a', pd_missing_value, 'b', 'a'],
+                          dtype='category'),
+    })
+
+    oe = OrdinalEncoder().fit(df)
+    assert len(oe.categories_) == 1
+    assert_array_equal(oe.categories_[0][:3], ['a', 'b', 'c'])
+    assert np.isnan(oe.categories_[0][-1])
+
+    df_trans = oe.transform(df)
+
+    assert_allclose(df_trans, [[2.0], [0.0], [np.nan], [1.0], [0.0]])
+
+    X_inverse = oe.inverse_transform(df_trans)
+    assert X_inverse.shape == (5, 1)
+    assert_array_equal(X_inverse[:2, 0], ['c', 'a'])
+    assert_array_equal(X_inverse[3:, 0], ['b', 'a'])
+    assert np.isnan(X_inverse[2, 0])
+
+
+@pytest.mark.parametrize("X, X2, cats, cat_dtype", [
+    ((np.array([['a', np.nan]], dtype=object).T,
+      np.array([['a', 'b']], dtype=object).T,
+     [np.array(['a', np.nan, 'd'], dtype=object)], np.object_)),
+    ((np.array([['a', np.nan]], dtype=object).T,
+      np.array([['a', 'b']], dtype=object).T,
+     [np.array(['a', np.nan, 'd'], dtype=object)], np.object_)),
+    ((np.array([[2.0, np.nan]], dtype=np.float64).T,
+      np.array([[3.0]], dtype=np.float64).T,
+     [np.array([2.0, 4.0, np.nan])], np.float64)),
+    ], ids=['object-None-missing-value', 'object-nan-missing_value',
+            'numeric-missing-value'])
+def test_ordinal_encoder_specified_categories_missing_passthrough(
+        X, X2, cats, cat_dtype):
+    """Test ordinal encoder for specified categories."""
+    oe = OrdinalEncoder(categories=cats)
+    exp = np.array([[0.], [np.nan]])
+    assert_array_equal(oe.fit_transform(X), exp)
+    # manually specified categories should have same dtype as
+    # the data when coerced from lists
+    assert oe.categories_[0].dtype == cat_dtype
+
+    # when specifying categories manually, unknown categories should already
+    # raise when fitting
+    oe = OrdinalEncoder(categories=cats)
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        oe.fit(X2)
+
+
+@pytest.mark.parametrize("X, expected_X_trans, X_test", [
+    (np.array([[1.0, np.nan, 3.0]]).T,
+     np.array([[0.0, np.nan, 1.0]]).T,
+     np.array([[4.0]])),
+    (np.array([[1.0, 4.0, 3.0]]).T,
+     np.array([[0.0, 2.0, 1.0]]).T,
+     np.array([[np.nan]])),
+    (np.array([['c', np.nan, 'b']], dtype=object).T,
+     np.array([[1.0, np.nan, 0.0]]).T,
+     np.array([['d']], dtype=object)),
+    (np.array([['c', 'a', 'b']], dtype=object).T,
+     np.array([[2.0, 0.0, 1.0]]).T,
+     np.array([[np.nan]], dtype=object)),
+])
+def test_ordinal_encoder_handle_missing_and_unknown(
+        X, expected_X_trans, X_test
+):
+    """Test the interaction between missing values and handle_unknown"""
+
+    oe = OrdinalEncoder(handle_unknown="use_encoded_value",
+                        unknown_value=-1)
+
+    X_trans = oe.fit_transform(X)
+    assert_allclose(X_trans, expected_X_trans)
+
+    assert_allclose(oe.transform(X_test), [[-1.0]])
