@@ -12,6 +12,22 @@ Version 0.24.2
 Changelog
 ---------
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`test_ranking.test_binary_clf_curve_implicit_bytes_pos_label`
+  added for testing error raised when bytes encoded labels are used.
+  Removed the same from :func:`test_ranking.test_binary_clf_curve_implicit_pos_label`. 
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
+
+:mod:`sklearn.utils`
+......................
+
+- |Enhancement| Raise informative error message in :func:`type_of_target` when 
+  labels encoded as bytes are used. For testing the same,
+  :func:`test_multiclass.test_labels_in_bytes_format` is added.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
+
 :mod:`sklearn.compose`
 ......................
 
