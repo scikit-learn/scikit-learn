@@ -1220,8 +1220,7 @@ class NMF(TransformerMixin, BaseEstimator):
         self.regularization = regularization
 
     def _more_tags(self):
-        return {'requires_positive_X': True,
-                'no_validation': True}
+        return {'requires_positive_X': True}
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -1246,25 +1245,14 @@ class NMF(TransformerMixin, BaseEstimator):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        n_components = self.n_components
-        init = self.init
-        solver = self.solver
-        beta_loss = self.beta_loss
-        tol = self.tol
-        max_iter = self.max_iter
-        random_state = self.random_state
-        alpha = self.alpha
-        l1_ratio = self.l1_ratio
-        verbose = self.verbose
-        shuffle = self.shuffle
-        regularization = self.regularization
-        update_H = self.update_H
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32])
 
         X = check_array(X, accept_sparse=('csr', 'csc'),
                         dtype=[np.float64, np.float32])
         check_non_negative(X, "NMF (input X)")
-        beta_loss = _check_string_param(solver, regularization,
-                                        beta_loss, init)
+        beta_loss = _check_string_param(self.solver, self.regularization,
+                                        self.beta_loss, self.init)
 
         if X.min() == 0 and beta_loss <= 0:
             raise ValueError("When beta_loss <= 0 and X contains zeros, "
@@ -1272,66 +1260,71 @@ class NMF(TransformerMixin, BaseEstimator):
                              "to X, or use a positive beta_loss.")
 
         n_samples, n_features = X.shape
+        n_components = self.n_components
         if n_components is None:
             n_components = n_features
 
-        if not isinstance(n_components, numbers.Integral) or n_components <= 0:
+        if not isinstance(
+            n_components, numbers.Integral
+            ) or n_components <= 0:
             raise ValueError("Number of components must be a positive integer;"
                              " got (n_components=%r)" % n_components)
-        if not isinstance(max_iter, numbers.Integral) or max_iter < 0:
+        if not isinstance(
+            self.max_iter, numbers.Integral
+            ) or self.max_iter < 0:
             raise ValueError("Maximum number of iterations must be a positive "
-                             "integer; got (max_iter=%r)" % max_iter)
-        if not isinstance(tol, numbers.Number) or tol < 0:
+                             "integer; got (max_iter=%r)" % self.max_iter)
+        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % tol)
+                             "positive; got (tol=%r)" % self.tol)
 
         # check W and H, or initialize them
-        if init == 'custom' and update_H:
+        if self.init == 'custom' and self.update_H:
             _check_init(H, (n_components, n_features), "NMF (input H)")
             _check_init(W, (n_samples, n_components), "NMF (input W)")
             if H.dtype != X.dtype or W.dtype != X.dtype:
                 raise TypeError("H and W should have the same dtype as X. Got "
                                 "H.dtype = {} and W.dtype = {}."
                                 .format(H.dtype, W.dtype))
-        elif not update_H:
-            print(H)
+        elif not self.update_H:
             _check_init(H, (n_components, n_features), "NMF (input H)")
             if H.dtype != X.dtype:
                 raise TypeError("H should have the same dtype as X. Got "
                                 "H.dtype = {}.".format(H.dtype))
             # 'mu' solver should not be initialized by zeros
-            if solver == 'mu':
+            if self.solver == 'mu':
                 avg = np.sqrt(X.mean() / n_components)
                 W = np.full((n_samples, n_components), avg, dtype=X.dtype)
             else:
                 W = np.zeros((n_samples, n_components), dtype=X.dtype)
         else:
-            W, H = _initialize_nmf(X, n_components, init=init,
-                                   random_state=random_state)
+            W, H = _initialize_nmf(X, n_components, init=self.init,
+                                   random_state=self.random_state)
 
         l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-            alpha, l1_ratio, regularization)
+            self.alpha, self.l1_ratio, self.regularization)
 
-        if solver == 'cd':
+        if self.solver == 'cd':
             W, H, n_iter = _fit_coordinate_descent(
-                X, W, H, tol, max_iter, l1_reg_W, l1_reg_H,
-                l2_reg_W, l2_reg_H, update_H=update_H,
-                verbose=verbose, shuffle=shuffle, random_state=random_state)
-        elif solver == 'mu':
+                X, W, H, self.tol, self.max_iter, l1_reg_W, l1_reg_H,
+                l2_reg_W, l2_reg_H, update_H=self.update_H,
+                verbose=self.verbose, shuffle=self.shuffle,
+                random_state=self.random_state)
+        elif self.solver == 'mu':
             W, H, n_iter = _fit_multiplicative_update(
-                X, W, H, beta_loss, max_iter, tol, l1_reg_W, l1_reg_H,
-                l2_reg_W, l2_reg_H, update_H, verbose
+                X, W, H, beta_loss, self.max_iter, self.tol, l1_reg_W, l1_reg_H,
+                l2_reg_W, l2_reg_H, self.update_H, self.verbose
             )
 
         else:
             raise ValueError("Invalid solver parameter '%s'." % solver)
 
-        if n_iter == max_iter and tol > 0:
+        if n_iter == self.max_iter and self.tol > 0:
             warnings.warn("Maximum number of iterations %d reached. Increase "
-                          "it to improve convergence." % max_iter,
+                          "it to improve convergence." % self.max_iter,
                           ConvergenceWarning)
 
-        self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
+        self.reconstruction_err_ = _beta_divergence(X, W, H, beta_loss,
                                                     square_root=True)
 
         self.n_components_ = H.shape[0]
