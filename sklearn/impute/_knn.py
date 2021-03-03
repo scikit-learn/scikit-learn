@@ -71,6 +71,10 @@ class KNNImputer(_BaseImputer):
         missing indicator even if there are missing values at transform/test
         time.
 
+    keep_missing_features : boolean, default=False
+        If true, features whose all values are missing during fit/train time
+        are not removed during transform/test time.
+
     Attributes
     ----------
     indicator_ : :class:`~sklearn.impute.MissingIndicator`
@@ -99,10 +103,11 @@ class KNNImputer(_BaseImputer):
     @_deprecate_positional_args
     def __init__(self, *, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean", copy=True,
-                 add_indicator=False):
+                 add_indicator=False, keep_missing_features=False):
         super().__init__(
             missing_values=missing_values,
-            add_indicator=add_indicator
+            add_indicator=add_indicator,
+            keep_missing_features=keep_missing_features
         )
         self.n_neighbors = n_neighbors
         self.weights = weights
@@ -219,14 +224,17 @@ class KNNImputer(_BaseImputer):
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
         valid_mask = ~np.all(mask_fit_X, axis=0)
-
         X_indicator = super()._transform_indicator(mask)
 
         # Removes columns where the training data is all nan
         if not np.any(mask):
             # No missing values in X
             # Remove columns where the training data is all nan
-            return X[:, valid_mask]
+            Xc = (
+                X
+                if self.keep_missing_features
+                else X[:, valid_mask])
+            return Xc
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -298,4 +306,8 @@ class KNNImputer(_BaseImputer):
             # process_chunk modifies X in place. No return value.
             pass
 
-        return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
+        Xc = (
+            X
+            if self.keep_missing_features
+            else X[:, valid_mask])
+        return super()._concatenate_indicator(Xc, X_indicator)

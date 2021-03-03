@@ -18,7 +18,7 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 
 from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
-from sklearn.impute import SimpleImputer, IterativeImputer
+from sklearn.impute import SimpleImputer, IterativeImputer, KNNImputer
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
 from sklearn.pipeline import Pipeline
@@ -1582,3 +1582,19 @@ def test_iterative_imputer_keep_missing_features(initial_strategy):
         assert array_with_nan_equal(X_ft[:, X_missing], np.nan).all()
     else:
         assert (X_ft[:, X_missing] == 0).all()
+
+
+def test_knn_imputer_keep_missing_features():
+    X = np.array([
+        [1, np.nan, 2],
+        [3, np.nan, np.nan]
+    ])
+    X_missing = np.array([1])
+
+    imputer = KNNImputer(keep_missing_features=True)
+    X_ft = imputer.fit_transform(X)
+    X_t = imputer.fit(X).transform(X)
+
+    assert array_with_nan_equal(X_ft, X_t).all()
+    assert X.shape == X_ft.shape
+    assert array_with_nan_equal(X_ft[:, X_missing], np.nan).all()
