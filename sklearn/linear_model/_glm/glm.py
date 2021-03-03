@@ -12,7 +12,6 @@ import numpy as np
 import scipy.optimize
 
 from ...base import BaseEstimator, RegressorMixin
-from ...utils import check_array, check_X_y
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ..._loss.glm_distribution import (
@@ -221,9 +220,9 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         family = self._family_instance
         link = self._link_instance
 
-        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
-                         dtype=[np.float64, np.float32],
-                         y_numeric=True, multi_output=False)
+        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr'],
+                                   dtype=[np.float64, np.float32],
+                                   y_numeric=True, multi_output=False)
 
         weights = _check_sample_weight(sample_weight, X)
 
@@ -311,9 +310,9 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=[np.float64, np.float32], ensure_2d=True,
-                        allow_nd=False)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                dtype=[np.float64, np.float32], ensure_2d=True,
+                                allow_nd=False, reset=False)
         return X @ self.coef_ + self.intercept_
 
     def predict(self, X):
@@ -390,6 +389,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
 class PoissonRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Poisson distribution.
+
+    This regressor uses the 'log' link function.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
@@ -472,6 +473,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
 class GammaRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
+
+    This regressor uses the 'log' link function.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
@@ -590,6 +593,10 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
 
+    fit_intercept : bool, default=True
+        Specifies if a constant (a.k.a. bias or intercept) should be
+        added to the linear predictor (X @ coef + intercept).
+
     link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
         `X @ coeff + intercept` to prediction `y_pred`. Option 'auto' sets
@@ -597,10 +604,6 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
         - 'identity' for Normal distribution
         - 'log' for Poisson,  Gamma and Inverse Gaussian distributions
-
-    fit_intercept : bool, default=True
-        Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
