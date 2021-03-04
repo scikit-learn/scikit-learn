@@ -1292,8 +1292,6 @@ class NMF(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
-        X = check_array(X, accept_sparse=('csr', 'csc'),
-                        dtype=[np.float64, np.float32])
         check_non_negative(X, "NMF (input X)")
         beta_loss = _check_string_param(self.solver, self.regularization,
                                         self.beta_loss, self.init)
@@ -1379,20 +1377,58 @@ class NMF(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
-                                dtype=[np.float64, np.float32],
-                                reset=False)
 
-        with config_context(assume_finite=True):
-            W, _, n_iter_ = non_negative_factorization(
-                X=X, W=None, H=self.components_,
-                n_components=self.n_components_,
-                init=self.init, update_H=False, solver=self.solver,
-                beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-                alpha=self.alpha, l1_ratio=self.l1_ratio,
-                regularization=self.regularization,
-                random_state=self.random_state,
-                verbose=self.verbose, shuffle=self.shuffle)
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32])
+        check_non_negative(X, "NMF (input X)")
+        beta_loss = _check_string_param(self.solver, self.regularization,
+                                        self.beta_loss, self.init)
+
+        if X.min() == 0 and beta_loss <= 0:
+            raise ValueError("When beta_loss <= 0 and X contains zeros, "
+                             "the solver may diverge. Please add small values "
+                             "to X, or use a positive beta_loss.")
+
+        n_samples, n_features = X.shape
+        n_components = self.n_components_
+
+        # check parameters
+        _check_params(n_components, self.max_iter, self.tol)
+
+        # initialize or check W and H
+        W, H = _check_w_h(X, None, self.components_, n_components, self.solver,
+                          self.init, self.random_state, False)
+                          
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
+            self.alpha, self.l1_ratio, self.regularization)
+
+        if self.solver == 'cd':
+            W, H, n_iter = _fit_coordinate_descent(
+                X, W, H, self.tol, self.max_iter, l1_reg_W, l1_reg_H,
+                l2_reg_W, l2_reg_H, update_H=False,
+                verbose=self.verbose, shuffle=self.shuffle,
+                random_state=self.random_state)
+        elif self.solver == 'mu':
+            W, H, n_iter = _fit_multiplicative_update(
+                X, W, H, beta_loss, self.max_iter, self.tol,
+                l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
+                False, self.verbose
+            )
+
+        else:
+            raise ValueError("Invalid solver parameter '%s'." % self.solver)
+
+        if n_iter == self.max_iter and self.tol > 0:
+            warnings.warn("Maximum number of iterations %d reached. Increase "
+                          "it to improve convergence." % self.max_iter,
+                          ConvergenceWarning)
+
+        self.reconstruction_err_ = _beta_divergence(X, W, H, beta_loss,
+                                                    square_root=True)
+
+        self.n_components_ = H.shape[0]
+        self.components_ = H
+        self.n_iter_ = n_iter
 
         return W
 
