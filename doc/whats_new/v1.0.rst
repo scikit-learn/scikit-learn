@@ -168,7 +168,7 @@ Changelog
 ..........................
 
 - |Enhancement| Improve :class:`neighbors.KDTree` worst-case time complexity
-  from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n \log n)` on sorted and
+  from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n)` on sorted and
   on duplicate inputs.
   :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
   :user:`Julien Jerphanion <jjerphan>`.
