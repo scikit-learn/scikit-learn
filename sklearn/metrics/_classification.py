@@ -1072,7 +1072,7 @@ def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
     modified with ``zero_division``.
 
-    Note that macro F1 (``average='macro'``) is not the harmonic mean of 
+    Note that macro F1 (``average='macro'``) is not the harmonic mean of
     average recall and precision, although some publications define it like
     that [2].
     """
