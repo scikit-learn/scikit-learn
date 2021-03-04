@@ -9,6 +9,7 @@ from copy import deepcopy
 import joblib
 
 from sklearn.base import is_classifier
+from sklearn.base import clone
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
@@ -1406,3 +1407,95 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
 
     assert_array_equal(sample_weight, sample_weight_1_25)
+
+
+@pytest.mark.parametrize("normalize", [True, False])
+def test_enet_ridge_consistency(normalize):
+    rng = np.random.RandomState(42)
+    X, y = make_regression(
+        n_samples=100,
+        n_features=300,
+        effective_rank=10,
+        n_informative=50,
+        random_state=rng,
+    )
+    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    # sw = 2 * np.ones(shape=X.shape[0])
+    alpha = 1.
+    common_params = dict(
+        normalize=normalize,
+        tol=1e-12,
+    )
+    ridge = Ridge(alpha=alpha, **common_params).fit(
+        X, y, sample_weight=sw
+    )
+    enet = ElasticNet(alpha=alpha / sw.sum(), l1_ratio=0, **common_params).fit(
+        X, y, sample_weight=sw
+    )
+    assert_allclose(ridge.coef_, enet.coef_)
+    assert_allclose(ridge.intercept_, enet.intercept_)
+
+
+@pytest.mark.parametrize("normalize", [True, False])
+@pytest.mark.parametrize(
+    "estimator", [
+        Lasso(alpha=1.),
+        ElasticNet(alpha=1., l1_ratio=0.1),
+    ]
+)
+def test_sample_weight_invariance(normalize, estimator):
+    rng = np.random.RandomState(42)
+    X, y = make_regression(
+        n_samples=100,
+        n_features=300,
+        effective_rank=10,
+        n_informative=50,
+        random_state=rng,
+    )
+    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    # sw = 2 * np.ones(shape=X.shape[0])
+    params = dict(
+        normalize=normalize,
+        tol=1e-12,
+    )
+
+    # Check that setting some weights to 0 is equivalent to trimming the
+    # samples:
+    cutoff = X.shape[0] // 3
+    sw_with_null = sw.copy()
+    sw_with_null[:cutoff] = 0.
+    X_trimmed, y_trimmed = X[cutoff:, :], y[cutoff:]
+    sw_trimmed = sw[cutoff:]
+
+    reg_trimmed = clone(estimator).set_params(**params).fit(
+        X_trimmed, y_trimmed, sample_weight=sw_trimmed)
+    reg_null_weighted = clone(estimator).set_params(**params).fit(
+        X, y, sample_weight=sw_with_null)
+    np.testing.assert_allclose(
+        reg_null_weighted.coef_,
+        reg_trimmed.coef_,
+    )
+    np.testing.assert_allclose(
+        reg_null_weighted.intercept_,
+        reg_trimmed.intercept_,
+    )
+
+    # Check that duplicating the training dataset is equivalent to multiplying
+    # the weights by 2:
+    X_dup = np.concatenate([X, X], axis=0)
+    y_dup = np.concatenate([y, y], axis=0)
+    sw_dup = np.concatenate([sw, sw], axis=0)
+
+    reg_2sw = clone(estimator).set_params(**params).fit(
+        X, y, sample_weight=2 * sw)
+    reg_dup = clone(estimator).set_params(**params).fit(
+        X_dup, y_dup, sample_weight=sw_dup)
+
+    np.testing.assert_allclose(
+        reg_2sw.coef_,
+        reg_dup.coef_,
+    )
+    np.testing.assert_allclose(
+        reg_2sw.intercept_,
+        reg_dup.intercept_,
+    )
