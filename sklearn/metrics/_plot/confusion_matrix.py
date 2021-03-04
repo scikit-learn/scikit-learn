@@ -77,6 +77,12 @@ class ConfusionMatrixDisplay:
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
 
+    def set_fontsize(self, font_size=None):
+        self.font_size = font_size
+
+    def get_fontsize(self):
+        return self.font_size
+
     @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None,
@@ -142,10 +148,16 @@ class ConfusionMatrixDisplay:
                 else:
                     text_cm = format(cm[i, j], values_format)
 
-                self.text_[i, j] = ax.text(
-                    j, i, text_cm,
-                    ha="center", va="center",
-                    color=color)
+                if(self.font_size):
+                    self.text_[i, j] = ax.text(
+                        j, i, text_cm,
+                        ha="center", va="center",
+                        color=color, fontsize=self.font_size)
+                else:
+                    self.text_[i, j] = ax.text(
+                        j, i, text_cm,
+                        ha="center", va="center",
+                        color=color)
 
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
@@ -441,7 +453,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
-                          cmap='viridis', ax=None, colorbar=True):
+                          cmap='viridis', ax=None, colorbar=True,font_size=None):
     """Plot Confusion Matrix.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -554,6 +566,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
                                   display_labels=display_labels)
+
+    disp.set_fontsize(font_size)
     return disp.plot(include_values=include_values,
                      cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
                      values_format=values_format, colorbar=colorbar)
