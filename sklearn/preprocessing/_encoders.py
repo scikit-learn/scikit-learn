@@ -645,17 +645,17 @@ class OneHotEncoder(_BaseEncoder):
             return cats
 
         # infrequent is enabled
-        infreq_idx = self.infrequent_indices_[i]
-        if infreq_idx is None:
+        infreq_map = self._default_to_infrequent_mappings[i]
+        if infreq_map is None:
             return cats
 
-        frequent_indices = np.setdiff1d(np.arange(len(cats)), infreq_idx)
+        frequent_mask = infreq_map < infreq_map.max()
 
         if cats.dtype.kind in 'US' and 'infrequent' in cats:
             infrequent_cat = 'infrequent_sklearn'
         else:
             infrequent_cat = 'infrequent'
-        return np.concatenate((cats[frequent_indices],
+        return np.concatenate((cats[frequent_mask],
                                np.array([infrequent_cat], dtype=object)))
 
     def _compute_n_features_outs(self):
