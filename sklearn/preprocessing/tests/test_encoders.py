@@ -75,7 +75,7 @@ def test_one_hot_encoder_handle_unknown(handle_unknown):
 
     # Raise error if handle_unknown is neither ignore or error.
     oh = OneHotEncoder(handle_unknown='42')
-    with pytest.raises(ValueError, match='handle_unknown should be either'):
+    with pytest.raises(ValueError, match='handle_unknown should be one of'):
         oh.fit(X)
 
 
@@ -1248,7 +1248,7 @@ def test_ohe_ignore_deprecated():
     ohe = OneHotEncoder(handle_unknown='ignore')
 
     msg = (r"handle_unknown='ignore' is deprecated in favor of 'auto' in "
-           r"version 0\.24 and will be removed in version 0\.26")
+           r"version 1\.0 and will be removed in version 1\.2")
     with pytest.warns(FutureWarning, match=msg):
         ohe.fit(X_train)
 

@@ -262,21 +262,21 @@ class OneHotEncoder(_BaseEncoder):
             `'auto'` was added to automatically handle unknown categories
             and infrequent categories.
 
-        .. deprecated:: 0.24
+        .. deprecated:: 1.0
             `'ignore'` is deprecated in favor of `'auto'`. This option will be
-            removed in 0.26.
+            removed in 1.2.
 
     min_frequency : int or float, default=1
-        Specifies the minimum frequency for a category not to be considered
-        infrequent.
+        Specifies the minimum frequency below which a category will be
+        considered infrequent.
 
-            1. If int, categories with a smaller cardinality will be considered
-            infrequent.
+        - If `int`, categories with a smaller cardinality will be considered
+          infrequent.
 
-            2. If float, categories with a smaller cardinality than
-            `min_frequency * n_samples`  will be considered infrequent.
+        - If `float`, categories with a smaller cardinality than
+          `min_frequency * n_samples`  will be considered infrequent.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
     max_categories : int, default=None
         Specifies an upper limit to the number of output features for each
@@ -285,7 +285,7 @@ class OneHotEncoder(_BaseEncoder):
         categories along with the frequent categories. If `None`, there is no
         limit to the number of output features.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
     Attributes
     ----------
@@ -385,7 +385,7 @@ class OneHotEncoder(_BaseEncoder):
     def _validate_keywords(self):
 
         if self.handle_unknown not in ('error', 'ignore', 'auto'):
-            msg = (f"handle_unknown should be either 'error', 'ignore', 'auto'"
+            msg = (f"handle_unknown should be one of 'error', 'ignore', 'auto'"
                    f"got {self.handle_unknown}.")
             raise ValueError(msg)
         # If we have both dropped columns and ignored unknown
@@ -429,8 +429,8 @@ class OneHotEncoder(_BaseEncoder):
         # TODO: Remove when handle_unknown='ignore' is deprecated
         if self.handle_unknown == 'ignore':
             warnings.warn("handle_unknown='ignore' is deprecated in favor "
-                          "of 'auto' in version 0.24 and will be removed in "
-                          "version 0.26", FutureWarning)
+                          "of 'auto' in version 1.0 and will be removed in "
+                          "version 1.2", FutureWarning)
             if self._infrequent_enabled:
                 raise ValueError("infrequent categories are only supported "
                                  "when handle_unknown is 'error' or 'auto'")
@@ -537,7 +537,7 @@ class OneHotEncoder(_BaseEncoder):
                              "infrequent, try decreasing min_frequency")
         return output if output.size > 0 else None
 
-    def _fit_infrequent_category_mapping(self, fit_results):
+    def _fit_infrequent_category_mapping(self, n_samples, category_counts):
         """Fit infrequent categories.
 
         Defines the private attribute: `_default_to_infrequent_mappings`. For
@@ -546,35 +546,37 @@ class OneHotEncoder(_BaseEncoder):
         infrequent categories. If `_default_to_infrequent_mappings[i]` is None,
         there were no infrequent categories in the training set.
 
+        For example if categories 0, 2 and 4 were frequent, while categories
+        1, 3, 5 were infrequent for feature 7, then these categories are mapped
+        to a single output:
+        `_default_to_infrequent_mappings[7] = array([0, 3, 1, 3, 2, 3])`
+
         Parameters
         ----------
-        fit_results : dict
-            return values from `super()._fit()`
+        n_samples : int
+            Number of samples in training set.
+        category_counts: list of ndarray
+            List of counts corresponding where `category_counts[i]` are the
+            counts for each category in `self.categories_[i]`.
         """
-        if not self._infrequent_enabled:
-            return
-
-        n_samples = fit_results["n_samples"]
-        category_counts = fit_results["category_counts"]
-
         self.infrequent_indices_ = [
             self._identify_infrequent(category_count, n_samples, col_idx)
             for col_idx, category_count in enumerate(category_counts)
         ]
 
         # compute mapping from default mapping to infrequent mapping
-        default_to_infrequent_mappings = []
+        self._default_to_infrequent_mappings = []
 
         for cats, infreq_idx in zip(self.categories_,
                                     self.infrequent_indices_):
             # no infrequent categories
             if infreq_idx is None:
-                default_to_infrequent_mappings.append(None)
+                self._default_to_infrequent_mappings.append(None)
                 continue
 
             n_cats = len(cats)
             # infrequent indices exist
-            mapping = np.empty(n_cats, dtype=int)
+            mapping = np.empty(n_cats, dtype=np.int64)
             n_infrequent_cats = infreq_idx.size
 
             # infrequent categories are mapped to the last element.
@@ -584,34 +586,40 @@ class OneHotEncoder(_BaseEncoder):
             frequent_indices = np.setdiff1d(np.arange(n_cats), infreq_idx)
             mapping[frequent_indices] = np.arange(n_frequent_cats)
 
-            default_to_infrequent_mappings.append(mapping)
-
-        self._default_to_infrequent_mappings = default_to_infrequent_mappings
+            self._default_to_infrequent_mappings.append(mapping)
 
     def _map_to_infrequent_categories(self, X_int, X_mask):
         """Map categories to infrequent categories. This modifies X_int
-        in-place.
+        in-place. Values that were invalid based on `X_mask` are mapped to
+        the infrequent category if there was an infrequent category for that
+        feature.
 
         Parameters
         ----------
         X_int: ndarray of shape (n_samples, n_features)
             Integer encoded categories.
+
+        X_mask: ndarray of shape (n_samples, n_features)
+            Bool mask for valid values in `X_int`.
         """
         if not self._infrequent_enabled:
             return
 
-        n_features = X_int.shape[1]
-        for col_idx in range(n_features):
+        for col_idx in range(X_int.shape[1]):
             infrequent_idx = self.infrequent_indices_[col_idx]
             if infrequent_idx is None:
                 continue
 
             X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
             if self.handle_unknown == 'auto':
-                # unknown values will be mapped to infrequent in the next for
-                # loop
+                # All the unknown values are now mapped to the
+                # infrequent_idx[0], which makes the unknown values valid
+                # This is needed in `transform` when the encoding is formed
+                # using `X_mask`.
                 X_mask[:, col_idx] = True
 
+        # Remaps encoding in `X_int` where the infrequent categories are
+        # grouped together.
         for i, mapping in enumerate(self._default_to_infrequent_mappings):
             if mapping is None:
                 continue
@@ -647,16 +655,11 @@ class OneHotEncoder(_BaseEncoder):
             infrequent_cat = 'infrequent_sklearn'
         else:
             infrequent_cat = 'infrequent'
-        return np.r_[cats[frequent_indices],
-                     np.array([infrequent_cat], dtype=object)]
+        return np.concatenate((cats[frequent_indices],
+                               np.array([infrequent_cat], dtype=object)))
 
-    def _get_transformed_categories(self):
-        """Transformed categories."""
-        return [self._compute_transformed_categories(i)
-                for i in range(len(self.categories_))]
-
-    def _get_n_transformed_features(self):
-        """Number of transformed features."""
+    def _compute_n_features_outs(self):
+        """Compute the n_features_out for each input feature."""
         if self.drop_idx_ is not None:
             output = []
             for drop_idx, cats in zip(self.drop_idx_, self.categories_):
@@ -672,7 +675,8 @@ class OneHotEncoder(_BaseEncoder):
         if not self._infrequent_enabled:
             return output
 
-        # infrequent is enabled
+        # infrequent is enabled, the number of features out are reduced
+        # because the infrequent categories are grouped together
         for i, infreq_idx in enumerate(self.infrequent_indices_):
             if infreq_idx is None:
                 continue
@@ -701,7 +705,9 @@ class OneHotEncoder(_BaseEncoder):
         fit_results = self._fit(X, handle_unknown=self.handle_unknown,
                                 force_all_finite='allow-nan',
                                 return_counts=self._infrequent_enabled)
-        self._fit_infrequent_category_mapping(fit_results)
+        if self._infrequent_enabled:
+            self._fit_infrequent_category_mapping(
+                fit_results["n_samples"], fit_results["category_counts"])
         self.drop_idx_ = self._compute_drop_idx()
         return self
 
@@ -730,7 +736,9 @@ class OneHotEncoder(_BaseEncoder):
 
     def transform(self, X):
         """
-        Transform X using one-hot encoding.
+        Transform X using one-hot encoding. If there are infrequent categories
+        for a feature, the infrequent categories will be grouped into a single
+        category.
 
         Parameters
         ----------
@@ -765,7 +773,7 @@ class OneHotEncoder(_BaseEncoder):
             X_int[X_int > to_drop] -= 1
             X_mask &= keep_cells
 
-        n_values = self._get_n_transformed_features()
+        n_values = self._compute_n_features_outs()
 
         mask = X_mask.ravel()
         feature_indices = np.cumsum([0] + n_values)
@@ -812,7 +820,8 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
-        transformed_features = self._get_transformed_categories()
+        transformed_features = [self._compute_transformed_categories(i)
+                                for i, _ in enumerate(self.categories_)]
         n_features_out = sum(cats.shape[0] for cats in transformed_features)
 
         # validate shape of passed X
@@ -905,7 +914,8 @@ class OneHotEncoder(_BaseEncoder):
             Array of feature names.
         """
         check_is_fitted(self)
-        cats = self._get_transformed_categories()
+        cats = [self._compute_transformed_categories(i)
+                for i, _ in enumerate(self.categories_)]
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
         elif len(input_features) != len(cats):
