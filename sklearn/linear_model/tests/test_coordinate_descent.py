@@ -454,7 +454,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     # linear estimator in a pipeline with a StandardScaler, normalize=False
     linear_regressor = estimator(normalize=False, fit_intercept=True, **params)
-    _scale_alpha_inplace(linear_regressor, X_train.shape[0])  # rescale alpha
+
+    # rescale alpha
+    _scale_alpha_inplace(linear_regressor, sample_weight.sum())
     reg_with_scaler = Pipeline([
         ("scaler", StandardScaler(with_mean=with_mean)),
         ("linear_regressor", linear_regressor)
@@ -471,7 +473,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # sense that they predict exactly the same outcome.
     y_pred_normalize = reg_with_normalize.predict(X_test)
     y_pred_scaler = reg_with_scaler.predict(X_test)
-    assert_allclose(y_pred_normalize,  y_pred_scaler)
+    assert_allclose(y_pred_normalize, y_pred_scaler)
+
     # Check intercept computation when normalize is True
     y_train_mean = np.average(y_train, weights=sample_weight)
     if is_sparse:

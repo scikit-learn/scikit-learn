@@ -252,7 +252,10 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             # the np.sqrt. Otherwise constant features cannot be detected with
             # sample_weights.
             constant_mask = X_var < 10 * np.finfo(X.dtype).eps
-            X_var *= X.shape[0]
+            if sample_weight is None:
+                X_var *= X.shape[0]
+            else:
+                X_var *= sample_weight.sum()
             X_scale = np.sqrt(X_var, out=X_var)
             X_scale[constant_mask] = 1.
             if sp.issparse(X):
