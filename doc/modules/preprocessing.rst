@@ -543,8 +543,9 @@ features, it can often be better to specify ``handle_unknown='auto'`` instead
 of setting the ``categories`` manually as above. When
 ``handle_unknown='auto'`` is specified and unknown categories are encountered
 during transform, no error will be raised but the resulting one-hot encoded
-columns for this feature will be all zeros
-(``handle_unknown='auto'`` is only supported for one-hot encoding)::
+columns for this feature will be all zeros or considered as an infrequent
+category if enabled. (``handle_unknown='auto'`` is only supported for one-hot
+encoding)::
 
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='auto')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
