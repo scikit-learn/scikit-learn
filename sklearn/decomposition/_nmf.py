@@ -248,6 +248,23 @@ def _beta_loss_to_float(beta_loss):
     return beta_loss
 
 
+def _check_params(n_components, max_iter, tol):
+        if not isinstance(
+            n_components, numbers.Integral
+        ) or n_components <= 0:
+            raise ValueError("Number of components must be a positive integer;"
+                             " got (n_components=%r)" % n_components)
+        if not isinstance(
+            max_iter, numbers.Integral
+        ) or max_iter < 0:
+            raise ValueError("Maximum number of iterations must be a positive "
+                             "integer; got (max_iter=%r)" % max_iter)
+        if not isinstance(tol, numbers.Number) or tol < 0:
+            raise ValueError("Tolerance for stopping criteria must be "
+                             "positive; got (tol=%r)" % tol)
+
+
+
 def _initialize_nmf(X, n_components, init='warn', eps=1e-6,
                     random_state=None):
     """Algorithms for NMF initialization.
@@ -398,6 +415,33 @@ def _initialize_nmf(X, n_components, init='warn', eps=1e-6,
             'Invalid init parameter: got %r instead of one of %r' %
             (init, (None, 'random', 'nndsvd', 'nndsvda', 'nndsvdar')))
 
+    return W, H
+
+
+def _check_w_h(X, W, H, n_components, solver, init, random_state, update_H):
+    # check W and H, or initialize them
+    n_samples, n_features = X.shape
+    if init == 'custom' and update_H:
+        _check_init(H, (n_components, n_features), "NMF (input H)")
+        _check_init(W, (n_samples, n_components), "NMF (input W)")
+        if H.dtype != X.dtype or W.dtype != X.dtype:
+            raise TypeError("H and W should have the same dtype as X. Got "
+                            "H.dtype = {} and W.dtype = {}."
+                            .format(H.dtype, W.dtype))
+    elif not update_H:
+        _check_init(H, (n_components, n_features), "NMF (input H)")
+        if H.dtype != X.dtype:
+            raise TypeError("H should have the same dtype as X. Got "
+                            "H.dtype = {}.".format(H.dtype))
+        # 'mu' solver should not be initialized by zeros
+        if solver == 'mu':
+            avg = np.sqrt(X.mean() / n_components)
+            W = np.full((n_samples, n_components), avg, dtype=X.dtype)
+        else:
+            W = np.zeros((n_samples, n_components), dtype=X.dtype)
+    else:
+        W, H = _initialize_nmf(X, n_components, init=init,
+                               random_state=random_state)
     return W, H
 
 
@@ -1264,43 +1308,13 @@ class NMF(TransformerMixin, BaseEstimator):
         if n_components is None:
             n_components = n_features
 
-        if not isinstance(
-            n_components, numbers.Integral
-        ) or n_components <= 0:
-            raise ValueError("Number of components must be a positive integer;"
-                             " got (n_components=%r)" % n_components)
-        if not isinstance(
-            self.max_iter, numbers.Integral
-        ) or self.max_iter < 0:
-            raise ValueError("Maximum number of iterations must be a positive "
-                             "integer; got (max_iter=%r)" % self.max_iter)
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
-            raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % self.tol)
+        # check parameters
+        _check_params(n_components, self.max_iter, self.tol)
 
-        # check W and H, or initialize them
-        if self.init == 'custom' and self.update_H:
-            _check_init(H, (n_components, n_features), "NMF (input H)")
-            _check_init(W, (n_samples, n_components), "NMF (input W)")
-            if H.dtype != X.dtype or W.dtype != X.dtype:
-                raise TypeError("H and W should have the same dtype as X. Got "
-                                "H.dtype = {} and W.dtype = {}."
-                                .format(H.dtype, W.dtype))
-        elif not self.update_H:
-            _check_init(H, (n_components, n_features), "NMF (input H)")
-            if H.dtype != X.dtype:
-                raise TypeError("H should have the same dtype as X. Got "
-                                "H.dtype = {}.".format(H.dtype))
-            # 'mu' solver should not be initialized by zeros
-            if self.solver == 'mu':
-                avg = np.sqrt(X.mean() / n_components)
-                W = np.full((n_samples, n_components), avg, dtype=X.dtype)
-            else:
-                W = np.zeros((n_samples, n_components), dtype=X.dtype)
-        else:
-            W, H = _initialize_nmf(X, n_components, init=self.init,
-                                   random_state=self.random_state)
-
+        # initialize or check W and H
+        W, H = _check_w_h(X, W, H, n_components, self.solver, self.init,
+                          self.random_state, self.update_H)
+                          
         l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
             self.alpha, self.l1_ratio, self.regularization)
 
