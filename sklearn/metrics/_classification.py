@@ -1072,10 +1072,9 @@ def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
     modified with ``zero_division``.
 
-    When using ``average=macro`` the arithmetic mean over (class-wise)
-    harmonic means of precision and recall is computed, which is preferable
-    to the (alternatively used) harmonic mean over macro precision
-    and macro recall [2].
+    Note that macro F1 (``average='macro'``) is not the harmonic mean of 
+    average recall and precision, although some publications define it like
+    that [2].
     """
     return fbeta_score(y_true, y_pred, beta=1, labels=labels,
                        pos_label=pos_label, average=average,
