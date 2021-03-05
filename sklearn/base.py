@@ -21,6 +21,7 @@ from .utils._tags import (
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
+from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
 
@@ -349,7 +350,11 @@ class BaseEstimator:
                call to `partial_fit`. All other methods that validate `X`
                should set `reset=False`.
         """
-        n_features = X.shape[1]
+        try:
+            n_features = _num_features(X)
+        except TypeError:
+            # If the number of features is not defined skip this check
+            return
 
         if reset:
             self.n_features_in_ = n_features
@@ -433,8 +438,7 @@ class BaseEstimator:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
 
-        if check_params.get('ensure_2d', True):
-            self._check_n_features(X, reset=reset)
+        self._check_n_features(X, reset=reset)
 
         return out
 

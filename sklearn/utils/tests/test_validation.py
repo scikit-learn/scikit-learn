@@ -18,6 +18,7 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _convert_container
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
@@ -44,6 +45,7 @@ from sklearn.utils.validation import (
     _deprecate_positional_args,
     _check_sample_weight,
     _allclose_dense_sparse,
+    _num_features,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
 from sklearn.utils.fixes import parse_version
@@ -1324,3 +1326,34 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
                                                      dtype=ntype2)})
     arr = check_array(df, accept_sparse=['csr', 'csc'])
     assert np.issubdtype(arr.dtype, expected_subtype)
+
+
+@pytest.mark.parametrize("constructor_name", [
+    "list", "tuple", "array", "dataframe", "sparse_csr", "sparse_csc"
+])
+def test_num_features(constructor_name):
+    """Check _num_features for array-likes."""
+    X = [[1, 2, 3], [4, 5, 6]]
+    X = _convert_container(X, constructor_name)
+    assert _num_features(X) == 3
+
+
+@pytest.mark.parametrize("X", [
+    [1, 2, 3], ["a", "b", "c"], [False, True, False], [1.0, 3.4, 4.0]],
+                         ids=["int", "str", "bool", "float"])
+@pytest.mark.parametrize("constructor_name", [
+    "list", "tuple", "array", "series"
+])
+def test_num_features_errors_1d_containers(X, constructor_name):
+    msg = "Unable to find the number of features from X"
+    X = _convert_container(X, constructor_name)
+    with pytest.raises(TypeError, match=msg):
+        _num_features(X)
+
+
+@pytest.mark.parametrize("X", [1, 'b', False, 3.0],
+                         ids=["int", "str", "bool", "float"])
+def test_num_features_errors_scalars(X):
+    msg = "Unable to find the number of features from X"
+    with pytest.raises(TypeError, match=msg):
+        _num_features(X)

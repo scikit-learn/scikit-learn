@@ -184,6 +184,43 @@ def _is_arraylike(x):
             hasattr(x, '__array__'))
 
 
+def _num_features(X):
+    """Return the number of features in an array-like X.
+
+    Parameters
+    ----------
+    X : array-like
+        array-like to get the number of features.
+
+    Returns
+    -------
+    features : int
+        Number of features
+    """
+    message = "Unable to find the number of features from X"
+    if not hasattr(X, '__len__') and not hasattr(X, 'shape'):
+        if not hasattr(X, '__array__'):
+            raise TypeError(message)
+        X = np.asarray(X)
+
+    if hasattr(X, 'shape') and X.shape is not None:
+        if len(X.shape) <= 1:
+            raise TypeError(message)
+        if isinstance(X.shape[1], numbers.Integral):
+            return X.shape[1]
+
+    first_elem = X[0]
+
+    # Do not consider an array-like of strings to be a 2D array
+    if isinstance(first_elem, (str, bytes)):
+        raise TypeError(message)
+
+    try:
+        return len(first_elem)
+    except Exception as err:
+        raise TypeError(message) from err
+
+
 def _num_samples(x):
     """Return number of samples in array-like x."""
     message = 'Expected sequence or array-like, got %s' % type(x)
