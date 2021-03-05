@@ -734,16 +734,13 @@ def _generate_sparse_matrix(X_csr):
 
 
 def check_estimator_sparse_data(name, estimator_orig):
-    rng = np.random.RandomState(0)
-    X = rng.rand(40, 10)
-    X[X < .8] = 0
-    X = _pairwise_estimator_convert_X(X, estimator_orig)
-    X_csr = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(int)
+    X, X_csr, y = _toy_sparse_dataset(estimator_orig,
+                                      n_samples=40,
+                                      n_features=10)
+
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
     tags = _safe_tags(estimator_orig)
     for matrix_format, X in _generate_sparse_matrix(X_csr):
         # fit and predict
@@ -774,9 +771,6 @@ def check_estimator_sparse_data(name, estimator_orig):
                 pred = estimator.predict(X)
                 if tags['multioutput_only']:
                     assert pred.shape == (X.shape[0], 1)
-                elif tags['multioutput']:
-                    assert (pred.shape == (X.shape[0], 1) or
-                            pred.shape == (X.shape[0],))
                 else:
                     assert pred.shape == (X.shape[0],)
             for method in ["predict_proba", "decision_function"]:
@@ -2913,37 +2907,9 @@ def check_classifiers_regression_target(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig,
                                  strict_mode=True):
-    rng = np.random.RandomState(42)
+    X, X_csr, y = _toy_sparse_dataset(estimator_orig)
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
-    if is_regressor(estimator_orig):
-        n_samples = 10
-        n_features = 2
-        # we build float64 precision numbers from low precision ones:
-        # this way, fewer numbers get dropped by the
-        # machine precision in multiplications/additions, so if those
-        # are done in a different order btw sparse/dense, the results
-        # are more likely to still be the same
-        X = sparse.random(n_samples, n_features, density=0.8,
-                          random_state=rng).A.astype(np.float16)
-        X = X.astype(np.float)
-        X = X[~np.all(X == 0, axis=1)]  # we remove null rows
-        assert len(np.where(X == 0)[0]) > 0  # we should have sparsity
-        assert X.shape[0] > 5  # we mustn't have very few samples
-        n_samples = X.shape[0]
-        y = X.dot(np.array([0.1, -0.2])) + 0.01 * rng.randn(n_samples)
-        y = y.astype(np.float16).astype(np.float)
-        # we check that limiting the precision keeps some noise
-        assert np.all(X.dot(np.array([0.1, -0.2])) != y)
-    else:
-        tags = estimator_orig._get_tags()
-        centers = 2 if tags["binary_only"] else None
-        X, y = make_blobs(n_samples=10, n_features=2, random_state=rng,
-                          cluster_std=0.5, centers=centers)
-        X = X.astype(np.float16).astype(np.float)
-    X = _enforce_estimator_tags_x(estimator_orig, X)
-    X_csr = sparse.csr_matrix(X)
-    y = _enforce_estimator_tags_y(estimator_orig, y)
 
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X_sp = X_csr.asformat(sparse_format)
@@ -2978,6 +2944,41 @@ def check_estimator_sparse_dense(name, estimator_orig,
                 score = estimator.score(X_converted, y)
                 score_sp = estimator_sp.score(X_sp_converted, y)
                 assert_allclose(score, score_sp)
+
+
+def _toy_sparse_dataset(estimator, n_samples=10, n_features=2):
+    rng = np.random.RandomState(42)
+    assert n_samples >= 2
+    # we build float64 precision numbers from low precision ones:
+    # this way, fewer numbers get dropped by the
+    # machine precision in multiplications/additions, so if those
+    # are done in a different order btw sparse/dense, the results
+    # are more likely to still be the same
+    X = sparse.random(n_samples, n_features, density=0.8,
+                      random_state=rng,
+                      data_rvs=rng.randn).A.astype(np.float16)
+    X = X.astype(np.float)
+    X = X[~np.all(X == 0, axis=1)]  # we remove null rows
+    assert len(np.where(X == 0)[0]) > 0  # we should have sparsity
+    assert X.shape[0] > 5  # we mustn't have very few samples
+    n_samples = X.shape[0]
+    sep = rng.randn(n_features)
+    if is_regressor(estimator):
+        y = X.dot(sep) + 0.01 * rng.randn(n_samples)
+        y = y.astype(np.float16).astype(np.float)
+        # we check that limiting the precision keeps some noise:
+        assert np.all(X.dot(sep) != y)
+    else:
+        y = X.dot(np.array(sep)) > 0
+        # we switch the label of the second point closer to
+        # the frontier, to simulate a slight noise
+        undecided = np.argsort(np.abs(X.dot(np.array(sep))))[1]
+        y[undecided] = 1 - y[undecided]
+        assert not np.all((X.dot(sep) > 0) == y)
+    X = _enforce_estimator_tags_x(estimator, X)
+    X_csr = sparse.csr_matrix(X)
+    y = _enforce_estimator_tags_y(estimator, y)
+    return X, X_csr, y
 
 
 @ignore_warnings(category=FutureWarning)
