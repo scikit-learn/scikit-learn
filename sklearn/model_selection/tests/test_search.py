@@ -14,8 +14,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils._testing import (
-    assert_warns,
-    assert_warns_message,
     assert_raise_message,
     assert_array_equal,
     assert_array_almost_equal,
@@ -1433,7 +1431,12 @@ def test_grid_search_failing_classifier():
     # error in this test.
     gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
                       refit=False, error_score=0.0)
-    assert_warns(FitFailedWarning, gs.fit, X, y)
+    warning_message = (
+        "Estimator fit failed. The score on this train-test partition "
+        "for these parameters will be set to 0.0.*."
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        gs.fit(X, y)
     n_candidates = len(gs.cv_results_['params'])
 
     # Ensure that grid scores were set to zero as required for those fits
@@ -1449,7 +1452,12 @@ def test_grid_search_failing_classifier():
 
     gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
                       refit=False, error_score=float('nan'))
-    assert_warns(FitFailedWarning, gs.fit, X, y)
+    warning_message = (
+        "Estimator fit failed. The score on this train-test partition "
+        "for these parameters will be set to nan."
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        gs.fit(X, y)
     n_candidates = len(gs.cv_results_['params'])
     assert all(np.all(np.isnan(get_cand_scores(cand_i)))
                for cand_i in range(n_candidates)
@@ -1492,8 +1500,8 @@ def test_parameters_sampler_replacement():
                         'than n_iter=%d. Running %d iterations. For '
                         'exhaustive searches, use GridSearchCV.'
                         % (grid_size, n_iter, grid_size))
-    assert_warns_message(UserWarning, expected_warning,
-                         list, sampler)
+    with pytest.warns(UserWarning, match=expected_warning):
+        list(sampler)
 
     # degenerates to GridSearchCV if n_iter the same as grid_size
     sampler = ParameterSampler(params, n_iter=8)
