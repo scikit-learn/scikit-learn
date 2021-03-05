@@ -2964,7 +2964,7 @@ def _toy_sparse_dataset(estimator, n_samples=10, n_features=2):
     sep = rng.randn(n_features)
     if is_regressor(estimator):
         y = X.dot(sep) + 0.01 * rng.randn(n_samples)
-        y = y.astype(np.float16).astype(np.float)
+        y = y.astype(np.float16).astype(float)
         # we check that limiting the precision keeps some noise:
         assert np.all(X.dot(sep) != y)
     else:
