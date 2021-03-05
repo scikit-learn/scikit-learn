@@ -493,8 +493,6 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_ridge_loo_cv_asym_scoring():
     # checking on asymmetric scoring
     scoring = 'explained_variance'
@@ -507,12 +505,10 @@ def test_ridge_loo_cv_asym_scoring():
 
     alphas = [1e-3, .1, 1., 10., 1e3]
     loo_ridge = RidgeCV(cv=n_samples, fit_intercept=True,
-                        alphas=alphas, scoring=scoring,
-                        normalize=True)
+                        alphas=alphas, scoring=scoring)
 
     gcv_ridge = RidgeCV(fit_intercept=True,
-                        alphas=alphas, scoring=scoring,
-                        normalize=True)
+                        alphas=alphas, scoring=scoring)
 
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
