@@ -207,6 +207,16 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| Improve common tests in `estimator_checks` to ensure that
+  estimators give the same result when given sparse and dense inputs.
+  :pr:`13246` by :user:`Maniteja Nandana <maniteja123>`,
+  :user:`William de Vazelhes <wdevazelhes>`,
+  :user:`Alexandre Gramfort <agramfort>`, and
+  :user:`Jérôme Dockès <jeromedockes>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
