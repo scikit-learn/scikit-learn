@@ -956,9 +956,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 'preserves_dtype': [np.float64, np.float32],
                 '_xfail_checks':
                     {'check_estimator_sparse_dense':
-                     "Default StandardScaler don't support sparse inputs. "
-                     "But StandardScaler is tested on sparse data in "
-                     "`preprocessing.tests.test_data."
+                     "Default StandardScaler doesn't support sparse "
+                     "inputs. But StandardScaler is tested on sparse "
+                     "data in `preprocessing.tests.test_data."
                      "test_scaler_without_centering`."
                      }
                 }
