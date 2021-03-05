@@ -15,6 +15,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import scale
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
@@ -1403,3 +1404,45 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
 
     assert_array_equal(sample_weight, sample_weight_1_25)
+
+
+@pytest.mark.parametrize("ridge_alpha", [1e-1, 1., 1e6])
+@pytest.mark.parametrize("normalize", [True, False])
+def test_enet_ridge_consistency(normalize, ridge_alpha):
+    # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
+    # provided that the value of alpha is adapted.
+    #
+    # XXX: this test does not pass for weaker regularization (lower values of
+    # ridge_alpha): it could be either a problem of ElasticNet or Ridge (less
+    # likely) and depends on the dataset statistics: lower values for
+    # effective_rank are more problematic in particular.
+
+    rng = np.random.RandomState(42)
+    X, y = make_regression(
+        n_samples=100,
+        n_features=300,
+        effective_rank=100,
+        n_informative=50,
+        random_state=rng,
+    )
+    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
+
+    ridge = Ridge(
+        alpha=ridge_alpha,
+        normalize=normalize,
+    ).fit(X, y, sample_weight=sw)
+
+    enet = ElasticNet(
+        alpha=ridge_alpha / sw.sum(),
+        normalize=normalize,
+        l1_ratio=0.,
+        max_iter=1000,
+    )
+    with ignore_warnings(category=ConvergenceWarning):
+        # XXX: it seems that the duality gap convergence criterion is never met
+        # when l1_ratio is 0 and for any value of the `tol` parameter. Should
+        # this be considered a bug?
+        enet.fit(X, y, sample_weight=sw)
+
+    assert_allclose(ridge.coef_, enet.coef_)
+    assert_allclose(ridge.intercept_, enet.intercept_)
