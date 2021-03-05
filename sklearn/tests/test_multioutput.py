@@ -400,13 +400,13 @@ def test_multi_output_exceptions():
     # for fit and score
     y_new = np.column_stack((y1, y2))
     moc.fit(X, y)
-    with pytest.assert(ValueError):
+    with pytest.raises(ValueError):
         moc.score(X, y_new)
-        
+
     # ValueError when y is continuous
     msg = "Unknown label type"
-    with pytest.assert(ValueError, match=msg):
-       moc.fit(X, X[:, 1]) 
+    with pytest.raises(ValueError, match=msg):
+        moc.fit(X, X[:, 1])
 
 
 def generate_multilabel_dataset_with_correlations():
