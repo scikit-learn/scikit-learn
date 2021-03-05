@@ -2911,8 +2911,7 @@ def check_estimator_sparse_dense(name, estimator_orig,
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
 
-    for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
-        X_sp = X_csr.asformat(sparse_format)
+    for sparse_format, X_sp in _generate_sparse_matrix(X_csr):
 
         set_random_state(estimator)
         set_random_state(estimator_sp)
