@@ -337,14 +337,6 @@ def test_iforest_with_uniform_data():
     assert all(iforest.predict(rng.randn(100, 10)) == 1)
     assert all(iforest.predict(np.ones((100, 10))) == 1)
 
-    # Single row
-    X = rng.randn(1, 10)
-    iforest = IsolationForest()
-    iforest.fit(X)
-
-    assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(rng.randn(100, 10)) == 1)
-    assert all(iforest.predict(np.ones((100, 10))) == 1)
 
 
 # FIXME: remove in 1.2
