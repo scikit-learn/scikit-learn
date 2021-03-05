@@ -17,7 +17,7 @@ from sklearn.utils import check_random_state
 
 
 @pytest.mark.parametrize(
-    'normalize, n_warnings, warning',
+    'normalize, n_warnings, warning_category',
     [(True, 1, FutureWarning),
      (False, 1, FutureWarning),
      ("deprecated", 0, None)]
@@ -29,7 +29,7 @@ from sklearn.utils import check_random_state
 # FIXME remove test in 1.2
 def test_linear_model_normalize_deprecation_message(
      estimator,
-     normalize, n_warnings, warning
+     normalize, n_warnings, warning_category
 ):
     # check that we issue a FutureWarning when normalize was set in
     # linear model
@@ -43,8 +43,17 @@ def test_linear_model_normalize_deprecation_message(
         y = np.sign(y)
 
     model = estimator(normalize=normalize)
-    with pytest.warns(warning) as record:
+    with pytest.warns(warning_category) as record:
         model.fit(X, y)
-    assert len(record) == n_warnings
-    if n_warnings:
-        assert "'normalize' was deprecated" in str(record[0].message)
+    # Filter record in case other unrelated warnings are raised
+    unwanted = [r for r in record if r.category != warning_category]
+    if len(unwanted):
+        msg = "unexpected warnings:\n"
+        for w in unwanted:
+            msg += str(w)
+            msg += "\n"
+        raise AssertionError(msg)
+    wanted = [r for r in record if r.category == warning_category]
+    if warning_category is not None:
+        assert "'normalize' was deprecated" in str(wanted[0].message)
+    assert len(wanted) == n_warnings
