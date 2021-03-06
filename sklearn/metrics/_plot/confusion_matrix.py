@@ -29,6 +29,9 @@ class ConfusionMatrixDisplay:
     display_labels : ndarray of shape (n_classes,), default=None
         Display labels for plot. If None, display labels are set from 0 to
         `n_classes - 1`.
+    
+    font_size: int
+        Font size of the values in the matrix of the Visualization.
 
     Attributes
     ----------
@@ -73,10 +76,21 @@ class ConfusionMatrixDisplay:
     >>> disp.plot() # doctest: +SKIP
     """
     @_deprecate_positional_args
-    def __init__(self, confusion_matrix, *, display_labels=None):
+    def __init__(self, confusion_matrix, *, display_labels=None, font_size=10):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
+        self.font_size = font_size
 
+    @property
+    def font_size(self):
+        return self._font_size
+    
+    @font_size.setter
+    def font_size(self, font_size=10):
+        if(not(font_size) or font_size <= 0):
+            raise ValueError("Font size below 0 is not possible")
+        self._font_size = font_size
+    
     @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None,
@@ -145,7 +159,7 @@ class ConfusionMatrixDisplay:
                 self.text_[i, j] = ax.text(
                     j, i, text_cm,
                     ha="center", va="center",
-                    color=color)
+                    color=color, fontsize=self._font_size)
 
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
