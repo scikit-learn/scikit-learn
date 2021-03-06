@@ -504,9 +504,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
                         intercept_grads, layer_units, incremental):
 
+        params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, '_optimizer'):
-            params = self.coefs_ + self.intercepts_
-
             if self.solver == 'sgd':
                 self._optimizer = SGDOptimizer(
                     params, self.learning_rate_init, self.learning_rate,
@@ -567,10 +566,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                         coef_grads, intercept_grads)
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
-
                     # update weights
                     grads = coef_grads + intercept_grads
-                    self._optimizer.update_params(grads)
+                    self._optimizer.update_params(params, grads)
 
                 self.n_iter_ += 1
                 self.loss_ = accumulated_loss / X.shape[0]
