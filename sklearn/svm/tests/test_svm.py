@@ -686,7 +686,7 @@ def test_svm_gamma_error(Estimator, data):
 def test_svm_gamma_warning_with_linear_kernel(Estimator, data):
     est = Estimator(kernel='linear', gamma=1.0)
     warn_msg = "Setting 'gamma' when using 'linear' kernel"
-    with pytest.warns(DeprecationWarning, match=warn_msg):
+    with pytest.warns(FutureWarning, match=warn_msg):
         est.fit(*data)
 
 

@@ -220,7 +220,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 warnings.warn(
                     "Setting 'gamma' when using 'linear' kernel may raise a "
                     "`ValueError` starting in version 1.1 (renaming of 0.26).",
-                    DeprecationWarning
+                    FutureWarning
                 )
             self._gamma = self.gamma
 
