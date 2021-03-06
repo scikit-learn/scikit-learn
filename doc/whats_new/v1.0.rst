@@ -184,6 +184,13 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` now correct supports continued training
+  when loading from a pickled file. :pr:`19631` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
