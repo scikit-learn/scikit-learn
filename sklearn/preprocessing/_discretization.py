@@ -10,7 +10,7 @@ import numbers
 import numpy as np
 import warnings
 import copy
-from scipy import stats, mean
+from scipy import stats, mean, median
 
 from . import OneHotEncoder
 
@@ -315,6 +315,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if self.encode == 'mean':
             return self._aggregate_encoder_helper(X, Xt, lambda x: mean(x, axis=0))
+
+        if self.encode == 'median':
+            return self._aggregate_encoder_helper(X, Xt, lambda x: median(x, axis=0))
 
         if self.encode == 'ordinal':
             return Xt
