@@ -33,10 +33,10 @@ rng = np.random.RandomState(0)
 
 # Toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-y_class = ["foo", "foo", "foo", 1, 1, 1]    # test string class labels
+y_class = ["foo", "foo", "foo", "bar", "bar", "bar"]
 y_regr = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
-y_t_class = ["foo", 1, 1]
+y_t_class = ["foo", "bar", "bar"]
 y_t_regr = [-1, 1, 1]
 
 # Load the iris dataset and randomly permute it

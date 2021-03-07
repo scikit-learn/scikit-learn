@@ -128,7 +128,11 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     # TODO: pass in a list of expected nominal features
     for feature, categories in data_by_id.categories.items():
         feature_idx = data_by_id.feature_names.index(feature)
-        values = np.unique(data_by_id.data[:, feature_idx])
+        feature = data_by_id.data[:, feature_idx]
+        if np.all(np.isnan(feature)):
+            # no need to check when all values are nan
+            continue
+        values = np.unique(feature)
         values = values[np.isfinite(values)]
         assert set(values) <= set(range(len(categories)))
 

@@ -2,6 +2,7 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import sparse
 import numbers
@@ -42,8 +43,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None,
-                                 force_all_finite=force_all_finite)
+
+            # starting in numpy 1.21 mixed typed `X` will raise a FutureWarning
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', FutureWarning)
+                try:
+                    X_temp = check_array(X, dtype=None,
+                                         force_all_finite=force_all_finite)
+                except FutureWarning:
+                    X_temp = check_array(X, dtype=object,
+                                         force_all_finite=force_all_finite)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
                 X = check_array(X, dtype=object,

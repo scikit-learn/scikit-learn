@@ -70,13 +70,37 @@ cdef class LossFunction:
         """Python version of `dloss` for testing.
 
         Pytest needs a python function and can't use cdef functions.
+
+        Parameters
+        ----------
+        p : double
+            The prediction, p = w^T x
+        y : double
+            The true value (aka target)
+
+        Returns
+        -------
+        double
+            The derivative of the loss function with regards to `p`.
         """
         return self.dloss(p, y)
 
     def py_loss(self, double p, double y):
         """Python version of `loss` for testing.
-        
+
         Pytest needs a python function and can't use cdef functions.
+
+        Parameters
+        ----------
+        p : double
+            The prediction, p = w^T x
+        y : double
+            The true value (aka target)
+
+        Returns
+        -------
+        double
+            The loss evaluated at `p` and `y`.
         """
         return self.loss(p, y)
 

@@ -475,7 +475,18 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
                     raise TypeError("The outlier_label of classes {} is "
                                     "supposed to be a scalar, got "
                                     "{}.".format(classes, label))
-                if np.append(classes, label).dtype != classes.dtype:
+                # Starting in numpy 1.21 np.append admits a warning when
+                # the dtypes of classes and labels are not consistent
+                with warnings.catch_warnings():
+                    warnings.simplefilter('error', FutureWarning)
+                    try:
+                        appended_class_labels = np.append(classes, label)
+                    except FutureWarning:
+                        raise TypeError("The dtype of outlier_label {} is "
+                                        "inconsistent with classes {} in "
+                                        "y.".format(label, classes))
+
+                if appended_class_labels.dtype != classes.dtype:
                     # ensure the dtype of outlier label is consistent with y.
                     raise TypeError("The dtype of outlier_label {} is "
                                     "inconsistent with classes {} in "

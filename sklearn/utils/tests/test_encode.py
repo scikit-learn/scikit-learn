@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal
 from sklearn.utils._encode import _unique
 from sklearn.utils._encode import _encode
 from sklearn.utils._encode import _check_unknown
+from sklearn.utils import is_scalar_nan
 
 
 @pytest.mark.parametrize(
@@ -48,10 +49,19 @@ def test_encode_with_check_unknown():
 
 def _assert_check_unknown(values, uniques, expected_diff, expected_mask):
     diff = _check_unknown(values, uniques)
-    assert_array_equal(diff, expected_diff)
+    if is_scalar_nan(expected_diff[-1]):
+        assert_array_equal(diff[:-1], expected_diff[:-1])
+        assert np.isnan(diff[-1])
+    else:
+        assert_array_equal(diff, expected_diff)
 
     diff, valid_mask = _check_unknown(values, uniques, return_mask=True)
-    assert_array_equal(diff, expected_diff)
+    if is_scalar_nan(expected_diff[-1]):
+        assert_array_equal(diff[:-1], expected_diff[:-1])
+        assert np.isnan(diff[-1])
+    else:
+        assert_array_equal(diff, expected_diff)
+
     assert_array_equal(valid_mask, expected_mask)
 
 

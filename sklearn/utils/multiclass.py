@@ -160,7 +160,14 @@ def is_multilabel(y):
                 (y.dtype.kind in 'biu' or  # bool, int, uint
                  _is_integral_float(np.unique(y.data))))
     else:
-        labels = np.unique(y)
+        try:
+            labels = np.unique(y)
+        except TypeError:
+            raise (
+                ValueError(
+                    "Mix of label input types (string and number) is not "
+                    "supported")
+            )
 
         return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
                                     _is_integral_float(labels))
@@ -303,7 +310,15 @@ def type_of_target(y):
         _assert_all_finite(y)
         return 'continuous' + suffix
 
-    if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
+    try:
+        unique_values = np.unique(y)
+    except TypeError:
+        raise (
+            ValueError(
+                "Mix of label input types (string and number)")
+        )
+
+    if (len(unique_values) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
         return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
     else:
         return 'binary'  # [1, 2] or [["a"], ["b"]]
