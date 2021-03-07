@@ -32,8 +32,8 @@ class BaseOptimizer:
         Parameters
         ----------
         params : list, length = len(coefs_) + len(intercepts_)
-            The concatenated list containing coefs_ and intercepts_ in MLP model.
-            Used for initializing velocities and updating params
+            The concatenated list containing coefs_ and intercepts_ in MLP
+            model. Used for initializing velocities and updating params
 
         grads : list, length = len(params)
             Containing gradients with respect to coefs_ and intercepts_ in MLP
