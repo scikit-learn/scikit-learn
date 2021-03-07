@@ -76,20 +76,22 @@ class ConfusionMatrixDisplay:
     >>> disp.plot() # doctest: +SKIP
     """
     @_deprecate_positional_args
-    def __init__(self, confusion_matrix, *, display_labels=None, font_size=10):
+    def __init__(self, confusion_matrix, *, display_labels=None, val=10):
+        print("PRIRNTKGNEKSKDKDSDL")
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
-        self.font_size = font_size
+        self.font_size = val
 
     @property
     def font_size(self):
-        return self._font_size
+        return self.font_size
     
     @font_size.setter
-    def font_size(self, font_size=10):
-        if(not(font_size) or font_size <= 0):
+    def font_size(self, val):
+        print("67890")
+        if(not(val) or val <= 0):
             raise ValueError("Font size below 0 is not possible")
-        self._font_size = font_size
+        self.font_size = val
     
     @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
@@ -159,7 +161,7 @@ class ConfusionMatrixDisplay:
                 self.text_[i, j] = ax.text(
                     j, i, text_cm,
                     ha="center", va="center",
-                    color=color, fontsize=self._font_size)
+                    color=color, fontsize=self.font_size)
 
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
@@ -522,6 +524,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     colorbar : bool, default=True
         Whether or not to add a colorbar to the plot.
+    
+    fontsize: int, default=
 
         .. versionadded:: 0.24
 
