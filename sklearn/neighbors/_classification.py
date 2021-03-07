@@ -481,7 +481,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
                     warnings.simplefilter('error', FutureWarning)
                     try:
                         appended_class_labels = np.append(classes, label)
-                    except FutureWarning:
+                    except Exception:
                         raise TypeError("The dtype of outlier_label {} is "
                                         "inconsistent with classes {} in "
                                         "y.".format(label, classes))

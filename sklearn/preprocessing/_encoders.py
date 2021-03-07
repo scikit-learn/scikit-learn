@@ -50,7 +50,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 try:
                     X_temp = check_array(X, dtype=None,
                                          force_all_finite=force_all_finite)
-                except FutureWarning:
+                except Exception:
                     X_temp = check_array(X, dtype=object,
                                          force_all_finite=force_all_finite)
             if (not hasattr(X, 'dtype')
