@@ -10,6 +10,7 @@ from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.cluster import KMeans
 
 
 @pytest.mark.parametrize('n_features_to_select', (0, 5, 0., -1, 1.1))
@@ -132,3 +133,9 @@ def test_pipeline_support():
     pipe = make_pipeline(StandardScaler(), sfs)
     pipe.fit(X, y)
     pipe.transform(X)
+
+def test_fit_without_labels():
+  data = np.array([[1,1,1,1,1], [2,2,2,2,2], [3,3,3,3,3], [4,4,4,4,4], [5,5,5,5,5], [6,6,6,6,6]])
+  model = KMeans(3)
+  sfs = SequentialFeatureSelector(model, n_features_to_select=3)
+  data = sfs.fit_transform(data)
