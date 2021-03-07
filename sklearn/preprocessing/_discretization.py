@@ -306,12 +306,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
 
         if self.encode == 'max':
-            encoder = lambda x: np.max(x)
-            return self._aggregate_encoder_helper(X, Xt, encoder)
+            return self._aggregate_encoder_helper(X, Xt, lambda x: np.max(x))
 
         if self.encode == 'mode':
-            encoder =  lambda x: stats.mode(x)[0][0]
-            return self._aggregate_encoder_helper(X, Xt, encoder)
+            return self._aggregate_encoder_helper(X, Xt, lambda x: stats.mode(x)[0][0])
 
         if self.encode == 'mean':
             return self._aggregate_encoder_helper(X, Xt, lambda x: mean(x, axis=0))
