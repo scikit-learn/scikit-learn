@@ -344,7 +344,8 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features) or /
+            list of object
             The samples.
 
         Returns
@@ -372,7 +373,8 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features) or /
+            list of object
             The samples.
 
         Returns
