@@ -10,10 +10,8 @@ shapes = [(4, 6), (6, 8), (7, 8, 9)]
 
 
 def test_base_optimizer():
-    params = [np.zeros(shape) for shape in shapes]
-
     for lr in [10 ** i for i in range(-3, 4)]:
-        optimizer = BaseOptimizer(params, lr)
+        optimizer = BaseOptimizer(lr)
         assert optimizer.trigger_stopping('', False)
 
 
@@ -24,9 +22,9 @@ def test_sgd_optimizer_no_momentum():
         optimizer = SGDOptimizer(params, lr, momentum=0, nesterov=False)
         grads = [np.random.random(shape) for shape in shapes]
         expected = [param - lr * grad for param, grad in zip(params, grads)]
-        optimizer.update_params(grads)
+        optimizer.update_params(params, grads)
 
-        for exp, param in zip(expected, optimizer.params):
+        for exp, param in zip(expected, params):
             assert_array_equal(exp, param)
 
 
@@ -42,9 +40,9 @@ def test_sgd_optimizer_momentum():
         updates = [momentum * velocity - lr * grad
                    for velocity, grad in zip(velocities, grads)]
         expected = [param + update for param, update in zip(params, updates)]
-        optimizer.update_params(grads)
+        optimizer.update_params(params, grads)
 
-        for exp, param in zip(expected, optimizer.params):
+        for exp, param in zip(expected, params):
             assert_array_equal(exp, param)
 
 
@@ -71,9 +69,9 @@ def test_sgd_optimizer_nesterovs_momentum():
         updates = [momentum * update - lr * grad
                    for update, grad in zip(updates, grads)]
         expected = [param + update for param, update in zip(params, updates)]
-        optimizer.update_params(grads)
+        optimizer.update_params(params, grads)
 
-        for exp, param in zip(expected, optimizer.params):
+        for exp, param in zip(expected, params):
             assert_array_equal(exp, param)
 
 
@@ -103,6 +101,6 @@ def test_adam_optimizer():
             expected = [param + update
                         for param, update in zip(params, updates)]
 
-            optimizer.update_params(grads)
-            for exp, param in zip(expected, optimizer.params):
+            optimizer.update_params(params, grads)
+            for exp, param in zip(expected, params):
                 assert_array_equal(exp, param)
