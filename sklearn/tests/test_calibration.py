@@ -546,6 +546,7 @@ def test_calibration_pipeline(text_data, text_data_pipeline):
     with pytest.raises(AttributeError, match=msg):
         calib_clf.n_features_in_
 
+
 def test_calibration_pipeline_prediction(text_data, text_data_pipeline):
     # Test that calibration works in prefit pipeline with transformer,
     # where `X` is not array-like, sparse matrix or dataframe at the start.
@@ -557,6 +558,7 @@ def test_calibration_pipeline_prediction(text_data, text_data_pipeline):
     calib_clf.fit(X, y)
     # Ensure that no error is thrown at prediction stage
     calib_clf.predict_proba(X)
+
 
 @pytest.mark.parametrize('clf, cv', [
     pytest.param(LinearSVC(C=1), 2),
