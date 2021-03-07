@@ -523,7 +523,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     colorbar : bool, default=True
         Whether or not to add a colorbar to the plot.
     
-    fontsize: int, default=10
+        fontsize: int, default=10
 
         .. versionadded:: 0.24
 
