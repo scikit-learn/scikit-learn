@@ -21,6 +21,8 @@ classifier = svm.SVC(kernel='linear', C=0.01).fit(X_train, y_train)
 
 np.set_printoptions(precision=2)
 
+print(X_test)
+
 # Plot non-normalized confusion matrix
 titles_options = [("Confusion matrix, without normalization", 'true'),
                   ("Normalized confusion matrix", 'true')]
@@ -36,6 +38,7 @@ for title, normalize in titles_options:
     cm = confusion_matrix(y_test, y_pred,
                           labels=display_labels, normalize=normalize)
 
+    print(display_labels)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
                                   display_labels=display_labels, font_size=20)
 
@@ -45,5 +48,6 @@ for title, normalize in titles_options:
     disp.plot(cmap=plt.cm.Blues)
 
     disp.ax_.set_title(title)
+
 
 plt.show()
