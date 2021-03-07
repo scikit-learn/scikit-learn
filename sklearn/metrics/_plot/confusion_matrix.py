@@ -30,7 +30,7 @@ class ConfusionMatrixDisplay:
         Display labels for plot. If None, display labels are set from 0 to
         `n_classes - 1`.
     
-    font_size: int
+    fontsize: int, default=10
         Font size of the values in the matrix of the Visualization.
 
     Attributes
@@ -522,8 +522,6 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     colorbar : bool, default=True
         Whether or not to add a colorbar to the plot.
-    
-        fontsize: int, default=10
 
         .. versionadded:: 0.24
 
