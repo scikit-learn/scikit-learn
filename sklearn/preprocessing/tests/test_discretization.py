@@ -309,6 +309,29 @@ def test_transform_median():
 
     # ensure that original array is not mutated
     assert not np.array_equal(X, Xt)
+def test_transform_max():
+    expected_2bins = [[-1,   2.5, -3,  -0.5],
+                      [-1,   2.5, -3,  -0.5],
+                      [ 1,   4.5, -1,   2],
+                      [ 1,   4.5, -1,   2]]
+
+    expected_3bins = [[-2,   1.5, -4,  -1],
+                      [-1,   2.5, -3,  -0.5],
+                      [ 1,   4.5, -1,   2],
+                      [ 1,   4.5, -1,   2]]
+
+    # with 2 bins
+    est = KBinsDiscretizer(n_bins=2, encode='max')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_2bins, Xt)
+
+    # with 3 bins
+    est = KBinsDiscretizer(n_bins=3, encode='max')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_3bins, Xt)
+
+    # check that original array is not mutated
+    assert not np.array_equal(X, Xt)
 
 @pytest.mark.parametrize(
     'strategy, expected_inv',
