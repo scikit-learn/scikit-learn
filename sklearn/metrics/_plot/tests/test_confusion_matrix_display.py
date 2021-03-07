@@ -380,3 +380,47 @@ def test_confusion_matrix_with_unknown_labels(pyplot, constructor_name):
     display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
     expected_labels = [str(i) for i in range(n_classes + 1)]
     assert_array_equal(expected_labels, display_labels)
+
+
+@pytest.mark.parametrize("font_size", [5, 10, 13])
+def test_confusion_matrix_display_fontsize(pyplot, font_size):
+    X, y = make_classification(
+        n_samples=100, n_informative=5, n_classes=5, random_state=0
+    )
+
+    classifier = SVC().fit(X, y)
+    y_pred = classifier.predict(X)
+    display_labels = unique_labels(y, y_pred)
+
+    cm = confusion_matrix(y, y_pred,
+                          labels=display_labels)
+
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                  display_labels=display_labels, font_size=font_size)
+
+    disp.plot()
+
+    assert_equal(disp.text_[0][0].get_size(), font_size)
+
+    assert_equal(disp.font_size, font_size)
+
+
+@pytest.mark.parametrize("font_size", [None, 0, -10])
+def test_confusion_matrix__display_fontsize_invalid(pyplot, font_size):
+    X, y = make_classification(
+        n_samples=100, n_informative=5, n_classes=5, random_state=0
+    )
+
+    classifier = SVC().fit(X, y)
+    y_pred = classifier.predict(X)
+    display_labels = unique_labels(y, y_pred)
+
+    cm = confusion_matrix(y, y_pred,
+                          labels=display_labels)
+
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                  display_labels=display_labels)
+
+
+    with pytest.raises(ValueError):
+        disp.font_size = font_size
