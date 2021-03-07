@@ -264,7 +264,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         intensive due to the allocation of an extra array of shape
         (n_samples, n_clusters).
 
-        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        For now "auto" (kept for backward compatibility) chooses "elkan" but it
         might change in the future for a better heuristic.
 
     return_n_iter : bool, default=False
