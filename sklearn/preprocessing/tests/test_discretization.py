@@ -262,6 +262,31 @@ def test_transform_mean():
     # ensure that original array is not mutated
     assert not np.array_equal(X, Xt)
 
+
+def test_transform_median():
+    expected_2bins = [[-1.5, 2, -3.5, -0.75],
+                      [-1.5, 2, -3.5, -0.75],
+                      [ 0.5, 4, -1.5, 1.25],
+                      [ 0.5, 4, -1.5, 1.25]]
+
+    expected_3bins = [[-2, 1.5, -4, -1],
+                      [-1, 2.5, -3, -0.5],
+                      [0.5, 4, -1.5, 1.25],
+                      [0.5, 4, -1.5, 1.25]]
+
+    # for 2 bins
+    est = KBinsDiscretizer(n_bins=2, encode='median')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_2bins, Xt)
+
+    # for 3 bins
+    est = KBinsDiscretizer(n_bins=3, encode='median')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_3bins, Xt)
+
+    # ensure that original array is not mutated
+    assert not np.array_equal(X, Xt)
+
 @pytest.mark.parametrize(
     'strategy, expected_inv',
     [('uniform', [[-1.5, 2., -3.5, -0.5], [-0.5, 3., -2.5, -0.5],
