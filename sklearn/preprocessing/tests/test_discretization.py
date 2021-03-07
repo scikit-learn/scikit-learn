@@ -18,7 +18,6 @@ X = [[-2, 1.5, -4, -1],
      [0, 3.5, -2, 0.5],
      [1, 4.5, -1, 2]]
 
-
 @pytest.mark.parametrize(
     'strategy, expected',
     [('uniform', [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]]),
@@ -239,6 +238,29 @@ def test_transform_mode():
     # check that original array is not mutated
     assert not np.array_equal(X , Xt)
 
+def test_transform_mean():
+    expected_2bins = [[-1.5, 2, -3.5, -0.75],
+                      [-1.5, 2, -3.5, -0.75],
+                      [ 0.5, 4, -1.5, 1.25],
+                      [ 0.5, 4, -1.5, 1.25]]
+
+    expected_3bins = [[-2, 1.5, -4, -1],
+                      [-1, 2.5, -3, -0.5],
+                      [0.5, 4, -1.5, 1.25],
+                      [0.5, 4, -1.5, 1.25]]
+
+    # for 2 bins
+    est = KBinsDiscretizer(n_bins=2, encode='mean')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_2bins, Xt)
+
+    # for 3 bins
+    est = KBinsDiscretizer(n_bins=3, encode='mean')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_3bins, Xt)
+
+    # ensure that original array is not mutated
+    assert not np.array_equal(X, Xt)
 
 @pytest.mark.parametrize(
     'strategy, expected_inv',
