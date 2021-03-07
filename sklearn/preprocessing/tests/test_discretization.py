@@ -205,6 +205,29 @@ def test_nonuniform_strategies(
     Xt = est.fit_transform(X)
     assert_array_equal(expected_5bins, Xt.ravel())
 
+def test_transform_min():
+    expected_2bins = [[-2, 1.5, -4,  -1],
+                      [-2, 1.5, -4,  -1 ],
+                      [0, 3.5, -2,  0.5],
+                      [0, 3.5, -2,  0.5]]
+
+    expected_3bins = [[-2, 1.5, -4, -1],
+                      [-1, 2.5, -3, -0.5],
+                      [0, 3.5, -2, 0.5],
+                      [0, 3.5, -2, 0.5]]
+
+    # with 2 bins
+    est = KBinsDiscretizer(n_bins=2, encode='min')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_2bins, Xt)
+
+    # with 3 bins
+    est = KBinsDiscretizer(n_bins=3, encode='min')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_3bins, Xt)
+
+    # check that original array is not mutated
+    assert not np.array_equal(X, Xt)
 
 def test_transform_mode():
     X = [[-2, 1, -1,   -1],
@@ -212,7 +235,7 @@ def test_transform_mode():
         [ 0, 4, -2,  0.5],
         [ 1, 4, -1,    2],
         [ 1,  5,  0,   2]]
-    
+
     expected_2bins = [[-2, 1, -1,  -1],
             [-2, 1, -3,   0.5],
             [ 1, 4, -3,  0.5],

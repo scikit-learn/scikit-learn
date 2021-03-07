@@ -309,6 +309,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             encoder = lambda x: np.max(x)
             return self._aggregate_encoder_helper(X, Xt, encoder)
 
+        if self.encode == 'min':
+            return self._aggregate_encoder_helper(X, Xt, lambda x: np.min(x))
+
         if self.encode == 'mode':
             encoder =  lambda x: stats.mode(x)[0][0]
             return self._aggregate_encoder_helper(X, Xt, encoder)
