@@ -367,18 +367,3 @@ def test_error_on_a_dataset_with_unseen_labels(
 def test_plot_confusion_matrix_deprecation_warning(pyplot, fitted_clf, data):
     with pytest.warns(FutureWarning):
         plot_confusion_matrix(fitted_clf, *data)
-
-@pytest.mark.parametrize("font_size", [5, 10, 13])
-def test_plot_confusion_matrix_fontsize(pyplot, data, fitted_clf, n_classes, font_size):
-    X, y = data
-    disp = plot_confusion_matrix(fitted_clf, X, y, font_size=font_size)
-    #check shape
-    assert disp.text_.shape == (n_classes, n_classes)
-
-    assert disp.font_size == font_size
-
-@pytest.mark.parametrize("font_size", [None, 0, -10])
-def test_plot_confusion_matrix_fontsize_invalid(pyplot, data, fitted_clf, font_size):
-    X, y = data
-    with pytest.raises(ValueError):
-        disp = plot_confusion_matrix(fitted_clf, X, y, font_size=font_size)
