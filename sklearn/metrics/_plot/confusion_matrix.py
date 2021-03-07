@@ -79,7 +79,7 @@ class ConfusionMatrixDisplay:
     def __init__(self, confusion_matrix, *, display_labels=None, font_size=10):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
-        self.font_size = font_size
+        self._font_size = font_size
 
     @property
     def font_size(self):
