@@ -472,12 +472,19 @@ def test_angle_out_of_range_checks():
 
 @ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
-    # Precomputed distance matrices must be square matrices.
+    # Precomputed distance matrices cannot use PCA initialization.
     tsne = TSNE(metric="precomputed", init="pca", square_distances=True)
     with pytest.raises(ValueError, match="The parameter init=\"pca\" cannot"
                                          " be used with"
                                          " metric=\"precomputed\"."):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
+
+
+def test_pca_initialization_not_compatible_with_sparse_input():
+    # Sparse input matrices cannot use PCA initialization.
+    tsne = TSNE(init="pca", learning_rate=100.0)
+    with pytest.raises(ValueError, match="PCA initialization.*"):
+        tsne.fit_transform(sp.csr_matrix([[0, 5], [5, 0]]))
 
 
 @ignore_warnings(category=FutureWarning)  # Delete in 1.2
