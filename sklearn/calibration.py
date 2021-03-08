@@ -344,9 +344,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features) or /
-            list of object
-            The samples.
+        X : The samples, as accepted by base_estimator.predict_proba
 
         Returns
         -------
@@ -373,9 +371,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features) or /
-            list of object
-            The samples.
+        X : The samples, as accepted by base_estimator.predict
 
         Returns
         -------
