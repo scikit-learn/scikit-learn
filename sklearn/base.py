@@ -194,8 +194,8 @@ class _MetadataRequest:
 
         metadata_request = _empty_metadata_request()
 
-        defaults = [x for x in dir(self)
-                    if x.startswith('_metadata_request__')]
+        defaults = {x for x in dir(self)
+                    if x.startswith('_metadata_request__')}
         for attr in defaults:
             metadata_request = self._add_defaults(
                 metadata_request, getattr(self, attr))
@@ -207,7 +207,7 @@ class MetadataConsumer:
         user_provides_list = list(method_params.keys())
         for user_provides in user_provides_list:
             method_params[user_provides] -= {param}
-            if method_params[user_provides] == set():
+            if not len(method_params[user_provides]):
                 del method_params[user_provides]
 
     def _request_key_for_method(self, *, method, param, user_provides):

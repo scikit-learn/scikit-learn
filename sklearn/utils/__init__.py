@@ -1186,7 +1186,12 @@ def all_estimators(type_filter=None):
 
 
 def _empty_metadata_request():
+    """Returns an empty default container.
+
+    The container has all possible methods which can request metadata as keys.
+    """
     return Bunch(fit={},
+                 partial_fit={},
                  predict={},
                  transform={},
                  score={},

@@ -1787,8 +1787,8 @@ class LogisticRegressionCV(LogisticRegression,
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
 
-        **fit_params : dict of str -> object
-            Parameters required for the scorer and the CV splitter
+        **fit_params : dict of str -> array-like
+            Parameters requested by the scorer and the CV splitter.
 
         Returns
         -------
@@ -1853,7 +1853,7 @@ class LogisticRegressionCV(LogisticRegression,
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
         scorer = get_scorer(self.scoring)
-        _params = build_method_metadata_params(
+        params = build_method_metadata_params(
             children={'base': super(LinearClassifierMixin),
                       'splitter': cv,
                       'scorer': scorer},
@@ -1864,9 +1864,9 @@ class LogisticRegressionCV(LogisticRegression,
             ],
             metadata=fit_params
         )
-        _cv_params = _params.split
-        _score_params = _params.score
-        folds = list(cv.split(X, y, **_cv_params))
+        cv_params = params.split
+        score_params = params.score
+        folds = list(cv.split(X, y, **cv_params))
 
         # Use the label encoded classes
         n_classes = len(encoded_labels)
@@ -1919,7 +1919,7 @@ class LogisticRegressionCV(LogisticRegression,
                       max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight,
                       l1_ratio=l1_ratio,
-                      score_params=_score_params
+                      score_params=score_params
                       )
             for label in iter_encoded_labels
             for train, test in folds

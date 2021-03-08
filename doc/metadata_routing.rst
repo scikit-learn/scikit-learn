@@ -6,7 +6,7 @@ Metadata Routing
 
 This guide demonstrates how metadata such as ``sample_weight`` can be routed
 and passed along to estimators, scorers, and CV splitters through
-meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass a
+meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass
 metadata to a method such as ``fit`` or ``score``, the object accepting the
 metadata, should *request* it. For estimators and splitters this is done via
 ``request_*`` methods, e.g. ``request_sample_weight(...)``, and for scorers
@@ -17,7 +17,7 @@ default. This is best demonstrated by the following examples.
 Usage Examples
 **************
 Here we present a few examples to show different common usecases. The examples
-in this section require the following imports and data:
+in this section require the following imports and data::
 
   >>> import numpy as np
   >>> from sklearn.metrics import make_scorer, accuracy_score
@@ -26,12 +26,12 @@ in this section require the following imports and data:
   >>> from sklearn.model_selection import GroupKFold
   >>> from sklearn.feature_selection import SelectKBest
   >>> from sklearn.pipeline import make_pipeline
-  >>> N, M = 100, 4
-  >>> X = np.random.rand(N, M)
-  >>> y = np.random.randint(0, 2, size=N)
-  >>> my_groups = np.random.randint(0, 10, size=N)
-  >>> my_weights = np.random.rand(N)
-  >>> my_other_weights = np.random.rand(N)
+  >>> n_samples, n_features = 100, 4
+  >>> X = np.random.rand(n_samples, n_features)
+  >>> y = np.random.randint(0, 2, size=n_samples)
+  >>> my_groups = np.random.randint(0, 10, size=n_samples)
+  >>> my_weights = np.random.rand(n_samples)
+  >>> my_other_weights = np.random.rand(n_samples)
 
 Weighted scoring and fitting
 ----------------------------
@@ -44,7 +44,7 @@ consumers understand the meaning of the key ``"sample_weight"``::
   ...                            request_props=["sample_weight"])
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ...     ).request_sample_weight(fit="sample_weight")
+  ...     ).request_sample_weight(fit=True)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -54,7 +54,7 @@ consumers understand the meaning of the key ``"sample_weight"``::
   ...     scoring=weighted_acc,
   ... )
 
-Error handling: if props={'sample_eight': my_weights, ...} was passed,
+Error handling: if props={'sample_eight': my_weights, ...} were passed,
 cross_validate would raise an error, since 'sample_eight' was not
 requested by any of its children.
 
@@ -62,8 +62,8 @@ Weighted scoring and unweighted fitting
 ---------------------------------------
 
 Since ``LogisticRegressionCV``, like all scikit-learn estimators, requires that
-weights explicitly be requested, removing that request means the fitting is
-unweighted::
+weights explicitly be requested, omitting ``request_sample_weight`` means the
+fitting is unweighted::
 
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            request_props=["sample_weight"])
@@ -102,8 +102,8 @@ explicitly. Here it does not request them::
 Different scoring and fitting weights
 -------------------------------------
 
-Despite make_scorer and LogisticRegressionCV both expecting a key
-sample_weight, we can use aliases to pass different weights to different
+Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting a key
+``sample_weight``, we can use aliases to pass different weights to different
 consumers::
 
   >>> weighted_acc = make_scorer(
@@ -150,4 +150,4 @@ defined as::
 
     request_props : list of strings, or dict of {str: str}, default=None
         A list of required properties, or a mapping of the form
-        ``{provided_metadata: required_metadata}``, or None.
+        ``{"provided_metadata": "required_metadata"}``, or None.
