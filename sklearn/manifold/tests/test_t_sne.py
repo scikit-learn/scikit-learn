@@ -483,7 +483,7 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
 def test_pca_initialization_not_compatible_with_sparse_input():
     # Sparse input matrices cannot use PCA initialization.
     tsne = TSNE(init="pca", learning_rate=100.0)
-    with pytest.raises(ValueError, match="PCA initialization.*"):
+    with pytest.raises(TypeError, match="PCA initialization.*"):
         tsne.fit_transform(sp.csr_matrix([[0, 5], [5, 0]]))
 
 
