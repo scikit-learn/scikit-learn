@@ -15,6 +15,7 @@ from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.fixes import loguniform
 from sklearn.utils.fixes import MaskedArray
+from sklearn.utils.fixes import linspace, parse_version, np_version
 
 
 @pytest.mark.parametrize('joblib_version', ('0.11', '0.12.0'))
@@ -89,3 +90,37 @@ def test_loguniform(low, high, base):
 def test_masked_array_deprecated():  # TODO: remove in 1.0
     with pytest.warns(FutureWarning, match='is deprecated'):
         MaskedArray()
+
+
+def test_linspace():
+    """Test that linespace works like np.linespace as of numpy version 1.16."""
+    start, stop = 0, 10
+    num = 6
+    out = linspace(start=start, stop=stop, num=num, endpoint=True)
+    assert_array_equal(out, np.array([0., 2, 4, 6, 8, 10]))
+
+    start, stop = [0, 100], [10, 1100]
+    num = 6
+    out = linspace(start=start, stop=stop, num=num, endpoint=True)
+    res = np.c_[[0., 2, 4, 6, 8, 10],
+                [100, 300, 500, 700, 900, 1100]]
+    assert_array_equal(out, res)
+
+    out2 = linspace(start=start, stop=stop, num=num, endpoint=True, axis=1)
+    assert_array_equal(out2, out.T)
+
+    out, step = linspace(
+        start=start,
+        stop=stop,
+        num=num,
+        endpoint=True,
+        retstep=True,
+    )
+    assert_array_equal(out, res)
+    assert_array_equal(step, [2, 200])
+
+    if np_version < parse_version('1.16'):
+        with pytest.raises(ValueError):
+            linspace(start=[0, 1], stop=10)
+    else:
+        linspace(start=[0, 1], stop=10)

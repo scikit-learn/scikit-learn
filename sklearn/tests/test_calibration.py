@@ -7,12 +7,13 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
+from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import LeaveOneOut, train_test_split
 
 from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_almost_equal,
                                     assert_array_equal,
-                                    assert_raises, ignore_warnings)
+                                    ignore_warnings)
 from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
@@ -26,7 +27,7 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import CalibratedClassifierCV
+from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
@@ -59,7 +60,8 @@ def test_calibration(data, method, ensemble):
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
     cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
-    assert_raises(ValueError, cal_clf.fit, X, y)
+    with pytest.raises(ValueError):
+        cal_clf.fit(X, y)
 
     # Naive Bayes with calibration
     for this_X_train, this_X_test in [(X_train, X_test),
@@ -275,6 +277,29 @@ def test_calibration_multiclass(method, ensemble, seed):
     assert calibrated_brier < 1.1 * uncalibrated_brier
 
 
+def test_calibration_zero_probability():
+    # Test an edge case where _CalibratedClassifier avoids numerical errors
+    # in the multiclass normalization step if all the calibrators output
+    # are zero all at once for a given sample and instead fallback to uniform
+    # probabilities.
+    class ZeroCalibrator():
+        # This function is called from _CalibratedClassifier.predict_proba.
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+    X, y = make_blobs(n_samples=50, n_features=10, random_state=7,
+                      centers=10, cluster_std=15.0)
+    clf = DummyClassifier().fit(X, y)
+    calibrator = ZeroCalibrator()
+    cal_clf = _CalibratedClassifier(
+        base_estimator=clf, calibrators=[calibrator], classes=clf.classes_)
+
+    probas = cal_clf.predict_proba(X)
+
+    # Check that all probabilities are uniformly 1. / clf.n_classes_
+    assert_allclose(probas, 1. / clf.n_classes_)
+
+
 def test_calibration_prefit():
     """Test calibration for prefitted classifiers"""
     n_samples = 50
@@ -362,8 +387,8 @@ def test_sigmoid_calibration():
 
     # check that _SigmoidCalibration().fit only accepts 1d array or 2d column
     # arrays
-    assert_raises(ValueError, _SigmoidCalibration().fit,
-                  np.vstack((exF, exF)), exY)
+    with pytest.raises(ValueError):
+        _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
 
 
 def test_calibration_curve():
@@ -382,8 +407,8 @@ def test_calibration_curve():
 
     # probabilities outside [0, 1] should not be accepted when normalize
     # is set to False
-    assert_raises(ValueError, calibration_curve, [1.1], [-0.1],
-                  normalize=False)
+    with pytest.raises(ValueError):
+        calibration_curve([1.1], [-0.1], normalize=False)
 
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
@@ -397,8 +422,8 @@ def test_calibration_curve():
     assert_almost_equal(prob_pred_quantile, [0.1, 0.8])
 
     # Check that error is raised when invalid strategy is selected
-    assert_raises(ValueError, calibration_curve, y_true2, y_pred2,
-                  strategy='percentile')
+    with pytest.raises(ValueError):
+        calibration_curve(y_true2, y_pred2, strategy='percentile')
 
 
 @pytest.mark.parametrize('ensemble', [True, False])

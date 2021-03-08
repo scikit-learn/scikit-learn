@@ -28,26 +28,27 @@ from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.preprocessing import Binarizer
+from sklearn.preprocessing import KernelCenterer
+from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import normalize
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import scale
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import quantile_transform
+from sklearn.preprocessing import MaxAbsScaler
+from sklearn.preprocessing import maxabs_scale
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import robust_scale
+from sklearn.preprocessing import add_dummy_feature
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import PowerTransformer
+from sklearn.preprocessing import power_transform
 from sklearn.preprocessing._data import _handle_zeros_in_scale
-from sklearn.preprocessing._data import Binarizer
-from sklearn.preprocessing._data import KernelCenterer
-from sklearn.preprocessing._data import Normalizer
-from sklearn.preprocessing._data import normalize
-from sklearn.preprocessing._data import StandardScaler
-from sklearn.preprocessing._data import scale
-from sklearn.preprocessing._data import MinMaxScaler
-from sklearn.preprocessing._data import minmax_scale
-from sklearn.preprocessing._data import QuantileTransformer
-from sklearn.preprocessing._data import quantile_transform
-from sklearn.preprocessing._data import MaxAbsScaler
-from sklearn.preprocessing._data import maxabs_scale
-from sklearn.preprocessing._data import RobustScaler
-from sklearn.preprocessing._data import robust_scale
-from sklearn.preprocessing._data import add_dummy_feature
-from sklearn.preprocessing._data import PolynomialFeatures
-from sklearn.preprocessing._data import PowerTransformer
-from sklearn.preprocessing._data import power_transform
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
+
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
@@ -57,6 +58,7 @@ from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
 from sklearn import datasets
+
 
 iris = datasets.load_iris()
 
@@ -148,6 +150,7 @@ def test_polynomial_feature_names():
 
 
 def test_polynomial_feature_array_order():
+    """Test that output array has the given order."""
     X = np.arange(10).reshape(5, 2)
 
     def is_c_contiguous(a):
@@ -411,6 +414,62 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
         assert scaler.scale_.dtype == np.float64
 
 
+@pytest.mark.parametrize("scaler", [
+    StandardScaler(with_mean=False),
+    RobustScaler(with_centering=False),
+])
+@pytest.mark.parametrize("sparse_constructor",
+                         [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("constant", [0, 1., 100.])
+def test_standard_scaler_constant_features(
+        scaler, add_sample_weight, sparse_constructor, dtype, constant):
+    if (isinstance(scaler, StandardScaler)
+            and constant > 1
+            and sparse_constructor is not np.asarray
+            and add_sample_weight):
+        # https://github.com/scikit-learn/scikit-learn/issues/19546
+        pytest.xfail("Computation of weighted variance is numerically unstable"
+                     " for sparse data. See: #19546.")
+
+    if isinstance(scaler, RobustScaler) and add_sample_weight:
+        pytest.skip(f"{scaler.__class__.__name__} does not yet support"
+                    f" sample_weight")
+
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    n_features = 1
+    if add_sample_weight:
+        fit_params = dict(sample_weight=rng.uniform(size=n_samples) * 2)
+    else:
+        fit_params = {}
+    X_array = np.full(shape=(n_samples, n_features), fill_value=constant,
+                      dtype=dtype)
+    X = sparse_constructor(X_array)
+    X_scaled = scaler.fit(X, **fit_params).transform(X)
+
+    if isinstance(scaler, StandardScaler):
+        # The variance info should be close to zero for constant features.
+        assert_allclose(scaler.var_, np.zeros(X.shape[1]), atol=1e-7)
+
+    # Constant features should not be scaled (scale of 1.):
+    assert_allclose(scaler.scale_, np.ones(X.shape[1]))
+
+    if hasattr(X_scaled, "toarray"):
+        assert_allclose(X_scaled.toarray(), X_array)
+    else:
+        assert_allclose(X_scaled, X)
+
+    if isinstance(scaler, StandardScaler) and not add_sample_weight:
+        # Also check consistency with the standard scale function.
+        X_scaled_2 = scale(X, with_mean=scaler.with_mean)
+        if hasattr(X_scaled_2, "toarray"):
+            assert_allclose(X_scaled_2.toarray(), X_scaled_2.toarray())
+        else:
+            assert_allclose(X_scaled_2, X_scaled_2)
+
+
 def test_scale_1d():
     # 1-d inputs
     X_list = [1., 3., 5., 0.]
@@ -535,12 +594,11 @@ def test_scaler_float16_overflow():
 
 
 def test_handle_zeros_in_scale():
-    s1 = np.array([0, 1, 2, 3])
+    s1 = np.array([0, 1e-16, 1, 2, 3])
     s2 = _handle_zeros_in_scale(s1, copy=True)
 
-    assert not s1[0] == s2[0]
-    assert_array_equal(s1, np.array([0, 1, 2, 3]))
-    assert_array_equal(s2, np.array([1, 1, 2, 3]))
+    assert_allclose(s1, np.array([0, 1e-16, 1, 2, 3]))
+    assert_allclose(s2, np.array([1, 1, 1, 2, 3]))
 
 
 def test_minmax_scaler_partial_fit():
@@ -1591,15 +1649,13 @@ def test_quantile_transform_bounds():
     transformer = QuantileTransformer()
     transformer.fit(X)
     assert (transformer.transform([[-10]]) ==
-                 transformer.transform([[np.min(X)]]))
+            transformer.transform([[np.min(X)]]))
     assert (transformer.transform([[10]]) ==
-                 transformer.transform([[np.max(X)]]))
+            transformer.transform([[np.max(X)]]))
     assert (transformer.inverse_transform([[-10]]) ==
-                 transformer.inverse_transform(
-                     [[np.min(transformer.references_)]]))
+            transformer.inverse_transform([[np.min(transformer.references_)]]))
     assert (transformer.inverse_transform([[10]]) ==
-                 transformer.inverse_transform(
-                     [[np.max(transformer.references_)]]))
+            transformer.inverse_transform([[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():
@@ -1904,9 +1960,9 @@ def test_maxabs_scaler_partial_fit():
                                   scaler_incr_csc.max_abs_)
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert (scaler_batch.n_samples_seen_ ==
-                     scaler_incr_csr.n_samples_seen_)
+                scaler_incr_csr.n_samples_seen_)
         assert (scaler_batch.n_samples_seen_ ==
-                     scaler_incr_csc.n_samples_seen_)
+                scaler_incr_csc.n_samples_seen_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csc.scale_)
