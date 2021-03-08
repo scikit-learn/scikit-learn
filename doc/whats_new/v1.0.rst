@@ -210,10 +210,9 @@ Changelog
 :mod:`sklearn.calibration`
 ............................
 
-- |Fix| :class:`calibration.CalibratedClassifierCV` now delegating validation
-  to base estimator to fix :func:`CalibratedClassifierCV.predict` and
-  :func:`CalibratedClassifierCV.predict_proba`
-  :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
+- |Fix| The predict and predict_proba methods of
+  :class:`calibration.CalibratedClassifierCV can now properly be used on
+  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
 
 Code and Documentation Contributors
 -----------------------------------
