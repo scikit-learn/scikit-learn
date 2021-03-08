@@ -134,6 +134,11 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
+- |Enhancement| A fix to raise an error when ``pred_decision`` is 1d
+  whereas it is a multiclass classification or when ``pred_decision``
+  parameter is not consistent with ``labels`` parameter.
+  :pr:`19643` by :user:`Pierre Attard <PierreAttard>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
