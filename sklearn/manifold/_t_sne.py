@@ -708,7 +708,8 @@ class TSNE(BaseEstimator):
 
         if self._init == 'pca' and issparse(X):
             raise TypeError("PCA initialization is currently not suported "
-                "with the sparse input matrix. Use init=\"random\" instead") 
+                            "with the sparse input matrix. Use "
+                            "init=\"random\" instead.")
         if self.method not in ['barnes_hut', 'exact']:
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
