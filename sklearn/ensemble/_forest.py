@@ -369,10 +369,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             warn("Warm-start fitting without increasing n_estimators does not "
                  "fit new trees.")
         else:
-            if self.warm_start and len(self.estimators_) > 0:
-                # We draw from the random state to get the random state we
-                # would have got if we hadn't used a warm_start.
-                random_state.randint(MAX_INT, size=len(self.estimators_))
 
             trees = [self._make_estimator(append=False,
                                           random_state=random_state)
