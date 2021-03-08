@@ -2371,6 +2371,14 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     y_true = column_or_1d(y_true)
     y_true_unique = np.unique(labels if labels is not None else y_true)
     if y_true_unique.size > 2:
+        if (pred_decision.ndim == 1) or \
+                (labels is not None and pred_decision.ndim > 1 and
+                 np.size(y_true_unique) != pred_decision.shape[1]):
+            raise ValueError("The shape of pred_decision is not "
+                             "consistent with the number of classes. "
+                             "pred_decision shape must be "
+                             "(n_samples, n_classes) with "
+                             "multiclass target")
         if (labels is None and pred_decision.ndim > 1 and
                 (np.size(y_true_unique) != pred_decision.shape[1])):
             raise ValueError("Please include all labels in y_true "

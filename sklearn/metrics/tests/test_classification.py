@@ -2135,6 +2135,25 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
         hinge_loss(y_true, pred_decision)
 
 
+def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
+    y_true = [2, 1, 0, 1, 0, 1, 1]
+    pred_decision = np.array([0, 1, 2, 1, 0, 2, 1])
+    error_message = ("The shape of pred_decision is not "
+                     "consistent with the number of classes. "
+                     "pred_decision shape must be "
+                     "(n_samples, n_classes) with "
+                     "multiclass target")
+
+    assert_raise_message(ValueError, error_message, hinge_loss,
+                         y_true=y_true, pred_decision=pred_decision)
+    pred_decision = [[0, 1], [0, 1], [0, 1], [0, 1],
+                     [2, 0], [0, 1], [1, 0]]
+    labels = [0, 1, 2]
+    assert_raise_message(ValueError, error_message, hinge_loss,
+                         y_true=y_true, pred_decision=pred_decision,
+                         labels=labels)
+
+
 def test_hinge_loss_multiclass_with_missing_labels():
     pred_decision = np.array([
         [+0.36, -0.17, -0.58, -0.99],
