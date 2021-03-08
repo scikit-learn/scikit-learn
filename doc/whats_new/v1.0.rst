@@ -60,6 +60,12 @@ Changelog
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| Fixed a regression in :class:`cross_decomposition.CCA`. :pr:`19646`
+  by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
