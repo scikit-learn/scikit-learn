@@ -1153,38 +1153,6 @@ def test_class_weight_errors(name):
     check_class_weight_errors(name)
 
 
-def check_warm_start(name, random_state=42):
-    # Test if fitting incrementally with warm start gives a forest of the
-    # right size and the same results as a normal fit.
-    X, y = hastie_X, hastie_y
-    ForestEstimator = FOREST_ESTIMATORS[name]
-    est_ws = None
-    for n_estimators in [5, 10]:
-        if est_ws is None:
-            est_ws = ForestEstimator(n_estimators=n_estimators,
-                                     random_state=random_state,
-                                     warm_start=True)
-        else:
-            est_ws.set_params(n_estimators=n_estimators)
-        est_ws.fit(X, y)
-        assert len(est_ws) == n_estimators
-
-    est_no_ws = ForestEstimator(n_estimators=10, random_state=random_state,
-                                warm_start=False)
-    est_no_ws.fit(X, y)
-
-    assert (set([tree.random_state for tree in est_ws]) ==
-            set([tree.random_state for tree in est_no_ws]))
-
-    assert_array_equal(est_ws.apply(X), est_no_ws.apply(X),
-                       err_msg="Failed with {0}".format(name))
-
-
-@pytest.mark.parametrize('name', FOREST_ESTIMATORS)
-def test_warm_start(name):
-    check_warm_start(name)
-
-
 def check_warm_start_clear(name):
     # Test if fit clears state and grows a new forest when warm_start==False.
     X, y = hastie_X, hastie_y
@@ -1262,6 +1230,7 @@ def check_warm_start_oob(name):
     est = ForestEstimator(n_estimators=15, max_depth=3, warm_start=False,
                           random_state=1, bootstrap=True, oob_score=True)
     est.fit(X, y)
+    assert hasattr(est, 'oob_score_')
 
     est_2 = ForestEstimator(n_estimators=5, max_depth=3, warm_start=False,
                             random_state=1, bootstrap=True, oob_score=False)
@@ -1271,7 +1240,6 @@ def check_warm_start_oob(name):
     est_2.fit(X, y)
 
     assert hasattr(est_2, 'oob_score_')
-    assert est.oob_score_ == est_2.oob_score_
 
     # Test that oob_score is computed even if we don't need to train
     # additional trees.
