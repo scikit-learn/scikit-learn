@@ -115,20 +115,20 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     raise TypeError(msg.format(type(max_samples)))
 
 
-def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
+def _generate_sample_indices(random_seed, n_samples, n_samples_bootstrap):
     """
     Private function used to _parallel_build_trees function."""
 
-    random_instance = check_random_state(random_state)
+    random_instance = np.random.RandomState(random_seed)
     sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
 
     return sample_indices
 
 
-def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
+def _generate_unsampled_indices(random_seed, n_samples, n_samples_bootstrap):
     """
     Private function used to forest._set_oob_score function."""
-    sample_indices = _generate_sample_indices(random_state, n_samples,
+    sample_indices = _generate_sample_indices(random_seed, n_samples,
                                               n_samples_bootstrap)
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0
@@ -138,7 +138,7 @@ def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
     return unsampled_indices
 
 
-def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
+def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees, random_seed,
                           verbose=0, class_weight=None,
                           n_samples_bootstrap=None):
     """
@@ -153,7 +153,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        indices = _generate_sample_indices(tree.random_state, n_samples,
+        indices = _generate_sample_indices(random_seed, n_samples,
                                            n_samples_bootstrap)
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
@@ -355,6 +355,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if not self.warm_start or not hasattr(self, "estimators_"):
             # Free allocated memory, if any
             self.estimators_ = []
+            self.seeds_for_bootstrapping_ = []
 
         n_more_estimators = self.n_estimators - len(self.estimators_)
 
@@ -372,6 +373,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 # would have got if we hadn't used a warm_start.
                 random_state.randint(MAX_INT, size=len(self.estimators_))
 
+            # Generate and store random seeds that will be used for bootstrap sampling.
+            # These are stored to (optionally) regenerate the samples for OOB scores.
+            random_seeds = list(random_state.randint(MAX_INT, size=n_more_estimators, dtype='u8'))
+
             trees = [self._make_estimator(append=False,
                                           random_state=random_state)
                      for i in range(n_more_estimators)]
@@ -385,13 +390,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                              **_joblib_parallel_args(prefer='threads'))(
                 delayed(_parallel_build_trees)(
-                    t, self, X, y, sample_weight, i, len(trees),
+                    t, self, X, y, sample_weight, i, len(trees), random_seeds[i],
                     verbose=self.verbose, class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap)
                 for i, t in enumerate(trees))
 
-            # Collect newly grown trees
+            # Collect newly grown trees and random seeds
             self.estimators_.extend(trees)
+            self.seeds_for_bootstrapping_.extend(random_seeds)
 
         if self.oob_score:
             y_type = type_of_target(y)
@@ -465,9 +471,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples, self.max_samples,
         )
-        for estimator in self.estimators_:
+        for i, estimator in enumerate(self.estimators_):
+            random_seed = self.seeds_for_bootstrapping_[i]
+
             unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_samples_bootstrap,
+                random_seed, n_samples, n_samples_bootstrap,
             )
 
             y_pred = self._get_oob_predictions(
