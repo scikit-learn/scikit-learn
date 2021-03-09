@@ -85,7 +85,7 @@ def test_invalid_classification_loss():
         (None, None, True, 5, 1e-1),
         ('loss', .1, True, 5, 1e-7),  # use loss
         ('loss', None, True, 5, 1e-1),  # use loss on training data
-        (None, None, False, 5, None),  # no early stopping
+        (None, None, False, 5, 0.0),  # no early stopping
         ])
 def test_early_stopping_regression(scoring, validation_fraction,
                                    early_stopping, n_iter_no_change, tol):
@@ -126,7 +126,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
         (None, None, True, 5, 1e-1),
         ('loss', .1, True, 5, 1e-7),  # use loss
         ('loss', None, True, 5, 1e-1),  # use loss on training data
-        (None, None, False, 5, None),  # no early stopping
+        (None, None, False, 5, 0.0),  # no early stopping
         ])
 def test_early_stopping_classification(data, scoring, validation_fraction,
                                        early_stopping, n_iter_no_change, tol):
@@ -201,6 +201,20 @@ def test_least_absolute_deviation():
                                          random_state=0)
     gbdt.fit(X, y)
     assert gbdt.score(X, y) > .9
+
+
+def test_least_absolute_deviation_sample_weight():
+    # non regression test for issue #19400
+    # make sure no error is thrown during fit of
+    # HistGradientBoostingRegressor with least_absolute_deviation loss function
+    # and passing sample_weight
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.uniform(-1, 1, size=(n_samples, 2))
+    y = rng.uniform(-1, 1, size=n_samples)
+    sample_weight = rng.uniform(0, 1, size=n_samples)
+    gbdt = HistGradientBoostingRegressor(loss='least_absolute_deviation')
+    gbdt.fit(X, y, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize('y', [([1., -2., 0.]), ([0., 0., 0.])])
