@@ -384,8 +384,8 @@ def test_no_refit():
         # error messages
         for fn_name in ('predict', 'predict_proba', 'predict_log_proba',
                         'transform', 'inverse_transform'):
-            error_msg = ('refit=False. %s is available only after refitting on'
-                         ' the best parameters' % fn_name)
+            error_msg = (f"refit=False. {fn_name} is available only after "
+                         f"refitting on the best parameters")
             with pytest.raises(NotFittedError, match=error_msg):
                 getattr(grid_search, fn_name)(X)
 

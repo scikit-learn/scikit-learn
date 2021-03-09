@@ -897,28 +897,28 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
 
     X = y = groups = np.ones(1)
     msg = re.escape(
-        "The groups parameter contains fewer than 2 unique groups ({}). "
-        "LeaveOneGroupOut expects at least 2.".format(groups)
+        f"The groups parameter contains fewer than 2 unique groups ({groups})."
+        f" LeaveOneGroupOut expects at least 2."
     )
     with pytest.raises(ValueError, match=msg):
         next(LeaveOneGroupOut().split(X, y, groups))
 
     X = y = groups = np.ones(1)
     msg = re.escape(
-        "The groups parameter contains fewer than (or equal to) n_groups "
-        "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
-        "that at least n_groups + 1 (4) unique groups "
-        "be present".format(groups)
+        f"The groups parameter contains fewer than (or equal to) n_groups "
+        f"(3) numbers of unique groups ({groups}). LeavePGroupsOut expects "
+        f"that at least n_groups + 1 (4) unique groups "
+        f"be present"
     )
     with pytest.raises(ValueError, match=msg):
         next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
     X = y = groups = np.arange(3)
     msg = re.escape(
-        "The groups parameter contains fewer than (or equal to) n_groups "
-        "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
-        "that at least n_groups + 1 (4) unique groups "
-        "be present".format(groups)
+        f"The groups parameter contains fewer than (or equal to) n_groups "
+        f"(3) numbers of unique groups ({groups}). LeavePGroupsOut expects "
+        f"that at least n_groups + 1 (4) unique groups "
+        f"be present"
     )
     with pytest.raises(ValueError, match=msg):
         next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
