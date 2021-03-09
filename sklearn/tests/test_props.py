@@ -380,9 +380,21 @@ def test_MetadataRequest():
             )
             return self
 
+    with pytest.raises(ValueError,
+                       match="The default values can only be None"):
+        TestDefaults().get_metadata_request()
+
+    TestDefaults._metadata_request__my_other_param = {
+        'score': 'my_other_param',
+        'fit': 'my_other_param'
+    }
     expected = {
-        "score": {"my_param": {"my_param"}},
-        "fit": {},
+        "score": {
+            "my_param": {"my_param"},
+            "my_other_param": {"my_other_param"}
+        },
+        "fit": {"my_other_param": {"my_other_param"}},
+        "partial_fit": {},
         "predict": {},
         "transform": {},
         "inverse_transform": {},
@@ -392,8 +404,12 @@ def test_MetadataRequest():
 
     est = TestDefaults().request_my_param(score="other_param")
     expected = {
-        "score": {"other_param": {"my_param"}},
-        "fit": {},
+        "score": {
+            "other_param": {"my_param"},
+            "my_other_param": {"my_other_param"}
+        },
+        "fit": {"my_other_param": {"my_other_param"}},
+        "partial_fit": {},
         "predict": {},
         "transform": {},
         "inverse_transform": {},
@@ -403,8 +419,14 @@ def test_MetadataRequest():
 
     est = TestDefaults().request_sample_weight(fit=True)
     expected = {
-        "score": {"my_param": {"my_param"}},
-        "fit": {"sample_weight": {"sample_weight"}},
+        "score": {
+            "my_param": {"my_param"},
+            "my_other_param": {"my_other_param"}
+        },
+        "fit": {
+            "my_other_param": {"my_other_param"},
+            "sample_weight": {"sample_weight"}},
+        "partial_fit": {},
         "predict": {},
         "transform": {},
         "inverse_transform": {},
@@ -437,6 +459,7 @@ def test_build_router_metadata_request():
             "sample_weight": {"sample_weight"},
             "my_weights": {"my_weights"},
         },
+        "partial_fit": {},
         "predict": {},
         "transform": {},
         "inverse_transform": {},
@@ -479,16 +502,15 @@ def test_build_method_metadata_params():
     )
     expected = {
         "score": {
-            "my_weights": {"my_weights"},
-            "sample_weight": {"sample_weight"},
+            "sample_weight": [1],
         },
         "fit": {
-            "sample_weight": {"sample_weight"},
-            "my_weights": {"my_weights"},
+            "sample_weight": [2],
         },
+        "partial_fit": {},
         "predict": {},
         "transform": {},
         "inverse_transform": {},
-        "split": {"my_groups": {"my_groups"}},
+        "split": {},
     }
     assert expected == got

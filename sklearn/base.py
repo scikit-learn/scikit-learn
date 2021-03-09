@@ -164,6 +164,33 @@ def _pprint(params, offset=0, printer=repr):
 
 
 class _MetadataRequest:
+    def _validate_defaults(self, attr_name):
+        """Validate the defaults present in self.attr_name.
+
+        The defaults values follow the same structure as other
+        metadata_request, but only True, False, None, and strings with the same
+        value as indicated in the attribute name are allowed. For instance,
+        `_metadata_request__sample_weight` can only have `"sample_weight"` as a
+        value in the dict.
+
+        Returns
+        -------
+        None
+        """
+        defaults = getattr(self, attr_name)
+        defaults = _standardize_metadata_request(defaults)
+        metadata_name = attr_name.split("__")[1]
+        for method, values in defaults.items():
+            for key, value in values.items():
+                if (key != metadata_name or
+                        (value is None and value != {metadata_name})):
+                    raise ValueError(
+                        "The default values can only be None, or "
+                        "a string with the same value as the name of the "
+                        "metadata variable. E.g.: "
+                        "`_metadata_request__sample_weight = {'fit': "
+                        "'sample_weight'")
+
     def _add_defaults(self, metadata_request, defaults):
         metadata_request = _standardize_metadata_request(
             metadata_request)
@@ -197,6 +224,7 @@ class _MetadataRequest:
         defaults = {x for x in dir(self)
                     if x.startswith('_metadata_request__')}
         for attr in defaults:
+            self._validate_defaults(attr)
             metadata_request = self._add_defaults(
                 metadata_request, getattr(self, attr))
         return _standardize_metadata_request(metadata_request)
