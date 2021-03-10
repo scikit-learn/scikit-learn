@@ -10,7 +10,6 @@ from scipy.spatial.distance import cdist
 from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils.fixes import sp_version, parse_version
 
 
@@ -207,9 +206,9 @@ def test_bad_pyfunc_metric():
         return "1"
 
     X = np.ones((5, 2))
-    assert_raises_regex(TypeError,
-                        "Custom distance function must accept two vectors",
-                        BallTree, X, metric=wrong_distance)
+    msg = "Custom distance function must accept two vectors"
+    with pytest.raises(TypeError, match=msg):
+        BallTree(X, metric=wrong_distance)
 
 
 def test_input_data_size():

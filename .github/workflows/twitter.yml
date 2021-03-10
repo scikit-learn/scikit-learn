@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Tweet URL of last commit as @sklearn_commits
         if: github.repository == 'scikit-learn/scikit-learn'
-        uses: xorilog/twitter-action@0.1
+        uses: docker://thomasjpfan/twitter-action:0.3
         with:
           args: "-message \"https://github.com/scikit-learn/scikit-learn/commit/${{ github.sha }}\""
         env:
