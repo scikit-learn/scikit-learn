@@ -1340,7 +1340,7 @@ def test_num_features(constructor_name):
 
 @pytest.mark.parametrize(
     "X",
-     [
+    [
         [1, 2, 3],
         ["a", "b", "c"],
         [False, True, False],
