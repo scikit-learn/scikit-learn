@@ -16,7 +16,7 @@ from math import sqrt
 from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
 from ..base import BaseEstimator, TransformerMixin
-from ..exceptions import ConvergenceWarning
+from ..exceptions import ConvergenceWarning, NotFittedError
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
@@ -1396,7 +1396,7 @@ class NMF(TransformerMixin, BaseEstimator):
             check_is_fitted(self)
             n_components = self.n_components_
             H = self.components_
-        except:
+        except NotFittedError:
             n_components = self.n_components
 
         if n_components is None:
