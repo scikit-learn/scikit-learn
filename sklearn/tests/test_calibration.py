@@ -533,11 +533,14 @@ def text_data_pipeline(text_data):
 
 
 def test_calibration_pipeline(text_data, text_data_pipeline):
-    """Test that calibration works in prefit pipeline with transformer,
-    where `X` is not array-like, sparse matrix or dataframe at the start.
+    """Test that calibration works in prefit pipeline with transformer
+
+    `X` is not array-like, sparse matrix or dataframe at the start.
     See https://github.com/scikit-learn/scikit-learn/issues/8710
-    Test is can also predict without running into validation errors.
-    See https://github.com/scikit-learn/scikit-learn/issues/19637"""
+
+    Also test it can predict without running into validation errors.
+    See https://github.com/scikit-learn/scikit-learn/issues/19637
+    """
     X, y = text_data
     clf = text_data_pipeline
     calib_clf = CalibratedClassifierCV(clf, cv='prefit')
