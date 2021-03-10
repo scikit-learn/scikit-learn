@@ -861,31 +861,31 @@ class StratifiedGroupKFold(_BaseKFold):
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is less than n_splits=%d."
                            % (n_smallest_class, self.n_splits)), UserWarning)
-        labels_num = len(y_cnt)
-        y_counts_per_group = defaultdict(lambda: np.zeros(labels_num))
+        n_classes = len(y_cnt)
+        y_counts_per_group = defaultdict(lambda: np.zeros(n_classes))
         for label, group in zip(y_inv, groups):
             y_counts_per_group[group][label] += 1
 
-        y_counts_per_fold = defaultdict(lambda: np.zeros(labels_num))
+        y_counts_per_fold = defaultdict(lambda: np.zeros(n_classes))
         groups_per_fold = defaultdict(set)
 
         groups_and_y_counts = list(y_counts_per_group.items())
         if self.shuffle:
             rng.shuffle(groups_and_y_counts)
 
-        for group, y_counts in sorted(groups_and_y_counts,
-                                      key=lambda x: -np.std(x[1])):
+        for group, group_y_counts in sorted(groups_and_y_counts,
+                                            key=lambda x: -np.std(x[1])):
             best_fold = None
             min_eval = np.inf
             min_samples_in_fold = np.inf
             for i in range(self.n_splits):
-                y_counts_per_fold[i] += y_counts
+                y_counts_per_fold[i] += group_y_counts
                 std_per_label = []
-                for label in range(labels_num):
+                for label in range(n_classes):
                     std_per_label.append(np.std(
                         [y_counts_per_fold[j][label] / y_cnt[label]
                          for j in range(self.n_splits)]))
-                y_counts_per_fold[i] -= y_counts
+                y_counts_per_fold[i] -= group_y_counts
                 fold_eval = np.mean(std_per_label)
                 samples_in_fold = np.sum(y_counts_per_fold[i])
                 is_current_fold_better = (
@@ -897,7 +897,7 @@ class StratifiedGroupKFold(_BaseKFold):
                     min_eval = fold_eval
                     min_samples_in_fold = samples_in_fold
                     best_fold = i
-            y_counts_per_fold[best_fold] += y_counts
+            y_counts_per_fold[best_fold] += group_y_counts
             groups_per_fold[best_fold].add(group)
 
         for i in range(self.n_splits):
