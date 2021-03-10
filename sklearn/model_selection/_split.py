@@ -866,7 +866,7 @@ class StratifiedGroupKFold(_BaseKFold):
         for label, group in zip(y_inv, groups):
             y_counts_per_group[group][label] += 1
 
-        y_counts_per_fold = defaultdict(lambda: np.zeros(n_classes))
+        y_counts_per_fold = np.zeros((self.n_splits, n_classes))
         groups_per_fold = defaultdict(set)
 
         groups_and_y_counts = list(y_counts_per_group.items())
