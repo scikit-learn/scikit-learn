@@ -149,7 +149,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
 # K-means batch estimation by EM (expectation maximization)
 
 def _tolerance(X, tol):
-    """Return a tolerance which is independent of the dataset."""
+    """Return a tolerance which is dependent on the dataset."""
     if tol == 0:
         return 0
     if sp.issparse(X):
@@ -264,7 +264,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         intensive due to the allocation of an extra array of shape
         (n_samples, n_clusters).
 
-        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        For now "auto" (kept for backward compatibility) chooses "elkan" but it
         might change in the future for a better heuristic.
 
     return_n_iter : bool, default=False
@@ -729,7 +729,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     -----
     The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
-    The average complexity is given by O(k n T), were n is the number of
+    The average complexity is given by O(k n T), where n is the number of
     samples and T is the number of iteration.
 
     The worst case complexity is given by O(n^(k+2/p)) with

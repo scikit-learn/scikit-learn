@@ -30,6 +30,7 @@ from sklearn.metrics import r2_score
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import scale
 from sklearn.pipeline import make_pipeline
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
@@ -607,7 +608,7 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     # check that the partial dependence support dataframe and pipeline
     # including a column transformer
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    df = pd.DataFrame(scale(iris.data), columns=iris.feature_names)
 
     pipe = make_pipeline(preprocessor, estimator)
     pipe.fit(df, iris.target)

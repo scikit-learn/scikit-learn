@@ -269,7 +269,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
 
     See Also
     --------
-    plot_confusion_matrix : Plot Confusion Matrix.
+    ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
+        given an estimator, the data, and the label.
+    ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
+        given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     References
@@ -1837,7 +1840,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
 
     adjusted : bool, default=False
         When true, the result is adjusted for chance, so that random
-        performance would score 0, and perfect performance scores 1.
+        performance would score 0, while keeping perfect performance at a score
+        of 1.
 
     Returns
     -------
