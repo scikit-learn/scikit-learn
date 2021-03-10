@@ -299,7 +299,8 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
     >>> cm = confusion_matrix(y_true, y_pred,
-    >>> labels=["ant", "bird", "cat"], as_dict=True)
+    ...  labels=["ant", "bird", "cat"], as_dict=True)
+
     {('ant', 'ant'): 2, ('bird', 'ant'): 0, ('cat', 'ant'): 1,
      ('ant', 'bird'): 0, ('bird', 'bird'): 0, ('cat', 'bird'): 0,
      ('ant', 'cat'): 0, ('bird', 'cat'): 1, ('cat', 'cat'): 2}
