@@ -202,9 +202,14 @@ def _num_features(X):
     features : int
         Number of features
     """
+    type_ = type(X)
+    if type_.__module__ == "builtins":
+        type_name = type_.__qualname__
+    else:
+        type_name = f"{type_.__module__}.{type_.__qualname__}"
     message = (
         "Unable to find the number of features from X of type "
-        f"{type(X).__module__}.{type(X).__qualname__}"
+        f"{type_name}"
     )
     if not hasattr(X, '__len__') and not hasattr(X, 'shape'):
         if not hasattr(X, '__array__'):

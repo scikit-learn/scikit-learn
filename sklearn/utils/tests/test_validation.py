@@ -1354,9 +1354,15 @@ def test_num_features(constructor_name):
 ])
 def test_num_features_errors_1d_containers(X, constructor_name):
     X = _convert_container(X, constructor_name)
+    if constructor_name == "array":
+        expected_type_name = "numpy.ndarray"
+    elif constructor_name == "series":
+        expected_type_name = "pandas.core.series.Series"
+    else:
+        expected_type_name = constructor_name
     message = (
         "Unable to find the number of features from X of type "
-        f"{type(X).__module__}.{type(X).__qualname__}"
+        f"{expected_type_name}"
     )
     if hasattr(X, "shape"):
         message += " with shape (3,)"
@@ -1367,6 +1373,9 @@ def test_num_features_errors_1d_containers(X, constructor_name):
 @pytest.mark.parametrize("X", [1, 'b', False, 3.0],
                          ids=["int", "str", "bool", "float"])
 def test_num_features_errors_scalars(X):
-    msg = "Unable to find the number of features from X"
+    msg = (
+        "Unable to find the number of features from X of type "
+        f"{type(X).__qualname__}"
+    )
     with pytest.raises(TypeError, match=msg):
         _num_features(X)
