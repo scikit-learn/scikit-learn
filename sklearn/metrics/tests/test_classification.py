@@ -595,7 +595,8 @@ def test_confusion_matrix_pprint():
     def test(y_true, y_pred):
         cm = confusion_matrix(y_true, y_pred, as_dict=True)
         print(cm)
-        assert cm == {('0', '0'): 19, ('1', '0'): 4, ('2', '0'): 0, ('0', '1'): 4, ('1', '1'): 3, ('2', '1'): 2,
+        assert cm == {('0', '0'): 19, ('1', '0'): 4, ('2', '0'): 0,
+                      ('0', '1'): 4, ('1', '1'): 3, ('2', '1'): 2,
                       ('0', '2'): 1, ('1', '2'): 24, ('2', '2'): 18}
 
     test(y_true, y_pred)

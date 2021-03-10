@@ -368,7 +368,8 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     if as_dict:
         label_list = labels.tolist()
         cm_lol = cm.tolist()
-        cm_dict = {(str(label_list[j]), str(label_list[i])): cm_lol[j][i] for i in range(0, len(label_list))
+        cm_dict = {(str(label_list[j]), str(label_list[i])): cm_lol[j][i]
+                   for i in range(0, len(label_list))
                    for j in range(0, len(cm_lol))}
 
         return cm_dict
@@ -2073,7 +2074,8 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         else:
             if line_heading == 'accuracy':
                 row_fmt_accuracy = '{:>{width}s} ' + \
-                                   ' {:>9.{digits}}' * 2 + ' {:>9.{digits}f}' + \
+                                   ' {:>9.{digits}}' * 2 +\
+                                   ' {:>9.{digits}f}' + \
                                    ' {:>9}\n'
                 report += row_fmt_accuracy.format(line_heading, '', '',
                                                   *avg[2:], width=width,
