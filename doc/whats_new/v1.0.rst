@@ -177,7 +177,7 @@ Changelog
   :class:`model_selection.StratifiedKFold` and `model_selection.GroupKFold`,
   providing an ability to split data preserving the distribution of classes in
   each split while keeping each group within a single split.
-  :pr:`18649` by `Leandro Hermida <hermidalc>` `Rodion Martynov <marrodion>`.
+  :pr:`18649` by `Leandro Hermida <hermidalc>` and `Rodion Martynov <marrodion>`.
 
 
 :mod:`sklearn.naive_bayes`
