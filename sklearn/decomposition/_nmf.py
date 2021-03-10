@@ -1065,9 +1065,12 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     est = NMF(n_components=n_components, init=init, solver=solver,
               beta_loss=beta_loss, tol=tol, max_iter=max_iter,
               random_state=random_state, alpha=alpha, l1_ratio=l1_ratio,
-              verbose=verbose, update_H=update_H, shuffle=shuffle,
-              regularization=regularization)
-    W = est.fit_transform(X, W=W, H=H)
+              verbose=verbose, shuffle=shuffle, regularization=regularization)
+
+    if update_H:
+        W = est.fit_transform(X, W=W, H=H)
+    else:
+        W = est.transform(X, H=H)
 
     return W, est.components_, est.n_iter_
 
@@ -1247,7 +1250,7 @@ class NMF(TransformerMixin, BaseEstimator):
     def __init__(self, n_components=None, *, init='warn', solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 update_H=True, shuffle=False, regularization='both'):
+                 shuffle=False, regularization='both'):
         self.n_components = n_components
         self.init = init
         self.solver = solver
@@ -1259,7 +1262,6 @@ class NMF(TransformerMixin, BaseEstimator):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
-        self.update_H = update_H
         self.regularization = regularization
 
     def _more_tags(self):
@@ -1310,7 +1312,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         # initialize or check W and H
         W, H = _check_w_h(X, W, H, n_components, self.solver, self.init,
-                          self.random_state, self.update_H)
+                          self.random_state, True)
 
         l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
             self.alpha, self.l1_ratio, self.regularization)
@@ -1318,14 +1320,14 @@ class NMF(TransformerMixin, BaseEstimator):
         if self.solver == 'cd':
             W, H, n_iter = _fit_coordinate_descent(
                 X, W, H, self.tol, self.max_iter, l1_reg_W, l1_reg_H,
-                l2_reg_W, l2_reg_H, update_H=self.update_H,
+                l2_reg_W, l2_reg_H, update_H=True,
                 verbose=self.verbose, shuffle=self.shuffle,
                 random_state=self.random_state)
         elif self.solver == 'mu':
             W, H, n_iter = _fit_multiplicative_update(
                 X, W, H, beta_loss, self.max_iter, self.tol,
                 l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
-                self.update_H, self.verbose
+                True, self.verbose
             )
 
         else:
@@ -1362,7 +1364,7 @@ class NMF(TransformerMixin, BaseEstimator):
         self.fit_transform(X, **params)
         return self
 
-    def transform(self, X):
+    def transform(self, X, H=None):
         """Transform the data X according to the fitted NMF model.
 
         Parameters
@@ -1370,12 +1372,13 @@ class NMF(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data matrix to be transformed by the model.
 
+        H : array-like of shape (n_components, n_features)
+
         Returns
         -------
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
@@ -1389,13 +1392,21 @@ class NMF(TransformerMixin, BaseEstimator):
                              "to X, or use a positive beta_loss.")
 
         n_samples, n_features = X.shape
-        n_components = self.n_components_
+        try:
+            check_is_fitted(self)
+            n_components = self.n_components_
+            H = self.components_
+        except:
+            n_components = self.n_components
+
+        if n_components is None:
+            n_components = n_features
 
         # check parameters
         _check_params(n_components, self.max_iter, self.tol)
 
         # initialize or check W and H
-        W, H = _check_w_h(X, None, self.components_, n_components, self.solver,
+        W, H = _check_w_h(X, None, H, n_components, self.solver,
                           self.init, self.random_state, False)
 
         l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
