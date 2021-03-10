@@ -256,7 +256,9 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
 
     Returns
     -------
-    C : ndarray of shape (n_classes, n_classes) OR dict with length (n_classes x n_classes)
+    C : ndarray of shape (n_classes, n_classes) OR dict with
+        length (n_classes x n_classes)
+
         Confusion matrix as a ndarry whose i-th row and j-th
         column entry indicates the number of
         samples with true label being i-th class
