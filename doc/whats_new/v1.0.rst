@@ -207,6 +207,13 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
+:mod:`sklearn.calibration`
+............................
+
+- |Fix| The predict and predict_proba methods of
+  :class:`calibration.CalibratedClassifierCV can now properly be used on
+  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
+
 Code and Documentation Contributors
 -----------------------------------
 
