@@ -738,8 +738,8 @@ class StratifiedKFold(_BaseKFold):
 class StratifiedGroupKFold(_BaseKFold):
     """Stratified K-Folds iterator variant with non-overlapping groups.
 
-    This cross-validation object is a variation of StratifiedKFold that returns
-    stratified folds with non-overlapping groups. The folds are made by
+    This cross-validation object is a variation of StratifiedKFold attempts to
+    return stratified folds with non-overlapping groups. The folds are made by
     preserving the percentage of samples for each class.
 
     The same group will not appear in two different folds (the number of
