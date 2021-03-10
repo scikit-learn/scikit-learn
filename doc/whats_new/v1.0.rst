@@ -214,6 +214,16 @@ Changelog
   :class:`calibration.CalibratedClassifierCV can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
 
+:mod:`sklearn.metrics`
+............................
+
+- |Enhancement| :func:`metrics.confusion_matrix` now can return a confusion
+  matrix with labels in form of dict as an option, :pr:`19190`
+  by :user:`Shubham Shinde <shubhamdo>` and
+  :user:`Max Kinner <maxkinner>` and
+  :user:`Varun John <varunjohn786>` and
+  :user:`Vinayak Parab <vinayak-parab>`
+
 Code and Documentation Contributors
 -----------------------------------
 
