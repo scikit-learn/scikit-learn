@@ -1338,9 +1338,16 @@ def test_num_features(constructor_name):
     assert _num_features(X) == 3
 
 
-@pytest.mark.parametrize("X", [
-    [1, 2, 3], ["a", "b", "c"], [False, True, False], [1.0, 3.4, 4.0]],
-                         ids=["int", "str", "bool", "float"])
+@pytest.mark.parametrize(
+    "X",
+     [
+        [1, 2, 3],
+        ["a", "b", "c"],
+        [False, True, False],
+        [1.0, 3.4, 4.0]
+    ],
+    ids=["int", "str", "bool", "float"]
+)
 @pytest.mark.parametrize("constructor_name", [
     "list", "tuple", "array", "series"
 ])
