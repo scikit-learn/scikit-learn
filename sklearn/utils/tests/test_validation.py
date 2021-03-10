@@ -2,6 +2,7 @@
 
 import warnings
 import os
+import re
 
 from tempfile import NamedTemporaryFile
 from itertools import product
@@ -1352,9 +1353,14 @@ def test_num_features(constructor_name):
     "list", "tuple", "array", "series"
 ])
 def test_num_features_errors_1d_containers(X, constructor_name):
-    msg = "Unable to find the number of features from X"
     X = _convert_container(X, constructor_name)
-    with pytest.raises(TypeError, match=msg):
+    message = (
+        "Unable to find the number of features from X of type "
+        f"{type(X).__module__}.{type(X).__qualname__}"
+    )
+    if hasattr(X, "shape"):
+        message += " with shape (3,)"
+    with pytest.raises(TypeError, match=re.escape(message)):
         _num_features(X)
 
 

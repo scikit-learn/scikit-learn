@@ -202,7 +202,10 @@ def _num_features(X):
     features : int
         Number of features
     """
-    message = f"Unable to find the number of features from X of type {type(X)}"
+    message = (
+        "Unable to find the number of features from X of type "
+        f"{type(X).__module__}.{type(X).__qualname__}"
+    )
     if not hasattr(X, '__len__') and not hasattr(X, 'shape'):
         if not hasattr(X, '__array__'):
             raise TypeError(message)
