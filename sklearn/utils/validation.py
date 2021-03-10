@@ -217,8 +217,7 @@ def _num_features(X):
         if not hasattr(X.shape, '__len__') or len(X.shape) <= 1:
             message += f" with shape {X.shape}"
             raise TypeError(message)
-        if isinstance(X.shape[1], numbers.Integral):
-            return X.shape[1]
+        return X.shape[1]
 
     first_elem = X[0]
 
