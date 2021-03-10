@@ -14,7 +14,6 @@ import warnings
 from math import sqrt
 
 from ._cdnmf_fast import _update_cdnmf_fast
-from .._config import config_context
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning, NotFittedError
 from ..utils import check_random_state, check_array
