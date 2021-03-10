@@ -169,6 +169,13 @@ Changelog
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now correctly shows the score for
+  single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
