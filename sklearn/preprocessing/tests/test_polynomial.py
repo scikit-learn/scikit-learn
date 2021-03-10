@@ -153,7 +153,8 @@ def test_spline_transformer_feature_names():
 @pytest.mark.parametrize("degree", range(1, 5))
 @pytest.mark.parametrize("n_knots", range(3, 5))
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
-def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
+@pytest.mark.parametrize("extrapolation", ["constant", "periodic"])
+def test_spline_transformer_unity_decomposition(degree, n_knots, knots, extrapolation):
     """Test that B-splines are indeed a decomposition of unity.
 
     Splines basis functions must sum up to 1 per row, if we stay in between
@@ -163,8 +164,12 @@ def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
     # make the boundaries 0 and 1 part of X_train, for sure.
     X_train = np.r_[[[0]], X[::2, :], [[1]]]
     X_test = X[1::2, :]
+
+    if extrapolation == "periodic":
+        n_knots = n_knots + degree  # periodic splines require degree < n_knots
+
     splt = SplineTransformer(
-        n_knots=n_knots, degree=degree, knots=knots, include_bias=True
+        n_knots=n_knots, degree=degree, knots=knots, include_bias=True, extrapolation=extrapolation
     )
     splt.fit(X_train)
     for X in [X_train, X_test]:
