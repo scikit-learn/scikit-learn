@@ -101,59 +101,57 @@ def _deprecate_normalize(normalize, default, estimator_name):
     else:
         _normalize = normalize
 
-    str_on_pipeline = (
-        "If you still wish to normalize use Pipeline with a StandardScaler "
+    pipeline_msg = (
+        "If you wish to scale the data, use Pipeline with a StandardScaler "
         "in a preprocessing stage. To reproduce the previous behavior:\n\n"
-        "from sklearn.pipeline import make_pipeline\n"
+        "from sklearn.pipeline import make_pipeline\n\n"
         "model = make_pipeline(StandardScaler(with_mean=False), "
-        f"{estimator_name}()).\n"
-    )
-
-    str_on_params = (
-        "If you wish to use additional parameters in "
-        "the fit() you can include them as follows:\n\n"
-        "kwargs = {\n"
-        "    model.steps[0][0] + '__<your_param_name>': "
-        "<your_param_value>,\n"
-        "    model.steps[-1][0] + '__<your_param_name>': "
-        "<your_param_value>\n}\n"
-        "model.fit(X, y, **kwargs)"
+        f"{estimator_name}())\n\n"
+        "If you wish to pass a sample_weight parameter, you need to pass it "
+        "as a fit parameter to each step of the pipeline as follows:\n\n"
+        "kwargs = {s[0] + '__sample_weight': sample_weight for s "
+        "in model.steps}\n"
+        "model.fit(X, y, **kwargs)\n\n"
     )
 
     if estimator_name == 'Ridge' or estimator_name == 'RidgeClassifier':
-        str_on_alpha = 'Set parameter alpha to: original_alpha * n_samples. '
+        alpha_msg = 'Set parameter alpha to: original_alpha * n_samples. '
     elif 'Lasso' in estimator_name:
-        str_on_alpha = (
+        alpha_msg = (
             'Set parameter alpha to: original_alpha * np.sqrt(n_samples). '
         )
     elif 'ElasticNet' in estimator_name:
-        str_on_alpha = (
+        alpha_msg = (
             'Set parameter alpha to original_alpha * np.sqrt(n_samples) if'
             'l1_ratio is 1 and original_alpha * n_samples if l1_ratio is 0. '
         )
     elif estimator_name == 'RidgeCV' or estimator_name == 'RidgeClassifierCV':
-        str_on_alpha = 'Set parameter alphas to: original_alphas * n_samples. '
+        alpha_msg = 'Set parameter alphas to: original_alphas * n_samples. '
     else:
-        str_on_alpha = ""
+        alpha_msg = ""
 
     if default and normalize == 'deprecated':
         warnings.warn(
             "The default of 'normalize' will be set to False in version 1.2 "
             "and deprecated in version 1.4.\n" +
-            str_on_pipeline + str_on_alpha + str_on_params,
+            pipeline_msg + alpha_msg,
             FutureWarning
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
             "'normalize' was deprecated in version 1.0 and will be "
             "removed in 1.2.\n" +
-            str_on_pipeline + str_on_alpha + str_on_params, FutureWarning
+            pipeline_msg + alpha_msg, FutureWarning
         )
     elif not normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be"
-            " removed in 1.2 Don't set 'normalize' parameter"
-            " and leave it to its default value", FutureWarning
+            "'normalize' was deprecated in version 1.0 and will be "
+            "removed in 1.2. "
+            "Please leave the normalize parameter to its default value to "
+            "silence this warning. The default behavior of this estimator "
+            "is to not do any normalization. If normalization is needed "
+            "please use sklearn.preprocessing.StandardScaler instead.",
+            FutureWarning
         )
 
     return _normalize
