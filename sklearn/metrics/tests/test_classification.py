@@ -1,4 +1,3 @@
-
 from functools import partial
 from itertools import product
 from itertools import chain
@@ -49,6 +48,7 @@ from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
 
 from scipy.spatial.distance import hamming as sp_hamming
+
 
 ###############################################################################
 # Utilities for testing
@@ -102,7 +102,6 @@ def make_prediction(dataset=None, binary=False):
 # Tests
 
 def test_classification_report_dictionary_output():
-
     # Test performance report with dictionary output
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
@@ -135,7 +134,7 @@ def test_classification_report_dictionary_output():
         target_names=iris.target_names, output_dict=True)
 
     # assert the 2 dicts are equal.
-    assert(report.keys() == expected_report.keys())
+    assert (report.keys() == expected_report.keys())
     for key in expected_report:
         if key == 'accuracy':
             assert isinstance(report[key], float)
@@ -616,9 +615,9 @@ def test_cohen_kappa():
     y2 = np.array([0] * 50 + [1] * 40 + [2] * 10)
     assert_almost_equal(cohen_kappa_score(y1, y2), .9315, decimal=4)
     assert_almost_equal(cohen_kappa_score(y1, y2,
-                        weights="linear"), 0.9412, decimal=4)
+                                          weights="linear"), 0.9412, decimal=4)
     assert_almost_equal(cohen_kappa_score(y1, y2,
-                        weights="quadratic"), 0.9541, decimal=4)
+                                          weights="quadratic"), 0.9541, decimal=4)
 
 
 @ignore_warnings
@@ -782,7 +781,7 @@ def test_matthews_corrcoef_overflow(n_points):
         mcc_denominator = activity * pos_rate * (1 - activity) * (1 - pos_rate)
         return mcc_numerator / np.sqrt(mcc_denominator)
 
-    def random_ys(n_points):    # binary
+    def random_ys(n_points):  # binary
         x_true = rng.random_sample(n_points)
         x_pred = x_true + 0.2 * (rng.random_sample(n_points) - 0.5)
         y_true = (x_true > 0.5)
@@ -1237,7 +1236,7 @@ def test_multilabel_hamming_loss():
     assert hamming_loss(y1, np.zeros(y1.shape)) == 4 / 6
     assert hamming_loss(y2, np.zeros(y1.shape)) == 0.5
     assert hamming_loss(y1, y2, sample_weight=w) == 1. / 12
-    assert hamming_loss(y1, 1-y2, sample_weight=w) == 11. / 12
+    assert hamming_loss(y1, 1 - y2, sample_weight=w) == 11. / 12
     assert hamming_loss(y1, np.zeros_like(y1), sample_weight=w) == 2. / 3
     # sp_hamming only works with 1-D arrays
     assert hamming_loss(y1[0], y2[0]) == sp_hamming(y1[0], y2[0])
@@ -1435,6 +1434,7 @@ def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
         )
     assert score == pytest.approx(expected_score)
     assert len(record) == 0
+
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
@@ -1758,7 +1758,6 @@ def test_prf_warnings():
     # average of per-label scores
     f, w = precision_recall_fscore_support, UndefinedMetricWarning
     for average in [None, 'weighted', 'macro']:
-
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 in labels with no predicted samples.'
                ' Use `zero_division` parameter to control'
@@ -1834,7 +1833,6 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
     # average of per-label scores
     f = precision_recall_fscore_support
     for average in [None, 'weighted', 'macro']:
-
         assert_no_warnings(f, [0, 1, 2], [1, 1, 2], average=average,
                            zero_division=zero_division)
 
@@ -2140,9 +2138,9 @@ def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
     # argument
     y_true = [2, 1, 0, 1, 0, 1, 1]
     pred_decision = np.array([0, 1, 2, 1, 0, 2, 1])
-    error_message = (r"The shape of pred_decision can not be 1d array"
+    error_message = ("The shape of pred_decision can not be 1d array"
                      "with a multiclass target. "
-                     "pred_decision shape must be \(n_samples, n_classes\)")
+                     r"pred_decision shape must be \(n_samples, n_classes\)")
     with pytest.raises(ValueError, match=error_message):
         hinge_loss(y_true=y_true, pred_decision=pred_decision)
 
@@ -2150,10 +2148,10 @@ def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
     pred_decision = [[0, 1], [0, 1], [0, 1], [0, 1],
                      [2, 0], [0, 1], [1, 0]]
     labels = [0, 1, 2]
-    error_message = (r"The shape of pred_decision is not "
+    error_message = ("The shape of pred_decision is not "
                      "consistent with the number of classes. "
                      "pred_decision shape must be "
-                     "\(n_samples, n_classes\) with "
+                     r"\(n_samples, n_classes\) with "
                      "multiclass target")
     with pytest.raises(ValueError, match=error_message):
         hinge_loss(y_true=y_true, pred_decision=pred_decision, labels=labels)
