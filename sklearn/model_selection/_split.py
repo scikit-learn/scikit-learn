@@ -875,28 +875,9 @@ class StratifiedGroupKFold(_BaseKFold):
 
         for group, group_y_counts in sorted(groups_and_y_counts,
                                             key=lambda x: -np.std(x[1])):
-            best_fold = None
-            min_eval = np.inf
-            min_samples_in_fold = np.inf
-            for i in range(self.n_splits):
-                y_counts_per_fold[i] += group_y_counts
-                std_per_label = []
-                for label in range(n_classes):
-                    std_per_label.append(np.std(
-                        [y_counts_per_fold[j][label] / y_cnt[label]
-                         for j in range(self.n_splits)]))
-                y_counts_per_fold[i] -= group_y_counts
-                fold_eval = np.mean(std_per_label)
-                samples_in_fold = np.sum(y_counts_per_fold[i])
-                is_current_fold_better = (
-                    np.isclose(fold_eval, min_eval)
-                    and samples_in_fold < min_samples_in_fold
-                    or fold_eval < min_eval
-                )
-                if is_current_fold_better:
-                    min_eval = fold_eval
-                    min_samples_in_fold = samples_in_fold
-                    best_fold = i
+            best_fold = self._find_best_fold(
+                y_counts_per_fold=y_counts_per_fold, n_classes=n_classes,
+                y_cnt=y_cnt, group_y_counts=group_y_counts)
             y_counts_per_fold[best_fold] += group_y_counts
             groups_per_fold[best_fold].add(group)
 
@@ -904,6 +885,32 @@ class StratifiedGroupKFold(_BaseKFold):
             test_indices = [idx for idx, group in enumerate(groups)
                             if group in groups_per_fold[i]]
             yield test_indices
+
+    def _find_best_fold(
+            self, y_counts_per_fold, n_classes, y_cnt, group_y_counts):
+        best_fold = None
+        min_eval = np.inf
+        min_samples_in_fold = np.inf
+        for i in range(self.n_splits):
+            y_counts_per_fold[i] += group_y_counts
+            std_per_label = []
+            for label in range(n_classes):
+                std_per_label.append(np.std(
+                    [y_counts_per_fold[j][label] / y_cnt[label]
+                        for j in range(self.n_splits)]))
+            y_counts_per_fold[i] -= group_y_counts
+            fold_eval = np.mean(std_per_label)
+            samples_in_fold = np.sum(y_counts_per_fold[i])
+            is_current_fold_better = (
+                fold_eval < min_eval or
+                np.isclose(fold_eval, min_eval)
+                and samples_in_fold < min_samples_in_fold
+            )
+            if is_current_fold_better:
+                min_eval = fold_eval
+                min_samples_in_fold = samples_in_fold
+                best_fold = i
+        return best_fold
 
 
 class TimeSeriesSplit(_BaseKFold):
