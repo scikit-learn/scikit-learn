@@ -876,8 +876,13 @@ class StratifiedGroupKFold(_BaseKFold):
         if self.shuffle:
             rng.shuffle(y_counts_per_group)
 
-        for group_idx, group_y_counts in sorted(enumerate(y_counts_per_group),
-                                                key=lambda x: -np.std(x[1])):
+        # Stable sort to keep shuffled order for groups with the same
+        # class distribution variance
+        sorted_groups_idx = np.argsort(-np.std(y_counts_per_group, axis=1),
+                                       kind='stable')
+
+        for group_idx in sorted_groups_idx:
+            group_y_counts = y_counts_per_group[group_idx]
             best_fold = self._find_best_fold(
                 y_counts_per_fold=y_counts_per_fold, y_cnt=y_cnt,
                 group_y_counts=group_y_counts)
