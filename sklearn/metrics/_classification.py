@@ -2285,6 +2285,48 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
     return _weighted_sum(loss, sample_weight, normalize)
 
 
+def _check_valid_multiclass_decision_shape(y_true_unique, pred_decision,
+                                           labels):
+    """Check if the inputs are consistent.
+
+    If it is a multiclass problem (it means thare are more than 2 classes
+    to classify), `pred_decision` parameter can't be 1d array. The column
+    number must be equal to classes number.
+
+    If not every classes are present in `y_true`, `labels` parameter
+    must be filled in.
+
+    Parameters
+    ----------
+    y_true_unique : array-like
+
+    pred_decision : array-like
+
+    labels : array-like
+    """
+
+    if pred_decision.ndim <= 1:
+        raise ValueError("The shape of pred_decision can not be 1d array"
+                         "with a multiclass target. "
+                         "pred_decision shape must be (n_samples, n_classes)")
+
+    invalid_decision_shape = pred_decision.ndim > 1 and \
+                             y_true_unique.size != pred_decision.shape[1]
+
+    if labels is None:
+        if invalid_decision_shape:
+            raise ValueError("Please include all labels in y_true "
+                             "or pass labels as third argument")
+    elif invalid_decision_shape:
+        raise ValueError("The shape of pred_decision is not "
+                         "consistent with the number of classes. "
+                         "pred_decision shape must be "
+                         "(n_samples, n_classes) with "
+                         "multiclass target")
+
+    return
+
+
 @_deprecate_positional_args
 def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized).
@@ -2370,19 +2412,11 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
     y_true_unique = np.unique(labels if labels is not None else y_true)
-    if y_true_unique.size > 2:
-        if pred_decision.ndim <= 1 or \
-                y_true_unique.size != pred_decision.shape[1]:
-            if labels is not None or pred_decision.ndim <= 1:
-                raise ValueError("The shape of pred_decision is not "
-                                 "consistent with the number of classes. "
-                                 "pred_decision shape must be "
-                                 "(n_samples, n_classes) with "
-                                 "multiclass target")
-            else:
-                raise ValueError("Please include all labels in y_true "
-                                 "or pass labels as third argument")
 
+    if y_true_unique.size > 2:
+
+        _check_valid_multiclass_decision_shape(y_true_unique, pred_decision,
+                                               labels)
         if labels is None:
             labels = y_true_unique
         le = LabelEncoder()
