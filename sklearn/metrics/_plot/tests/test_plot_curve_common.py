@@ -1,9 +1,12 @@
 import pytest
+import numpy as np
 
+from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.base import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
@@ -11,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.metrics import plot_det_curve
+from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import plot_roc_curve
 
 
@@ -25,7 +29,7 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize("plot_func", [plot_det_curve])
 def test_plot_curve_error_non_binary(pyplot, data, plot_func):
     X, y = data
     clf = DecisionTreeClassifier()
@@ -49,7 +53,7 @@ def test_plot_curve_error_non_binary(pyplot, data, plot_func):
 )
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_error_no_response(
-    pyplot, data_binary, response_method, msg, plot_func,
+        pyplot, data_binary, response_method, msg, plot_func,
 ):
     X, y = data_binary
 
@@ -66,7 +70,7 @@ def test_plot_curve_error_no_response(
 
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_estimator_name_multiple_calls(
-    pyplot, data_binary, plot_func
+        pyplot, data_binary, plot_func
 ):
     # non-regression test checking that the `name` used when calling
     # `plot_func` is used as well when calling `disp.plot()`
@@ -101,3 +105,53 @@ def test_plot_det_curve_not_fitted_errors(pyplot, data_binary, clf, plot_func):
     disp = plot_func(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
     assert disp.estimator_name == model.__class__.__name__
+
+
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
+@pytest.mark.parametrize("nrows, ncols", [(1, 4), (1, 5)])
+@pytest.mark.parametrize("plot_func",
+                         [plot_precision_recall_curve, plot_roc_curve])
+def test_plot_curve_incorrect_num_axes(pyplot, nrows, ncols, plot_func):
+    fig, axes = pyplot.subplots(nrows, ncols)
+
+    X, y = make_classification(n_classes=3, n_samples=50,
+                               n_informative=3, random_state=0)
+    lr = LogisticRegression().fit(X, y)
+
+    msg = "Expected ax to have {} axes, got {}".format(3, nrows * ncols)
+
+    with pytest.raises(ValueError, match=msg):
+        plot_func(lr, X, y, ax=axes)
+
+
+@pytest.mark.parametrize(
+    "response_method, msg",
+    [("predict_proba", "response method predict_proba is not defined in "
+                       "MyClassifier"),
+     ("decision_function", "response method decision_function is not defined "
+                           "in MyClassifier"),
+     ("auto", "response method decision_function or predict_proba is not "
+              "defined in MyClassifier"),
+     ("bad_method", "response_method must be 'predict_proba', "
+                    "'decision_function' or 'auto'")])
+@pytest.mark.parametrize("plot_func",
+                         [plot_precision_recall_curve, plot_roc_curve])
+@pytest.mark.parametrize("is_binary, ", [True, False])
+def test_error_bad_response(pyplot, response_method, msg,
+                            is_binary, plot_func):
+    if is_binary:
+        X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    else:
+        X, y = make_classification(n_classes=3, n_samples=50,
+                                   n_informative=3, random_state=0)
+
+    class MyClassifier(ClassifierMixin, BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            self.classes_ = np.unique(y)
+            return self
+
+    clf = MyClassifier().fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        plot_func(clf, X, y, response_method=response_method)

@@ -1,4 +1,4 @@
-from .base import _get_response
+from .base import _plot_curve
 
 from .. import average_precision_score
 from .. import precision_recall_curve
@@ -71,6 +71,7 @@ class PrecisionRecallDisplay:
     >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)
     >>> disp.plot() # doctest: +SKIP
     """
+
     @_deprecate_positional_args
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None, pos_label=None):
@@ -108,7 +109,11 @@ class PrecisionRecallDisplay:
 
         name = self.estimator_name if name is None else name
 
-        line_kwargs = {"drawstyle": "steps-post"}
+        if "drawstyle" not in kwargs:
+            line_kwargs = {"drawstyle": "steps-post"}
+        else:
+            line_kwargs = {}
+
         if self.average_precision is not None and name is not None:
             line_kwargs["label"] = (f"{name} (AP = "
                                     f"{self.average_precision:0.2f})")
@@ -140,11 +145,63 @@ class PrecisionRecallDisplay:
         return self
 
 
+def _get_precision_recall_display(y, y_pred,
+                                  pos_label=1, sample_weight=None,
+                                  y_type='binary', name=None):
+    """Calculate precision recall metrics and return precision recall display.
+
+    Parameters
+    ----------
+    y : array-like of shape (n_samples,)
+        Target values.
+
+    y_pred: ndarray of shape (n_samples,)
+        Target scores.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+        This parameter is ignored for multiclass cenarios.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    name : str, default=None
+        Name of ROC Curve for labeling.
+
+    Returns
+    -------
+    display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
+        Object that stores computed values.
+    """
+
+    precision, recall, _ = precision_recall_curve(
+        y, y_pred,
+        pos_label=pos_label,
+        sample_weight=sample_weight
+    )
+
+    average_precision = average_precision_score(
+        y, y_pred,
+        pos_label=pos_label,
+        sample_weight=sample_weight
+    )
+
+    pos_label = pos_label if y_type == 'binary' else None
+
+    return PrecisionRecallDisplay(
+        precision=precision, recall=recall,
+        average_precision=average_precision, estimator_name=name,
+        pos_label=pos_label
+    )
+
+
 @_deprecate_positional_args
 def plot_precision_recall_curve(estimator, X, y, *,
                                 sample_weight=None, response_method="auto",
                                 name=None, ax=None, pos_label=None, **kwargs):
-    """Plot Precision Recall Curve for binary classifiers.
+    """Plot Precision Recall Curve.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
 
@@ -159,10 +216,11 @@ def plot_precision_recall_curve(estimator, X, y, *,
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like of shape (n_samples,)
-        Binary target values.
+    y : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Target values.
 
-    sample_weight : array-like of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,) \
+                    or (n_samples, n_classes), default=None
         Sample weights.
 
     response_method : {'predict_proba', 'decision_function', 'auto'}, \
@@ -176,8 +234,13 @@ def plot_precision_recall_curve(estimator, X, y, *,
         Name for labeling curve. If `None`, the name of the
         estimator is used.
 
-    ax : matplotlib axes, default=None
+    ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
+        In a multiclass setting:
+        - If a single axis is passed in, all plots are plotted in \
+          the same axis.
+        - If an array-like of axes are passed in, the precision recall curve \
+          plots will be drawn directly into these axes.
 
     pos_label : str or int, default=None
         The class considered as the positive class when computing the precision
@@ -192,34 +255,25 @@ def plot_precision_recall_curve(estimator, X, y, *,
     Returns
     -------
     display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
-        Object that stores computed values.
+        Object or array-like of object that stores computed values.
 
     See Also
     --------
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
     PrecisionRecallDisplay : Precision Recall visualization.
+
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label)
+    def plot_curve_func(y, y_pred, pos_label=1, y_type='binary', name=None):
+        return _get_precision_recall_display(
+            y, y_pred, pos_label=pos_label,
+            sample_weight=sample_weight,
+            y_type=y_type, name=name
+        )
 
-    precision, recall, _ = precision_recall_curve(y, y_pred,
-                                                  pos_label=pos_label,
-                                                  sample_weight=sample_weight)
-    average_precision = average_precision_score(y, y_pred,
-                                                pos_label=pos_label,
-                                                sample_weight=sample_weight)
-
-    name = name if name is not None else estimator.__class__.__name__
-
-    viz = PrecisionRecallDisplay(
-        precision=precision,
-        recall=recall,
-        average_precision=average_precision,
-        estimator_name=name,
-        pos_label=pos_label,
-    )
-
-    return viz.plot(ax=ax, name=name, **kwargs)
+    return _plot_curve(plot_curve_func=plot_curve_func,
+                       estimator=estimator, X=X, y=y,
+                       response_method=response_method, name=name,
+                       ax=ax, pos_label=pos_label, **kwargs)

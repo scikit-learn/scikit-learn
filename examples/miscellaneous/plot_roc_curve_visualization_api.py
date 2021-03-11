@@ -10,7 +10,7 @@ how to use the visualization API by comparing ROC curves.
 print(__doc__)
 
 # %%
-# Load Data and Train a SVC
+# Load Data and Train a Binary SVC
 # -------------------------
 # First, we load the wine dataset and convert it to a binary classification
 # problem. Then, we train a support vector classifier on a training dataset.
@@ -35,7 +35,7 @@ svc.fit(X_train, y_train)
 # :func:`sklearn.metrics.plot_roc_curve`. The returned `svc_disp` object allows
 # us to continue using the already computed ROC curve for the SVC in future
 # plots.
-svc_disp = plot_roc_curve(svc, X_test, y_test)
+svc_disp = plot_roc_curve(svc, X_test, y_test, pos_label=1)
 plt.show()
 
 # %%
@@ -50,6 +50,24 @@ plt.show()
 rfc = RandomForestClassifier(n_estimators=10, random_state=42)
 rfc.fit(X_train, y_train)
 ax = plt.gca()
-rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=ax, alpha=0.8)
+rfc_disp = plot_roc_curve(rfc, X_test, y_test, pos_label=1, ax=ax, alpha=0.8)
 svc_disp.plot(ax=ax, alpha=0.8)
+plt.show()
+
+# %%
+# Training a Random Forest and Plotting the ROC Curve for a multiclass scenario
+# -------------------------
+X, y = load_wine(return_X_y=True)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+svc = SVC(random_state=42)
+svc.fit(X_train, y_train)
+
+fig, ax = plt.subplots(1, 3, figsize=(19.2, 4.8))
+svc_disp = plot_roc_curve(svc, X_test, y_test, ax=ax)
+
+rfc = RandomForestClassifier(n_estimators=10, random_state=42)
+rfc.fit(X_train, y_train)
+plot_roc_curve(rfc, X_test, y_test, ax=ax, alpha=0.8)
+
 plt.show()

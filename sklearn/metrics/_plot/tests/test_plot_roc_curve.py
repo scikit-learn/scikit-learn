@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import label_binarize
 from sklearn.utils import shuffle
 from sklearn.compose import make_column_transformer
 
@@ -31,6 +32,7 @@ def data():
 def data_binary(data):
     X, y = data
     return X[y < 2], y[y < 2]
+
 
 @pytest.mark.parametrize("response_method",
                          ["predict_proba", "decision_function"])
@@ -57,7 +59,8 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     lr.fit(X, y)
 
     viz = plot_roc_curve(lr, X, y, alpha=0.8, sample_weight=sample_weight,
-                         drop_intermediate=drop_intermediate)
+                         drop_intermediate=drop_intermediate,
+                         response_method=response_method)
 
     y_pred = getattr(lr, response_method)(X)
     if y_pred.ndim == 2:
@@ -91,6 +94,58 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
 
     assert viz.ax_.get_ylabel() == expected_ylabel
     assert viz.ax_.get_xlabel() == expected_xlabel
+
+
+@pytest.mark.parametrize("response_method",
+                         ["predict_proba", "decision_function"])
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+@pytest.mark.parametrize("drop_intermediate", [True, False])
+def test_plot_roc_curve_multiclass(pyplot, response_method, data,
+                                   with_sample_weight, drop_intermediate):
+    X, y = data
+
+    if with_sample_weight:
+        rng = np.random.RandomState(42)
+        sample_weight = rng.randint(1, 4, size=(X.shape[0]))
+    else:
+        sample_weight = None
+
+    lr = LogisticRegression()
+    lr.fit(X, y)
+
+    viz = plot_roc_curve(lr, X, y, alpha=0.8, sample_weight=sample_weight,
+                         drop_intermediate=drop_intermediate,
+                         response_method=response_method)
+
+    y_pred = getattr(lr, response_method)(X)
+
+    y = label_binarize(y, classes=np.unique(y))
+
+    for i in range(3):
+        fpr, tpr, _ = roc_curve(y[:, i], y_pred[:, i],
+                                pos_label=1,
+                                sample_weight=sample_weight,
+                                drop_intermediate=drop_intermediate)
+
+        assert_allclose(viz[i].roc_auc, auc(fpr, tpr))
+        assert_allclose(viz[i].fpr, fpr)
+        assert_allclose(viz[i].tpr, tpr)
+
+        assert viz[i].estimator_name == "LogisticRegression"
+
+        # cannot fail thanks to pyplot fixture
+        import matplotlib as mpl  # noqal
+        assert isinstance(viz[i].line_, mpl.lines.Line2D)
+        assert viz[i].line_.get_alpha() == 0.8
+        assert isinstance(viz[i].ax_, mpl.axes.Axes)
+        assert isinstance(viz[i].figure_, mpl.figure.Figure)
+
+        expected_label = "LogisticRegression for class {} " \
+                         "(AUC = {:0.2f})".format(i, viz[i].roc_auc)
+        assert viz[i].line_.get_label() == expected_label
+
+        assert viz[i].ax_.get_ylabel() == "True Positive Rate"
+        assert viz[i].ax_.get_xlabel() == "False Positive Rate"
 
 
 @pytest.mark.parametrize(

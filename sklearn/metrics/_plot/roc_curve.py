@@ -1,4 +1,4 @@
-from .base import _get_response
+from .base import _plot_curve
 
 from .. import auc
 from .. import roc_curve
@@ -67,6 +67,7 @@ class RocCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
+
     @_deprecate_positional_args
     def __init__(self, *, fpr, tpr,
                  roc_auc=None, estimator_name=None, pos_label=None):
@@ -117,11 +118,13 @@ class RocCurveDisplay:
             fig, ax = plt.subplots()
 
         self.line_, = ax.plot(self.fpr, self.tpr, **line_kwargs)
+
         info_pos_label = (f" (Positive label: {self.pos_label})"
                           if self.pos_label is not None else "")
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
+
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
@@ -130,6 +133,61 @@ class RocCurveDisplay:
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
+
+
+def _get_roc_curve_display(y, y_pred,
+                           pos_label=1, sample_weight=None,
+                           drop_intermediate=True, y_type='binary', name=None):
+    """Calculate roc metrics and return roc curve display.
+
+    Parameters
+    ----------
+    y : array-like of shape (n_samples,)
+        Target values.
+
+    y_pred: ndarray of shape (n_samples,)
+        Target scores.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+        This parameter is ignored for multiclass cenarios.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    drop_intermediate : boolean, default=True
+        Whether to drop some suboptimal thresholds which would not appear
+        on a plotted ROC curve. This is useful in order to create lighter
+        ROC curves.
+
+    name : str, default=None
+        Name of ROC Curve for labeling.
+
+    Returns
+    -------
+    display : :class:`~sklearn.metrics.RocCurveDisplay`
+        Object that stores computed values.
+    """
+    fpr, tpr, _ = roc_curve(
+        y, y_pred,
+        pos_label=pos_label,
+        sample_weight=sample_weight,
+        drop_intermediate=drop_intermediate
+    )
+
+    roc_auc = auc(fpr, tpr)
+
+    pos_label = pos_label if y_type == 'binary' else None
+
+    return RocCurveDisplay(
+        fpr=fpr,
+        tpr=tpr,
+        roc_auc=roc_auc,
+        estimator_name=name,
+        pos_label=pos_label
+    )
 
 
 @_deprecate_positional_args
@@ -162,8 +220,8 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
         on a plotted ROC curve. This is useful in order to create lighter
         ROC curves.
 
-    response_method : {'predict_proba', 'decision_function', 'auto'} \
-    default='auto'
+    response_method : {'predict_proba', 'decision_function', 'auto'}, \
+                      default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. If set to 'auto',
         :term:`predict_proba` is tried first and if it does not exist
@@ -173,8 +231,13 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
         Name of ROC Curve for labeling. If `None`, use the name of the
         estimator.
 
-    ax : matplotlib axes, default=None
+    ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
+        In a multiclass setting:
+        - If a single axis is passed in, all plots are plotted in \
+          the same axis.
+        - If an array-like of axes are passed in, the roc curve \
+          plots will be drawn directly into these axes.
 
     pos_label : str or int, default=None
         The class considered as the positive class when computing the roc auc
@@ -186,7 +249,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     Returns
     -------
     display : :class:`~sklearn.metrics.RocCurveDisplay`
-        Object that stores computed values.
+        Object or array-like of object that stores computed values.
 
     See Also
     --------
@@ -209,22 +272,15 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     """
     check_matplotlib_support('plot_roc_curve')
 
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label)
+    def plot_curve_func(y, y_pred, pos_label=1, y_type='binary', name=None):
+        return _get_roc_curve_display(
+            y, y_pred, pos_label=pos_label,
+            sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
+            y_type=y_type, name=name
+        )
 
-    fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
-                            sample_weight=sample_weight,
-                            drop_intermediate=drop_intermediate)
-    roc_auc = auc(fpr, tpr)
-
-    name = estimator.__class__.__name__ if name is None else name
-
-    viz = RocCurveDisplay(
-        fpr=fpr,
-        tpr=tpr,
-        roc_auc=roc_auc,
-        estimator_name=name,
-        pos_label=pos_label
-    )
-
-    return viz.plot(ax=ax, name=name, **kwargs)
+    return _plot_curve(plot_curve_func=plot_curve_func,
+                       estimator=estimator, X=X, y=y,
+                       response_method=response_method, name=name,
+                       ax=ax, pos_label=pos_label, **kwargs)
