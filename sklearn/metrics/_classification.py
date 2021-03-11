@@ -2374,9 +2374,11 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     if y_true_unique.size > 2:
 
         if pred_decision.ndim <= 1:
-            raise ValueError("The shape of pred_decision can not be 1d array"
+            raise ValueError("The shape of pred_decision cannot be 1d array"
                              "with a multiclass target. pred_decision shape "
-                             "must be (n_samples, n_classes)")
+                             "must be (n_samples, n_classes), that is "
+                             f"({y_true.shape[0]}, {y_true_unique.size})."
+                             f" Got: {pred_decision.shape}")
 
         # pred_decision.ndim > 1 is true
         if y_true_unique.size != pred_decision.shape[1]:
@@ -2386,9 +2388,11 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
             else:
                 raise ValueError("The shape of pred_decision is not "
                                  "consistent with the number of classes. "
-                                 "pred_decision shape must be "
-                                 "(n_samples, n_classes) with "
-                                 "multiclass target")
+                                 "With a multiclass target, pred_decision "
+                                 "shape must be "
+                                 "(n_samples, n_classes), that is "
+                                 f"({y_true.shape[0]}, {y_true_unique.size}). "
+                                 f"Got: {pred_decision.shape}")
         if labels is None:
             labels = y_true_unique
         le = LabelEncoder()

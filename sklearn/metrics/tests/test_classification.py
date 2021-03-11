@@ -4,6 +4,7 @@ from itertools import product
 from itertools import chain
 from itertools import permutations
 import warnings
+import re
 
 import numpy as np
 from scipy import linalg
@@ -2138,24 +2139,27 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
 def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
     # test for inconsistency between multiclass problem and pred_decision
     # argument
-    y_true = [2, 1, 0, 1, 0, 1, 1]
+    y_true = np.array([2, 1, 0, 1, 0, 1, 1])
     pred_decision = np.array([0, 1, 2, 1, 0, 2, 1])
-    error_message = ("The shape of pred_decision can not be 1d array"
-                     "with a multiclass target. "
-                     r"pred_decision shape must be \(n_samples, n_classes\)")
-    with pytest.raises(ValueError, match=error_message):
+    error_message = ("The shape of pred_decision cannot be 1d array"
+                     "with a multiclass target. pred_decision shape "
+                     "must be (n_samples, n_classes), that is "
+                     f"({y_true.shape[0]}, {np.unique(y_true).size}). "
+                     f"Got: ({y_true.shape[0]},)")
+    with pytest.raises(ValueError, match=re.escape(error_message)):
         hinge_loss(y_true=y_true, pred_decision=pred_decision)
 
     # test for inconsistency between pred_decision shape and labels number
-    pred_decision = [[0, 1], [0, 1], [0, 1], [0, 1],
-                     [2, 0], [0, 1], [1, 0]]
+    pred_decision = np.array([[0, 1], [0, 1], [0, 1], [0, 1],
+                              [2, 0], [0, 1], [1, 0]])
     labels = [0, 1, 2]
     error_message = ("The shape of pred_decision is not "
                      "consistent with the number of classes. "
-                     "pred_decision shape must be "
-                     r"\(n_samples, n_classes\) with "
-                     "multiclass target")
-    with pytest.raises(ValueError, match=error_message):
+                     "With a multiclass target, pred_decision "
+                     "shape must be (n_samples, n_classes), that is "
+                     f"({y_true.shape[0]}, {np.unique(y_true).size}). "
+                     f"Got: ({y_true.shape[0]}, {pred_decision.shape[1]})")
+    with pytest.raises(ValueError, match=re.escape(error_message)):
         hinge_loss(y_true=y_true, pred_decision=pred_decision, labels=labels)
 
 
