@@ -169,12 +169,9 @@ Changelog
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
 
-:mod:`sklearn.model_selection`
-..............................
-
-- |Fix| :class:`model_selection.RandomizedSearchCV` and
-  :class:`model_selection.GridSearchCV` now correctly shows the score for
-  single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
+- |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
+  are integral.
+  :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -213,6 +210,13 @@ Changelog
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
+
+:mod:`sklearn.calibration`
+............................
+
+- |Fix| The predict and predict_proba methods of
+  :class:`calibration.CalibratedClassifierCV can now properly be used on
+  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
 
 Code and Documentation Contributors
 -----------------------------------

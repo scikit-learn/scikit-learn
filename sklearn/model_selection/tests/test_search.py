@@ -14,7 +14,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils._testing import (
-    assert_raise_message,
     assert_array_equal,
     assert_array_almost_equal,
     assert_allclose,
@@ -270,8 +269,8 @@ def test_grid_search_no_score():
 
     # giving no scoring function raises an error
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
-    assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
-                         [[1]])
+    with pytest.raises(TypeError, match="no scoring"):
+        grid_search_no_score.fit([[1]])
 
 
 def test_grid_search_score_method():
@@ -316,11 +315,11 @@ def test_grid_search_groups():
 
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2),
                  GroupKFold(n_splits=3), GroupShuffleSplit()]
+    error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
         gs = GridSearchCV(clf, grid, cv=cv)
-        assert_raise_message(ValueError,
-                             "The 'groups' parameter should not be None.",
-                             gs.fit, X, y)
+        with pytest.raises(ValueError, match=error_msg):
+            gs.fit(X, y)
         gs.fit(X, y, groups=groups)
 
     non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
@@ -385,20 +384,21 @@ def test_no_refit():
         # error messages
         for fn_name in ('predict', 'predict_proba', 'predict_log_proba',
                         'transform', 'inverse_transform'):
-            assert_raise_message(NotFittedError,
-                                 ('refit=False. %s is available only after '
-                                  'refitting on the best parameters'
-                                  % fn_name), getattr(grid_search, fn_name), X)
+            error_msg = (f"refit=False. {fn_name} is available only after "
+                         f"refitting on the best parameters")
+            with pytest.raises(NotFittedError, match=error_msg):
+                getattr(grid_search, fn_name)(X)
 
     # Test that an invalid refit param raises appropriate error messages
+    error_msg = ("For multi-metric scoring, the parameter refit must be set to"
+                 " a scorer key")
     for refit in ["", 5, True, 'recall', 'accuracy']:
-        assert_raise_message(ValueError, "For multi-metric scoring, the "
-                             "parameter refit must be set to a scorer key",
-                             GridSearchCV(clf, {}, refit=refit,
-                                          scoring={'acc': 'accuracy',
-                                                   'prec': 'precision'}
-                                          ).fit,
-                             X, y)
+        with pytest.raises(ValueError, match=error_msg):
+            GridSearchCV(
+                clf, {},
+                refit=refit,
+                scoring={'acc': 'accuracy', 'prec': 'precision'}
+            ).fit(X, y)
 
 
 def test_grid_search_error():
@@ -437,30 +437,33 @@ def test_grid_search_when_param_grid_includes_range():
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1}
     clf = SVC(gamma='auto')
-    assert_raise_message(
-        ValueError,
+    error_msg = re.escape(
         "Parameter grid for parameter (C) needs to"
         " be a list or numpy array, but got (<class 'int'>)."
         " Single values need to be wrapped in a list"
-        " with one element.",
-        GridSearchCV, clf, param_dict)
+        " with one element."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": []}
     clf = SVC()
-    assert_raise_message(
-        ValueError,
-        "Parameter values for parameter (C) need to be a non-empty sequence.",
-        GridSearchCV, clf, param_dict)
+    error_msg = re.escape(
+        "Parameter values for parameter (C) need to be a non-empty sequence."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": "1,2,3"}
     clf = SVC(gamma='auto')
-    assert_raise_message(
-        ValueError,
+    error_msg = re.escape(
         "Parameter grid for parameter (C) needs to"
         " be a list or numpy array, but got (<class 'str'>)."
         " Single values need to be wrapped in a list"
-        " with one element.",
-        GridSearchCV, clf, param_dict)
+        " with one element."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": np.ones((3, 2))}
     clf = SVC()
@@ -1293,10 +1296,13 @@ def test_fit_grid_point():
             assert n_test_samples == test.size
 
     # Should raise an error upon multimetric scorer
-    assert_raise_message(ValueError, "For evaluating multiple scores, use "
-                         "sklearn.model_selection.cross_validate instead.",
-                         fit_grid_point, X, y, svc, params, train, test,
-                         {'score': scorer}, verbose=True)
+    error_msg = ("For evaluating multiple scores, use "
+                 "sklearn.model_selection.cross_validate instead.")
+    with pytest.raises(ValueError, match=error_msg):
+        fit_grid_point(
+            X, y, svc, params, train, test, {'score': scorer},
+            verbose=True
+        )
 
 
 # FIXME remove test_fit_grid_point_deprecated as
