@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import scipy.sparse as sp
 
 from scipy.sparse import issparse
 from sklearn.semi_supervised import _label_propagation as label_propagation
@@ -26,13 +27,27 @@ ESTIMATORS = [
     }),
 ]
 
+ESTIMATOR_CLS = [label_propagation.LabelPropagation,
+              label_propagation.LabelSpreading]
 
-def test_fit_transduction():
+
+PARAMETERS = [{'kernel': 'rbf'}, {'kernel': 'knn', 'n_neighbors': 2}, {
+        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
+    }]
+
+
+MATRIX_TYPES = (sp.csc_matrix, sp.csr_matrix, sp.coo_matrix, sp.dok_matrix,
+                sp.bsr_matrix, sp.lil_matrix, sp.dia_matrix, np.array)
+
+
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+@pytest.mark.parametrize("estimator", ESTIMATOR_CLS)
+@pytest.mark.parametrize("parameters", PARAMETERS)
+def test_fit_transduction(matrix_type, estimator, parameters):
     samples = [[1., 0.], [0., 2.], [1., 3.]]
     labels = [0, 1, -1]
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(samples, labels)
-        assert clf.transduction_[2] == 1
+    clf = estimator(**parameters).fit(matrix_type(samples), labels)
+    assert clf.transduction_[2] == 1
 
 
 def test_distribution():
