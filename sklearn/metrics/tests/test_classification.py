@@ -2136,7 +2136,8 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
 
 
 def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
-    # test for inconsistency between multiclass problem and pred_decision argument
+    # test for inconsistency between multiclass problem and pred_decision
+    # argument
     y_true = [2, 1, 0, 1, 0, 1, 1]
     pred_decision = np.array([0, 1, 2, 1, 0, 2, 1])
     error_message = (r"The shape of pred_decision can not be 1d array"

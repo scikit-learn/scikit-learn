@@ -2310,8 +2310,8 @@ def _check_valid_multiclass_decision_shape(y_true_unique, pred_decision,
                          "with a multiclass target. "
                          "pred_decision shape must be (n_samples, n_classes)")
 
-    invalid_decision_shape = pred_decision.ndim > 1 and \
-                             y_true_unique.size != pred_decision.shape[1]
+    invalid_decision_shape = (pred_decision.ndim > 1 and
+                              y_true_unique.size != pred_decision.shape[1])
 
     if labels is None:
         if invalid_decision_shape:
