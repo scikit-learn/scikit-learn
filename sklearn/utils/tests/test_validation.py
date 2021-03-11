@@ -1366,6 +1366,8 @@ def test_num_features_errors_1d_containers(X, constructor_name):
     )
     if hasattr(X, "shape"):
         message += " with shape (3,)"
+    elif isinstance(X[0], str):
+        message += " where the elements are of type str"
     with pytest.raises(TypeError, match=re.escape(message)):
         _num_features(X)
 

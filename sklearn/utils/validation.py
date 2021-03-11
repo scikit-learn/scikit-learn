@@ -228,7 +228,8 @@ def _num_features(X):
 
     # Do not consider an array-like of strings to be a 2D array
     if isinstance(first_sample, (str, bytes)):
-        message += f" of {type(first_sample)}"
+        message += (f" where the elements are of type "
+                    f"{type(first_sample).__qualname__}")
         raise TypeError(message)
 
     try:
