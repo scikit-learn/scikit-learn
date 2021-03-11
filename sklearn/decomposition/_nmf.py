@@ -1160,10 +1160,6 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.19
 
-    update_H : bool, default=True
-        Set to True, both W and H will be estimated from initial guesses.
-        Set to False, only W will be estimated.
-
     tol : float, default=1e-4
         Tolerance of the stopping condition.
 
