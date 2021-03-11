@@ -28,6 +28,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
+from ..metrics import prediction_strength_score
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..exceptions import FitFailedWarning, NotFittedError
 from ._split import check_cv
@@ -454,7 +455,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
                    split_progress=None, candidate_progress=None,
-                   error_score=np.nan):
+                   error_score=np.nan, use_prediction_strength=False):
 
     """Fit estimator and compute scores for a given dataset split.
 
@@ -583,49 +584,22 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
         estimator = estimator.set_params(**cloned_parameters)
 
-    start_time = time.time()
-
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
-    result = {}
-    try:
-        if y_train is None:
-            estimator.fit(X_train, **fit_params)
-        else:
-            estimator.fit(X_train, y_train, **fit_params)
-
-    except Exception as e:
-        # Note fit time as time until error
-        fit_time = time.time() - start_time
-        score_time = 0.0
-        if error_score == 'raise':
-            raise
-        elif isinstance(error_score, numbers.Number):
-            if isinstance(scorer, dict):
-                test_scores = {name: error_score for name in scorer}
-                if return_train_score:
-                    train_scores = test_scores.copy()
-            else:
-                test_scores = error_score
-                if return_train_score:
-                    train_scores = error_score
-            warnings.warn("Estimator fit failed. The score on this train-test"
-                          " partition for these parameters will be set to %f. "
-                          "Details: \n%s" %
-                          (error_score, format_exc()),
-                          FitFailedWarning)
-        result["fit_failed"] = True
+    if use_prediction_strength:
+        (fit_failed, test_scores,
+         score_time, fit_time) = _prediction_strength_fit_and_score(
+            estimator, X_train, X_test, y_train, y_test,
+            fit_params, error_score
+        )
     else:
-        result["fit_failed"] = False
-
-        fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorer, error_score)
-        score_time = time.time() - start_time - fit_time
-        if return_train_score:
-            train_scores = _score(
-                estimator, X_train, y_train, scorer, error_score
-            )
+        (fit_failed, test_scores, train_scores,
+         score_time, fit_time) = _default_fit_and_score(
+            estimator, X_train, X_test, y_train, y_test, scorer,
+            fit_params, return_train_score, error_score
+        )
+    result = {"fit_failed": fit_failed, "test_scores": test_scores}
 
     if verbose > 1:
         total_time = score_time + fit_time
@@ -645,7 +619,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         end_msg += result_msg
         print(end_msg)
 
-    result["test_scores"] = test_scores
     if return_train_score:
         result["train_scores"] = train_scores
     if return_n_test_samples:
@@ -658,6 +631,96 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     if return_estimator:
         result["estimator"] = estimator
     return result
+
+
+def _default_fit_and_score(estimator, X_train, X_test, y_train, y_test,
+                           scorer, fit_params, return_train_score,
+                           error_score):
+    start_time = time.time()
+    train_scores = None
+
+    try:
+        if y_train is None:
+            estimator.fit(X_train, **fit_params)
+        else:
+            estimator.fit(X_train, y_train, **fit_params)
+
+    except Exception:
+        # Note fit time as time until error
+        fit_time = time.time() - start_time
+        score_time = 0.0
+        if error_score == 'raise':
+            raise
+        elif isinstance(error_score, numbers.Number):
+            if isinstance(scorer, dict):
+                test_scores = {name: error_score for name in scorer}
+                if return_train_score:
+                    train_scores = test_scores.copy()
+            else:
+                test_scores = error_score
+                if return_train_score:
+                    train_scores = error_score
+            warnings.warn("Estimator fit failed. The score on this train-test"
+                          " partition for these parameters will be set to %f. "
+                          "Details: \n%s" %
+                          (error_score, format_exc()),
+                          FitFailedWarning)
+        fit_failed = True
+    else:
+        fit_failed = False
+
+        fit_time = time.time() - start_time
+        test_scores = _score(estimator, X_test, y_test, scorer, error_score)
+        score_time = time.time() - start_time - fit_time
+        if return_train_score:
+            train_scores = _score(
+                estimator, X_train, y_train, scorer, error_score
+            )
+
+    return fit_failed, test_scores, train_scores, score_time, fit_time
+
+
+def _prediction_strength_fit_and_score(estimator, X_train, X_test,
+                                       y_train, y_test, fit_params,
+                                       error_score):
+    start_time = time.time()
+
+    try:
+        if y_train is None:
+            estimator.fit(X_train, **fit_params)
+            predict_train = estimator.predict(X_train)
+
+            estimator.fit(X_test, **fit_params)
+            predict_test = estimator.predict(X_train)
+        else:
+            estimator.fit(X_train, y_train, **fit_params)
+            predict_train = estimator.predict(X_train, y_train)
+
+            estimator.fit(X_test, y_test, **fit_params)
+            predict_test = estimator.predict(X_train)
+
+    except Exception:
+        # Note fit time as time until error
+        fit_time = time.time() - start_time
+        score_time = 0.0
+        if error_score == 'raise':
+            raise
+        elif isinstance(error_score, numbers.Number):
+            test_scores = error_score
+            warnings.warn("Estimator fit failed. The score on this train-test"
+                          " partition for these parameters will be set to %f. "
+                          "Details: \n%s" %
+                          (error_score, format_exc()),
+                          FitFailedWarning)
+        fit_failed = True
+    else:
+        fit_failed = False
+
+        fit_time = time.time() - start_time
+        test_scores = prediction_strength_score(predict_test, predict_train)
+        score_time = time.time() - start_time - fit_time
+
+    return fit_failed, test_scores, score_time, fit_time
 
 
 def _score(estimator, X_test, y_test, scorer, error_score="raise"):

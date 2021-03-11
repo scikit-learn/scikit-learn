@@ -47,6 +47,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection import PredictionStrengthGridSearchCV
 from sklearn.model_selection._search import BaseSearchCV
 
 from sklearn.model_selection._validation import FitFailedWarning
@@ -2137,3 +2138,138 @@ def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
     else:
         assert_allclose(y_pred, y.mean())
         assert search.score(X, y) == pytest.approx(r2_score(y, y_pred))
+
+
+def test_prediction_strength_fit_easy():
+    X, y = make_blobs(600, 10, centers=4, random_state=1)
+
+    pscv = PredictionStrengthGridSearchCV(
+        estimator=KMeans(random_state=1),
+        param_grid={'n_clusters': [2, 3, 4, 5, 6, 7, 8]},
+        threshold=0.9,
+        cv=2)
+    pscv.fit(X)
+
+    assert pscv.best_params_ == {'n_clusters': 4}
+    assert pscv.best_estimator_.get_params()['n_clusters'] == 4
+    assert pscv.best_score_ > 0.9
+    assert pscv.n_splits_ == 2
+
+    pscv_rev = PredictionStrengthGridSearchCV(
+        estimator=KMeans(random_state=1),
+        param_grid={'n_clusters': [8, 7, 6, 5, 4, 3, 2]},
+        threshold=0.9,
+        cv=2)
+    pscv_rev.fit(X)
+    assert pscv_rev.best_params_ == pscv.best_params_
+    assert_almost_equal(pscv_rev.best_score_, pscv.best_score_)
+
+
+def test_prediction_strength_fit_hard():
+    X, y = make_blobs(600, 10, centers=3, cluster_std=10.,
+                      center_box=(-5., 5.), random_state=1)
+
+    pscv = PredictionStrengthGridSearchCV(
+        estimator=KMeans(random_state=1),
+        param_grid={'n_clusters': [2, 3, 4, 5, 6, 7, 8]},
+        threshold=0.7,
+        cv=5)
+
+    with pytest.warns(UserWarning):
+        pscv.fit(X)
+    assert pscv.best_params_ == {'n_clusters': 2}
+    assert pscv.best_estimator_.get_params()['n_clusters'] == 2
+    assert 0.6 > pscv.best_score_
+
+
+def test_prediction_strength_fit_verbose():
+    X, y = make_blobs()
+    pscv = PredictionStrengthGridSearchCV(
+        estimator=KMeans(random_state=1),
+        param_grid={'n_clusters': [2, 3, 4, 5, 6, 7, 8]},
+        verbose=10, error_score='raise')
+
+    pscv.fit(X)
+
+
+class FailingClusterer(BaseEstimator):
+    """Classifier that raises a ValueError on fit()"""
+
+    FAILING_PARAMETER = 2
+
+    def __init__(self, n_clusters=None):
+        self.n_clusters = n_clusters
+
+    def fit(self, X):
+        if self.n_clusters == FailingClusterer.FAILING_PARAMETER:
+            raise ValueError("Failing clusterer failed as required")
+
+    def predict(self, X):
+        return np.zeros(X.shape[0])
+
+    def score(self, X):
+        return np.nan
+
+
+def test_prediction_strength_fit_failing_clusterer():
+    X, y = make_blobs()
+    pscv = PredictionStrengthGridSearchCV(
+        estimator=FailingClusterer(5),
+        param_grid={'n_clusters': [2, 3, 4, 5, 6, 7, 8]},
+        refit=False, error_score='raise')
+
+    # FailingClusterer issues a ValueError so this is what we look for.
+    with pytest.raises(ValueError,
+                       match="Failing clusterer failed as required"):
+        pscv.fit(X)
+
+
+def test_prediction_strength_threshold_range():
+    X, y = make_blobs()
+    pscv = PredictionStrengthGridSearchCV(
+        estimator=KMeans(random_state=1),
+        param_grid={'n_clusters': [2, 3, 4, 5, 6, 7, 8]},
+        threshold=0.0,
+        cv=5)
+    with pytest.raises(ValueError,
+                       match=r"threshold must be in the interval \(0, 1\], "
+                             r"but was"):
+        pscv.fit(X)
+
+    pscv.set_params(threshold=-0.1)
+    with pytest.raises(ValueError,
+                       match=r"threshold must be in the interval \(0, 1\], "
+                             r"but was"):
+        pscv.fit(X)
+
+    pscv.set_params(threshold=10)
+    with pytest.raises(ValueError,
+                       match=r"threshold must be in the interval \(0, 1\], "
+                             r"but was"):
+        pscv.fit(X)
+
+    pscv.set_params(threshold=float('nan'))
+    with pytest.raises(ValueError,
+                       match="threshold must be finite"):
+        pscv.fit(X)
+
+    pscv.set_params(threshold=float('-inf'))
+    with pytest.raises(ValueError,
+                       match="threshold must be finite"):
+        pscv.fit(X)
+
+    pscv.set_params(threshold=float('inf'))
+    with pytest.raises(ValueError,
+                       match="threshold must be finite"):
+        pscv.fit(X)
+
+
+def test_prediction_strength_param_grid():
+    X, y = make_blobs()
+    pscv = PredictionStrengthGridSearchCV(
+        estimator=KMeans(random_state=1),
+        param_grid={'n_init': [2, 5, 10]},
+        cv=5)
+    with pytest.raises(ValueError,
+                       match="param_grid must contain n_clusters"):
+        pscv.fit(X)
