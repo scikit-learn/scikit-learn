@@ -1437,10 +1437,18 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
         l1_ratio=0.,
         max_iter=1000,
     )
-    with ignore_warnings(category=ConvergenceWarning):
-        # XXX: it seems that the duality gap convergence criterion is never met
-        # when l1_ratio is 0 and for any value of the `tol` parameter. Should
-        # this be considered a bug?
+    # Even when the ElasticNet model has actually converged, the duality gap
+    # convergence criterion is never met when l1_ratio is 0 and for any value
+    # of the `tol` parameter. The convergence message should point the user to
+    # Ridge instead:
+    expected_msg = (
+        r"Objective did not converge\. .* "
+        r"Linear regression models with null weight for the "
+        r"l1 regularization term are more efficiently fitted "
+        r"using one of the solvers implemented in "
+        r"sklearn\.linear_model\.Ridge/RidgeCV instead\."
+    )
+    with pytest.warns(ConvergenceWarning, match=expected_msg):
         enet.fit(X, y, sample_weight=sw)
 
     assert_allclose(ridge.coef_, enet.coef_)
