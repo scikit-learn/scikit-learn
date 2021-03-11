@@ -169,6 +169,10 @@ Changelog
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
 
+- |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
+  are integral.
+  :pr:`9843` by :user:`Jon Crall <Erotemic>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
