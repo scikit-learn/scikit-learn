@@ -14,8 +14,9 @@ import warnings
 from math import sqrt
 
 from ._cdnmf_fast import _update_cdnmf_fast
+from .._config import config_context
 from ..base import BaseEstimator, TransformerMixin
-from ..exceptions import ConvergenceWarning, NotFittedError
+from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
@@ -1061,17 +1062,18 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
+    X = check_array(X, accept_sparse=('csr', 'csc'),
+                    dtype=[np.float64, np.float32])
+
     est = NMF(n_components=n_components, init=init, solver=solver,
               beta_loss=beta_loss, tol=tol, max_iter=max_iter,
               random_state=random_state, alpha=alpha, l1_ratio=l1_ratio,
               verbose=verbose, shuffle=shuffle, regularization=regularization)
 
-    if update_H:
-        W = est.fit_transform(X, W=W, H=H)
-    else:
-        W = est.transform(X, H=H)
+    with config_context(assume_finite=True):
+        W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
 
-    return W, est.components_, est.n_iter_
+    return W, H, n_iter
 
 
 class NMF(TransformerMixin, BaseEstimator):
@@ -1292,11 +1294,57 @@ class NMF(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
-        check_non_negative(X, "NMF (input X)")
-        beta_loss = _check_string_param(self.solver, self.regularization,
-                                        self.beta_loss, self.init)
+        with config_context(assume_finite=True):
+            W, H, n_iter = self._fit_transform(X, W=W, H=H)
 
-        if X.min() == 0 and beta_loss <= 0:
+        self.reconstruction_err_ = _beta_divergence(X, W, H, self._beta_loss,
+                                                    square_root=True)
+
+        self.n_components_ = H.shape[0]
+        self.components_ = H
+        self.n_iter_ = n_iter
+
+        return W
+
+    def _fit_transform(self, X, y=None, W=None, H=None, update_H=True):
+        """Learn a NMF model for the data X and returns the transformed data.
+
+        This is more efficient than calling fit followed by transform.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Data matrix to be decomposed
+
+        y : Ignored
+
+        W : array-like of shape (n_samples, n_components)
+            If init='custom', it is used as initial guess for the solution.
+
+        H : array-like of shape (n_components, n_features)
+            If init='custom', it is used as initial guess for the solution.
+            If update_H=False, it is used as a constant, to solve for W only.
+
+        update_H : bool, default=True
+            If True, both W and H will be estimated from initial guesses.
+            If False, only W will be estimated.
+
+        Returns
+        -------
+        W : ndarray of shape (n_samples, n_components)
+            Transformed data.
+
+        H : ndarray of shape (n_components, n_features)
+            Factorization matrix, sometimes called 'dictionary'.
+
+        n_iter_ : int
+            Actual number of iterations.
+        """
+        check_non_negative(X, "NMF (input X)")
+        self._beta_loss = _check_string_param(self.solver, self.regularization,
+                                              self.beta_loss, self.init)
+
+        if X.min() == 0 and self._beta_loss <= 0:
             raise ValueError("When beta_loss <= 0 and X contains zeros, "
                              "the solver may diverge. Please add small values "
                              "to X, or use a positive beta_loss.")
@@ -1311,7 +1359,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         # initialize or check W and H
         W, H = _check_w_h(X, W, H, n_components, self.solver, self.init,
-                          self.random_state, True)
+                          self.random_state, update_H)
 
         l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
             self.alpha, self.l1_ratio, self.regularization)
@@ -1319,16 +1367,14 @@ class NMF(TransformerMixin, BaseEstimator):
         if self.solver == 'cd':
             W, H, n_iter = _fit_coordinate_descent(
                 X, W, H, self.tol, self.max_iter, l1_reg_W, l1_reg_H,
-                l2_reg_W, l2_reg_H, update_H=True,
+                l2_reg_W, l2_reg_H, update_H=update_H,
                 verbose=self.verbose, shuffle=self.shuffle,
                 random_state=self.random_state)
         elif self.solver == 'mu':
             W, H, n_iter = _fit_multiplicative_update(
-                X, W, H, beta_loss, self.max_iter, self.tol,
+                X, W, H, self._beta_loss, self.max_iter, self.tol,
                 l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
-                True, self.verbose
-            )
-
+                update_H=update_H, verbose=self.verbose)
         else:
             raise ValueError("Invalid solver parameter '%s'." % self.solver)
 
@@ -1337,14 +1383,7 @@ class NMF(TransformerMixin, BaseEstimator):
                           "it to improve convergence." % self.max_iter,
                           ConvergenceWarning)
 
-        self.reconstruction_err_ = _beta_divergence(X, W, H, beta_loss,
-                                                    square_root=True)
-
-        self.n_components_ = H.shape[0]
-        self.components_ = H
-        self.n_iter_ = n_iter
-
-        return W
+        return W, H, n_iter
 
     def fit(self, X, y=None, **params):
         """Learn a NMF model for the data X.
@@ -1363,7 +1402,7 @@ class NMF(TransformerMixin, BaseEstimator):
         self.fit_transform(X, **params)
         return self
 
-    def transform(self, X, H=None):
+    def transform(self, X):
         """Transform the data X according to the fitted NMF model.
 
         Parameters
@@ -1371,73 +1410,18 @@ class NMF(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data matrix to be transformed by the model.
 
-        H : array-like of shape (n_components, n_features)
-
         Returns
         -------
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-
+        check_is_fitted(self)
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
-                                dtype=[np.float64, np.float32])
-        check_non_negative(X, "NMF (input X)")
-        beta_loss = _check_string_param(self.solver, self.regularization,
-                                        self.beta_loss, self.init)
+                                dtype=[np.float64, np.float32],
+                                reset=False)
 
-        if X.min() == 0 and beta_loss <= 0:
-            raise ValueError("When beta_loss <= 0 and X contains zeros, "
-                             "the solver may diverge. Please add small values "
-                             "to X, or use a positive beta_loss.")
-
-        n_samples, n_features = X.shape
-        try:
-            check_is_fitted(self)
-            n_components = self.n_components_
-            H = self.components_
-        except NotFittedError:
-            n_components = self.n_components
-
-        if n_components is None:
-            n_components = n_features
-
-        # check parameters
-        _check_params(n_components, self.max_iter, self.tol)
-
-        # initialize or check W and H
-        W, H = _check_w_h(X, None, H, n_components, self.solver,
-                          self.init, self.random_state, False)
-
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-            self.alpha, self.l1_ratio, self.regularization)
-
-        if self.solver == 'cd':
-            W, H, n_iter = _fit_coordinate_descent(
-                X, W, H, self.tol, self.max_iter, l1_reg_W, l1_reg_H,
-                l2_reg_W, l2_reg_H, update_H=False,
-                verbose=self.verbose, shuffle=self.shuffle,
-                random_state=self.random_state)
-        elif self.solver == 'mu':
-            W, H, n_iter = _fit_multiplicative_update(
-                X, W, H, beta_loss, self.max_iter, self.tol,
-                l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
-                False, self.verbose
-            )
-
-        else:
-            raise ValueError("Invalid solver parameter '%s'." % self.solver)
-
-        if n_iter == self.max_iter and self.tol > 0:
-            warnings.warn("Maximum number of iterations %d reached. Increase "
-                          "it to improve convergence." % self.max_iter,
-                          ConvergenceWarning)
-
-        self.reconstruction_err_ = _beta_divergence(X, W, H, beta_loss,
-                                                    square_root=True)
-
-        self.n_components_ = H.shape[0]
-        self.components_ = H
-        self.n_iter_ = n_iter
+        with config_context(assume_finite=True):
+            W, *_ = self._fit_transform(X, H=self.components_, update_H=False)
 
         return W
 
