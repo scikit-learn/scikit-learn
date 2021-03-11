@@ -224,18 +224,18 @@ def _num_features(X):
             raise TypeError(message)
         return X.shape[1]
 
-    first_elem = X[0]
+    first_sample = X[0]
 
     # Do not consider an array-like of strings to be a 2D array
-    if isinstance(first_elem, (str, bytes)):
-        message += f" of {type(first_elem)}"
+    if isinstance(first_sample, (str, bytes)):
+        message += f" of {type(first_sample)}"
         raise TypeError(message)
 
     try:
         # If X is a list of lists, for instance, we assume that all nested
         # lists have the same length without checking or converting to
         # a numpy array to keep this function call as cheap as possible.
-        return len(first_elem)
+        return len(first_sample)
     except Exception as err:
         raise TypeError(message) from err
 
