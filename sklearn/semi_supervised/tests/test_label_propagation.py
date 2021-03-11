@@ -28,7 +28,7 @@ ESTIMATORS = [
 ]
 
 ESTIMATOR_CLS = [label_propagation.LabelPropagation,
-              label_propagation.LabelSpreading]
+                 label_propagation.LabelSpreading]
 
 
 PARAMETERS = [{'kernel': 'rbf'}, {'kernel': 'knn', 'n_neighbors': 2}, {
@@ -116,7 +116,7 @@ def test_label_propagation_closed_form():
     # adopting notation from Zhu et al 2002
     T_bar = clf._build_graph()
     Tuu = T_bar[tuple(np.meshgrid(unlabelled_idx, unlabelled_idx,
-                      indexing='ij'))]
+                                  indexing='ij'))]
     Tul = T_bar[tuple(np.meshgrid(unlabelled_idx, labelled_idx,
                                   indexing='ij'))]
     Y = Y[:, :-1]

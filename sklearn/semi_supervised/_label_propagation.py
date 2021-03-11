@@ -227,7 +227,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
         """
         X, y = self._validate_data(
-            X, y, accept_sparse=['csc', 'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'],
+            X, y, accept_sparse=['csc', 'csr',
+                                 'coo', 'dok', 'bsr', 'lil', 'dia'],
             reset=True)
         self.X_ = X
         check_classification_targets(y)
