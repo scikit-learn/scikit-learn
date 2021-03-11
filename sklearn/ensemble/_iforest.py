@@ -450,11 +450,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 + _average_path_length(n_samples_leaf)
                 - 1.0
             )
-
+        denominator = (len(self.estimators_)* _average_path_length([self.max_samples_]))
         scores = 2 ** (
-            -depths
-            / (len(self.estimators_)
-               * _average_path_length([self.max_samples_]))
+            -np.divide(depths,denominator,np.ones_like(depths), where=denominator!=0)
         )
         return scores
 
