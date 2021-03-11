@@ -616,8 +616,8 @@ def test_cohen_kappa():
     assert_almost_equal(cohen_kappa_score(y1, y2), .9315, decimal=4)
     assert_almost_equal(cohen_kappa_score(y1, y2,
                                           weights="linear"), 0.9412, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2,
-                                          weights="quadratic"), 0.9541, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2, weights="quadratic"),
+                        0.9541, decimal=4)
 
 
 @ignore_warnings
