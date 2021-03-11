@@ -676,9 +676,16 @@ Example::
 
 Implementation notes:
 
-- This implementation iterates over groups sorted by standard deviation of
-  classes. That means that when shuffle=True only groups with the same classes
-  distribution will be shuffled.
+- With the current implementation full shuffle is not possible in most
+  scenarios. When shuffle=True, the following happens:
+
+  1. All groups a shuffled.
+  2. Groups are sorted by standard deviation of classes using stable sort.
+  3. Sorted groups are iterated over and assigned to folds.
+
+  That means that only groups with the same standard deviation of class
+  distribution will be shuffled, which might be useful when each group has only
+  a single class.
 - The algorithm greedily assigns each group to one of n_splits test sets,
   choosing the test set that minimises the variance in class distribution
   across test sets. Group assignment proceeds from groups with highest to
@@ -686,7 +693,7 @@ Implementation notes:
   classes are assigned first.
 - This split is suboptimal in a sense that it might produce imbalanced splits
   even if perfect stratification is possible. If you have relatively close
-  distribution of labels within groups, using :class:`GroupKFold` is better.
+  distribution of classes in each group, using :class:`GroupKFold` is better.
 
 .. _leave_one_group_out:
 
