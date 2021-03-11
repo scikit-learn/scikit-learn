@@ -15,7 +15,6 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -2137,22 +2136,26 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
 
 
 def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
+    # test for inconsistency between multiclass problem and pred_decision argument
     y_true = [2, 1, 0, 1, 0, 1, 1]
     pred_decision = np.array([0, 1, 2, 1, 0, 2, 1])
-    error_message = ("The shape of pred_decision is not "
-                     "consistent with the number of classes. "
-                     "pred_decision shape must be "
-                     "(n_samples, n_classes) with "
-                     "multiclass target")
+    error_message = (r"The shape of pred_decision can not be 1d array"
+                     "with a multiclass target. "
+                     "pred_decision shape must be \(n_samples, n_classes\)")
+    with pytest.raises(ValueError, match=error_message):
+        hinge_loss(y_true=y_true, pred_decision=pred_decision)
 
-    assert_raise_message(ValueError, error_message, hinge_loss,
-                         y_true=y_true, pred_decision=pred_decision)
+    # test for inconsistency between pred_decision shape and labels number
     pred_decision = [[0, 1], [0, 1], [0, 1], [0, 1],
                      [2, 0], [0, 1], [1, 0]]
     labels = [0, 1, 2]
-    assert_raise_message(ValueError, error_message, hinge_loss,
-                         y_true=y_true, pred_decision=pred_decision,
-                         labels=labels)
+    error_message = (r"The shape of pred_decision is not "
+                     "consistent with the number of classes. "
+                     "pred_decision shape must be "
+                     "\(n_samples, n_classes\) with "
+                     "multiclass target")
+    with pytest.raises(ValueError, match=error_message):
+        hinge_loss(y_true=y_true, pred_decision=pred_decision, labels=labels)
 
 
 def test_hinge_loss_multiclass_with_missing_labels():
