@@ -862,28 +862,31 @@ class StratifiedGroupKFold(_BaseKFold):
                            " members, which is less than n_splits=%d."
                            % (n_smallest_class, self.n_splits)), UserWarning)
         n_classes = len(y_cnt)
-        y_counts_per_group = defaultdict(lambda: np.zeros(n_classes))
-        for label, group in zip(y_inv, groups):
-            y_counts_per_group[group][label] += 1
+
+        _, groups_inv, groups_cnt = np.unique(
+            groups, return_inverse=True, return_counts=True)
+        y_counts_per_group = np.zeros((len(groups_cnt), n_classes))
+        # y_counts_per_group = defaultdict(lambda: np.zeros(n_classes))
+        for label_idx, group_idx in zip(y_inv, groups_inv):
+            y_counts_per_group[group_idx, label_idx] += 1
 
         y_counts_per_fold = np.zeros((self.n_splits, n_classes))
         groups_per_fold = defaultdict(set)
 
-        groups_and_y_counts = list(y_counts_per_group.items())
         if self.shuffle:
-            rng.shuffle(groups_and_y_counts)
+            rng.shuffle(y_counts_per_group)
 
-        for group, group_y_counts in sorted(groups_and_y_counts,
-                                            key=lambda x: -np.std(x[1])):
+        for group_idx, group_y_counts in sorted(enumerate(y_counts_per_group),
+                                                key=lambda x: -np.std(x[1])):
             best_fold = self._find_best_fold(
                 y_counts_per_fold=y_counts_per_fold, y_cnt=y_cnt,
                 group_y_counts=group_y_counts)
             y_counts_per_fold[best_fold] += group_y_counts
-            groups_per_fold[best_fold].add(group)
+            groups_per_fold[best_fold].add(group_idx)
 
         for i in range(self.n_splits):
-            test_indices = [idx for idx, group in enumerate(groups)
-                            if group in groups_per_fold[i]]
+            test_indices = [idx for idx, group_idx in enumerate(groups_inv)
+                            if group_idx in groups_per_fold[i]]
             yield test_indices
 
     def _find_best_fold(
