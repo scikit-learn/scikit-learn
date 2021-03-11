@@ -878,7 +878,7 @@ class StratifiedGroupKFold(_BaseKFold):
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
         sorted_groups_idx = np.argsort(-np.std(y_counts_per_group, axis=1),
-                                       kind='stable')
+                                       kind='mergesort')
 
         for group_idx in sorted_groups_idx:
             group_y_counts = y_counts_per_group[group_idx]
