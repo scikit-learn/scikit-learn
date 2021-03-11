@@ -2137,3 +2137,22 @@ def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
     else:
         assert_allclose(y_pred, y.mean())
         assert search.score(X, y) == pytest.approx(r2_score(y, y_pred))
+
+
+@pytest.mark.parametrize("return_train_score", [True, False])
+def test_search_cv_verbose_3(capsys, return_train_score):
+    """Check that search cv with verbose>2 shows the score for single
+    metrics. non-regression test fo #19658."""
+    X, y = make_classification(n_samples=100, n_classes=2, flip_y=.2,
+                               random_state=0)
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [.1]}
+
+    GridSearchCV(clf, grid, scoring='accuracy', verbose=3, cv=3,
+                 return_train_score=return_train_score).fit(X, y)
+    captured = capsys.readouterr().out
+    if return_train_score:
+        match = re.findall(r"score=\(train=[\d\.]+, test=[\d.]+\)", captured)
+    else:
+        match = re.findall(r"score=[\d\.]+", captured)
+    assert len(match) == 3
