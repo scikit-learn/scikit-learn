@@ -8,8 +8,9 @@ import os
 import sys
 from contextlib import contextmanager
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal, assert_array_less
-from numpy.testing import assert_array_almost_equal, assert_warns
+from numpy.testing import assert_array_almost_equal
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from sklearn.exceptions import ConvergenceWarning
@@ -154,7 +155,12 @@ def test_spatial_median_2d():
     fermat_weber = fmin_bfgs(cost_func, median, disp=False)
     assert_array_almost_equal(median, fermat_weber)
     # Check when maximum iteration is exceeded a warning is emitted
-    assert_warns(ConvergenceWarning, _spatial_median, X, max_iter=30, tol=0.)
+    warning_message = (
+        "Maximum number of iterations 30 reached"
+        " in spatial median."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        _spatial_median(X, max_iter=30, tol=0.)
 
 
 def test_theil_sen_1d():
