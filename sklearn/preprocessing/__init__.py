@@ -34,8 +34,8 @@ from ._label import MultiLabelBinarizer
 
 from ._discretization import KBinsDiscretizer
 
-from ._polynomial import SplineTransformer
 from ._polynomial import PolynomialFeatures
+from ._polynomial import SplineTransformer
 
 
 __all__ = [

@@ -8,11 +8,11 @@ from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import KBinsDiscretizer, SplineTransformer
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import (
+    KBinsDiscretizer, PolynomialFeatures, SplineTransformer
+)                           
 
 
-# TODO: add PolynomialFeatures if it moves to _polynomial.py
 @pytest.mark.parametrize("est", (SplineTransformer,))
 def test_polynomial_and_spline_array_order(est):
     """Test that output array has the given order."""
