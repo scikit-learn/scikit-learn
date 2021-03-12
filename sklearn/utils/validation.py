@@ -187,8 +187,8 @@ def _is_arraylike(x):
 def _num_features(X):
     """Return the number of features in an array-like X.
 
-    This helper function tries hard no to materialize an array version
-    of X if not necessary. For instance if X is a list of lists, X the first
+    This helper function tries hard to avoid to materialize an array version
+    of X unless necessary. For instance, if X is a list of lists,
     this function will return the length of the first element, assuming
     that subsequent elements are all lists of the same length without
     checking.
