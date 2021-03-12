@@ -1188,49 +1188,34 @@ def test_logreg_predict_proba_multinomial():
     assert clf_wrong_loss > clf_multi_loss
 
 
-def test_max_iter():
+@pytest.mark.parametrize("max_iter", np.arange(1, 5))
+@pytest.mark.parametrize("multi_class", ['ovr', 'multinomial'])
+@pytest.mark.parametrize(
+    "solver, message",
+    [("newton-cg", "newton-cg failed to converge. Increase the "
+                   "number of iterations."),
+     ("liblinear", "Liblinear failed to converge, increase the "
+                   "number of iterations."),
+     ("sag", "The max_iter was reached which means the "
+             "coef_ did not converge"),
+     ("saga", "The max_iter was reached which means the "
+              "coef_ did not converge"),
+     ("lbfgs", "lbfgs failed to converge")])
+def test_max_iter(max_iter, multi_class, solver, message):
     # Test that the maximum number of iteration is reached
     X, y_bin = iris.data, iris.target.copy()
     y_bin[y_bin == 2] = 0
 
-    solvers = ['newton-cg', 'liblinear', 'sag', 'saga', 'lbfgs']
-    warning_messages = {
-        'newton-cg': (
-            "newton-cg failed to converge. Increase the"
-            " number of iterations."
-        ),
-        'liblinear': (
-            "Liblinear failed to converge, increase the"
-            " number of iterations."
-        ),
-        'sag': (
-            "The max_iter was reached which means the"
-            " coef_ did not converge"
-        ),
-        'saga': (
-            "The max_iter was reached which means the"
-            " coef_ did not converge"
-        ),
-        'lbfgs': (
-            r"lbfgs failed to converge .*[\n]*.*[\n]*"
-            r"Increase the number of iterations.*"
-            r"or scale the data.*[\n]*.*[\n]*"
-            r"Please also refer to the documentation "
-            r"for alternative solver options.*[\n]*.*"
-        )
-    }
-    for max_iter in range(1, 5):
-        for solver in solvers:
-            for multi_class in ['ovr', 'multinomial']:
-                if solver == 'liblinear' and multi_class == 'multinomial':
-                    continue
-                lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
-                                        multi_class=multi_class,
-                                        random_state=0, solver=solver)
-                with pytest.warns(ConvergenceWarning,
-                                  match=warning_messages[solver]):
-                    lr.fit(X, y_bin)
-                assert lr.n_iter_[0] == max_iter
+    if solver == 'liblinear' and multi_class == 'multinomial':
+        pytest.skip("'multinomial' is unavailable when solver='liblinear'")
+
+    lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
+                            multi_class=multi_class,
+                            random_state=0, solver=solver)
+    with pytest.warns(ConvergenceWarning, match=message):
+        lr.fit(X, y_bin)
+
+    assert lr.n_iter_[0] == max_iter
 
 
 @pytest.mark.parametrize('solver',
