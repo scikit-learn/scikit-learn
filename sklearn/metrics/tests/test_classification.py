@@ -2145,7 +2145,7 @@ def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
                      "with a multiclass target. pred_decision shape "
                      "must be (n_samples, n_classes), that is "
                      f"({y_true.shape[0]}, {np.unique(y_true).size}). "
-                     f"Got: ({y_true.shape[0]},)")
+                     f"Got: {pred_decision.shape}")
     with pytest.raises(ValueError, match=re.escape(error_message)):
         hinge_loss(y_true=y_true, pred_decision=pred_decision)
 
