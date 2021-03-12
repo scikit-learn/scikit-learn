@@ -1415,9 +1415,11 @@ class MiniBatchKMeans(KMeans):
 
     inertia_ : float
         The value of the inertia criterion associated with the chosen
-        partition (if compute_labels is set to True). The inertia is
-        defined as the sum of square distances of samples to their cluster
-        center, weighted by the sample weights if provided.
+        partition if compute_labels is set to True. If compute_labels is set to
+        False, it's an approximation of the inertia based on an exponentially
+        weighted average of the batch inertiae.
+        The inertia is defined as the sum of square distances of samples to
+        their cluster center, weighted by the sample weights if provided.
 
     n_iter_ : int
         Number of iterations over the full dataset.
@@ -1763,6 +1765,8 @@ class MiniBatchKMeans(KMeans):
             self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
                 X, sample_weight, x_squared_norms, self.cluster_centers_,
                 n_threads=self._n_threads)
+        else:
+            self.inertia_ = self._ewa_inertia * n_samples
 
         return self
 

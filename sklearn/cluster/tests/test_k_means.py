@@ -468,16 +468,23 @@ def test_minibatch_kmeans_init_size():
 
 
 @pytest.mark.parametrize("tol, max_no_improvement", [(1e-4, None), (0, 10)])
-def test_minibatch_declared_convergence(tol, max_no_improvement):
-    # Check that convergence based on small center change is achievable.
+def test_minibatch_declared_convergence(capsys, tol, max_no_improvement):
+    # Check convergence detection based on ewa batch inertia or on
+    # small center change.
     X, _, centers = make_blobs(centers=3, random_state=0, return_centers=True)
 
     km = MiniBatchKMeans(n_clusters=3, init=centers, batch_size=20, tol=tol,
-                         random_state=0, max_iter=10,
+                         random_state=0, max_iter=10, verbose=1,
                          max_no_improvement=max_no_improvement)
 
     km.fit(X)
     assert 1 < km.n_iter_ < 10
+
+    captured = capsys.readouterr()
+    if max_no_improvement is None:
+        assert "Converged (small centers change)" in captured.out
+    if tol == 0:
+        assert "Converged (lack of improvement in inertia)" in captured.out
 
 
 def test_minibatch_iter_steps():
@@ -489,6 +496,7 @@ def test_minibatch_iter_steps():
 
     # n_iter_ is the number of started epochs
     assert km.n_iter_ == np.ceil((km.n_steps_ * batch_size) / n_samples)
+    assert isinstance(km.n_iter_, int)
 
     # without stopping condition, max_iter should be reached
     km = MiniBatchKMeans(n_clusters=3, batch_size=batch_size, random_state=0,
@@ -496,6 +504,7 @@ def test_minibatch_iter_steps():
 
     assert km.n_iter_ == 10
     assert km.n_steps_ == (10 * n_samples) // batch_size
+    assert isinstance(km.n_steps_, int)
 
 
 def test_kmeans_copyx():

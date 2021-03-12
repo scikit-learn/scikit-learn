@@ -74,7 +74,7 @@ cdef void update_center_dense(
         floating[:, ::1] centers_new,  # OUT
         floating[::1] weight_sums,     # INOUT
         int[::1] labels,               # IN
-        int *indices) nogil:           # OUT
+        int *indices) nogil:           # TMP
     """Update of a single center for dense MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
@@ -85,7 +85,7 @@ cdef void update_center_dense(
 
         floating wsum = 0
 
-    # indices = np.where(labels == i)[0]
+    # indices = np.where(labels == cluster_idx)[0]
     k = 0
     for sample_idx in range(n_samples):
         if labels[sample_idx] == cluster_idx:
@@ -184,7 +184,7 @@ cdef void update_center_sparse(
         floating[:, ::1] centers_new,  # OUT
         floating[::1] weight_sums,     # INOUT
         int[::1] labels,               # IN
-        int *indices) nogil:           # OUT
+        int *indices) nogil:           # TMP
     """Update of a single center for sparse MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
@@ -195,7 +195,7 @@ cdef void update_center_sparse(
 
         floating wsum = 0
 
-    # indices = np.where(labels == i)[0]
+    # indices = np.where(labels == cluster_idx)[0]
     k = 0
     for sample_idx in range(n_samples):
         if labels[sample_idx] == cluster_idx:
