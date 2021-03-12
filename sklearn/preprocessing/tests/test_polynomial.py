@@ -10,7 +10,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     KBinsDiscretizer, PolynomialFeatures, SplineTransformer
-)                           
+)
 
 
 @pytest.mark.parametrize("est", (SplineTransformer,))
