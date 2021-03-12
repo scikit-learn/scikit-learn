@@ -165,6 +165,11 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
+- |Enhancement| A fix to raise an error in :func:`metrics.hinge_loss` when
+  ``pred_decision`` is 1d whereas it is a multiclass classification or when
+  ``pred_decision`` parameter is not consistent with the ``labels`` parameter.
+  :pr:`19643` by :user:`Pierre Attard <PierreAttard>`.
+
 - |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.

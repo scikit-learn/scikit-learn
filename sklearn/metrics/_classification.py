@@ -2378,11 +2378,29 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
     y_true_unique = np.unique(labels if labels is not None else y_true)
+
     if y_true_unique.size > 2:
-        if (labels is None and pred_decision.ndim > 1 and
-                (np.size(y_true_unique) != pred_decision.shape[1])):
-            raise ValueError("Please include all labels in y_true "
-                             "or pass labels as third argument")
+
+        if pred_decision.ndim <= 1:
+            raise ValueError("The shape of pred_decision cannot be 1d array"
+                             "with a multiclass target. pred_decision shape "
+                             "must be (n_samples, n_classes), that is "
+                             f"({y_true.shape[0]}, {y_true_unique.size})."
+                             f" Got: {pred_decision.shape}")
+
+        # pred_decision.ndim > 1 is true
+        if y_true_unique.size != pred_decision.shape[1]:
+            if labels is None:
+                raise ValueError("Please include all labels in y_true "
+                                 "or pass labels as third argument")
+            else:
+                raise ValueError("The shape of pred_decision is not "
+                                 "consistent with the number of classes. "
+                                 "With a multiclass target, pred_decision "
+                                 "shape must be "
+                                 "(n_samples, n_classes), that is "
+                                 f"({y_true.shape[0]}, {y_true_unique.size}). "
+                                 f"Got: {pred_decision.shape}")
         if labels is None:
             labels = y_true_unique
         le = LabelEncoder()
