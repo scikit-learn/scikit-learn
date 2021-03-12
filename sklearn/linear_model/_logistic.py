@@ -234,8 +234,7 @@ def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
     def Hs(s):
         ret = np.empty_like(s)
         if sparse.issparse(X):
-            XTdX = safe_sparse_dot(X.T, dX)
-            ret[:n_features] = safe_sparse_dot(XTdX, s[:n_features])
+            ret[:n_features] = X.T.dot(dX.dot(s[:n_features]))
         else:
             ret[:n_features] = np.linalg.multi_dot([X.T, dX, s[:n_features]])
         ret[:n_features] += alpha * s[:n_features]
