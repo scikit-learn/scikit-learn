@@ -12,6 +12,12 @@ Version 0.24.2
 Changelog
 ---------
 
+:mod:`sklearn.semi_supervised`
+......................
+
+- |Fix| :meth:`BaseLabelPropagation.fit` does not accept sparse matrix.
+  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+
 :mod:`sklearn.compose`
 ......................
 
