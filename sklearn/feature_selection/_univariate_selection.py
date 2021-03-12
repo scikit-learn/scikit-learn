@@ -234,6 +234,8 @@ def r_regression(X, y, *, center=True):
     """Compute Pearson R correlation coefficients between the features and
     the target
 
+    .. versionadded:: 1.0
+
     Linear model for testing the individual effect of each of many regressors.
     This is a scoring function to be used in a feature selection procedure, not
     a free standing feature selection procedure.
@@ -365,6 +367,8 @@ def f_regression(X, y, *, center=True):
 
 def abs_r_regression(X, y, center=True):
     """Absolute value of Pearson R from univariate linear regressions.
+
+    .. versionadded:: 1.0
 
     This convenience wrapper is to be used with SelectKBest and other models
     that require a statistic which is increased with significance of
