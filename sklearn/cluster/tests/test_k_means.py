@@ -474,7 +474,7 @@ def test_minibatch_declared_convergence(capsys, tol, max_no_improvement):
     X, _, centers = make_blobs(centers=3, random_state=0, return_centers=True)
 
     km = MiniBatchKMeans(n_clusters=3, init=centers, batch_size=20, tol=tol,
-                         random_state=0, max_iter=10, verbose=1,
+                         random_state=0, max_iter=10, n_init=1, verbose=1,
                          max_no_improvement=max_no_improvement)
 
     km.fit(X)
@@ -485,7 +485,7 @@ def test_minibatch_declared_convergence(capsys, tol, max_no_improvement):
         assert "Converged (small centers change)" in captured.out
     if tol == 0:
         assert "Converged (lack of improvement in inertia)" in captured.out
-
+    
 
 def test_minibatch_iter_steps():
     # Check consistency of n_iter_ and n_steps_ attributes.
