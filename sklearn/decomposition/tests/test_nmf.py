@@ -237,7 +237,7 @@ def test_non_negative_factorization_consistency(init, solver, regularization):
     A[:, 2 * np.arange(5)] = 0
 
     W_nmf, H, _ = non_negative_factorization(
-        A, init=init, solver=solver, update_H=True,
+        A, init=init, solver=solver,
         regularization=regularization, random_state=1, tol=1e-2)
     W_nmf_2, _, _ = non_negative_factorization(
         A, H=H, update_H=False, init=init, solver=solver,
