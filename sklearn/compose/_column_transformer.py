@@ -351,8 +351,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         check_is_fitted(self)
         feature_names = []
         for name, trans, column, _ in self._iter(fitted=True):
-            if trans == 'drop' or (
-                    hasattr(column, '__len__') and not len(column)):
+            if trans == 'drop' or _is_empty_column_selection(column):
                 continue
             if trans == 'passthrough':
                 if self._feature_names_in is not None:
@@ -809,6 +808,14 @@ class make_column_selector:
         self.dtype_exclude = dtype_exclude
 
     def __call__(self, df):
+        """Callable for column selection to be used by a
+        :class:`ColumnTransformer`.
+
+        Parameters
+        ----------
+        df : dataframe of shape (n_features, n_samples)
+            DataFrame to select columns from.
+        """
         if not hasattr(df, 'iloc'):
             raise ValueError("make_column_selector can only be applied to "
                              "pandas dataframes")

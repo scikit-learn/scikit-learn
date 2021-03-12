@@ -51,62 +51,64 @@ Overview of clustering methods
      - number of clusters
      - Very large ``n_samples``, medium ``n_clusters`` with
        :ref:`MiniBatch code <mini_batch_kmeans>`
-     - General-purpose, even cluster size, flat geometry, not too many clusters
+     - General-purpose, even cluster size, flat geometry,
+       not too many clusters, inductive
      - Distances between points
 
    * - :ref:`Affinity propagation <affinity_propagation>`
      - damping, sample preference
      - Not scalable with n_samples
-     - Many clusters, uneven cluster size, non-flat geometry
+     - Many clusters, uneven cluster size, non-flat geometry, inductive
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Mean-shift <mean_shift>`
      - bandwidth
      - Not scalable with ``n_samples``
-     - Many clusters, uneven cluster size, non-flat geometry
+     - Many clusters, uneven cluster size, non-flat geometry, inductive
      - Distances between points
 
    * - :ref:`Spectral clustering <spectral_clustering>`
      - number of clusters
      - Medium ``n_samples``, small ``n_clusters``
-     - Few clusters, even cluster size, non-flat geometry
+     - Few clusters, even cluster size, non-flat geometry, transductive
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Ward hierarchical clustering <hierarchical_clustering>`
      - number of clusters or distance threshold
      - Large ``n_samples`` and ``n_clusters``
-     - Many clusters, possibly connectivity constraints
+     - Many clusters, possibly connectivity constraints, transductive
      - Distances between points
 
    * - :ref:`Agglomerative clustering <hierarchical_clustering>`
      - number of clusters or distance threshold, linkage type, distance
      - Large ``n_samples`` and ``n_clusters``
      - Many clusters, possibly connectivity constraints, non Euclidean
-       distances
+       distances, transductive
      - Any pairwise distance
 
    * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
      - Very large ``n_samples``, medium ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes
+     - Non-flat geometry, uneven cluster sizes, transductive
      - Distances between nearest points
 
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, variable cluster density
+     - Non-flat geometry, uneven cluster sizes, variable cluster density,
+       transductive
      - Distances between points
 
    * - :ref:`Gaussian mixtures <mixture>`
      - many
      - Not scalable
-     - Flat geometry, good for density estimation
+     - Flat geometry, good for density estimation, inductive
      - Mahalanobis distances to  centers
 
-   * - :ref:`Birch`
+   * - :ref:`BIRCH <birch>`
      - branching factor, threshold, optional global clusterer.
      - Large ``n_clusters`` and ``n_samples``
-     - Large dataset, outlier removal, data reduction.
+     - Large dataset, outlier removal, data reduction, inductive
      - Euclidean distance between points
 
 Non-flat geometry clustering is useful when the clusters have a specific
@@ -118,6 +120,10 @@ Gaussian mixture models, useful for clustering, are described in
 :ref:`another chapter of the documentation <mixture>` dedicated to
 mixture models. KMeans can be seen as a special case of Gaussian mixture
 model with equal covariance per component.
+
+:term:`Transductive <transductive>` clustering methods (in contrast to
+:term:`inductive` clustering methods) are not designed to be applied to new,
+unseen data.
 
 .. _k_means:
 
@@ -943,7 +949,7 @@ represented as children of a larger parent cluster.
 
 .. _birch:
 
-Birch
+BIRCH
 =====
 
 The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
@@ -962,7 +968,7 @@ the need to hold the entire input data in memory. This information includes:
 - Centroids - To avoid recalculation linear sum / n_samples.
 - Squared norm of the centroids.
 
-The Birch algorithm has two parameters, the threshold and the branching factor.
+The BIRCH algorithm has two parameters, the threshold and the branching factor.
 The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
@@ -996,13 +1002,13 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
   then this node is again split into two and the process is continued
   recursively, till it reaches the root.
 
-**Birch or MiniBatchKMeans?**
+**BIRCH or MiniBatchKMeans?**
 
- - Birch does not scale very well to high dimensional data. As a rule of thumb if
+ - BIRCH does not scale very well to high dimensional data. As a rule of thumb if
    ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
  - If the number of instances of data needs to be reduced, or if one wants a
    large number of subclusters either as a preprocessing step or otherwise,
-   Birch is more useful than MiniBatchKMeans.
+   BIRCH is more useful than MiniBatchKMeans.
 
 
 **How to use partial_fit?**

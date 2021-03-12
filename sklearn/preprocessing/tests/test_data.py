@@ -414,6 +414,62 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
         assert scaler.scale_.dtype == np.float64
 
 
+@pytest.mark.parametrize("scaler", [
+    StandardScaler(with_mean=False),
+    RobustScaler(with_centering=False),
+])
+@pytest.mark.parametrize("sparse_constructor",
+                         [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("constant", [0, 1., 100.])
+def test_standard_scaler_constant_features(
+        scaler, add_sample_weight, sparse_constructor, dtype, constant):
+    if (isinstance(scaler, StandardScaler)
+            and constant > 1
+            and sparse_constructor is not np.asarray
+            and add_sample_weight):
+        # https://github.com/scikit-learn/scikit-learn/issues/19546
+        pytest.xfail("Computation of weighted variance is numerically unstable"
+                     " for sparse data. See: #19546.")
+
+    if isinstance(scaler, RobustScaler) and add_sample_weight:
+        pytest.skip(f"{scaler.__class__.__name__} does not yet support"
+                    f" sample_weight")
+
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    n_features = 1
+    if add_sample_weight:
+        fit_params = dict(sample_weight=rng.uniform(size=n_samples) * 2)
+    else:
+        fit_params = {}
+    X_array = np.full(shape=(n_samples, n_features), fill_value=constant,
+                      dtype=dtype)
+    X = sparse_constructor(X_array)
+    X_scaled = scaler.fit(X, **fit_params).transform(X)
+
+    if isinstance(scaler, StandardScaler):
+        # The variance info should be close to zero for constant features.
+        assert_allclose(scaler.var_, np.zeros(X.shape[1]), atol=1e-7)
+
+    # Constant features should not be scaled (scale of 1.):
+    assert_allclose(scaler.scale_, np.ones(X.shape[1]))
+
+    if hasattr(X_scaled, "toarray"):
+        assert_allclose(X_scaled.toarray(), X_array)
+    else:
+        assert_allclose(X_scaled, X)
+
+    if isinstance(scaler, StandardScaler) and not add_sample_weight:
+        # Also check consistency with the standard scale function.
+        X_scaled_2 = scale(X, with_mean=scaler.with_mean)
+        if hasattr(X_scaled_2, "toarray"):
+            assert_allclose(X_scaled_2.toarray(), X_scaled_2.toarray())
+        else:
+            assert_allclose(X_scaled_2, X_scaled_2)
+
+
 def test_scale_1d():
     # 1-d inputs
     X_list = [1., 3., 5., 0.]
@@ -538,12 +594,11 @@ def test_scaler_float16_overflow():
 
 
 def test_handle_zeros_in_scale():
-    s1 = np.array([0, 1, 2, 3])
+    s1 = np.array([0, 1e-16, 1, 2, 3])
     s2 = _handle_zeros_in_scale(s1, copy=True)
 
-    assert not s1[0] == s2[0]
-    assert_array_equal(s1, np.array([0, 1, 2, 3]))
-    assert_array_equal(s2, np.array([1, 1, 2, 3]))
+    assert_allclose(s1, np.array([0, 1e-16, 1, 2, 3]))
+    assert_allclose(s2, np.array([1, 1, 1, 2, 3]))
 
 
 def test_minmax_scaler_partial_fit():
