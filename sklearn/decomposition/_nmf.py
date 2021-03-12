@@ -1221,20 +1221,23 @@ class NMF(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'requires_positive_X': True}
 
-    def _check_params(self, n_components, max_iter, tol):
+    def _check_params(self, X):
+        if self._n_components is None:
+            self._n_components = X.shape[1]
         if not isinstance(
-            n_components, numbers.Integral
-        ) or n_components <= 0:
+            self._n_components, numbers.Integral
+        ) or self._n_components <= 0:
             raise ValueError("Number of components must be a positive integer;"
-                             " got (n_components=%r)" % n_components)
+                             " got (n_components=%r)" % self._n_components)
         if not isinstance(
-            max_iter, numbers.Integral
-        ) or max_iter < 0:
+            self.max_iter, numbers.Integral
+        ) or self.max_iter < 0:
             raise ValueError("Maximum number of iterations must be a positive "
-                             "integer; got (max_iter=%r)" % max_iter)
-        if not isinstance(tol, numbers.Number) or tol < 0:
+                             "integer; got (max_iter=%r)" % self.max_iter)
+        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % tol)
+                             "positive; got (tol=%r)" % self.tol)
+        return self
 
     def _check_w_h(self, X, W, H, n_components, solver,
                    init, random_state, update_H):
@@ -1345,16 +1348,14 @@ class NMF(TransformerMixin, BaseEstimator):
                              "to X, or use a positive beta_loss.")
 
         n_samples, n_features = X.shape
-        n_components = self.n_components
-        if n_components is None:
-            n_components = n_features
 
+        self._n_components = self.n_components
         # check parameters
-        self._check_params(n_components, self.max_iter, self.tol)
+        self._check_params(X)
 
         # initialize or check W and H
-        W, H = self._check_w_h(X, W, H, n_components, self.solver, self.init,
-                               self.random_state, update_H)
+        W, H = self._check_w_h(X, W, H, self._n_components, self.solver,
+                               self.init, self.random_state, update_H)
 
         l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
             self.alpha, self.l1_ratio, self.regularization)
