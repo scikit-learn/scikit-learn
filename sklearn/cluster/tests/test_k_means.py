@@ -485,7 +485,7 @@ def test_minibatch_declared_convergence(capsys, tol, max_no_improvement):
         assert "Converged (small centers change)" in captured.out
     if tol == 0:
         assert "Converged (lack of improvement in inertia)" in captured.out
-    
+
 
 def test_minibatch_iter_steps():
     # Check consistency of n_iter_ and n_steps_ attributes.
