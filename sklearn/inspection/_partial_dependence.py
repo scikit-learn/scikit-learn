@@ -27,7 +27,7 @@ from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
-from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
+from ..ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)
 
 
