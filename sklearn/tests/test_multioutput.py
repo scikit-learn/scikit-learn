@@ -396,11 +396,10 @@ def test_multi_output_exceptions():
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
-    # ValueError when number of outputs is different
-    # for fit and score
     y_new = np.column_stack((y1, y2))
     moc.fit(X, y)
-    with pytest.raises(ValueError):
+    msg = 'The number of outputs of Y .+ should be same'
+    with pytest.raises(ValueError, match=msg):
         moc.score(X, y_new)
 
     # ValueError when y is continuous
