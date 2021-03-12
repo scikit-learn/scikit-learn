@@ -454,6 +454,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
             len(self.estimators_) * _average_path_length([self.max_samples_])
         )
         scores = 2 ** (
+            # For a single training sample, denominator and depth are 0.
+            # Therefore, we set the score manually to 1.
             -np.divide(depths, denominator, np.ones_like(depths),
                        where=denominator != 0)
         )
