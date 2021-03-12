@@ -1222,6 +1222,7 @@ class NMF(TransformerMixin, BaseEstimator):
         return {'requires_positive_X': True}
 
     def _check_params(self, X):
+        self._n_components = self.n_components
         if self._n_components is None:
             self._n_components = X.shape[1]
         if not isinstance(
@@ -1239,31 +1240,31 @@ class NMF(TransformerMixin, BaseEstimator):
                              "positive; got (tol=%r)" % self.tol)
         return self
 
-    def _check_w_h(self, X, W, H, n_components, solver,
-                   init, random_state, update_H):
+    def _check_w_h(self, X, W, H, update_H):
         # check W and H, or initialize them
         n_samples, n_features = X.shape
-        if init == 'custom' and update_H:
-            _check_init(H, (n_components, n_features), "NMF (input H)")
-            _check_init(W, (n_samples, n_components), "NMF (input W)")
+        if self.init == 'custom' and update_H:
+            _check_init(H, (self._n_components, n_features), "NMF (input H)")
+            _check_init(W, (n_samples, self._n_components), "NMF (input W)")
             if H.dtype != X.dtype or W.dtype != X.dtype:
                 raise TypeError("H and W should have the same dtype as X. Got "
                                 "H.dtype = {} and W.dtype = {}."
                                 .format(H.dtype, W.dtype))
         elif not update_H:
-            _check_init(H, (n_components, n_features), "NMF (input H)")
+            _check_init(H, (self._n_components, n_features), "NMF (input H)")
             if H.dtype != X.dtype:
                 raise TypeError("H should have the same dtype as X. Got "
                                 "H.dtype = {}.".format(H.dtype))
             # 'mu' solver should not be initialized by zeros
-            if solver == 'mu':
-                avg = np.sqrt(X.mean() / n_components)
-                W = np.full((n_samples, n_components), avg, dtype=X.dtype)
+            if self.solver == 'mu':
+                avg = np.sqrt(X.mean() / self._n_components)
+                W = np.full((n_samples, self._n_components),
+                            avg, dtype=X.dtype)
             else:
-                W = np.zeros((n_samples, n_components), dtype=X.dtype)
+                W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
         else:
-            W, H = _initialize_nmf(X, n_components, init=init,
-                                   random_state=random_state)
+            W, H = _initialize_nmf(X, self._n_components, init=self.init,
+                                   random_state=self.random_state)
         return W, H
 
     def fit_transform(self, X, y=None, W=None, H=None):
@@ -1307,8 +1308,6 @@ class NMF(TransformerMixin, BaseEstimator):
     def _fit_transform(self, X, y=None, W=None, H=None, update_H=True):
         """Learn a NMF model for the data X and returns the transformed data.
 
-        This is more efficient than calling fit followed by transform.
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -1324,8 +1323,10 @@ class NMF(TransformerMixin, BaseEstimator):
             If update_H=False, it is used as a constant, to solve for W only.
 
         update_H : bool, default=True
-            If True, both W and H will be estimated from initial guesses.
-            If False, only W will be estimated.
+            If True, both W and H will be estimated from initial guesses,
+            this corresponds to a call to the 'fit_transform' method.
+            If False, only W will be estimated, this corresponds to a call
+            to the 'transform' method.
 
         Returns
         -------
@@ -1349,13 +1350,11 @@ class NMF(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
 
-        self._n_components = self.n_components
         # check parameters
         self._check_params(X)
 
         # initialize or check W and H
-        W, H = self._check_w_h(X, W, H, self._n_components, self.solver,
-                               self.init, self.random_state, update_H)
+        W, H = self._check_w_h(X, W, H, update_H)
 
         l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
             self.alpha, self.l1_ratio, self.regularization)
