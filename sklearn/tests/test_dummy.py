@@ -424,7 +424,7 @@ def test_quantile_invalid():
         est.fit(X, y)
 
     est = DummyRegressor(strategy="quantile", quantile='abc')
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         est.fit(X, y)
 
 
