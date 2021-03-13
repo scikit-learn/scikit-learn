@@ -250,7 +250,8 @@ def test_randomized_svd_infinite_rank():
         # compute the singular values of X using the fast approximate method
         # without the iterated power method
         _, sa, _ = randomized_svd(X, k, n_iter=0,
-                                  power_iteration_normalizer=normalizer)
+                                  power_iteration_normalizer=normalizer,
+                                  random_state=0)
 
         # the approximation does not tolerate the noise:
         assert np.abs(s[:k] - sa).max() > 0.1
