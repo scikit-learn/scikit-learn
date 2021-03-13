@@ -219,9 +219,9 @@ Changelog
 :mod:`sklearn.utils`
 .................................
 
-- |Enhancement| Changed the default value of the random_state in 
-  :func:`randomized_svd` of 
-  :class:`~sklearn.utils.extmath`.
+- |Enhancement| Deprecated the default value of the `random_state=0` in 
+  :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
+  the default value of `random_state` will be set to `None`.
   :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
