@@ -301,13 +301,12 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         shuffling the data, i.e. getting the random vectors to initialize
         the algorithm. Pass an int for reproducible results across multiple
         function calls. See :term:`Glossary <random_state>`.
-        During the deprecation cycle this will set to zero and afterwards
-        it will be set to None.
-        The previous behavior (`random_state=0`) is deprecated, and
-        from v1.2 the default value will be `random_state=None`. Set
-        the value of `random_state` explicitly to suppress the deprecation
-        warning.
+
         .. versionchanged:: 1.2
+            The previous behavior (`random_state=0`) is deprecated, and
+            from v1.2 the default value will be `random_state=None`. Set
+            the value of `random_state` explicitly to suppress the deprecation
+            warning.
 
     Notes
     -----
