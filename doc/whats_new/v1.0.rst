@@ -114,7 +114,7 @@ Changelog
 ...........................
 
 - |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
-  has been optimised for dense matrices when using `solver==newton-cg` and
+  has been optimised for dense matrices when using `solver='newton-cg'` and
   `multi_class!='multinomial'`.
   :pr:`19571` by :user:`Julien Jerphanion <jjerphan>`.
 
