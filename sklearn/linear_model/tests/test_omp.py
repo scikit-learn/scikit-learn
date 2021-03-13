@@ -83,7 +83,7 @@ def test_unreachable_accuracy():
                       n_nonzero_coefs=n_features))
 
 
-# Parametrizing positional params and keyword params to enhance the test
+# Parametrizing the decorator to enhance the test
 @pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
 @pytest.mark.parametrize(
     "keyword_params",
