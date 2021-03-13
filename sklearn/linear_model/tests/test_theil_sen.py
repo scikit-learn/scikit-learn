@@ -205,20 +205,21 @@ def test_checksubparams_negative_subpopulation():
     X, y, w, c = gen_toy_problem_1d()
     theil_sen = TheilSenRegressor(max_subpopulation=-1, random_state=0)
 
-    with pytest.error(ValueError):
+    with pytest.raises(ValueError):
         theil_sen.fit(X, y)
+
 
 def test_checksubparams_too_few_subsamples():
     X, y, w, c = gen_toy_problem_1d()
     theil_sen = TheilSenRegressor(n_subsamples=1, random_state=0)
-    with pytest.error(ValueError):
+    with pytest.raises(ValueError):
         theil_sen.fit(X, y)
 
 
 def test_checksubparams_too_many_subsamples():
     X, y, w, c = gen_toy_problem_1d()
     theil_sen = TheilSenRegressor(n_subsamples=101, random_state=0)
-    with pytest.error(ValueError):
+    with pytest.raises(ValueError):
         theil_sen.fit(X, y)
 
 
@@ -228,7 +229,7 @@ def test_checksubparams_n_subsamples_if_less_samples_than_features():
     X = random_state.normal(size=(n_samples, n_features))
     y = random_state.normal(size=n_samples)
     theil_sen = TheilSenRegressor(n_subsamples=9, random_state=0)
-    with pytest.error(ValueError):
+    with pytest.raises(ValueError):
         theil_sen.fit(X, y)
 
 

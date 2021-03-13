@@ -1,8 +1,8 @@
 import warnings
 
 import numpy as np
-from scipy import linalg
 import pytest
+from scipy import linalg
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from sklearn.utils._testing import assert_allclose
@@ -97,6 +97,7 @@ def test_x_none_gram_none_raises_value_error():
     Xy = np.dot(X.T, y)
     with pytest.raises(ValueError):
         linear_model.lars_path(None, Gram=None, Xy=Xy)
+
 
 def test_all_precomputed():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
@@ -484,7 +485,7 @@ def test_lasso_lars_ic():
     # test error on unknown IC
     lars_broken = linear_model.LassoLarsIC('<unknown>')
 
-    with pytest.error(ValueError):
+    with pytest.raises(ValueError):
         lars_broken.fit(X, y)
 
 
