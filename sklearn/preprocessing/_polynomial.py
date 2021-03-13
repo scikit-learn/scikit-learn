@@ -307,7 +307,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ]
         self.bsplines_ = bsplines
 
-        self.n_features_out_ = n_out - n_features * self.include_bias
+        self.n_features_out_ = n_out - n_features * (1 - self.include_bias)
         return self
 
     def transform(self, X):
@@ -336,7 +336,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         # Note that scipy BSpline returns float64 arrays and converts input
         # x=X[:, i] to c-contiguous float64.
-        n_out = self.n_features_out_ + n_features * self.include_bias
+        n_out = self.n_features_out_ + n_features * (1 - self.include_bias)
         if X.dtype in FLOAT_DTYPES:
             dtype = X.dtype
         else:

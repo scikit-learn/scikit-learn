@@ -1107,6 +1107,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         j_indices = []
         indptr = []
 
+        if self.lowercase:
+            for vocab in vocabulary:
+                if any(map(str.isupper, vocab)):
+                    warnings.warn("Upper case characters found in"
+                                  " vocabulary while 'lowercase'"
+                                  " is True. These entries will not"
+                                  " be matched with any documents")
+                    break
+
         values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
@@ -1270,22 +1279,20 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             List of arrays of terms.
         """
         self._check_vocabulary()
-
-        if sp.issparse(X):
-            # We need CSR format for fast row manipulations.
-            X = X.tocsr()
-        else:
-            # We need to convert X to a matrix, so that the indexing
-            # returns 2D objects
-            X = np.asmatrix(X)
+        # We need CSR format for fast row manipulations.
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         terms = np.array(list(self.vocabulary_.keys()))
         indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
-                for i in range(n_samples)]
+        if sp.issparse(X):
+            return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
+                    for i in range(n_samples)]
+        else:
+            return [inverse_vocabulary[np.flatnonzero(X[i, :])].ravel()
+                    for i in range(n_samples)]
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
