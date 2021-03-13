@@ -74,7 +74,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         - a single string (see :ref:`scoring_parameter`);
         - a callable (see :ref:`scoring`) that returns a single value.
 
-        If `scoring` reprents multiple scores, one can use:
+        If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
@@ -631,13 +631,21 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         end_msg = f"[CV{progress_msg}] END "
         result_msg = params_msg + (";" if params_msg else "")
-        if verbose > 2 and isinstance(test_scores, dict):
-            for scorer_name in sorted(test_scores):
-                result_msg += f" {scorer_name}: ("
+        if verbose > 2:
+            if isinstance(test_scores, dict):
+                for scorer_name in sorted(test_scores):
+                    result_msg += f" {scorer_name}: ("
+                    if return_train_score:
+                        scorer_scores = train_scores[scorer_name]
+                        result_msg += f"train={scorer_scores:.3f}, "
+                    result_msg += f"test={test_scores[scorer_name]:.3f})"
+            else:
+                result_msg += ", score="
                 if return_train_score:
-                    scorer_scores = train_scores[scorer_name]
-                    result_msg += f"train={scorer_scores:.3f}, "
-                result_msg += f"test={test_scores[scorer_name]:.3f})"
+                    result_msg += (f"(train={train_scores:.3f}, "
+                                   f"test={test_scores:.3f})")
+                else:
+                    result_msg += f"{test_scores:.3f}"
         result_msg += f" total time={logger.short_format_time(total_time)}"
 
         # Right align the result_msg
@@ -1473,7 +1481,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     if n_ticks > train_sizes_abs.shape[0]:
         warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
                       "of ticks will be less than the size of "
-                      "'train_sizes' %d instead of %d)."
+                      "'train_sizes': %d instead of %d."
                       % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
 
     return train_sizes_abs

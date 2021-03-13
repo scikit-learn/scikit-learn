@@ -38,7 +38,7 @@ from .base import BaseEstimator, TransformerMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, check_is_fitted
+from .utils.validation import check_is_fitted
 from .utils.validation import _deprecate_positional_args
 from .exceptions import DataDimensionalityWarning
 
@@ -129,7 +129,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
             % n_samples)
 
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
-    return (4 * np.log(n_samples) / denominator).astype(int)
+    return (4 * np.log(n_samples) / denominator).astype(np.int64)
 
 
 def _check_density(density, n_features):
@@ -402,9 +402,8 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         X_new : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Projected array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
-
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'], reset=False)
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
