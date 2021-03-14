@@ -352,8 +352,15 @@ class BaseEstimator:
         """
         try:
             n_features = _num_features(X)
-        except TypeError:
-            # If the number of features is not defined skip this check
+        except TypeError as e:
+            if not reset and hasattr(self, "n_features_in_"):
+                raise ValueError(
+                    "X does not contain any features, but "
+                    f"{self.__class__.__name__} is expecting "
+                    f"{self.n_features_in_} features"
+                ) from e
+            # If the number of features is not defined and reset=True,
+            # then we skip this check
             return
 
         if reset:

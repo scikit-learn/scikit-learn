@@ -581,3 +581,17 @@ def test_is_pairwise():
     with pytest.warns(None) as record:
         assert not _is_pairwise(est)
     assert not record
+
+
+def test_n_features_in_validation():
+    """Check that `_check_n_features` validates data when reset=False"""
+    est = MyEstimator()
+    X_train = [[1, 2, 3], [4, 5, 6]]
+    est._check_n_features(X_train, reset=True)
+
+    assert est.n_features_in_ == 3
+
+    msg = ("X does not contain any features, but MyEstimator is expecting "
+           "3 features")
+    with pytest.raises(ValueError, match=msg):
+        est._check_n_features("invalid X", reset=False)
