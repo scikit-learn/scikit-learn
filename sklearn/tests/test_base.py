@@ -595,3 +595,15 @@ def test_n_features_in_validation():
            "3 features")
     with pytest.raises(ValueError, match=msg):
         est._check_n_features("invalid X", reset=False)
+
+
+def test_n_features_in_no_validation():
+    """Check that `_check_n_features` does not validate data when
+    n_features_in_ is not defined."""
+    est = MyEstimator()
+    est._check_n_features("invalid X", reset=True)
+
+    assert not hasattr(est, "n_features_in_")
+
+    # does not raise
+    est._check_n_features("invalid X", reset=False)
