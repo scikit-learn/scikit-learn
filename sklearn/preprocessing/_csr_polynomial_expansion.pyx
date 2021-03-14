@@ -9,7 +9,9 @@ from numpy cimport ndarray
 cimport numpy as np
 
 np.import_array()
-ctypedef np.int32_t INDEX_T
+ctypedef fused INDEX_T:
+    np.int32_t
+    np.int64_t
 
 ctypedef fused DATA_T:
     np.float32_t
@@ -120,7 +122,7 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
                  i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
-                 expanded_column
+                 expanded_column, col
 
     with nogil:
         expanded_indptr[0] = indptr[0]
