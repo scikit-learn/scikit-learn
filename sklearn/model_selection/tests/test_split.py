@@ -1,6 +1,7 @@
 """Test the split module"""
 import warnings
 import pytest
+import re
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
@@ -12,7 +13,6 @@ from itertools import permutations
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils._mocking import MockDataFrame
@@ -116,10 +116,10 @@ def test_cross_validator_with_default_params():
 
     # ValueError for get_n_splits methods
     msg = "The 'X' parameter should not be None."
-    assert_raise_message(ValueError, msg,
-                         loo.get_n_splits, None, y, groups)
-    assert_raise_message(ValueError, msg,
-                         lpo.get_n_splits, None, y, groups)
+    with pytest.raises(ValueError, match=msg):
+        loo.get_n_splits(None, y, groups)
+    with pytest.raises(ValueError, match=msg):
+        lpo.get_n_splits(None, y, groups)
 
 
 def test_2d_y():
@@ -214,10 +214,10 @@ def test_kfold_valueerrors():
         KFold(1)
     error_string = ("k-fold cross-validation requires at least one"
                     " train/test split")
-    assert_raise_message(ValueError, error_string,
-                         StratifiedKFold, 0)
-    assert_raise_message(ValueError, error_string,
-                         StratifiedKFold, 1)
+    with pytest.raises(ValueError, match=error_string):
+        StratifiedKFold(0)
+    with pytest.raises(ValueError, match=error_string):
+        StratifiedKFold(1)
 
     # When n_splits is not integer:
     with pytest.raises(ValueError):
@@ -858,10 +858,10 @@ def test_leave_one_p_group_out():
         lpgo_2.get_n_splits(None, None, [0.0, np.inf, 0.0])
 
     msg = "The 'groups' parameter should not be None."
-    assert_raise_message(ValueError, msg,
-                         logo.get_n_splits, None, None, None)
-    assert_raise_message(ValueError, msg,
-                         lpgo_1.get_n_splits, None, None, None)
+    with pytest.raises(ValueError, match=msg):
+        logo.get_n_splits(None, None, None)
+    with pytest.raises(ValueError, match=msg):
+        lpgo_1.get_n_splits(None, None, None)
 
 
 def test_leave_group_out_changing_groups():
@@ -891,27 +891,37 @@ def test_leave_group_out_changing_groups():
 
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     X = y = groups = np.ones(0)
-    assert_raise_message(ValueError, "Found array with 0 sample(s)", next,
-                         LeaveOneGroupOut().split(X, y, groups))
+    msg = re.escape("Found array with 0 sample(s)")
+    with pytest.raises(ValueError, match=msg):
+        next(LeaveOneGroupOut().split(X, y, groups))
+
     X = y = groups = np.ones(1)
-    msg = ("The groups parameter contains fewer than 2 unique groups ({}). "
-           "LeaveOneGroupOut expects at least 2.").format(groups)
-    assert_raise_message(ValueError, msg, next,
-                         LeaveOneGroupOut().split(X, y, groups))
+    msg = re.escape(
+        f"The groups parameter contains fewer than 2 unique groups ({groups})."
+        f" LeaveOneGroupOut expects at least 2."
+    )
+    with pytest.raises(ValueError, match=msg):
+        next(LeaveOneGroupOut().split(X, y, groups))
+
     X = y = groups = np.ones(1)
-    msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups "
-           "be present").format(groups)
-    assert_raise_message(ValueError, msg, next,
-                         LeavePGroupsOut(n_groups=3).split(X, y, groups))
+    msg = re.escape(
+        f"The groups parameter contains fewer than (or equal to) n_groups "
+        f"(3) numbers of unique groups ({groups}). LeavePGroupsOut expects "
+        f"that at least n_groups + 1 (4) unique groups "
+        f"be present"
+    )
+    with pytest.raises(ValueError, match=msg):
+        next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
+
     X = y = groups = np.arange(3)
-    msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups "
-           "be present").format(groups)
-    assert_raise_message(ValueError, msg, next,
-                         LeavePGroupsOut(n_groups=3).split(X, y, groups))
+    msg = re.escape(
+        f"The groups parameter contains fewer than (or equal to) n_groups "
+        f"(3) numbers of unique groups ({groups}). LeavePGroupsOut expects "
+        f"that at least n_groups + 1 (4) unique groups "
+        f"be present"
+    )
+    with pytest.raises(ValueError, match=msg):
+        next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
 
 @ignore_warnings
