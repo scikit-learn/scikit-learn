@@ -1,7 +1,8 @@
 # Authors: David Dale dale.david@mail.ru
 # License: BSD 3 clause
-
+import scipy
 import numpy as np
+from packaging.version import parse
 from scipy.optimize import linprog
 
 from ..base import BaseEstimator, RegressorMixin
@@ -34,13 +35,16 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
-    normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
+
+    solver: str, optional, default 'auto'
+        Name of the solver used by scipy.optimize.linprog.
+        If it is 'auto', will use 'highs' with scipy>=1.6.0
+        and 'interior-point' with older versions.
+
+    solver: dict, optional
+        Additional parameters passed to scipy.optimize.linprog as options.
 
     Attributes
     ----------
@@ -68,17 +72,15 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             quantile=0.5,
             alpha=0.0001,
             fit_intercept=True,
-            normalize=False,
             copy_X=True,
-            method='revised simplex',
+            solver='auto',
             solver_options=None,
     ):
         self.quantile = quantile
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
-        self.normalize = normalize
-        self.method = method
+        self.solver = solver
         self.solver_options = solver_options
 
     def fit(self, X, y, sample_weight=None):
@@ -106,7 +108,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                                    y_numeric=True, multi_output=False)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            X, y, fit_intercept=self.fit_intercept, copy=self.copy_X,
             sample_weight=sample_weight)
 
         sample_weight = _check_sample_weight(sample_weight, X)
@@ -144,14 +146,20 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         ], axis=1)
         b_eq_vector = y
 
+        method = self.solver
+        if method == 'auto':
+            if parse(scipy.__version__) < parse('1.6.0'):
+                method = 'interior-point'
+            else:
+                method = 'highs'
+
         result = linprog(
             c=c_vector,
             A_eq=a_eq_matrix,
             b_eq=b_eq_vector,
-            method=self.method,
+            method=method,
             options=self.solver_options
         )
-        # todo: check the optimization result for convergence
 
         params_pos = result.x[:n_params]
         params_neg = result.x[n_params:2 * n_params]

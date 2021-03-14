@@ -28,7 +28,7 @@ from ._passive_aggressive import PassiveAggressiveClassifier
 from ._passive_aggressive import PassiveAggressiveRegressor
 from ._perceptron import Perceptron
 
-from .quantile import QuantileRegressor
+from ._quantile import QuantileRegressor
 from ._ransac import RANSACRegressor
 from ._theil_sen import TheilSenRegressor
 
