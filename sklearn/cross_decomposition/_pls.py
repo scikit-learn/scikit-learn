@@ -334,7 +334,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         return x_scores
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X=None, Y=None):
         """Transform data back to its original space.
 
         Parameters
@@ -343,23 +343,38 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             New data, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
 
+        Y : array-like of shape (n_samples, n_components)
+            New target, where `n_samples` is the number of samples
+            and `n_components` is the number of pls components.
+
         Returns
         -------
-        x_reconstructed : array-like of shape (n_samples, n_features)
+        'X_reconstructed' if X given : array-like of shape (n_samples, n_features),
+        'Y_reconstructed' if Y given : array-like of shape (n_samples, n_features)
 
         Notes
         -----
         This transformation will only be exact if `n_components=n_features`.
         """
         check_is_fitted(self)
-        X = check_array(X, dtype=FLOAT_DTYPES)
-        # From pls space to original space
-        X_reconstructed = np.matmul(X, self.x_loadings_.T)
 
-        # Denormalize
-        X_reconstructed *= self._x_std
-        X_reconstructed += self._x_mean
-        return X_reconstructed
+        if X is not None:
+            X = check_array(X, dtype=FLOAT_DTYPES)
+            # From pls space to original space
+            X_reconstructed = np.matmul(X, self.x_loadings_.T)
+            # Denormalize
+            X_reconstructed *= self._x_std
+            X_reconstructed += self._x_mean
+            return X_reconstructed
+
+        if Y is not None:
+            Y = check_array(Y, dtype=FLOAT_DTYPES)
+            # From pls space to original space
+            Y_reconstructed = np.matmul(Y, self.y_loadings_.T)
+            # Denormalize
+            Y_reconstructed *= self._y_std
+            Y_reconstructed += self._y_mean
+            return Y_reconstructed
 
     def predict(self, X, copy=True):
         """Predict targets of given samples.
