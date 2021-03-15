@@ -45,7 +45,7 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-- |Feature| The option for using the squared error via ``loss`` and
+- |API| The option for using the squared error via ``loss`` and
   ``criterion`` parameters was made more consistent. The preferred way is by
   setting the value to `"squared_error"`. Old option names are still valid,
   produce the same models, but are deprecated and will be removed in version
