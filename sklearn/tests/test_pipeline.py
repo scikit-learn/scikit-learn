@@ -37,6 +37,7 @@ from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.manifold import TSNE
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
@@ -76,6 +77,11 @@ class NoTrans(NoFit):
     def set_params(self, **params):
         self.a = params['a']
         return self
+
+
+class OnlyFitTrans(NoFit):
+    def fit_transform(self, X, y=None):
+        return X
 
 
 class NoInvTransf(NoTrans):
@@ -171,8 +177,8 @@ def test_pipeline_init():
     # Check that we can't instantiate pipelines with objects without fit
     # method
     assert_raises_regex(TypeError,
-                        'Last step of Pipeline should implement fit '
-                        'or be the string \'passthrough\''
+                        'Last step of Pipeline should implement fit, '
+                        'fit_transform or be the string \'passthrough\''
                         '.*NoFit.*',
                         Pipeline, [('clf', NoFit())])
     # Smoke test with only an estimator
@@ -400,6 +406,58 @@ def test_pipeline_methods_preprocessing_svm():
         pipe.score(X, y)
 
 
+def test_pipeline_methods_pca_tsne():
+    # test that only fit_transform needs to be present in order to
+    # run a pipeline with fit_transform.
+    # Don't require transform to be present, explicitly.
+    pca = PCA(n_components=2, random_state=0)
+    tsne = TSNE(random_state=0)
+    separate_emb = tsne.fit_transform(pca.fit_transform(iris.data))
+
+    pca_for_pipeline = PCA(n_components=2, random_state=0)
+    tsne_for_pipeline = TSNE(random_state=0)
+    msg = ("Intermediate step '%s' (type %s) does not have "
+           "transform, pipeline is not reusable on test data."
+           % (tsne_for_pipeline, type(tsne_for_pipeline)))
+
+    pipe = make_pipeline(pca_for_pipeline, tsne_for_pipeline,
+                         'passthrough')
+
+    with pytest.warns(UserWarning, match=re.escape(msg)):
+        pipeline_emb = pipe.fit_transform(iris.data)
+
+    assert_array_almost_equal(pipeline_emb, separate_emb)
+
+    error_estimator = NoTrans()
+    msg = ("All intermediate steps should be "
+           "transformers and implement fit and "
+           "transform, fit_transform or be the string "
+           "'passthrough'. '%s' (type %s) doesn't"
+           % (error_estimator, type(error_estimator)))
+    with pytest.raises(TypeError, match=re.escape(msg)):
+        make_pipeline(error_estimator, 'passthrough')
+
+
+def test_fit_predict_on_nonreusable_pipeline():
+    oft = OnlyFitTrans()
+
+    km = KMeans(random_state=0)
+    km_for_pipeline = KMeans(random_state=0)
+
+    separate_pred = km.fit_predict(iris.data)
+
+    pipe = make_pipeline(oft, km_for_pipeline)
+
+    msg = ("Intermediate step '%s' (type %s) does not have "
+           "transform, pipeline is not reusable on test data."
+           % (oft, type(oft)))
+
+    with pytest.warns(UserWarning, match=re.escape(msg)):
+        pipeline_pred = pipe.fit_predict(iris.data)
+
+    assert_array_almost_equal(pipeline_pred, separate_pred)
+
+
 def test_fit_predict_on_pipeline():
     # test that the fit_predict method is implemented on a pipeline
     # test that the fit_predict on pipeline yields same results as applying
@@ -499,7 +557,7 @@ def test_feature_union():
     # test error if some elements do not support transform
     assert_raises_regex(TypeError,
                         'All estimators should implement fit and '
-                        'transform.*\\bNoTrans\\b',
+                        'transform.*\\bNoTrans\\b.*',
                         FeatureUnion,
                         [("transform", Transf()), ("no_transform", NoTrans())])
 
