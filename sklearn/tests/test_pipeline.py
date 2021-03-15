@@ -979,7 +979,9 @@ def test_set_feature_union_step_drop():
 
 
 def test_step_name_validation():
-    error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
+    error_message_1 = re.escape(
+        "Estimator names must not contain __: got ['a__q']"
+    )
     error_message_2 = re.escape("Names provided are not unique: ['a', 'a']")
     error_message_3 = re.escape(
         "Estimator names conflict with constructor arguments: ['%s']"
