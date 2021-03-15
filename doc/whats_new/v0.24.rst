@@ -37,6 +37,13 @@ Changelog
   linear quantile regression with L1 penalty.
   :pr:`9978` by :user:`David Dale <avidale>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now correctly shows the score for
+  single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -51,6 +58,16 @@ Changelog
 - |Fix| Avoid NaN during label propagation in
   :class:`~sklearn.semi_supervised.LabelPropagation`.
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
+
+:mod:`sklearn.tree`
+.......................
+
+- |Fix| Fix a bug in `fit` of :class:`tree.BaseDecisionTree` that caused
+  segmentation faults under certain conditions. `fit` now deep copies the
+  `Criterion` object to prevent shared concurrent accesses.
+  :pr:`19580` by :user:`Samuel Brice <samdbrice>` and
+  :user:`Alex Adamson <aadamson>` and
+  :user:`Wil Yegelwel <wyegelwel>`.
 
 :mod:`sklearn.utils`
 ....................

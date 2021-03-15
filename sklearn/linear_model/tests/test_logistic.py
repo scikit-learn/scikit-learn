@@ -19,9 +19,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils import shuffle
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
@@ -155,11 +153,13 @@ def test_lr_liblinear_warning():
     target = iris.target_names[iris.target]
 
     lr = LogisticRegression(solver='liblinear', n_jobs=2)
-    assert_warns_message(UserWarning,
-                         "'n_jobs' > 1 does not have any effect when"
-                         " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-                         " = 2.",
-                         lr.fit, iris.data, target)
+    warning_message = (
+        "'n_jobs' > 1 does not have any effect when"
+        " 'solver' is set to 'liblinear'. Got 'n_jobs'"
+        " = 2."
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        lr.fit(iris.data, target)
 
 
 def test_predict_3_classes():
@@ -1188,23 +1188,34 @@ def test_logreg_predict_proba_multinomial():
     assert clf_wrong_loss > clf_multi_loss
 
 
-def test_max_iter():
+@pytest.mark.parametrize("max_iter", np.arange(1, 5))
+@pytest.mark.parametrize("multi_class", ['ovr', 'multinomial'])
+@pytest.mark.parametrize(
+    "solver, message",
+    [("newton-cg", "newton-cg failed to converge. Increase the "
+                   "number of iterations."),
+     ("liblinear", "Liblinear failed to converge, increase the "
+                   "number of iterations."),
+     ("sag", "The max_iter was reached which means the "
+             "coef_ did not converge"),
+     ("saga", "The max_iter was reached which means the "
+              "coef_ did not converge"),
+     ("lbfgs", "lbfgs failed to converge")])
+def test_max_iter(max_iter, multi_class, solver, message):
     # Test that the maximum number of iteration is reached
     X, y_bin = iris.data, iris.target.copy()
     y_bin[y_bin == 2] = 0
 
-    solvers = ['newton-cg', 'liblinear', 'sag', 'saga', 'lbfgs']
+    if solver == 'liblinear' and multi_class == 'multinomial':
+        pytest.skip("'multinomial' is unavailable when solver='liblinear'")
 
-    for max_iter in range(1, 5):
-        for solver in solvers:
-            for multi_class in ['ovr', 'multinomial']:
-                if solver == 'liblinear' and multi_class == 'multinomial':
-                    continue
-                lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
-                                        multi_class=multi_class,
-                                        random_state=0, solver=solver)
-                assert_warns(ConvergenceWarning, lr.fit, X, y_bin)
-                assert lr.n_iter_[0] == max_iter
+    lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
+                            multi_class=multi_class,
+                            random_state=0, solver=solver)
+    with pytest.warns(ConvergenceWarning, match=message):
+        lr.fit(X, y_bin)
+
+    assert lr.n_iter_[0] == max_iter
 
 
 @pytest.mark.parametrize('solver',
@@ -1644,12 +1655,11 @@ def test_l1_ratio_param(l1_ratio):
                            l1_ratio=l1_ratio).fit(X, Y1)
 
     if l1_ratio is not None:
-        msg = ("l1_ratio parameter is only used when penalty is 'elasticnet'."
-               " Got (penalty=l1)")
-
-        assert_warns_message(UserWarning, msg,
-                             LogisticRegression(penalty='l1', solver='saga',
-                                                l1_ratio=l1_ratio).fit, X, Y1)
+        msg = (r"l1_ratio parameter is only used when penalty is"
+               r" 'elasticnet'\. Got \(penalty=l1\)")
+        with pytest.warns(UserWarning, match=msg):
+            LogisticRegression(penalty='l1', solver='saga',
+                               l1_ratio=l1_ratio).fit(X, Y1)
 
 
 @pytest.mark.parametrize('l1_ratios', ([], [.5, 2], None, 'something_wrong'))
@@ -1664,11 +1674,12 @@ def test_l1_ratios_param(l1_ratios):
                              l1_ratios=l1_ratios, cv=2).fit(X, Y1)
 
     if l1_ratios is not None:
-        msg = ("l1_ratios parameter is only used when penalty is "
-               "'elasticnet'. Got (penalty=l1)")
+        msg = (r"l1_ratios parameter is only used when penalty"
+               r" is 'elasticnet'. Got \(penalty=l1\)")
         function = LogisticRegressionCV(penalty='l1', solver='saga',
                                         l1_ratios=l1_ratios, cv=2).fit
-        assert_warns_message(UserWarning, msg, function, X, Y1)
+        with pytest.warns(UserWarning, match=msg):
+            function(X, Y1)
 
 
 @pytest.mark.parametrize('C', np.logspace(-3, 2, 4))
@@ -1769,7 +1780,8 @@ def test_penalty_none(solver):
 
     msg = "Setting penalty='none' will ignore the C"
     lr = LogisticRegression(penalty='none', solver=solver, C=4)
-    assert_warns_message(UserWarning, msg, lr.fit, X, y)
+    with pytest.warns(UserWarning, match=msg):
+        lr.fit(X, y)
 
     lr_none = LogisticRegression(penalty='none', solver=solver,
                                  random_state=0)

@@ -9,7 +9,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises_regexp
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import parse_version
 
@@ -1446,7 +1445,13 @@ def test_tol_parameter():
 
     # Strict tolerance and small max_iter should trigger a warning
     model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
-    model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
+    warning_message = (
+        "Maximum number of iteration reached before "
+        "convergence. Consider increasing max_iter to "
+        "improve the fit."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        model_3.fit(X, y)
     assert model_3.n_iter_ == 3
 
 

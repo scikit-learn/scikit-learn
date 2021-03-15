@@ -5,7 +5,7 @@ from string import Template
 import uuid
 import html
 
-from sklearn import config_context
+from .. import config_context
 
 
 class _VisualBlock:
