@@ -570,7 +570,7 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
 
 @_deprecate_positional_args
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
-                      sample_weight=None):
+                      sample_weight=None, cm=None):
     r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -609,6 +609,12 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    cm : ndarray of shape (n_classes, n_classes)
+        Confusion matrix whose i-th row and j-th
+        column entry indicates the number of
+        samples with true label being i-th class,
+        can be precomputed by sklearn.metrics.confusion_matrix().
+
     Returns
     -------
     kappa : float
@@ -626,8 +632,11 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
     .. [3] `Wikipedia entry for the Cohen's kappa
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
     """
-    confusion = confusion_matrix(y1, y2, labels=labels,
-                                 sample_weight=sample_weight)
+    if cm is None:
+        confusion = confusion_matrix(y1, y2, labels=labels,
+                                     sample_weight=sample_weight)
+    else:
+        confusion = cm
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -652,7 +661,8 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
 
 @_deprecate_positional_args
 def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
-                  average='binary', sample_weight=None, zero_division="warn"):
+                  average='binary', sample_weight=None, zero_division="warn",
+                  cm=None):
     """Jaccard similarity coefficient score.
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -715,6 +725,15 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
         there are no negative values in predictions and labels. If set to
         "warn", this acts like 0, but a warning is also raised.
 
+    cm : ndarray of shape (n_outputs, 2, 2)
+        A 2x2 confusion matrix corresponding to each output in the input.
+        When calculating class-wise multi_confusion (default), then
+        n_outputs = n_labels; when calculating sample-wise multi_confusion
+        (samplewise=True), n_outputs = n_samples. If ``labels`` is defined,
+        the results will be returned in the order specified in ``labels``,
+        otherwise the results will be returned in sorted order by default.
+        Can be precomputed by sklearn.metrics.multilabel_confusion_matrix().
+
     Returns
     -------
     score : float (if average is not None) or array of floats, shape =\
@@ -769,9 +788,14 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
     samplewise = average == 'samples'
-    MCM = multilabel_confusion_matrix(y_true, y_pred,
-                                      sample_weight=sample_weight,
-                                      labels=labels, samplewise=samplewise)
+
+    if cm is None:
+        MCM = multilabel_confusion_matrix(y_true, y_pred,
+                                          sample_weight=sample_weight,
+                                          labels=labels, samplewise=samplewise)
+    else:
+        MCM = cm
+
     numerator = MCM[:, 1, 1]
     denominator = MCM[:, 1, 1] + MCM[:, 0, 1] + MCM[:, 1, 0]
 
@@ -797,7 +821,7 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
 
 
 @_deprecate_positional_args
-def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
+def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, cm=None):
     """Compute the Matthews correlation coefficient (MCC).
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -827,6 +851,12 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         Sample weights.
 
         .. versionadded:: 0.18
+
+    cm : ndarray of shape (n_classes, n_classes)
+        Confusion matrix whose i-th row and j-th
+        column entry indicates the number of
+        samples with true label being i-th class,
+        can be precomputed by sklearn.metrics.confusion_matrix().
 
     Returns
     -------
@@ -870,7 +900,11 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    if cm is None:
+        C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    else:
+        C = cm
+
     t_sum = C.sum(axis=1, dtype=np.float64)
     p_sum = C.sum(axis=0, dtype=np.float64)
     n_correct = np.trace(C, dtype=np.float64)
@@ -1316,7 +1350,8 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
                                     sample_weight=None,
-                                    zero_division="warn"):
+                                    zero_division="warn",
+                                    cm=None):
     """Compute precision, recall, F-measure and support for each class.
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1423,6 +1458,15 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
+    cm : ndarray of shape (n_outputs, 2, 2)
+        A 2x2 confusion matrix corresponding to each output in the input.
+        When calculating class-wise multi_confusion (default), then
+        n_outputs = n_labels; when calculating sample-wise multi_confusion
+        (samplewise=True), n_outputs = n_samples. If ``labels`` is defined,
+        the results will be returned in the order specified in ``labels``,
+        otherwise the results will be returned in sorted order by default.
+        Can be precomputed by sklearn.metrics.multilabel_confusion_matrix().
+
     Notes
     -----
     When ``true positive + false positive == 0``, precision is undefined.
@@ -1474,9 +1518,14 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
 
     # Calculate tp_sum, pred_sum, true_sum ###
     samplewise = average == 'samples'
-    MCM = multilabel_confusion_matrix(y_true, y_pred,
-                                      sample_weight=sample_weight,
-                                      labels=labels, samplewise=samplewise)
+
+    if cm is None:
+        MCM = multilabel_confusion_matrix(y_true, y_pred,
+                                          sample_weight=sample_weight,
+                                          labels=labels, samplewise=samplewise)
+    else:
+        MCM = cm
+
     tp_sum = MCM[:, 1, 1]
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
@@ -1791,7 +1840,7 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
 
 @_deprecate_positional_args
 def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
-                            adjusted=False):
+                            adjusted=False, cm=None):
     """Compute the balanced accuracy.
 
     The balanced accuracy in binary and multiclass classification problems to
@@ -1819,6 +1868,12 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
         When true, the result is adjusted for chance, so that random
         performance would score 0, while keeping perfect performance at a score
         of 1.
+
+    cm : ndarray of shape (n_classes, n_classes)
+        Confusion matrix whose i-th row and j-th
+        column entry indicates the number of
+        samples with true label being i-th class,
+        can be precomputed by sklearn.metrics.confusion_matrix().
 
     Returns
     -------
@@ -1855,7 +1910,11 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
     0.625
 
     """
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    if cm is None:
+        C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    else:
+        C = cm
+
     with np.errstate(divide='ignore', invalid='ignore'):
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)):
