@@ -221,6 +221,15 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| Deprecated the default value of the `random_state=0` in 
+  :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
+  the default value of `random_state` will be set to `None`.
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
+
 :mod:`sklearn.calibration`
 ............................
 
