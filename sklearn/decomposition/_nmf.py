@@ -770,23 +770,24 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         denominator = denominator + l2_reg_H * H
     denominator[denominator == 0] = EPSILON
 
-    if gamma != 1.:
-        H **= 1. / gamma
-
     if A is not None and B is not None:
+        if gamma != 1:
+            H **= 1 / gamma
+        numerator *= H
         A *= rho
         B *= rho
-        A += numerator * H
+        A += numerator
         B += denominator
-        numerator = A
-        denominator = B
-        H = (np.divide(A, B, dtype=X.dtype))
-    else:
-        H *= (np.divide(numerator, denominator, dtype=X.dtype))
+        H = A / B
 
-    # gamma is in ]0, 1]
-    if gamma != 1.:
-        H **= gamma
+        if gamma != 1:
+            H **= gamma
+    else:
+        delta_H = numerator
+        delta_H /= denominator
+        if gamma != 1:
+            delta_H **= gamma
+        H *= delta_H
 
     return H, A, B
 
