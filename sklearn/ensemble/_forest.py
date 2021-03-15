@@ -1311,8 +1311,9 @@ class RandomForestRegressor(ForestRegressor):
         absolute error, and "poisson" which uses reduction in
         Poisson deviance to find splits.
 
-        .. versionadded:: 0.19
-           Poisson ("poisson") criterion.
+
+        .. versionadded:: 1.0
+           Added criterion "poisson".
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
