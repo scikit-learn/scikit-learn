@@ -2,8 +2,8 @@
 ==============
 Quantile regression
 ==============
-
-Plot the prediction of different conditional quantiles.
+This example illustrates how quantile regression can predict non-trivial
+conditional quantiles.
 
 The left figure shows the case when error distribution is normal,
 but variance is not constant.
@@ -30,7 +30,7 @@ ax1.scatter(x, y)
 
 quantiles = [0.05, 0.5, 0.95]
 for quantile in quantiles:
-    qr = QuantileRegressor(quantile=quantile, max_iter=10000, alpha=0)
+    qr = QuantileRegressor(quantile=quantile, alpha=0)
     qr.fit(X, y)
     ax1.plot([0, 10], qr.predict([[0], [10]]))
 ax1.set_xlabel('x')
@@ -42,7 +42,7 @@ y = 20 + x * 0.5 + rng.pareto(10, size=x.shape[0])*10
 ax2.scatter(x, y)
 
 for quantile in quantiles:
-    qr = QuantileRegressor(quantile=quantile, max_iter=10000, alpha=0)
+    qr = QuantileRegressor(quantile=quantile, alpha=0)
     qr.fit(X, y)
     ax2.plot([0, 10], qr.predict([[0], [10]]))
 ax2.set_xlabel('x')
@@ -54,10 +54,10 @@ plt.show()
 
 #########################################################################
 #
-# The second part of the code shows that LinearRegression minimizes RMSE,
+# The second part of the example shows that LinearRegression minimizes RMSE,
 # while QuantileRegressor minimizes MAE, and both do their own job well.
 
-models = [LinearRegression(), QuantileRegressor(alpha=0, max_iter=10000)]
+models = [LinearRegression(), QuantileRegressor(alpha=0)]
 names = ['OLS', 'Quantile']
 
 print('# In-sample performance')
@@ -66,7 +66,7 @@ for model_name, model in zip(names, models):
     model.fit(X, y)
     mae = mean_absolute_error(model.predict(X), y)
     rmse = np.sqrt(mean_squared_error(model.predict(X), y))
-    print('MAE={:.4}  RMSE={:.4}'.format(mae, rmse))
+    print('MAE = {:.4}  RMSE = {:.4}'.format(mae, rmse))
 print('\n# Cross-validated performance')
 for model_name, model in zip(names, models):
     print(model_name + ':')
@@ -74,4 +74,4 @@ for model_name, model in zip(names, models):
                            scoring='neg_mean_absolute_error').mean()
     rmse = np.sqrt(-cross_val_score(model, X, y, cv=3,
                                     scoring='neg_mean_squared_error').mean())
-    print('MAE={:.4}  RMSE={:.4}'.format(mae, rmse))
+    print('MAE = {:.4}  RMSE = {:.4}'.format(mae, rmse))
