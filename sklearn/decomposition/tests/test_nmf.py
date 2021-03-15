@@ -280,10 +280,10 @@ def test_non_negative_factorization_consistency(Estimator, init, beta_loss,
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    W_nmf, H, _, _ = non_negative_factorization(
+    W_nmf, H, _ = non_negative_factorization(
         A, init=init, solver=solver, beta_loss=beta_loss, max_iter=max_iter,
         regularization=regularization, random_state=1, tol=1e-2)
-    W_nmf_2, _, _, _ = non_negative_factorization(
+    W_nmf_2, *_ = non_negative_factorization(
         A, H=H, update_H=False, init=init, solver=solver, beta_loss=beta_loss,
         max_iter=max_iter,
         regularization=regularization, random_state=1, tol=1e-2)
@@ -432,7 +432,7 @@ def test_nmf_multiplicative_update_sparse(batch_size):
     for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
         # Reference with dense array X
         W, H = W0.copy(), H0.copy()
-        W1, H1, _, _ = non_negative_factorization(
+        W1, H1, *_ = non_negative_factorization(
             X, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
             l1_ratio=l1_ratio, regularization='both', random_state=42,
@@ -440,7 +440,7 @@ def test_nmf_multiplicative_update_sparse(batch_size):
 
         # Compare with sparse X
         W, H = W0.copy(), H0.copy()
-        W2, H2, _, _ = non_negative_factorization(
+        W2, H2, *_ = non_negative_factorization(
             X_csr, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
             l1_ratio=l1_ratio, regularization='both', random_state=42,
@@ -453,7 +453,7 @@ def test_nmf_multiplicative_update_sparse(batch_size):
         # behavior, but the results should be continuous w.r.t beta_loss
         beta_loss -= 1.e-5
         W, H = W0.copy(), H0.copy()
-        W3, H3, _, _ = non_negative_factorization(
+        W3, H3, *_ = non_negative_factorization(
             X_csr, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
             l1_ratio=l1_ratio, regularization='both', random_state=42,
@@ -477,7 +477,7 @@ def test_nmf_negative_beta_loss(batch_size):
     X_csr = sp.csr_matrix(X)
 
     def _assert_nmf_no_nan(X, beta_loss):
-        W, H, _, _ = non_negative_factorization(
+        W, H, *_ = non_negative_factorization(
             X, init='random', n_components=n_components, solver='mu',
             beta_loss=beta_loss, random_state=0, max_iter=1000,
             batch_size=batch_size)
@@ -580,7 +580,7 @@ def test_nmf_decreasing(batch_size):
             previous_loss = None
             for _ in range(30):
                 # one more iteration starting from the previous results
-                W, H, _, _ = non_negative_factorization(
+                W, H, *_ = non_negative_factorization(
                     X, W, H, beta_loss=beta_loss, init='custom',
                     batch_size=batch_size,
                     n_components=n_components, max_iter=1, alpha=alpha,

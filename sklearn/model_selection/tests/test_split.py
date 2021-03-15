@@ -1,6 +1,7 @@
 """Test the split module"""
 import warnings
 import pytest
+import re
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
@@ -10,11 +11,8 @@ from itertools import combinations_with_replacement
 from itertools import permutations
 
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils._mocking import MockDataFrame
@@ -118,10 +116,10 @@ def test_cross_validator_with_default_params():
 
     # ValueError for get_n_splits methods
     msg = "The 'X' parameter should not be None."
-    assert_raise_message(ValueError, msg,
-                         loo.get_n_splits, None, y, groups)
-    assert_raise_message(ValueError, msg,
-                         lpo.get_n_splits, None, y, groups)
+    with pytest.raises(ValueError, match=msg):
+        loo.get_n_splits(None, y, groups)
+    with pytest.raises(ValueError, match=msg):
+        lpo.get_n_splits(None, y, groups)
 
 
 def test_2d_y():
@@ -206,26 +204,34 @@ def test_kfold_valueerrors():
     # classes are less than n_splits.
     y = np.array([3, 3, -1, -1, 2])
 
-    assert_raises(ValueError, next, skf_3.split(X2, y))
+    with pytest.raises(ValueError):
+        next(skf_3.split(X2, y))
 
     # Error when number of folds is <= 1
-    assert_raises(ValueError, KFold, 0)
-    assert_raises(ValueError, KFold, 1)
+    with pytest.raises(ValueError):
+        KFold(0)
+    with pytest.raises(ValueError):
+        KFold(1)
     error_string = ("k-fold cross-validation requires at least one"
                     " train/test split")
-    assert_raise_message(ValueError, error_string,
-                         StratifiedKFold, 0)
-    assert_raise_message(ValueError, error_string,
-                         StratifiedKFold, 1)
+    with pytest.raises(ValueError, match=error_string):
+        StratifiedKFold(0)
+    with pytest.raises(ValueError, match=error_string):
+        StratifiedKFold(1)
 
     # When n_splits is not integer:
-    assert_raises(ValueError, KFold, 1.5)
-    assert_raises(ValueError, KFold, 2.0)
-    assert_raises(ValueError, StratifiedKFold, 1.5)
-    assert_raises(ValueError, StratifiedKFold, 2.0)
+    with pytest.raises(ValueError):
+        KFold(1.5)
+    with pytest.raises(ValueError):
+        KFold(2.0)
+    with pytest.raises(ValueError):
+        StratifiedKFold(1.5)
+    with pytest.raises(ValueError):
+        StratifiedKFold(2.0)
 
     # When shuffle is not  a bool:
-    assert_raises(TypeError, KFold, n_splits=4, shuffle=None)
+    with pytest.raises(TypeError):
+        KFold(n_splits=4, shuffle=None)
 
 
 def test_kfold_indices():
@@ -565,24 +571,25 @@ def test_stratified_shuffle_split_init():
     X = np.arange(7)
     y = np.asarray([0, 1, 1, 1, 2, 2, 2])
     # Check that error is raised if there is a class with only one sample
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(3, 0.2).split(X, y))
+    with pytest.raises(ValueError):
+        next(StratifiedShuffleSplit(3, 0.2).split(X, y))
 
     # Check that error is raised if the test set size is smaller than n_classes
-    assert_raises(ValueError, next, StratifiedShuffleSplit(3, 2).split(X, y))
+    with pytest.raises(ValueError):
+        next(StratifiedShuffleSplit(3, 2).split(X, y))
     # Check that error is raised if the train set size is smaller than
     # n_classes
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(3, 3, 2).split(X, y))
+    with pytest.raises(ValueError):
+        next(StratifiedShuffleSplit(3, 3, 2).split(X, y))
 
     X = np.arange(9)
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
 
     # Train size or test size too small
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(train_size=2).split(X, y))
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(test_size=2).split(X, y))
+    with pytest.raises(ValueError):
+        next(StratifiedShuffleSplit(train_size=2).split(X, y))
+    with pytest.raises(ValueError):
+        next(StratifiedShuffleSplit(test_size=2).split(X, y))
 
 
 def test_stratified_shuffle_split_respects_test_size():
@@ -845,16 +852,16 @@ def test_leave_one_p_group_out():
     assert lpgo_1.get_n_splits(groups=np.arange(4)) == 4
 
     # raise ValueError if a `groups` parameter is illegal
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         logo.get_n_splits(None, None, [0.0, np.nan, 0.0])
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         lpgo_2.get_n_splits(None, None, [0.0, np.inf, 0.0])
 
     msg = "The 'groups' parameter should not be None."
-    assert_raise_message(ValueError, msg,
-                         logo.get_n_splits, None, None, None)
-    assert_raise_message(ValueError, msg,
-                         lpgo_1.get_n_splits, None, None, None)
+    with pytest.raises(ValueError, match=msg):
+        logo.get_n_splits(None, None, None)
+    with pytest.raises(ValueError, match=msg):
+        lpgo_1.get_n_splits(None, None, None)
 
 
 def test_leave_group_out_changing_groups():
@@ -884,35 +891,47 @@ def test_leave_group_out_changing_groups():
 
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     X = y = groups = np.ones(0)
-    assert_raise_message(ValueError, "Found array with 0 sample(s)", next,
-                         LeaveOneGroupOut().split(X, y, groups))
+    msg = re.escape("Found array with 0 sample(s)")
+    with pytest.raises(ValueError, match=msg):
+        next(LeaveOneGroupOut().split(X, y, groups))
+
     X = y = groups = np.ones(1)
-    msg = ("The groups parameter contains fewer than 2 unique groups ({}). "
-           "LeaveOneGroupOut expects at least 2.").format(groups)
-    assert_raise_message(ValueError, msg, next,
-                         LeaveOneGroupOut().split(X, y, groups))
+    msg = re.escape(
+        f"The groups parameter contains fewer than 2 unique groups ({groups})."
+        f" LeaveOneGroupOut expects at least 2."
+    )
+    with pytest.raises(ValueError, match=msg):
+        next(LeaveOneGroupOut().split(X, y, groups))
+
     X = y = groups = np.ones(1)
-    msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups "
-           "be present").format(groups)
-    assert_raise_message(ValueError, msg, next,
-                         LeavePGroupsOut(n_groups=3).split(X, y, groups))
+    msg = re.escape(
+        f"The groups parameter contains fewer than (or equal to) n_groups "
+        f"(3) numbers of unique groups ({groups}). LeavePGroupsOut expects "
+        f"that at least n_groups + 1 (4) unique groups "
+        f"be present"
+    )
+    with pytest.raises(ValueError, match=msg):
+        next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
+
     X = y = groups = np.arange(3)
-    msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups "
-           "be present").format(groups)
-    assert_raise_message(ValueError, msg, next,
-                         LeavePGroupsOut(n_groups=3).split(X, y, groups))
+    msg = re.escape(
+        f"The groups parameter contains fewer than (or equal to) n_groups "
+        f"(3) numbers of unique groups ({groups}). LeavePGroupsOut expects "
+        f"that at least n_groups + 1 (4) unique groups "
+        f"be present"
+    )
+    with pytest.raises(ValueError, match=msg):
+        next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
 
 @ignore_warnings
 def test_repeated_cv_value_errors():
     # n_repeats is not integer or <= 0
     for cv in (RepeatedKFold, RepeatedStratifiedKFold):
-        assert_raises(ValueError, cv, n_repeats=0)
-        assert_raises(ValueError, cv, n_repeats=1.5)
+        with pytest.raises(ValueError):
+            cv(n_repeats=0)
+        with pytest.raises(ValueError):
+            cv(n_repeats=1.5)
 
 
 @pytest.mark.parametrize(
@@ -954,7 +973,8 @@ def test_repeated_kfold_determinstic_split():
         assert_array_equal(train, [2, 3, 4])
         assert_array_equal(test, [0, 1])
 
-        assert_raises(StopIteration, next, splits)
+        with pytest.raises(StopIteration):
+            next(splits)
 
 
 def test_get_n_splits_for_repeated_kfold():
@@ -1002,7 +1022,8 @@ def test_repeated_stratified_kfold_determinstic_split():
         assert_array_equal(train, [0, 1, 4])
         assert_array_equal(test, [2, 3])
 
-        assert_raises(StopIteration, next, splits)
+        with pytest.raises(StopIteration):
+            next(splits)
 
 
 def test_train_test_split_errors():
@@ -1258,7 +1279,8 @@ def test_check_cv():
     cv = check_cv(3, y_multioutput, classifier=True)
     np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
 
-    assert_raises(ValueError, check_cv, cv="lolo")
+    with pytest.raises(ValueError):
+        check_cv(cv="lolo")
 
 
 def test_cv_iterable_wrapper():
@@ -1375,17 +1397,22 @@ def test_group_kfold():
     # Should fail if there are more folds than groups
     groups = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(groups))
-    assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
-                         next, GroupKFold(n_splits=3).split(X, y, groups))
+    with pytest.raises(
+        ValueError,
+        match="Cannot have number of splits.*greater"
+    ):
+        next(GroupKFold(n_splits=3).split(X, y, groups))
 
 
 def test_time_series_cv():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
 
     # Should fail if there are more folds than samples
-    assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
-                         next,
-                         TimeSeriesSplit(n_splits=7).split(X))
+    with pytest.raises(
+        ValueError,
+        match="Cannot have number of folds.*greater"
+    ):
+        next(TimeSeriesSplit(n_splits=7).split(X))
 
     tscv = TimeSeriesSplit(2)
 

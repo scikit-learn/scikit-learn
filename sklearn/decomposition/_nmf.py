@@ -791,7 +791,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
     return H, A, B
 
 
-def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
+def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=None, iter_offset=0,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
@@ -813,6 +813,12 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     H : array-like of shape (n_components, n_features)
         Initial guess for the solution.
 
+    A : array-like of shape (n_components, n_features)
+        Initial guess for the numerator auxiliary function
+
+    B : array-like of shape (n_components, n_features)
+        Initial guess for the denominator auxiliary function
+
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
@@ -828,7 +834,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         Used in the batch case only.
 
     iter_offset : int, default=0
-        Number of previous iterations completed used for initialization.
+        Number of previous iterations completed used for
+        initialization, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
 
     max_iter : int, default=200
         Number of iterations.
@@ -873,7 +881,16 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     iter_offset : int
         The number of iteration on data batches that has been
-        performed.
+        performed, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
+
+    A : array-like of shape (n_components, n_features)
+        Numerator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
+
+    B : array-like of shape (n_components, n_features)
+        Denominator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
 
     References
     ----------
@@ -885,19 +902,6 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     start_time = time.time()
 
     n_samples = X.shape[0]
-
-    if batch_size is None:  # NMF
-        batch_size = n_samples
-        A = None
-        B = None
-
-    else:  # MiniBatchNMF
-        if batch_size > n_samples:
-            batch_size = n_samples
-
-        # Initialize auxiliary matrices
-        A = H.copy()
-        B = np.ones(H.shape)
 
     rho = 0.
     if forget_factor is not None:
@@ -919,6 +923,10 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     H_sum, HHt, XHt = None, None, None
 
+
+    if batch_size is None:
+        batch_size = n_samples
+        
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
     n_steps = (max_iter * n_samples) // batch_size
@@ -967,10 +975,13 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         print("Epoch %02d reached after %.3f seconds." %
               (n_i, end_time - start_time))
 
-    n_iter = (n_i // batch_size) + 1
-    iter_offset = n_iter - n_i
-
-    return W, H, n_iter, iter_offset
+    if batch_size is None:
+        n_iter = n_i + 1
+        return W, H, n_iter
+    else:
+        n_iter = (n_i // batch_size) + 1
+        iter_offset = n_iter - n_i
+        return W, H, n_iter, iter_offset, A, B
 
 
 @_deprecate_positional_args
@@ -1168,91 +1179,32 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     """
     X = check_array(X, accept_sparse=('csr', 'csc'),
                     dtype=[np.float64, np.float32])
-    check_non_negative(X, "NMF (input X)")
-    beta_loss = _check_string_param(solver, regularization, beta_loss,
-                                    init, batch_size)
 
-    if X.min() == 0 and beta_loss <= 0:
-        raise ValueError("When beta_loss <= 0 and X contains zeros, "
-                         "the solver may diverge. Please add small values to "
-                         "X, or use a positive beta_loss.")
+    if batch_size is None:
+        est = NMF(n_components=n_components, init=init, solver=solver,
+                  beta_loss=beta_loss, tol=tol, max_iter=max_iter,
+                  random_state=random_state, alpha=alpha, l1_ratio=l1_ratio,
+                  verbose=verbose, shuffle=shuffle,
+                  regularization=regularization)
 
-    iter_offset = 0
-    n_samples, n_features = X.shape
-    if n_components is None:
-        n_components = n_features
+        with config_context(assume_finite=True):
+            W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
 
-    if not isinstance(n_components, numbers.Integral) or n_components <= 0:
-        raise ValueError("Number of components must be a positive integer;"
-                         " got (n_components=%r)" % n_components)
-    if not isinstance(max_iter, numbers.Integral) or max_iter < 0:
-        raise ValueError("Maximum number of iterations must be a positive "
-                         "integer; got (max_iter=%r)" % max_iter)
-    if not isinstance(tol, numbers.Number) or tol < 0:
-        raise ValueError("Tolerance for stopping criteria must be "
-                         "positive; got (tol=%r)" % tol)
-
-    # check W and H, or initialize them
-    if init == 'custom' and update_H:
-        _check_init(H, (n_components, n_features), "NMF (input H)")
-        _check_init(W, (n_samples, n_components), "NMF (input W)")
-
-        if H.dtype != X.dtype or W.dtype != X.dtype:
-            raise TypeError("H and W should have the same dtype as X. Got "
-                            "H.dtype = {} and W.dtype = {}."
-                            .format(H.dtype, W.dtype))
-    elif not update_H:
-        _check_init(H, (n_components, n_features), "NMF (input H)")
-        if H.dtype != X.dtype:
-            raise TypeError("H should have the same dtype as X. Got H.dtype = "
-                            "{}.".format(H.dtype))
-
-        if init != 'custom':
-            W, _ = _initialize_nmf(X, n_components, init=init,
-                                   random_state=random_state)
-        else:
-            # 'mu' solver should not be initialized by zeros
-            if solver == 'mu':
-                avg = np.sqrt(X.mean() / n_components)
-                W = np.full((n_samples, n_components), avg, dtype=X.dtype)
-            else:
-                W = np.zeros((n_samples, n_components), dtype=X.dtype)
+        return W, H, n_iter
     else:
-        W, H = _initialize_nmf(X, n_components, init=init,
-                               random_state=random_state)
+        est = MiniBatchNMF(n_components=n_components, init=init,
+                           batch_size=batch_size, solver=solver,
+                           beta_loss=beta_loss, tol=tol, max_iter=max_iter,
+                           random_state=random_state, alpha=alpha,
+                           l1_ratio=l1_ratio, forget_factor=forget_factor,
+                           verbose=verbose, regularization=regularization)
 
-    if batch_size is not None:
-        if not isinstance(batch_size, numbers.Integral) or batch_size < 0:
-            raise ValueError("Number of samples per batch must be a positive "
-                             "integer; got (batch_size=%r)" % batch_size)
+        with config_context(assume_finite=True):
+            W, H, n_iter, iter_offset, A, B = est._fit_transform(
+                X, W=W, H=H, update_H=update_H
+            )
 
-    l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-        alpha, l1_ratio, regularization)
-
-    if solver == 'cd':
-        W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
-                                               l1_reg_W, l1_reg_H,
-                                               l2_reg_W, l2_reg_H,
-                                               update_H=update_H,
-                                               verbose=verbose,
-                                               shuffle=shuffle,
-                                               random_state=random_state)
-    elif solver == 'mu':
-        W, H, n_iter, iter_offset = _fit_multiplicative_update(
-            X, W, H, beta_loss, batch_size, iter_offset, max_iter,
-            tol, l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H, update_H,
-            verbose, forget_factor
-        )
-
-    else:
-        raise ValueError("Invalid solver parameter '%s'." % solver)
-
-    if n_iter == max_iter and tol > 0:
-        warnings.warn("Maximum number of iterations %d reached. Increase it to"
-                      " improve convergence." % max_iter, ConvergenceWarning)
-
-    return W, H, n_iter, iter_offset
-
+        return W, H, n_iter, iter_offset, A, B
 
 class NMF(TransformerMixin, BaseEstimator):
     """Non-Negative Matrix Factorization (NMF).
@@ -1443,6 +1395,52 @@ class NMF(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'requires_positive_X': True}
 
+    def _check_params(self, X):
+        self._n_components = self.n_components
+        if self._n_components is None:
+            self._n_components = X.shape[1]
+        if not isinstance(
+            self._n_components, numbers.Integral
+        ) or self._n_components <= 0:
+            raise ValueError("Number of components must be a positive integer;"
+                             " got (n_components=%r)" % self._n_components)
+        if not isinstance(
+            self.max_iter, numbers.Integral
+        ) or self.max_iter < 0:
+            raise ValueError("Maximum number of iterations must be a positive "
+                             "integer; got (max_iter=%r)" % self.max_iter)
+        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
+            raise ValueError("Tolerance for stopping criteria must be "
+                             "positive; got (tol=%r)" % self.tol)
+        return self
+
+    def _check_w_h(self, X, W, H, update_H):
+        # check W and H, or initialize them
+        n_samples, n_features = X.shape
+        if self.init == 'custom' and update_H:
+            _check_init(H, (self._n_components, n_features), "NMF (input H)")
+            _check_init(W, (n_samples, self._n_components), "NMF (input W)")
+            if H.dtype != X.dtype or W.dtype != X.dtype:
+                raise TypeError("H and W should have the same dtype as X. Got "
+                                "H.dtype = {} and W.dtype = {}."
+                                .format(H.dtype, W.dtype))
+        elif not update_H:
+            _check_init(H, (self._n_components, n_features), "NMF (input H)")
+            if H.dtype != X.dtype:
+                raise TypeError("H should have the same dtype as X. Got "
+                                "H.dtype = {}.".format(H.dtype))
+            # 'mu' solver should not be initialized by zeros
+            if self.solver == 'mu':
+                avg = np.sqrt(X.mean() / self._n_components)
+                W = np.full((n_samples, self._n_components),
+                            avg, dtype=X.dtype)
+            else:
+                W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
+        else:
+            W, H = _initialize_nmf(X, self._n_components, init=self.init,
+                                   random_state=self.random_state)
+        return W, H
+
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -1470,22 +1468,91 @@ class NMF(TransformerMixin, BaseEstimator):
                                 dtype=[np.float64, np.float32])
 
         with config_context(assume_finite=True):
-            W, H, n_iter_, _ = non_negative_factorization(
-                X=X, W=W, H=H, n_components=self.n_components, init=self.init,
-                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-                tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-                l1_ratio=self.l1_ratio, regularization=self.regularization,
-                random_state=self.random_state, verbose=self.verbose,
-                shuffle=self.shuffle)
+            W, H, n_iter = self._fit_transform(X, W=W, H=H)
 
-        self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
+        self.reconstruction_err_ = _beta_divergence(X, W, H, self._beta_loss,
                                                     square_root=True)
 
         self.n_components_ = H.shape[0]
         self.components_ = H
-        self.n_iter_ = n_iter_
+        self.n_iter_ = n_iter
 
         return W
+
+    def _fit_transform(self, X, y=None, W=None, H=None, update_H=True):
+        """Learn a NMF model for the data X and returns the transformed data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Data matrix to be decomposed
+
+        y : Ignored
+
+        W : array-like of shape (n_samples, n_components)
+            If init='custom', it is used as initial guess for the solution.
+
+        H : array-like of shape (n_components, n_features)
+            If init='custom', it is used as initial guess for the solution.
+            If update_H=False, it is used as a constant, to solve for W only.
+
+        update_H : bool, default=True
+            If True, both W and H will be estimated from initial guesses,
+            this corresponds to a call to the 'fit_transform' method.
+            If False, only W will be estimated, this corresponds to a call
+            to the 'transform' method.
+
+        Returns
+        -------
+        W : ndarray of shape (n_samples, n_components)
+            Transformed data.
+
+        H : ndarray of shape (n_components, n_features)
+            Factorization matrix, sometimes called 'dictionary'.
+
+        n_iter_ : int
+            Actual number of iterations.
+        """
+        check_non_negative(X, "NMF (input X)")
+        self._beta_loss = _check_string_param(self.solver, self.regularization,
+                                              self.beta_loss, self.init, None)
+
+        if X.min() == 0 and self._beta_loss <= 0:
+            raise ValueError("When beta_loss <= 0 and X contains zeros, "
+                             "the solver may diverge. Please add small values "
+                             "to X, or use a positive beta_loss.")
+
+        n_samples, n_features = X.shape
+
+        # check parameters
+        self._check_params(X)
+
+        # initialize or check W and H
+        W, H = self._check_w_h(X, W, H, update_H)
+
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
+            self.alpha, self.l1_ratio, self.regularization)
+
+        if self.solver == 'cd':
+            W, H, n_iter = _fit_coordinate_descent(
+                X, W, H, self.tol, self.max_iter, l1_reg_W, l1_reg_H,
+                l2_reg_W, l2_reg_H, update_H=update_H,
+                verbose=self.verbose, shuffle=self.shuffle,
+                random_state=self.random_state)
+        elif self.solver == 'mu':
+            W, H, n_iter, *_ = _fit_multiplicative_update(
+                X, W, H, None, None, self._beta_loss, None, 0, self.max_iter,
+                self.tol, l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
+                update_H, self.verbose, None)
+        else:
+            raise ValueError("Invalid solver parameter '%s'." % self.solver)
+
+        if n_iter == self.max_iter and self.tol > 0:
+            warnings.warn("Maximum number of iterations %d reached. Increase "
+                          "it to improve convergence." % self.max_iter,
+                          ConvergenceWarning)
+
+        return W, H, n_iter
 
     def fit(self, X, y=None, **params):
         """Learn a NMF model for the data X.
@@ -1523,15 +1590,7 @@ class NMF(TransformerMixin, BaseEstimator):
                                 reset=False)
 
         with config_context(assume_finite=True):
-            W, _, n_iter_, _ = non_negative_factorization(
-                X=X, W=None, H=self.components_,
-                n_components=self.n_components_,
-                init=self.init, update_H=False, solver=self.solver,
-                beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-                alpha=self.alpha, l1_ratio=self.l1_ratio,
-                regularization=self.regularization,
-                random_state=self.random_state,
-                verbose=self.verbose, shuffle=self.shuffle)
+            W, *_ = self._fit_transform(X, H=self.components_, update_H=False)
 
         return W
 
@@ -1714,7 +1773,6 @@ class MiniBatchNMF(NMF):
     WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
     https://hal.archives-ouvertes.fr/hal-00602050)
     """
-
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, init=None, solver='mu',
                  batch_size=1024,
@@ -1730,6 +1788,18 @@ class MiniBatchNMF(NMF):
 
         self.batch_size = batch_size
         self.forget_factor = forget_factor
+
+    def _check_params(self, X):
+        super()._check_params(X)
+        self._batch_size = self.batch_size
+        if not isinstance(
+            self._batch_size, numbers.Integral
+        ) or self._batch_size <= 0:
+            raise ValueError("Number of samples per batch must be a positive "
+                             "integer; got (batch_size=%r)" % self._batch_size)
+        if self._batch_size > X.shape[0]:
+            self._batch_size = X.shape[0]
+        return self
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -1758,56 +1828,95 @@ class MiniBatchNMF(NMF):
                                 dtype=[np.float64, np.float32])
 
         with config_context(assume_finite=True):
-            W, H, n_iter_, iter_offset_ = non_negative_factorization(
-                X=X, W=W, H=H, n_components=self.n_components,
-                batch_size=self.batch_size, init=self.init,
-                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-                tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-                l1_ratio=self.l1_ratio, regularization=self.regularization,
-                random_state=self.random_state, verbose=self.verbose,
-                forget_factor=self.forget_factor)
-        # TODO internal iters for W
-        self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
+            W, H, n_iter_, iter_offset_, A, B = self._fit_transform(X, W=W,
+                                                                    H=H)
+
+        self.reconstruction_err_ = _beta_divergence(X, W, H, self._beta_loss,
                                                     square_root=True)
 
         self.n_components_ = H.shape[0]
         self.components_ = H
         self.n_iter_ = n_iter_
         self.iter_offset_ = iter_offset_
+        self._components_numerator = A
+        self._components_denominator = B
 
         return W
 
-    def transform(self, X):
-        """Transform the data X according to the fitted NMF model.
+    def _fit_transform(self, X, y=None, W=None, H=None, update_H=True):
+        """Learn a NMF model for the data X and returns the transformed data.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be transformed by the model.
+            Data matrix to be decomposed
+
+        y : Ignored
+
+        W : array-like of shape (n_samples, n_components)
+            If init='custom', it is used as initial guess for the solution.
+
+        H : array-like of shape (n_components, n_features)
+            If init='custom', it is used as initial guess for the solution.
+            If update_H=False, it is used as a constant, to solve for W only.
+
+        update_H : bool, default=True
+            If True, both W and H will be estimated from initial guesses,
+            this corresponds to a call to the 'fit_transform' method.
+            If False, only W will be estimated, this corresponds to a call
+            to the 'transform' method.
 
         Returns
         -------
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
+
+        H : ndarray of shape (n_components, n_features)
+            Factorization matrix, sometimes called 'dictionary'.
+
+        n_iter_ : int
+            Actual number of iterations.
         """
-        check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
-                                dtype=[np.float64, np.float32],
-                                reset=False)
+        check_non_negative(X, "NMF (input X)")
+        self._beta_loss = _check_string_param(self.solver, self.regularization,
+                                              self.beta_loss, self.init,
+                                              self.batch_size)
 
-        with config_context(assume_finite=True):
-            W, _, _, iter_offset = non_negative_factorization(
-                X=X, W=None, H=self.components_,
-                n_components=self.n_components_,
-                init=self.init, update_H=False, solver=self.solver,
-                batch_size=self.batch_size, beta_loss=self.beta_loss,
-                tol=self.tol, max_iter=self.max_iter,
-                alpha=self.alpha, l1_ratio=self.l1_ratio,
-                regularization=self.regularization,
-                random_state=self.random_state,
-                verbose=self.verbose)
+        if X.min() == 0 and self._beta_loss <= 0:
+            raise ValueError("When beta_loss <= 0 and X contains zeros, "
+                             "the solver may diverge. Please add small values "
+                             "to X, or use a positive beta_loss.")
 
-        return W
+        n_samples, n_features = X.shape
+
+        # check parameters
+        self._check_params(X)
+
+        # initialize or check W and H
+        W, H = self._check_w_h(X, W, H, update_H)
+
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
+            self.alpha, self.l1_ratio, self.regularization)
+
+        # Initialize auxiliary matrices
+        A = H.copy()
+        B = np.ones(H.shape)
+
+        if self.solver == 'mu':
+            W, H, n_iter, iter_offset, A, B = _fit_multiplicative_update(
+                X, W, H, A, B, self._beta_loss, self._batch_size, 0,
+                self.max_iter, self.tol,
+                l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
+                update_H, self.verbose, self.forget_factor)
+        else:
+            raise ValueError("Invalid solver parameter '%s'." % self.solver)
+
+        if n_iter == self.max_iter and self.tol > 0:
+            warnings.warn("Maximum number of iterations %d reached. Increase "
+                          "it to improve convergence." % self.max_iter,
+                          ConvergenceWarning)
+
+        return W, H, n_iter, iter_offset, A, B
 
     def partial_fit(self, X, y=None, **params):
         is_first_call_to_partial_fit = not hasattr(self, 'components_')
@@ -1819,21 +1928,20 @@ class MiniBatchNMF(NMF):
                 W = self.transform(X)
 
                 # Add 1 iteration to the current estimation
-                W, H, n_iter, iter_offset = non_negative_factorization(
-                    X=X, W=W, H=self.components_,
-                    n_components=self.n_components,
-                    batch_size=self.batch_size, init='custom',
-                    update_H=True, solver=self.solver,
-                    beta_loss=self.beta_loss,
-                    tol=0, max_iter=1, alpha=self.alpha,
-                    l1_ratio=self.l1_ratio, regularization=self.regularization,
-                    random_state=self.random_state, verbose=self.verbose,
-                    forget_factor=self.forget_factor)
+                W, H, n_iter, iter_offset, A, B = _fit_multiplicative_update(
+                    X, W, self.components_, self._components_numerator,
+                    self._components_denominator, self._beta_loss,
+                    self._batch_size, 0, 1, self.tol,
+                    l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
+                    update_H, self.verbose, self.forget_factor
+                )
 
             self.n_components_ = H.shape[0]
             self.components_ = H
             self.n_iter_ += n_iter
             self.iter_offset_ += iter_offset
+            self._components_numerator = A
+            self._components_denominator = B
 
         else:
             self.fit_transform(X, **params)

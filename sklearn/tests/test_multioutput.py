@@ -5,9 +5,6 @@ import scipy.sparse as sp
 from joblib import cpu_count
 
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn import datasets
@@ -80,7 +77,9 @@ def test_multi_target_regression_one_target():
     # Test multi target regression raises
     X, y = datasets.make_regression(n_targets=1)
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
-    assert_raises(ValueError, rgr.fit, X, y)
+    msg = 'at least two dimensions'
+    with pytest.raises(ValueError, match=msg):
+        rgr.fit(X, y)
 
 
 def test_multi_target_sparse_regression():
@@ -106,8 +105,9 @@ def test_multi_target_sample_weights_api():
     w = [0.8, 0.6]
 
     rgr = MultiOutputRegressor(OrthogonalMatchingPursuit())
-    assert_raises_regex(ValueError, "does not support sample weights",
-                        rgr.fit, X, y, w)
+    msg = "does not support sample weights"
+    with pytest.raises(ValueError, match=msg):
+        rgr.fit(X, y, w)
 
     # no exception should be raised if the base estimator supports weights
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
@@ -252,9 +252,9 @@ def test_multi_output_classification_partial_fit():
 def test_multi_output_classification_partial_fit_no_first_classes_exception():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
-    assert_raises_regex(ValueError, "classes must be passed on the first call "
-                                    "to partial_fit.",
-                        multi_target_linear.partial_fit, X, y)
+    msg = "classes must be passed on the first call to partial_fit."
+    with pytest.raises(ValueError, match=msg):
+        multi_target_linear.partial_fit(X, y)
 
 
 def test_multi_output_classification():
@@ -386,17 +386,27 @@ def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
     moc = MultiOutputClassifier(LinearSVC(random_state=0))
-    assert_raises(NotFittedError, moc.predict, y)
+
+    with pytest.raises(NotFittedError):
+        moc.predict(y)
+
     with pytest.raises(NotFittedError):
         moc.predict_proba
-    assert_raises(NotFittedError, moc.score, X, y)
+
+    with pytest.raises(NotFittedError):
+        moc.score(X, y)
+
     # ValueError when number of outputs is different
     # for fit and score
     y_new = np.column_stack((y1, y2))
     moc.fit(X, y)
-    assert_raises(ValueError, moc.score, X, y_new)
+    with pytest.raises(ValueError):
+        moc.score(X, y_new)
+
     # ValueError when y is continuous
-    assert_raise_message(ValueError, "Unknown label type", moc.fit, X, X[:, 1])
+    msg = "Unknown label type"
+    with pytest.raises(ValueError, match=msg):
+        moc.fit(X, X[:, 1])
 
 
 def generate_multilabel_dataset_with_correlations():
