@@ -2,41 +2,41 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
+import scipy.stats
 
+from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, assert_raises
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 
 
-def test_quantile_toy_example():
+@pytest.mark.parametrize(
+    'quantile, alpha, intercept, coef',
+    [
+        # for 50% quantile w/o regularization, any slope in [1, 10] is okay
+        [0.5, 0, 1, None],
+        # if positive error costs more, the slope is maximal
+        [0.51, 0, 1, 10],
+        # if negative error costs more, the slope is minimal
+        [0.49, 0, 1, 1],
+        # for a small lasso penalty, the slope is also minimal
+        [0.5, 0.01, 1, 1],
+        # for a large lasso penalty, the model predicts the constant median
+        [0.5, 100, 2, 0],
+    ]
+)
+def test_quantile_toy_example(quantile, alpha, intercept, coef):
     # test how different parameters affect a small intuitive example
     X = [[0], [1], [1]]
     y = [1, 2, 11]
-    # for 50% quantile w/o regularization, any slope in [1, 10] is okay
-    model = QuantileRegressor(quantile=0.5, alpha=0).fit(X, y)
-    assert_allclose(model.intercept_, 1, atol=1e-2)
-    assert model.coef_[0] >= 1
+    model = QuantileRegressor(quantile=quantile, alpha=alpha).fit(X, y)
+    assert_allclose(model.intercept_, intercept, atol=1e-2)
+    if coef is not None:
+        assert_allclose(model.coef_[0], coef, atol=1e-2)
+    if alpha < 100:
+        assert model.coef_[0] >= 1
     assert model.coef_[0] <= 10
-
-    # if positive error costs more, the slope is maximal
-    model = QuantileRegressor(quantile=0.51, alpha=0).fit(X, y)
-    assert_allclose(model.intercept_, 1, atol=1e-2)
-    assert_allclose(model.coef_[0], 10, atol=1e-2)
-
-    # if negative error costs more, the slope is minimal
-    model = QuantileRegressor(quantile=0.49, alpha=0).fit(X, y)
-    assert_allclose(model.intercept_, 1, atol=1e-2)
-    assert_allclose(model.coef_[0], 1, atol=1e-2)
-
-    # for a small lasso penalty, the slope is also minimal
-    model = QuantileRegressor(quantile=0.5, alpha=0.01).fit(X, y)
-    assert_allclose(model.intercept_, 1, atol=1e-2)
-    assert_allclose(model.coef_[0], 1, atol=1e-2)
-
-    # for a large lasso penalty, the model predicts constant median
-    model = QuantileRegressor(quantile=0.5, alpha=100).fit(X, y)
-    assert_allclose(model.intercept_, 2, atol=1e-2)
-    assert_allclose(model.coef_[0], 0, atol=1e-2)
 
 
 def test_quantile_equals_huber_for_low_epsilon():
@@ -90,11 +90,27 @@ def test_quantile_sample_weight():
     assert_allclose(weighted_fraction_below, 0.5, atol=1e-2)
 
 
-def test_quantile_incorrect_quantile():
+@pytest.mark.parametrize('quantile', [2.0, 1.0, 0.0, -1])
+def test_quantile_incorrect_quantile(quantile):
     X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
     with assert_raises(ValueError):
-        QuantileRegressor(quantile=2.0).fit(X, y)
-    with assert_raises(ValueError):
-        QuantileRegressor(quantile=1.0).fit(X, y)
-    with assert_raises(ValueError):
-        QuantileRegressor(quantile=0.0).fit(X, y)
+        QuantileRegressor(quantile=quantile).fit(X, y)
+
+
+@pytest.mark.parametrize('quantile', [0.1, 0.5, 0.9])
+def test_asymmetric_error(quantile):
+    n_samples = 1000
+    n_features = 3
+    bias = 12.3
+    param = 1.0
+    generator = check_random_state(42)
+    X = generator.randn(n_samples, n_features)
+    ground_truth = generator.rand(n_features)
+    dist = scipy.stats.expon(param)
+    noise = dist.rvs(size=n_samples, random_state=42)
+    y = np.dot(X, ground_truth) + bias + noise
+    model = QuantileRegressor(quantile=quantile).fit(X, y)
+
+    assert_allclose(model.intercept_, bias + dist.ppf(quantile), atol=0.1)
+    assert_allclose(model.coef_, ground_truth, atol=0.3)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=0.003)
