@@ -346,7 +346,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Check parameters
         self._validate_estimator()
         # TODO: Remove in v1.2
-        if self.criterion == "mse":
+        if (
+            isinstance(self, (RandomForestRegressor, ExtraTreesRegressor))
+            and self.criterion == "mse"
+        ):
             warn(
                 "Criterion 'mse' was deprecated in v1.0 and will be "
                 "removed in version 1.2. Use `criterion='squared_error'` "
