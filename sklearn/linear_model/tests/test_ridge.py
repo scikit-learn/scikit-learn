@@ -10,7 +10,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -162,10 +161,14 @@ def test_ridge_regression_convergence_fail():
     rng = np.random.RandomState(0)
     y = rng.randn(5)
     X = rng.randn(5, 10)
-
-    assert_warns(ConvergenceWarning, ridge_regression,
-                 X, y, alpha=1.0, solver="sparse_cg",
-                 tol=0., max_iter=None, verbose=1)
+    warning_message = (
+        r"sparse_cg did not converge after"
+        r" [0-9]+ iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        ridge_regression(X, y,
+                         alpha=1.0, solver="sparse_cg",
+                         tol=0., max_iter=None, verbose=1)
 
 
 def test_ridge_sample_weights():
