@@ -1434,11 +1434,11 @@ conditional on :math:`X`, while OLS estimates conditional mean.
 The :class:`QuantileRegressor` applies linear loss to all samples.
 Somewhat related, the :class:`HuberRegressor` applies
 linear penalty to a small fraction of outliers and quadratic loss to the rest
-of observations. :class:`QuantileRegressor` also supports L1 and L2
-regularization, like :class:`ElasticNet`. It solves
+of observations. :class:`QuantileRegressor` also supports L1
+regularization, like :class:`Lasso`. It solves
 
 .. math::
-    \underset{w}{min\,} { \frac{1}{n_{samples}} L_q (y - X w) + \alpha \rho ||w||_1 + \alpha(1-\rho) ||w||_2 ^ 2}
+    \underset{w}{min\,} { \frac{1}{n_{samples}} L_q (y - X w) + \alpha ||w||_1}
 
 where
 
@@ -1455,8 +1455,8 @@ and :math:`q \in (0, 1)` is the quantile to be estimated.
 Quantile regression may be useful if one is interested in predicting an interval
 instead of point prediction. Sometimes prediction interval is calculated based
 on the assumption that prediction error is distributed normally with zero mean
-and constant variance. Quantile regression provides sensible prediction i
-ntervals even for errors with non-constant (but predictable) variance or
+and constant variance. Quantile regression provides sensible prediction
+intervals even for errors with non-constant (but predictable) variance or
 non-normal distribution.
 
 .. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_001.png
@@ -1465,23 +1465,17 @@ non-normal distribution.
    :scale: 50%
 
 Another advantage of quantile regression over OLS is its robustness
-to outliers, because it is only sign of an error that influences estimated
+to outliers, because it is only the sign of an error that influences estimated
 coefficients, not its absolute value.
 
 Quantile loss function can be used with models other than linear. For example,
-:class:`GradientBoostingRegressor` can predict conditional quantiles,
+:class:`GradientBoostingRegressor` can predict conditional quantiles
 if its parameter ``loss`` is set to ``"quantile"`` and parameter ``alpha`` is
 set to the quantile that should be predicted. See the example in
 :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
 
 Most implementations of quantile regression are based on linear programming
-problem. Use of L2 regularization makes the problem nonlinear, but use of
-non-differentiable absolute values makes it difficult for gradient descent
-optimization. Instead, the current implementation solves
-a sequence of smooth approximate problems similar to Huber regression,
-proposed by Chen and Wei. Every next step uses a finer approximation.
-Optimization stops when solutions of two consecutive steps are almost identical
-or when maximal number of iterations is exceeded.
+problem. The current implementation is based on :mod:`scipy.optimize.linprog`.
 
 .. topic:: Examples:
 
