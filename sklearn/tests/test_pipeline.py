@@ -178,8 +178,8 @@ def test_pipeline_init():
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
     assert (pipe.get_params(deep=True) ==
-                 dict(svc__a=None, svc__b=None, svc=clf,
-                      **pipe.get_params(deep=False)))
+            dict(svc__a=None, svc__b=None, svc=clf,
+                 **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -637,7 +637,7 @@ def test_set_pipeline_steps():
         )
     with pytest.raises(TypeError, match=msg):
         pipeline.fit([[1]], [1])
-        
+
     with pytest.raises(TypeError, match=msg):
         pipeline.fit_transform([[1]], [1])
 
@@ -704,15 +704,15 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
     assert (pipeline.get_params(deep=True) ==
-                      {'steps': pipeline.steps,
-                       'm2': mult2,
-                       'm3': passthrough,
-                       'last': mult5,
-                       'memory': None,
-                       'm2__mult': 2,
-                       'last__mult': 5,
-                       'verbose': False
-                       })
+            {'steps': pipeline.steps,
+             'm2': mult2,
+             'm3': passthrough,
+             'last': mult5,
+             'memory': None,
+             'm2__mult': 2,
+             'last__mult': 5,
+             'verbose': False
+             })
 
     pipeline.set_params(m2=passthrough)
     exp = 5
@@ -983,7 +983,7 @@ def test_step_name_validation():
     error_message_2 = re.escape("Names provided are not unique: ['a', 'a']")
     error_message_3 = re.escape("Estimator names conflict with constructor "
                                 "arguments: ['%s']"
-                    )
+                                )
     bad_steps1 = [('a__q', Mult(2)), ('b', Mult(3))]
     bad_steps2 = [('a', Mult(2)), ('a', Mult(3))]
     for cls, param in [(Pipeline, 'steps'),
@@ -1005,7 +1005,7 @@ def test_step_name_validation():
             setattr(est, param, bad_steps)
             with pytest.raises(ValueError, match=message):
                 est.fit([[1]], [1])
-            
+
             with pytest.raises(ValueError, match=message):
                 est.fit_transform([[1]], [1])
 
