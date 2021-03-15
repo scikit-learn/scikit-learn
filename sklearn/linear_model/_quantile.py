@@ -104,14 +104,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             Returns self.
         """
 
-        X, y = self._validate_data(X, y, accept_sparse=['csr'],
+        X, y = self._validate_data(X, y, accept_sparse=False,
                                    y_numeric=True, multi_output=False)
+
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=self.copy_X,
             sample_weight=sample_weight)
-
-        sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.quantile >= 1.0 or self.quantile <= 0.0:
             raise ValueError(
@@ -173,7 +173,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         if self.fit_intercept:
             self.coef_ = self.coef_ / X_scale
             self.intercept_ = params[0] + y_offset \
-                              - np.dot(X_offset, self.coef_.T)
+                - np.dot(X_offset, self.coef_.T)
         else:
             self.intercept_ = 0.0
         return self
