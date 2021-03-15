@@ -11,10 +11,10 @@ on:
       - fix_anaconda_upload
       # Release branches
       - "[0-9]+.[0-9]+.X"
-  # pull_request:
-  #  branches:
-  #    - main
-  #    - "[0-9]+.[0-9]+.X"
+  pull_request:
+  branches:
+    - main
+    - "[0-9]+.[0-9]+.X"
   # Manual run
   workflow_dispatch:
 
@@ -147,7 +147,7 @@ jobs:
     name: Upload to Anaconda
     runs-on: ubuntu-latest
     needs: build_sdist 
-    # needs: [build_wheels, build_sdist]
+    needs: [build_wheels, build_sdist]
     # The artifacts cannot be uploaded on PRs
     if: github.event_name != 'pull_request'
 
