@@ -217,7 +217,7 @@ Changelog
   and :user:`wstates <wstates>`.
 
 :mod:`sklearn.utils`
-.................................
+....................
 
 - |Enhancement| Deprecated the default value of the `random_state=0` in 
   :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
