@@ -923,10 +923,9 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     H_sum, HHt, XHt = None, None, None
 
-
     if batch_size is None:
         batch_size = n_samples
-        
+
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
     n_steps = (max_iter * n_samples) // batch_size
@@ -1205,6 +1204,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
             )
 
         return W, H, n_iter, iter_offset, A, B
+
 
 class NMF(TransformerMixin, BaseEstimator):
     """Non-Negative Matrix Factorization (NMF).
@@ -1928,12 +1928,17 @@ class MiniBatchNMF(NMF):
                 W = self.transform(X)
 
                 # Add 1 iteration to the current estimation
+                l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = \
+                    _compute_regularization(
+                        self.alpha, self.l1_ratio, self.regularization
+                    )
+
                 W, H, n_iter, iter_offset, A, B = _fit_multiplicative_update(
                     X, W, self.components_, self._components_numerator,
                     self._components_denominator, self._beta_loss,
                     self._batch_size, 0, 1, self.tol,
                     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
-                    update_H, self.verbose, self.forget_factor
+                    False, self.verbose, self.forget_factor
                 )
 
             self.n_components_ = H.shape[0]
