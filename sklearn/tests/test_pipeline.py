@@ -275,7 +275,7 @@ def test_pipeline_fit_params():
     assert pipe.named_steps['transf'].b is None
     # invalid parameters should raise an error message
 
-    msg = re.escape(r"fit() got an unexpected keyword argument 'bad'")
+    msg = re.escape("fit() got an unexpected keyword argument 'bad'")
     with pytest.raises(TypeError, match=msg):
         pipe.fit(None, None, clf__bad=True)
 
