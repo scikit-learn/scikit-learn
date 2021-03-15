@@ -38,12 +38,12 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    solver: str, optional, default 'auto'
+    solver : str, optional, default 'auto'
         Name of the solver used by scipy.optimize.linprog.
         If it is 'auto', will use 'highs' with scipy>=1.6.0
         and 'interior-point' with older versions.
 
-    solver: dict, optional
+    solver_options : dict, optional
         Additional parameters passed to scipy.optimize.linprog as options.
 
     Attributes
