@@ -33,6 +33,13 @@ Changelog
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now correctly shows the score for
+  single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
