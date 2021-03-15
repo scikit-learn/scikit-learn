@@ -634,7 +634,7 @@ def test_set_pipeline_steps():
     msg = re.escape(
         "Last step of Pipeline should implement fit or be the "
         "string 'passthrough'."
-        )
+    )
     with pytest.raises(TypeError, match=msg):
         pipeline.fit([[1]], [1])
 
