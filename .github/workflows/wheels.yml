@@ -146,7 +146,6 @@ jobs:
   upload_anaconda:
     name: Upload to Anaconda
     runs-on: ubuntu-latest
-    needs: build_sdist 
     needs: [build_wheels, build_sdist]
     # The artifacts cannot be uploaded on PRs
     if: github.event_name != 'pull_request'
