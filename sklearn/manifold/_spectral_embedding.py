@@ -335,7 +335,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
             # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
-            _, diffusion_map = eigh(laplacian)
+            _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 embedding = embedding / dd

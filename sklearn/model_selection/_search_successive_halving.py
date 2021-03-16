@@ -448,7 +448,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
+        ``HalvingGridSearchCV`` instance.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -735,7 +735,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
+        ``HalvingRandomSearchCV`` instance.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.

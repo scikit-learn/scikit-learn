@@ -4,11 +4,38 @@ schedules:
   displayName: Run nightly build
   branches:
     include:
-    - master
+    - main
   always: true
 
 jobs:
+- job: git_commit
+  displayName: Get Git Commit
+  pool:
+    vmImage: ubuntu-18.04
+  steps:
+    - bash: |
+        set -ex
+        if [[ $BUILD_REASON == "PullRequest" ]]; then
+          # By default pull requests use refs/pull/PULL_ID/merge as the source branch
+          # which has a "Merge ID into ID" as a commit message. The latest commit
+          # message is the second to last commit
+          COMMIT_ID=$(echo $BUILD_SOURCEVERSIONMESSAGE | awk '{print $2}')
+          message=$(git log $COMMIT_ID -1 --pretty=%B)
+        else
+          message=$BUILD_SOURCEVERSIONMESSAGE
+        fi
+        echo "##vso[task.setvariable variable=message;isOutput=true]$message"
+      name: commit
+      displayName: Get source version message
+
 - job: linting
+  dependsOn: [git_commit]
+  condition: |
+    and(
+      succeeded(),
+      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[lint skip]')),
+      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+    )
   displayName: Linting
   pool:
     vmImage: ubuntu-18.04
@@ -20,54 +47,26 @@ jobs:
         pip install flake8 mypy==0.782
       displayName: Install linters
     - bash: |
-        set -ex
-        if [[ $BUILD_REASON == "PullRequest" ]]; then
-          # By default pull requests use refs/pull/PULL_ID/merge as the source branch
-          # which has a "Merge ID into ID" as a commit message. The latest commit
-          # message is the second to last commit
-          COMMIT_ID=$(echo $BUILD_SOURCEVERSIONMESSAGE | awk '{print $2}')
-          COMMIT_MESSAGE=$(git log $COMMIT_ID -1 --pretty=%B)
-        else
-          COMMIT_MESSAGE=$BUILD_SOURCEVERSIONMESSAGE
-        fi
-        echo "##vso[task.setvariable variable=COMMIT_MESSAGE]$COMMIT_MESSAGE"
-      displayName: Get source version message
-    - bash: |
-        set -ex
-        if [[ "$COMMIT_MESSAGE" =~ "[lint skip]" ]]; then
-          # skip linting
-          echo "Skipping flake8 linting"
-          exit 0
-        else
-          ./build_tools/circle/linting.sh
-        fi
+        ./build_tools/circle/linting.sh
       displayName: Run linting
     - bash: |
-        set -ex
-        if [[ "$COMMIT_MESSAGE" =~ "[lint skip]" ]]; then
-          # skip linting
-          echo "Skipping mypy linting"
-          exit 0
-        else
-          mypy sklearn/
-        fi
+        mypy sklearn/
       displayName: Run mypy
-    - bash: |
-        if [[ "$COMMIT_MESSAGE" =~ "[scipy-dev]" ]] || [[ $BUILD_REASON == "Schedule" ]]; then
-          echo "Running scipy-dev"
-          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
-        else
-          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]false"
-        fi
-      name: gitCommitMessage
-      displayName: Determine to run scipy-dev
 
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Nightly
     vmImage: ubuntu-18.04
-    dependsOn: [linting]
-    condition: eq(dependencies['linting']['outputs']['gitCommitMessage.runScipyDev'], 'true')
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[scipy-dev]'
+          )
+        )
+      )
     matrix:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
@@ -79,11 +78,39 @@ jobs:
         # Here we make sure, that they are still run on a regular basis.
         SKLEARN_SKIP_NETWORK_TESTS: '0'
 
+# Check compilation with intel C++ compiler (ICC)
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Nightly_ICC
+    vmImage: ubuntu-18.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[icc-build]')
+        )
+      )
+    matrix:
+      pylatest_conda_mkl:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        BLAS: 'mkl'
+        COVERAGE: 'false'
+        BUILD_WITH_ICC: 'true'
+
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Runs
     vmImage: ubuntu-18.04
+    dependsOn: [git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
     matrix:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
@@ -95,8 +122,13 @@ jobs:
   parameters:
     name: Linux
     vmImage: ubuntu-18.04
-    dependsOn: [linting]
-    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
     matrix:
       # Linux environment to test that scikit-learn can be built against
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
@@ -139,8 +171,13 @@ jobs:
   parameters:
     name: Linux32
     vmImage: ubuntu-18.04
-    dependsOn: [linting]
-    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
     matrix:
       py36_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
@@ -157,8 +194,13 @@ jobs:
   parameters:
     name: macOS
     vmImage: macOS-10.14
-    dependsOn: [linting]
-    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
     matrix:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
@@ -174,8 +216,13 @@ jobs:
   parameters:
     name: Windows
     vmImage: vs2017-win2016
-    dependsOn: [linting]
-    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
     matrix:
       py37_conda_mkl:
         PYTHON_VERSION: '3.7'

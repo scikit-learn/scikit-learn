@@ -2,6 +2,111 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_24_2:
+
+Version 0.24.2
+==============
+
+**TBD 2021**
+
+Changelog
+---------
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :meth:`compose.ColumnTransformer.get_feature_names` does not call
+  :term:`get_feature_names` on transformers with an empty column selection.
+  :pr:`19579` by `Thomas Fan`_.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixed a bug in :class:`ensemble.HistGradientBoostingRegressor` `fit`
+  with `sample_weight` parameter and `least_absolute_deviation` loss function.
+  :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
+  sample_weight object is not modified anymore. :pr:`19182` by
+  :user:`Yosuke KOBAYASHI <m7142yosuke>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now correctly shows the score for
+  single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Validate the constructor parameter `handle_unknown` in
+  :class:`preprocessing.OrdinalEncoder` to only allow for `'error'` and
+  `'use_encoded_value'` strategies.
+  :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| Avoid NaN during label propagation in
+  :class:`~sklearn.semi_supervised.LabelPropagation`.
+  :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
+
+:mod:`sklearn.tree`
+.......................
+
+- |Fix| Fix a bug in `fit` of :class:`tree.BaseDecisionTree` that caused
+  segmentation faults under certain conditions. `fit` now deep copies the
+  `Criterion` object to prevent shared concurrent accesses.
+  :pr:`19580` by :user:`Samuel Brice <samdbrice>` and
+  :user:`Alex Adamson <aadamson>` and
+  :user:`Wil Yegelwel <wyegelwel>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Better contains the CSS provided by :func:`utils.estimator_html_repr`
+  by giving CSS ids to the html representation. :pr:`19417` by `Thomas Fan`_.
+
+.. _changes_0_24_1:
+
+Version 0.24.1
+==============
+
+**January 2021**
+
+Packaging
+---------
+
+The 0.24.0 scikit-learn wheels were not working with MacOS <1.15 due to
+`libomp`. The version of `libomp` used to build the wheels was too recent for
+older macOS versions. This issue has been fixed for 0.24.1 scikit-learn wheels.
+Scikit-learn wheels published on PyPI.org now officially support macOS 10.13
+and later.
+
+Changelog
+---------
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fix numerical stability bug that could happen in
+  :func:`metrics.adjusted_mutual_info_score` and
+  :func:`metrics.mutual_info_score` with NumPy 1.20+.
+  :pr:`19179` by `Thomas Fan`_.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| :class:`semi_supervised.SelfTrainingClassifier` is now accepting
+  meta-estimator (e.g. :class:`ensemble.StackingClassifier`). The validation
+  of this estimator is done on the fitted estimator, once we know the existence
+  of the method `predict_proba`.
+  :pr:`19126` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_0_24:
 
 Version 0.24.0
@@ -39,20 +144,8 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
-
 Changelog
 ---------
-
-..
-    Entries should be grouped by module (in alphabetic order) and prefixed with
-    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
-    |Fix| or |API| (see whats_new.rst for descriptions).
-    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
-    Changes not specific to a module should be listed under *Multiple Modules*
-    or *Miscellaneous*.
-    Entries should end with:
-    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
-    where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.base`
 ...................
@@ -189,10 +282,6 @@ Changelog
 .......................
 
 - |Feature| :func:`datasets.fetch_openml` now validates md5 checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
-
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
   files downloaded or cached to ensure data integrity.
   :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
@@ -610,6 +699,12 @@ Changelog
   :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
+
+- |Enhancement| :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV` and
+  :func:`model_selection.cross_validate` support `scoring` being a callable
+  returning a dictionary of of multiple metric names/values association.
+  :pr:`15126` by `Thomas Fan`_.
 
 :mod:`sklearn.multiclass`
 .........................
