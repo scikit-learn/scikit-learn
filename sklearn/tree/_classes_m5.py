@@ -1449,8 +1449,8 @@ def predict_from_leaves_no_smoothing(tree, node_models, X):
         # predict
         node_model = node_models[leaf_node_id]
         if isinstance(node_model, LinRegLeafModel):
-            y_predicted[sample_indices] = node_model.predict(
-                X[sample_indices, :])
+            y_predicted[sample_indices] = np.ravel(node_model.predict(
+                X[sample_indices, :]))
         else:
             # isinstance(node_model, ConstantLeafModel)
             y_predicted[sample_indices] = tree.value[leaf_node_id]
