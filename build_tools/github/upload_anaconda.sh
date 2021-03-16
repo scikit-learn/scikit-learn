@@ -17,9 +17,6 @@ conda create -n upload -y python=3.8
 source activate upload
 conda install -y anaconda-client
 
-ANACONDA_ORG="alfaro96"
-ANACONDA_TOKEN="$SCIKIT_LEARN_STAGING_UPLOAD_TOKEN"
-
 # Force a replacement if the remote file already exists
 anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG dist/artifact/*
 echo "Index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"

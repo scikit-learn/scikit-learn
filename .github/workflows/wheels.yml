@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-      - fix_anaconda_upload
       # Release branches
       - "[0-9]+.[0-9]+.X"
   pull_request:
@@ -23,7 +22,7 @@ jobs:
   check_build_trigger:
     name: Check build trigger
     runs-on: ubuntu-latest
-    # if: github.repository == 'scikit-learn/scikit-learn'
+    if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
 
