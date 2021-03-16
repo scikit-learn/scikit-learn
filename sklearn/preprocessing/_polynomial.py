@@ -65,6 +65,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         'periodic', periodic splines with a periodicity equal to the distance
         between the first and last knot are used. Periodic splines enforce
         equal function values and derivatives at the first and last knot.
+        For example, this makes it possible to avoid introducing an arbitrary
+        jump between Dec 31st and Jan 1st in spline features derived from a
+        naturally periodic "day-of-year" input feature. In this case it is
+        recommended to manually set the knot values to control the period.
 
     include_bias : bool, default=True
         If True (default), then the last spline element inside the data range
