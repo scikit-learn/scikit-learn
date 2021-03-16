@@ -8,6 +8,7 @@ from sklearn.base import clone
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
@@ -256,13 +257,10 @@ def test_classifier_prediction_independent_of_X(strategy):
 
 def test_classifier_exceptions():
     clf = DummyClassifier(strategy="unknown")
-    with pytest.raises(ValueError):
-        clf.fit([], [])
+    assert_raises(ValueError, clf.fit, [], [])
 
-    with pytest.raises(NotFittedError):
-        clf.predict([])
-    with pytest.raises(NotFittedError):
-        clf.predict_proba([])
+    assert_raises(NotFittedError, clf.predict, [])
+    assert_raises(NotFittedError, clf.predict_proba, [])
 
 
 def test_mean_strategy_regressor():
@@ -301,8 +299,7 @@ def test_mean_strategy_multioutput_regressor():
 
 def test_regressor_exceptions():
     reg = DummyRegressor()
-    with pytest.raises(NotFittedError):
-        reg.predict([])
+    assert_raises(NotFittedError, reg.predict, [])
 
 
 def test_median_strategy_regressor():
@@ -404,34 +401,27 @@ def test_quantile_invalid():
     y = [0] * 5  # ignored
 
     est = DummyRegressor(strategy="quantile")
-    with pytest.raises(ValueError):
-        est.fit(X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile=None)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile=[0])
-    with pytest.raises(ValueError):
-        est.fit(X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile=-0.1)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile=1.1)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile='abc')
-    with pytest.raises(ValueError):
-        est.fit(X, y)
+    assert_raises(TypeError, est.fit, X, y)
 
 
 def test_quantile_strategy_empty_train():
     est = DummyRegressor(strategy="quantile", quantile=0.4)
-    with pytest.raises(ValueError):
-        est.fit([], [])
+    assert_raises(ValueError, est.fit, [], [])
 
 
 def test_constant_strategy_regressor():
@@ -489,8 +479,7 @@ def test_unknown_strategey_regressor():
     y = [1, 2, 4, 6, 8]
 
     est = DummyRegressor(strategy='gona')
-    with pytest.raises(ValueError):
-        est.fit(X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
 
 def test_constants_not_specified_regressor():
@@ -498,8 +487,7 @@ def test_constants_not_specified_regressor():
     y = [1, 2, 4, 6, 8]
 
     est = DummyRegressor(strategy='constant')
-    with pytest.raises(TypeError):
-        est.fit(X, y)
+    assert_raises(TypeError, est.fit, X, y)
 
 
 def test_constant_size_multioutput_regressor():
@@ -508,8 +496,7 @@ def test_constant_size_multioutput_regressor():
     y = random_state.randn(10, 5)
 
     est = DummyRegressor(strategy='constant', constant=[1, 2, 3, 4])
-    with pytest.raises(ValueError):
-        est.fit(X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
 
 def test_constant_strategy():
