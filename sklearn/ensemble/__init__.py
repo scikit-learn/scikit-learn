@@ -21,6 +21,8 @@ from ._voting import VotingClassifier
 from ._voting import VotingRegressor
 from ._stacking import StackingClassifier
 from ._stacking import StackingRegressor
+from ._qrf import RandomForestQuantileRegressor
+from ._qrf import ExtraTreesQuantileRegressor
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
@@ -37,4 +39,5 @@ __all__ = ["BaseEnsemble",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "VotingClassifier", "VotingRegressor",
            "StackingClassifier", "StackingRegressor",
+           "RandomForestQuantileRegressor", "ExtraTreesQuantileRegressor"
            ]
