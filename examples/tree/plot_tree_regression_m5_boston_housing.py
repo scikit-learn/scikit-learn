@@ -99,9 +99,9 @@ plt.ylabel('predicted_y')
 
 # Compress the tree (features-wise)
 idx = clf.compress_features()
-# Print the tree TODO
-# print(tree_to_text(clf, out_file=None))
-# print(tree_to_text(clf, out_file=None, feature_names=boston.feature_names))
+# Print the tree and its equations
+print(clf.as_pretty_text())
+print(clf.as_pretty_text(feature_names=boston.feature_names))
 
 # Predict
 y_predicted2 = clf.predict(X_test[:, idx])
@@ -111,7 +111,8 @@ print("M5P2 MSE: %.4f" % mse)
 # #############################################################################
 # Plot predictions
 plt.subplot(2, 3, 5)
-plt.title('Predictions on test set (RMSE = {:2f})'.format(np.sqrt(mse2)))
+plt.title('Predictions (compressed tree) on test set (RMSE = {:2f})'
+          ''.format(np.sqrt(mse2)))
 plt.plot(y_test, y_predicted2, '.')
 plt.xlabel('true y')
 plt.ylabel('predicted_y')
