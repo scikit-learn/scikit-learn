@@ -148,7 +148,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         method = self.solver
         if method == 'auto':
-            if parse(scipy.__version__) < parse('1.6.0'):
+            scipy_version = parse(scipy.__version__)
+            if scipy_version < parse('1.0.0'):
+                method = 'simplex'
+            elif scipy_version < parse('1.6.0'):
                 method = 'interior-point'
             else:
                 method = 'highs'
