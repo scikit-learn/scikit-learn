@@ -343,7 +343,7 @@ class IterativeImputer(_BaseImputer):
             imputed_values = np.clip(imputed_values,
                                      self._min_value[feat_idx],
                                      self._max_value[feat_idx])
-
+            np.ravel(imputed_values)
         shape_imputed_values = imputed_values.shape
         if len(shape_imputed_values) > 1:
             imputed_values = imputed_values.reshape(shape_imputed_values[0])
