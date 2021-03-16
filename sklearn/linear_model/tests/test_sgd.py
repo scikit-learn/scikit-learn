@@ -8,7 +8,6 @@ import joblib
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import parse_version
 
@@ -634,10 +633,8 @@ def test_partial_fit_weight_class_balanced(klass):
              r"estimate the class frequency distributions\. "
              r"Pass the resulting weights as the class_weight "
              r"parameter\.")
-    assert_raises_regexp(ValueError,
-                         regex,
-                         klass(class_weight='balanced').partial_fit,
-                         X, Y, classes=np.unique(Y))
+    with pytest.raises(ValueError, match=regex):
+        klass(class_weight='balanced').partial_fit(X, Y, classes=np.unique(Y))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -1433,11 +1430,13 @@ def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
 @pytest.mark.parametrize('nu', [-0.5, 2])
 def test_bad_nu_values(klass, nu):
     msg = r"nu must be in \(0, 1]"
-    assert_raises_regexp(ValueError, msg, klass, nu=nu)
+    with pytest.raises(ValueError, match=msg):
+        klass(nu=nu)
 
     clf = klass(nu=0.05)
     clf2 = clone(clf)
-    assert_raises_regexp(ValueError, msg, clf2.set_params, nu=nu)
+    with pytest.raises(ValueError, match=msg):
+        clf2.set_params(nu=nu)
 
 
 @pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
@@ -1506,7 +1505,8 @@ def test_partial_fit_oneclass(klass):
     assert id1 == id2
 
     # raises ValueError if number of features does not match previous data
-    assert_raises(ValueError, clf.partial_fit, X[:, 1])
+    with pytest.raises(ValueError):
+        clf.partial_fit(X[:, 1])
 
 
 @pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
@@ -1739,7 +1739,8 @@ def test_underflow_or_overlow():
         msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
                      " Scaling input data with StandardScaler or MinMaxScaler"
                      " might help.")
-        assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
+        with pytest.raises(ValueError, match=msg_regxp):
+            model.fit(X, y)
 
 
 def test_numerical_stability_large_gradient():
