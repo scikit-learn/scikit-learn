@@ -350,7 +350,7 @@ def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
     Y = np.array([[1, 0], [0, 1]])
-    warning_message = 'will be ignored'
+    warning_message = 'unknown class.* will be ignored'
     with pytest.warns(UserWarning, match=warning_message):
         matrix = mlb.fit(y).transform([[4, 1], [2, 0]])
 
