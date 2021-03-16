@@ -22,7 +22,7 @@ from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
-from .utils import check_array, check_X_y, check_random_state
+from .utils import check_random_state
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
                                _check_fit_params, _deprecate_positional_args)
@@ -101,11 +101,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         -------
         self : object
         """
-        X, y = check_X_y(X, y,
-                         force_all_finite=False,
-                         multi_output=True,
-                         accept_sparse=True)
-
+        X, y = self._validate_data(X, y, force_all_finite=False,
+                                   multi_output=True,
+                                   accept_sparse=True)
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
                              "multi-output regression but has only one.")
@@ -202,8 +200,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a predict method")
 
-        X = check_array(X, force_all_finite=False, accept_sparse=True)
-
+        X = self._validate_data(X, force_all_finite=False, accept_sparse=True)
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X)
             for e in self.estimators_)
@@ -470,7 +467,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
-        check_array(X, accept_sparse=True)
+        self._validate_data(X, accept_sparse=True)
         self.order_ = self.order
         if isinstance(self.order_, tuple):
             self.order_ = np.array(self.order_)
@@ -535,7 +532,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=True)
+        X = self._validate_data(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -686,7 +683,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         -------
         Y_prob : array-like of shape (n_samples, n_classes)
         """
-        X = check_array(X, accept_sparse=True)
+        X = self._validate_data(X, accept_sparse=True)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
