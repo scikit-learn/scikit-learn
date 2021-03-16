@@ -28,13 +28,12 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
 
-digits = datasets.load_digits()
+X, y = datasets.load_digits(return_X_y=True)
 
-X, y = digits.data, digits.target
 X = StandardScaler().fit_transform(X)
 
 # classify small against large digits
-y = (y > 4).astype(np.int)
+y = (y > 4).astype(int)
 
 l1_ratio = 0.5  # L1 weight in the Elastic-Net regularization
 

@@ -7,7 +7,8 @@ import json
 import time
 import os
 
-from joblib import delayed, Parallel, Memory
+from joblib import Parallel
+from sklearn.utils.fixes import delayed
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -137,8 +138,7 @@ def exp(solvers, penalty, single_target,
             y = y_n
 
     elif dataset == 'digits':
-        digits = load_digits()
-        X, y = digits.data, digits.target
+        X, y = load_digits(return_X_y=True)
         if single_target:
             y_n = y.copy()
             y_n[y < 5] = 1

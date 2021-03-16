@@ -17,7 +17,7 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.semi_supervised import label_propagation
+from sklearn.semi_supervised import LabelSpreading
 from sklearn.datasets import make_circles
 
 # generate ring with inner box
@@ -30,7 +30,7 @@ labels[-1] = inner
 
 # #############################################################################
 # Learn with LabelSpreading
-label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=0.8)
+label_spread = LabelSpreading(kernel='knn', alpha=0.8)
 label_spread.fit(X, labels)
 
 # #############################################################################

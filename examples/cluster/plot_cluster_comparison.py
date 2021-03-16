@@ -63,8 +63,8 @@ varied = datasets.make_blobs(n_samples=n_samples,
 # ============
 # Set up cluster parameters
 # ============
-plt.figure(figsize=(9 * 2 + 3, 12.5))
-plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
+plt.figure(figsize=(9 * 2 + 3, 13))
+plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.95, wspace=.05,
                     hspace=.01)
 
 plot_num = 1
@@ -74,14 +74,20 @@ default_base = {'quantile': .3,
                 'damping': .9,
                 'preference': -200,
                 'n_neighbors': 10,
-                'n_clusters': 3}
+                'n_clusters': 3,
+                'min_samples': 20,
+                'xi': 0.05,
+                'min_cluster_size': 0.1}
 
 datasets = [
     (noisy_circles, {'damping': .77, 'preference': -240,
-                     'quantile': .2, 'n_clusters': 2}),
+                     'quantile': .2, 'n_clusters': 2,
+                     'min_samples': 20, 'xi': 0.25}),
     (noisy_moons, {'damping': .75, 'preference': -220, 'n_clusters': 2}),
-    (varied, {'eps': .18, 'n_neighbors': 2}),
-    (aniso, {'eps': .15, 'n_neighbors': 2}),
+    (varied, {'eps': .18, 'n_neighbors': 2,
+              'min_samples': 5, 'xi': 0.035, 'min_cluster_size': .2}),
+    (aniso, {'eps': .15, 'n_neighbors': 2,
+             'min_samples': 20, 'xi': 0.1, 'min_cluster_size': .2}),
     (blobs, {}),
     (no_structure, {})]
 
@@ -116,6 +122,9 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         n_clusters=params['n_clusters'], eigen_solver='arpack',
         affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=params['eps'])
+    optics = cluster.OPTICS(min_samples=params['min_samples'],
+                            xi=params['xi'],
+                            min_cluster_size=params['min_cluster_size'])
     affinity_propagation = cluster.AffinityPropagation(
         damping=params['damping'], preference=params['preference'])
     average_linkage = cluster.AgglomerativeClustering(
@@ -126,15 +135,16 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         n_components=params['n_clusters'], covariance_type='full')
 
     clustering_algorithms = (
-        ('MiniBatchKMeans', two_means),
-        ('AffinityPropagation', affinity_propagation),
+        ('MiniBatch\nKMeans', two_means),
+        ('Affinity\nPropagation', affinity_propagation),
         ('MeanShift', ms),
-        ('SpectralClustering', spectral),
+        ('Spectral\nClustering', spectral),
         ('Ward', ward),
-        ('AgglomerativeClustering', average_linkage),
+        ('Agglomerative\nClustering', average_linkage),
         ('DBSCAN', dbscan),
-        ('Birch', birch),
-        ('GaussianMixture', gmm)
+        ('OPTICS', optics),
+        ('BIRCH', birch),
+        ('Gaussian\nMixture', gmm)
     )
 
     for name, algorithm in clustering_algorithms:
@@ -157,7 +167,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
         t1 = time.time()
         if hasattr(algorithm, 'labels_'):
-            y_pred = algorithm.labels_.astype(np.int)
+            y_pred = algorithm.labels_.astype(int)
         else:
             y_pred = algorithm.predict(X)
 

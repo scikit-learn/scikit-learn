@@ -2,16 +2,18 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
-                                   assert_equal, assert_not_equal,
-                                   assert_raises, assert_allclose)
+from sklearn.utils._testing import (assert_array_almost_equal,
+                                   assert_allclose)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
+from sklearn.datasets import make_blobs
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.utils.validation import _check_psd_eigenvalues
 
 
 def test_kernel_pca():
@@ -21,7 +23,7 @@ def test_kernel_pca():
 
     def histogram(x, y, **kwargs):
         # Histogram kernel implemented as a callable.
-        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        assert kwargs == {}    # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
     for eigen_solver in ("auto", "dense", "arpack"):
@@ -40,22 +42,22 @@ def test_kernel_pca():
 
             # non-regression test: previously, gamma would be 0 by default,
             # forcing all eigenvalues to 0 under the poly kernel
-            assert_not_equal(X_fit_transformed.size, 0)
+            assert X_fit_transformed.size != 0
 
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)
-            assert_equal(X_pred_transformed.shape[1],
+            assert (X_pred_transformed.shape[1] ==
                          X_fit_transformed.shape[1])
 
             # inverse transform
             if inv:
                 X_pred2 = kpca.inverse_transform(X_pred_transformed)
-                assert_equal(X_pred2.shape, X_pred.shape)
+                assert X_pred2.shape == X_pred.shape
 
 
 def test_kernel_pca_invalid_parameters():
-    assert_raises(ValueError, KernelPCA, 10, fit_inverse_transform=True,
-                  kernel='precomputed')
+    with pytest.raises(ValueError):
+        KernelPCA(10, fit_inverse_transform=True, kernel='precomputed')
 
 
 def test_kernel_pca_consistent_transform():
@@ -103,12 +105,12 @@ def test_kernel_pca_sparse():
 
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)
-            assert_equal(X_pred_transformed.shape[1],
+            assert (X_pred_transformed.shape[1] ==
                          X_fit_transformed.shape[1])
 
             # inverse transform
             # X_pred2 = kpca.inverse_transform(X_pred_transformed)
-            # assert_equal(X_pred2.shape, X_pred.shape)
+            # assert X_pred2.shape == X_pred.shape)
 
 
 def test_kernel_pca_linear_kernel():
@@ -135,7 +137,7 @@ def test_kernel_pca_n_components():
             kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver)
             shape = kpca.fit(X_fit).transform(X_pred).shape
 
-            assert_equal(shape, (2, c))
+            assert shape == (2, c)
 
 
 def test_remove_zero_eig():
@@ -144,15 +146,15 @@ def test_remove_zero_eig():
     # n_components=None (default) => remove_zero_eig is True
     kpca = KernelPCA()
     Xt = kpca.fit_transform(X)
-    assert_equal(Xt.shape, (3, 0))
+    assert Xt.shape == (3, 0)
 
     kpca = KernelPCA(n_components=2)
     Xt = kpca.fit_transform(X)
-    assert_equal(Xt.shape, (3, 2))
+    assert Xt.shape == (3, 2)
 
     kpca = KernelPCA(n_components=2, remove_zero_eig=True)
     Xt = kpca.fit_transform(X)
-    assert_equal(Xt.shape, (3, 0))
+    assert Xt.shape == (3, 0)
 
 
 def test_leave_zero_eig():
@@ -211,12 +213,10 @@ def test_kernel_pca_invalid_kernel():
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((2, 4))
     kpca = KernelPCA(kernel="tototiti")
-    assert_raises(ValueError, kpca.fit, X_fit)
+    with pytest.raises(ValueError):
+        kpca.fit(X_fit)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
@@ -228,12 +228,9 @@ def test_gridsearch_pipeline():
     param_grid = dict(kernel_pca__gamma=2. ** np.arange(-2, 2))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     grid_search.fit(X, y)
-    assert_equal(grid_search.best_score_, 1)
+    assert grid_search.best_score_ == 1
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.
@@ -246,11 +243,9 @@ def test_gridsearch_pipeline_precomputed():
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     X_kernel = rbf_kernel(X, gamma=2.)
     grid_search.fit(X_kernel, y)
-    assert_equal(grid_search.best_score_, 1)
+    assert grid_search.best_score_ == 1
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_nested_circles():
     # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
@@ -258,7 +253,7 @@ def test_nested_circles():
 
     # 2D nested circles are not linearly separable
     train_score = Perceptron(max_iter=5).fit(X, y).score(X, y)
-    assert_less(train_score, 0.8)
+    assert train_score < 0.8
 
     # Project the circles data into the first 2 components of a RBF Kernel
     # PCA model.
@@ -271,4 +266,59 @@ def test_nested_circles():
 
     # The data is perfectly linearly separable in that space
     train_score = Perceptron(max_iter=5).fit(X_kpca, y).score(X_kpca, y)
-    assert_equal(train_score, 1.0)
+    assert train_score == 1.0
+
+
+def test_kernel_conditioning():
+    """ Test that ``_check_psd_eigenvalues`` is correctly called
+    Non-regression test for issue #12140 (PR #12145)"""
+
+    # create a pathological X leading to small non-zero eigenvalue
+    X = [[5, 1],
+         [5+1e-8, 1e-8],
+         [5+1e-8, 0]]
+    kpca = KernelPCA(kernel="linear", n_components=2,
+                     fit_inverse_transform=True)
+    kpca.fit(X)
+
+    # check that the small non-zero eigenvalue was correctly set to zero
+    assert kpca.lambdas_.min() == 0
+    assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
+
+
+@pytest.mark.parametrize("kernel",
+                         ["linear", "poly", "rbf", "sigmoid", "cosine"])
+def test_kernel_pca_inverse_transform(kernel):
+    X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
+                       random_state=0)
+
+    kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True)
+    X_trans = kp.fit_transform(X)
+    X_inv = kp.inverse_transform(X_trans)
+    assert_allclose(X, X_inv)
+
+
+def test_32_64_decomposition_shape():
+    """ Test that the decomposition is similar for 32 and 64 bits data """
+    # see https://github.com/scikit-learn/scikit-learn/issues/18146
+    X, y = make_blobs(
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        cluster_std=0.1
+    )
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+
+    # Compare the shapes (corresponds to the number of non-zero eigenvalues)
+    kpca = KernelPCA()
+    assert (kpca.fit_transform(X).shape ==
+            kpca.fit_transform(X.astype(np.float32)).shape)
+
+
+# TODO: Remove in 1.1
+def test_kernel_pcc_pairwise_is_deprecated():
+    kp = KernelPCA(kernel='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        kp._pairwise

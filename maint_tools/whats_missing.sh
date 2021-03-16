@@ -11,15 +11,15 @@ from_branch=$1
 to_file=$2
 
 logged_prs() {
-	git log --oneline $from_branch..master sklearn/ |
-		grep -wv -e CI -e DOC -e doc -e MNT -e MAINT -e BLD -e COSMIT -e EXA -e examples -e example -e minor -e STY -e Style -e docstring |
+	git log --oneline $from_branch..main sklearn/ |
+		grep -wv -e CLN -e TST -e CI -e DOC -e doc -e MNT -e MAINT -e BLD -e COSMIT -e EXA -e examples -e example -e minor -e STY -e Style -e docstring |
 		grep -o '(#[0-9][0-9]\+)$' |
 		grep -o '[0-9]\+'
 }
 
 mentioned_issues() {
 	cat doc/whats_new/v$to_file.rst |
-			grep -o 'issue:`[0-9]\+`' |
+			grep -o 'issue:`[0-9]\+`\|pr:`[0-9]\+`' |
 			grep -o '[0-9]\+'
 }
 

@@ -14,10 +14,15 @@ Note that those results can be highly dependent on the value of
 """
 
 print(__doc__)
+
+import warnings
+
 import matplotlib.pyplot as plt
+
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import MinMaxScaler
 from sklearn import datasets
+from sklearn.exceptions import ConvergenceWarning
 
 # different learning rate schedules and momentum parameters
 params = [{'solver': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
@@ -52,6 +57,7 @@ def plot_on_dataset(X, y, ax, name):
     # for each dataset, plot learning for each learning strategy
     print("\nlearning on dataset %s" % name)
     ax.set_title(name)
+
     X = MinMaxScaler().fit_transform(X)
     mlps = []
     if name == "digits":
@@ -62,22 +68,29 @@ def plot_on_dataset(X, y, ax, name):
 
     for label, param in zip(labels, params):
         print("training: %s" % label)
-        mlp = MLPClassifier(verbose=0, random_state=0,
+        mlp = MLPClassifier(random_state=0,
                             max_iter=max_iter, **param)
-        mlp.fit(X, y)
+
+        # some parameter combinations will not converge as can be seen on the
+        # plots so they are ignored here
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=ConvergenceWarning,
+                                    module="sklearn")
+            mlp.fit(X, y)
+
         mlps.append(mlp)
         print("Training set score: %f" % mlp.score(X, y))
         print("Training set loss: %f" % mlp.loss_)
     for mlp, label, args in zip(mlps, labels, plot_args):
-            ax.plot(mlp.loss_curve_, label=label, **args)
+        ax.plot(mlp.loss_curve_, label=label, **args)
 
 
 fig, axes = plt.subplots(2, 2, figsize=(15, 10))
 # load / generate some toy datasets
 iris = datasets.load_iris()
-digits = datasets.load_digits()
+X_digits, y_digits = datasets.load_digits(return_X_y=True)
 data_sets = [(iris.data, iris.target),
-             (digits.data, digits.target),
+             (X_digits, y_digits),
              datasets.make_circles(noise=0.2, factor=0.5, random_state=1),
              datasets.make_moons(noise=0.3, random_state=0)]
 
