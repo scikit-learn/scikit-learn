@@ -23,8 +23,9 @@ if [[ $BUILD_WHEEL == true && $TRAVIS_EVENT_TYPE != pull_request ]]; then
     MINICONDA_PATH=$HOME/miniconda
     chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 
+    # Install Python 3.8 because of a bug with Python 3.9
     export PATH=$MINICONDA_PATH/bin:$PATH
-    conda create -n upload -y python
+    conda create -n upload -y python=3.8
     source activate upload
     conda install -y anaconda-client
 
