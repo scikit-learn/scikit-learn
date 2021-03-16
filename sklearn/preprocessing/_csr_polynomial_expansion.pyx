@@ -90,6 +90,11 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
     assert degree in (2, 3)
 
+    # Dimensionality of the expanded space can become very
+    # large so we cast d to int64 when computing
+    # expanded_dimensionality to avoid overflow
+    d = <np.int64_t>d
+
     if degree == 2:
         expanded_dimensionality = int((d**2 + d) / 2 - interaction_only*d)
     else:
@@ -104,7 +109,11 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     # Count how many nonzero elements the expanded matrix will contain.
     for row_i in range(indptr.shape[0]-1):
         # nnz is the number of nonzero elements in this row.
-        nnz = indptr[row_i + 1] - indptr[row_i]
+        # The number of nonzero elements can explode
+        # in the expanded space, so we cast to int64
+        # before the expansion computation to
+        # avoid overflow:
+        nnz = <np.int64_t>(indptr[row_i + 1] - indptr[row_i])
         if degree == 2:
             total_nnz += (nnz ** 2 + nnz) / 2 - interaction_only * nnz
         else:
@@ -121,8 +130,7 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
         shape=num_rows + 1, dtype=indptr.dtype)
 
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
-                 i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
-                 expanded_column, col
+                 i_ptr, j_ptr, k_ptr, num_cols_in_row, col
 
     with nogil:
         expanded_indptr[0] = indptr[0]

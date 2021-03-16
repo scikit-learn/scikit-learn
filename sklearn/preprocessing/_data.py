@@ -1777,9 +1777,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # use np.int64 for index datatype to prevent overflow
                 # in case X has a large dimension
                 Xp_next = _csr_polynomial_expansion(X.data,
-                                                    X.indices.astype(np.int64),
-                                                    X.indptr.astype(np.int64),
-                                                    np.int64(X.shape[1]),
+                                                    X.indices,
+                                                    X.indptr,
+                                                    X.shape[1],
                                                     self.interaction_only,
                                                     deg)
                 if Xp_next is None:
