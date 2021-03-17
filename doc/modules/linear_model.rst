@@ -1464,10 +1464,6 @@ non-normal distribution.
    :align: center
    :scale: 50%
 
-Another advantage of quantile regression over OLS is its robustness
-to outliers, because it is only the sign of an error that influences estimated
-coefficients, not its absolute value.
-
 Based on minimizing the pinball loss, conditional quantiles can also be estimated by models other than linear models. For example,
 :class:`GradientBoostingRegressor` can predict conditional quantiles
 if its parameter ``loss`` is set to ``"quantile"`` and parameter ``alpha`` is
