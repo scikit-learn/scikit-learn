@@ -9,6 +9,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, assert_raises
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
+from sklearn.utils.fixes import sp_version, parse_version
 
 
 @pytest.mark.parametrize(
@@ -26,6 +27,7 @@ from sklearn.linear_model import HuberRegressor, QuantileRegressor
         [0.5, 100, 2, 0],
     ]
 )
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason="requires at least scipy 1.0.0")
 def test_quantile_toy_example(quantile, alpha, intercept, coef):
     # test how different parameters affect a small intuitive example
     X = [[0], [1], [1]]
@@ -39,6 +41,7 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef):
     assert model.coef_[0] <= 10
 
 
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason="requires at least scipy 1.0.0")
 def test_quantile_equals_huber_for_low_epsilon():
     X, y = make_regression(n_samples=100, n_features=20, random_state=0,
                            noise=1.0)
@@ -48,6 +51,7 @@ def test_quantile_equals_huber_for_low_epsilon():
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
 
 
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason="requires at least scipy 1.0.0")
 def test_quantile_estimates_fraction():
     # Test that model estimates percentage of points below the prediction
     X, y = make_regression(n_samples=1000, n_features=20, random_state=0,
@@ -58,6 +62,7 @@ def test_quantile_estimates_fraction():
         assert_allclose(fraction_below, q, atol=1e-2)
 
 
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason="requires at least scipy 1.0.0")
 def test_quantile_without_intercept():
     X, y = make_regression(n_samples=300, n_features=20, random_state=0,
                            noise=1.0)
@@ -72,6 +77,7 @@ def test_quantile_without_intercept():
     assert_allclose(fraction_below, 0.5, atol=1e-1)
 
 
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason="requires at least scipy 1.0.0")
 def test_quantile_sample_weight():
     # test that with unequal sample weights we still estimate weighted fraction
     n = 1000
@@ -90,6 +96,7 @@ def test_quantile_sample_weight():
     assert_allclose(weighted_fraction_below, 0.5, atol=1e-2)
 
 
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason="requires at least scipy 1.0.0")
 @pytest.mark.parametrize('quantile', [2.0, 1.0, 0.0, -1])
 def test_quantile_incorrect_quantile(quantile):
     X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
@@ -97,6 +104,7 @@ def test_quantile_incorrect_quantile(quantile):
         QuantileRegressor(quantile=quantile).fit(X, y)
 
 
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason="requires at least scipy 1.0.0")
 @pytest.mark.parametrize('quantile', [0.1, 0.5, 0.9])
 def test_asymmetric_error(quantile):
     n_samples = 1000

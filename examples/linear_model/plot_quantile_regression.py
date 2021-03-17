@@ -15,10 +15,16 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 from sklearn.linear_model import QuantileRegressor, LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import cross_val_score
+from sklearn.utils.fixes import parse_version, sp_version
+
+if sp_version < parse_version("1.0.0"):
+    # prior to spacy 1.0.0, the linear programming solver is unstable
+    sys.exit(0)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
 
