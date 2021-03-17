@@ -692,7 +692,7 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     slice of batch_size elements
 
     See Also
-    ------
+    --------
     gen_even_slices: Generator to create n_packs slices going up to n.
 
     Examples
@@ -745,7 +745,7 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     slice
 
     See Also
-    ------
+    --------
     gen_batches: Generator to create slices containing batch_size elements
         from 0 to n.
 
