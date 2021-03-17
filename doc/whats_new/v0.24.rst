@@ -445,6 +445,12 @@ Changelog
   of the hyperparameters are too tight.
   :issue:`12638` by :user:`Sylvain Lannuzel <SylvainLan>`.
 
+- |Fix| :class:`gaussian_process.GaussianProcessRegressor` raises division by
+  zero standard when normalization is requested
+  :pr:`19703` by :user:`<sobkevich>`,
+  :user:` Boris Villazón-Terrazas <boricles>` and
+  :user:`Alexandr Fonari <afonari>`.
+
 :mod:`sklearn.impute`
 .....................
 

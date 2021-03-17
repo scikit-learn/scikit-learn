@@ -557,3 +557,11 @@ def test_constant_target(kernel):
     _y_train_std = gpr._y_train_std
 
     assert_array_equal(_y_train_std, expected_std)
+
+    # Test that zero std is handled properly
+    y_with_zero_std = np.ones(X.shape[0])
+    gpr = GaussianProcessRegressor(normalize_y=True).fit(X, y_with_zero_std)
+    y_pred, y_cov = gpr.predict(X, return_cov=True)
+
+    assert_almost_equal(y_pred, y_with_zero_std)
+    assert_almost_equal(np.diag(y_cov), 0.)
