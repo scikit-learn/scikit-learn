@@ -144,7 +144,8 @@ class CalibratedClassifierCV(ClassifierMixin,
         The class labels.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`.
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying base_estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
@@ -263,20 +264,20 @@ class CalibratedClassifierCV(ClassifierMixin,
                 check_is_fitted(self.base_estimator[-1])
             else:
                 check_is_fitted(self.base_estimator)
-            try:
-                self.n_features_in_ = _num_features(X)
-            except TypeError:
-                # X is not necessarily tabular as base_estimator might be able
-                # to accept non-tabular data.
-                pass
             with suppress(AttributeError):
-                if self.n_features_in_ != base_estimator.n_features_in_:
+                # Only perform the check and set self.n_features_in_ if the
+                # base estimator has the attribute defined.
+                expected_n_features_in = base_estimator.n_features_in_
+                actual_n_features_in = _num_features(X)
+                if expected_n_features_in != actual_n_features_in:
                     raise ValueError(
                         f"Base estimator {base_estimator.__class__.__name__} "
-                        f"was prefit on {base_estimator.n_features_in_} "
+                        f"was prefit on {expected_n_features_in} "
                         f"features but CalibratedClassifierCV is fit "
-                        f"with {self.n_features_in_} features."
+                        f"with {actual_n_features_in} features."
                     )
+                else:
+                    self.n_features_in_ = actual_n_features_in
             self.classes_ = self.base_estimator.classes_
 
             pred_method = _get_prediction_method(base_estimator)
