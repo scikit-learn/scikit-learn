@@ -1431,26 +1431,27 @@ Quantile Regression
 Quantile regression estimates median or other quantiles of :math:`y`
 conditional on :math:`X`, while OLS estimates conditional mean.
 
-The :class:`QuantileRegressor` applies linear loss to all samples.
-Somewhat related, the :class:`HuberRegressor` applies
-linear penalty to a small fraction of outliers and quadratic loss to the rest
-of observations. :class:`QuantileRegressor` also supports L1
-regularization, like :class:`Lasso`. It solves
+As a linear model, the :class:`QuantileRegressor` gives linear predictions :math:`\hat{y}(w, x) = Xw` for the specified ``quantile`` :math:`q \in (0, 1)`. The weights or coefficients :math:`w` are then found by the following minimization problem:
 
 .. math::
-    \underset{w}{min\,} { \frac{1}{n_{samples}} L_q (y - X w) + \alpha ||w||_1}
+    \min_{w} {\frac{1}{n_{\text{samples}}} PB_q(y - X w) + \alpha ||w||_1}
 
-where
+This consists of the pinball loss (also known as linear loss),
+see also :class:`~sklearn.metrics.mean_pinball_loss`,
 
 .. math::
-    \L_q(t) =
+    \PB_q(t) = q \max(t, 0) + (1 - q) \max(-t, 0) =
     \begin{cases}
         q t, & t > 0, \\
         0,    & t = 0, \\
         (1-q) t, & t < 0
     \end{cases}
 
-and :math:`q \in (0, 1)` is the quantile to be estimated.
+and the L1 penalty, similar to the :class:`Lasso`.
+
+As the pinball loss is only linear in the residuals, quantile regression
+is much morerobust to outliers than estimation of the mean by the squared error.
+Somewhat in between is the :class:`HuberRegressor`.
 
 Quantile regression may be useful if one is interested in predicting an interval
 instead of point prediction. Sometimes, prediction intervals are calculated based
