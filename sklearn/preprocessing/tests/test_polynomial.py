@@ -1,10 +1,13 @@
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
 import pytest
-
+from numpy.testing import assert_allclose, assert_array_equal
+from scipy.interpolate import BSpline
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import KBinsDiscretizer, SplineTransformer
+from sklearn.utils.fixes import linspace, sp_version
+
+from pkg_resources import parse_version
 
 
 # TODO: add PolynomialFeatures if it moves to _polynomial.py
@@ -31,7 +34,7 @@ def test_polynomial_and_spline_array_order(est):
         ({"n_knots": 1}, "n_knots must be a positive integer >= 2."),
         ({"n_knots": 2.5}, "n_knots must be a positive integer >= 2."),
         ({"n_knots": "string"}, "n_knots must be a positive integer >= 2."),
-        ({"knots": "string"}, "Expected 2D array, got scalar array instead:"),
+        ({"knots": 1}, "Expected 2D array, got scalar array instead:"),
         ({"knots": [1, 2]}, "Expected 2D array, got 1D array instead:"),
         (
             {"knots": [[1]]},
@@ -48,22 +51,32 @@ def test_polynomial_and_spline_array_order(est):
         ({"knots": [[2], [1]]}, "knots must be sorted without duplicates."),
         (
             {"extrapolation": None},
-            "extrapolation must be one of 'error', 'constant', 'linear' or "
-            "'continue'.",
+            "extrapolation must be one of 'error', 'constant', 'linear', "
+            "'continue' or 'periodic'.",
         ),
         (
             {"extrapolation": 1},
-            "extrapolation must be one of 'error', 'constant', 'linear' or "
-            "'continue'.",
+            "extrapolation must be one of 'error', 'constant', 'linear', "
+            "'continue' or 'periodic'.",
         ),
         (
             {"extrapolation": "string"},
-            "extrapolation must be one of 'error', 'constant', 'linear' or "
-            "'continue'.",
+            "extrapolation must be one of 'error', 'constant', 'linear', "
+            "'continue' or 'periodic'.",
         ),
         ({"include_bias": None}, "include_bias must be bool."),
         ({"include_bias": 1}, "include_bias must be bool."),
         ({"include_bias": "string"}, "include_bias must be bool."),
+        (
+            {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
+            "Periodic splines require degree < n_knots. Got n_knots="
+            "3 and degree=3."
+        ),
+        (
+            {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
+            "Periodic splines require degree < n_knots. Got n_knots=2 and "
+            "degree=2."
+        )
     ],
 )
 def test_spline_transformer_input_validation(params, err_msg):
@@ -75,7 +88,8 @@ def test_spline_transformer_input_validation(params, err_msg):
 
 
 def test_spline_transformer_manual_knot_input():
-    """Test that array-like knot positions in SplineTransformer are accepted.
+    """
+    Test that array-like knot positions in SplineTransformer are accepted.
     """
     X = np.arange(20).reshape(10, 2)
     knots = [[0.5, 1], [1.5, 2], [5, 10]]
@@ -84,6 +98,18 @@ def test_spline_transformer_manual_knot_input():
     st2 = SplineTransformer(degree=3, knots=knots).fit(X)
     for i in range(X.shape[1]):
         assert_allclose(st1.bsplines_[i].t, st2.bsplines_[i].t)
+
+
+@pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
+def test_spline_transformer_integer_knots(extrapolation):
+    """Test that SplineTransformer accepts integer value knot positions."""
+    X = np.arange(20).reshape(10, 2)
+    knots = [[0, 1], [1, 2], [5, 5], [11, 10], [12, 11]]
+    _ = SplineTransformer(
+        degree=3,
+        knots=knots,
+        extrapolation=extrapolation
+    ).fit_transform(X)
 
 
 def test_spline_transformer_feature_names():
@@ -127,7 +153,13 @@ def test_spline_transformer_feature_names():
 @pytest.mark.parametrize("degree", range(1, 5))
 @pytest.mark.parametrize("n_knots", range(3, 5))
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
-def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
+@pytest.mark.parametrize("extrapolation", ["constant", "periodic"])
+def test_spline_transformer_unity_decomposition(
+    degree,
+    n_knots,
+    knots,
+    extrapolation
+):
     """Test that B-splines are indeed a decomposition of unity.
 
     Splines basis functions must sum up to 1 per row, if we stay in between
@@ -137,8 +169,16 @@ def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
     # make the boundaries 0 and 1 part of X_train, for sure.
     X_train = np.r_[[[0]], X[::2, :], [[1]]]
     X_test = X[1::2, :]
+
+    if extrapolation == "periodic":
+        n_knots = n_knots + degree  # periodic splines require degree < n_knots
+
     splt = SplineTransformer(
-        n_knots=n_knots, degree=degree, knots=knots, include_bias=True
+        n_knots=n_knots,
+        degree=degree,
+        knots=knots,
+        include_bias=True,
+        extrapolation=extrapolation
     )
     splt.fit(X_train)
     for X in [X_train, X_test]:
@@ -166,6 +206,151 @@ def test_spline_transformer_linear_regression(bias, intercept):
     )
     pipe.fit(X, y)
     assert_allclose(pipe.predict(X), y, rtol=1e-3)
+
+
+@pytest.mark.parametrize("knots, n_knots, degree", [
+    ("uniform", 5, 3),
+    ("uniform", 12, 8),
+    (
+        [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
+        100,  # this gets ignored.
+        3
+    )
+])
+def test_spline_transformer_periodicity_of_extrapolation(
+    knots, n_knots, degree
+):
+    """Test that the SplineTransformer is periodic for multiple features."""
+    X_1 = linspace((-1, 0), (1, 5), 10)
+    X_2 = linspace((1, 5), (3, 10), 10)
+
+    splt = SplineTransformer(
+        knots=knots,
+        n_knots=n_knots,
+        degree=degree,
+        extrapolation="periodic"
+    )
+    splt.fit(X_1)
+
+    assert_allclose(splt.transform(X_1), splt.transform(X_2))
+
+
+@pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
+def test_spline_transformer_periodic_linear_regression(bias, intercept):
+    """Test that B-splines fit a periodic curve pretty well."""
+    # "+ 3" to avoid the value 0 in assert_allclose
+    def f(x):
+        return np.sin(2 * np.pi * x) - np.sin(8 * np.pi * x) + 3
+
+    X = np.linspace(0, 1, 101)[:, None]
+    pipe = Pipeline(
+        steps=[
+            (
+                "spline",
+                SplineTransformer(
+                    n_knots=20,
+                    degree=3,
+                    include_bias=bias,
+                    extrapolation="periodic",
+                ),
+            ),
+            ("ols", LinearRegression(fit_intercept=intercept)),
+        ]
+    )
+    pipe.fit(X, f(X[:, 0]))
+
+    # Generate larger array to check periodic extrapolation
+    X_ = np.linspace(-1, 2, 301)[:, None]
+    predictions = pipe.predict(X_)
+    assert_allclose(predictions, f(X_[:, 0]), atol=0.01, rtol=0.01)
+    assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
+
+
+@pytest.mark.skipif(
+    sp_version < parse_version("1.0.0"),
+    reason="Periodic extrapolation not yet implemented for BSpline.",
+)
+def test_spline_transformer_periodic_spline_backport():
+    """Test that the backport of extrapolate="periodic" works correctly"""
+    X = np.linspace(-2, 3.5, 10)[:, None]
+    degree = 2
+
+    # Use periodic extrapolation backport in SplineTransformer
+    transformer = SplineTransformer(
+        degree=degree,
+        extrapolation="periodic",
+        knots=[[-1.0], [0.0], [1.0]]
+    )
+    Xt = transformer.fit_transform(X)
+
+    # Use periodic extrapolation in BSpline
+    coef = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.0, 1.0]])
+    spl = BSpline(np.arange(-3, 4), coef, degree, "periodic")
+    Xspl = spl(X[:, 0])
+    assert_allclose(Xt, Xspl)
+
+
+def test_spline_transformer_periodic_splines_periodicity():
+    """
+    Test if shifted knots result in the same transformation up to permutation.
+    """
+    X = np.linspace(0, 10, 101)[:, None]
+
+    transformer_1 = SplineTransformer(
+        degree=3,
+        extrapolation="periodic",
+        knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]]
+    )
+
+    transformer_2 = SplineTransformer(
+        degree=3,
+        extrapolation="periodic",
+        knots=[[1.0], [3.0], [4.0], [5.0], [8.0], [9.0]]
+    )
+
+    Xt_1 = transformer_1.fit_transform(X)
+    Xt_2 = transformer_2.fit_transform(X)
+
+    assert_allclose(Xt_1, Xt_2[:, [4, 0, 1, 2, 3]])
+
+
+@pytest.mark.parametrize("degree", [3, 5])
+def test_spline_transformer_periodic_splines_smoothness(degree):
+    """Test that spline transformation is smooth at first / last knot."""
+    X = np.linspace(-2, 10, 10_000)[:, None]
+
+    transformer = SplineTransformer(
+        degree=degree,
+        extrapolation="periodic",
+        knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]]
+    )
+    Xt = transformer.fit_transform(X)
+
+    delta = (X.max() - X.min()) / len(X)
+    tol = 10 * delta
+
+    dXt = Xt
+    # We expect splines of degree `degree` to be (`degree`-1) times
+    # continuously differentiable. I.e. for d = 0, ..., `degree` - 1 the d-th
+    # derivative should be continous. This is the case if the (d+1)-th
+    # numerical derivative is reasonably small (smaller than `tol` in absolute
+    # value). We thus compute d-th numeric derivatives for d = 1, ..., `degree`
+    # and compare them to `tol`.
+    #
+    # Note that the 0-th derivative is the function itself, such that we are
+    # also checking its continuity.
+    for d in range(1, degree + 1):
+        # Check continuity of the (d-1)-th derivative
+        diff = np.diff(dXt, axis=0)
+        assert np.abs(diff).max() < tol
+        # Compute d-th numeric derivative
+        dXt = diff / delta
+
+    # As degree `degree` splines are not `degree` times continously
+    # differentiable at the knots, the `degree + 1`-th numeric derivative
+    # should have spikes at the knots.
+    diff = np.diff(dXt, axis=0)
+    assert np.abs(diff).max() > 1
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
