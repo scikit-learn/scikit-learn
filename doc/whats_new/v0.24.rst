@@ -448,7 +448,7 @@ Changelog
 - |Fix| :class:`gaussian_process.GaussianProcessRegressor` raises division by
   zero standard when normalization is requested
   :pr:`19703` by :user:`<sobkevich>`,
-  :user:` Boris Villazón-Terrazas <boricles>` and
+  :user:`Boris Villazón-Terrazas <boricles>` and
   :user:`Alexandr Fonari <afonari>`.
 
 :mod:`sklearn.impute`
