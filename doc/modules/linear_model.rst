@@ -1468,7 +1468,7 @@ Another advantage of quantile regression over OLS is its robustness
 to outliers, because it is only the sign of an error that influences estimated
 coefficients, not its absolute value.
 
-Quantile loss function can be used with models other than linear. For example,
+Based on minimizing the pinball loss, conditional quantiles can also be estimated by models other than linear models. For example,
 :class:`GradientBoostingRegressor` can predict conditional quantiles
 if its parameter ``loss`` is set to ``"quantile"`` and parameter ``alpha`` is
 set to the quantile that should be predicted. See the example in
