@@ -33,10 +33,6 @@ Changelog
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
 
-- |Feature| Added :class:`linear_model.QuantileRegressor` which implements
-  linear quantile regression with L1 penalty.
-  :pr:`9978` by :user:`David Dale <avidale>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 

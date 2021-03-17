@@ -128,6 +128,10 @@ Changelog
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
 
+- |Feature| Added :class:`linear_model.QuantileRegressor` which implements
+  linear quantile regression with L1 penalty.
+  :pr:`9978` by :user:`David Dale <avidale>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -224,10 +228,10 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| Deprecated the default value of the `random_state=0` in 
+- |Enhancement| Deprecated the default value of the `random_state=0` in
   :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
   the default value of `random_state` will be set to `None`.
-  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
 :mod:`sklearn.calibration`
