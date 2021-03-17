@@ -327,7 +327,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     Xt = transformer.fit_transform(X)
 
     delta = (X.max() - X.min()) / len(X)
-    tol = 1e-2
+    tol = 10 * delta
 
     dXt = Xt
     # We expect splines of degree `degree` to be (`degree`-1) times
@@ -350,7 +350,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     # differentiable at the knots, the `degree + 1`-th numeric derivative
     # should have spikes at the knots.
     diff = np.diff(dXt, axis=0)
-    assert np.abs(diff).max() > 100 * tol
+    assert np.abs(diff).max() > 1
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
