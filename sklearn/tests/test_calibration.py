@@ -571,7 +571,6 @@ def test_calibration_attributes(clf, cv):
                                n_classes=2, random_state=7)
     if cv == 'prefit':
         clf = clf.fit(X, y)
-
     calib_clf = CalibratedClassifierCV(clf, cv=cv)
     calib_clf.fit(X, y)
 
