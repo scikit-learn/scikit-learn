@@ -33,6 +33,8 @@ from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight, _num_samples
+from .utils.validation import _num_features
+from .utils import _safe_indexing
 from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
@@ -143,6 +145,8 @@ class CalibratedClassifierCV(ClassifierMixin,
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
             or `ensemble=False`)
@@ -259,8 +263,20 @@ class CalibratedClassifierCV(ClassifierMixin,
                 check_is_fitted(self.base_estimator[-1])
             else:
                 check_is_fitted(self.base_estimator)
+            try:
+                self.n_features_in_ = _num_features(X)
+            except TypeError:
+                # X is not necessarily tabular as base_estimator might be able
+                # to accept non-tabular data.
+                pass
             with suppress(AttributeError):
-                self.n_features_in_ = base_estimator.n_features_in_
+                if self.n_features_in_ != base_estimator.n_features_in_:
+                    raise ValueError(
+                        f"Base estimator {base_estimator.__class__.__name__} "
+                        f"was prefit on {base_estimator.n_features_in_} "
+                        f"features but CalibratedClassifierCV is fit "
+                        f"with {self.n_features_in_} features."
+                    )
             self.classes_ = self.base_estimator.classes_
 
             pred_method = _get_prediction_method(base_estimator)
@@ -273,10 +289,6 @@ class CalibratedClassifierCV(ClassifierMixin,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
-            X, y = self._validate_data(
-                X, y, accept_sparse=['csc', 'csr', 'coo'],
-                force_all_finite=False, allow_nd=True
-            )
             # Set `classes_` using all `y`
             label_encoder_ = LabelEncoder().fit(y)
             self.classes_ = label_encoder_.classes_
@@ -337,6 +349,9 @@ class CalibratedClassifierCV(ClassifierMixin,
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
+            first_clf = next(iter(self.calibrated_classifiers_)).base_estimator
+            if hasattr(first_clf, "n_features_in_"):
+                self.n_features_in_ = first_clf.n_features_in_
         return self
 
     def predict_proba(self, X):
@@ -355,7 +370,6 @@ class CalibratedClassifierCV(ClassifierMixin,
             The predicted probas.
         """
         check_is_fitted(self)
-
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
         mean_proba = np.zeros((_num_samples(X), len(self.classes_)))
@@ -434,19 +448,21 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     -------
     calibrated_classifier : _CalibratedClassifier instance
     """
+    X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
+    X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
     if sample_weight is not None and supports_sw:
-        estimator.fit(X[train], y[train],
-                      sample_weight=sample_weight[train])
+        estimator.fit(X_train, y_train,
+                      sample_weight=_safe_indexing(sample_weight, train))
     else:
-        estimator.fit(X[train], y[train])
+        estimator.fit(X_train, y_train)
 
     n_classes = len(classes)
     pred_method = _get_prediction_method(estimator)
-    predictions = _compute_predictions(pred_method, X[test], n_classes)
+    predictions = _compute_predictions(pred_method, X_test, n_classes)
 
-    sw = None if sample_weight is None else sample_weight[test]
+    sw = None if sample_weight is None else _safe_indexing(sample_weight, test)
     calibrated_classifier = _fit_calibrator(
-        estimator, predictions, y[test], classes, method, sample_weight=sw
+        estimator, predictions, y_test, classes, method, sample_weight=sw
     )
     return calibrated_classifier
 

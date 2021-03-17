@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import pytest
+import re
 import numpy as np
 from numpy.testing import assert_allclose
 from scipy import sparse
@@ -14,6 +15,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_almost_equal,
                                     assert_array_equal,
                                     ignore_warnings)
+from sklearn.utils.validation import _num_features
 from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
@@ -547,9 +549,7 @@ def test_calibration_pipeline(text_data, text_data_pipeline):
     calib_clf.fit(X, y)
     # Check attributes are obtained from fitted estimator
     assert_array_equal(calib_clf.classes_, clf.classes_)
-    msg = "'CalibratedClassifierCV' object has no attribute"
-    with pytest.raises(AttributeError, match=msg):
-        calib_clf.n_features_in_
+    assert _num_features(X) == calib_clf.n_features_in_
 
     # Ensure that no error is thrown with predict and predict_proba
     calib_clf.predict(X)
@@ -576,6 +576,22 @@ def test_calibration_attributes(clf, cv):
         classes = LabelEncoder().fit(y).classes_
         assert_array_equal(calib_clf.classes_, classes)
         assert calib_clf.n_features_in_ == X.shape[1]
+
+
+def test_calibration_inconsistent_prefit_n_features_in():
+    # Check that `n_features_in_` from prefit base estimator
+    # is consistent with training set
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=2, random_state=7)
+    clf = LinearSVC(C=1).fit(X, y)
+    calib_clf = CalibratedClassifierCV(clf, cv='prefit')
+
+    msg = re.escape(
+        "Base estimator LinearSVC was prefit on 5 features "
+        "but CalibratedClassifierCV is fit with 3 features."
+    )
+    with pytest.raises(ValueError, match=msg):
+        calib_clf.fit(X[:, :3], y)
 
 
 # FIXME: remove in 1.1
