@@ -107,7 +107,7 @@ def test_kernel_pca_sparse():
         for kernel in ("linear", "rbf", "poly"):
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
-                             fit_inverse_transform=False)
+                             fit_inverse_transform=False, random_state=0)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
@@ -212,18 +212,21 @@ def test_kernel_pca_precomputed():
     X_pred = rng.random_sample((2, 4))
 
     for eigen_solver in ("dense", "arpack", "randomized"):
-        X_kpca = KernelPCA(4, eigen_solver=eigen_solver).\
-            fit(X_fit).transform(X_pred)
+        X_kpca = KernelPCA(
+            4, eigen_solver=eigen_solver, random_state=0
+        ).fit(X_fit).transform(X_pred)
+
         X_kpca2 = KernelPCA(
-            4, eigen_solver=eigen_solver, kernel='precomputed').fit(
-                np.dot(X_fit, X_fit.T)).transform(np.dot(X_pred, X_fit.T))
+            4, eigen_solver=eigen_solver, kernel='precomputed', random_state=0
+        ).fit(np.dot(X_fit, X_fit.T)).transform(np.dot(X_pred, X_fit.T))
 
         X_kpca_train = KernelPCA(
-            4, eigen_solver=eigen_solver,
-            kernel='precomputed').fit_transform(np.dot(X_fit, X_fit.T))
+            4, eigen_solver=eigen_solver, kernel='precomputed', random_state=0
+        ).fit_transform(np.dot(X_fit, X_fit.T))
+
         X_kpca_train2 = KernelPCA(
-            4, eigen_solver=eigen_solver, kernel='precomputed').fit(
-                np.dot(X_fit, X_fit.T)).transform(np.dot(X_fit, X_fit.T))
+            4, eigen_solver=eigen_solver, kernel='precomputed', random_state=0
+        ).fit(np.dot(X_fit, X_fit.T)).transform(np.dot(X_fit, X_fit.T))
 
         assert_array_almost_equal(np.abs(X_kpca),
                                   np.abs(X_kpca2))
@@ -379,23 +382,23 @@ def test_kernel_pca_solvers_equivalence(n_components):
 
     # Generate random data
     n_train, n_test = 2000, 100
-    np.random.seed(0)
-    X, _ = make_circles(n_samples=(n_train + n_test), factor=.3, noise=.05)
+    X, _ = make_circles(n_samples=(n_train + n_test), factor=.3, noise=.05,
+                        random_state=0)
     X_fit, X_pred = X[:n_train, :], X[n_train:, :]
 
     # reference (full)
-    ref_pred = KernelPCA(n_components, eigen_solver="dense")\
-        .fit(X_fit).transform(X_pred)
+    ref_pred = KernelPCA(n_components, eigen_solver="dense", random_state=0
+                         ).fit(X_fit).transform(X_pred)
 
     # arpack
-    a_pred = KernelPCA(n_components, eigen_solver="arpack")\
-        .fit(X_fit).transform(X_pred)
+    a_pred = KernelPCA(n_components, eigen_solver="arpack", random_state=0
+                       ).fit(X_fit).transform(X_pred)
     # check that the result is still correct despite the approx
     assert_array_almost_equal(np.abs(a_pred), np.abs(ref_pred))
 
     # randomized
-    r_pred = KernelPCA(n_components, eigen_solver="randomized")\
-        .fit(X_fit).transform(X_pred)
+    r_pred = KernelPCA(n_components, eigen_solver="randomized", random_state=0
+                       ).fit(X_fit).transform(X_pred)
     # check that the result is still correct despite the approximation
     assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
 
@@ -403,10 +406,16 @@ def test_kernel_pca_solvers_equivalence(n_components):
 @pytest.mark.parametrize("kernel",
                          ["linear", "poly", "rbf", "sigmoid", "cosine"])
 def test_kernel_pca_inverse_transform(kernel):
+    """
+    Makes sure that whatever the solver, transforming and then inverse
+    transforming the training set leads to the train set, if the
+    number of components is large enough.
+    """
     X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
                        random_state=0)
 
-    kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True)
+    kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True,
+                   random_state=0)
     X_trans = kp.fit_transform(X)
     X_inv = kp.inverse_transform(X_trans)
     assert_allclose(X, X_inv)

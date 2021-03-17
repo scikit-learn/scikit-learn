@@ -68,9 +68,9 @@ include_arpack = False  # set this to True to include arpack solver (slower)
 
 # 2- Generate random data
 # -----------------------
-np.random.seed(0)
 n_features = 2
-X, y = make_circles(n_samples=max_n_samples, factor=.3, noise=.05)
+X, y = make_circles(n_samples=max_n_samples, factor=.3, noise=.05,
+                    random_state=0)
 
 
 # 3- Benchmark

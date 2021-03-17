@@ -66,9 +66,9 @@ arpack_all = False  # set to True if you wish to run arpack for all n_compo
 
 # 2- Generate random data
 # -----------------------
-np.random.seed(0)
 n_features = 2
-X, y = make_circles(n_samples=(n_train + n_test), factor=.3, noise=.05)
+X, y = make_circles(n_samples=(n_train + n_test), factor=.3, noise=.05,
+                    random_state=0)
 X_train, X_test = X[:n_train, :], X[n_train:, :]
 
 
