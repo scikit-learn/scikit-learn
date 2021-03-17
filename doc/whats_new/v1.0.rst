@@ -172,7 +172,7 @@ Changelog
 .................................
 - |Fix| Fix ValueError triggered when setting the estimator as PLSRegression() in 
   :class: `sklearn._iterative.py: func: _impute_one_feature`
-  :pr:`19409` by :user:`Isaack Mungui <icky254>`.
+  :pr:`19409` by :user:`Isaack Mungui <isaack-mungui>`.
 
 Code and Documentation Contributors
 -----------------------------------
