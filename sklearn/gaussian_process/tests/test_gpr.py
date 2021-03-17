@@ -543,3 +543,17 @@ def test_bound_check_fixed_hyperparameter():
                         periodicity_bounds="fixed")  # seasonal component
     kernel = k1 + k2
     GaussianProcessRegressor(kernel=kernel).fit(X, y)
+
+
+@pytest.mark.parametrize('kernel', kernels)
+def test_constant_target(kernel):
+    # Test for constant target(s), the private _y_train_std attribute has
+    # a standard deviation of 1 instead of 0
+    gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+    # create a constant targets of 2
+    y = np.full((1, X.shape[0]), 2).ravel()
+    expected_std = np.full((1, X.shape[0]), 1).ravel()
+    gpr.fit(X, y)
+    _y_train_std = gpr._y_train_std
+
+    assert_array_equal(_y_train_std, expected_std)
