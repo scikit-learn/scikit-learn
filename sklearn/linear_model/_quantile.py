@@ -7,6 +7,7 @@ from scipy.optimize import linprog
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
+from ..exceptions import ConvergenceWarning
 from ..utils.validation import _check_sample_weight
 from ..utils.fixes import sp_version, parse_version
 
