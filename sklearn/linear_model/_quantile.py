@@ -163,14 +163,17 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             method=method,
             options=self.solver_options,
         )
+        solution = result.x
         if not result.success:
             warnings.warn(
                 'Linear programming for Quantile regression did not converge. '
-                'Status is {}'.format(result.status)
+                'Status is {}'.format(result.status), ConvergenceWarning
             )
+            if solution is np.nan:
+                solution = np.zeros(a_eq_matrix.shape[1])
 
-        params_pos = result.x[:n_params]
-        params_neg = result.x[n_params:2 * n_params]
+        params_pos = solution[:n_params]
+        params_neg = solution[n_params:2 * n_params]
         params = params_pos - params_neg
 
         self.n_iter_ = result.nit
@@ -185,3 +188,15 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         else:
             self.intercept_ = 0.0
         return self
+
+    def _more_tags(self):
+        if sp_version >= parse_version('1.0.0'):
+            return {}
+        return {
+            '_xfail_checks': {
+                'check_regressors_train':
+                'scipy.optimize.linprog is unstable in versions before 1.0.0',
+                'check_regressor_data_not_an_array':
+                'scipy.optimize.linprog is unstable in versions before 1.0.0',
+            }
+        }
