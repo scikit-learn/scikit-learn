@@ -10,7 +10,6 @@ from scipy.spatial.distance import cdist
 from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils.fixes import sp_version, parse_version
 
 
@@ -55,7 +54,19 @@ def test_cdist(metric):
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        D_true = cdist(X1, X2, metric, **kwargs)
+        if metric == "wminkowski":
+            if sp_version >= parse_version("1.8.0"):
+                pytest.skip("wminkowski will be removed in SciPy 1.8.0")
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if sp_version >= parse_version("1.6.0"):
+                ExceptionToAssert = DeprecationWarning
+            with pytest.warns(ExceptionToAssert):
+                D_true = cdist(X1, X2, metric, **kwargs)
+        else:
+            D_true = cdist(X1, X2, metric, **kwargs)
+
         check_cdist(metric, kwargs, D_true)
 
 
@@ -83,7 +94,19 @@ def test_pdist(metric):
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        D_true = cdist(X1, X1, metric, **kwargs)
+        if metric == "wminkowski":
+            if sp_version >= parse_version("1.8.0"):
+                pytest.skip("wminkowski will be removed in SciPy 1.8.0")
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if sp_version >= parse_version("1.6.0"):
+                ExceptionToAssert = DeprecationWarning
+            with pytest.warns(ExceptionToAssert):
+                D_true = cdist(X1, X1, metric, **kwargs)
+        else:
+            D_true = cdist(X1, X1, metric, **kwargs)
+
         check_pdist(metric, kwargs, D_true)
 
 
@@ -183,9 +206,9 @@ def test_bad_pyfunc_metric():
         return "1"
 
     X = np.ones((5, 2))
-    assert_raises_regex(TypeError,
-                        "Custom distance function must accept two vectors",
-                        BallTree, X, metric=wrong_distance)
+    msg = "Custom distance function must accept two vectors"
+    with pytest.raises(TypeError, match=msg):
+        BallTree(X, metric=wrong_distance)
 
 
 def test_input_data_size():

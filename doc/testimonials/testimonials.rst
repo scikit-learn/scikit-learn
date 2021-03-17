@@ -1108,3 +1108,44 @@ Michael Fitzke Next Generation Technologies Sr Leader, Mars Inc.
    </div>
    </div>
 
+
+`BNP Paribas Cardif <https://www.bnpparibascardif.com/>`_
+---------------------------------------------------------
+
+.. raw:: html
+
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
+
+BNP Paribas Cardif uses scikit-learn for several of its machine learning models
+in production. Our internal community of developers and data scientists has
+been using scikit-learn since 2015, for several reasons: the quality of the
+developments, documentation and contribution governance, and the sheer size of
+the contributing community. We even explicitly mention the use of
+scikit-learn's pipelines in our internal model risk governance as one of our
+good practices to decrease operational risks and overfitting risk. As a way to
+support open source software development and in particular scikit-learn
+project, we decided to participate to scikit-learn's consortium at La Fondation
+Inria since its creation in 2018.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Sébastien Conort, Chief Data Scientist, BNP Paribas Cardif
+
+.. raw:: html
+
+   </span>
+   </div>
+   <div class="sk-testimonial-div-box">
+
+.. image:: images/bnp_paribas_cardif.png
+    :width: 120pt
+    :align: center
+    :target: https://www.bnpparibascardif.com/
+
+.. raw:: html
+
+   </div>
+   </div>
