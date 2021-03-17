@@ -550,18 +550,28 @@ def test_constant_target(kernel):
     # Test for constant target(s), the private _y_train_std attribute has
     # a standard deviation of 1 instead of 0
     gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
-    # create a constant targets of 2
-    y = np.full((1, X.shape[0]), 2).ravel()
-    expected_std = np.full((1, X.shape[0]), 1).ravel()
+
+    # create a constant target of 1
+    y = np.ones(X.shape[0])
+    expected_std = np.ones(shape=X.shape[0])
     gpr.fit(X, y)
-    _y_train_std = gpr._y_train_std
 
-    assert_array_equal(_y_train_std, expected_std)
+    assert_array_equal(gpr._y_train_std, expected_std)
 
-    # Test that zero std is handled properly
-    y_with_zero_std = np.ones(X.shape[0])
-    gpr = GaussianProcessRegressor(normalize_y=True).fit(X, y_with_zero_std)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
 
-    assert_almost_equal(y_pred, y_with_zero_std)
+    assert_almost_equal(y_pred, y)
     assert_almost_equal(np.diag(y_cov), 0.)
+
+    # Test multi-target data
+
+    n_samples = X.shape[0]
+    rng = np.random.RandomState(0)
+    y = np.concatenate([
+        rng.normal(size=(n_samples, 1)),  # non-constant target
+        np.full(shape=(n_samples, 1), fill_value=2)  # constant target
+    ], axis=1)
+
+    # Ensure no tracebacks
+    gpr.fit(X, y)
+    gpr.predict(X)
