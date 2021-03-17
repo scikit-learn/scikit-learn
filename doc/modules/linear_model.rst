@@ -1453,7 +1453,7 @@ where
 and :math:`q \in (0, 1)` is the quantile to be estimated.
 
 Quantile regression may be useful if one is interested in predicting an interval
-instead of point prediction. Sometimes prediction interval is calculated based
+instead of point prediction. Sometimes, prediction intervals are calculated based
 on the assumption that prediction error is distributed normally with zero mean
 and constant variance. Quantile regression provides sensible prediction
 intervals even for errors with non-constant (but predictable) variance or
