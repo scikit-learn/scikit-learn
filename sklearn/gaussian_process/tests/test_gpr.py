@@ -21,9 +21,8 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils._testing \
     import (assert_array_less,
-            assert_almost_equal, assert_raise_message,
-            assert_array_almost_equal, assert_array_equal,
-            assert_allclose)
+            assert_almost_equal, assert_array_almost_equal,
+            assert_array_equal, assert_allclose)
 
 
 def f(x):
@@ -404,12 +403,15 @@ def test_gpr_correct_error_message():
     y = np.ones(6)
     kernel = DotProduct()
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
-    assert_raise_message(np.linalg.LinAlgError,
-                         "The kernel, %s, is not returning a "
-                         "positive definite matrix. Try gradually increasing "
-                         "the 'alpha' parameter of your "
-                         "GaussianProcessRegressor estimator."
-                         % kernel, gpr.fit, X, y)
+    message = (
+        "The kernel, %s, is not returning a "
+        "positive definite matrix. Try gradually increasing "
+        "the 'alpha' parameter of your "
+        "GaussianProcessRegressor estimator."
+        % kernel
+    )
+    with pytest.raises(np.linalg.LinAlgError, match=message):
+        gpr.fit(X, y)
 
 
 @pytest.mark.parametrize('kernel', kernels)
