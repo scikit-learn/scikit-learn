@@ -582,14 +582,6 @@ def test_calibration_attributes(clf, cv):
         assert_array_equal(calib_clf.classes_, classes)
         assert calib_clf.n_features_in_ == X.shape[1]
 
-    if cv == "prefit":
-        msg = (
-            "Base estimator LinearSVC was prefit on 5 features but "
-            "CalibratedClassifierCV is fit with 10 features."
-        )
-        with pytest.raises(ValueError, match=re.escape(msg)):
-            calib_clf.fit(np.concatenate([X, X], axis=1), y)
-
 
 def test_calibration_inconsistent_prefit_n_features_in():
     # Check that `n_features_in_` from prefit base estimator
