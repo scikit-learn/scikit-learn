@@ -305,11 +305,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
         y_mean : ndarray of shape (n_samples, [n_output_dims])
             Mean of predictive distribution a query points.
 
-        y_std : ndarray of shape (n_samples,), optional
+        y_std : ndarray of shape (n_samples, [n_output_dims]), optional
             Standard deviation of predictive distribution at query points.
             Only returned when `return_std` is True.
 
-        y_cov : ndarray of shape (n_samples, n_samples), optional
+        y_cov : ndarray of shape (n_samples, n_samples, [n_output_dims]), optional
             Covariance of joint predictive distribution a query points.
             Only returned when `return_cov` is True.
         """
@@ -352,7 +352,16 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
 
                 # undo normalisation
-                y_cov = y_cov * self._y_train_std**2
+                if (self._y_train_std.ndim==0):   # for single-target data
+                  y_cov = y_cov * self._y_train_std**2  
+                elif (self._y_train_std.ndim==1):   # for multitarget data
+                  y_cov_temp = y_cov.reshape((y_cov.shape[0], y_cov.shape[1], 1))
+                  y_cov = np.zeros((y_cov.shape[0], y_cov.shape[1], self._y_train_std.shape[0]))
+                  idx = 0
+                  for line in y_cov_temp:
+                    line = line * self._y_train_std**2
+                    y_cov[idx] = line
+                    idx += 1
 
                 return y_mean, y_cov
             elif return_std:
@@ -378,7 +387,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = y_var * self._y_train_std**2
+                if (self._y_train_std.ndim==0):   # for single-target data
+                  y_var = y_var * self._y_train_std**2  
+                  
+                elif (self._y_train_std.ndim==1):   # for multitarget data 
+                  y_var = y_var.reshape((-1,1))
+                  y_var = y_var * self._y_train_std**2
 
                 return y_mean, np.sqrt(y_var)
             else:
