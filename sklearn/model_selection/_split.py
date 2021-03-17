@@ -803,7 +803,7 @@ class StratifiedGroupKFold(_BaseKFold):
     The implementation is designed to:
 
     * Mimic the behavior of StratifiedKFold as much as possible for trivial
-      groups (e.g. when each group contain only one sample).
+      groups (e.g. when each group contains only one sample).
     * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
       ``y = [1, 0]`` should not change the indices generated.
     * Stratify based on samples as much as possible while keeping
