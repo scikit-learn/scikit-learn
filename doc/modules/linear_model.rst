@@ -1429,7 +1429,7 @@ Quantile Regression
 ===================
 
 Quantile regression estimates the median or other quantiles of :math:`y`
-conditional on :math:`X`, while OLS estimates conditional mean.
+conditional on :math:`X`, while OLS estimates the conditional mean.
 
 As a linear model, the :class:`QuantileRegressor` gives linear predictions :math:`\hat{y}(w, x) = Xw` for the specified ``quantile`` :math:`q \in (0, 1)`. The weights or coefficients :math:`w` are then found by the following minimization problem:
 
