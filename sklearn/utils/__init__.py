@@ -742,7 +742,6 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     Yields
     ------
     slice
-    
     See Also
     ------
     gen_batches: Generator to create slices containing batch_size elements
