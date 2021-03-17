@@ -13,5 +13,5 @@ contact_links:
     url: https://gitter.im/scikit-learn/scikit-learn
     about: Users and developers can sometimes be found on the gitter channel
   - name: Blank issue
-    url: https://github.com/scikit-learn/scikit-learn/issue/new
+    url: https://github.com/scikit-learn/scikit-learn/issues/new
     about: Github Discussions should be used in most cases, unless you know better
