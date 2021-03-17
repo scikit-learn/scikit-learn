@@ -1,4 +1,6 @@
 from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.cluster import OPTICS
+from sklearn.model_selection import GridSearchCV
 
 from .common import Benchmark, Estimator, Predictor, Transformer
 from .datasets import _blobs_dataset, _20newsgroups_highdim_dataset
@@ -88,6 +90,39 @@ class MiniBatchKMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
                                     random_state=0)
 
         return estimator
+
+    def make_scorers(self):
+        self.train_scorer = (
+            lambda _, __: neg_mean_inertia(self.X,
+                                           self.estimator.predict(self.X),
+                                           self.estimator.cluster_centers_))
+        self.test_scorer = (
+            lambda _, __: neg_mean_inertia(self.X_val,
+                                           self.estimator.predict(self.X_val),
+                                           self.estimator.cluster_centers_))
+
+
+class OPTICSGridSearchBenchmark(Predictor, Estimator, Benchmark):
+    def setup_cache(self):
+        super().setup_cache()
+
+    def make_data(self, params):
+        return _blobs_dataset(n_clusters=20)
+
+    def make_estimator(self, params):
+        optics = OPTICS(
+            metric="euclidean",
+            cluster_method="dbscan",
+            min_samples=10,
+        )
+        return GridSearchCV(
+            optics,
+            {
+                "eps": [0.1, 0.2, 0.3, 0.4, 0.5],
+            },
+            n_jobs=1,
+            cv=[(slice(None), slice(None))]
+        )
 
     def make_scorers(self):
         self.train_scorer = (
