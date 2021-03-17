@@ -1,13 +1,14 @@
 # Authors: David Dale dale.david@mail.ru
 # License: BSD 3 clause
-import scipy
+import warnings
+
 import numpy as np
-from packaging.version import parse
 from scipy.optimize import linprog
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
 from ..utils.validation import _check_sample_weight
+from ..utils.fixes import sp_version, parse_version
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
@@ -148,10 +149,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         method = self.solver
         if method == 'auto':
-            scipy_version = parse(scipy.__version__)
-            if scipy_version < parse('1.0.0'):
+            if sp_version < parse_version('1.0.0'):
                 method = 'simplex'
-            elif scipy_version < parse('1.6.0'):
+            elif sp_version < parse_version('1.6.0'):
                 method = 'interior-point'
             else:
                 method = 'highs'
@@ -161,8 +161,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             A_eq=a_eq_matrix,
             b_eq=b_eq_vector,
             method=method,
-            options=self.solver_options
+            options=self.solver_options,
         )
+        if not result.success:
+            warnings.warn(
+                'Linear programming for Quantile regression did not converge. '
+                'Status is {}'.format(result.status)
+            )
 
         params_pos = result.x[:n_params]
         params_neg = result.x[n_params:2 * n_params]
