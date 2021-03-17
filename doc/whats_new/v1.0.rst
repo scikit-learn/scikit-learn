@@ -113,6 +113,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
+  has been optimised for dense matrices when using `solver='newton-cg'` and
+  `multi_class!='multinomial'`.
+  :pr:`19571` by :user:`Julien Jerphanion <jjerphan>`.
+
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
@@ -164,6 +169,11 @@ Changelog
   :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
+
+- |Enhancement| A fix to raise an error in :func:`metrics.hinge_loss` when
+  ``pred_decision`` is 1d whereas it is a multiclass classification or when
+  ``pred_decision`` parameter is not consistent with the ``labels`` parameter.
+  :pr:`19643` by :user:`Pierre Attard <PierreAttard>`.
 
 - |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
@@ -220,6 +230,15 @@ Changelog
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| Deprecated the default value of the `random_state=0` in 
+  :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
+  the default value of `random_state` will be set to `None`.
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
 :mod:`sklearn.calibration`
 ............................
