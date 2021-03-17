@@ -6,10 +6,6 @@ from re import escape
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
@@ -35,6 +31,7 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn import svm
+from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 
 iris = datasets.load_iris()
@@ -47,22 +44,30 @@ n_classes = 3
 
 def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    assert_raises(ValueError, ovr.predict, [])
+
+    # test predicting without fitting
+    with pytest.raises(NotFittedError):
+        ovr.predict([])
 
     # Fail on multioutput data
-    assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
-                  np.array([[1, 0], [0, 1]]),
-                  np.array([[1, 2], [3, 1]]))
-    assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
-                  np.array([[1, 0], [0, 1]]),
-                  np.array([[1.5, 2.4], [3.1, 0.8]]))
+    msg = "Multioutput target data is not supported with label binarization"
+    with pytest.raises(ValueError, match=msg):
+        X = np.array([[1, 0], [0, 1]])
+        y = np.array([[1, 2], [3, 1]])
+        OneVsRestClassifier(MultinomialNB()).fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        X = np.array([[1, 0], [0, 1]])
+        y = np.array([[1.5, 2.4], [3.1, 0.8]])
+        OneVsRestClassifier(MultinomialNB()).fit(X, y)
 
 
 def test_check_classification_targets():
     # Test that check_classification_target return correct type. #5782
     y = np.array([0.0, 1.1, 2.0, 3.0])
     msg = type_of_target(y)
-    assert_raise_message(ValueError, msg, check_classification_targets, y)
+    with pytest.raises(ValueError, match=msg):
+        check_classification_targets(y)
 
 
 def test_ovr_fit_predict():
@@ -120,12 +125,12 @@ def test_ovr_partial_fit_exceptions():
     X = np.abs(np.random.randn(14, 2))
     y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
     ovr.partial_fit(X[:7], y[:7], np.unique(y))
-    # A new class value which was not in the first call of partial_fit
-    # It should raise ValueError
+    # If a new class that was not in the first call of partial fit is seen
+    # it should raise ValueError
     y1 = [5] + y[7:-1]
-    assert_raises_regexp(ValueError, r"Mini-batch contains \[.+\] while "
-                                     r"classes must be subset of \[.+\]",
-                         ovr.partial_fit, X=X[7:], y=y1)
+    msg = r"Mini-batch contains \[.+\] while classes must be subset of \[.+\]"
+    with pytest.raises(ValueError, match=msg):
+        ovr.partial_fit(X=X[7:], y=y1)
 
 
 def test_ovr_ovo_regressor():
@@ -201,7 +206,9 @@ def test_ovr_always_present():
     y[:, 2] = 1
 
     ovr = OneVsRestClassifier(LogisticRegression())
-    assert_warns(UserWarning, ovr.fit, X, y)
+    msg = r'Label .+ is present in all training examples'
+    with pytest.warns(UserWarning, match=msg):
+        ovr.fit(X, y)
     y_pred = ovr.predict(X)
     assert_array_equal(np.array(y_pred), np.array(y))
     y_pred = ovr.decision_function(X)
@@ -213,7 +220,10 @@ def test_ovr_always_present():
     y = np.zeros((10, 2))
     y[5:, 0] = 1  # variable label
     ovr = OneVsRestClassifier(LogisticRegression())
-    assert_warns(UserWarning, ovr.fit, X, y)
+
+    msg = r'Label not 1 is present in all training examples'
+    with pytest.warns(UserWarning, match=msg):
+        ovr.fit(X, y)
     y_pred = ovr.predict_proba(X)
     assert_array_equal(y_pred[:, -1], np.zeros(X.shape[0]))
 
@@ -266,7 +276,7 @@ def test_ovr_binary():
             probabilities = clf.predict_proba(X_test)
             assert 2 == len(probabilities[0])
             assert (clf.classes_[np.argmax(probabilities, axis=1)] ==
-                         clf.predict(X_test))
+                    clf.predict(X_test))
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
@@ -389,8 +399,8 @@ def test_ovr_single_label_predict_proba():
 
     assert_almost_equal(Y_proba.sum(axis=1), 1.0)
     # predict assigns a label if the probability that the
-    # sample has the label is greater than 0.5.
-    pred = np.array([l.argmax() for l in Y_proba])
+    # sample has the label with the greatest predictive probability.
+    pred = Y_proba.argmax(axis=1)
     assert not (pred - Y_pred).any()
 
 
@@ -458,7 +468,7 @@ def test_ovr_coef_():
             assert shape[1] == iris.data.shape[1]
             # don't densify sparse coefficients
             assert (sp.issparse(ovr.estimators_[0].coef_) ==
-                         sp.issparse(ovr.coef_))
+                    sp.issparse(ovr.coef_))
 
 
 # TODO: Remove this test in version 1.1
@@ -467,13 +477,16 @@ def test_ovr_coef_():
 def test_ovr_coef_exceptions():
     # Not fitted exception!
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    # lambda is needed because we don't want coef_ to be evaluated right away
-    assert_raises(ValueError, lambda x: ovr.coef_, None)
+
+    with pytest.raises(NotFittedError):
+        ovr.coef_
 
     # Doesn't have coef_ exception!
     ovr = OneVsRestClassifier(DecisionTreeClassifier())
     ovr.fit(iris.data, iris.target)
-    assert_raises(AttributeError, lambda x: ovr.coef_, None)
+    msg = "Base estimator doesn't have a coef_ attribute"
+    with pytest.raises(AttributeError, match=msg):
+        ovr.coef_
 
 
 # TODO: Remove this test in version 1.1 when
@@ -494,7 +507,8 @@ def test_ovr_deprecated_coef_intercept():
 
 def test_ovo_exceptions():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
-    assert_raises(ValueError, ovo.predict, [])
+    with pytest.raises(NotFittedError):
+        ovo.predict([])
 
 
 def test_ovo_fit_on_list():
@@ -563,8 +577,8 @@ def test_ovo_partial_fit_predict():
     message_re = escape("Mini-batch contains {0} while "
                         "it must be subset of {1}".format(np.unique(error_y),
                                                           np.unique(y)))
-    assert_raises_regexp(ValueError, message_re, ovo.partial_fit, X[:7],
-                         error_y, np.unique(y))
+    with pytest.raises(ValueError, match=message_re):
+        ovo.partial_fit(X[:7], error_y, np.unique(y))
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsOneClassifier(SVC())
@@ -682,7 +696,9 @@ def test_ovo_one_class():
     y = np.array(['a'] * 4)
 
     ovo = OneVsOneClassifier(LinearSVC())
-    assert_raise_message(ValueError, "when only one class", ovo.fit, X, y)
+    msg = "when only one class"
+    with pytest.raises(ValueError, match=msg):
+        ovo.fit(X, y)
 
 
 def test_ovo_float_y():
@@ -691,12 +707,15 @@ def test_ovo_float_y():
     y = iris.data[:, 0]
 
     ovo = OneVsOneClassifier(LinearSVC())
-    assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
+    msg = "Unknown label type"
+    with pytest.raises(ValueError, match=msg):
+        ovo.fit(X, y)
 
 
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
-    assert_raises(ValueError, ecoc.predict, [])
+    with pytest.raises(NotFittedError):
+        ecoc.predict([])
 
 
 def test_ecoc_fit_predict():
@@ -728,10 +747,14 @@ def test_ecoc_float_y():
     y = iris.data[:, 0]
 
     ovo = OutputCodeClassifier(LinearSVC())
-    assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
+    msg = "Unknown label type"
+    with pytest.raises(ValueError, match=msg):
+        ovo.fit(X, y)
+
     ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
-    assert_raise_message(ValueError, "code_size should be greater than 0,"
-                         " got -1", ovo.fit, X, y)
+    msg = "code_size should be greater than 0, got -1"
+    with pytest.raises(ValueError, match=msg):
+        ovo.fit(X, y)
 
 
 def test_ecoc_delegate_sparse_base_estimator():
@@ -773,7 +796,7 @@ def test_pairwise_indices():
 
     for idx in precomputed_indices:
         assert (idx.shape[0] * n_estimators / (n_estimators - 1) ==
-                     linear_kernel.shape[0])
+                linear_kernel.shape[0])
 
 
 @ignore_warnings(category=FutureWarning)

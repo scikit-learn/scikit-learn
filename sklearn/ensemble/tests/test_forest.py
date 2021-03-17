@@ -1476,3 +1476,39 @@ def test_little_tree_with_small_max_samples(ForestClass):
 
     msg = "Tree without `max_samples` restriction should have more nodes"
     assert tree1.node_count > tree2.node_count, msg
+
+
+# FIXME: remove in 1.2
+@pytest.mark.parametrize(
+    "Estimator",
+    [ExtraTreesClassifier, ExtraTreesRegressor,
+     RandomForestClassifier, RandomForestRegressor,
+     RandomTreesEmbedding]
+)
+def test_n_features_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `n_features_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+        est.n_features_
+
+
+@pytest.mark.parametrize('Forest', FOREST_REGRESSORS)
+def test_mse_criterion_object_segfault_smoke_test(Forest):
+    # This is a smoke test to ensure that passing a mutable criterion
+    # does not cause a segfault when fitting with concurrent threads.
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/12623
+    from sklearn.tree._criterion import MSE
+
+    y = y_reg.reshape(-1, 1)
+    n_samples, n_outputs = y.shape
+    mse_criterion = MSE(n_outputs, n_samples)
+    est = FOREST_REGRESSORS[Forest](
+        n_estimators=2, n_jobs=2, criterion=mse_criterion
+    )
+
+    est.fit(X_reg, y)
