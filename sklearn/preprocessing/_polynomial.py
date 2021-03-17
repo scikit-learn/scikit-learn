@@ -19,13 +19,13 @@ __all__ = [
 
 # TODO:
 # - sparse support (either scipy or own cython solution)?
-# - extrapolation (cyclic)
 class SplineTransformer(TransformerMixin, BaseEstimator):
     """Generate univariate B-spline bases for features.
 
     Generate a new feature matrix consisting of
-    `n_splines=n_knots + degree - 1` spline basis functions (B-splines) of
-    polynomial order=`degree` for each feature.
+    `n_splines=n_knots + degree - 1` (`n_knots - 1` for
+    `extrapolation="periodic"`) spline basis functions
+    (B-splines) of polynomial order=`degree` for each feature.
 
     Read more in the :ref:`User Guide <spline_transformer>`.
 
@@ -54,14 +54,21 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
           `degree` number of knots are added before the first knot, the same
           after the last knot.
 
-    extrapolation : {'error', 'constant', 'linear', 'continue'}, \
+    extrapolation : {'error', 'constant', 'linear', 'continue', 'periodic'}, \
         default='constant'
         If 'error', values outside the min and max values of the training
         features raises a `ValueError`. If 'constant', the value of the
         splines at minimum and maximum value of the features is used as
         constant extrapolation. If 'linear', a linear extrapolation is used.
         If 'continue', the splines are extrapolated as is, i.e. option
-        `extrapolate=True` in :class:`scipy.interpolate.BSpline`.
+        `extrapolate=True` in :class:`scipy.interpolate.BSpline`. If
+        'periodic', periodic splines with a periodicity equal to the distance
+        between the first and last knot are used. Periodic splines enforce
+        equal function values and derivatives at the first and last knot.
+        For example, this makes it possible to avoid introducing an arbitrary
+        jump between Dec 31st and Jan 1st in spline features derived from a
+        naturally periodic "day-of-year" input feature. In this case it is
+        recommended to manually set the knot values to control the period.
 
     include_bias : bool, default=True
         If True (default), then the last spline element inside the data range
@@ -84,7 +91,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     n_features_out_ : int
         The total number of output features, which is computed as
         `n_features * n_splines`, where `n_splines` is
-        the number of bases elements of the B-splines, `n_knots + degree - 1`.
+        the number of bases elements of the B-splines,
+        `n_knots + degree - 1` for non-periodic splines and
+        `n_knots - 1` for periodic ones.
         If `include_bias=False`, then it is only
         `n_features * (n_splines - 1)`.
 
@@ -235,7 +244,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 X, n_knots=self.n_knots, knots=self.knots
             )
         else:
-            base_knots = check_array(self.knots)
+            base_knots = check_array(self.knots, dtype=np.float64)
             if base_knots.shape[0] < 2:
                 raise ValueError(
                     "Number of knots, knots.shape[0], must be >= " "2."
@@ -250,10 +259,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             "constant",
             "linear",
             "continue",
+            "periodic",
         ):
             raise ValueError(
                 "extrapolation must be one of 'error', "
-                "'constant', 'linear' or 'continue'."
+                "'constant', 'linear', 'continue' or 'periodic'."
             )
 
         if not isinstance(self.include_bias, (bool, np.bool_)):
@@ -261,44 +271,74 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         # number of knots for base interval
         n_knots = base_knots.shape[0]
+
+        if self.extrapolation == "periodic" and n_knots <= self.degree:
+            raise ValueError(
+                "Periodic splines require degree < n_knots. Got n_knots="
+                f"{n_knots} and degree={self.degree}."
+            )
+
         # number of splines basis functions
-        n_splines = n_knots + self.degree - 1
+        if self.extrapolation != "periodic":
+            n_splines = n_knots + self.degree - 1
+        else:
+            # periodic splines have self.degree less degrees of freedom
+            n_splines = n_knots - 1
+
         degree = self.degree
         n_out = n_features * n_splines
         # We have to add degree number of knots below, and degree number knots
         # above the base knots in order to make the spline basis complete.
-        # Eilers & Marx in "Flexible smoothing with B-splines and  penalties"
-        # https://doi.org/10.1214/ss/1038425655 advice against repeating first
-        # and last knot several times, which would have inferior behaviour at
-        # boundaries if combined with a penalty (hence P-Spline). We follow
-        # this advice even if our splines are unpenalized.
-        # Meaning we do not:
-        # knots = np.r_[np.tile(base_knots.min(axis=0), reps=[degree, 1]),
-        #              base_knots,
-        #              np.tile(base_knots.max(axis=0), reps=[degree, 1])
-        #              ]
-        # Instead, we reuse the distance of the 2 fist/last knots.
-        dist_min = base_knots[1] - base_knots[0]
-        dist_max = base_knots[-1] - base_knots[-2]
-        knots = np.r_[
-            linspace(
-                base_knots[0] - degree * dist_min,
-                base_knots[0] - dist_min,
-                num=degree,
-            ),
-            base_knots,
-            linspace(
-                base_knots[-1] + dist_max,
-                base_knots[-1] + degree * dist_max,
-                num=degree,
-            ),
-        ]
+        if self.extrapolation == "periodic":
+            # For periodic splines the spacing of the first / last degree knots
+            # needs to be a continuation of the spacing of the last / first
+            # base knots.
+            period = base_knots[-1] - base_knots[0]
+            knots = np.r_[
+                base_knots[-(degree + 1): -1] - period,
+                base_knots,
+                base_knots[1: (degree + 1)] + period
+            ]
+
+        else:
+            # Eilers & Marx in "Flexible smoothing with B-splines and
+            # penalties" https://doi.org/10.1214/ss/1038425655 advice
+            # against repeating first and last knot several times, which
+            # would have inferior behaviour at boundaries if combined with
+            # a penalty (hence P-Spline). We follow this advice even if our
+            # splines are unpenalized. Meaning we do not:
+            # knots = np.r_[
+            #     np.tile(base_knots.min(axis=0), reps=[degree, 1]),
+            #     base_knots,
+            #     np.tile(base_knots.max(axis=0), reps=[degree, 1])
+            # ]
+            # Instead, we reuse the distance of the 2 fist/last knots.
+            dist_min = base_knots[1] - base_knots[0]
+            dist_max = base_knots[-1] - base_knots[-2]
+
+            knots = np.r_[
+                linspace(
+                    base_knots[0] - degree * dist_min,
+                    base_knots[0] - dist_min,
+                    num=degree,
+                ),
+                base_knots,
+                linspace(
+                    base_knots[-1] + dist_max,
+                    base_knots[-1] + degree * dist_max,
+                    num=degree,
+                ),
+            ]
 
         # With a diagonal coefficient matrix, we get back the spline basis
         # elements, i.e. the design matrix of the spline.
         # Note, BSpline appreciates C-contiguous float64 arrays as c=coef.
-        coef = np.eye(n_knots + self.degree - 1, dtype=np.float64)
-        extrapolate = self.extrapolation == "continue"
+        coef = np.eye(n_splines, dtype=np.float64)
+        if self.extrapolation == "periodic":
+            coef = np.concatenate((coef, coef[:degree, :]))
+
+        extrapolate = self.extrapolation in ["periodic", "continue"]
+
         bsplines = [
             BSpline.construct_fast(
                 knots[:, i], coef, self.degree, extrapolate=extrapolate
@@ -331,7 +371,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         )
 
         n_samples, n_features = X.shape
-        n_splines = self.bsplines_[0].c.shape[0]
+        n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
         # Note that scipy BSpline returns float64 arrays and converts input
@@ -346,8 +386,23 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             spl = self.bsplines_[i]
 
-            if self.extrapolation in ("continue", "error"):
-                XBS[:, (i * n_splines):((i + 1) * n_splines)] = spl(X[:, i])
+            if self.extrapolation in ("continue", "error", "periodic"):
+
+                if self.extrapolation == "periodic":
+                    # With periodic extrapolation we map x to the segment
+                    # [spl.t[k], spl.t[n]].
+                    # This is equivalent to BSpline(.., extrapolate="periodic")
+                    # for scipy>=1.0.0.
+                    n = spl.t.size - spl.k - 1
+                    # Assign to new array to avoid inplace operation
+                    x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
+                        spl.t[n] - spl.t[spl.k]
+                    )
+                else:
+                    x = X[:, i]
+
+                XBS[:, (i * n_splines):((i + 1) * n_splines)] = spl(x)
+
             else:
                 xmin = spl.t[degree]
                 xmax = spl.t[-degree - 1]
