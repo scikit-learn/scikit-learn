@@ -395,7 +395,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 @_deprecate_positional_args
 def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
                       power_iteration_normalizer='auto',
-                      selection='module', random_state=0):
+                      selection='module', random_state=None):
     """Computes a truncated eigendecomposition using randomized methods
 
     The choice of components to select can be tuned with the `selection`
