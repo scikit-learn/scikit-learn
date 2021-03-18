@@ -1679,8 +1679,8 @@ def test_ocsvm_vs_sgdocsvm():
     y_pred_sgdocsvm = pipe_sgd.predict(X_test)
     dec_sgdocsvm = pipe_sgd.decision_function(X_test).reshape(1, -1)
 
-    corrcoef = np.corrcoef(np.concatenate((dec_ocsvm, dec_sgdocsvm)))[0, 1]
     assert np.mean(y_pred_sgdocsvm == y_pred_ocsvm) >= 0.99
+    corrcoef = np.corrcoef(np.concatenate((dec_ocsvm, dec_sgdocsvm)))[0, 1]
     assert corrcoef >= 0.9
 
 
