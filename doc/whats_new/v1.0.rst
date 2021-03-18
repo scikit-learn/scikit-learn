@@ -68,6 +68,9 @@ Changelog
   `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
   :user:`EL-ATEIF Sara <elateifsara>`.
 
+- |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
+  when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
