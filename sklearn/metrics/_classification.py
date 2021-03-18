@@ -686,8 +686,8 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {None, 'micro', 'macro', 'samples', 'weighted', \
-            'binary'}, default='binary'
+    average : {'micro', 'macro', 'samples', 'weighted', \
+            'binary'} or None, default='binary'
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
