@@ -814,6 +814,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=should_copy,
                      check_input=check_input, sample_weight=sample_weight)
+        
+        # When y was passed as a 1d-array, we flatten the coefficients.
+        ravel = (y.ndim == 1)
+
         # coordinate descent needs F-ordered arrays and _pre_fit might have
         # called _rescale_data
         if check_input or sample_weight is not None:
@@ -863,11 +867,14 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
-            self.coef_ = coef_[0]
             self.dual_gap_ = dual_gaps_[0]
         else:
-            self.coef_ = coef_
             self.dual_gap_ = dual_gaps_
+
+        if ravel:
+            coef_ = coef_[0]
+        self.coef_ = coef_
+
 
         self._set_intercept(X_offset, y_offset, X_scale)
 
