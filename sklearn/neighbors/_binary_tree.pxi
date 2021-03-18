@@ -1323,11 +1323,11 @@ cdef class BinaryTree:
         i    : if return_distance == False
         (d,i) : if return_distance == True
 
-        d : ndarray of shape X.shape[:-1] + k, dtype=double
+        d : ndarray of shape X.shape[:-1] + (k,), dtype=double
             Each entry gives the list of distances to the neighbors of the
             corresponding point.
 
-        i : ndarray of shape X.shape[:-1] + k, dtype=int
+        i : ndarray of shape X.shape[:-1] + (k,), dtype=int
             Each entry gives the list of indices of neighbors of the
             corresponding point.
         """
