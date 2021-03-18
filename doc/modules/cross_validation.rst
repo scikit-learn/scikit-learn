@@ -353,7 +353,7 @@ Example of 2-fold cross-validation on a dataset with 4 samples::
 Here is a visualization of the cross-validation behavior. Note that
 :class:`KFold` is not affected by classes or groups.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_004.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_006.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -509,7 +509,7 @@ Here is a usage example::
 Here is a visualization of the cross-validation behavior. Note that
 :class:`ShuffleSplit` is not affected by classes or groups.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_006.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_008.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -566,7 +566,7 @@ We can see that :class:`StratifiedKFold` preserves the class ratios
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_009.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -585,7 +585,7 @@ percentage for each target class as in the complete set.
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_009.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_012.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -645,7 +645,7 @@ size due to the imbalance in the data.
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_005.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -778,7 +778,7 @@ Here is a usage example::
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_008.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_011.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -880,7 +880,7 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_010.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_013.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
