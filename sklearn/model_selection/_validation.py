@@ -351,18 +351,18 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
         Similar to :func:`cross_validate`
         but only a single metric is permitted.
 
-        If None, the estimator's default scorer (if available) is used.
+        If ``None``, the estimator's default scorer (if available) is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
+        - ``None``, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For int/None inputs, if the estimator is a classifier and ``y`` is
+        For ``int``/``None`` inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
@@ -370,7 +370,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            ``cv`` default value if ``None`` changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
@@ -391,7 +391,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
+            - ``None``, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
