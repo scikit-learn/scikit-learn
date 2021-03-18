@@ -1391,7 +1391,8 @@ class NMF(TransformerMixin, BaseEstimator):
                 'Invalid regularization parameter: got %r instead of '
                 'one of %r' % (self.regularization, allowed_regularization))
 
-        # 'mu' is the only solver that handles other beta losses than 'frobenius'
+        # 'mu' is the only solver that handles other beta losses
+        # than 'frobenius'
         if self.solver != 'mu' and self.beta_loss not in (2, 'frobenius'):
             raise ValueError(
                 'Invalid beta_loss parameter: solver %r does not handle '
