@@ -1,3 +1,8 @@
+"""We can not use pytest here, because we run
+build_tools/azure/test_pytest_soft_dependency.sh on these
+tests to make sure estimator_checks works without pytest.
+"""
+
 import unittest
 import sys
 
@@ -5,11 +10,11 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-import pytest
-
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
+    assert_raises,
+    assert_raises_regex,
     assert_warns,
     ignore_warnings,
     MinimalClassifier,
@@ -409,8 +414,7 @@ def test_not_an_array_array_function():
         raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
-    with pytest.raises(TypeError, match=msg):
-        np.sum(not_array)
+    assert_raises_regex(TypeError, msg, np.sum, not_array)
     # always returns True
     assert np.may_share_memory(not_array, None)
 
@@ -434,93 +438,92 @@ def test_check_estimator():
 
     # check that we have a set_params and can clone
     msg = "Passing a class was deprecated"
-    with pytest.raises(TypeError, match=msg):
-        check_estimator(object)
+    assert_raises_regex(TypeError, msg, check_estimator, object)
     msg = (
         "Parameter 'p' of estimator 'HasMutableParameters' is of type "
         "object which is not allowed"
     )
     # check that the "default_constructible" test checks for mutable parameters
     check_estimator(HasImmutableParameters())  # should pass
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(HasMutableParameters())
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, HasMutableParameters()
+    )
     # check that values returned by get_params match set_params
     msg = "get_params result does not match what was passed to set_params"
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(ModifiesValueInsteadOfRaisingError())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        ModifiesValueInsteadOfRaisingError())
     assert_warns(UserWarning, check_estimator, RaisesErrorInSetParams())
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(ModifiesAnotherValue())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        ModifiesAnotherValue())
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
-    with pytest.raises(AttributeError, match=msg):
-        check_estimator(BaseEstimator())
+    assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
     msg = "Did not raise"
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(BaseBadClassifier())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
     try:
         from pandas import Series  # noqa
         msg = ("Estimator NoSampleWeightPandasSeriesType raises error if "
                "'sample_weight' parameter is of type pandas.Series")
-        with pytest.raises(ValueError, match=msg):
-            check_estimator(NoSampleWeightPandasSeriesType())
+        assert_raises_regex(
+            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType())
     except ImportError:
         pass
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(NoCheckinPredict())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        NoCheckinPredict())
     # check that estimator state does not change
     # at transform/predict/predict_proba time
     msg = 'Estimator changes __dict__ during predict'
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(ChangesDict())
+    assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict())
     # check that `fit` only changes attribures that
     # are private (start with an _ or end with a _).
     msg = ('Estimator ChangesWrongAttribute should not change or mutate  '
            'the parameter wrong_attribute from 0 to 1 during fit.')
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(ChangesWrongAttribute())
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, ChangesWrongAttribute())
     check_estimator(ChangesUnderscoreAttribute())
     # check that `fit` doesn't add any public attribute
     msg = (r'Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(SetsWrongAttribute())
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, SetsWrongAttribute())
     # check for sample order invariance
     name = NotInvariantSampleOrder.__name__
     method = 'predict'
     msg = ("{method} of {name} is not invariant when applied to a dataset"
            "with different sample order.").format(method=method, name=name)
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(NotInvariantSampleOrder())
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, NotInvariantSampleOrder())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = 'predict'
     msg = ("{method} of {name} is not invariant when applied "
            "to a subset.").format(method=method, name=name)
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(NotInvariantPredict())
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, NotInvariantPredict())
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(NoSparseClassifier())
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, NoSparseClassifier()
+    )
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
            r'support \S{3}_64 matrix, and is not failing gracefully.*')
-    with pytest.raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        LargeSparseNotSupportedClassifier())
 
     # does error on binary_only untagged estimator
     msg = 'Only 2 classes are supported'
-    with pytest.raises(ValueError, match=msg):
-        check_estimator(UntaggedBinaryClassifier())
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        UntaggedBinaryClassifier())
 
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())
@@ -535,8 +538,8 @@ def test_check_estimator():
 
     # Check regressor with requires_positive_y estimator tag
     msg = 'negative y values not supported!'
-    with pytest.raises(ValueError, match=msg):
-        check_estimator(RequiresPositiveYRegressor())
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        RequiresPositiveYRegressor())
 
     # Does not raise error on classifier with poor_score tag
     check_estimator(PoorScoreLogisticRegression())
@@ -545,8 +548,7 @@ def test_check_estimator():
 def test_check_outlier_corruption():
     # should raise AssertionError
     decision = np.array([0., 1., 1.5, 2.])
-    with pytest.raises(AssertionError):
-        check_outlier_corruption(1, 2, decision)
+    assert_raises(AssertionError, check_outlier_corruption, 1, 2, decision)
     # should pass
     decision = np.array([0., 1., 1., 2.])
     check_outlier_corruption(1, 2, decision)
@@ -554,8 +556,8 @@ def test_check_outlier_corruption():
 
 def test_check_estimator_transformer_no_mixin():
     # check that TransformerMixin is not required for transformer tests to run
-    with pytest.raises(AttributeError, match='.*fit_transform.*'):
-        check_estimator(BadTransformerWithoutMixin())
+    assert_raises_regex(AttributeError, '.*fit_transform.*',
+                        check_estimator, BadTransformerWithoutMixin())
 
 
 def test_check_estimator_clones():
@@ -592,8 +594,8 @@ def test_check_estimators_unfitted():
     # check that a ValueError/AttributeError is raised when calling predict
     # on an unfitted estimator
     msg = "Did not raise"
-    with pytest.raises(AssertionError, match=msg):
-        check_estimators_unfitted("estimator", NoSparseClassifier())
+    assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
+                        "estimator", NoSparseClassifier())
 
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
@@ -609,21 +611,19 @@ def test_check_no_attributes_set_in_init():
         def __init__(self, you_should_set_this_=None):
             pass
 
-    msg = (
-        "Estimator estimator_name should not set any"
-        " attribute apart from parameters during init."
-        r" Found attributes \['you_should_not_set_this_'\]."
-    )
-    with pytest.raises(AssertionError, match=msg):
-        check_no_attributes_set_in_init('estimator_name',
-                                        NonConformantEstimatorPrivateSet())
-    msg = (
-        "Estimator estimator_name should store all "
-        "parameters as an attribute during init."
-    )
-    with pytest.raises(AttributeError, match=msg):
-        check_no_attributes_set_in_init('estimator_name',
-                                        NonConformantEstimatorNoParamSet())
+    assert_raises_regex(AssertionError,
+                        "Estimator estimator_name should not set any"
+                        " attribute apart from parameters during init."
+                        r" Found attributes \['you_should_not_set_this_'\].",
+                        check_no_attributes_set_in_init,
+                        'estimator_name',
+                        NonConformantEstimatorPrivateSet())
+    assert_raises_regex(AttributeError,
+                        "Estimator estimator_name should store all "
+                        "parameters as an attribute during init.",
+                        check_no_attributes_set_in_init,
+                        'estimator_name',
+                        NonConformantEstimatorNoParamSet())
 
 
 def test_check_estimator_pairwise():
@@ -640,32 +640,32 @@ def test_check_estimator_pairwise():
 
 
 def test_check_classifier_data_not_an_array():
-    msg = 'Not equal to tolerance'
-    with pytest.raises(AssertionError, match=msg):
-        check_classifier_data_not_an_array(
-            'estimator_name',
-            EstimatorInconsistentForPandas()
-        )
+    assert_raises_regex(AssertionError,
+                        'Not equal to tolerance',
+                        check_classifier_data_not_an_array,
+                        'estimator_name',
+                        EstimatorInconsistentForPandas())
 
 
 def test_check_regressor_data_not_an_array():
-    msg = 'Not equal to tolerance'
-    with pytest.raises(AssertionError, match=msg):
-        check_regressor_data_not_an_array(
-            'estimator_name',
-            EstimatorInconsistentForPandas()
-        )
+    assert_raises_regex(AssertionError,
+                        'Not equal to tolerance',
+                        check_regressor_data_not_an_array,
+                        'estimator_name',
+                        EstimatorInconsistentForPandas())
 
 
 def test_check_estimator_get_tags_default_keys():
     estimator = EstimatorMissingDefaultTags()
     err_msg = (r"EstimatorMissingDefaultTags._get_tags\(\) is missing entries"
                r" for the following default tags: {'allow_nan'}")
-    with pytest.raises(AssertionError, match=err_msg):
-        check_estimator_get_tags_default_keys(
-            estimator.__class__.__name__,
-            estimator
-        )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_estimator_get_tags_default_keys,
+        estimator.__class__.__name__,
+        estimator,
+    )
 
     # noop check when _get_tags is not available
     estimator = MinimalTransformer()
@@ -689,15 +689,12 @@ def run_tests_without_pytest():
 
 def test_check_class_weight_balanced_linear_classifier():
     # check that ill-computed balanced weights raises an exception
-    msg = (
-        "Classifier estimator_name is not computing "
-        "class_weight=balanced properly."
-    )
-    with pytest.raises(AssertionError, match=msg):
-        check_class_weight_balanced_linear_classifier(
-            'estimator_name',
-            BadBalancedWeightsClassifier
-        )
+    assert_raises_regex(AssertionError,
+                        "Classifier estimator_name is not computing"
+                        " class_weight=balanced properly.",
+                        check_class_weight_balanced_linear_classifier,
+                        'estimator_name',
+                        BadBalancedWeightsClassifier)
 
 
 def test_all_estimators_all_public():
