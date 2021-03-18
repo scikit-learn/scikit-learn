@@ -90,23 +90,22 @@ outliers_fraction = 0.15
 n_outliers = int(outliers_fraction * n_samples)
 n_inliers = n_samples - n_outliers
 
-# define outlier/anomaly detection methods to be compared
+# define outlier/anomaly detection methods to be compared.
+# the SGDOneClassSVM must be used in a pipeline with a kernel approximation
+# to give similar results to the OneClassSVM
 anomaly_algorithms = [
     ("Robust covariance", EllipticEnvelope(contamination=outliers_fraction)),
     ("One-Class SVM", svm.OneClassSVM(nu=outliers_fraction, kernel="rbf",
                                       gamma=0.1)),
+    ("One-Class SVM (SGD)", make_pipeline(
+        Nystroem(gamma=0.1, random_state=42, n_components=150),
+        SGDOneClassSVM(nu=outliers_fraction, shuffle=True,
+                       fit_intercept=True, random_state=42, tol=1e-6)
+    )),
     ("Isolation Forest", IsolationForest(contamination=outliers_fraction,
                                          random_state=42)),
     ("Local Outlier Factor", LocalOutlierFactor(
         n_neighbors=35, contamination=outliers_fraction))]
-# SGDOneClassSVM must be used with a kernel approximation to give similar
-# results to the OneClassSVM
-transform = Nystroem(gamma=0.1, random_state=42, n_components=150)
-clf_sgd = SGDOneClassSVM(nu=outliers_fraction, shuffle=True,
-                         fit_intercept=True, random_state=42, tol=1e-6)
-pipe_sgd = make_pipeline(transform, clf_sgd)
-anomaly_algorithms.insert(2, ("One-Class SVM (SGD)", pipe_sgd))
-
 
 # Define datasets
 blobs_params = dict(random_state=0, n_samples=n_inliers, n_features=2)
