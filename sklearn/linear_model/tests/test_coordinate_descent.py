@@ -19,8 +19,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
@@ -646,7 +644,13 @@ def test_lasso_alpha_warning():
     Y = [-1, 0, 1]       # just a straight line
 
     clf = Lasso(alpha=0)
-    assert_warns(UserWarning, clf.fit, X, Y)
+    warning_message = (
+        "With alpha=0, this algorithm does not "
+        "converge well. You are advised to use the "
+        "LinearRegression estimator"
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        clf.fit(X, Y)
 
 
 def test_lasso_positive_constraint():
@@ -733,7 +737,12 @@ def test_multi_task_lasso_and_enet():
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
     clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1)
-    assert_warns_message(ConvergenceWarning, 'did not converge', clf.fit, X, Y)
+    warning_message = (
+        "Objective did not converge. You might want to "
+        "increase the number of iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        clf.fit(X, Y)
 
 
 def test_lasso_readonly_data():
@@ -1075,11 +1084,13 @@ def test_overrided_gram_matrix():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     Gram = X.T.dot(X)
     clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram)
-    assert_warns_message(UserWarning,
-                         "Gram matrix was provided but X was centered"
-                         " to fit intercept, "
-                         "or X was normalized : recomputing Gram matrix.",
-                         clf.fit, X, y)
+    warning_message = (
+        "Gram matrix was provided but X was centered"
+        " to fit intercept, "
+        "or X was normalized : recomputing Gram matrix."
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        clf.fit(X, y)
 
 
 @pytest.mark.parametrize('model', [ElasticNet, Lasso])
@@ -1214,7 +1225,12 @@ def test_enet_coordinate_descent(klass, n_classes, kwargs):
     y = np.ones((n_samples, n_classes))
     if klass == Lasso:
         y = y.ravel()
-    assert_warns(ConvergenceWarning, clf.fit, X, y)
+    warning_message = (
+        "Objective did not converge. You might want to"
+        " increase the number of iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        clf.fit(X, y)
 
 
 def test_convergence_warnings():
@@ -1403,3 +1419,53 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
 
     assert_array_equal(sample_weight, sample_weight_1_25)
+
+
+@pytest.mark.parametrize("ridge_alpha", [1e-1, 1., 1e6])
+@pytest.mark.parametrize("normalize", [True, False])
+def test_enet_ridge_consistency(normalize, ridge_alpha):
+    # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
+    # provided that the value of alpha is adapted.
+    #
+    # XXX: this test does not pass for weaker regularization (lower values of
+    # ridge_alpha): it could be either a problem of ElasticNet or Ridge (less
+    # likely) and depends on the dataset statistics: lower values for
+    # effective_rank are more problematic in particular.
+
+    rng = np.random.RandomState(42)
+    X, y = make_regression(
+        n_samples=100,
+        n_features=300,
+        effective_rank=100,
+        n_informative=50,
+        random_state=rng,
+    )
+    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
+
+    ridge = Ridge(
+        alpha=ridge_alpha,
+        normalize=normalize,
+    ).fit(X, y, sample_weight=sw)
+
+    enet = ElasticNet(
+        alpha=ridge_alpha / sw.sum(),
+        normalize=normalize,
+        l1_ratio=0.,
+        max_iter=1000,
+    )
+    # Even when the ElasticNet model has actually converged, the duality gap
+    # convergence criterion is never met when l1_ratio is 0 and for any value
+    # of the `tol` parameter. The convergence message should point the user to
+    # Ridge instead:
+    expected_msg = (
+        r"Objective did not converge\. .* "
+        r"Linear regression models with null weight for the "
+        r"l1 regularization term are more efficiently fitted "
+        r"using one of the solvers implemented in "
+        r"sklearn\.linear_model\.Ridge/RidgeCV instead\."
+    )
+    with pytest.warns(ConvergenceWarning, match=expected_msg):
+        enet.fit(X, y, sample_weight=sw)
+
+    assert_allclose(ridge.coef_, enet.coef_)
+    assert_allclose(ridge.intercept_, enet.intercept_)

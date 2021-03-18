@@ -113,6 +113,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
+  has been optimised for dense matrices when using `solver='newton-cg'` and
+  `multi_class!='multinomial'`.
+  :pr:`19571` by :user:`Julien Jerphanion <jjerphan>`.
+
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
@@ -165,9 +170,22 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
+- |Enhancement| A fix to raise an error in :func:`metrics.hinge_loss` when
+  ``pred_decision`` is 1d whereas it is a multiclass classification or when
+  ``pred_decision`` parameter is not consistent with the ``labels`` parameter.
+  :pr:`19643` by :user:`Pierre Attard <PierreAttard>`.
+
 - |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
+
+- |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
+  are integral.
+  :pr:`9843` by :user:`Jon Crall <Erotemic>`.
+
+- |Enhancement| Add :func:`metrics.specificity_score`. 
+  :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
+  and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -192,6 +210,9 @@ Changelog
   polynomial ``degree`` of the splines, number of knots ``n_knots`` and knot
   positioning strategy ``knots``.
   :pr:`18368` by :user:`Christian Lorentzen <lorentzenchr>`.
+  :class:`preprocessing.SplineTransformer` also supports periodic
+  splines via the ``extrapolation`` argument.
+  :pr:`19483` by :user:`Malte Londschien <mlondschien>`.
 
 - |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
   and similar scalers detect near-constant features to avoid scaling them to
@@ -207,9 +228,21 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
-- |Enhancement| Add `metrics.specificity_score` function. 
-  :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
-  and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| Deprecated the default value of the `random_state=0` in 
+  :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
+  the default value of `random_state` will be set to `None`.
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
+
+:mod:`sklearn.calibration`
+............................
+
+- |Fix| The predict and predict_proba methods of
+  :class:`calibration.CalibratedClassifierCV can now properly be used on
+  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
 
 Code and Documentation Contributors
 -----------------------------------
