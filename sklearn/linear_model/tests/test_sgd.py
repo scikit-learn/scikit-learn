@@ -387,8 +387,10 @@ def test_validation_set_not_used_for_training(klass):
         cv = StratifiedShuffleSplit(test_size=validation_fraction,
                                     random_state=seed)
     else:
+        rng = np.random.RandomState(seed)
+        rng.randint(1, np.iinfo(np.int32).max)
         cv = ShuffleSplit(test_size=validation_fraction,
-                          random_state=seed)
+                          random_state=rng)
     idx_train, idx_val = next(cv.split(X, Y))
     idx_train = np.sort(idx_train)  # remove shuffling
     clf2.fit(X[idx_train], Y[idx_train])
