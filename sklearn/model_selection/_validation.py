@@ -7,6 +7,7 @@ functions to validate the model.
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Raghav RV <rvraghav93@gmail.com>
+#         Michal Karbownik <michakarbownik@gmail.com>
 # License: BSD 3 clause
 
 
@@ -1102,18 +1103,18 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-        If None the estimator's score method is used.
+        If ``None`` the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
+        - ``None``, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For int/None inputs, if the estimator is a classifier and ``y`` is
+        For ``int``/``None`` inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
@@ -1121,7 +1122,7 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            ``cv`` default value if ``None`` changed from 3-fold to 5-fold.
 
     n_permutations : int, default=100
         Number of times to permute ``y``.
