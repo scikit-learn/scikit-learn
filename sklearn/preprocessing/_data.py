@@ -950,7 +950,15 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {'allow_nan': True,
-                'preserves_dtype': [np.float64, np.float32]}
+                'preserves_dtype': [np.float64, np.float32],
+                '_xfail_checks':
+                    {'check_estimator_sparse_dense':
+                     "Default StandardScaler doesn't support sparse "
+                     "inputs. But StandardScaler is tested on sparse "
+                     "data in `preprocessing.tests.test_data."
+                     "test_scaler_without_centering`."
+                     }
+                }
 
 
 class MaxAbsScaler(TransformerMixin, BaseEstimator):
@@ -1456,7 +1464,14 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return X
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {'allow_nan': True,
+                '_xfail_checks':
+                    {'check_estimator_sparse_dense':
+                     "Default RobustScaler don't support sparse inputs. "
+                     "But RobustScaler is tested on sparse data in "
+                     "`preprocessing.tests.test_data."
+                     "test_robust_scaler_equivalence_dense_sparse`."
+                     }}
 
 
 @_deprecate_positional_args

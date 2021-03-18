@@ -243,6 +243,16 @@ Changelog
   :class:`calibration.CalibratedClassifierCV can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
 
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| Improve common tests in `estimator_checks` to ensure that
+  estimators give the same result when given sparse and dense inputs.
+  :pr:`13246` by :user:`Maniteja Nandana <maniteja123>`,
+  :user:`William de Vazelhes <wdevazelhes>`,
+  :user:`Alexandre Gramfort <agramfort>`, and
+  :user:`Jérôme Dockès <jeromedockes>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

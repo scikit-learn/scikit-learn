@@ -593,16 +593,20 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         return np.hstack(X_new)
 
     def _transform_sparse(self, X):
-        indices = X.indices.copy()
-        indptr = X.indptr.copy()
+        # We remove possible explicit zeros, which will lead to infinity
+        # in the log:
+        X_pruned = X.copy()
+        X_pruned.eliminate_zeros()
 
-        data_step = np.sqrt(X.data * self.sample_interval_)
+        indices = X_pruned.indices.copy()
+        indptr = X_pruned.indptr.copy()
+        data_step = np.sqrt(X_pruned.data * self.sample_interval_)
         X_step = sp.csr_matrix((data_step, indices, indptr),
                                shape=X.shape, dtype=X.dtype, copy=False)
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval_ * np.log(X.data)
-        step_nz = 2 * X.data * self.sample_interval_
+        log_step_nz = self.sample_interval_ * np.log(X_pruned.data)
+        step_nz = 2 * X_pruned.data * self.sample_interval_
 
         for j in range(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /

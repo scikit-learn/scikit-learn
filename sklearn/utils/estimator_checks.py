@@ -113,7 +113,7 @@ def _yield_checks(estimator):
         yield check_sparsify_coefficients
 
     yield check_estimator_sparse_data
-
+    yield check_estimator_sparse_dense
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     yield check_estimators_pickle
@@ -734,57 +734,58 @@ def _generate_sparse_matrix(X_csr):
 
 
 def check_estimator_sparse_data(name, estimator_orig):
-    rng = np.random.RandomState(0)
-    X = rng.rand(40, 10)
-    X[X < .8] = 0
-    X = _pairwise_estimator_convert_X(X, estimator_orig)
-    X_csr = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(int)
+    X, X_csr, y = _toy_sparse_dataset(estimator_orig,
+                                      n_samples=40,
+                                      n_features=10)
+
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
     tags = _safe_tags(estimator_orig)
     for matrix_format, X in _generate_sparse_matrix(X_csr):
-        # catch deprecation warnings
-        with ignore_warnings(category=FutureWarning):
-            estimator = clone(estimator_orig)
-            if name in ['Scaler', 'StandardScaler']:
-                estimator.set_params(with_mean=False)
         # fit and predict
-        if "64" in matrix_format:
-            err_msg = (
-                f"Estimator {name} doesn't seem to support {matrix_format} "
-                "matrix, and is not failing gracefully, e.g. by using "
-                "check_array(X, accept_large_sparse=False)"
-            )
-        else:
-            err_msg = (
-                f"Estimator {name} doesn't seem to fail gracefully on sparse "
-                "data: error message should state explicitly that sparse "
-                "input is not supported if this is not the case."
-            )
-        with raises(
-            (TypeError, ValueError),
-            match=["sparse", "Sparse"],
-            may_pass=True,
-            err_msg=err_msg,
-        ):
+        try:
             with ignore_warnings(category=FutureWarning):
                 estimator.fit(X, y)
+        except (TypeError, ValueError) as e:
+            if 'sparse' not in repr(e).lower():
+                if "64" in matrix_format:
+                    msg = (f"Estimator {name} doesn't seem to support "
+                           f"{matrix_format} matrix, and is not failing "
+                           f"gracefully, e.g. by using "
+                           f"check_array(X, accept_large_sparse=False)")
+                    raise AssertionError(msg)
+                else:
+                    msg = (f"Estimator {name} doesn't seem to fail gracefully "
+                           f"on sparse data: error message should state "
+                           f"explicitly that sparse input is not supported if "
+                           f"this is not the case.")
+                    raise AssertionError(msg)
+        except Exception:
+            msg = (f"Estimator {name} doesn't seem to fail gracefully on "
+                   f"sparse data: it should raise a TypeError or a ValueError "
+                   f"if sparse input is explicitly not supported.")
+            raise AssertionError(msg)
+        else:
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 if tags['multioutput_only']:
                     assert pred.shape == (X.shape[0], 1)
                 else:
                     assert pred.shape == (X.shape[0],)
-            if hasattr(estimator, 'predict_proba'):
-                probs = estimator.predict_proba(X)
-                if tags['binary_only']:
-                    expected_probs_shape = (X.shape[0], 2)
-                else:
-                    expected_probs_shape = (X.shape[0], 4)
-                assert probs.shape == expected_probs_shape
+            for method in ["predict_proba", "decision_function"]:
+                if hasattr(estimator, method):
+                    probs = getattr(estimator, method)(X)
+                    assert probs.shape[0] == X.shape[0]
+            if hasattr(estimator, "transform"):
+                transformed = estimator.transform(X)
+                assert X.shape[0] == transformed.shape[0]
+            if hasattr(estimator, "score"):
+                score = estimator.score(X, y)
+                assert np.isscalar(score)
+            if hasattr(estimator, "score_samples"):
+                score = estimator.score_samples(X)
+                assert score.shape == (X.shape[0],)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2248,7 +2249,7 @@ def check_classifiers_classes(name, classifier_orig):
     X_multiclass = StandardScaler().fit_transform(X_multiclass)
     # We need to make sure that we have non negative data, for things
     # like NMF
-    X_multiclass -= X_multiclass.min() - .1
+    X_multiclass = _enforce_estimator_tags_x(classifier_orig, X_multiclass)
 
     X_binary = X_multiclass[y_multiclass != 2]
     y_binary = y_multiclass[y_multiclass != 2]
@@ -2901,6 +2902,82 @@ def check_classifiers_regression_target(name, estimator_orig):
     if not _safe_tags(e, key="no_validation"):
         with raises(ValueError, match=msg):
             e.fit(X, y)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_estimator_sparse_dense(name, estimator_orig,
+                                 strict_mode=True):
+    X, X_csr, y = _toy_sparse_dataset(estimator_orig)
+    estimator = clone(estimator_orig)
+    estimator_sp = clone(estimator_orig)
+
+    for sparse_format, X_sp in _generate_sparse_matrix(X_csr):
+
+        set_random_state(estimator)
+        set_random_state(estimator_sp)
+        X_converted = _pairwise_estimator_convert_X(X, estimator)
+        X_sp_converted = _pairwise_estimator_convert_X(X_sp, estimator)
+        try:
+            estimator_sp.fit(X_sp_converted, y)
+            estimator.fit(X_converted, y)
+        except (ValueError, TypeError):
+            # this is the case where estimators don't support sparse inputs.
+            # We don't want to have this case interfere
+            # with our test of equality: it is already tested by
+            # check_estimator_sparse_data
+            pass
+        else:
+            for method in ["predict", "predict_proba", "decision_function",
+                           "transform", "score_samples"]:
+                if hasattr(estimator, method):
+                    pred = getattr(estimator, method)(X_converted)
+                    pred_sp = getattr(estimator_sp, method)(X_sp_converted)
+                    # estimators accepting sparse inputs can also return sparse
+                    # outputs, so we convert everything to dense for
+                    # comparison:
+                    pred_sp = (pred_sp.A if sparse.issparse(pred_sp) else
+                               pred_sp)
+                    pred = pred.A if sparse.issparse(pred) else pred
+                    assert_allclose(pred, pred_sp, atol=1e-17)
+            if hasattr(estimator, "score"):
+                score = estimator.score(X_converted, y)
+                score_sp = estimator_sp.score(X_sp_converted, y)
+                assert_allclose(score, score_sp)
+
+
+def _toy_sparse_dataset(estimator, n_samples=10, n_features=2):
+    rng = np.random.RandomState(42)
+    assert n_samples >= 2
+    # we build float64 precision numbers from low precision ones:
+    # this way, fewer numbers get dropped by the
+    # machine precision in multiplications/additions, so if those
+    # are done in a different order btw sparse/dense, the results
+    # are more likely to still be the same
+    X = sparse.random(n_samples, n_features, density=0.8,
+                      random_state=rng,
+                      data_rvs=rng.randn).A.astype(np.float16)
+    X = X.astype(np.float)
+    X = X[~np.all(X == 0, axis=1)]  # we remove null rows
+    assert len(np.where(X == 0)[0]) > 0  # we should have sparsity
+    assert X.shape[0] > 5  # we mustn't have very few samples
+    n_samples = X.shape[0]
+    sep = rng.randn(n_features)
+    if is_regressor(estimator):
+        y = X.dot(sep) + 0.01 * rng.randn(n_samples)
+        y = y.astype(np.float16).astype(float)
+        # we check that limiting the precision keeps some noise:
+        assert np.all(X.dot(sep) != y)
+    else:
+        y = X.dot(np.array(sep)) > 0
+        # we switch the label of the second point closer to
+        # the frontier, to simulate a slight noise
+        undecided = np.argsort(np.abs(X.dot(np.array(sep))))[1]
+        y[undecided] = 1 - y[undecided]
+        assert not np.all((X.dot(sep) > 0) == y)
+    X = _enforce_estimator_tags_x(estimator, X)
+    X_csr = sparse.csr_matrix(X)
+    y = _enforce_estimator_tags_y(estimator, y)
+    return X, X_csr, y
 
 
 @ignore_warnings(category=FutureWarning)

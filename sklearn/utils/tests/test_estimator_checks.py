@@ -181,16 +181,78 @@ class NoCheckinPredict(BaseBadClassifier):
         return self
 
 
-class NoSparseClassifier(BaseBadClassifier):
-    def fit(self, X, y):
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
+class BadFitExceptionSparseClassifier(BaseBadClassifier):
+    """An estimator that does not accept sparse inputs but
+    returns a plain Exception instead of TypeError or ValueError"""
+
+    def fit(self, X, y, *args, **kwargs):
+        X = self._validate_data(X, accept_sparse=True)
         if sp.issparse(X):
-            raise ValueError("Nonsensical Error")
+            raise Exception("Nonsensical Error")
+        self.is_fitted_ = True
         return self
 
     def predict(self, X):
-        X = check_array(X)
-        return np.ones(X.shape[0])
+        X = self._validate_data(X, reset=False, accept_sparse=True)
+        return super(BadFitExceptionSparseClassifier, self).predict(X)
+
+
+class BadFitTypeErrorSparseClassifier(BaseBadClassifier):
+    """An estimator that refuses sparse inputs that returns a TypeError
+    (as allowed), but with the wrong message"""
+
+    def fit(self, X, y, *args, **kwargs):
+        X = self._validate_data(X, accept_sparse=True)
+        if sp.issparse(X):
+            raise TypeError("Nonsensical Error")
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X):
+        X = self._validate_data(X, reset=False, accept_sparse=True)
+        return super(BadFitTypeErrorSparseClassifier, self).predict(X)
+
+
+class BadFitValueErrorSparseClassifier(BaseBadClassifier):
+    """An estimator that refuses sparse inputs that returns a ValueError
+    (as allowed), but with the wrong message"""
+
+    def fit(self, X, y, *args, **kwargs):
+        X = self._validate_data(X, accept_sparse=True)
+        if sp.issparse(X):
+            raise ValueError("Nonsensical Error")
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X):
+        X = self._validate_data(X, reset=False, accept_sparse=True)
+        return super(BadFitValueErrorSparseClassifier, self).predict(X)
+
+
+class SparseDenseDifferentPredict(LogisticRegression):
+    """An estimator that returns a different result for sparse inputs and
+    dense inputs when using predict"""
+
+    def predict(self, X):
+        X = check_array(X, accept_sparse=True)
+        if sp.issparse(X):
+            return super(SparseDenseDifferentPredict, self).predict(X)
+        else:
+            return - super(SparseDenseDifferentPredict, self).predict(X)
+
+
+class SparseDenseDifferentPredictProba(LogisticRegression):
+    """An estimator that returns a different result for sparse inputs and
+    dense inputs when using predict_proba"""
+
+    def predict_proba(self, X):
+        X = check_array(X, accept_sparse=True)
+        if sp.issparse(X):
+            return super(SparseDenseDifferentPredictProba,
+                         self).predict_proba(X)
+        else:
+            return - super(SparseDenseDifferentPredictProba,
+                           self).predict_proba(X)
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
@@ -270,13 +332,19 @@ class NotInvariantPredict(BaseEstimator):
 
     def predict(self, X):
         # return 1 if X has more than one element else return 0
-        X = check_array(X)
+        X = check_array(X, accept_sparse=('csr', 'csc'))
         if X.shape[0] > 1:
             return np.ones(X.shape[0])
         return np.zeros(X.shape[0])
 
 
 class NotInvariantSampleOrder(BaseEstimator):
+
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags['multioutput'] = True
+        return tags
+
     def fit(self, X, y):
         X, y = self._validate_data(
             X, y,
@@ -288,13 +356,22 @@ class NotInvariantSampleOrder(BaseEstimator):
         return self
 
     def predict(self, X):
-        X = check_array(X)
+        X = check_array(X, accept_sparse=('csr', 'csc'))
         # if the input contains the same elements but different sample order,
         # then just return zeros.
-        if (np.array_equiv(np.sort(X, axis=0), np.sort(self._X, axis=0)) and
-           (X != self._X).any()):
-            return np.zeros(X.shape[0])
-        return X[:, 0]
+        if sp.issparse(X):
+            X_checked = X.A
+        else:
+            X_checked = X
+        if sp.issparse(self._X):
+            _X_checked = self._X.A
+        else:
+            _X_checked = self._X
+        if (np.array_equiv(np.sort(X_checked, axis=0),
+                           np.sort(_X_checked, axis=0)) and
+           (X_checked != _X_checked).any()):
+            return np.zeros(X_checked.shape[0])
+        return X_checked[:, 0]
 
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
@@ -502,11 +579,32 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg,
                         check_estimator, NotInvariantPredict())
     # check for sparse matrix input handling
-    name = NoSparseClassifier.__name__
-    msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
+    name = BadFitExceptionSparseClassifier.__name__
+    msg = (f"Estimator {name} doesn't seem to fail gracefully on sparse data: "
+           f"it should raise a TypeError or a ValueError if sparse input "
+           f"is explicitly not supported.")
     assert_raises_regex(
-        AssertionError, msg, check_estimator, NoSparseClassifier()
+        AssertionError, msg, check_estimator, BadFitExceptionSparseClassifier()
     )
+
+    # check for sparse matrix input handling, if the wrong TypeError is thrown
+    for clf in [BadFitTypeErrorSparseClassifier,
+                BadFitValueErrorSparseClassifier]:
+        name = clf.__name__
+        msg = (f"Estimator {name} doesn't seem to fail gracefully on sparse "
+               f"data: error message should state explicitly that sparse "
+               f"input is not supported if this is not the case.")
+        assert_raises_regex(
+            AssertionError, msg, check_estimator, clf()
+        )
+    # check that the equality of the result for sparse/dense input is checked
+    assert_raises_regex(AssertionError,
+                        "Not equal to tolerance",
+                        check_estimator, SparseDenseDifferentPredict())
+    assert_raises_regex(AssertionError,
+                        "Not equal to tolerance",
+                        check_estimator,
+                        SparseDenseDifferentPredictProba())
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
@@ -589,7 +687,7 @@ def test_check_estimators_unfitted():
     # on an unfitted estimator
     msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
-                        "estimator", NoSparseClassifier())
+                        "estimator", BaseBadClassifier())
 
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError

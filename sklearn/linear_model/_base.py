@@ -45,6 +45,7 @@ from ..utils.fixes import delayed
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
 
+DENSE_INTERCEPT_DECAY = 1.0
 SPARSE_INTERCEPT_DECAY = 0.01
 # For sparse data intercept updates are scaled by this decay factor to avoid
 # intercept oscillation.
@@ -186,7 +187,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
     else:
         X = np.ascontiguousarray(X)
         dataset = ArrayData(X, y, sample_weight, seed=seed)
-        intercept_decay = 1.0
+        intercept_decay = DENSE_INTERCEPT_DECAY
 
     return dataset, intercept_decay
 

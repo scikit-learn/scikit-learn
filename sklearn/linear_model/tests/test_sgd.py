@@ -10,6 +10,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.estimator_checks import check_estimator_sparse_dense
 from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
@@ -1646,3 +1647,28 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
+
+
+@pytest.mark.parametrize('estimator_orig',
+                         [linear_model.SGDRegressor(),
+                          linear_model.PassiveAggressiveRegressor(),
+                          linear_model.SGDClassifier(),
+                          linear_model.Perceptron(),
+                          linear_model.PassiveAggressiveClassifier()])
+def test_sgd_sparse_dense_same_decay(estimator_orig):
+    """Tests that with default parameters, estimators that inherit from
+    `sklearn.linear_model._stochastic_gradient.BaseSGD`
+    return the same results on dense and sparse data. It's
+    tested here and not in common tests because for sparse data,
+    the "intercept decay" variable is set to a different value than for
+    dense data, which would give different results between sparse and
+    dense. Here we test that for toy examples, if this intercept
+    decay is set to the same value, the result is the same between
+    sparse and dense."""
+    old_dense_intercept_decay = linear_model._base.DENSE_INTERCEPT_DECAY
+    old_sparse_intercept_decay = linear_model._base.SPARSE_INTERCEPT_DECAY
+    linear_model._base.DENSE_INTERCEPT_DECAY = 0.01
+    linear_model._base.SPARSE_INTERCEPT_DECAY = 0.01
+    check_estimator_sparse_dense(None, estimator_orig)
+    linear_model._base.DENSE_INTERCEPT_DECAY = old_dense_intercept_decay
+    linear_model._base.SPARSE_INTERCEPT_DECAY = old_sparse_intercept_decay
