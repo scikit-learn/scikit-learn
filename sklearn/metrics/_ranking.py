@@ -1492,11 +1492,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
         "decision_function" on some classifiers).
 
     k : int, default=None
-        Only consider the highest k scores in the ranking. If None, use all
+        Only consider the highest k scores in the ranking. If ``None``, use all
         outputs.
 
     sample_weight : ndarray of shape (n_samples,), default=None
-        Sample weights. If None, all samples are given the same weight.
+        Sample weights. If ``None``, all samples are given the same weight.
 
     ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
