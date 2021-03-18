@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import sys
+import re
 import numpy as np
 import warnings
 
@@ -410,7 +411,7 @@ def test_gpr_correct_error_message():
         "GaussianProcessRegressor estimator."
         % kernel
     )
-    with pytest.raises(np.linalg.LinAlgError, match=message):
+    with pytest.raises(np.linalg.LinAlgError, match=re.escape(message)):
         gpr.fit(X, y)
 
 
