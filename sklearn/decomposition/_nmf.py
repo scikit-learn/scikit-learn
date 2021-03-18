@@ -204,40 +204,6 @@ def _compute_regularization(alpha, l1_ratio, regularization):
     return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
 
-def _check_string_param(solver, regularization, beta_loss, init, batch_size):
-    allowed_solver = ('cd', 'mu')
-    if solver not in allowed_solver:
-        raise ValueError(
-            'Invalid solver parameter: got %r instead of one of %r' %
-            (solver, allowed_solver))
-
-    allowed_regularization = ('both', 'components', 'transformation', None)
-    if regularization not in allowed_regularization:
-        raise ValueError(
-            'Invalid regularization parameter: got %r instead of one of %r' %
-            (regularization, allowed_regularization))
-
-    # 'mu' is the only solver that handles other beta losses than 'frobenius'
-    if solver != 'mu' and beta_loss not in (2, 'frobenius'):
-        raise ValueError(
-            'Invalid beta_loss parameter: solver %r does not handle beta_loss'
-            ' = %r' % (solver, beta_loss))
-
-    if batch_size is not None and solver == 'cd':
-        raise ValueError("Invalid solver 'cd' not supported "
-                         "when batch_size is not None.")
-
-    if solver == 'mu' and init == 'nndsvd':
-        warnings.warn("The multiplicative update ('mu') solver cannot update "
-                      "zeros present in the initialization, and so leads to "
-                      "poorer results when used jointly with init='nndsvd'. "
-                      "You may try init='nndsvda' or init='nndsvdar' instead.",
-                      UserWarning)
-
-    beta_loss = _beta_loss_to_float(beta_loss)
-    return beta_loss
-
-
 def _beta_loss_to_float(beta_loss):
     """Convert string beta_loss to float."""
     allowed_beta_loss = {'frobenius': 2,
@@ -1413,6 +1379,33 @@ class NMF(TransformerMixin, BaseEstimator):
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
+        allowed_solver = ('cd', 'mu')
+        if self.solver not in allowed_solver:
+            raise ValueError(
+                'Invalid solver parameter: got %r instead of one of %r' %
+                (self.solver, allowed_solver))
+
+        allowed_regularization = ('both', 'components', 'transformation', None)
+        if self.regularization not in allowed_regularization:
+            raise ValueError(
+                'Invalid regularization parameter: got %r instead of '
+                'one of %r' % (self.regularization, allowed_regularization))
+
+        # 'mu' is the only solver that handles other beta losses than 'frobenius'
+        if self.solver != 'mu' and self.beta_loss not in (2, 'frobenius'):
+            raise ValueError(
+                'Invalid beta_loss parameter: solver %r does not handle '
+                'beta_loss = %r' % (self.solver, self.beta_loss))
+
+        if self.solver == 'mu' and self.init == 'nndsvd':
+            warnings.warn("The multiplicative update ('mu') solver cannot "
+                          "update zeros present in the initialization, "
+                          "and so leads to poorer results when used jointly "
+                          "with init='nndsvd'. You may try init='nndsvda' "
+                          "or init='nndsvdar' instead.", UserWarning)
+
+        self._beta_loss = _beta_loss_to_float(self.beta_loss)
+
         return self
 
     def _check_w_h(self, X, W, H, update_H):
@@ -1515,8 +1508,8 @@ class NMF(TransformerMixin, BaseEstimator):
             Actual number of iterations.
         """
         check_non_negative(X, "NMF (input X)")
-        self._beta_loss = _check_string_param(self.solver, self.regularization,
-                                              self.beta_loss, self.init, None)
+        # check parameters
+        self._check_params(X)
 
         if X.min() == 0 and self._beta_loss <= 0:
             raise ValueError("When beta_loss <= 0 and X contains zeros, "
@@ -1524,9 +1517,6 @@ class NMF(TransformerMixin, BaseEstimator):
                              "to X, or use a positive beta_loss.")
 
         n_samples, n_features = X.shape
-
-        # check parameters
-        self._check_params(X)
 
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
@@ -1800,6 +1790,9 @@ class MiniBatchNMF(NMF):
                              "integer; got (batch_size=%r)" % self._batch_size)
         if self._batch_size > X.shape[0]:
             self._batch_size = X.shape[0]
+        if self._batch_size is not None and self.solver == 'cd':
+            raise ValueError("Invalid solver 'cd' not supported "
+                             "when batch_size is not None.")
         return self
 
     def fit_transform(self, X, y=None, W=None, H=None):
@@ -1879,9 +1872,8 @@ class MiniBatchNMF(NMF):
             Actual number of iterations.
         """
         check_non_negative(X, "NMF (input X)")
-        self._beta_loss = _check_string_param(self.solver, self.regularization,
-                                              self.beta_loss, self.init,
-                                              self.batch_size)
+        # check parameters
+        self._check_params(X)
 
         if X.min() == 0 and self._beta_loss <= 0:
             raise ValueError("When beta_loss <= 0 and X contains zeros, "
@@ -1889,9 +1881,6 @@ class MiniBatchNMF(NMF):
                              "to X, or use a positive beta_loss.")
 
         n_samples, n_features = X.shape
-
-        # check parameters
-        self._check_params(X)
 
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
@@ -1901,7 +1890,7 @@ class MiniBatchNMF(NMF):
 
         # Initialize auxiliary matrices
         A = H.copy()
-        B = np.ones(H.shape)
+        B = np.ones(H.shape, dtype=H.dtype)
 
         if self.solver == 'mu':
             W, H, n_iter, iter_offset, A, B = _fit_multiplicative_update(
@@ -1939,7 +1928,7 @@ class MiniBatchNMF(NMF):
                     self._components_denominator, self._beta_loss,
                     self._batch_size, 0, 1, self.tol,
                     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
-                    False, self.verbose, self.forget_factor
+                    True, self.verbose, self.forget_factor
                 )
 
             self.n_components_ = H.shape[0]
