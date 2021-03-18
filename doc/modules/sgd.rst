@@ -246,7 +246,8 @@ solution of a kernelized One-Class SVM, implemented in
 samples. Note that the complexity of a kernelized One-Class SVM is at best
 quadratic in the number of samples.
 :class:`sklearn.linear_model.SGDOneClassSVM` is thus well suited for datasets
-with a large number of training samples (> 10.000).
+with a large number of training samples (> 10,000) for which the SGD
+variant can be several orders of magnitude faster.
 
 Its implementation is based on the implementation of the stochastic
 gradient descent. Indeed, the original optimization problem of the One-Class
