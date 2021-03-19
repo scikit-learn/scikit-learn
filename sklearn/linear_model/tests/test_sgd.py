@@ -2,6 +2,7 @@ import pickle
 import pytest
 
 import numpy as np
+from numpy.testing import assert_allclose
 import scipy.sparse as sp
 import joblib
 
@@ -310,10 +311,10 @@ def test_late_onset_averaging_reached(klass):
     Y_encode[Y_encode == 2] = 1.0
 
     clf1 = klass(average=7, learning_rate="constant",
-                 loss='squared_loss', eta0=eta0,
+                 loss='squared_error', eta0=eta0,
                  alpha=alpha, max_iter=2, shuffle=False)
     clf2 = klass(average=0, learning_rate="constant",
-                 loss='squared_loss', eta0=eta0,
+                 loss='squared_error', eta0=eta0,
                  alpha=alpha, max_iter=1, shuffle=False)
 
     clf1.fit(X, Y_encode)
@@ -540,7 +541,7 @@ def test_average_binary_computed_correctly(klass):
     X = rng.normal(size=(n_samples, n_features))
     w = rng.normal(size=n_features)
 
-    clf = klass(loss='squared_loss',
+    clf = klass(loss='squared_error',
                 learning_rate='constant',
                 eta0=eta, alpha=alpha,
                 fit_intercept=True,
@@ -611,7 +612,7 @@ def test_sgd_multiclass_average(klass):
     eta = .001
     alpha = .01
     # Multi-class average test case
-    clf = klass(loss='squared_loss',
+    clf = klass(loss='squared_error',
                 learning_rate='constant',
                 eta0=eta, alpha=alpha,
                 fit_intercept=True,
@@ -675,6 +676,8 @@ def test_set_coef_multiclass(klass):
     clf = klass().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
 
+# TODO: Remove filterwarnings in v1.2.
+@pytest.mark.filterwarnings("ignore:.*squared_loss.*:FutureWarning")
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_sgd_predict_proba_method_access(klass):
     # Checks that SGDClassifier predict_proba and predict_log_proba methods
@@ -1067,7 +1070,7 @@ def test_regression_losses(klass):
     assert 1.0 == np.mean(clf.predict(X) == Y)
 
     clf = klass(alpha=0.01, learning_rate="constant", eta0=0.01,
-                loss="squared_loss", random_state=random_state)
+                loss="squared_error", random_state=random_state)
     clf.fit(X, Y)
     assert 1.0 == np.mean(clf.predict(X) == Y)
 
@@ -1115,7 +1118,7 @@ def test_sgd_averaged_computed_correctly(klass):
     # simple linear function without noise
     y = np.dot(X, w)
 
-    clf = klass(loss='squared_loss',
+    clf = klass(loss='squared_error',
                 learning_rate='constant',
                 eta0=eta, alpha=alpha,
                 fit_intercept=True,
@@ -1144,7 +1147,7 @@ def test_sgd_averaged_partial_fit(klass):
     # simple linear function without noise
     y = np.dot(X, w)
 
-    clf = klass(loss='squared_loss',
+    clf = klass(loss='squared_error',
                 learning_rate='constant',
                 eta0=eta, alpha=alpha,
                 fit_intercept=True,
@@ -1166,7 +1169,7 @@ def test_average_sparse(klass):
 
     eta = .001
     alpha = .01
-    clf = klass(loss='squared_loss',
+    clf = klass(loss='squared_error',
                 learning_rate='constant',
                 eta0=eta, alpha=alpha,
                 fit_intercept=True,
@@ -1194,7 +1197,7 @@ def test_sgd_least_squares_fit(klass):
     # simple linear function without noise
     y = 0.5 * X.ravel()
 
-    clf = klass(loss='squared_loss', alpha=0.1, max_iter=20,
+    clf = klass(loss='squared_error', alpha=0.1, max_iter=20,
                 fit_intercept=False)
     clf.fit(X, y)
     score = clf.score(X, y)
@@ -1203,7 +1206,7 @@ def test_sgd_least_squares_fit(klass):
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
-    clf = klass(loss='squared_loss', alpha=0.1, max_iter=20,
+    clf = klass(loss='squared_error', alpha=0.1, max_iter=20,
                 fit_intercept=False)
     clf.fit(X, y)
     score = clf.score(X, y)
@@ -1646,3 +1649,25 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize(
+    'Estimator',
+    [linear_model.SGDClassifier, linear_model.SGDRegressor]
+)
+def test_loss_squared_loss_deprecated(Estimator):
+
+    # Note: class BaseSGD calls self._validate_params() in __init__, therefore
+    # even instatiation of class raises FutureWarning for squared_loss.
+    with pytest.warns(FutureWarning,
+                      match="The loss 'squared_loss' was deprecated"):
+        est1 = Estimator(loss="squared_loss", random_state=0)
+        est1.fit(X, Y)
+
+    est2 = Estimator(loss="squared_error", random_state=0)
+    est2.fit(X, Y)
+    if hasattr(est1, "predict_proba"):
+        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
+    else:
+        assert_allclose(est1.predict(X), est2.predict(X))

@@ -45,6 +45,37 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |API| The option for using the squared error via ``loss`` and
+  ``criterion`` parameters was made more consistent. The preferred way is by
+  setting the value to `"squared_error"`. Old option names are still valid,
+  produce the same models, but are deprecated and will be removed in version
+  1.2.
+  :pr:`19310` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`ensemble.ExtraTreesRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.GradientBoostingRegressor`, `loss="ls"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.RandomForestRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.HistGradientBoostingRegressor`, `loss="least_squares"`
+    is deprecated, use `"squared_error"` instead which is now the default.
+
+  - For :class:`linear_model.RANSACRegressor`, `loss="squared_loss"` is
+    deprecated, use `"squared_error"` instead.
+
+  - For :class:`linear_model.SGDRegressor`, `loss="squared_loss"` is
+    deprecated, use `"squared_error"` instead which is now the default.
+
+  - For :class:`tree.DecisionTreeRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
 :mod:`sklearn.cluster`
 ......................
 
