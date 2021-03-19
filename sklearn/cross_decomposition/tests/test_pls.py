@@ -566,5 +566,5 @@ def test_loadings_converges():
     # ConvergenceWarning is not raised
     assert not record
 
-    # Loadings converges
+    # Loadings converges to reasonable values
     assert np.all(np.abs(cca.x_loadings_) < 1)
