@@ -552,6 +552,37 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
+@pytest.mark.parametrize("columns", [1, 2, 3])
+def test_polynomial_features_csr_wide(columns):
+    x = sparse.csr_matrix(([1], ([0], [columns])))
+
+    est = PolynomialFeatures(3)
+    try:
+        est.fit_transform(x)
+    except:
+        pytest.fail("should not happen")
+
+
+@pytest.mark.parametrize(
+    ["n_features", "degree", "interaction_only", "include_bias"],
+    [
+        (i, j, a, b)
+        for i in range(1, 5)
+        for j in range(1, 5)
+        for a in [True, False]
+        for b in [True, False]
+    ],
+)
+def test_num_combinations(n_features, degree, interaction_only, include_bias):
+    num_combos = PolynomialFeatures._num_combinations(
+        n_features, degree, interaction_only, include_bias
+    )
+    combos = PolynomialFeatures._combinations(
+        n_features, degree, interaction_only, include_bias
+    )
+    assert num_combos == sum([1 for _ in combos])
+
+
 @pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
                          [(2, True, False, np.float32),
                           (2, True, False, np.float64),

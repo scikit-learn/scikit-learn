@@ -113,6 +113,34 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         return chain.from_iterable(comb(range(n_features), i)
                                    for i in range(start, degree + 1))
 
+    @staticmethod
+    def _num_combinations(n_features, degree, interaction_only, include_bias):
+        def ncr(n, r):
+            r = min(r, n - r)
+            numer = 1
+            for i in range(n, n - r, -1):
+                numer *= i
+
+            denom = 1
+            for i in range(1, r + 1):
+                denom *= i
+
+            return numer // denom
+
+        if interaction_only:
+            combinations = 0
+            for i in range(1, degree + 1):
+                if i > n_features:
+                    continue
+                combinations += ncr(n_features, i)
+        else:
+            combinations = ncr(n_features + degree, degree) - 1
+
+        if include_bias:
+            combinations += 1
+
+        return combinations
+
     @property
     def powers_(self):
         check_is_fitted(self)
@@ -170,13 +198,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        n_samples, n_features = self._validate_data(
-            X, accept_sparse=True).shape
-        combinations = self._combinations(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
+        n_samples, n_features = self._validate_data(X, accept_sparse=True).shape
         self.n_input_features_ = n_features
-        self.n_output_features_ = sum(1 for _ in combinations)
+        self.n_output_features_ = self._num_combinations(
+            n_features, self.degree, self.interaction_only, self.include_bias
+        )
+
         return self
 
     def transform(self, X):
