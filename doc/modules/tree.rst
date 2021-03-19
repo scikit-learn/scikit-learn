@@ -166,6 +166,7 @@ options, including coloring nodes by their class (or value for regression) and
 using explicit variable and class names if desired. Jupyter notebooks also
 render these plots inline automatically::
 
+    >>> iris = load_iris()
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
     ...                      feature_names=iris.feature_names,  # doctest: +SKIP
     ...                      class_names=iris.target_names,  # doctest: +SKIP
