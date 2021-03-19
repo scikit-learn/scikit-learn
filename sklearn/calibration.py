@@ -24,15 +24,15 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
-    check_array,
     column_or_1d,
     deprecated,
     indexable,
 )
+
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight
+from .utils.validation import _check_sample_weight, _num_samples
 from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
@@ -344,8 +344,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : The samples, as accepted by base_estimator.predict_proba
 
         Returns
         -------
@@ -353,11 +352,10 @@ class CalibratedClassifierCV(ClassifierMixin,
             The predicted probas.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
-                        force_all_finite=False)
+
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        mean_proba = np.zeros((X.shape[0], len(self.classes_)))
+        mean_proba = np.zeros((_num_samples(X), len(self.classes_)))
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -373,8 +371,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : The samples, as accepted by base_estimator.predict
 
         Returns
         -------
@@ -643,7 +640,7 @@ class _CalibratedClassifier:
             self.base_estimator.classes_
         )
 
-        proba = np.zeros((X.shape[0], n_classes))
+        proba = np.zeros((_num_samples(X), n_classes))
         for class_idx, this_pred, calibrator in \
                 zip(pos_class_indices, predictions.T, self.calibrators):
             if n_classes == 2:

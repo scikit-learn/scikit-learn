@@ -772,15 +772,12 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     data_name = 'iris'
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    assert_warns_message(
-        UserWarning,
-        "Multiple active versions of the dataset matching the name"
-        " iris exist. Versions may be fundamentally different, "
-        "returning version 1.",
-        fetch_openml,
-        name=data_name,
-        as_frame=False
-    )
+
+    msg = ("Multiple active versions of the dataset matching the name"
+           " iris exist. Versions may be fundamentally different, "
+           "returning version 1.")
+    with pytest.warns(UserWarning, match=msg):
+        fetch_openml(name=data_name, as_frame=False, cache=False)
 
 
 def test_decode_iris(monkeypatch):

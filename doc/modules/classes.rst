@@ -1595,6 +1595,7 @@ Plotting
    utils.extmath.fast_logdet
    utils.extmath.density
    utils.extmath.weighted_mode
+   utils.gen_batches
    utils.gen_even_slices
    utils.graph.single_source_shortest_path_length
    utils.graph_shortest_path.graph_shortest_path
