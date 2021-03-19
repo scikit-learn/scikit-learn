@@ -60,6 +60,9 @@ enhance the functionality of scikit-learn's estimators.
 
 **Experimentation frameworks**
 
+- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
+  organize, log and reproduce experiments
+
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
   research in a consistent and reproducible way
 
@@ -263,9 +266,6 @@ Other packages useful for data analysis and machine learning.
 
 - `PyMC <https://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
   fitting algorithms.
-
-- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
-  organize, log and reproduce experiments
 
 - `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
