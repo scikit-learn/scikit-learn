@@ -173,7 +173,7 @@ def _encode(values, *, uniques, check_unknown=True):
     encoded : ndarray
         Encoded values
     """
-    if values.dtype.kind in 'OU':
+    if values.dtype.kind in 'OUS':
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
@@ -214,7 +214,7 @@ def _check_unknown(values, known_values, return_mask=False):
     """
     valid_mask = None
 
-    if values.dtype.kind in 'UO':
+    if values.dtype.kind in 'OUS':
         values_set = set(values)
         values_set, missing_in_values = _extract_missing(values_set)
 

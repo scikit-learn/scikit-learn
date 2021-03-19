@@ -758,30 +758,33 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-def _convert_container(container, constructor_name, columns_name=None):
+def _convert_container(container, constructor_name, columns_name=None, dtype=None):
     if constructor_name == 'list':
-        return list(container)
+        if dtype is None:
+            return list(container)
+        else:
+            return np.asarray(container, dtype=dtype).tolist()
     elif constructor_name == 'tuple':
         return tuple(container)
     elif constructor_name == 'array':
-        return np.asarray(container)
+        return np.asarray(container, dtype=dtype)
     elif constructor_name == 'sparse':
-        return sp.sparse.csr_matrix(container)
+        return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == 'dataframe':
         pd = pytest.importorskip('pandas')
-        return pd.DataFrame(container, columns=columns_name)
+        return pd.DataFrame(container, columns=columns_name, dtype=dtype)
     elif constructor_name == 'series':
         pd = pytest.importorskip('pandas')
-        return pd.Series(container)
+        return pd.Series(container, dtype=dtype)
     elif constructor_name == 'index':
         pd = pytest.importorskip('pandas')
-        return pd.Index(container)
+        return pd.Index(container, dtype=dtype)
     elif constructor_name == 'slice':
         return slice(container[0], container[1])
     elif constructor_name == 'sparse_csr':
-        return sp.sparse.csr_matrix(container)
+        return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == 'sparse_csc':
-        return sp.sparse.csc_matrix(container)
+        return sp.sparse.csc_matrix(container, dtype=dtype)
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
