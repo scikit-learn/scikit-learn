@@ -2220,16 +2220,15 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                                 ", ".join(map(str, y_pred))))
 
     # training set performance
-    if name != "ComplementNB":
-        # This is a pathological data set for ComplementNB.
-        # For some specific cases 'ComplementNB' predicts less classes
-        # than expected
+    if not _safe_tags(classifier, key="poor_score"):
+        # In some cases poor_score estimators are predicting 
+        # less classes than expected
         assert_array_equal(np.unique(y), np.unique(y_pred))
     assert_array_equal(classes, classifier.classes_,
-                       err_msg="Unexpected classes_ attribute for %r: "
-                       "expected '%s', got '%s'" %
-                       (classifier, ", ".join(map(str, classes)),
-                        ", ".join(map(str, classifier.classes_))))
+                        err_msg="Unexpected classes_ attribute for %r: "
+                        "expected '%s', got '%s'" %
+                        (classifier, ", ".join(map(str, classes)),
+                            ", ".join(map(str, classifier.classes_))))
 
 
 def _choose_check_classifiers_labels(name, y, y_names):
