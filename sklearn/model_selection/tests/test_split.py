@@ -353,6 +353,7 @@ def test_stratified_kfold_ratios(k, shuffle, kfold):
     y = np.array([4] * int(0.10 * n_samples) +
                  [0] * int(0.89 * n_samples) +
                  [1] * int(0.01 * n_samples))
+    # ensure perfect stratification with StratifiedGroupKFold
     groups = np.arange(len(y))
     distr = np.bincount(y) / len(y)
 
@@ -376,6 +377,7 @@ def test_stratified_kfold_label_invariance(k, shuffle, kfold):
                  [0] * int(0.89 * n_samples) +
                  [1] * int(0.01 * n_samples))
     X = np.ones(len(y))
+    # ensure perfect stratification with StratifiedGroupKFold
     groups = np.arange(len(y))
 
     def get_splits(y):
@@ -409,6 +411,7 @@ def test_stratifiedkfold_balance(kfold):
     # Repeat with shuffling turned off and on
     X = np.ones(17)
     y = [0] * 3 + [1] * 14
+    # ensure perfect stratification with StratifiedGroupKFold
     groups = np.arange(len(y))
 
     for shuffle in (True, False):
