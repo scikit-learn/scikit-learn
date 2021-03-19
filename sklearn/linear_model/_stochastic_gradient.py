@@ -2052,7 +2052,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         y : array, shape (n_samples,)
             Labels of the samples.
         """
-        y = (self.decision_function(X) >= 0).astype(int)
+        y = (self.decision_function(X) >= 0).astype(np.int32)
         y[y == 0] = -1  # for consistency with outlier detectors
         return y
 
