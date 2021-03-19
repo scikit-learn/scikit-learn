@@ -48,6 +48,11 @@ Changelog
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Fix encoder categories having dtype='S'
+  :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder`.
+  :pr:`19727` by :user:`Andrew Delong <andrewdelong>`.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
