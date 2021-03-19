@@ -1743,6 +1743,12 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     --------
     sklearn.svm.OneClassSVM
 
+    Notes
+    -----
+    This estimator has a linear complexity in the number of training samples
+    and is thus better suited than the `sklearn.svm.OneClassSVM`
+    implementation for datasets with a large number of training samples (say
+    > 10,000).
     """
 
     loss_functions = {"hinge": (Hinge, 1.0)}
