@@ -758,7 +758,8 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-def _convert_container(container, constructor_name, columns_name=None, dtype=None):
+def _convert_container(container, constructor_name, columns_name=None,
+                       dtype=None):
     if constructor_name == 'list':
         if dtype is None:
             return list(container)
