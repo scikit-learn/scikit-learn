@@ -130,7 +130,8 @@ Using the Iris dataset, we can construct a tree as follows::
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-    >>> X, y = load_iris(return_X_y=True)
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, y)
 
@@ -166,7 +167,6 @@ options, including coloring nodes by their class (or value for regression) and
 using explicit variable and class names if desired. Jupyter notebooks also
 render these plots inline automatically::
 
-    >>> iris = load_iris()
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
     ...                      feature_names=iris.feature_names,  # doctest: +SKIP
     ...                      class_names=iris.target_names,  # doctest: +SKIP
