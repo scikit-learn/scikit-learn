@@ -270,6 +270,10 @@ Other packages useful for data analysis and machine learning.
 - `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
+- `scikit-survival <https://scikit-survival.readthedocs.io/>`_ A library implementing
+  models to learn from censored time-to-event data (also called survival analysis).
+  Models are fully compatible with scikit-learn.
+
 Recommendation Engine packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
