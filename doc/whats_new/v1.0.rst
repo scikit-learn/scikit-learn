@@ -120,6 +120,9 @@ Changelog
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
 
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s ``inverse_transform``.
+  :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
