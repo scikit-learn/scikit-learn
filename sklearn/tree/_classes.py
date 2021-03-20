@@ -62,10 +62,11 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _criterion.Gini,
                 "entropy": _criterion.Entropy}
-# TODO: Remove "mse" in version 1.2.
+# TODO: Remove "mse" and "mae" in version 1.2.
 CRITERIA_REG = {"squared_error": _criterion.MSE,
                 "mse": _criterion.MSE,
                 "friedman_mse": _criterion.FriedmanMSE,
+                "absolute_error": _criterion.MAE,
                 "mae": _criterion.MAE,
                 "poisson": _criterion.Poisson}
 
@@ -357,6 +358,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 warnings.warn(
                     "Criterion 'mse' was deprecated in v1.0 and will be "
                     "removed in version 1.2. Use `criterion='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
+            elif self.criterion == "mae":
+                warnings.warn(
+                    "Criterion 'mae' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='absolute_error'` "
                     "which is equivalent.",
                     FutureWarning
                 )
@@ -1001,16 +1009,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"squared_error", "mse", "friedman_mse", "mae", "poisson"}, \
-            default="squared_error"
+    criterion : {"squared_error", "mse", "friedman_mse", "absolute_error", \
+            "mae", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "friedman_mse", which uses
         mean squared error with Friedman's improvement score for potential
-        splits, "mae" for the mean absolute error, which minimizes the L1 loss
-        using the median of each terminal node, and "poisson" which uses
-        reduction in Poisson deviance to find splits.
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1021,6 +1029,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1576,6 +1588,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
