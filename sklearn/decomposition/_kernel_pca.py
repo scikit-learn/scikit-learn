@@ -349,7 +349,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_components)
-        mean_shift : bool, default=True
+        reconstruct_mean : bool, default=True
             If True, then mean of the reconstruction is reconstructed when
             the linear kernel is used, to keep the compatibility with
             :class:`~sklearn.decomposition.PCA`.
