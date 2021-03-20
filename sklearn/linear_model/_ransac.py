@@ -137,9 +137,9 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         as 0.99 (the default) and e is the current fraction of inliers w.r.t.
         the total number of samples.
 
-    loss : string, callable, default='absolute_loss'
-        String inputs, 'absolute_loss' and 'squared_error' are supported which
-        find the absolute loss and squared error per sample respectively.
+    loss : string, callable, default='absolute_error'
+        String inputs, 'absolute_error' and 'squared_error' are supported which
+        find the absolute error and squared error per sample respectively.
 
         If ``loss`` is a callable, then it should be a function that takes
         two arrays as inputs, the true and predicted value and returns a 1-D
@@ -154,6 +154,10 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         .. deprecated:: 1.0
             The loss 'squared_loss' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
+
+        .. deprecated:: 1.0
+            The loss 'absolute_loss' was deprecated in v1.0 and will be removed
+            in version 1.2. Use `loss='absolute_error'` which is equivalent.
 
     random_state : int, RandomState instance, default=None
         The generator used to initialize the centers.
@@ -212,7 +216,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100, max_skips=np.inf,
                  stop_n_inliers=np.inf, stop_score=np.inf,
-                 stop_probability=0.99, loss='absolute_loss',
+                 stop_probability=0.99, loss='absolute_error',
                  random_state=None):
 
         self.base_estimator = base_estimator
@@ -293,7 +297,15 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         else:
             residual_threshold = self.residual_threshold
 
-        if self.loss == "absolute_loss":
+        # TODO: Remove absolute_loss in v1.2.
+        if self.loss in ("absolute_error", "absolute_loss"):
+            if self.loss == "absolute_loss":
+                warnings.warn(
+                    "The loss 'absolute_loss' was deprecated in v1.0 and will "
+                    "be removed in version 1.2. Use `loss='absolute_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
             if y.ndim == 1:
                 loss_function = lambda y_true, y_pred: np.abs(y_true - y_pred)
             else:
@@ -319,7 +331,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         else:
             raise ValueError(
-                "loss should be 'absolute_loss', 'squared_error' or a "
+                "loss should be 'absolute_error', 'squared_error' or a "
                 "callable. Got %s. " % self.loss)
 
         random_state = check_random_state(self.random_state)
