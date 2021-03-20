@@ -559,8 +559,8 @@ def test_polynomial_features_csr_wide(columns):
     est = PolynomialFeatures(3)
     try:
         est.fit_transform(x)
-    except:
-        pytest.fail("should not happen")
+    except ValueError:
+        pytest.fail("possible overflow")
 
 
 @pytest.mark.parametrize(
