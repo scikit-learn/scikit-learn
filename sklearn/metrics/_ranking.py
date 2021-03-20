@@ -321,7 +321,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     )
 
 
-def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
+def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None, min_tpr=None):
     """Binary roc auc score."""
     if len(np.unique(y_true)) != 2:
         raise ValueError("Only one class present in y_true. ROC AUC score "
@@ -329,29 +329,60 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
 
     fpr, tpr, _ = roc_curve(y_true, y_score,
                             sample_weight=sample_weight)
-    if max_fpr is None or max_fpr == 1:
+    # when there is no valid limitation on both max_fpr and min_tpr:
+    if (max_fpr is None or max_fpr == 1) and (min_tpr is None or min_tpr == 0):
         return auc(fpr, tpr)
-    if max_fpr <= 0 or max_fpr > 1:
+    if (max_fpr is not None) and (max_fpr <= 0 or max_fpr > 1):
         raise ValueError("Expected max_fpr in range (0, 1], got: %r" % max_fpr)
+    if (min_tpr is not None) and (min_tpr < 0 or min_tpr >= 1):
+        raise ValueError("Expected min_tpr in range [0, 1), got: %r" % min_tpr)
 
-    # Add a single point at max_fpr by linear interpolation
-    stop = np.searchsorted(fpr, max_fpr, 'right')
-    x_interp = [fpr[stop - 1], fpr[stop]]
-    y_interp = [tpr[stop - 1], tpr[stop]]
-    tpr = np.append(tpr[:stop], np.interp(max_fpr, x_interp, y_interp))
-    fpr = np.append(fpr[:stop], max_fpr)
+    if max_fpr is not None and max_fpr != 1:
+        # if specified max_fpr, add a single point at max_fpr (for tpr list) by linear interpolation
+        stop = np.searchsorted(fpr, max_fpr, 'right')
+        x_interp_tpr = [fpr[stop - 1], fpr[stop]]
+        y_interp_tpr = [tpr[stop - 1], tpr[stop]]
+        tpr_interp = np.interp(max_fpr, x_interp_tpr, y_interp_tpr)
+        # cut the tpr and fpr according to stop index found by max_fpr limitation:
+        tpr = np.append(tpr[:stop], tpr_interp)
+        fpr = np.append(fpr[:stop], max_fpr)
+
+    if min_tpr is not None and min_tpr != 0:
+        # if specified min_tpr, add a single point at min_tpr (for fpr list) by linear interpolation
+        start = np.searchsorted(tpr, min_tpr, 'left')
+        # handle the case when the required min_tpr and max_fpr can't form a valid area:
+        if start == len(tpr):
+            return 0.0
+        x_interp_fpr = [tpr[start - 1], tpr[start]]
+        y_interp_fpr = [fpr[start - 1], fpr[start]]
+        fpr_interp = np.interp(min_tpr, x_interp_fpr, y_interp_fpr)
+        # further cut the tpr and fpr according to start index found by max_fpr limitation:
+        tpr = np.append(min_tpr, tpr[start:])
+        fpr = np.append(fpr_interp, fpr[start:])
+
+    # McClish correction: standardize result to be 0.5 if non-discriminant, and 1 if maximal
+    # if max_fpr not defined, regard it as 1, to feed the uniform formula of min and max area:
+    if max_fpr is None:
+        max_fpr = 1.0
+    # if min_tpr not defined, regard it as 0, to feed the uniform formula of min and max area:
+    if min_tpr is None:
+        min_tpr = 0.0
+
+    # shift the yaxis to start from original point 0,
+    # so that the auc calculation could skip the rectangle area formed by
+    # (fpr_interp, 0), (max_fpr, 0), (fpr_interp, min_tpr), (max_fpr, min_tpr)
+    tpr = [x - min_tpr for x in tpr]
     partial_auc = auc(fpr, tpr)
 
-    # McClish correction: standardize result to be 0.5 if non-discriminant
-    # and 1 if maximal
-    min_area = 0.5 * max_fpr**2
-    max_area = max_fpr
+    max_area = (1 - min_tpr) * max_fpr
+    # if max_fpr <= min_tpr, the min_area is 0
+    min_area = 0.5 * (max_fpr - min_tpr) ** 2 if max_fpr > min_tpr else 0
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
 @_deprecate_positional_args
 def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
-                  max_fpr=None, multi_class="raise", labels=None):
+                  max_fpr=None, min_tpr=None, multi_class="raise", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -419,8 +450,24 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         Sample weights.
 
     max_fpr : float > 0 and <= 1, default=None
-        If not ``None``, the standardized partial AUC [2]_ over the range
-        [0, max_fpr] is returned. For the multiclass case, ``max_fpr``,
+        Only used for partial AUC calculation.
+        If not ``None``, and if the min_tpr is not defined,
+        the partial AUC [2]_ over the range (of fpr axis) [0, max_fpr] is returned.
+        If not ``None``, and if the min_tpr is also defined,
+        the AUC over the ROC range which conforms to both max_fpr and min_tpr limitations is returned,
+        which is the area A described in [6]_ Figure 1.
+        For the multiclass case, ``max_fpr``,
+        should be either equal to ``None`` or ``1.0`` as AUC ROC partial
+        computation currently is not supported for multiclass.
+
+    min_tpr : float > 0 and <= 1, default=None
+        Only used for partial AUC calculation.
+        If not ``None``, and if the max_fpr is not defined, the top right
+        tail area of full ROC over the range (of tpr axis) [min_tpr, 1] is returned.
+        If not ``None``, and if the max_fpr is also defined,
+        the AUC over the ROC range which conforms to both max_fpr and min_tpr limitations is returned,
+        which is the area A described in [6] Figure 1.
+        For the multiclass case, ``min_tpr``,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
 
@@ -471,6 +518,9 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
+
+    .. [6] `Hanfang Yang, Kun Lu, Xiang Lyu, Feifang Hu (2017). Two-Way Partial AUC and Its Properties
+            <https://arxiv.org/abs/1508.00298>`_
 
     See Also
     --------
@@ -532,6 +582,11 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
                              "multiclass setting, 'max_fpr' must be"
                              " set to `None`, received `max_fpr={0}` "
                              "instead".format(max_fpr))
+        if min_tpr is not None and min_tpr != 0.:
+            raise ValueError("Partial AUC computation not available in "
+                             "multiclass setting, 'min_tpr' must be"
+                             " set to `None`, received `min_tpr={0}` "
+                             "instead".format(min_tpr))
         if multi_class == 'raise':
             raise ValueError("multi_class must be in ('ovo', 'ovr')")
         return _multiclass_roc_auc_score(y_true, y_score, labels,
@@ -540,12 +595,14 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         labels = np.unique(y_true)
         y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(partial(_binary_roc_auc_score,
-                                             max_fpr=max_fpr),
+                                             max_fpr=max_fpr,
+                                             min_tpr=min_tpr),
                                      y_true, y_score, average,
                                      sample_weight=sample_weight)
     else:  # multilabel-indicator
         return _average_binary_score(partial(_binary_roc_auc_score,
-                                             max_fpr=max_fpr),
+                                             max_fpr=max_fpr,
+                                             min_tpr=min_tpr),
                                      y_true, y_score, average,
                                      sample_weight=sample_weight)
 
