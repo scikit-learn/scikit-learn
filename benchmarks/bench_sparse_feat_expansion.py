@@ -40,7 +40,9 @@ for degree, ax in zip(degrees, axes):
         label="csr",
         linestyle=csr_linestyle,
     )
-    ax.set_title("density %0.2f, degree=%d, n_samples=%d" % (density, degree, num_rows))
+    ax.set_title(
+        "density %0.2f, degree=%d, n_samples=%d" % (density, degree, num_rows)
+    )
     ax.legend()
     ax.set_xlabel("Dimensionality")
     ax.set_ylabel("Time (seconds)")
