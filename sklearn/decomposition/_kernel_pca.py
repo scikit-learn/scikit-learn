@@ -343,15 +343,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # Project with a scalar product between K and the scaled eigenvectors
         return np.dot(K, scaled_alphas)
 
-    def inverse_transform(self, X, reconstruct_mean=True):  
+    def inverse_transform(self, X, reconstruct_mean=True):
         """Transform X back to original space.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_components)
         mean_shift : bool, default=True
-            If True, then mean of the reconstruction is reconstructed when the linear kernel is 
-            used, to keep the compatibility with :class:`~sklearn.decomposition.PCA`.
+            If True, then mean of the reconstruction is reconstructed when
+            the linear kernel is used, to keep the compatibility with
+            :class:`~sklearn.decomposition.PCA`.
 
         Returns
         -------
@@ -369,12 +370,15 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         K = self._get_kernel(X, self.X_transformed_fit_)
         X_reconstructed = np.dot(K, self.dual_coef_)
 
-        # When centering is applied to the linear kernel, the information of the mean is lost. 
-        # This information can be reconstructed by adding the mean of training data to the 
-        # reconstruction, as in `sklearn.decomposition._BasePCA._inverse_transform`.
-        if (self.kernel=='linear') or (self.kernel=='poly' and self.degree==1 and self.coef0==0):
-            if reconstruct_mean:
-                X_reconstructed += self.X_fit_.mean(axis=0, keepdims=True)
+        # When centering is applied to the linear kernel, the information of
+        # the mean is lost. This information can be reconstructed by adding
+        #  the mean of training data to the reconstruction, as in
+        # `sklearn.decomposition._BasePCA._inverse_transform`.
+        if reconstruct_mean and (
+            (self.kernel == 'linear') or
+            (self.kernel == 'poly' and self.degree == 1 and self.coef0 == 0)
+        ):
+            X_reconstructed += self.X_fit_.mean(axis=0, keepdims=True)
 
         return X_reconstructed
 
