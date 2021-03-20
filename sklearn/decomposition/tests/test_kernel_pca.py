@@ -286,16 +286,20 @@ def test_kernel_conditioning():
     assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
 
 
-@pytest.mark.parametrize("kernel",
-                         ["linear", "poly", "rbf", "sigmoid", "cosine"])
-def test_kernel_pca_inverse_transform(kernel):
-    X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
+def test_kernel_pca_inverse_transform_reconstruct_mean():
+    X, *_ = make_blobs(n_samples=100, n_features=3, centers=[[1, 1, 1]],
                        random_state=0)
 
-    kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True)
-    X_trans = kp.fit_transform(X)
-    X_inv = kp.inverse_transform(X_trans)
-    assert_allclose(X, X_inv)
+    # When alpha = 0, the inverse transform is exactly equal to the original.
+    kpca = KernelPCA(n_components=3, kernel='linear', fit_inverse_transform=True, alpha=1e-3)
+    X_trans = kpca.fit_transform(X)
+    X_inv = kpca.inverse_transform(X_trans)
+    assert_allclose(X, X_inv, atol=1e-3)
+
+    kpca = KernelPCA(n_components=3, kernel='poly', degree=1, coef0=0, fit_inverse_transform=True, alpha=1e-3)
+    X_trans = kpca.fit_transform(X)
+    X_inv = kpca.inverse_transform(X_trans)
+    assert_allclose(X, X_inv, atol=1e-3)
 
 
 def test_32_64_decomposition_shape():

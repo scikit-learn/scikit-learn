@@ -343,12 +343,15 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # Project with a scalar product between K and the scaled eigenvectors
         return np.dot(K, scaled_alphas)
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, reconstruct_mean=True):  
         """Transform X back to original space.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_components)
+        mean_shift : bool, default=True
+            If True, then mean of the reconstruction is reconstructed when the linear kernel is 
+            used, to keep the compatibility with :class:`~sklearn.decomposition.PCA`.
 
         Returns
         -------
@@ -364,9 +367,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                  "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
-        n_samples = self.X_transformed_fit_.shape[0]
-        K.flat[::n_samples + 1] += self.alpha
-        return np.dot(K, self.dual_coef_)
+        X_reconstructed = np.dot(K, self.dual_coef_)
+
+        # When centering is applied to the linear kernel, the information of the mean is lost. 
+        # This information can be reconstructed by adding the mean of training data to the 
+        # reconstruction, as in `sklearn.decomposition._BasePCA._inverse_transform`.
+        if (self.kernel=='linear') or (self.kernel=='poly' and self.degree==1 and self.coef0==0):
+            if reconstruct_mean:
+                X_reconstructed += self.X_fit_.mean(axis=0, keepdims=True)
+
+        return X_reconstructed
 
     def _more_tags(self):
         return {'preserves_dtype': [np.float64, np.float32],
