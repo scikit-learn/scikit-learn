@@ -299,7 +299,8 @@ def test_kernel_pca_inverse_transform_reconstruct_mean():
     assert_allclose(X, X_inv, atol=1e-3)
 
     kpca = KernelPCA(
-        n_components=3, kernel='poly', degree=1, coef0=0, fit_inverse_transform=True, alpha=1e-3
+        n_components=3, kernel='poly', degree=1, coef0=0,
+        fit_inverse_transform=True, alpha=1e-3
     )
     X_trans = kpca.fit_transform(X)
     X_inv = kpca.inverse_transform(X_trans)
