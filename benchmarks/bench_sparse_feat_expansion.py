@@ -9,7 +9,7 @@ from time import time
 degree = 2
 trials = 3
 num_rows = 1000
-dimensionalities = np.array([2 ** i for i in range(1, 10)])
+dimensionalities = np.array([2 ** i for i in range(1, 11)])
 degrees = [2, 3]
 csr_times = {d: np.zeros(len(dimensionalities)) for d in degrees}
 density = 0.01
