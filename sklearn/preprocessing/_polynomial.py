@@ -198,7 +198,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        n_samples, n_features = self._validate_data(X, accept_sparse=True).shape
+        _, n_features = self._validate_data(X, accept_sparse=True).shape
         self.n_input_features_ = n_features
         self.n_output_features_ = self._num_combinations(
             n_features, self.degree, self.interaction_only, self.include_bias
