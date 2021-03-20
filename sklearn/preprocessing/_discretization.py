@@ -9,6 +9,8 @@
 import numbers
 import numpy as np
 import warnings
+import copy
+from scipy import stats, mean, median
 
 from . import OneHotEncoder
 
@@ -164,7 +166,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 f" instead."
             )
 
-        valid_encode = ('onehot', 'onehot-dense', 'ordinal')
+        valid_encode = ('onehot', 'onehot-dense', 'ordinal', 'min', 'max', 'mean', 'median', 'mode')
         if self.encode not in valid_encode:
             raise ValueError("Valid options for 'encode' are {}. "
                              "Got encode={!r} instead."
@@ -303,6 +305,21 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
         np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
 
+        if self.encode == 'max':
+            return self._aggregate_encoder_helper(X, Xt, lambda x: np.max(x))
+
+        if self.encode == 'min':
+            return self._aggregate_encoder_helper(X, Xt, lambda x: np.min(x))
+
+        if self.encode == 'mode':
+            return self._aggregate_encoder_helper(X, Xt, lambda x: stats.mode(x)[0][0])
+
+        if self.encode == 'mean':
+            return self._aggregate_encoder_helper(X, Xt, lambda x: mean(x, axis=0))
+
+        if self.encode == 'median':
+            return self._aggregate_encoder_helper(X, Xt, lambda x: median(x, axis=0))
+
         if self.encode == 'ordinal':
             return Xt
 
@@ -351,3 +368,24 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
 
         return Xinv
+
+
+    def _aggregate_encoder_helper(self, X, ordinal_labels, aggregate_encoder):
+        A = np.array(X)
+
+        # traverse columns
+        for j in range(len(A[0])):
+            col = A[:, j]
+
+            # go through each bin to get the entries that match the corresponding label
+            # then perform the encoding operation (min, max, mean, etc.) on just those entries
+            for bin_num in range(self.n_bins):
+                 # map for membership in current bin
+                mapping = [bin_num == ordinal_labels[i, j] for i in range(len(A))]
+  
+                # if the bin has more than one element
+                if len(col[mapping]) > 0:
+                    # apply aggregate encoding on the list of elements in the bin
+                    A[mapping, j] = aggregate_encoder(col[mapping])
+        
+        return A

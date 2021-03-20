@@ -360,7 +360,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double power_t,
                double t=1.0,
                double intercept_decay=1.0,
-               int average=0):
+               int average=0,
+               int batch_size=1):
     """SGD for generic loss functions and penalties with optional averaging
 
     Parameters
@@ -485,6 +486,14 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double max_change = 0.0
     cdef double max_weight = 0.0
 
+    cdef double avg_batch_loss = 0.0
+    cdef double sum_batch_loss = 0.0
+    cdef double sum_batch_dloss = 0.0
+    cdef double avg_batch_dloss = 0.0
+    cdef int validation_sample_count = 0
+    # cdef WeightVector batch_x_sum = WeightVector(np.zeros(weights.shape[0]), None)
+    cdef double batch_weight = 0.0
+
     cdef long long sample_index
     cdef unsigned char [:] validation_mask_view = validation_mask
 
@@ -511,6 +520,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         optimal_init = 1.0 / (initial_eta0 * alpha)
 
     t_start = time()
+    print("batch_size", batch_size)
     with nogil:
         for epoch in range(max_iter):
             sumloss = 0
@@ -519,47 +529,90 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     print("-- Epoch %d" % (epoch + 1))
             if shuffle:
                 dataset.shuffle(seed)
-            for i in range(n_samples):
-                dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
-                             &y, &sample_weight)
 
-                sample_index = dataset.index_data_ptr[dataset.current_index]
-                if validation_mask_view[sample_index]:
-                    # do not learn on the validation set
-                    continue
 
-                p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
+            for i in range(n_samples//batch_size):
+                # calculate the average loss in the batch
+                sum_batch_loss = 0
+                sum_batch_dloss = 0
+                validation_sample_count = 0
+                batch_weight = 0
+
                 if learning_rate == OPTIMAL:
                     eta = 1.0 / (alpha * (optimal_init + t - 1))
                 elif learning_rate == INVSCALING:
                     eta = eta0 / pow(t, power_t)
 
-                if verbose or not early_stopping:
-                    sumloss += loss.loss(p, y)
+                with gil:
+                    print("outside of the batch loop weights: ", weights)
+                # TODO: add a list to store the data pointers in the batch : batch_data_pointers , batch_index_pointers, xnnzs,
+                for j in range(batch_size):
+                    dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
+                                 &y, &sample_weight)
 
-                if y > 0.0:
-                    class_weight = weight_pos
-                else:
-                    class_weight = weight_neg
+                    sample_index = dataset.index_data_ptr[dataset.current_index]
 
-                if learning_rate == PA1:
-                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    if update == 0:
+                    # batch_x_sum.add(x_data_ptr, x_ind_ptr, xnnz, sample_weight)
+                    # batch_weight += sample_weight
+                    # with gil:
+                    #     print("sample_data ", x_data_ptr)
+                    #     print("sample_weight: ", sample_weight)
+
+                    # TODO: update the validation
+                    if validation_mask_view[sample_index]:
+                        # do not learn on the validation set
+                        validation_sample_count += 1
                         continue
-                    update = min(C, loss.loss(p, y) / update)
-                elif learning_rate == PA2:
-                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    update = loss.loss(p, y) / (update + 0.5 / C)
-                else:
-                    dloss = loss.dloss(p, y)
-                    # clip dloss with large values to avoid numerical
-                    # instabilities
-                    if dloss < -MAX_DLOSS:
-                        dloss = -MAX_DLOSS
-                    elif dloss > MAX_DLOSS:
-                        dloss = MAX_DLOSS
-                    update = -eta * dloss
 
+                    p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
+
+                    if verbose or not early_stopping:
+                        sumloss += loss.loss(p, y)
+
+                    if y > 0.0:
+                        class_weight = weight_pos
+                    else:
+                        class_weight = weight_neg
+
+                    sum_batch_loss += loss.loss(p, y)
+
+                    # TODO: -- NEED TO CHECK WHAT PA1 AND PA2 IS
+                    if learning_rate == PA1:
+                        update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                        if update == 0:
+                            continue
+                        update = min(C, loss.loss(p, y) / update)
+                    elif learning_rate == PA2:
+                        update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                        update = loss.loss(p, y) / (update + 0.5 / C)
+                    else:
+                        dloss = loss.dloss(p, y)
+                        # clip dloss with large values to avoid numerical
+                        # instabilities
+                        if dloss < -MAX_DLOSS:
+                            dloss = -MAX_DLOSS
+                        elif dloss > MAX_DLOSS:
+                            dloss = MAX_DLOSS
+
+                        sum_batch_dloss += dloss
+
+                # outside of the batch loop ---------------
+                avg_batch_loss = sum_batch_loss / (batch_size - validation_sample_count)
+                avg_batch_dloss = sum_batch_dloss / (batch_size - validation_sample_count)
+                # batch_x_sum.scale(1 / (batch_size - validation_sample_count))
+                # with gil:
+                #     print("after scale:", )
+                # update after each batch
+                if learning_rate == PA1:
+                    update = 0.0
+                elif learning_rate == PA2:
+                    update = 0.0
+                else:
+                    update = -eta * avg_batch_dloss
+
+                with gil:
+                    print("sum_batch_dloss: ", sum_batch_dloss, "update: ", update)
+                # need to check what pa1 and pa2 is, need to combine with if statement above
                 if learning_rate >= PA1:
                     if is_hinge:
                         # classification
@@ -570,15 +623,28 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                 update *= class_weight * sample_weight
 
+                with gil:
+                    print("update:  %d" % update)
+
                 if penalty_type >= L2:
                     # do not scale to negative values when eta or alpha are too
                     # big: instead set the weights to zero
                     w.scale(max(0, 1.0 - ((1.0 - l1_ratio) * eta * alpha)))
+                    # with gil:
+                    #     print("line615, weights scale in penalty >= l2: ", weights)
+
+                # TODO: not sure about this part
                 if update != 0.0:
+                    # TODO: add a for loop, loop through the  batch_data_pointers , batch_index_pointers, xnnzs,
+                    # update the w
                     w.add(x_data_ptr, x_ind_ptr, xnnz, update)
+                    with gil:
+                        print("line 621: update != 0, weights", weights)
                     if fit_intercept == 1:
                         intercept += update * intercept_decay
 
+                # with gil:
+                #     print("line 619: average: ", average)
                 if 0 < average <= t:
                     # compute the average for the intercept and update the
                     # average weights, this is done regardless as to whether
@@ -586,6 +652,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                     w.add_average(x_data_ptr, x_ind_ptr, xnnz,
                                   update, (t - average + 1))
+                    with gil:
+                        print("added average: ", weights)
                     average_intercept += ((intercept - average_intercept) /
                                           (t - average + 1))
 
@@ -647,9 +715,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
                           " #%d. Scaling input data with StandardScaler or"
                           " MinMaxScaler might help.") % (epoch + 1))
-
     w.reset_wscale()
-
     return weights, intercept, average_weights, average_intercept, epoch + 1
 
 

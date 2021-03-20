@@ -1,6 +1,7 @@
 from numpy.testing import (
     assert_allclose,
     assert_array_equal,
+    assert_equal
 )
 import numpy as np
 import pytest
@@ -16,7 +17,7 @@ from sklearn.svm import SVR
 
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
-
+from sklearn.utils.multiclass import unique_labels
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(

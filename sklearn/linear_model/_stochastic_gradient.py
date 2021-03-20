@@ -76,7 +76,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=5, warm_start=False, average=False):
+                 n_iter_no_change=5, warm_start=False, average=False, batch_size=1):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
@@ -97,6 +97,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.average = average
         self.max_iter = max_iter
         self.tol = tol
+        self.batch_size = batch_size
         # current tests expect init to do parameter validation
         # but we are not allowed to set attributes
         self._validate_params()
@@ -357,7 +358,7 @@ def _prepare_fit_binary(est, y, i):
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
                pos_weight, neg_weight, sample_weight, validation_mask=None,
-               random_state=None):
+               random_state=None, batch_size=1):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -415,6 +416,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
     random_state = check_random_state(random_state)
+    print("y_i", y_i)
     dataset, intercept_decay = make_dataset(
         X, y_i, sample_weight, random_state=random_state)
 
@@ -430,16 +432,15 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     # numpy mtrand expects a C long which is a signed 32 bit integer under
     # Windows
     seed = random_state.randint(MAX_INT)
-
+    print("average coef", average_coef)
     tol = est.tol if est.tol is not None else -np.inf
-
     coef, intercept, average_coef, average_intercept, n_iter_ = _plain_sgd(
         coef, intercept, average_coef, average_intercept, est.loss_function_,
         penalty_type, alpha, C, est.l1_ratio, dataset, validation_mask,
         est.early_stopping, validation_score_cb, int(est.n_iter_no_change),
         max_iter, tol, int(est.fit_intercept), int(est.verbose),
         int(est.shuffle), seed, pos_weight, neg_weight, learning_rate_type,
-        est.eta0, est.power_t, est.t_, intercept_decay, est.average)
+        est.eta0, est.power_t, est.t_, intercept_decay, est.average, batch_size)
 
     if est.average:
         if len(est.classes_) == 2:
@@ -473,7 +474,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,
-                 class_weight=None, warm_start=False, average=False):
+                 class_weight=None, warm_start=False, average=False, batch_size=1):
 
         super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
@@ -483,7 +484,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             power_t=power_t, early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
-            average=average)
+            average=average, batch_size=batch_size)
         self.class_weight = class_weight
         self.n_jobs = n_jobs
 
@@ -587,7 +588,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                                               self._expanded_class_weight[1],
                                               self._expanded_class_weight[0],
                                               sample_weight,
-                                              random_state=self.random_state)
+                                              random_state=self.random_state,
+                                              batch_size=self.batch_size)
 
         self.t_ += n_iter_ * X.shape[0]
         self.n_iter_ = n_iter_
@@ -728,6 +730,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self :
             Returns an instance of self.
         """
+        print(X)
+        print(y)
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
@@ -978,7 +982,7 @@ class SGDClassifier(BaseSGDClassifier):
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, class_weight=None, warm_start=False,
-                 average=False):
+                 average=False, batch_size=1):
         super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
@@ -987,7 +991,7 @@ class SGDClassifier(BaseSGDClassifier):
             power_t=power_t, early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, class_weight=class_weight,
-            warm_start=warm_start, average=average)
+            warm_start=warm_start, average=average, batch_size=batch_size)
 
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
