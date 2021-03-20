@@ -904,8 +904,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'least_squares', 'least_absolute_deviation', \
-            'poisson'}, default='squared_error'
+    loss : {'squared_error', 'least_squares', 'absolute_error', \
+            'least_absolute_deviation', 'poisson'}, default='squared_error'
         The loss function to use in the boosting process. Note that the
         "least squares" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
@@ -918,6 +918,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. deprecated:: 1.0
             The loss 'least_squares' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
+
+        .. deprecated:: 1.0
+            The loss 'least_absolute_deviation' was deprecated in v1.0 and will
+            be removed in version 1.2. Use `loss='absolute_error'` which is
+            equivalent.
 
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
@@ -1050,7 +1055,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
-    _VALID_LOSSES = ('squared_error', 'least_squares',
+    _VALID_LOSSES = ('squared_error', 'least_squares', 'absolute_error',
                      'least_absolute_deviation', 'poisson')
 
     @_deprecate_positional_args
@@ -1126,6 +1131,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return y
 
     def _get_loss(self, sample_weight):
+        # TODO: Remove in v1.2
         if self.loss == "least_squares":
             warnings.warn(
                 "The loss 'least_squares' was deprecated in v1.0 and will be "
@@ -1133,6 +1139,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 "equivalent.",
                 FutureWarning)
             return _LOSSES["squared_error"](sample_weight=sample_weight)
+        elif self.loss == "least_absolute_deviation":
+            warnings.warn(
+                "The loss 'least_absolute_deviation' was deprecated in v1.0 "
+                " and will be removed in version 1.2. Use 'absolute_error' "
+                "which is equivalent.",
+                FutureWarning)
+            return _LOSSES["absolute_error"](sample_weight=sample_weight)
 
         return _LOSSES[self.loss](sample_weight=sample_weight)
 

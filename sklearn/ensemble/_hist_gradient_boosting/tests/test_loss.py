@@ -103,7 +103,7 @@ def test_derivatives(loss, x0, y_true):
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
     ("squared_error", 0, 1),
-    ('least_absolute_deviation', 0, 1),
+    ("absolute_error", 0, 1),
     ('binary_crossentropy', 2, 1),
     ('categorical_crossentropy', 3, 3),
     ('poisson', 0, 1),
@@ -118,7 +118,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
 
     rng = np.random.RandomState(seed)
     n_samples = 100
-    if loss in ("squared_error", 'least_absolute_deviation'):
+    if loss in ("squared_error", "absolute_error"):
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
     elif loss in ('poisson'):
         y_true = rng.poisson(size=n_samples).astype(Y_DTYPE)
@@ -172,10 +172,10 @@ def test_baseline_least_squares():
                        baseline_prediction)
 
 
-def test_baseline_least_absolute_deviation():
+def test_baseline_absolute_error():
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['least_absolute_deviation'](sample_weight=None)
+    loss = _LOSSES["absolute_error"](sample_weight=None)
     y_train = rng.normal(size=100)
     baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
     assert baseline_prediction.shape == tuple()  # scalar
@@ -256,7 +256,7 @@ def test_baseline_categorical_crossentropy():
 
 @pytest.mark.parametrize('loss, problem', [
     ("squared_error", 'regression'),
-    ('least_absolute_deviation', 'regression'),
+    ("absolute_error", 'regression'),
     ('binary_crossentropy', 'classification'),
     ('categorical_crossentropy', 'classification'),
     ('poisson', 'poisson_regression'),
