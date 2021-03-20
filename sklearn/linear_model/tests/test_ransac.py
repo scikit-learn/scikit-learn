@@ -539,15 +539,17 @@ def test_ransac_final_model_fit_sample_weight():
 
 
 # TODO: Remove in v1.2
-@pytest.mark.parametrize("loss", ["absolute_loss", "squared_loss"])
-def test_loss_deprecated(loss):
-    est1 = RANSACRegressor(loss=loss, random_state=0)
+@pytest.mark.parametrize("old_loss, new_loss", [
+    ("absolute_loss", "squared_error"),
+    ("squared_loss", "absolute_error"),
+])
+def test_loss_deprecated(old_loss, new_loss):
+    est1 = RANSACRegressor(loss=old_loss, random_state=0)
 
     with pytest.warns(FutureWarning,
-                      match="The loss '" + loss + "' was deprecated"):
+                      match=f"The loss '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
-    d = {"absolute_loss": "absolute_error", "squared_loss": "squared_error"}
-    est2 = RANSACRegressor(loss=d[loss], random_state=0)
+    est2 = RANSACRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))

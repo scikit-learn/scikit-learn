@@ -2121,14 +2121,16 @@ def test_X_idx_sorted_deprecated(TreeEstimator):
 
 # TODO: Remove in v1.2
 @pytest.mark.parametrize("Tree", REG_TREES.values())
-@pytest.mark.parametrize("criterion", ["mse", "mae"])
-def test_mse_deprecated(Tree, criterion):
-    tree = Tree(criterion=criterion)
+@pytest.mark.parametrize("old_criterion, new_criterion", [
+    ("mse", "squared_error"),
+    ("mae", "absolute_error"),
+])
+def test_criterion_deprecated(Tree, old_criterion, new_criterion):
+    tree = Tree(criterion=old_criterion)
 
     with pytest.warns(FutureWarning,
-                      match="Criterion '" + criterion + "' was deprecated"):
+                      match=f"Criterion '{old_criterion}' was deprecated"):
         tree.fit(X, y)
 
-    d = {"mse": "squared_error", "mae": "absolute_error"}
-    tree_new = Tree(criterion=d[criterion]).fit(X, y)
+    tree_new = Tree(criterion=new_criterion).fit(X, y)
     assert_allclose(tree.predict(X), tree_new.predict(X))

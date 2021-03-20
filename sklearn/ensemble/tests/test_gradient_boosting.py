@@ -1390,15 +1390,17 @@ def test_criterion_mse_deprecated(Estimator):
 
 
 # TODO: Remove in v1.2
-@pytest.mark.parametrize("loss", ["ls", "lad"])
-def test_loss_deprecated(loss):
-    est1 = GradientBoostingRegressor(loss=loss, random_state=0)
+@pytest.mark.parametrize("old_loss, new_loss", [
+    ("ls", "squared_error"),
+    ("lad", "absolute_error"),
+])
+def test_loss_deprecated(old_loss, new_loss):
+    est1 = GradientBoostingRegressor(loss=old_loss, random_state=0)
 
     with pytest.warns(FutureWarning,
-                      match="The loss '" + loss + "' was deprecated"):
+                      match=f"The loss '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
-    d = {"ls": "squared_error", "lad": "absolute_error"}
-    est2 = GradientBoostingRegressor(loss=d[loss], random_state=0)
+    est2 = GradientBoostingRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
