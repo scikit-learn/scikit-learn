@@ -552,7 +552,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-@pytest.mark.parametrize("columns", [1, 2, 3])
+@pytest.mark.parametrize("columns", [1, 2, 3, 1000])
 def test_polynomial_features_csr_wide(columns):
     x = sparse.csr_matrix(([1], ([0], [columns])))
 
