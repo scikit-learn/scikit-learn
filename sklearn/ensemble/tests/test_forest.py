@@ -1498,14 +1498,16 @@ def test_n_features_deprecation(Estimator):
 
 
 # TODO: Remove in v1.2
-def test_mse_deprecated():
-    est1 = RandomForestRegressor(criterion="mse", random_state=0)
+@pytest.mark.parametrize("criterion", ["mse", "mae"])
+def test_criterion_deprecated(criterion):
+    est1 = RandomForestRegressor(criterion=criterion, random_state=0)
 
     with pytest.warns(FutureWarning,
-                      match="Criterion 'mse' was deprecated"):
+                      match="Criterion '" + criterion + "' was deprecated"):
         est1.fit(X, y)
 
-    est2 = RandomForestRegressor(criterion="squared_error", random_state=0)
+    d = {"mse": "squared_error", "mae": "absolute_error"}
+    est2 = RandomForestRegressor(criterion=d[criterion], random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 

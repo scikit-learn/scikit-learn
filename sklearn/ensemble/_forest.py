@@ -346,16 +346,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Check parameters
         self._validate_estimator()
         # TODO: Remove in v1.2
-        if (
-            isinstance(self, (RandomForestRegressor, ExtraTreesRegressor))
-            and self.criterion == "mse"
-        ):
-            warn(
-                "Criterion 'mse' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `criterion='squared_error'` "
-                "which is equivalent.",
-                FutureWarning
-            )
+        if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
+            if self.criterion == "mse":
+                warn(
+                    "Criterion 'mse' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
+            elif self.criterion == "mae":
+                warn(
+                    "Criterion 'mae' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='absolute_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
 
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
@@ -1321,11 +1326,12 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "mae"}, default="squared_error"
+    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, and "mae" for the
-        mean absolute error.
+        variance reduction as feature selection criterion, and "absolute_error"
+        for the mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1333,6 +1339,10 @@ class RandomForestRegressor(ForestRegressor):
         .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1936,10 +1946,11 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "mae"}, default="squared_error"
+    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "squared_error" and "mse" for the mean squared error, which is
-        equal to variance reduction as feature selection criterion, and "mae"
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, and "absolute_error"
         for the mean absolute error.
 
         .. versionadded:: 0.18
@@ -1948,6 +1959,10 @@ class ExtraTreesRegressor(ForestRegressor):
         .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
             version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
