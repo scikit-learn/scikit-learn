@@ -120,7 +120,10 @@ Changelog
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
 
-- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s ``inverse_transform``.
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s
+  ``inverse_transform``. It now reconstructs the mean of the data by adding
+  the mean at the last step of reconstruction, in the same way as
+  ``inverse_transform`` of :class:`decomposition.PCA`.
   :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
 
 :mod:`sklearn.ensemble`
