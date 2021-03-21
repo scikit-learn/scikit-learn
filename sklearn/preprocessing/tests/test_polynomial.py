@@ -572,9 +572,13 @@ def test_polynomial_features_csr_wide(columns):
     ],
 )
 def test_num_combinations(n_features, degree, interaction_only, include_bias):
-    num_combos = PolynomialFeatures._num_combinations(
-        n_features, degree, interaction_only, include_bias
+    x = sparse.csr_matrix(([1], ([0], [n_features - 1])))
+    est = PolynomialFeatures(
+        degree, interaction_only=interaction_only, include_bias=include_bias
     )
+    est.fit(x)
+    num_combos = est.n_output_features_
+
     combos = PolynomialFeatures._combinations(
         n_features, degree, interaction_only, include_bias
     )
