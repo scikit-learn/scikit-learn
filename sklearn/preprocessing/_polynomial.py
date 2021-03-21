@@ -8,6 +8,7 @@ from itertools import combinations_with_replacement as combinations_w_r
 import numpy as np
 from scipy import sparse
 from scipy.interpolate import BSpline
+from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
@@ -115,26 +116,14 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     @staticmethod
     def _num_combinations(n_features, degree, interaction_only, include_bias):
-        def ncr(n, r):
-            r = min(r, n - r)
-            numer = 1
-            for i in range(n, n - r, -1):
-                numer *= i
-
-            denom = 1
-            for i in range(1, r + 1):
-                denom *= i
-
-            return numer // denom
-
         if interaction_only:
             combinations = 0
             for i in range(1, degree + 1):
                 if i > n_features:
                     continue
-                combinations += ncr(n_features, i)
+                combinations += comb(n_features, i, exact=True)
         else:
-            combinations = ncr(n_features + degree, degree) - 1
+            combinations = comb(n_features + degree, degree, exact=True) - 1
 
         if include_bias:
             combinations += 1
