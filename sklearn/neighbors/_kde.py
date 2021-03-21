@@ -41,7 +41,7 @@ class KernelDensity(BaseEstimator):
                  'cosine'}, default='gaussian'
         The kernel to use.
 
-    metric : str, default='euclidian'
+    metric : str, default='euclidean'
         The distance metric to use.  Note that not all metrics are
         valid with all algorithms.  Refer to the documentation of
         :class:`BallTree` and :class:`KDTree` for a description of
