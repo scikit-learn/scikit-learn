@@ -1487,7 +1487,6 @@ def test_clone_oneclass(klass):
     assert_array_equal(clf.coef_, clf2.coef_)
 
 
-@ignore_warnings
 @pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_partial_fit_oneclass(klass):
     third = X.shape[0] // 3
