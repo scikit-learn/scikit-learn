@@ -557,10 +557,8 @@ def test_polynomial_features_csr_wide(columns):
     x = sparse.csr_matrix(([1], ([0], [columns])))
 
     est = PolynomialFeatures(3)
-    try:
-        est.fit_transform(x)
-    except ValueError:
-        pytest.fail("possible overflow")
+    # this causes a crash with values of `columns` which are too large
+    est.fit_transform(x)
 
 
 @pytest.mark.parametrize(
