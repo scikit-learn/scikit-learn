@@ -176,7 +176,9 @@ def check_regression_criterion(name, criterion):
 
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
-@pytest.mark.parametrize('criterion', ("squared_error", "mae", "friedman_mse"))
+@pytest.mark.parametrize('criterion', (
+    "squared_error", "absolute_error", "friedman_mse"
+))
 def test_regression(name, criterion):
     check_regression_criterion(name, criterion)
 
@@ -261,10 +263,14 @@ def check_importances(name, criterion, dtype, tolerance):
         itertools.chain(product(FOREST_CLASSIFIERS,
                                 ["gini", "entropy"]),
                         product(FOREST_REGRESSORS,
-                                ["squared_error", "friedman_mse", "mae"])))
+                                [
+                                 "squared_error",
+                                 "friedman_mse",
+                                 "absolute_error"
+                                 ])))
 def test_importances(dtype, name, criterion):
     tolerance = 0.01
-    if name in FOREST_REGRESSORS and criterion == "mae":
+    if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
     check_importances(name, criterion, dtype, tolerance)
 
