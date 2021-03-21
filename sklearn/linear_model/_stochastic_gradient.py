@@ -416,7 +416,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
     random_state = check_random_state(random_state)
-    print("y_i", y_i)
+
     dataset, intercept_decay = make_dataset(
         X, y_i, sample_weight, random_state=random_state)
 
@@ -432,7 +432,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     # numpy mtrand expects a C long which is a signed 32 bit integer under
     # Windows
     seed = random_state.randint(MAX_INT)
-    print("average coef", average_coef)
+
     tol = est.tol if est.tol is not None else -np.inf
     coef, intercept, average_coef, average_intercept, n_iter_ = _plain_sgd(
         coef, intercept, average_coef, average_intercept, est.loss_function_,
@@ -730,8 +730,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self :
             Returns an instance of self.
         """
-        print(X)
-        print(y)
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
