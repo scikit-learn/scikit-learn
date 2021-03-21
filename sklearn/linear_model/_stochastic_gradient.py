@@ -1624,8 +1624,9 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     """Solves linear One-Class SVM using Stochastic Gradient Descent.
 
     This implementation is meant to be used with a kernel approximation
-    technique to obtain results similar to `sklearn.svm.OneClassSVM` which uses
-    a Gaussian kernel by default.
+    technique (e.g. `sklearn.kernel_approximation.Nystroem`) to obtain results
+    similar to `sklearn.svm.OneClassSVM` which uses a Gaussian kernel by
+    default.
 
     Read more in the :ref:`User Guide <sgd_online_one_class_svm>`.
 
