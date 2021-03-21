@@ -11,6 +11,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_raises
 from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
@@ -21,6 +22,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.datasets import make_blobs
 
 
 def _update_kwargs(kwargs):
@@ -1641,3 +1643,33 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
+
+
+@pytest.mark.parametrize("batch_size",
+                         [5, 10])
+def test_mini_batch(batch_size):
+    # we create 50 separable points
+    X, Y = make_blobs(n_samples=10, centers=2, random_state=0, cluster_std=0.60)
+
+    # fit the model
+    clf1 = SGDClassifier(loss="hinge", alpha=0.01, max_iter=200)
+
+    clf1.fit(X, Y)
+
+    clf2 = SGDClassifier(loss="hinge", alpha=0.01, max_iter=200, batch_size=batch_size)
+
+    clf2.fit(X, Y)
+
+    assert_array_almost_equal(clf1.coef_, clf2.coef_)
+
+
+@pytest.mark.parametrize("batch_size",
+                         [None, -1, 0])
+def test_mini_batch_invalid(batch_size):
+    # we create 50 separable points
+    X, Y = make_blobs(n_samples=10, centers=2, random_state=0, cluster_std=0.60)
+
+    assert_raises(ValueError, SGDClassifier(loss="hinge", alpha=0.01, max_iter=200, batch_size=batch_size))
+
+    #clf.fit(X, Y)
+
