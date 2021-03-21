@@ -120,7 +120,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             combinations = 0
             for i in range(1, degree + 1):
                 if i > n_features:
-                    continue
+                    break
                 combinations += comb(n_features, i, exact=True)
         else:
             combinations = comb(n_features + degree, degree, exact=True) - 1
