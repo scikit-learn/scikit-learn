@@ -14,6 +14,7 @@ from ._split import RepeatedStratifiedKFold
 from ._split import ShuffleSplit
 from ._split import GroupShuffleSplit
 from ._split import StratifiedShuffleSplit
+from ._split import StratifiedGroupKFold
 from ._split import PredefinedSplit
 from ._split import train_test_split
 from ._split import check_cv
@@ -57,6 +58,7 @@ __all__ = ['BaseCrossValidator',
            'RandomizedSearchCV',
            'ShuffleSplit',
            'StratifiedKFold',
+           'StratifiedGroupKFold',
            'StratifiedShuffleSplit',
            'check_cv',
            'cross_val_predict',

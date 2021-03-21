@@ -30,7 +30,7 @@ For example, using `SGDClassifier(loss='log')` results in logistic regression,
 i.e. a model equivalent to :class:`~sklearn.linear_model.LogisticRegression`
 which is fitted via SGD instead of being fitted by one of the other solvers
 in :class:`~sklearn.linear_model.LogisticRegression`. Similarly,
-`SGDRegressor(loss='squared_loss', penalty='l2')` and
+`SGDRegressor(loss='squared_error', penalty='l2')` and
 :class:`~sklearn.linear_model.Ridge` solve the same optimization problem, via
 different means.
 
@@ -211,7 +211,7 @@ samples (> 10.000), for other problems we recommend :class:`Ridge`,
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDRegressor` supports the following loss functions:
 
-  * ``loss="squared_loss"``: Ordinary least squares,
+  * ``loss="squared_error"``: Ordinary least squares,
   * ``loss="huber"``: Huber loss for robust regression,
   * ``loss="epsilon_insensitive"``: linear Support Vector Regression.
 
@@ -362,9 +362,9 @@ Different choices for :math:`L` entail different classifiers or regressors:
 
 - Hinge (soft-margin): equivalent to Support Vector Classification.
   :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))`.
-- Perceptron: 
+- Perceptron:
   :math:`L(y_i, f(x_i)) = \max(0, - y_i f(x_i))`.
-- Modified Huber: 
+- Modified Huber:
   :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))^2` if :math:`y_i f(x_i) >
   1`, and :math:`L(y_i, f(x_i)) = -4 y_i f(x_i)` otherwise.
 - Log: equivalent to Logistic Regression.

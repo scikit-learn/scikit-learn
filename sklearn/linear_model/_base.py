@@ -235,17 +235,19 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             if not return_mean:
                 X_offset[:] = X.dtype.type(0)
         else:
-            X_offset, X_var, _ = _incremental_mean_and_var(
-                X, last_mean=0., last_variance=0., last_sample_count=0.,
-                sample_weight=sample_weight
-            )
+            if normalize:
+                X_offset, X_var, _ = _incremental_mean_and_var(
+                    X, last_mean=0., last_variance=0., last_sample_count=0.,
+                    sample_weight=sample_weight
+                )
+            else:
+                X_offset = np.average(X, axis=0, weights=sample_weight)
 
-            X_offset = X_offset.astype(X.dtype)
+            X_offset = X_offset.astype(X.dtype, copy=False)
             X -= X_offset
 
-        X_var = X_var.astype(X.dtype, copy=False)
-
         if normalize:
+            X_var = X_var.astype(X.dtype, copy=False)
             # Detect constant features on the computed variance, before taking
             # the np.sqrt. Otherwise constant features cannot be detected with
             # sample_weights.
