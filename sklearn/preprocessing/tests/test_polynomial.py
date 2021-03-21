@@ -561,16 +561,10 @@ def test_polynomial_features_csr_wide(columns):
     est.fit_transform(x)
 
 
-@pytest.mark.parametrize(
-    ["n_features", "degree", "interaction_only", "include_bias"],
-    [
-        (i, j, a, b)
-        for i in range(1, 5)
-        for j in range(1, 5)
-        for a in [True, False]
-        for b in [True, False]
-    ],
-)
+@pytest.mark.parametrize("n_features", range(1, 5))
+@pytest.mark.parametrize("degree", range(1, 5))
+@pytest.mark.parametrize("interaction_only", [True, False])
+@pytest.mark.parametrize("include_bias", [True, False])
 def test_num_combinations(n_features, degree, interaction_only, include_bias):
     x = sparse.csr_matrix(([1], ([0], [n_features - 1])))
     est = PolynomialFeatures(
