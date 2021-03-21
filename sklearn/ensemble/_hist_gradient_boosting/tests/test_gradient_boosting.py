@@ -994,17 +994,18 @@ def test_uint8_predict(Est):
 
 
 # TODO: Remove in v1.2
-@pytest.mark.parametrize("loss", ["least_squares", "least_absolute_deviation"])
-def test_loss_deprecated(loss):
+@pytest.mark.parametrize("old_loss, new_loss", [
+    ("least_squares", "squared_error"),
+    ("least_absolute_deviation", "absolute_error"),
+])
+def test_loss_deprecated(old_loss, new_loss):
     X, y = make_regression(n_samples=50, random_state=0)
-    est1 = HistGradientBoostingRegressor(loss=loss, random_state=0)
+    est1 = HistGradientBoostingRegressor(loss=old_loss, random_state=0)
 
     with pytest.warns(FutureWarning,
-                      match="The loss '" + loss + "' was deprecated"):
+                      match=f"The loss '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
-    d = {"least_squares": "squared_error",
-         "least_absolute_deviation": "absolute_error"}
-    est2 = HistGradientBoostingRegressor(loss=d[loss], random_state=0)
+    est2 = HistGradientBoostingRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
