@@ -5,6 +5,7 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -1457,13 +1458,13 @@ def _test_warm_start_oneclass(klass, X, lr):
     clf3.fit(X)
 
     assert clf3.t_ == clf.t_
-    assert_array_almost_equal(clf3.coef_, clf.coef_)
+    assert_allclose(clf3.coef_, clf.coef_)
 
     clf3.set_params(nu=0.1)
     clf3.fit(X)
 
     assert clf3.t_ == clf2.t_
-    assert_array_almost_equal(clf3.coef_, clf2.coef_)
+    assert_allclose(clf3.coef_, clf2.coef_)
 
 
 @pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
@@ -1527,9 +1528,9 @@ def test_partial_fit_equal_fit_oneclass(klass, lr):
     y_scores2 = clf.decision_function(T)
 
     assert clf.t_ == t
-    assert_array_almost_equal(y_scores, y_scores2)
-    assert_array_almost_equal(clf.coef_, coef)
-    assert_array_almost_equal(clf.offset_, offset)
+    assert_allclose(y_scores, y_scores2)
+    assert_allclose(clf.coef_, coef)
+    assert_allclose(clf.offset_, offset)
 
 
 @pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
@@ -1555,10 +1556,8 @@ def test_late_onset_averaging_reached_oneclass(klass):
                       coef_init=clf2.coef_.ravel(),
                       offset_init=clf2.offset_)
 
-    assert_array_almost_equal(clf1.coef_.ravel(),
-                              average_coef.ravel(),
-                              decimal=16)
-    assert_almost_equal(clf1.offset_, average_offset, decimal=15)
+    assert_allclose(clf1.coef_.ravel(), average_coef.ravel())
+    assert_allclose(clf1.offset_, average_offset)
 
 
 @pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
@@ -1579,8 +1578,8 @@ def test_sgd_averaged_computed_correctly_oneclass(klass):
     clf.fit(X)
     average_coef, average_offset = asgd_oneclass(klass, X, eta, nu)
 
-    assert_array_almost_equal(clf.coef_, average_coef, decimal=16)
-    assert_almost_equal(clf.offset_, average_offset, decimal=15)
+    assert_allclose(clf.coef_, average_coef)
+    assert_allclose(clf.offset_, average_offset)
 
 
 @pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
@@ -1602,8 +1601,8 @@ def test_sgd_averaged_partial_fit_oneclass(klass):
     clf.partial_fit(X[int(n_samples / 2):][:])
     average_coef, average_offset = asgd_oneclass(klass, X, eta, nu)
 
-    assert_array_almost_equal(clf.coef_, average_coef, decimal=16)
-    assert_almost_equal(clf.offset_, average_offset, decimal=15)
+    assert_allclose(clf.coef_, average_coef)
+    assert_allclose(clf.offset_, average_offset)
 
 
 @pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
@@ -1622,8 +1621,8 @@ def test_average_sparse_oneclass(klass):
     clf.partial_fit(X3[int(n_samples / 2):])
     average_coef, average_offset = asgd_oneclass(klass, X3, eta, nu)
 
-    assert_array_almost_equal(clf.coef_, average_coef, decimal=16)
-    assert_almost_equal(clf.offset_, average_offset, decimal=15)
+    assert_allclose(clf.coef_, average_coef)
+    assert_allclose(clf.offset_, average_offset)
 
 
 def test_sgd_oneclass():
@@ -1634,14 +1633,14 @@ def test_sgd_oneclass():
     clf = SGDOneClassSVM(nu=0.5, eta0=1, learning_rate='constant',
                          shuffle=False, max_iter=1)
     clf.fit(X_train)
-    assert_array_almost_equal(clf.coef_, np.array([-0.125, 0.4375]))
+    assert_allclose(clf.coef_, np.array([-0.125, 0.4375]))
     assert clf.offset_[0] == -0.5
 
     scores = clf.score_samples(X_test)
-    assert_array_almost_equal(scores, np.array([-0.9375, 0.625]))
+    assert_allclose(scores, np.array([-0.9375, 0.625]))
 
     dec = clf.score_samples(X_test) - clf.offset_
-    assert_array_almost_equal(clf.decision_function(X_test), dec)
+    assert_allclose(clf.decision_function(X_test), dec)
 
     pred = clf.predict(X_test)
     assert_array_equal(pred, np.array([-1, 1]))
