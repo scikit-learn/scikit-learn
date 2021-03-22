@@ -1419,3 +1419,53 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
 
     assert_array_equal(sample_weight, sample_weight_1_25)
+
+
+@pytest.mark.parametrize("ridge_alpha", [1e-1, 1., 1e6])
+@pytest.mark.parametrize("normalize", [True, False])
+def test_enet_ridge_consistency(normalize, ridge_alpha):
+    # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
+    # provided that the value of alpha is adapted.
+    #
+    # XXX: this test does not pass for weaker regularization (lower values of
+    # ridge_alpha): it could be either a problem of ElasticNet or Ridge (less
+    # likely) and depends on the dataset statistics: lower values for
+    # effective_rank are more problematic in particular.
+
+    rng = np.random.RandomState(42)
+    X, y = make_regression(
+        n_samples=100,
+        n_features=300,
+        effective_rank=100,
+        n_informative=50,
+        random_state=rng,
+    )
+    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
+
+    ridge = Ridge(
+        alpha=ridge_alpha,
+        normalize=normalize,
+    ).fit(X, y, sample_weight=sw)
+
+    enet = ElasticNet(
+        alpha=ridge_alpha / sw.sum(),
+        normalize=normalize,
+        l1_ratio=0.,
+        max_iter=1000,
+    )
+    # Even when the ElasticNet model has actually converged, the duality gap
+    # convergence criterion is never met when l1_ratio is 0 and for any value
+    # of the `tol` parameter. The convergence message should point the user to
+    # Ridge instead:
+    expected_msg = (
+        r"Objective did not converge\. .* "
+        r"Linear regression models with null weight for the "
+        r"l1 regularization term are more efficiently fitted "
+        r"using one of the solvers implemented in "
+        r"sklearn\.linear_model\.Ridge/RidgeCV instead\."
+    )
+    with pytest.warns(ConvergenceWarning, match=expected_msg):
+        enet.fit(X, y, sample_weight=sw)
+
+    assert_allclose(ridge.coef_, enet.coef_)
+    assert_allclose(ridge.intercept_, enet.intercept_)

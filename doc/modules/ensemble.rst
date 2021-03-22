@@ -537,7 +537,8 @@ Regression
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
 for regression which can be specified via the argument
-``loss``; the default loss function for regression is least squares (``'ls'``).
+``loss``; the default loss function for regression is squared error
+(``'squared_error'``).
 
 ::
 
@@ -549,8 +550,10 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
-    ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
+    >>> est = GradientBoostingRegressor(
+    ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+    ...     loss='squared_error'
+    ... ).fit(X_train, y_train)
     >>> mean_squared_error(y_test, est.predict(X_test))
     5.00...
 
@@ -741,8 +744,8 @@ the parameter ``loss``:
 
   * Regression
 
-    * Least squares (``'ls'``): The natural choice for regression due
-      to its superior computational properties. The initial model is
+    * Squared error (``'squared_error'``): The natural choice for regression
+      due to its superior computational properties. The initial model is
       given by the mean of the target values.
     * Least absolute deviation (``'lad'``): A robust loss function for
       regression. The initial model is given by the median of the
@@ -950,7 +953,7 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'least_squares',
+Available losses for regression are 'squared_error',
 'least_absolute_deviation', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and

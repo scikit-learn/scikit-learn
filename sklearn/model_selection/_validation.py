@@ -784,7 +784,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, defualt=None
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
     pre_dispatch : int or str, default='2*n_jobs'

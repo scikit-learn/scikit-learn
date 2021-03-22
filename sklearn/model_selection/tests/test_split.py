@@ -35,6 +35,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import StratifiedGroupKFold
 
 from sklearn.linear_model import Ridge
 
@@ -80,6 +81,7 @@ def test_cross_validator_with_default_params():
     lopo = LeavePGroupsOut(p)
     ss = ShuffleSplit(random_state=0)
     ps = PredefinedSplit([1, 1, 2, 2])  # n_splits = np of unique folds = 2
+    sgkf = StratifiedGroupKFold(n_splits)
 
     loo_repr = "LeaveOneOut()"
     lpo_repr = "LeavePOut(p=2)"
@@ -90,15 +92,17 @@ def test_cross_validator_with_default_params():
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, "
                "test_size=None, train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
+    sgkf_repr = ("StratifiedGroupKFold(n_splits=2, random_state=None, "
+                 "shuffle=False)")
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
                          n_unique_groups, comb(n_unique_groups, p),
-                         n_shuffle_splits, 2]
+                         n_shuffle_splits, 2, n_splits]
 
     for i, (cv, cv_repr) in enumerate(zip(
-            [loo, lpo, kf, skf, lolo, lopo, ss, ps],
+            [loo, lpo, kf, skf, lolo, lopo, ss, ps, sgkf],
             [loo_repr, lpo_repr, kf_repr, skf_repr, lolo_repr, lopo_repr,
-             ss_repr, ps_repr])):
+             ss_repr, ps_repr, sgkf_repr])):
         # Test if get_n_splits works correctly
         assert n_splits_expected[i] == cv.get_n_splits(X, y, groups)
 
@@ -133,10 +137,11 @@ def test_2d_y():
     groups = rng.randint(0, 3, size=(n_samples,))
     splitters = [LeaveOneOut(), LeavePOut(p=2), KFold(), StratifiedKFold(),
                  RepeatedKFold(), RepeatedStratifiedKFold(),
-                 ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
-                 GroupShuffleSplit(), LeaveOneGroupOut(),
-                 LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
-                 TimeSeriesSplit(), PredefinedSplit(test_fold=groups)]
+                 StratifiedGroupKFold(), ShuffleSplit(),
+                 StratifiedShuffleSplit(test_size=.5), GroupShuffleSplit(),
+                 LeaveOneGroupOut(), LeavePGroupsOut(n_groups=2),
+                 GroupKFold(n_splits=3), TimeSeriesSplit(),
+                 PredefinedSplit(test_fold=groups)]
     for splitter in splitters:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
@@ -193,6 +198,11 @@ def test_kfold_valueerrors():
     with pytest.warns(Warning, match="The least populated class"):
         next(skf_3.split(X2, y))
 
+    sgkf_3 = StratifiedGroupKFold(3)
+    naive_groups = np.arange(len(y))
+    with pytest.warns(Warning, match="The least populated class"):
+        next(sgkf_3.split(X2, y, naive_groups))
+
     # Check that despite the warning the folds are still computed even
     # though all the classes are not necessarily represented at on each
     # side of the split at each split
@@ -200,12 +210,20 @@ def test_kfold_valueerrors():
         warnings.simplefilter("ignore")
         check_cv_coverage(skf_3, X2, y, groups=None, expected_n_splits=3)
 
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        check_cv_coverage(
+            sgkf_3, X2, y, groups=naive_groups, expected_n_splits=3
+        )
+
     # Check that errors are raised if all n_groups for individual
     # classes are less than n_splits.
     y = np.array([3, 3, -1, -1, 2])
 
     with pytest.raises(ValueError):
         next(skf_3.split(X2, y))
+    with pytest.raises(ValueError):
+        next(sgkf_3.split(X2, y))
 
     # Error when number of folds is <= 1
     with pytest.raises(ValueError):
@@ -218,6 +236,10 @@ def test_kfold_valueerrors():
         StratifiedKFold(0)
     with pytest.raises(ValueError, match=error_string):
         StratifiedKFold(1)
+    with pytest.raises(ValueError, match=error_string):
+        StratifiedGroupKFold(0)
+    with pytest.raises(ValueError, match=error_string):
+        StratifiedGroupKFold(1)
 
     # When n_splits is not integer:
     with pytest.raises(ValueError):
@@ -228,6 +250,10 @@ def test_kfold_valueerrors():
         StratifiedKFold(1.5)
     with pytest.raises(ValueError):
         StratifiedKFold(2.0)
+    with pytest.raises(ValueError):
+        StratifiedGroupKFold(1.5)
+    with pytest.raises(ValueError):
+        StratifiedGroupKFold(2.0)
 
     # When shuffle is not  a bool:
     with pytest.raises(TypeError):
@@ -318,7 +344,8 @@ def test_stratified_kfold_no_shuffle():
 
 @pytest.mark.parametrize('shuffle', [False, True])
 @pytest.mark.parametrize('k', [4, 5, 6, 7, 8, 9, 10])
-def test_stratified_kfold_ratios(k, shuffle):
+@pytest.mark.parametrize('kfold', [StratifiedKFold, StratifiedGroupKFold])
+def test_stratified_kfold_ratios(k, shuffle, kfold):
     # Check that stratified kfold preserves class ratios in individual splits
     # Repeat with shuffling turned off and on
     n_samples = 1000
@@ -326,12 +353,14 @@ def test_stratified_kfold_ratios(k, shuffle):
     y = np.array([4] * int(0.10 * n_samples) +
                  [0] * int(0.89 * n_samples) +
                  [1] * int(0.01 * n_samples))
+    # ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(len(y))
     distr = np.bincount(y) / len(y)
 
     test_sizes = []
     random_state = None if not shuffle else 0
-    skf = StratifiedKFold(k, random_state=random_state, shuffle=shuffle)
-    for train, test in skf.split(X, y):
+    skf = kfold(k, random_state=random_state, shuffle=shuffle)
+    for train, test in skf.split(X, y, groups=groups):
         assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
         assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
         test_sizes.append(len(test))
@@ -340,20 +369,23 @@ def test_stratified_kfold_ratios(k, shuffle):
 
 @pytest.mark.parametrize('shuffle', [False, True])
 @pytest.mark.parametrize('k', [4, 6, 7])
-def test_stratified_kfold_label_invariance(k, shuffle):
+@pytest.mark.parametrize('kfold', [StratifiedKFold, StratifiedGroupKFold])
+def test_stratified_kfold_label_invariance(k, shuffle, kfold):
     # Check that stratified kfold gives the same indices regardless of labels
     n_samples = 100
     y = np.array([2] * int(0.10 * n_samples) +
                  [0] * int(0.89 * n_samples) +
                  [1] * int(0.01 * n_samples))
     X = np.ones(len(y))
+    # ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(len(y))
 
     def get_splits(y):
         random_state = None if not shuffle else 0
         return [(list(train), list(test))
                 for train, test
-                in StratifiedKFold(k, random_state=random_state,
-                                   shuffle=shuffle).split(X, y)]
+                in kfold(k, random_state=random_state,
+                         shuffle=shuffle).split(X, y, groups=groups)]
 
     splits_base = get_splits(y)
     for perm in permutations([0, 1, 2]):
@@ -372,17 +404,20 @@ def test_kfold_balance():
         assert np.sum(sizes) == i
 
 
-def test_stratifiedkfold_balance():
+@pytest.mark.parametrize('kfold', [StratifiedKFold, StratifiedGroupKFold])
+def test_stratifiedkfold_balance(kfold):
     # Check that KFold returns folds with balanced sizes (only when
     # stratification is possible)
     # Repeat with shuffling turned off and on
     X = np.ones(17)
     y = [0] * 3 + [1] * 14
+    # ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(len(y))
 
     for shuffle in (True, False):
-        cv = StratifiedKFold(3, shuffle=shuffle)
+        cv = kfold(3, shuffle=shuffle)
         for i in range(11, 17):
-            skf = cv.split(X[:i], y[:i])
+            skf = cv.split(X[:i], y[:i], groups[:i])
             sizes = [len(test) for _, test in skf]
 
             assert (np.max(sizes) - np.min(sizes)) <= 1
@@ -411,39 +446,39 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
-def test_shuffle_kfold_stratifiedkfold_reproducibility():
+@pytest.mark.parametrize("kfold",
+                         [KFold, StratifiedKFold, StratifiedGroupKFold])
+def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8
+    groups_1 = np.arange(len(y))
     X2 = np.ones(16)  # Not divisible by 3
     y2 = [0] * 8 + [1] * 8
+    groups_2 = np.arange(len(y2))
 
     # Check that when the shuffle is True, multiple split calls produce the
     # same split when random_state is int
-    kf = KFold(3, shuffle=True, random_state=0)
-    skf = StratifiedKFold(3, shuffle=True, random_state=0)
+    kf = kfold(3, shuffle=True, random_state=0)
 
-    for cv in (kf, skf):
-        np.testing.assert_equal(list(cv.split(X, y)), list(cv.split(X, y)))
-        np.testing.assert_equal(list(cv.split(X2, y2)), list(cv.split(X2, y2)))
+    np.testing.assert_equal(
+        list(kf.split(X, y, groups_1)),
+        list(kf.split(X, y, groups_1))
+    )
 
     # Check that when the shuffle is True, multiple split calls often
     # (not always) produce different splits when random_state is
     # RandomState instance or None
-    kf = KFold(3, shuffle=True, random_state=np.random.RandomState(0))
-    skf = StratifiedKFold(3, shuffle=True,
-                          random_state=np.random.RandomState(0))
-
-    for cv in (kf, skf):
-        for data in zip((X, X2), (y, y2)):
-            # Test if the two splits are different cv
-            for (_, test_a), (_, test_b) in zip(cv.split(*data),
-                                                cv.split(*data)):
-                # cv.split(...) returns an array of tuples, each tuple
-                # consisting of an array with train indices and test indices
-                # Ensure that the splits for data are not same
-                # when random state is not set
-                with pytest.raises(AssertionError):
-                    np.testing.assert_array_equal(test_a, test_b)
+    kf = kfold(3, shuffle=True, random_state=np.random.RandomState(0))
+    for data in zip((X, X2), (y, y2), (groups_1, groups_2)):
+        # Test if the two splits are different cv
+        for (_, test_a), (_, test_b) in zip(kf.split(*data),
+                                            kf.split(*data)):
+            # cv.split(...) returns an array of tuples, each tuple
+            # consisting of an array with train indices and test indices
+            # Ensure that the splits for data are not same
+            # when random state is not set
+            with pytest.raises(AssertionError):
+                np.testing.assert_array_equal(test_a, test_b)
 
 
 def test_shuffle_stratifiedkfold():
@@ -512,6 +547,96 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
     assert 0.94 > mean_score
     assert mean_score > 0.80
+
+
+def test_stratified_group_kfold_trivial():
+    sgkf = StratifiedGroupKFold(n_splits=3)
+    # Trivial example - groups with the same distribution
+    y = np.array([1] * 6 + [0] * 12)
+    X = np.ones_like(y).reshape(-1, 1)
+    groups = np.asarray((1, 2, 3, 4, 5, 6, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6))
+    distr = np.bincount(y) / len(y)
+    test_sizes = []
+    for train, test in sgkf.split(X, y, groups):
+        # check group constraint
+        assert np.intersect1d(groups[train], groups[test]).size == 0
+        # check y distribution
+        assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
+        assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
+        test_sizes.append(len(test))
+    assert np.ptp(test_sizes) <= 1
+
+
+def test_stratified_group_kfold_approximate():
+    # Not perfect stratification (even though it is possible) because of
+    # iteration over groups
+    sgkf = StratifiedGroupKFold(n_splits=3)
+    y = np.array([1] * 6 + [0] * 12)
+    X = np.ones_like(y).reshape(-1, 1)
+    groups = np.array([1, 2, 3, 3, 4, 4, 1, 1, 2, 2, 3, 4, 5, 5, 5, 6, 6, 6])
+    expected = np.asarray([[0.833, 0.166], [0.666, 0.333], [0.5, 0.5]])
+    test_sizes = []
+    for (train, test), expect_dist in zip(sgkf.split(X, y, groups), expected):
+        # check group constraint
+        assert np.intersect1d(groups[train], groups[test]).size == 0
+        split_dist = np.bincount(y[test]) / len(test)
+        assert_allclose(split_dist, expect_dist, atol=0.001)
+        test_sizes.append(len(test))
+    assert np.ptp(test_sizes) <= 1
+
+
+@pytest.mark.parametrize('y, groups, expected',
+                         [(np.array([0] * 6 + [1] * 6),
+                           np.array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]),
+                           np.asarray([[.5, .5],
+                                       [.5, .5],
+                                       [.5, .5]])),
+                          (np.array([0] * 9 + [1] * 3),
+                           np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 5, 6]),
+                           np.asarray([[.75, .25],
+                                       [.75, .25],
+                                       [.75, .25]]))])
+def test_stratified_group_kfold_homogeneous_groups(y, groups, expected):
+    sgkf = StratifiedGroupKFold(n_splits=3)
+    X = np.ones_like(y).reshape(-1, 1)
+    for (train, test), expect_dist in zip(sgkf.split(X, y, groups), expected):
+        # check group constraint
+        assert np.intersect1d(groups[train], groups[test]).size == 0
+        split_dist = np.bincount(y[test]) / len(test)
+        assert_allclose(split_dist, expect_dist, atol=0.001)
+
+
+@pytest.mark.parametrize('cls_distr',
+                         [(0.4, 0.6),
+                          (0.3, 0.7),
+                          (0.2, 0.8),
+                          (0.8, 0.2)])
+@pytest.mark.parametrize('n_groups', [5, 30, 70])
+def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
+    # Check that given sufficient amount of samples StratifiedGroupKFold
+    # produces better stratified folds than regular GroupKFold
+    n_splits = 5
+    sgkf = StratifiedGroupKFold(n_splits=n_splits)
+    gkf = GroupKFold(n_splits=n_splits)
+    rng = np.random.RandomState(0)
+    n_points = 1000
+    y = rng.choice(2, size=n_points, p=cls_distr)
+    X = np.ones_like(y).reshape(-1, 1)
+    g = rng.choice(n_groups, n_points)
+    sgkf_folds = sgkf.split(X, y, groups=g)
+    gkf_folds = gkf.split(X, y, groups=g)
+    sgkf_entr = 0
+    gkf_entr = 0
+    for (sgkf_train, sgkf_test), (_, gkf_test) in zip(sgkf_folds, gkf_folds):
+        # check group constraint
+        assert np.intersect1d(g[sgkf_train], g[sgkf_test]).size == 0
+        sgkf_distr = np.bincount(y[sgkf_test]) / len(sgkf_test)
+        gkf_distr = np.bincount(y[gkf_test]) / len(gkf_test)
+        sgkf_entr += stats.entropy(sgkf_distr, qk=cls_distr)
+        gkf_entr += stats.entropy(gkf_distr, qk=cls_distr)
+    sgkf_entr /= n_splits
+    gkf_entr /= n_splits
+    assert sgkf_entr <= gkf_entr
 
 
 def test_shuffle_split():
@@ -1310,7 +1435,8 @@ def test_cv_iterable_wrapper():
         "successive calls to split should yield different results")
 
 
-def test_group_kfold():
+@pytest.mark.parametrize('kfold', [GroupKFold, StratifiedGroupKFold])
+def test_group_kfold(kfold):
     rng = np.random.RandomState(0)
 
     # Parameters of the test
@@ -1329,7 +1455,7 @@ def test_group_kfold():
     len(np.unique(groups))
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    lkf = GroupKFold(n_splits=n_splits)
+    lkf = kfold(n_splits=n_splits)
     for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
@@ -1569,7 +1695,7 @@ def test_nested_cv():
     groups = rng.randint(0, 5, 15)
 
     cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(n_splits=3),
-           StratifiedKFold(),
+           StratifiedKFold(), StratifiedGroupKFold(),
            StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
@@ -1640,7 +1766,8 @@ def test_leave_p_out_empty_trainset():
         next(cv.split(X, y, groups=[1, 2]))
 
 
-@pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
+@pytest.mark.parametrize('Klass',
+                         (KFold, StratifiedKFold, StratifiedGroupKFold))
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     with pytest.raises(ValueError,
@@ -1653,6 +1780,8 @@ def test_random_state_shuffle_false(Klass):
     (KFold(shuffle=True, random_state=123), True),
     (StratifiedKFold(), True),
     (StratifiedKFold(shuffle=True, random_state=123), True),
+    (StratifiedGroupKFold(shuffle=True, random_state=123), True),
+    (StratifiedGroupKFold(), True),
     (RepeatedKFold(random_state=123), True),
     (RepeatedStratifiedKFold(random_state=123), True),
     (ShuffleSplit(random_state=123), True),
@@ -1664,7 +1793,6 @@ def test_random_state_shuffle_false(Klass):
     (LeaveOneGroupOut(), True),
     (LeavePGroupsOut(n_groups=2), True),
     (LeavePOut(p=2), True),
-
     (KFold(shuffle=True, random_state=None), False),
     (KFold(shuffle=True, random_state=None), False),
     (StratifiedKFold(shuffle=True, random_state=np.random.RandomState(0)),
