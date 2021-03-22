@@ -94,7 +94,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,), default=None
             Weight given to each sample.
 
         Returns
