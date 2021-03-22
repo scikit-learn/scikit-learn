@@ -415,10 +415,8 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if y.ndim > 2:
         raise ValueError("Target y has the wrong shape %s" % str(y.shape))
 
-    ravel = False
     if y.ndim == 1:
         y = y.reshape(-1, 1)
-        ravel = True
 
     n_samples_, n_targets = y.shape
 
@@ -504,8 +502,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                             ' inputs currently')
         coef = _solve_svd(X, y, alpha)
 
-    if ravel:
-        # When y was passed as a 1d-array, we flatten the coefficients.
+    if n_targets == 1:
         coef = coef.ravel()
 
     if return_n_iter and return_intercept:
@@ -1567,6 +1564,8 @@ class _RidgeGCV(LinearModel):
         self.best_score_ = best_score
         self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
+        if y.ndim == 1 or y.shape[1] == 1:
+            self.coef_ = self.coef_.ravel()
 
         X_offset += X_mean * X_scale
         self._set_intercept(X_offset, y_offset, X_scale)
