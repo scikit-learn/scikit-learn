@@ -1440,7 +1440,7 @@ This consists of the pinball loss (also known as linear loss),
 see also :class:`~sklearn.metrics.mean_pinball_loss`,
 
 .. math::
-    \PB_q(t) = q \max(t, 0) + (1 - q) \max(-t, 0) =
+    PB_q(t) = q \max(t, 0) + (1 - q) \max(-t, 0) =
     \begin{cases}
         q t, & t > 0, \\
         0,    & t = 0, \\
