@@ -24,8 +24,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    quantile : float, strictly between 0.0 and 1.0, default 0.5
-        The quantile that the model predicts.
+    quantile : float, default=0.5
+        The quantile that the model tries to predicts. It must be strictly
+        between 0 and 1.
 
     alpha : float, default 0.0001
         Constant that multiplies L1 penalty term.
