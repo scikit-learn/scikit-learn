@@ -10,7 +10,6 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import _convert_container
-from sklearn.utils._testing import raises
 from sklearn.utils import is_scalar_nan
 
 from sklearn.preprocessing import OneHotEncoder
@@ -829,37 +828,35 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-@pytest.mark.parametrize('input_dtype', ['O', 'U', 'S'])
-@pytest.mark.parametrize('category_dtype', ['O', 'U', 'S'])
+# deliberately omit 'OS' as an invalid combo
+@pytest.mark.parametrize('input_dtype, category_dtype', ['OO', 'OU',
+                                                         'UO', 'UU', 'US',
+                                                         'SO', 'SU', 'SS'])
 @pytest.mark.parametrize('array_type', ['list', 'array', 'dataframe'])
 def test_encoders_string_categories(input_dtype, category_dtype, array_type):
     """Check that encoding work with object, unicode, and byte string dtypes.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/15616
     https://github.com/scikit-learn/scikit-learn/issues/15726
+    https://github.com/scikit-learn/scikit-learn/issues/19677
     """
 
-    # Expect incompatible dtypes to raise an exception on fit(X)
-    may_pass = (category_dtype, input_dtype) not in {('S', 'O')}
-    context = raises(ValueError, match="unknown categories", may_pass=may_pass)
-
     X = np.array([['b'], ['a']], dtype=input_dtype)
-    X_test = _convert_container([['a'], ['a'], ['b'], ['a']],
-                                array_type, dtype=input_dtype)
     categories = [np.array(['b', 'a'], dtype=category_dtype)]
-    ohe = OneHotEncoder(categories=categories, sparse=False)
-    with context:
-        ohe.fit(X)
-        X_trans = ohe.transform(X_test)
-        expected = np.array([[0, 1], [0, 1], [1, 0], [0, 1]])
-        assert_allclose(X_trans, expected)
+    ohe = OneHotEncoder(categories=categories, sparse=False).fit(X)
 
-    oe = OrdinalEncoder(categories=categories)
-    with context:
-        oe.fit(X)
-        X_trans = oe.transform(X_test)
-        expected = np.array([[1], [1], [0], [1]])
-        assert_array_equal(X_trans, expected)
+    X_test = _convert_container([['a'], ['a'], ['b'], ['a']], array_type,
+                                dtype=input_dtype)
+    X_trans = ohe.transform(X_test)
+
+    expected = np.array([[0, 1], [0, 1], [1, 0], [0, 1]])
+    assert_allclose(X_trans, expected)
+
+    oe = OrdinalEncoder(categories=categories).fit(X)
+    X_trans = oe.transform(X_test)
+    
+    expected = np.array([[1], [1], [0], [1]])
+    assert_array_equal(X_trans, expected)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, None])
