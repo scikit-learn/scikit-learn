@@ -173,7 +173,9 @@ def plot_partial_dependence(
         differences between the `'brute'` and `'recursion'` method.
 
     n_jobs : int, default=None
-        The number of CPUs to use to compute the partial dependences.
+        The number of CPUs to use to compute the partial dependences. Computation
+        is parallelized over features of interest.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
