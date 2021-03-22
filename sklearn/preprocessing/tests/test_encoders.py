@@ -854,7 +854,7 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
     oe = OrdinalEncoder(categories=categories).fit(X)
     X_trans = oe.transform(X_test)
-    
+
     expected = np.array([[1], [1], [0], [1]])
     assert_array_equal(X_trans, expected)
 
