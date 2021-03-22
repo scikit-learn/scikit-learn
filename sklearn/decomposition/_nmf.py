@@ -895,8 +895,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
-    n_steps = (max_iter * n_samples) // batch_size
-
+    n_batches = n_samples // batch_size
+    n_steps = max_iter * n_batches
     for n_i, batch in zip(range(n_steps + 1), batches):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
@@ -945,7 +945,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         n_iter = n_i + 1
         return W, H, n_iter
     else:
-        n_iter = (n_i // batch_size) + 1
+        n_iter = n_i // n_batches
         iter_offset = n_iter - n_i
         return W, H, n_iter, iter_offset, A, B
 
@@ -1913,7 +1913,6 @@ class MiniBatchNMF(NMF):
         is_first_call_to_partial_fit = not hasattr(self, 'components_')
 
         if not is_first_call_to_partial_fit:
-
             with config_context(assume_finite=True):
                 # Compute W given H and X using transform
                 W = self.transform(X)

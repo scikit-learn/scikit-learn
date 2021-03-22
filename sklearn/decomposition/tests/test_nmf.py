@@ -716,13 +716,14 @@ def test_minibatch_nmf_partial_fit():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
     mbnmf1 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
-                          max_iter=1, beta_loss='kullback-leibler',
+                          max_iter=2, beta_loss='kullback-leibler',
                           batch_size=48)
     mbnmf2 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
                           max_iter=1, beta_loss='kullback-leibler',
                           batch_size=48)
 
     mbnmf1.fit(X)
+    mbnmf2.partial_fit(X)
     mbnmf2.partial_fit(X)
 
     assert mbnmf1.n_iter_ == mbnmf2.n_iter_
