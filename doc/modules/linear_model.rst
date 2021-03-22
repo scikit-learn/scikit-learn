@@ -1434,7 +1434,7 @@ conditional on :math:`X`, while OLS estimates the conditional mean.
 As a linear model, the :class:`QuantileRegressor` gives linear predictions :math:`\hat{y}(w, x) = Xw` for the specified ``quantile`` :math:`q \in (0, 1)`. The weights or coefficients :math:`w` are then found by the following minimization problem:
 
 .. math::
-    \min_{w} {\frac{1}{n_{\text{samples}}} PB_q(y - X w) + \alpha ||w||_1}
+    \min_{w} {\frac{1}{n_{\text{samples}}} \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}
 
 This consists of the pinball loss (also known as linear loss),
 see also :class:`~sklearn.metrics.mean_pinball_loss`,
