@@ -35,7 +35,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If True, X will be copied; else, it may be overwritten.
 
     solver : str, optional, default 'auto'
