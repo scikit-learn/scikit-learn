@@ -114,8 +114,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if self.quantile >= 1.0 or self.quantile <= 0.0:
             raise ValueError(
-                "Quantile should be strictly between 0.0 and 1.0, got %f"
-                % self.quantile)
+                f"Quantile should be strictly between 0.0 and 1.0, got "
+                f"{self.quantile}")
 
         n_obs, n_slopes = X.shape
         n_params = n_slopes
