@@ -49,7 +49,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Attributes
     ----------
     coef_ : array, shape (n_features,)
-        Features got by optimizing the Huber loss.
+        Estimated coefficients for the features.
 
     intercept_ : float
         Bias.
