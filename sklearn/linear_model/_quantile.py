@@ -31,7 +31,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     alpha : float, default=1e-4
         Constant that multiplies L1 penalty term.
 
-    fit_intercept : bool, default True
+    fit_intercept : bool, default=True
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
