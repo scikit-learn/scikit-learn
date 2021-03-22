@@ -20,7 +20,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <quantile_regression>`
 
-    .. versionadded:: 0.25
+    .. versionadded:: 1.0
 
     Parameters
     ----------
