@@ -193,7 +193,8 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr, min_tpr):
     new_tpr = [x - min_tpr for x in new_tpr]
     partial_auc = auc(new_fpr, new_tpr)
 
-    # Conforms with Formula (5) from McClish 1989
+    # Conforms with the proposal from
+    # Analyzing a portion of the ROC curve. McClish 1989 (see the definitions above Formula 7)
     max_area = (1 - min_tpr) * max_fpr
     # if max_fpr <= min_tpr, the min_area is 0
     min_area = 0.5 * (max_fpr - min_tpr) ** 2 if max_fpr > min_tpr else 0
@@ -1650,8 +1651,8 @@ def test_partial_roc_auc_score():
     assert roc_auc_score(y_true, y_scores, max_fpr=0.3) == 0.5
     # case 2: min_tpr = 0.5
     assert_almost_equal(2/3, roc_auc_score(y_true, y_scores, min_tpr=0.5), decimal=3)
-    # case 3: max_fpr = 0.8, min_tpr = 0.5
-    assert_almost_equal(0.6478, roc_auc_score(y_true, y_scores, max_fpr=0.8, min_tpr=0.5), decimal=3)
+    # case 3: max_fpr = 0.9, min_tpr = 0.6
+    assert_almost_equal(0.6825, roc_auc_score(y_true, y_scores, max_fpr=0.9, min_tpr=0.6), decimal=3)
 
     # 5. Compare two implementations
     y_true, y_pred, _ = make_prediction(binary=True)

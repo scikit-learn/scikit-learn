@@ -356,7 +356,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None, min
         x_interp_fpr = [tpr[start - 1], tpr[start]]
         y_interp_fpr = [fpr[start - 1], fpr[start]]
         fpr_interp = np.interp(min_tpr, x_interp_fpr, y_interp_fpr)
-        # further cut the tpr and fpr according to start index found by max_fpr limitation:
+        # further cut the tpr and fpr according to start index found by min_tpr limitation:
         tpr = np.append(min_tpr, tpr[start:])
         fpr = np.append(fpr_interp, fpr[start:])
 
@@ -375,7 +375,8 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None, min
     partial_auc = auc(fpr, tpr)
 
     max_area = (1 - min_tpr) * max_fpr
-    # if max_fpr <= min_tpr, the min_area is 0
+    # if max_fpr <= min_tpr,
+    # the min_area is 0 since the non-discriminant ROC has no intersection with this restricted region
     min_area = 0.5 * (max_fpr - min_tpr) ** 2 if max_fpr > min_tpr else 0
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
@@ -451,22 +452,32 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
     max_fpr : float > 0 and <= 1, default=None
         Only used for partial AUC calculation.
-        If not ``None``, and if the min_tpr is not defined,
-        the partial AUC [2]_ over the range (of fpr axis) [0, max_fpr] is returned.
-        If not ``None``, and if the min_tpr is also defined,
-        the AUC over the ROC range which conforms to both max_fpr and min_tpr limitations is returned,
-        which is the area A described in [6]_ Figure 1.
+
+        If not ``None``, and if the ``min_tpr`` is not defined,
+        the standardized partial AUC [2]_ over the range of fpr axis [0, max_fpr] is returned.
+        If not ``None``, and if the ``min_tpr`` is also defined,
+        the standardized partial AUC over the ROC range which conforms to both max_fpr and min_tpr limitations
+        is returned,
+        which is the standardized area of zone A described in [6]_ Figure 1.
+        If the ``max_fpr`` and ``min_tpr`` restrictions can't form an intersection shape with ROC curve, 0 is returned.
+
         For the multiclass case, ``max_fpr``,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
 
     min_tpr : float > 0 and <= 1, default=None
         Only used for partial AUC calculation.
-        If not ``None``, and if the max_fpr is not defined, the top right
-        tail area of full ROC over the range (of tpr axis) [min_tpr, 1] is returned.
-        If not ``None``, and if the max_fpr is also defined,
-        the AUC over the ROC range which conforms to both max_fpr and min_tpr limitations is returned,
-        which is the area A described in [6] Figure 1.
+        This option could also be used for setting limitations on max_fnr:
+        since TPR = 1 - FNR, set minimum TPR is equivalent to set maximum FNR.
+
+        If not ``None``, and if the ``max_fpr`` is not defined, the standardized top right
+        tail area of full ROC over the tpr axis range [min_tpr, 1] is returned.
+        If not ``None``, and if the ``max_fpr`` is also defined,
+        the standardized partial AUC over the ROC range which conforms to both max_fpr and min_tpr limitations
+        is returned,
+        which is the standardized area of zone A described in [6]_ Figure 1.
+        If the ``max_fpr`` and ``min_tpr`` restrictions can't form an intersection shape with ROC, 0 is returned.
+
         For the multiclass case, ``min_tpr``,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.

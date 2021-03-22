@@ -1456,6 +1456,10 @@ In applications where a high false positive rate is not tolerable the parameter
 ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
 to the given limit.
 
+In applications where a high false negative rate (equivalent to a low true positive rate)
+is not tolerable the parameter ``min_tpr`` of :func:`roc_auc_score`
+can be used to summarize the ROC curve up to the given limit.
+
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
