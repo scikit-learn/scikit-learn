@@ -43,7 +43,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         If it is 'auto', will use 'highs' with scipy>=1.6.0
         and 'interior-point' with older versions.
 
-    solver_options : dict, optional
+    solver_options : dict, default=None
         Additional parameters passed to scipy.optimize.linprog as options.
 
     Attributes
