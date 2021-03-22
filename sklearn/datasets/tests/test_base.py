@@ -144,14 +144,14 @@ def test_load_files_w_ignore_list(test_category_dir_1, test_category_dir_3,
                                   load_files_root):
     res = load_files(load_files_root, ignored_extensions=[".txt"])
     assert len(res.filenames) == 1
-    assert not all([re.search(".*\.txt$", f) for f in res.filenames])
+    assert not all([re.search(r".*\.txt$", f) for f in res.filenames])
 
 
 def test_load_files_w_allow_list(test_category_dir_1, test_category_dir_3,
                                  load_files_root):
     res = load_files(load_files_root, allowed_extensions=[".txt"])
     assert len(res.filenames) == 1
-    assert all([re.search(".*\.txt$", f) for f in res.filenames])
+    assert all([re.search(r".*\.txt$", f) for f in res.filenames])
 
 
 def test_load_sample_images():
