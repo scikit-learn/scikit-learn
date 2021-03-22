@@ -266,13 +266,16 @@ def test_nmf_sparse_transform(Estimator, solver, beta_loss):
 
 
 @pytest.mark.parametrize('init', ['random', 'nndsvd'])
-@pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
-                         [[NMF, 'cd', 2], [NMF, 'mu', 2],
-                          [MiniBatchNMF, 'mu', 1]])
+@pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss', 'batch_size',
+                          'forget_factor'],
+                         [[NMF, 'cd', 2, None, None],
+                          [NMF, 'mu', 2, None, None],
+                          [MiniBatchNMF, 'mu', 1, 10, 0.7]])
 @pytest.mark.parametrize('regularization',
                          (None, 'both', 'components', 'transformation'))
 def test_non_negative_factorization_consistency(Estimator, init, beta_loss,
-                                                solver, regularization):
+                                                solver, regularization,
+                                                batch_size, forget_factor):
     # Test that the function is called in the same way, either directly
     # or through the NMF class
     max_iter = 500
@@ -280,16 +283,17 @@ def test_non_negative_factorization_consistency(Estimator, init, beta_loss,
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    W_nmf, H, _ = non_negative_factorization(
+    W_nmf, H, *_ = non_negative_factorization(
         A, init=init, solver=solver, beta_loss=beta_loss, max_iter=max_iter,
-        regularization=regularization, random_state=1, tol=1e-2)
+        regularization=regularization, random_state=1, tol=1e-2,
+        batch_size=batch_size, forget_factor=forget_factor)
     W_nmf_2, *_ = non_negative_factorization(
         A, H=H, update_H=False, init=init, solver=solver, beta_loss=beta_loss,
-        max_iter=max_iter,
+        max_iter=max_iter, batch_size=batch_size, forget_factor=forget_factor,
         regularization=regularization, random_state=1, tol=1e-2)
 
     model_class = Estimator(init=init, solver=solver, beta_loss=beta_loss,
-                            regularization=regularization,
+                            regularization=regularization, max_iter=max_iter,
                             random_state=1, tol=1e-2)
     W_cls = model_class.fit_transform(A)
     W_cls_2 = model_class.transform(A)
