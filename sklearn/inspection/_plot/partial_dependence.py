@@ -174,7 +174,7 @@ def plot_partial_dependence(
 
     n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences. Computation
-        is parallelized over specified by the `features` parameter.
+        is parallelized over features specified by the `features` parameter.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
