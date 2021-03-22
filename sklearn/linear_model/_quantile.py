@@ -55,7 +55,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         The intercept of the model, aka bias term.
 
     n_iter_ : int
-        Number of iterations that scipy.optimize.linprog has run for.
+        The actual number of iterations performed by the solver.
 
     References
     ----------
