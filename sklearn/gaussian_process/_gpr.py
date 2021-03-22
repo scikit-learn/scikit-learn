@@ -302,7 +302,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Returns
         -------
-        y_mean : ndarray of shape (n_samples, [n_targets])
+        y_mean : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Mean of predictive distribution a query points.
 
         y_std : ndarray of shape (n_samples,), optional
@@ -403,7 +403,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Returns
         -------
-        y_samples : ndarray of shape (n_samples, [n_targets], n_samples)
+        y_samples : ndarray of shape (n_samples, n_samples), or \
+            (n_samples, n_targets, n_samples)
             Values of n_samples samples drawn from Gaussian process and
             evaluated at query points.
         """
