@@ -102,6 +102,9 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
   when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
 
+- |Feature|: load_files now allows users to include a blocklist and 
+   an allowlist. :pr:`19747` by :user:`Tony Attalla <tonyattalla>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
