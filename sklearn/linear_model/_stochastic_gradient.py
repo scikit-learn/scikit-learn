@@ -155,6 +155,14 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
 
+        if self.loss == "squared_loss":
+            warnings.warn(
+                "The loss 'squared_loss' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use `loss='squared_error'` which is "
+                "equivalent.",
+                FutureWarning
+            )
+
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
         try:
@@ -452,12 +460,14 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
+    # TODO: Remove squared_loss in v1.2
     loss_functions = {
         "hinge": (Hinge, 1.0),
         "squared_hinge": (SquaredHinge, 1.0),
         "perceptron": (Hinge, 0.0),
         "log": (Log, ),
         "modified_huber": (ModifiedHuber, ),
+        "squared_error": (SquaredLoss, ),
         "squared_loss": (SquaredLoss, ),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
@@ -766,7 +776,7 @@ class SGDClassifier(BaseSGDClassifier):
         linear SVM.
 
         The possible options are 'hinge', 'log', 'modified_huber',
-        'squared_hinge', 'perceptron', or a regression loss: 'squared_loss',
+        'squared_hinge', 'perceptron', or a regression loss: 'squared_error',
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
 
         The 'log' loss gives logistic regression, a probabilistic classifier.
@@ -780,6 +790,10 @@ class SGDClassifier(BaseSGDClassifier):
 
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
+
+        .. deprecated:: 1.0
+            The loss 'squared_loss' was deprecated in v1.0 and will be removed
+            in version 1.2. Use `loss='squared_error'` which is equivalent.
 
     penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -1117,7 +1131,9 @@ class SGDClassifier(BaseSGDClassifier):
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
+    # TODO: Remove squared_loss in v1.2
     loss_functions = {
+        "squared_error": (SquaredLoss, ),
         "squared_loss": (SquaredLoss, ),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
@@ -1127,7 +1143,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     @abstractmethod
     @_deprecate_positional_args
-    def __init__(self, loss="squared_loss", *, penalty="l2", alpha=0.0001,
+    def __init__(self, loss="squared_error", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
@@ -1389,12 +1405,12 @@ class SGDRegressor(BaseSGDRegressor):
 
     Parameters
     ----------
-    loss : str, default='squared_loss'
-        The loss function to be used. The possible values are 'squared_loss',
+    loss : str, default='squared_error'
+        The loss function to be used. The possible values are 'squared_error',
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'
 
-        The 'squared_loss' refers to the ordinary least squares fit.
-        'huber' modifies 'squared_loss' to focus less on getting outliers
+        The 'squared_error' refers to the ordinary least squares fit.
+        'huber' modifies 'squared_error' to focus less on getting outliers
         correct by switching from squared to linear loss past a distance of
         epsilon. 'epsilon_insensitive' ignores errors less than epsilon and is
         linear past that; this is the loss function used in SVR.
@@ -1403,6 +1419,10 @@ class SGDRegressor(BaseSGDRegressor):
 
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
+
+        .. deprecated:: 1.0
+            The loss 'squared_loss' was deprecated in v1.0 and will be removed
+            in version 1.2. Use `loss='squared_error'` which is equivalent.
 
     penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -1583,7 +1603,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
     @_deprecate_positional_args
-    def __init__(self, loss="squared_loss", *, penalty="l2", alpha=0.0001,
+    def __init__(self, loss="squared_error", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,

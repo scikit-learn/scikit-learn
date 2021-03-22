@@ -419,7 +419,7 @@ class CategoricalCrossEntropy(BaseLoss):
 
 
 _LOSSES = {
-    'least_squares': LeastSquares,
+    'squared_error': LeastSquares,
     'least_absolute_deviation': LeastAbsoluteDeviation,
     'binary_crossentropy': BinaryCrossEntropy,
     'categorical_crossentropy': CategoricalCrossEntropy,

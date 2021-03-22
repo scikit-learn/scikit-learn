@@ -45,6 +45,37 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |API| The option for using the squared error via ``loss`` and
+  ``criterion`` parameters was made more consistent. The preferred way is by
+  setting the value to `"squared_error"`. Old option names are still valid,
+  produce the same models, but are deprecated and will be removed in version
+  1.2.
+  :pr:`19310` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`ensemble.ExtraTreesRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.GradientBoostingRegressor`, `loss="ls"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.RandomForestRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.HistGradientBoostingRegressor`, `loss="least_squares"`
+    is deprecated, use `"squared_error"` instead which is now the default.
+
+  - For :class:`linear_model.RANSACRegressor`, `loss="squared_loss"` is
+    deprecated, use `"squared_error"` instead.
+
+  - For :class:`linear_model.SGDRegressor`, `loss="squared_loss"` is
+    deprecated, use `"squared_error"` instead which is now the default.
+
+  - For :class:`tree.DecisionTreeRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -67,6 +98,9 @@ Changelog
   missing values when returning a pandas dataframe. :pr:`19365` by
   `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
   :user:`EL-ATEIF Sara <elateifsara>`.
+
+- |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
+  when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -183,6 +217,16 @@ Changelog
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Feature| added :class:`model_selection.StratifiedGroupKFold`, that combines
+  :class:`model_selection.StratifiedKFold` and `model_selection.GroupKFold`,
+  providing an ability to split data preserving the distribution of classes in
+  each split while keeping each group within a single split.
+  :pr:`18649` by `Leandro Hermida <hermidalc>` and
+  `Rodion Martynov <marrodion>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
@@ -206,6 +250,9 @@ Changelog
   polynomial ``degree`` of the splines, number of knots ``n_knots`` and knot
   positioning strategy ``knots``.
   :pr:`18368` by :user:`Christian Lorentzen <lorentzenchr>`.
+  :class:`preprocessing.SplineTransformer` also supports periodic
+  splines via the ``extrapolation`` argument.
+  :pr:`19483` by :user:`Malte Londschien <mlondschien>`.
 
 - |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
   and similar scalers detect near-constant features to avoid scaling them to
@@ -220,6 +267,15 @@ Changelog
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| Deprecated the default value of the `random_state=0` in 
+  :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
+  the default value of `random_state` will be set to `None`.
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
 :mod:`sklearn.calibration`
 ............................
