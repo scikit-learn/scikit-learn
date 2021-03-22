@@ -52,7 +52,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Estimated coefficients for the features.
 
     intercept_ : float
-        Bias.
+        The intercept of the model, aka bias term.
 
     n_iter_ : int
         Number of iterations that scipy.optimize.linprog has run for.
