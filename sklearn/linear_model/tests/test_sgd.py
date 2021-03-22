@@ -331,7 +331,7 @@ def test_late_onset_averaging_not_reached(klass):
                  SparseSGDRegressor]:
         assert_almost_equal(clf1.intercept_, clf2.intercept_, decimal=16)
     elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM]:
-        assert_almost_equal(clf1.offset_, clf2.offset_, decimal=16)
+        assert_allclose(clf1.offset_, clf2.offset_)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
