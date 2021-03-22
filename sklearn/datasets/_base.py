@@ -254,6 +254,7 @@ def load_files(container_path, *, description=None, categories=None,
                  target=target,
                  DESCR=description)
 
+
 def _check_valid_document(file_name, allowed_extensions, ignored_extensions):
     """
     Checks if the file with file_name should be loaded in for load_files
@@ -280,6 +281,7 @@ def _check_valid_document(file_name, allowed_extensions, ignored_extensions):
         return extension in allowed_extensions
     else:
         return extension not in ignored_extensions
+
 
 def load_data(module_path, data_file_name):
     """Loads data from module_path/data/data_file_name.
