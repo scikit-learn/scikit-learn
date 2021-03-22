@@ -204,7 +204,7 @@ def load_files(container_path, *, description=None, categories=None,
     except AssertionError:
         raise AssertionError("Ignored extensions and allowed extensions cannot"
                              " both be present. Please choose one or the"
-                             " other")
+                             " other.")
 
     target = []
     target_names = []
@@ -280,7 +280,7 @@ def _check_valid_document(file_name, allowed_extensions, ignored_extensions):
         return extension in allowed_extensions
     else:
         return extension not in ignored_extensions
-        
+
 def load_data(module_path, data_file_name):
     """Loads data from module_path/data/data_file_name.
 

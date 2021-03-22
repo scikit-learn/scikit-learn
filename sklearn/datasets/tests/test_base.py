@@ -131,7 +131,7 @@ def test_load_files_wo_load_content(
 def test_load_files_w_allowed_and_ignored_extensions(load_files_root):
     msg = "Ignored extensions and allowed extensions cannot both be present. Please choose one or the other."
 
-    with pytest.raises(RuntimeError, match=msg):
+    with pytest.raises(AssertionError, match=msg):
         load_files(load_files_root, allowed_extensions=[".txt"],
                    ignored_extensions=[".txt"])
 
