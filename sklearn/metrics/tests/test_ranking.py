@@ -173,7 +173,8 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr, min_tpr):
         idx_in = idx_out - 1
         x_interp_tpr = [fpr[idx_in], fpr[idx_out]]
         y_interp_tpr = [tpr[idx_in], tpr[idx_out]]
-        new_tpr = np.append(new_tpr, np.interp(max_fpr, x_interp_tpr, y_interp_tpr))
+        new_tpr = np.append(new_tpr,
+                            np.interp(max_fpr, x_interp_tpr, y_interp_tpr))
 
         further_cut_new_tpr = new_tpr[new_tpr >= min_tpr]
         if len(further_cut_new_tpr) == 0:
@@ -184,7 +185,9 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr, min_tpr):
         idx_out = idx_in - 1
         x_interp_fpr = [new_tpr[idx_out], new_tpr[idx_in]]
         y_interp_fpr = [new_fpr[idx_out], new_fpr[idx_in]]
-        further_cut_new_fpr = np.append(np.interp(min_tpr, x_interp_fpr, y_interp_fpr), further_cut_new_fpr)
+        further_cut_new_fpr = np.append(np.interp(min_tpr,
+                                                  x_interp_fpr, y_interp_fpr),
+                                        further_cut_new_fpr)
         return (further_cut_new_fpr, further_cut_new_tpr)
 
     new_fpr, new_tpr = _partial_roc(y_true, y_predict, max_fpr, min_tpr)
@@ -194,7 +197,8 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr, min_tpr):
     partial_auc = auc(new_fpr, new_tpr)
 
     # Conforms with the proposal from
-    # Analyzing a portion of the ROC curve. McClish 1989 (see the definitions above Formula 7)
+    # Analyzing a portion of the ROC curve.
+    # McClish 1989 (see the definitions above Formula 7)
     max_area = (1 - min_tpr) * max_fpr
     # if max_fpr <= min_tpr, the min_area is 0
     min_area = 0.5 * (max_fpr - min_tpr) ** 2 if max_fpr > min_tpr else 0
@@ -1612,7 +1616,8 @@ def _test_ndcg_score_for(y_true, y_score):
 
 def test_partial_roc_auc_score():
     y_true = np.array([0, 0, 1, 1])
-    # Manually define y_scores, to construct a ROC curve with a special shape for several tests
+    # Manually define y_scores, to construct a ROC curve
+    # with a special shape for several tests
     # fpr = array([0. , 0.5, 0.5, 1. ])
     # tpr = array([0. , 0.5, 1. , 1. ])
     y_scores = np.array([0.1,  0,  0.1, 0.01])
@@ -1639,7 +1644,8 @@ def test_partial_roc_auc_score():
     with pytest.raises(ValueError):
         assert roc_auc_score(y_true, y_true, min_tpr=1)
 
-    # 3. Compare the roc_auc_score when there is no actual max_fpr or min_tpr constrains:
+    # 3. Compare the roc_auc_score when
+    # there is no actual max_fpr or min_tpr constrains:
     roc_auc_with_max_fpr_one = roc_auc_score(y_true, y_scores, max_fpr=1)
     roc_auc_with_min_tpr_zero = roc_auc_score(y_true, y_scores, min_tpr=0)
     unconstrained_roc_auc = roc_auc_score(y_true, y_scores)
@@ -1650,17 +1656,22 @@ def test_partial_roc_auc_score():
     # case 1: max_fpr = 0.3
     assert roc_auc_score(y_true, y_scores, max_fpr=0.3) == 0.5
     # case 2: min_tpr = 0.5
-    assert_almost_equal(2/3, roc_auc_score(y_true, y_scores, min_tpr=0.5), decimal=3)
+    assert_almost_equal(2/3, roc_auc_score(y_true, y_scores,
+                                           min_tpr=0.5), decimal=3)
     # case 3: max_fpr = 0.9, min_tpr = 0.6
-    assert_almost_equal(0.6825, roc_auc_score(y_true, y_scores, max_fpr=0.9, min_tpr=0.6), decimal=3)
+    assert_almost_equal(0.6825,
+                        roc_auc_score(y_true, y_scores,
+                                      max_fpr=0.9, min_tpr=0.6), decimal=3)
 
     # 5. Compare two implementations
     y_true, y_pred, _ = make_prediction(binary=True)
     for max_fpr in np.linspace(0.1, 1, 5):
         for min_tpr in np.linspace(1e-4, 1 - 1e-4, 5):
             assert_almost_equal(
-                roc_auc_score(y_true, y_pred, max_fpr=max_fpr, min_tpr=min_tpr),
-                _partial_roc_auc_score(y_true, y_pred, max_fpr=max_fpr, min_tpr=min_tpr),
+                roc_auc_score(y_true, y_pred,
+                              max_fpr=max_fpr, min_tpr=min_tpr),
+                _partial_roc_auc_score(y_true, y_pred,
+                                       max_fpr=max_fpr, min_tpr=min_tpr),
                 decimal=3, err_msg=f'{max_fpr, min_tpr}')
 
 
