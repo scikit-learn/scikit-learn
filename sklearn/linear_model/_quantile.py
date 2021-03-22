@@ -13,13 +13,10 @@ from ..utils.fixes import sp_version, parse_version
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
-    """Linear regression model that predicts conditional quantiles
-    and is robust to outliers.
+    """Linear regression model that predicts conditional quantiles.
 
-    The Quantile Regressor optimizes the skewed absolute loss
-    ``(y - X'w) (q - [y - X'w < 0])``, where q is the desired quantile.
-
-    Optimization is performed as a sequence of smooth optimization problems.
+    The linear Quantile Regressor optimizes the pinball loss for a
+    desired `quantile` and is robust to outliers.
 
     Read more in the :ref:`User Guide <quantile_regression>`
 
