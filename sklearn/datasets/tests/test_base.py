@@ -5,7 +5,7 @@ import warnings
 from pickle import loads
 from pickle import dumps
 from functools import partial
-
+import re
 import pytest
 
 import numpy as np
@@ -65,6 +65,14 @@ def test_category_dir_2(load_files_root):
     yield str(test_category_dir2)
     _remove_dir(test_category_dir2)
 
+@pytest.fixture
+def test_category_dir_3(load_files_root):
+    test_category_dir_3 = tempfile.mkdtemp(dir=load_files_root)
+    sample_file = tempfile.NamedTemporaryFile(dir=test_category_dir_3,
+                                              delete=False, suffix='.txt')
+    sample_file.close()
+    yield str(test_category_dir_3)
+    _remove_dir(test_category_dir_3)
 
 def test_data_home(data_home):
     # get_data_home will point to a pre-existing folder
@@ -120,6 +128,22 @@ def test_load_files_wo_load_content(
     assert res.DESCR is None
     assert res.get('data') is None
 
+def test_load_files_w_allowed_and_ignored_extensions(load_files_root):
+    msg = "Ignored extensions and allowed extensions cannot both be present. Please choose one or the other."
+
+    with pytest.raises(RuntimeError, match=msg):
+        load_files(load_files_root, allowed_extensions=[".txt"],
+                   ignored_extensions=[".txt"])
+
+def test_load_files_w_ignore_list(test_category_dir_1, test_category_dir_3, load_files_root):
+    res = load_files(load_files_root, ignored_extensions=[".txt"])
+    assert len(res.filenames) == 1
+    assert all([re.search(".*\.txt$", f) for f in res.filenames]) == False
+
+def test_load_files_w_allow_list(test_category_dir_1, test_category_dir_3, load_files_root):
+    res = load_files(load_files_root, allowed_extensions=[".txt"])
+    assert len(res.filenames) == 1
+    assert all([re.search(".*\.txt$", f) for f in res.filenames]) == True
 
 def test_load_sample_images():
     try:

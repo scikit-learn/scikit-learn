@@ -91,7 +91,8 @@ def _convert_data_dataframe(caller_name, data, target,
 @_deprecate_positional_args
 def load_files(container_path, *, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
-               decode_error='strict', random_state=0):
+               decode_error='strict', random_state=0, allowed_extensions=None,
+               ignored_extensions=None):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -127,6 +128,11 @@ def load_files(container_path, *, description=None, categories=None,
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
+
+    If you want files with a specific file extension (e.g. .txt) then you
+    can pass a list of those file extensions to allowed_extensions. Similarly,
+    in cases where you want to ignore certain extensions, you can pass a list
+    of those extensions to ignored_extensions.
 
     Read more in the :ref:`User Guide <datasets>`.
 
@@ -169,6 +175,12 @@ def load_files(container_path, *, description=None, categories=None,
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    allowed_extensions :list of str, default=None
+        list of desired file extensions
+
+    ignored_extensions : list of str, default=None
+        list of file extensions to exclude
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -186,6 +198,14 @@ def load_files(container_path, *, description=None, categories=None,
         filenames: ndarray
             The filenames holding the dataset.
     """
+
+    try:
+        assert not (allowed_extensions and ignored_extensions)
+    except AssertionError:
+        raise AssertionError("Ignored extensions and allowed extensions cannot"
+                             " both be present. Please choose one or the"
+                             " other")
+
     target = []
     target_names = []
     filenames = []
@@ -199,8 +219,9 @@ def load_files(container_path, *, description=None, categories=None,
     for label, folder in enumerate(folders):
         target_names.append(folder)
         folder_path = join(container_path, folder)
-        documents = [join(folder_path, d)
-                     for d in sorted(listdir(folder_path))]
+        documents = [join(folder_path, d) for d in sorted(listdir(folder_path))
+                     if _check_valid_document(d, allowed_extensions,
+                                              ignored_extensions)]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
@@ -233,7 +254,33 @@ def load_files(container_path, *, description=None, categories=None,
                  target=target,
                  DESCR=description)
 
+def _check_valid_document(file_name, allowed_extensions, ignored_extensions):
+    """
+    Checks if the file with file_name should be loaded in for load_files
+    Parameters
+    ----------
+    file_name: str
+        The name of the file to check
+    allowed_extensions : list or set of str,
+        List of desired file extensions
+    ignored_extensions : list or set of str,
+        List of file extensions to exclude
+    Returns
+    -------
+    data : Boolean
+        Indicates whether or not the file should be
+        loaded in load_files
+    """
 
+    if not allowed_extensions and not ignored_extensions:
+        return True
+
+    extension = os.path.splitext(file_name)[1]
+    if allowed_extensions:
+        return extension in allowed_extensions
+    else:
+        return extension not in ignored_extensions
+        
 def load_data(module_path, data_file_name):
     """Loads data from module_path/data/data_file_name.
 
