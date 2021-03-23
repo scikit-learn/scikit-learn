@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator
+from inspect import isgenerator, signature
 from functools import partial
 
 import pytest
@@ -24,7 +24,9 @@ from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
 
+from sklearn.base import RegressorMixin
 from sklearn.decomposition import PCA
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
@@ -41,6 +43,7 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks,
     check_n_features_in_after_fitting,
+    check_meta_estimators_validation
 )
 
 
@@ -282,3 +285,85 @@ N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
 def test_check_n_features_in_after_fitting(estimator):
     _set_checking_parameters(estimator)
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
+
+
+def _generate_meta_estimator_instances_with_pipeline():
+    """Generate instances of meta-estimators fed with a pipeline
+
+    Are considered meta-estimators all estimators accepting one of "estimator",
+    "base_estimator" or "estimators".
+    """
+    for _, Estimator in all_estimators():
+        sig = list(signature(Estimator).parameters)
+
+        if "estimator" in sig or "base_estimator" in sig:
+            if issubclass(Estimator, RegressorMixin):
+                estimator = make_pipeline(TfidfVectorizer(), Ridge())
+                param_grid = {"ridge__alpha": [0.1, 1.0]}
+            else:
+                estimator = make_pipeline(TfidfVectorizer(),
+                                          LogisticRegression())
+                param_grid = {"logisticregression__C": [0.1, 1.0]}
+
+            if "param_grid" in sig or "param_distributions" in sig:
+                # SearchCV estimators
+                yield Estimator(estimator, param_grid)
+            else:
+                yield Estimator(estimator)
+
+        elif "estimators" in sig:
+            # stacking, voting
+            if issubclass(Estimator, RegressorMixin):
+                estimator = [
+                    ("est1", make_pipeline(TfidfVectorizer(),
+                                           Ridge(alpha=0.1))),
+                    ("est2", make_pipeline(TfidfVectorizer(),
+                                           Ridge(alpha=1))),
+                ]
+            else:
+                estimator = [
+                    ("est1", make_pipeline(TfidfVectorizer(),
+                                           LogisticRegression(C=0.1))),
+                    ("est2", make_pipeline(TfidfVectorizer(),
+                                           LogisticRegression(C=1))),
+                ]
+            yield Estimator(estimator)
+
+        else:
+            continue
+
+
+# TODO: remove data validation for the following estimators
+# They should be able to work on any data and delegate data validation to
+# their inner estimator(s).
+DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
+        "AdaBoostClassifier",
+        "AdaBoostRegressor",
+        "BaggingClassifier",
+        "BaggingRegressor",
+        "CalibratedClassifierCV",
+        "ClassifierChain",
+        "IterativeImputer",
+        "MultiOutputClassifier",
+        "MultiOutputRegressor",
+        "OneVsOneClassifier",
+        "OutputCodeClassifier",
+        "RANSACRegressor",
+        "RFE",
+        "RFECV",
+        "RegressorChain",
+        "SelfTrainingClassifier",
+        "SequentialFeatureSelector"  # not applicable (2D data mandatory)
+]
+
+DATA_VALIDATION_META_ESTIMATORS = [
+    est for est in _generate_meta_estimator_instances_with_pipeline() if
+    est.__class__.__name__ not in DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", DATA_VALIDATION_META_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_check_meta_estimators_validation(estimator):
+    check_meta_estimators_validation(estimator.__class__.__name__, estimator)
