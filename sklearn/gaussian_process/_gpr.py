@@ -341,14 +341,14 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 return y_mean
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
-            y_mean = K_trans @ self.alpha_  # Line 4 (y_mean = f_star)
+            y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
 
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = self.kernel_(X) - K_trans @ v  # Line 6
+                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
 
                 # undo normalisation
                 y_cov = y_cov * self._y_train_std**2
@@ -361,12 +361,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     # decomposition L and its inverse L_inv
                     L_inv = solve_triangular(self.L_.T,
                                              np.eye(self.L_.shape[0]))
-                    self._K_inv = L_inv @ L_inv.T
+                    self._K_inv = L_inv.dot(L_inv.T)
 
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
                 y_var -= np.einsum("ij,ij->i",
-                                   K_trans @ self._K_inv, K_trans)
+                                   np.dot(K_trans, self._K_inv), K_trans)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
