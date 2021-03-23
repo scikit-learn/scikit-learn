@@ -211,8 +211,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             if self.alpha.shape[0] == 1:
                 self.alpha = self.alpha[0]
             else:
-                raise ValueError("alpha must be a scalar or an array"
-                                 " with same number of entries as y.(%d != %d)"
+                raise ValueError("alpha must be a scalar or an array "
+                                 "with same number of entries as y. (%d != %d)"
                                  % (self.alpha.shape[0], y.shape[0]))
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
@@ -283,9 +283,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
         """Predict using the Gaussian process regression model
 
         We can also predict based on an unfitted model by using the GP prior.
-        In addition to the mean of the predictive distribution, also its
-        standard deviation (return_std=True) or covariance (return_cov=True).
-        Note that at most one of the two can be requested.
+        In addition to the mean of the predictive distribution, optionally also
+        returns its standard deviation (`return_std=True`) or covariance
+        (`return_cov=True`). Note that at most one of the two can be requested.
 
         Parameters
         ----------
@@ -315,8 +315,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         """
         if return_std and return_cov:
             raise RuntimeError(
-                "Not returning standard deviation of predictions when "
-                "returning full covariance.")
+                "At most one of return_std or return_cov can be requested.")
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X = self._validate_data(X, ensure_2d=True, dtype="numeric",
@@ -342,14 +341,14 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 return y_mean
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
-            y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
+            y_mean = K_trans @ self.alpha_  # Line 4 (y_mean = f_star)
 
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
+                y_cov = self.kernel_(X) - K_trans @ v  # Line 6
 
                 # undo normalisation
                 y_cov = y_cov * self._y_train_std**2
@@ -362,12 +361,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     # decomposition L and its inverse L_inv
                     L_inv = solve_triangular(self.L_.T,
                                              np.eye(self.L_.shape[0]))
-                    self._K_inv = L_inv.dot(L_inv.T)
+                    self._K_inv = L_inv @ L_inv.T
 
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
                 y_var -= np.einsum("ij,ij->i",
-                                   np.dot(K_trans, self._K_inv), K_trans)
+                                   K_trans @ self._K_inv, K_trans)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
@@ -389,11 +388,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features) or list of object
+        X : array-like of shape (n_samples_X, n_features) or list of object
             Query points where the GP is evaluated.
 
         n_samples : int, default=1
-            The number of samples drawn from the Gaussian process
+            Number of samples drawn from the Gaussian process per query point
 
         random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
@@ -403,8 +402,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Returns
         -------
-        y_samples : ndarray of shape (n_samples, n_samples), or \
-            (n_samples, n_targets, n_samples)
+        y_samples : ndarray of shape (n_samples_X, n_samples), or \
+            (n_samples_X, n_targets, n_samples)
             Values of n_samples samples drawn from Gaussian process and
             evaluated at query points.
         """
