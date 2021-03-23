@@ -207,6 +207,12 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
+:mod:`sklearn.covariance.tests`
+...................
+
+- |Enhancement| Replace the use of assert_warns and assert_warns_message 
+with the pytest context manager. :pr:`19757` by :user:`Isaack Mungui <isaack-mungui>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
