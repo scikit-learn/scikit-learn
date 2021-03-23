@@ -808,15 +808,14 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             _, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
             S2 = (S ** 2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            cov_reg = np.dot(S2 * Vt.T, Vt)
-            det = linalg.det(cov_reg)
-            if det < self.tol:
+            rank = np.sum(S2 > self.tol)
+            if rank < n_features:
                 raise linalg.LinAlgError('The covariance matrix is not full '
                                          'rank. Increase regularization to '
                                          'fit the model.')
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
-                cov.append(cov_reg)
+                cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
         if self.store_covariance or store_covariance:

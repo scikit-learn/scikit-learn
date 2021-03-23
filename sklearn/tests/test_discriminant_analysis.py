@@ -542,7 +542,7 @@ def test_qda_regularization():
     # The default is reg_param=0. and will cause issues when there is a
     # constant variable.
 
-    # Fitting on data with constant variable with out regularization
+    # Fitting on data with constant variable without regularization
     # triggers a LinAlgError.
     error_msg = re.escape("The covariance matrix is not full rank")
     clf = QuadraticDiscriminantAnalysis()
@@ -565,8 +565,6 @@ def test_qda_regularization():
     clf = QuadraticDiscriminantAnalysis(reg_param=0.3)
     with pytest.raises(linalg.LinAlgError, match=error_msg):
         clf.fit(X5, y5)
-    # y_pred5 = clf.predict(X5)
-    # assert_array_equal(y_pred5, y5)
 
 
 def test_covariance():
