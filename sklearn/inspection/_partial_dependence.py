@@ -104,9 +104,13 @@ def _grid_from_X(X, percentiles, grid_resolution):
     return cartesian(values), values
 
 
-def _partial_dependence_recursion(est, grid, features):
+def _partial_dependence_recursion(est, grid, features, predict_kw):
+    if predict_kw is None:
+        predict_kw = {}
+
     averaged_predictions = est._compute_partial_dependence_recursion(grid,
-                                                                     features)
+                                                                     features,
+                                                                     **predict_kw)
     if averaged_predictions.ndim == 1:
         # reshape to (1, n_points) for consistency with
         # _partial_dependence_brute
@@ -115,7 +119,9 @@ def _partial_dependence_recursion(est, grid, features):
     return averaged_predictions
 
 
-def _partial_dependence_brute(est, grid, features, X, response_method):
+def _partial_dependence_brute(est, grid, features, X, response_method, predict_kw):
+    if predict_kw is None:
+        predict_kw = {}
 
     predictions = []
     averaged_predictions = []
@@ -159,7 +165,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             # (n_points, 1) for the regressors in cross_decomposition (I think)
             # (n_points, 2) for binary classification
             # (n_points, n_classes) for multiclass classification
-            pred = prediction_method(X_eval)
+            pred = prediction_method(X_eval, **predict_kw)
 
             predictions.append(pred)
             # average over samples
@@ -206,7 +212,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 @_deprecate_positional_args
 def partial_dependence(estimator, X, features, *, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto', kind='legacy'):
+                       method='auto', kind='legacy', predict_kw=None):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -311,6 +317,9 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             `kind='average'` will be the new default. It is intended to migrate
             from the ndarray output to :class:`~sklearn.utils.Bunch` output.
 
+    predict_kw : dict, default=None
+        Keyword arguments for prediction function other than X. E.g. `q` for
+        quantile regression methods.
 
     Returns
     -------
@@ -483,7 +492,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
 
     if method == 'brute':
         averaged_predictions, predictions = _partial_dependence_brute(
-            estimator, grid, features_indices, X, response_method
+            estimator, grid, features_indices, X, response_method, predict_kw
         )
 
         # reshape predictions to
@@ -493,7 +502,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         )
     else:
         averaged_predictions = _partial_dependence_recursion(
-            estimator, grid, features_indices
+            estimator, grid, features_indices, predict_kw
         )
 
     # reshape averaged_predictions to

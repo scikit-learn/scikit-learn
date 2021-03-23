@@ -38,6 +38,7 @@ def plot_partial_dependence(
     kind="average",
     subsample=1000,
     random_state=None,
+    predict_kw=None,
 ):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
@@ -232,6 +233,10 @@ def plot_partial_dependence(
 
         .. versionadded:: 0.24
 
+    predict_kw : dict, default=None
+        Keyword arguments for prediction function other than X. E.g. `q` for
+        quantile regression methods.
+
     Returns
     -------
     display : :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -348,7 +353,8 @@ def plot_partial_dependence(
                                     method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles,
-                                    kind=kind)
+                                    kind=kind,
+                                    predict_kw=predict_kw)
         for fxs in features)
 
     # For multioutput regression, we can only check the validity of target
@@ -396,7 +402,7 @@ def plot_partial_dependence(
         deciles=deciles,
         kind=kind,
         subsample=subsample,
-        random_state=random_state,
+        random_state=random_state
     )
     return display.plot(
         ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw

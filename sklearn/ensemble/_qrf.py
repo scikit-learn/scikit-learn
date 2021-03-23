@@ -18,14 +18,12 @@ Two algorithms for fitting are implemented (which are broadcasted)
 - Random forest (RandomForestQuantileRegressor)
 - Extra Trees (ExtraTreesQuantileRegressor)
 
-To combine algorithms and methods an intermediate class is present:
-_ForestQuantileRegressor, which is instantiated from the function
-`make_QRF`. In turn this function is called from RandomForestQuantileRegressor
-and ExtraTreesQuantileRegressor. The created model will therefore
-be of class _ForestQuantileRegressor.
+RandomForestQuantileRegressor and ExtraTreesQuantileRegressor are therefore only
+placeholders that link to the two implementations, passing on a parameter base_estimator
+to pick the right training algorithm.
 """
 from types import MethodType
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import numba as nb
@@ -221,115 +219,14 @@ def _weighted_random_sample(leaves, unique_leaves, weights, idx, random_numbers)
     return sampled_idx
 
 
-class _DefaultForestQuantileRegressor(ForestRegressor, metaclass=ABCMeta):
-    """
-    fit and predict functions for forest quantile regressors based on:
-    Nicolai Meinshausen, Quantile Regression Forests
-        http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
-    """
-    def fit(self, X, y, sample_weight=None):
-        # apply method requires X to be of dtype np.float32
-        X, y = check_X_y(
-            X, y, accept_sparse="csc", dtype=np.float32, multi_output=True)
-        super(_ForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
-
-        self.n_samples_ = len(y)
-        self.y_train_ = y.reshape((-1, self.n_outputs_)).astype(np.float32)
-        self.y_train_leaves_ = self.apply(X).T
-        self.y_weights_ = np.zeros_like(self.y_train_leaves_, dtype=np.float32)
-
-        if sample_weight is None:
-            sample_weight = np.ones(self.n_samples_)
-
-        for i, est in enumerate(self.estimators_):
-            if self.bootstrap:
-                bootstrap_indices = _generate_sample_indices(
-                    est.random_state, self.n_samples_, self.n_samples_)
-            else:
-                bootstrap_indices = np.arange(self.n_samples_)
-
-            weights = sample_weight * np.bincount(bootstrap_indices, minlength=self.n_samples_)
-            self.y_weights_[i] = weights / est.tree_.weighted_n_node_samples[self.y_train_leaves_[i]]
-
-        self.y_train_leaves_[self.y_weights_ == 0] = -1
-        return self
-
-    def predict(self, X, q=0.5):
-        # apply method requires X to be of dtype np.float32
-        X = check_array(X, dtype=np.float32, accept_sparse="csc")
-        if not 0 <= q <= 1:
-            raise ValueError("q should be between 0 and 1")
-
-        X_leaves = self.apply(X)
-        return _quantile_forest_predict(X_leaves, self.y_train_, self.y_train_leaves_, self.y_weights_, q).squeeze()
-
-
-class _RandomSampleForestQuantileRegressor(ForestRegressor, metaclass=ABCMeta):
-    """
-    fit and predict functions for forest quantile regressors. Implementation based on quantregForest R packakge.
-    """
-    def fit(self, X, y, sample_weight=None):
-        # apply method requires X to be of dtype np.float32
-        X, y = check_X_y(
-            X, y, accept_sparse="csc", dtype=np.float32, multi_output=True)
-        super(_ForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
-
-        self.n_samples_ = len(y)
-        y = y.reshape((-1, self.n_outputs_))
-
-        if sample_weight is None:
-            sample_weight = np.ones(self.n_samples_)
-
-        for i, est in enumerate(self.estimators_):
-            if self.bootstrap:
-                bootstrap_indices = _generate_sample_indices(
-                    est.random_state, self.n_samples_, self.n_samples_)
-            else:
-                bootstrap_indices = np.arange(self.n_samples_)
-
-            y_weights = np.bincount(bootstrap_indices, minlength=self.n_samples_) * sample_weight
-            mask = y_weights > 0
-
-            leaves = est.apply(X[mask])
-            idx = np.arange(len(y), dtype=np.int64)[mask]
-
-            weights = y_weights[mask] / est.tree_.weighted_n_node_samples[leaves]
-            unique_leaves = np.unique(leaves)
-
-            random_instance = check_random_state(est.random_state)
-            random_numbers = random_instance.rand(len(unique_leaves))
-
-            sampled_idx = _weighted_random_sample(leaves, unique_leaves, weights, idx, random_numbers)
-
-            est.tree_.value[unique_leaves, :, 0] = y[sampled_idx]
-
-        return self
-
-    def predict(self, X, q=0.5):
-        # apply method requires X to be of dtype np.float32
-        X = check_array(X, dtype=np.float32, accept_sparse="csc")
-        if not 0 <= q <= 1:
-            raise ValueError("q should be between 0 and 1")
-
-        quantiles = np.empty((len(X), self.n_outputs_, self.n_estimators))
-        for i, est in enumerate(self.estimators_):
-            if self.n_outputs_ == 1:
-                quantiles[:, 0, i] = est.predict(X)
-            else:
-                quantiles[:, :, i] = est.predict(X)
-
-        return np.quantile(quantiles, q=q, axis=-1).squeeze()
-
-
-class _ForestQuantileRegressor(ForestRegressor):
+class _ForestQuantileRegressor(ForestRegressor, metaclass=ABCMeta):
     """
     A forest regressor providing quantile estimates.
 
     The generation of the forest can be either based on Random Forest or
     Extra Trees algorithms. The fitting and prediction of the forest can
     be based on the methods layed out in the original paper of Meinshausen,
-    or on the adapted implementation of the R quantregForest package. The
-    creation of this class is meant to be done through the make_QRF function.
+    or on the adapted implementation of the R quantregForest package.
 
     Parameters
     ----------
@@ -418,7 +315,7 @@ class _ForestQuantileRegressor(ForestRegressor):
 
     base_estimator : ``DecisionTreeRegressor``, optional
         Subclass of ``DecisionTreeRegressor`` as the base_estimator for the
-        generation of the forest. Either DecisionTreeRegressor or ExtraTreeRegressor.
+        generation of the forest. Either DecisionTreeRegressor() or ExtraTreeRegressor().
 
 
     Attributes
@@ -466,7 +363,6 @@ class _ForestQuantileRegressor(ForestRegressor):
                  verbose=0,
                  warm_start=False,
                  base_estimator=DecisionTreeRegressor()):
-
         super(_ForestQuantileRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -489,6 +385,7 @@ class _ForestQuantileRegressor(ForestRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
 
+    @abstractmethod
     def fit(self, X, y, sample_weight):
         """
         Build a forest from the training set (X, y).
@@ -519,6 +416,7 @@ class _ForestQuantileRegressor(ForestRegressor):
                                   "obtained from either _DefaultForestQuantileRegressor or "
                                   "_RandomSampleForestQuantileRegressor")
 
+    @abstractmethod
     def predict(self, X, q):
         """
         Predict quantile regression values for X.
@@ -542,7 +440,7 @@ class _ForestQuantileRegressor(ForestRegressor):
                                   "obtained from either _DefaultForestQuantileRegressor or "
                                   "_RandomSampleForestQuantileRegressor")
 
-    def __repr__(self):
+    def repr(self, method):
         s = super(_ForestQuantileRegressor, self).__repr__()
 
         if type(self.base_estimator) is DecisionTreeRegressor:
@@ -551,71 +449,132 @@ class _ForestQuantileRegressor(ForestRegressor):
             c = "ExtraTreesQuantileRegressor"
 
         params = s[s.find("(") + 1:s.rfind(")")].split(", ")
-        params.append(f"method='{self.method}'")
+        params.append(f"method='{method}'")
         params = [x for x in params if x[:14] != "base_estimator"]
 
         return f"{c}({', '.join(params)})"
 
 
-def make_QRF(regressor_type='random_forest', method='default', **kwargs):
+class _DefaultForestQuantileRegressor(_ForestQuantileRegressor):
     """
-    Function to construct a _ForestQuantileRegressor with the fit and predict functions
-    from either _DefaultForestQuantileRegressor or _RandomSampleForestQuantileRegressor,
-    based on the method parameter.
-
-    Parameters
-    ----------
-    regressor_type : str, {'random_forest', 'extra_trees'}
-        Algorithm for the fitting of the Forest Quantile Regressor.
-
-    method : str, ['default', 'sample']
-        Method for the calculations. 'default' uses the method outlined in
-        the original paper. 'sample' uses the approach as currently used
-        in the R package quantRegForest. 'default' has the highest precision but
-        is slower, 'sample' is relatively fast. Depending on the method additional
-        attributes are stored in the model.
-
-        Default:
-            y_train_ : array-like, shape=(n_samples,)
-                Cache the target values at fit time.
-
-            y_weights_ : array-like, shape=(n_estimators, n_samples)
-                y_weights_[i, j] is the weight given to sample ``j` while
-                estimator ``i`` is fit. If bootstrap is set to True, this
-                reduces to a 2-D array of ones.
-
-            y_train_leaves_ : array-like, shape=(n_estimators, n_samples)
-                y_train_leaves_[i, j] provides the leaf node that y_train_[i]
-                ends up when estimator j is fit. If y_train_[i] is given
-                a weight of zero when estimator j is fit, then the value is -1.
+    fit and predict functions for forest quantile regressors based on:
+    Nicolai Meinshausen, Quantile Regression Forests
+        http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
     """
-    if method == 'default':
-        base = _DefaultForestQuantileRegressor
-    elif method == 'sample':
-        base = _RandomSampleForestQuantileRegressor
-    else:
-        raise ValueError(f"method not recognised, should be one of {_ForestQuantileRegressor.methods}")
+    def fit(self, X, y, sample_weight=None):
+        # apply method requires X to be of dtype np.float32
+        X, y = check_X_y(
+            X, y, accept_sparse="csc", dtype=np.float32, multi_output=True)
+        super(_ForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
 
-    if regressor_type == 'random_forest':
-        base_estimator = DecisionTreeRegressor()
-    elif regressor_type == 'extra_trees':
-        base_estimator = ExtraTreeRegressor()
-    else:
-        raise ValueError(f"regressor_type not recognised, should be one of {_ForestQuantileRegressor.base_estimators}")
+        self.n_samples_ = len(y)
+        self.y_train_ = y.reshape((-1, self.n_outputs_)).astype(np.float32)
+        self.y_train_leaves_ = self.apply(X).T
+        self.y_weights_ = np.zeros_like(self.y_train_leaves_, dtype=np.float32)
 
-    model = _ForestQuantileRegressor(base_estimator=base_estimator, **kwargs)
-    model.fit = MethodType(base.fit, model)
-    model.predict = MethodType(base.predict, model)
-    model.method = method
+        if sample_weight is None:
+            sample_weight = np.ones(self.n_samples_)
 
-    return model
+        for i, est in enumerate(self.estimators_):
+            if self.bootstrap:
+                bootstrap_indices = _generate_sample_indices(
+                    est.random_state, self.n_samples_, self.n_samples_)
+            else:
+                bootstrap_indices = np.arange(self.n_samples_)
+
+            weights = sample_weight * np.bincount(bootstrap_indices, minlength=self.n_samples_)
+            self.y_weights_[i] = weights / est.tree_.weighted_n_node_samples[self.y_train_leaves_[i]]
+
+        self.y_train_leaves_[self.y_weights_ == 0] = -1
+        return self
+
+    def predict(self, X, q):
+        # apply method requires X to be of dtype np.float32
+        X = check_array(X, dtype=np.float32, accept_sparse="csc")
+        if not 0 <= q <= 1:
+            raise ValueError("q should be between 0 and 1")
+
+        X_leaves = self.apply(X)
+        return _quantile_forest_predict(X_leaves, self.y_train_, self.y_train_leaves_, self.y_weights_, q).squeeze()
+
+    def __repr__(self):
+        return super(_DefaultForestQuantileRegressor, self).repr(method='default')
+
+
+class _RandomSampleForestQuantileRegressor(_ForestQuantileRegressor):
+    """
+    fit and predict functions for forest quantile regressors. Implementation based on quantregForest R packakge.
+    """
+    def fit(self, X, y, sample_weight=None):
+        # apply method requires X to be of dtype np.float32
+        X, y = check_X_y(
+            X, y, accept_sparse="csc", dtype=np.float32, multi_output=True)
+        super(_ForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
+
+        self.n_samples_ = len(y)
+        y = y.reshape((-1, self.n_outputs_))
+
+        if sample_weight is None:
+            sample_weight = np.ones(self.n_samples_)
+
+        for i, est in enumerate(self.estimators_):
+            if self.verbose:
+                print(f"Sampling tree {i}")
+
+            if self.bootstrap:
+                bootstrap_indices = _generate_sample_indices(
+                    est.random_state, self.n_samples_, self.n_samples_)
+            else:
+                bootstrap_indices = np.arange(self.n_samples_)
+
+            y_weights = np.bincount(bootstrap_indices, minlength=self.n_samples_) * sample_weight
+            mask = y_weights > 0
+
+            leaves = est.apply(X[mask])
+            idx = np.arange(len(y), dtype=np.int64)[mask]
+
+            weights = y_weights[mask] / est.tree_.weighted_n_node_samples[leaves]
+            unique_leaves = np.unique(leaves)
+
+            random_instance = check_random_state(est.random_state)
+            random_numbers = random_instance.rand(len(unique_leaves))
+
+            sampled_idx = _weighted_random_sample(leaves, unique_leaves, weights, idx, random_numbers)
+
+            est.tree_.value[unique_leaves, :, 0] = y[sampled_idx]
+
+        return self
+
+    def predict(self, X, q):
+        # apply method requires X to be of dtype np.float32
+        X = check_array(X, dtype=np.float32, accept_sparse="csc")
+        if not 0 <= q <= 1:
+            raise ValueError("q should be between 0 and 1")
+
+        quantiles = np.empty((len(X), self.n_outputs_, self.n_estimators))
+        for i, est in enumerate(self.estimators_):
+            if self.n_outputs_ == 1:
+                quantiles[:, 0, i] = est.predict(X)
+            else:
+                quantiles[:, :, i] = est.predict(X)
+
+        return np.quantile(quantiles, q=q, axis=-1).squeeze()
+
+    def __repr__(self):
+        return super(_RandomSampleForestQuantileRegressor, self).repr(method='sample')
 
 
 class RandomForestQuantileRegressor:
     def __new__(cls, *, method='default', **kwargs):
-        return make_QRF(method=method, regressor_type='random_forest', **kwargs)
+        if method == 'default':
+            return _DefaultForestQuantileRegressor(**kwargs)
+        elif method == 'sample':
+            return _RandomSampleForestQuantileRegressor(**kwargs)
 
 
 class ExtraTreesQuantileRegressor:
     def __new__(cls, *, method='default', **kwargs):
-        return make_QRF(method=method, regressor_type='extra_trees', **kwargs)
+        if method == 'default':
+            return _DefaultForestQuantileRegressor(base_estimator=ExtraTreeRegressor(), **kwargs)
+        elif method == 'sample':
+            return _RandomSampleForestQuantileRegressor(base_estimator=ExtraTreeRegressor(), **kwargs)
