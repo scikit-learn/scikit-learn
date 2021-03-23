@@ -168,7 +168,7 @@ def _generate_meta_estimator_instances_with_pipeline():
     Are considered meta-estimators all estimators accepting one of "estimator",
     "base_estimator" or "estimators".
     """
-    for _, Estimator in all_estimators():
+    for _, Estimator in sorted(all_estimators()):
         sig = list(signature(Estimator).parameters)
 
         if "estimator" in sig or "base_estimator" in sig:
