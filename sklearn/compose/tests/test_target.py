@@ -151,10 +151,10 @@ def test_transform_target_regressor_2d_transformer(X, y):
     assert y.shape == y_pred.shape
     # consistency forward transform
     if y.ndim == 1:  # create a 2D array and squeeze results
-        y_tran = regr.transformer_.transform(y.reshape(-1, 1)).squeeze()
+        y_tran = regr.transformer_.transform(y.reshape(-1, 1))
     else:
         y_tran = regr.transformer_.transform(y)
-    _check_standard_scaled(y, y_tran)
+    _check_standard_scaled(y, y_tran.squeeze())
     assert y.shape == y_pred.shape
     # consistency inverse transform
     assert_allclose(y, regr.transformer_.inverse_transform(
@@ -163,12 +163,13 @@ def test_transform_target_regressor_2d_transformer(X, y):
     lr = LinearRegression()
     transformer2 = clone(transformer)
     if y.ndim == 1:  # create a 2D array and squeeze results
-        lr.fit(X, transformer2.fit_transform(y.reshape(-1, 1)).squeeze())
+        lr.fit(X, transformer2.fit_transform(y.reshape(-1, 1)))
     else:
         lr.fit(X, transformer2.fit_transform(y))
     y_lr_pred = lr.predict(X)
-    assert_allclose(y_pred, transformer2.inverse_transform(y_lr_pred))
-    assert_allclose(regr.regressor_.coef_, lr.coef_)
+    assert_allclose(y_pred,
+                    transformer2.inverse_transform(y_lr_pred).squeeze())
+    assert_allclose(regr.regressor_.coef_, lr.coef_.squeeze())
 
 
 def test_transform_target_regressor_2d_transformer_multioutput():

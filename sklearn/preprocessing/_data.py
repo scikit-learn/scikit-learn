@@ -924,6 +924,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         copy = copy if copy is not None else self.copy
         if sparse.issparse(X):
