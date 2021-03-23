@@ -110,9 +110,14 @@ does not perform very well for outlier detection. That being said, outlier
 detection in high-dimension, or without any assumptions on the distribution
 of the inlying data is very challenging. :class:`svm.OneClassSVM` may still
 be used with outlier detection but requires fine-tuning of its hyperparameter
-`nu` to handle outliers and prevent overfitting. Finally,
-:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
-an ellipse. For more details on the different estimators refer to the example
+`nu` to handle outliers and prevent overfitting.
+:class:`linear_model.SGDOneClassSVM` provides an implementation of a
+linear One-Class SVM with a linear complexity in the number of samples. This
+implementation is here used with a kernel approximation technique to obtain
+results similar to :class:`svm.OneClassSVM` which uses a Gaussian kernel
+by default. Finally, :class:`covariance.EllipticEnvelope` assumes the data is
+Gaussian and learns an ellipse. For more details on the different estimators
+refer to the example
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` and the
 sections hereunder.
 
@@ -171,6 +176,23 @@ but regular, observation outside the frontier.
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75%
+
+
+Scaling up the One-Class SVM
+----------------------------
+
+An online linear version of the One-Class SVM is implemented in
+:class:`linear_model.SGDOneClassSVM`. This implementation scales linearly with
+the number of samples and can be used with a kernel approximation to
+approximate the solution of a kernelized :class:`svm.OneClassSVM` whose
+complexity is at best quadratic in the number of samples. See section
+:ref:`sgd_online_one_class_svm` for more details.
+
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
+    for an illustration of the approximation of a kernelized One-Class SVM
+    with the `linear_model.SGDOneClassSVM` combined with kernel approximation.
 
 
 Outlier Detection
@@ -278,8 +300,8 @@ allows you to add more trees to an already fitted model::
      for a comparison of :class:`ensemble.IsolationForest` with
      :class:`neighbors.LocalOutlierFactor`,
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
-     method) and a covariance-based outlier detection with
-     :class:`covariance.EllipticEnvelope`.
+     method), :class:`linear_model.SGDOneClassSVM`, and a covariance-based
+     outlier detection with :class:`covariance.EllipticEnvelope`.
 
 .. topic:: References:
 
