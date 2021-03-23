@@ -231,10 +231,10 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
         "SequentialFeatureSelector"  # not applicable (2D data mandatory)
 ]
 
-DATA_VALIDATION_META_ESTIMATORS = sorted([
+DATA_VALIDATION_META_ESTIMATORS = [
     est for est in _generate_meta_estimator_instances_with_pipeline() if
     est.__class__.__name__ not in DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE
-])
+]
 
 
 @pytest.mark.parametrize(
