@@ -289,6 +289,15 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
 
+        # mapping from original labels to encoded ones
+        label_mapping = {c: i for i, c in enumerate(self.classes_)}
+        for _, est in self.estimators:
+            # check if the base estimator has provided class_weight argument
+            if hasattr(est, 'class_weight') and \
+                    isinstance(est.class_weight, dict):
+                est.class_weight = {label_mapping[i]: w
+                                    for i, w in est.class_weight.items()}
+
         return super().fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
