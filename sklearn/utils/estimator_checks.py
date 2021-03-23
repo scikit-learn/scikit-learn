@@ -60,7 +60,6 @@ from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
 from ..datasets import (
-    fetch_20newsgroups,
     load_iris,
     make_blobs,
     make_multilabel_classification,
@@ -3198,14 +3197,13 @@ def check_meta_estimators_validation(name, estimator_orig):
     estimator = clone(estimator_orig)
     set_random_state(estimator)
 
-    X, y = fetch_20newsgroups(return_X_y=True, random_state=rng)
-
-    n_samples = 200
-    X = X[:n_samples]
-    y = y[:n_samples]
+    n_samples = 30
+    X = rng.choice(np.array(["aa", "bb", "cc"], dtype=object), size=n_samples)
 
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(3, size=n_samples)
 
     X = _enforce_estimator_tags_x(estimator, X)
     y = _enforce_estimator_tags_y(estimator, y)
