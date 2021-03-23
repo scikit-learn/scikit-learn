@@ -3187,28 +3187,3 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
         f"{name}._get_tags() is missing entries for the following default tags"
         f": {default_tags_keys - tags_keys.intersection(default_tags_keys)}"
     )
-
-
-def check_meta_estimators_validation(name, estimator_orig):
-    # Check that meta-estimators delegate data validation to the inner
-    # estimator(s).
-    rng = np.random.RandomState(0)
-
-    estimator = clone(estimator_orig)
-    set_random_state(estimator)
-
-    n_samples = 30
-    X = rng.choice(np.array(["aa", "bb", "cc"], dtype=object), size=n_samples)
-
-    if is_regressor(estimator):
-        y = rng.normal(size=n_samples)
-    else:
-        y = rng.randint(3, size=n_samples)
-
-    X = _enforce_estimator_tags_x(estimator, X)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    estimator.fit(X, y)
-
-    # n_features_in_ should not be defined since data is not tabular data.
-    assert not hasattr(estimator, "n_features_in_")
