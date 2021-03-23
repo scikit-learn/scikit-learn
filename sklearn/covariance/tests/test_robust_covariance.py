@@ -163,6 +163,6 @@ def test_mcd_increasing_det_warning():
          [5.2, 3.5, 1.5, 0.2]]
 
     mcd = MinCovDet(random_state=1)
-    warn_msg = "Determinant has increased."
+    warn_msg = "Determinant has increased"
     with pytest.warns(RuntimeWarning, match=warn_msg):
         mcd.fit(X)
