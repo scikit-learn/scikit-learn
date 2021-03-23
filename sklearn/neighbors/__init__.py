@@ -10,7 +10,7 @@ from ._graph import kneighbors_graph, radius_neighbors_graph
 from ._graph import KNeighborsTransformer, RadiusNeighborsTransformer
 from ._unsupervised import NearestNeighbors
 from ._classification import KNeighborsClassifier, RadiusNeighborsClassifier
-from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor
+from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor, KNeighborsQuantileRegressor
 from ._nearest_centroid import NearestCentroid
 from ._kde import KernelDensity
 from ._lof import LocalOutlierFactor
@@ -22,6 +22,7 @@ __all__ = ['BallTree',
            'KDTree',
            'KNeighborsClassifier',
            'KNeighborsRegressor',
+           'KNeighborsQuantileRegressor',
            'KNeighborsTransformer',
            'NearestCentroid',
            'NearestNeighbors',
