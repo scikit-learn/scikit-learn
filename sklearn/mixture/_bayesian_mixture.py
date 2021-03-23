@@ -288,6 +288,11 @@ class BayesianGaussianMixture(BaseMixture):
             (n_features)             if 'diag',
             float                    if 'spherical'
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
