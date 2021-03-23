@@ -9,14 +9,16 @@ import joblib
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
+from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
+from sklearn.kernel_approximation import Nystroem
+from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
@@ -67,6 +69,21 @@ class _SparseSGDRegressor(linear_model.SGDRegressor):
                                                            **kw)
 
 
+class _SparseSGDOneClassSVM(linear_model.SGDOneClassSVM):
+    def fit(self, X, *args, **kw):
+        X = sp.csr_matrix(X)
+        return linear_model.SGDOneClassSVM.fit(self, X, *args, **kw)
+
+    def partial_fit(self, X, *args, **kw):
+        X = sp.csr_matrix(X)
+        return linear_model.SGDOneClassSVM.partial_fit(self, X, *args, **kw)
+
+    def decision_function(self, X, *args, **kw):
+        X = sp.csr_matrix(X)
+        return linear_model.SGDOneClassSVM.decision_function(self, X, *args,
+                                                             **kw)
+
+
 def SGDClassifier(**kwargs):
     _update_kwargs(kwargs)
     return linear_model.SGDClassifier(**kwargs)
@@ -77,6 +94,11 @@ def SGDRegressor(**kwargs):
     return linear_model.SGDRegressor(**kwargs)
 
 
+def SGDOneClassSVM(**kwargs):
+    _update_kwargs(kwargs)
+    return linear_model.SGDOneClassSVM(**kwargs)
+
+
 def SparseSGDClassifier(**kwargs):
     _update_kwargs(kwargs)
     return _SparseSGDClassifier(**kwargs)
@@ -85,6 +107,11 @@ def SparseSGDClassifier(**kwargs):
 def SparseSGDRegressor(**kwargs):
     _update_kwargs(kwargs)
     return _SparseSGDRegressor(**kwargs)
+
+
+def SparseSGDOneClassSVM(**kwargs):
+    _update_kwargs(kwargs)
+    return _SparseSGDOneClassSVM(**kwargs)
 
 
 # Test Data
@@ -252,7 +279,8 @@ def test_clone(klass):
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
-                                   SGDRegressor, SparseSGDRegressor])
+                                   SGDRegressor, SparseSGDRegressor,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_plain_has_no_average_attr(klass):
     clf = klass(average=True, eta0=.01)
     clf.fit(X, Y)
@@ -285,7 +313,8 @@ def test_sgd_deprecated_attr(klass):
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
-                                   SGDRegressor, SparseSGDRegressor])
+                                   SGDRegressor, SparseSGDRegressor,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_late_onset_averaging_not_reached(klass):
     clf1 = klass(average=600)
     clf2 = klass()
@@ -298,7 +327,11 @@ def test_late_onset_averaging_not_reached(klass):
             clf2.partial_fit(X, Y)
 
     assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=16)
-    assert_almost_equal(clf1.intercept_, clf2.intercept_, decimal=16)
+    if klass in [SGDClassifier, SparseSGDClassifier, SGDRegressor,
+                 SparseSGDRegressor]:
+        assert_almost_equal(clf1.intercept_, clf2.intercept_, decimal=16)
+    elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM]:
+        assert_allclose(clf1.offset_, clf2.offset_)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -444,28 +477,32 @@ def test_sgd_bad_l1_ratio(klass):
         klass(l1_ratio=1.1)
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_sgd_bad_learning_rate_schedule(klass):
     # Check whether expected ValueError on bad learning_rate
     with pytest.raises(ValueError):
         klass(learning_rate="<unknown>")
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_sgd_bad_eta0(klass):
     # Check whether expected ValueError on bad eta0
     with pytest.raises(ValueError):
         klass(eta0=0, learning_rate="constant")
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_sgd_max_iter_param(klass):
     # Test parameter validity check
     with pytest.raises(ValueError):
         klass(max_iter=-10000)
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_sgd_shuffle_param(klass):
     # Test parameter validity check
     with pytest.raises(ValueError):
@@ -493,7 +530,8 @@ def test_sgd_n_iter_no_change(klass):
         klass(n_iter_no_change=0)
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_argument_coef(klass):
     # Checks coef_init not allowed as model argument (only fit)
     # Provided coef_ does not match dataset
@@ -501,7 +539,8 @@ def test_argument_coef(klass):
         klass(coef_init=np.zeros((3,)))
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_provide_coef(klass):
     # Checks coef_init shape for the warm starts
     # Provided coef_ does not match dataset.
@@ -509,12 +548,17 @@ def test_provide_coef(klass):
         klass().fit(X, Y, coef_init=np.zeros((3,)))
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_set_intercept(klass):
     # Checks intercept_ shape for the warm starts
     # Provided intercept_ does not match dataset.
-    with pytest.raises(ValueError):
-        klass().fit(X, Y, intercept_init=np.zeros((3,)))
+    if klass in [SGDClassifier, SparseSGDClassifier]:
+        with pytest.raises(ValueError):
+            klass().fit(X, Y, intercept_init=np.zeros((3,)))
+    elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM]:
+        with pytest.raises(ValueError):
+            klass().fit(X, Y, offset_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -590,10 +634,8 @@ def test_partial_fit_weight_class_balanced(klass):
              r"estimate the class frequency distributions\. "
              r"Pass the resulting weights as the class_weight "
              r"parameter\.")
-    assert_raises_regexp(ValueError,
-                         regex,
-                         klass(class_weight='balanced').partial_fit,
-                         X, Y, classes=np.unique(Y))
+    with pytest.raises(ValueError, match=regex):
+        klass(class_weight='balanced').partial_fit(X, Y, classes=np.unique(Y))
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -947,10 +989,14 @@ def test_sample_weights(klass):
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDOneClassSVM, SparseSGDOneClassSVM])
 def test_wrong_sample_weights(klass):
     # Test if ValueError is raised if sample_weight has wrong shape
-    clf = klass(alpha=0.1, max_iter=1000, fit_intercept=False)
+    if klass in [SGDClassifier, SparseSGDClassifier]:
+        clf = klass(alpha=0.1, max_iter=1000, fit_intercept=False)
+    elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM]:
+        clf = klass(nu=0.1, max_iter=1000, fit_intercept=False)
     # provided sample_weight too long
     with pytest.raises(ValueError):
         clf.fit(X, Y, sample_weight=np.arange(7))
@@ -1341,6 +1387,303 @@ def test_loss_function_epsilon(klass):
     assert clf.loss_functions['huber'][1] == 0.1
 
 
+###############################################################################
+# SGD One Class SVM Test Case
+
+# a simple implementation of ASGD to use for testing SGDOneClassSVM
+def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
+    if coef_init is None:
+        coef = np.zeros(X.shape[1])
+    else:
+        coef = coef_init
+
+    average_coef = np.zeros(X.shape[1])
+    offset = offset_init
+    intercept = 1 - offset
+    average_intercept = 0.0
+    decay = 1.0
+
+    # sparse data has a fixed decay of .01
+    if klass == SparseSGDOneClassSVM:
+        decay = .01
+
+    for i, entry in enumerate(X):
+        p = np.dot(entry, coef)
+        p += intercept
+        if p <= 1.0:
+            gradient = -1
+        else:
+            gradient = 0
+        coef *= max(0, 1.0 - (eta * nu / 2))
+        coef += -(eta * gradient * entry)
+        intercept += -(eta * (nu + gradient)) * decay
+
+        average_coef *= i
+        average_coef += coef
+        average_coef /= i + 1.0
+
+        average_intercept *= i
+        average_intercept += intercept
+        average_intercept /= i + 1.0
+
+    return average_coef, 1 - average_intercept
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+@pytest.mark.parametrize('nu', [-0.5, 2])
+def test_bad_nu_values(klass, nu):
+    msg = r"nu must be in \(0, 1]"
+    with pytest.raises(ValueError, match=msg):
+        klass(nu=nu)
+
+    clf = klass(nu=0.05)
+    clf2 = clone(clf)
+    with pytest.raises(ValueError, match=msg):
+        clf2.set_params(nu=nu)
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+def _test_warm_start_oneclass(klass, X, lr):
+    # Test that explicit warm restart...
+    clf = klass(nu=0.5, eta0=0.01, shuffle=False,
+                learning_rate=lr)
+    clf.fit(X)
+
+    clf2 = klass(nu=0.1, eta0=0.01, shuffle=False,
+                 learning_rate=lr)
+    clf2.fit(X, coef_init=clf.coef_.copy(),
+             offset_init=clf.offset_.copy())
+
+    # ... and implicit warm restart are equivalent.
+    clf3 = klass(nu=0.5, eta0=0.01, shuffle=False,
+                 warm_start=True, learning_rate=lr)
+    clf3.fit(X)
+
+    assert clf3.t_ == clf.t_
+    assert_allclose(clf3.coef_, clf.coef_)
+
+    clf3.set_params(nu=0.1)
+    clf3.fit(X)
+
+    assert clf3.t_ == clf2.t_
+    assert_allclose(clf3.coef_, clf2.coef_)
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+@pytest.mark.parametrize('lr',
+                         ["constant", "optimal", "invscaling", "adaptive"])
+def test_warm_start_oneclass(klass, lr):
+    _test_warm_start_oneclass(klass, X, lr)
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+def test_clone_oneclass(klass):
+    # Test whether clone works ok.
+    clf = klass(nu=0.5)
+    clf = clone(clf)
+    clf.set_params(nu=0.1)
+    clf.fit(X)
+
+    clf2 = klass(nu=0.1)
+    clf2.fit(X)
+
+    assert_array_equal(clf.coef_, clf2.coef_)
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+def test_partial_fit_oneclass(klass):
+    third = X.shape[0] // 3
+    clf = klass(nu=0.1)
+
+    clf.partial_fit(X[:third])
+    assert clf.coef_.shape == (X.shape[1], )
+    assert clf.offset_.shape == (1,)
+    assert clf.predict([[0, 0]]).shape == (1, )
+    id1 = id(clf.coef_.data)
+
+    clf.partial_fit(X[third:])
+    id2 = id(clf.coef_.data)
+    # check that coef_ haven't been re-allocated
+    assert id1 == id2
+
+    # raises ValueError if number of features does not match previous data
+    with pytest.raises(ValueError):
+        clf.partial_fit(X[:, 1])
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+@pytest.mark.parametrize('lr',
+                         ["constant", "optimal", "invscaling", "adaptive"])
+def test_partial_fit_equal_fit_oneclass(klass, lr):
+    clf = klass(nu=0.05, max_iter=2, eta0=0.01,
+                learning_rate=lr, shuffle=False)
+    clf.fit(X)
+    y_scores = clf.decision_function(T)
+    t = clf.t_
+    coef = clf.coef_
+    offset = clf.offset_
+
+    clf = klass(nu=0.05, eta0=0.01, max_iter=1,
+                learning_rate=lr, shuffle=False)
+    for _ in range(2):
+        clf.partial_fit(X)
+    y_scores2 = clf.decision_function(T)
+
+    assert clf.t_ == t
+    assert_allclose(y_scores, y_scores2)
+    assert_allclose(clf.coef_, coef)
+    assert_allclose(clf.offset_, offset)
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+def test_late_onset_averaging_reached_oneclass(klass):
+    # Test average
+    eta0 = .001
+    nu = .05
+
+    # 2 passes over the training set but average only at second pass
+    clf1 = klass(average=7, learning_rate="constant", eta0=eta0,
+                 nu=nu, max_iter=2, shuffle=False)
+    # 1 pass over the training set with no averaging
+    clf2 = klass(average=0, learning_rate="constant", eta0=eta0,
+                 nu=nu, max_iter=1, shuffle=False)
+
+    clf1.fit(X)
+    clf2.fit(X)
+
+    # Start from clf2 solution, compute averaging using asgd function and
+    # compare with clf1 solution
+    average_coef, average_offset = \
+        asgd_oneclass(klass, X, eta0, nu,
+                      coef_init=clf2.coef_.ravel(),
+                      offset_init=clf2.offset_)
+
+    assert_allclose(clf1.coef_.ravel(), average_coef.ravel())
+    assert_allclose(clf1.offset_, average_offset)
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+def test_sgd_averaged_computed_correctly_oneclass(klass):
+    # Tests the average SGD One-Class SVM matches the naive implementation
+    eta = .001
+    nu = .05
+    n_samples = 20
+    n_features = 10
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(n_samples, n_features))
+
+    clf = klass(learning_rate='constant',
+                eta0=eta, nu=nu,
+                fit_intercept=True,
+                max_iter=1, average=True, shuffle=False)
+
+    clf.fit(X)
+    average_coef, average_offset = asgd_oneclass(klass, X, eta, nu)
+
+    assert_allclose(clf.coef_, average_coef)
+    assert_allclose(clf.offset_, average_offset)
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+def test_sgd_averaged_partial_fit_oneclass(klass):
+    # Tests whether the partial fit yields the same average as the fit
+    eta = .001
+    nu = .05
+    n_samples = 20
+    n_features = 10
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(n_samples, n_features))
+
+    clf = klass(learning_rate='constant',
+                eta0=eta, nu=nu,
+                fit_intercept=True,
+                max_iter=1, average=True, shuffle=False)
+
+    clf.partial_fit(X[:int(n_samples / 2)][:])
+    clf.partial_fit(X[int(n_samples / 2):][:])
+    average_coef, average_offset = asgd_oneclass(klass, X, eta, nu)
+
+    assert_allclose(clf.coef_, average_coef)
+    assert_allclose(clf.offset_, average_offset)
+
+
+@pytest.mark.parametrize('klass', [SGDOneClassSVM, SparseSGDOneClassSVM])
+def test_average_sparse_oneclass(klass):
+    # Checks the average coef on data with 0s
+    eta = .001
+    nu = .01
+    clf = klass(learning_rate='constant',
+                eta0=eta, nu=nu,
+                fit_intercept=True,
+                max_iter=1, average=True, shuffle=False)
+
+    n_samples = X3.shape[0]
+
+    clf.partial_fit(X3[:int(n_samples / 2)])
+    clf.partial_fit(X3[int(n_samples / 2):])
+    average_coef, average_offset = asgd_oneclass(klass, X3, eta, nu)
+
+    assert_allclose(clf.coef_, average_coef)
+    assert_allclose(clf.offset_, average_offset)
+
+
+def test_sgd_oneclass():
+    # Test fit, decision_function, predict and score_samples on a toy
+    # dataset
+    X_train = np.array([[-2, -1], [-1, -1], [1, 1]])
+    X_test = np.array([[0.5, -2], [2, 2]])
+    clf = SGDOneClassSVM(nu=0.5, eta0=1, learning_rate='constant',
+                         shuffle=False, max_iter=1)
+    clf.fit(X_train)
+    assert_allclose(clf.coef_, np.array([-0.125, 0.4375]))
+    assert clf.offset_[0] == -0.5
+
+    scores = clf.score_samples(X_test)
+    assert_allclose(scores, np.array([-0.9375, 0.625]))
+
+    dec = clf.score_samples(X_test) - clf.offset_
+    assert_allclose(clf.decision_function(X_test), dec)
+
+    pred = clf.predict(X_test)
+    assert_array_equal(pred, np.array([-1, 1]))
+
+
+def test_ocsvm_vs_sgdocsvm():
+    # Checks SGDOneClass SVM gives a good approximation of kernelized
+    # One-Class SVM
+    nu = 0.05
+    gamma = 2.
+    random_state = 42
+
+    # Generate train and test data
+    rng = np.random.RandomState(random_state)
+    X = 0.3 * rng.randn(500, 2)
+    X_train = np.r_[X + 2, X - 2]
+    X = 0.3 * rng.randn(100, 2)
+    X_test = np.r_[X + 2, X - 2]
+
+    # One-Class SVM
+    clf = OneClassSVM(gamma=gamma, kernel='rbf', nu=nu)
+    clf.fit(X_train)
+    y_pred_ocsvm = clf.predict(X_test)
+    dec_ocsvm = clf.decision_function(X_test).reshape(1, -1)
+
+    # SGDOneClassSVM using kernel approximation
+    max_iter = 15
+    transform = Nystroem(gamma=gamma, random_state=random_state)
+    clf_sgd = SGDOneClassSVM(nu=nu, shuffle=True, fit_intercept=True,
+                             max_iter=max_iter, random_state=random_state,
+                             tol=-np.inf)
+    pipe_sgd = make_pipeline(transform, clf_sgd)
+    pipe_sgd.fit(X_train)
+    y_pred_sgdocsvm = pipe_sgd.predict(X_test)
+    dec_sgdocsvm = pipe_sgd.decision_function(X_test).reshape(1, -1)
+
+    assert np.mean(y_pred_sgdocsvm == y_pred_ocsvm) >= 0.99
+    corrcoef = np.corrcoef(np.concatenate((dec_ocsvm, dec_sgdocsvm)))[0, 1]
+    assert corrcoef >= 0.9
+
+
 def test_l1_ratio():
     # Test if l1 ratio extremes match L1 and L2 penalty settings.
     X, y = datasets.make_classification(n_samples=1000,
@@ -1396,7 +1739,8 @@ def test_underflow_or_overlow():
         msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
                      " Scaling input data with StandardScaler or MinMaxScaler"
                      " might help.")
-        assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
+        with pytest.raises(ValueError, match=msg_regxp):
+            model.fit(X, y)
 
 
 def test_numerical_stability_large_gradient():
