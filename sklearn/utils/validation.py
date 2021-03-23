@@ -226,7 +226,7 @@ def _num_features(X):
 
     first_sample = X[0]
 
-    # Do not consider an array-like of strings of dicts to be a 2D array
+    # Do not consider an array-like of strings or dicts to be a 2D array
     if isinstance(first_sample, (str, bytes, dict)):
         message += (f" where the samples are of type "
                     f"{type(first_sample).__qualname__}")
