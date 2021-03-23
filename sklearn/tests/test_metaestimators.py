@@ -10,7 +10,6 @@ from sklearn.base import RegressorMixin
 from sklearn.base import is_regressor
 from sklearn.datasets import make_classification
 from sklearn.utils import all_estimators
-from sklearn.utils.estimator_checks import _get_check_estimator_ids
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.validation import check_is_fitted
@@ -237,8 +236,12 @@ DATA_VALIDATION_META_ESTIMATORS = [
 ]
 
 
+def _get_meta_estimator_id(estimator):
+    return estimator.__class__.__name__
+
+
 @pytest.mark.parametrize(
-    "estimator", DATA_VALIDATION_META_ESTIMATORS, ids=_get_check_estimator_ids
+    "estimator", DATA_VALIDATION_META_ESTIMATORS, ids=_get_meta_estimator_id
 )
 def test_meta_estimators_delegate_data_validation(estimator):
     # Check that meta-estimators delegate data validation to the inner
