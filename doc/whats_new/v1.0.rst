@@ -268,6 +268,9 @@ Changelog
   centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
   <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
 
+- |Fix| :meth:`preprocessing.StandardScaler.inverse_transform` now
+  correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
+
 :mod:`sklearn.tree`
 ...................
 
