@@ -48,6 +48,7 @@ standardized pAUC for a better understanding.
 """
 # %%
 # Plot partial ROC area on one example
+
 print(__doc__)
 
 import numpy as np
@@ -115,30 +116,36 @@ plt.show()
 # Manual calculation on standardized pAUC for the above example
 # ..........................................
 # The partial AUC is the area of the region formed by "max_fpr",
-# "min_tpr", and "ROC curve" lines. The pAUC value A = 0.4 * 0.4 = 0.16.
+# "min_tpr", and "ROC curve" lines. The pAUC value ``A = 0.4 * 0.4 = 0.16``.
 #
 # According to the Formula 7 in [1]_,
 # the standardized pAUC is
+#
 # .. math::
 #    \frac{1}{2}\left ( 1 + \frac{A - min}{max - min} \right )
 #
-# Following the ideas proposed by [1]_(McClish in 1989),
+# where the max/min means the maximum/minimum value of AUC
+# under the `max_fpr` and `min_tpr` restrictions.
+#
+# Following the ideas proposed by [1]_ (McClish in 1989),
 # under ``max_fpr`` and ``min_tpr`` restrictions,
 # we know the maximum area could attain is the rectangle with 4 endpoints:
-# ``(0, ``min_tpr``), (0, 1), (``max_fpr``, ``min_tpr``), (``max_fpr``, 1)`` .
+# ``(0, min_tpr), (0, 1), (max_fpr, min_tpr), (max_fpr, 1)`` .
 #
-# Thus, the max area is ``(1 - ``min_tpr``) * max_fpr = 0.4 * 0.9 = 0.36``
+# Thus, the max area is ``(1 - min_tpr) * max_fpr = 0.4 * 0.9 = 0.36``.
 #
 # The minimum area could attain is the triangle with 3 endpoints:
 # ``(min_tpr, min_tpr), (max_fpr, min_tpr), and (max_fpr, max_fpr)``.
 # Thus, the min area is
 # ``0.5 * (max_fpr - min_tpr) * (max_fpr - min_tpr) = 0.045``.
 #
-# Finally, we get
+# Finally, we get the standardized pAUC as
+#
 # .. math::
 #    spauc =
-#    \frac{1}{2}\left ( 1 + \frac{0.16 - 0.045}{0.36 - 0.045} \right ) = 0.6825
-
+#    \frac{1}{2}\left ( 1 + \frac{0.16 - 0.045}{0.36 - 0.045} \right )
+#    \approx  0.6825
+#
 
 # %%
 # .. topic:: References
