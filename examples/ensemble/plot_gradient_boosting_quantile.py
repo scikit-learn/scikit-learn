@@ -71,10 +71,10 @@ for alpha in [0.05, 0.5, 0.95]:
     all_models["q %1.2f" % alpha] = gbr.fit(X_train, y_train)
 
 # %%
-# For the sake of comparison, also fit a baseline model trained with the usual
-# least squares loss (ls), also known as the mean squared error (MSE).
-gbr_ls = GradientBoostingRegressor(loss='ls', **common_params)
-all_models["ls"] = gbr_ls.fit(X_train, y_train)
+# For the sake of comparison, we also fit a baseline model trained with the
+# usual (mean) squared error (MSE).
+gbr_ls = GradientBoostingRegressor(loss='squared_error', **common_params)
+all_models["mse"] = gbr_ls.fit(X_train, y_train)
 
 # %%
 # Create an evenly spaced evaluation set of input values spanning the [0, 10]
@@ -82,13 +82,13 @@ all_models["ls"] = gbr_ls.fit(X_train, y_train)
 xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # %%
-# Plot the true conditional mean function f, the prediction of the conditional
-# mean (least squares loss), the conditional median and the conditional 90%
-# interval (from 5th to 95th conditional percentiles).
+# Plot the true conditional mean function f, the predictions of the conditional
+# mean (loss equals squared error), the conditional median and the conditional
+# 90% interval (from 5th to 95th conditional percentiles).
 import matplotlib.pyplot as plt
 
 
-y_pred = all_models['ls'].predict(xx)
+y_pred = all_models['mse'].predict(xx)
 y_lower = all_models['q 0.05'].predict(xx)
 y_upper = all_models['q 0.95'].predict(xx)
 y_med = all_models['q 0.50'].predict(xx)
@@ -153,7 +153,7 @@ pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 #
 # Note that because the target distribution is asymmetric, the expected
 # conditional mean and conditional median are signficiantly different and
-# therefore one could not use the least squares model get a good estimation of
+# therefore one could not use the squared error model get a good estimation of
 # the conditional median nor the converse.
 #
 # If the target distribution were symmetric and had no outliers (e.g. with a
@@ -179,9 +179,9 @@ pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 # shows that the best test metric is obtained when the model is trained by
 # minimizing this same metric.
 #
-# Note that the conditional median estimator is competitive with the least
-# squares estimator in terms of MSE on the test set: this can be explained by
-# the fact the least squares estimator is very sensitive to large outliers
+# Note that the conditional median estimator is competitive with the squared
+# error estimator in terms of MSE on the test set: this can be explained by
+# the fact the squared error estimator is very sensitive to large outliers
 # which can cause significant overfitting. This can be seen on the right hand
 # side of the previous plot. The conditional median estimator is biased
 # (underestimation for this asymetric noise) but is also naturally robust to

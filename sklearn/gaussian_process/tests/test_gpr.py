@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import sys
+import re
 import numpy as np
 import warnings
 
@@ -21,9 +22,8 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils._testing \
     import (assert_array_less,
-            assert_almost_equal, assert_raise_message,
-            assert_array_almost_equal, assert_array_equal,
-            assert_allclose, assert_warns_message)
+            assert_almost_equal, assert_array_almost_equal,
+            assert_array_equal, assert_allclose)
 
 
 def f(x):
@@ -404,12 +404,15 @@ def test_gpr_correct_error_message():
     y = np.ones(6)
     kernel = DotProduct()
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
-    assert_raise_message(np.linalg.LinAlgError,
-                         "The kernel, %s, is not returning a "
-                         "positive definite matrix. Try gradually increasing "
-                         "the 'alpha' parameter of your "
-                         "GaussianProcessRegressor estimator."
-                         % kernel, gpr.fit, X, y)
+    message = (
+        "The kernel, %s, is not returning a "
+        "positive definite matrix. Try gradually increasing "
+        "the 'alpha' parameter of your "
+        "GaussianProcessRegressor estimator."
+        % kernel
+    )
+    with pytest.raises(np.linalg.LinAlgError, match=re.escape(message)):
+        gpr.fit(X, y)
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -474,14 +477,14 @@ def test_K_inv_reset(kernel):
 def test_warning_bounds():
     kernel = RBF(length_scale_bounds=[1e-5, 1e-3])
     gpr = GaussianProcessRegressor(kernel=kernel)
-    assert_warns_message(ConvergenceWarning, "The optimal value found for "
-                                             "dimension 0 of parameter "
-                                             "length_scale is close to "
-                                             "the specified upper bound "
-                                             "0.001. Increasing the bound "
-                                             "and calling fit again may "
-                                             "find a better value.",
-                         gpr.fit, X, y)
+    warning_message = (
+        "The optimal value found for dimension 0 of parameter "
+        "length_scale is close to the specified upper bound "
+        "0.001. Increasing the bound and calling fit again may "
+        "find a better value."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        gpr.fit(X, y)
 
     kernel_sum = (WhiteKernel(noise_level_bounds=[1e-5, 1e-3]) +
                   RBF(length_scale_bounds=[1e3, 1e5]))
