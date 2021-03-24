@@ -23,8 +23,12 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_array, gen_even_slices
-from ..utils import _to_object_array
+from ..utils import (
+    check_array,
+    gen_even_slices,
+    _to_object_array,
+)
+from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
@@ -351,7 +355,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             effective_p = self.p
 
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
-            raise ValueError("p must be greater than one for minkowski metric")
+            raise ValueError("p must be greater or equal to one for "
+                             "minkowski metric")
 
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
@@ -407,8 +412,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric == 'minkowski':
             p = self.effective_metric_params_.pop('p', 2)
             if p < 1:
-                raise ValueError("p must be greater than one "
-                                 "for minkowski metric")
+                raise ValueError("p must be greater or equal to one for "
+                                 "minkowski metric")
             elif p == 1:
                 self.effective_metric_ = 'manhattan'
             elif p == 2:
@@ -520,6 +525,14 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
+    def _more_tags(self):
+        # For cross-validation routines to split data correctly
+        return {'pairwise': self.metric == 'precomputed'}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly
@@ -655,7 +668,7 @@ class KNeighborsMixin:
             if self.effective_metric_ == 'precomputed':
                 X = _check_precomputed(X)
             else:
-                X = check_array(X, accept_sparse='csr')
+                X = self._validate_data(X, accept_sparse='csr', reset=False)
         else:
             query_is_train = True
             X = self._fit_X
@@ -704,13 +717,11 @@ class KNeighborsMixin:
                     parse_version(joblib.__version__) < parse_version('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
-                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
             chunked_results = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(
+                delayed(_tree_query_parallel_helper)(
                     self._tree, X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
@@ -916,10 +927,10 @@ class RadiusNeighborsMixin:
             Whether or not to return the distances.
 
         sort_results : bool, default=False
-            If True, the distances and indices will be sorted before being
-            returned. If `False`, the results will not be sorted. If
-            `return_distance=False`, setting `sort_results=True` will
-            result in an error.
+            If True, the distances and indices will be sorted by increasing
+            distances before being returned. If False, the results may not
+            be sorted. If `return_distance=False`, setting `sort_results=True`
+            will result in an error.
 
             .. versionadded:: 0.22
 
@@ -972,7 +983,7 @@ class RadiusNeighborsMixin:
             if self.effective_metric_ == 'precomputed':
                 X = _check_precomputed(X)
             else:
-                X = check_array(X, accept_sparse='csr')
+                X = self._validate_data(X, accept_sparse='csr', reset=False)
         else:
             query_is_train = True
             X = self._fit_X
@@ -1012,6 +1023,16 @@ class RadiusNeighborsMixin:
                 neigh_ind_list = sum(chunked_results, [])
                 results = _to_object_array(neigh_ind_list)
 
+            if sort_results:
+                if not return_distance:
+                    raise ValueError("return_distance must be True "
+                                     "if sort_results is True.")
+                for ii in range(len(neigh_dist)):
+                    order = np.argsort(neigh_dist[ii], kind='mergesort')
+                    neigh_ind[ii] = neigh_ind[ii][order]
+                    neigh_dist[ii] = neigh_dist[ii][order]
+                results = neigh_dist, neigh_ind
+
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -1019,13 +1040,11 @@ class RadiusNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = effective_n_jobs(self.n_jobs)
+            delayed_query = delayed(_tree_query_radius_parallel_helper)
             if parse_version(joblib.__version__) < parse_version('0.12'):
                 # Deal with change of API in joblib
-                delayed_query = delayed(_tree_query_radius_parallel_helper,
-                                        check_pickle=False)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(_tree_query_radius_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
 
             chunked_results = Parallel(n_jobs, **parallel_kwargs)(
@@ -1088,9 +1107,9 @@ class RadiusNeighborsMixin:
             edges are Euclidean distance between points.
 
         sort_results : bool, default=False
-            If True, the distances and indices will be sorted before being
-            returned. If False, the results will not be sorted.
-            Only used with mode='distance'.
+            If True, in each row of the result, the non-zero entries will be
+            sorted by increasing distances. If False, the non-zero entries may
+            not be sorted. Only used with mode='distance'.
 
             .. versionadded:: 0.22
 

@@ -50,7 +50,7 @@ PROJECT_URLS = {
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
 import sklearn
-import sklearn._build_utils.min_dependencies as min_deps  # noqa
+import sklearn._min_dependencies as min_deps  # noqa
 
 
 VERSION = sklearn.__version__
@@ -108,13 +108,27 @@ class CleanCommand(Clean):
 
 cmdclass = {'clean': CleanCommand, 'sdist': sdist}
 
-# custom build_ext command to set OpenMP compile flags depending on os and
-# compiler
+# Custom build_ext command to set OpenMP compile flags depending on os and
+# compiler. Also makes it possible to set the parallelism level via
+# and environment variable (useful for the wheel building CI).
 # build_ext has to be imported after setuptools
 try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
     class build_ext_subclass(build_ext):
+
+        def finalize_options(self):
+            super().finalize_options()
+            if self.parallel is None:
+                # Do not override self.parallel if already defined by
+                # command-line flag (--parallel or -j)
+
+                parallel = os.environ.get("SKLEARN_BUILD_PARALLEL")
+                if parallel:
+                    self.parallel = int(parallel)
+            if self.parallel:
+                print("setting parallel=%d " % self.parallel)
+
         def build_extensions(self):
             from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
@@ -240,6 +254,7 @@ def setup_package():
                                  'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
                                  'Programming Language :: Python :: 3.8',
+                                 'Programming Language :: Python :: 3.9',
                                  ('Programming Language :: Python :: '
                                   'Implementation :: CPython'),
                                  ('Programming Language :: Python :: '
@@ -251,13 +266,9 @@ def setup_package():
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
-    if len(sys.argv) == 1 or (
-            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-                                    sys.argv[1] in ('--help-commands',
-                                                    'egg_info',
-                                                    'dist_info',
-                                                    '--version',
-                                                    'clean'))):
+    commands = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
+    if all(command in ('egg_info', 'dist_info', 'clean', 'check')
+           for command in commands):
         # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.

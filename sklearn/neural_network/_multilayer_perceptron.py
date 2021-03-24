@@ -22,7 +22,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
 from ..utils import _safe_indexing
-from ..utils import check_array, column_or_1d
+from ..utils import column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
@@ -131,7 +131,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'], reset=False)
 
         # Initialize first layer
         activation = X
@@ -358,8 +358,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
+        first_pass = (not hasattr(self, 'coefs_') or
+                      (not self.warm_start and not incremental))
 
-        X, y = self._validate_input(X, y, incremental)
+        X, y = self._validate_input(X, y, incremental, reset=first_pass)
 
         n_samples, n_features = X.shape
 
@@ -375,8 +377,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # check random state
         self._random_state = check_random_state(self.random_state)
 
-        if not hasattr(self, 'coefs_') or (not self.warm_start and not
-                                           incremental):
+        if first_pass:
             # First time training the model
             self._initialize(y, layer_units, X.dtype)
 
@@ -963,10 +964,11 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
             n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
-    def _validate_input(self, X, y, incremental):
+    def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
                                    multi_output=True,
-                                   dtype=(np.float64, np.float32))
+                                   dtype=(np.float64, np.float32),
+                                   reset=reset)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
@@ -1125,7 +1127,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron regressor.
 
-    This model optimizes the squared-loss using LBFGS or stochastic gradient
+    This model optimizes the squared error using LBFGS or stochastic gradient
     descent.
 
     .. versionadded:: 0.18
@@ -1381,7 +1383,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             activation=activation, solver=solver, alpha=alpha,
             batch_size=batch_size, learning_rate=learning_rate,
             learning_rate_init=learning_rate_init, power_t=power_t,
-            max_iter=max_iter, loss='squared_loss', shuffle=shuffle,
+            max_iter=max_iter, loss='squared_error', shuffle=shuffle,
             random_state=random_state, tol=tol, verbose=verbose,
             warm_start=warm_start, momentum=momentum,
             nesterovs_momentum=nesterovs_momentum,
@@ -1409,10 +1411,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             return y_pred.ravel()
         return y_pred
 
-    def _validate_input(self, X, y, incremental):
+    def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
                                    multi_output=True, y_numeric=True,
-                                   dtype=(np.float64, np.float32))
+                                   dtype=(np.float64, np.float32),
+                                   reset=reset)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
