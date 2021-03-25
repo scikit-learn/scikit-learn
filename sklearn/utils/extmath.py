@@ -245,7 +245,7 @@ def randomized_range_finder(A, *, size, n_iter,
 @_deprecate_positional_args
 def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state=0):
+                   flip_sign=True, random_state='warn'):
     """Computes a truncated randomized SVD.
 
     Parameters
@@ -296,11 +296,17 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data, i.e. getting the random vectors to initialize the algorithm.
-        Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, default='warn'
+        The seed of the pseudo random number generator to use when
+        shuffling the data, i.e. getting the random vectors to initialize
+        the algorithm. Pass an int for reproducible results across multiple
+        function calls. See :term:`Glossary <random_state>`.
+
+        .. versionchanged:: 1.2
+            The previous behavior (`random_state=0`) is deprecated, and
+            from v1.2 the default value will be `random_state=None`. Set
+            the value of `random_state` explicitly to suppress the deprecation
+            warning.
 
     Notes
     -----
@@ -326,9 +332,21 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn("Calculating SVD of a {} is expensive. "
-                      "csr_matrix is more efficient.".format(
-                          type(M).__name__),
+                      "csr_matrix is more efficient.".format(type(M).__name__),
                       sparse.SparseEfficiencyWarning)
+
+    if random_state == 'warn':
+        warnings.warn(
+            "If 'random_state' is not supplied, the current default "
+            "is to use 0 as a fixed seed. This will change to  "
+            "None in version 1.2 leading to non-deterministic results "
+            "that better reflect nature of the randomized_svd solver. "
+            "If you want to silence this warning, set 'random_state' "
+            "to an integer seed or to None explicitly depending "
+            "if you want your code to be deterministic or not.",
+            FutureWarning
+        )
+        random_state = 0
 
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
@@ -455,7 +473,7 @@ def cartesian(arrays, out=None):
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
-    out : ndarray
+    out : ndarray, default=None
         Array to place the cartesian product in.
 
     Returns
@@ -690,14 +708,16 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     return result
 
 
-def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
+def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
+                              sample_weight=None):
     """Calculate mean update and a Youngs and Cramer variance update.
 
-    last_mean and last_variance are statistics computed at the last step by the
-    function. Both must be initialized to 0.0. In case no scaling is required
-    last_variance can be None. The mean is always required and returned because
-    necessary for the calculation of the variance. last_n_samples_seen is the
-    number of samples encountered until now.
+    If sample_weight is given, the weighted mean and variance is computed.
+
+    Update a given mean and (possibly) variance according to new data given
+    in X. last_mean is always required to compute the new mean.
+    If last_variance is None, no variance is computed and None return for
+    updated_variance.
 
     From the paper "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
@@ -712,13 +732,19 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     last_variance : array-like of shape (n_features,)
 
     last_sample_count : array-like of shape (n_features,)
+        The number of samples encountered until now if sample_weight is None.
+        If sample_weight is not None, this is the sum of sample_weight
+        encountered.
+
+    sample_weight : array-like of shape (n_samples,) or None
+        Sample weights. If None, compute the unweighted mean/variance.
 
     Returns
     -------
     updated_mean : ndarray of shape (n_features,)
 
     updated_variance : ndarray of shape (n_features,)
-        If None, only mean is computed.
+        None if last_variance was None.
 
     updated_sample_count : ndarray of shape (n_features,)
 
@@ -740,9 +766,15 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
+    if sample_weight is not None:
+        new_sum = _safe_accumulator_op(np.nansum, X * sample_weight[:, None],
+                                       axis=0)
+        new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X)),
+                                  axis=0)
+    else:
+        new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
+        new_sample_count = np.sum(~np.isnan(X), axis=0)
 
-    new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
@@ -750,8 +782,12 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = (
-            _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
+        T = new_sum / new_sample_count
+        if sample_weight is not None:
+            new_unnormalized_variance = np.nansum(sample_weight[:, None] *
+                                                  (X - T)**2, axis=0)
+        else:
+            new_unnormalized_variance = np.nansum((X - T)**2, axis=0)
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):

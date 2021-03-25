@@ -515,3 +515,76 @@ def test_plot_partial_dependence_does_not_override_ylabel(pyplot, clf_diabetes,
 
     assert axes[0].get_ylabel() == "Hello world"
     assert axes[1].get_ylabel() == "Partial dependence"
+
+
+@pytest.mark.parametrize(
+    "kind, expected_shape",
+    [("average", (1, 2)), ("individual", (1, 2, 50)), ("both", (1, 2, 51))],
+)
+def test_plot_partial_dependence_subsampling(
+    pyplot, clf_diabetes, diabetes, kind, expected_shape
+):
+    # check that the subsampling is properly working
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/pull/18359
+    matplotlib = pytest.importorskip("matplotlib")
+    grid_resolution = 25
+    feature_names = diabetes.feature_names
+
+    disp1 = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        ["age", "bmi"],
+        kind=kind,
+        grid_resolution=grid_resolution,
+        feature_names=feature_names,
+        subsample=50,
+        random_state=0,
+    )
+
+    assert disp1.lines_.shape == expected_shape
+    assert all(
+        [
+            isinstance(line, matplotlib.lines.Line2D)
+            for line in disp1.lines_.ravel()
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "kind, line_kw, label",
+    [
+        ("individual", {}, None),
+        ("individual", {"label": "xxx"}, None),
+        ("average", {}, None),
+        ("average", {"label": "xxx"}, "xxx"),
+        ("both", {}, "average"),
+        ("both", {"label": "xxx"}, "xxx"),
+    ],
+)
+def test_partial_dependence_overwrite_labels(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    kind,
+    line_kw,
+    label,
+):
+    """Test that make sure that we can overwrite the label of the PDP plot"""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        [0, 2],
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+        kind=kind,
+        line_kw=line_kw,
+    )
+
+    for ax in disp.axes_.ravel():
+        if label is None:
+            assert ax.get_legend() is None
+        else:
+            legend_text = ax.get_legend().get_texts()
+            assert len(legend_text) == 1
+            assert legend_text[0].get_text() == label

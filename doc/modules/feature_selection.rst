@@ -119,12 +119,12 @@ Recursive feature elimination
 =============================
 
 Given an external estimator that assigns weights to features (e.g., the
-coefficients of a linear model), recursive feature elimination (:class:`RFE`)
+coefficients of a linear model), the goal of recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
 features. First, the estimator is trained on the initial set of features and
 the importance of each feature is obtained either through any specific attribute
 (such as ``coef_``, ``feature_importances_``) or callable. Then, the least important
-features are pruned from current set of features.That procedure is recursively
+features are pruned from current set of features. That procedure is recursively
 repeated on the pruned set until the desired number of features to select is
 eventually reached.
 
@@ -145,10 +145,10 @@ number of features.
 Feature selection using SelectFromModel
 =======================================
 
-:class:`SelectFromModel` is a meta-transformer that can be used along with any
-estimator that importance of each feature through a specific attribute (such as
-``coef_``, ``feature_importances_``) or callable after fitting.
-The features are considered unimportant and removed, if the corresponding
+:class:`SelectFromModel` is a meta-transformer that can be used alongside any
+estimator that assigns importance to each feature through a specific attribute (such as
+``coef_``, ``feature_importances_``) or via an `importance_getter` callable after fitting.
+The features are considered unimportant and removed if the corresponding
 importance of the feature values are below the provided
 ``threshold`` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.

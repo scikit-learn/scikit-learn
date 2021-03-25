@@ -11,17 +11,20 @@ from math import sqrt
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..model_selection import check_cv
 
-premature = """ Orthogonal matching pursuit ended prematurely due to linear
-dependence in the dictionary. The requested precision might not have been met.
-"""
+premature = (
+    "Orthogonal matching pursuit ended prematurely due to linear"
+    " dependence in the dictionary. The requested precision might"
+    " not have been met."
+)
 
 
 def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
@@ -586,6 +589,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
     n_iter_ : int or array-like
         Number of active features across every target.
+
+    n_nonzero_coefs_ : int
+        The number of non-zero coefficients in the solution. If
+        `n_nonzero_coefs` is None and `tol` is None this value is either set
+        to 10% of `n_features` or 1, whichever is greater.
 
     Examples
     --------

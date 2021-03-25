@@ -32,7 +32,7 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(f):
+def _deprecate_positional_args(func=None, *, version="1.0 (renaming of 0.25)"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -40,36 +40,44 @@ def _deprecate_positional_args(f):
 
     Parameters
     ----------
-    f : callable
+    func : callable, default=None
         Function to check arguments on.
+    version : callable, default="1.0 (renaming of 0.25)"
+        The version when positional arguments will result in error.
     """
-    sig = signature(f)
-    kwonly_args = []
-    all_args = []
+    def _inner_deprecate_positional_args(f):
+        sig = signature(f)
+        kwonly_args = []
+        all_args = []
 
-    for name, param in sig.parameters.items():
-        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
-            all_args.append(name)
-        elif param.kind == Parameter.KEYWORD_ONLY:
-            kwonly_args.append(name)
+        for name, param in sig.parameters.items():
+            if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
+                all_args.append(name)
+            elif param.kind == Parameter.KEYWORD_ONLY:
+                kwonly_args.append(name)
 
-    @wraps(f)
-    def inner_f(*args, **kwargs):
-        extra_args = len(args) - len(all_args)
-        if extra_args <= 0:
-            return f(*args, **kwargs)
+        @wraps(f)
+        def inner_f(*args, **kwargs):
+            extra_args = len(args) - len(all_args)
+            if extra_args <= 0:
+                return f(*args, **kwargs)
 
-        # extra_args > 0
-        args_msg = ['{}={}'.format(name, arg)
-                    for name, arg in zip(kwonly_args[:extra_args],
-                                         args[-extra_args:])]
-        warnings.warn("Pass {} as keyword args. From version 0.25 "
-                      "passing these as positional arguments will "
-                      "result in an error".format(", ".join(args_msg)),
-                      FutureWarning)
-        kwargs.update(zip(sig.parameters, args))
-        return f(**kwargs)
-    return inner_f
+            # extra_args > 0
+            args_msg = ['{}={}'.format(name, arg)
+                        for name, arg in zip(kwonly_args[:extra_args],
+                                             args[-extra_args:])]
+            args_msg = ", ".join(args_msg)
+            warnings.warn(f"Pass {args_msg} as keyword args. From version "
+                          f"{version} passing these as positional arguments "
+                          "will result in an error", FutureWarning)
+            kwargs.update(zip(sig.parameters, args))
+            return f(**kwargs)
+        return inner_f
+
+    if func is not None:
+        return _inner_deprecate_positional_args(func)
+
+    return _inner_deprecate_positional_args
 
 
 def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
@@ -174,6 +182,63 @@ def _is_arraylike(x):
     return (hasattr(x, '__len__') or
             hasattr(x, 'shape') or
             hasattr(x, '__array__'))
+
+
+def _num_features(X):
+    """Return the number of features in an array-like X.
+
+    This helper function tries hard to avoid to materialize an array version
+    of X unless necessary. For instance, if X is a list of lists,
+    this function will return the length of the first element, assuming
+    that subsequent elements are all lists of the same length without
+    checking.
+    Parameters
+    ----------
+    X : array-like
+        array-like to get the number of features.
+
+    Returns
+    -------
+    features : int
+        Number of features
+    """
+    type_ = type(X)
+    if type_.__module__ == "builtins":
+        type_name = type_.__qualname__
+    else:
+        type_name = f"{type_.__module__}.{type_.__qualname__}"
+    message = (
+        "Unable to find the number of features from X of type "
+        f"{type_name}"
+    )
+    if not hasattr(X, '__len__') and not hasattr(X, 'shape'):
+        if not hasattr(X, '__array__'):
+            raise TypeError(message)
+        # Only convert X to a numpy array if there is no cheaper, heuristic
+        # option.
+        X = np.asarray(X)
+
+    if hasattr(X, 'shape'):
+        if not hasattr(X.shape, '__len__') or len(X.shape) <= 1:
+            message += f" with shape {X.shape}"
+            raise TypeError(message)
+        return X.shape[1]
+
+    first_sample = X[0]
+
+    # Do not consider an array-like of strings to be a 2D array
+    if isinstance(first_sample, (str, bytes)):
+        message += (f" where the samples are of type "
+                    f"{type(first_sample).__qualname__}")
+        raise TypeError(message)
+
+    try:
+        # If X is a list of lists, for instance, we assume that all nested
+        # lists have the same length without checking or converting to
+        # a numpy array to keep this function call as cheap as possible.
+        return len(first_sample)
+    except Exception as err:
+        raise TypeError(message) from err
 
 
 def _num_samples(x):
@@ -632,20 +697,21 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
 
-        # in the future np.flexible dtypes will be handled like object dtypes
-        if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
-            warnings.warn(
-                "Beginning in version 0.22, arrays of bytes/strings will be "
-                "converted to decimal numbers if dtype='numeric'. "
-                "It is recommended that you convert the array to "
-                "a float dtype before using it in scikit-learn, "
-                "for example by using "
-                "your_array = your_array.astype(np.float64).",
-                FutureWarning, stacklevel=2)
-
         # make sure we actually converted to numeric:
-        if dtype_numeric and array.dtype.kind == "O":
-            array = array.astype(np.float64)
+        if dtype_numeric and array.dtype.kind in "OUSV":
+            warnings.warn(
+                "Arrays of bytes/strings is being converted to decimal "
+                "numbers if dtype='numeric'. This behavior is deprecated in "
+                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
+                "convert your data to numeric values explicitly instead.",
+                FutureWarning, stacklevel=2
+            )
+            try:
+                array = array.astype(np.float64)
+            except ValueError as e:
+                raise ValueError(
+                    "Unable to convert array of bytes/strings "
+                    "into decimal numbers with dtype='numeric'") from e
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
@@ -1264,7 +1330,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     return lambdas
 
 
-def _check_sample_weight(sample_weight, X, dtype=None):
+def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
@@ -1280,12 +1346,15 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     X : {ndarray, list, sparse matrix}
         Input data.
 
-    dtype: dtype
+    dtype: dtype, default=None
        dtype of the validated `sample_weight`.
        If None, and the input `sample_weight` is an array, the dtype of the
        input is preserved; otherwise an array with the default numpy dtype
        is be allocated.  If `dtype` is not one of `float32`, `float64`,
        `None`, the output will be of dtype `float64`.
+
+    copy : bool, default=False
+        If True, a copy of sample_weight will be created.
 
     Returns
     -------
@@ -1306,7 +1375,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
             sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
-            order="C"
+            order="C", copy=copy
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")

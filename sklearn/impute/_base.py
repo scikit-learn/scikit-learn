@@ -4,6 +4,7 @@
 
 import numbers
 import warnings
+from collections import Counter
 
 import numpy as np
 import numpy.ma as ma
@@ -34,15 +35,20 @@ def _most_frequent(array, extra_value, n_repeat):
        of the array."""
     # Compute the most frequent value in array only
     if array.size > 0:
-        with warnings.catch_warnings():
-            # stats.mode raises a warning when input array contains objects due
-            # to incapacity to detect NaNs. Irrelevant here since input array
-            # has already been NaN-masked.
-            warnings.simplefilter("ignore", RuntimeWarning)
+        if array.dtype == object:
+            # scipy.stats.mode is slow with object dtype array.
+            # Python Counter is more efficient
+            counter = Counter(array)
+            most_frequent_count = counter.most_common(1)[0][1]
+            # tie breaking similarly to scipy.stats.mode
+            most_frequent_value = min(
+                value for value, count in counter.items()
+                if count == most_frequent_count
+            )
+        else:
             mode = stats.mode(array)
-
-        most_frequent_value = mode[0][0]
-        most_frequent_count = mode[1][0]
+            most_frequent_value = mode[0][0]
+            most_frequent_count = mode[1][0]
     else:
         most_frequent_value = 0
         most_frequent_count = 0
@@ -55,11 +61,8 @@ def _most_frequent(array, extra_value, n_repeat):
     elif most_frequent_count > n_repeat:
         return most_frequent_value
     elif most_frequent_count == n_repeat:
-        # Ties the breaks. Copy the behaviour of scipy.stats.mode
-        if most_frequent_value < extra_value:
-            return most_frequent_value
-        else:
-            return extra_value
+        # tie breaking similarly to scipy.stats.mode
+        return min(most_frequent_value, extra_value)
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
@@ -140,6 +143,7 @@ class SimpleImputer(_BaseImputer):
           each column. Can only be used with numeric data.
         - If "most_frequent", then replace missing using the most frequent
           value along each column. Can be used with strings or numeric data.
+          If there is more than one such value, only the smallest is returned.
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
 
@@ -568,26 +572,26 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         nullable integer dtypes with missing values, `missing_values`
         should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
-    features : str, default=None
+    features : {'missing-only', 'all'}, default='missing-only'
         Whether the imputer mask should represent all or a subset of
         features.
 
-        - If "missing-only" (default), the imputer mask will only represent
+        - If 'missing-only' (default), the imputer mask will only represent
           features containing missing values during fit time.
-        - If "all", the imputer mask will represent all features.
+        - If 'all', the imputer mask will represent all features.
 
-    sparse : boolean or "auto", default=None
+    sparse : bool or 'auto', default='auto'
         Whether the imputer mask format should be sparse or dense.
 
-        - If "auto" (default), the imputer mask will be of same type as
+        - If 'auto' (default), the imputer mask will be of same type as
           input.
         - If True, the imputer mask will be a sparse matrix.
         - If False, the imputer mask will be a numpy array.
 
-    error_on_new : boolean, default=None
-        If True (default), transform will raise an error when there are
-        features with missing values in transform that have no missing values
-        in fit. This is applicable only when ``features="missing-only"``.
+    error_on_new : bool, default=True
+        If True, transform will raise an error when there are features with
+        missing values in transform that have no missing values in fit. This is
+        applicable only when `features='missing-only'`.
 
     Attributes
     ----------
@@ -793,15 +797,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
-            X = self._validate_input(X, in_fit=True)
+            X = self._validate_input(X, in_fit=False)
         else:
             if not (hasattr(X, 'dtype') and X.dtype.kind == 'b'):
                 raise ValueError("precomputed is True but the input data is "
                                  "not a mask")
-
-        if X.shape[1] != self._n_features:
-            raise ValueError("X has a different number of features "
-                             "than during fitting.")
 
         imputer_mask, features = self._get_missing_features_info(X)
 
