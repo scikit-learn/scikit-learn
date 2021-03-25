@@ -1,3 +1,4 @@
+import re
 
 import numpy as np
 import scipy.sparse
@@ -118,7 +119,10 @@ def test_gnb_sample_weight():
 def test_gnb_neg_priors():
     """Test whether an error is raised in case of negative priors"""
     clf = GaussianNB(priors=np.array([-1., 2.]))
-    assert_raises(ValueError, clf.fit, X, y)
+
+    msg = re.escape('Priors must be non-negative.')
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_gnb_priors():
@@ -146,13 +150,19 @@ def test_gnb_wrong_nb_priors():
     """ Test whether an error is raised if the number of prior is different
     from the number of class"""
     clf = GaussianNB(priors=np.array([.25, .25, .25, .25]))
-    assert_raises(ValueError, clf.fit, X, y)
+
+    msg = re.escape('Number of priors must match number of classes')
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_gnb_prior_greater_one():
     """Test if an error is raised if the sum of prior greater than one"""
     clf = GaussianNB(priors=np.array([2., 1.]))
-    assert_raises(ValueError, clf.fit, X, y)
+
+    msg = re.escape('The sum of the priors should be 1')
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_gnb_prior_large_bias():
@@ -339,9 +349,13 @@ def test_discretenb_provide_prior(DiscreteNaiveBayes):
     assert_array_almost_equal(prior, np.array([.5, .5]))
 
     # Inconsistent number of classes with prior
-    assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2])
-    assert_raises(ValueError, clf.partial_fit, [[0], [1]], [0, 1],
-                  classes=[0, 1, 1])
+    msg_1 = re.escape('Number of priors must match number of classes')
+    with pytest.raises(ValueError, match=msg_1):
+        clf.fit([[0], [1], [2]], [0, 1, 2])
+
+    msg_2 = re.escape('is not the same as on last call to partial_fit')
+    with pytest.raises(ValueError, match=msg_2):
+        clf.partial_fit([[0], [1]], [0, 1], classes=[0, 1, 1])
 
 
 @pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
