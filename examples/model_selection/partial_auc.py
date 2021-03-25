@@ -51,6 +51,9 @@ standardized pAUC for a better understanding.
 
 print(__doc__)
 
+# Author: Fengjun Wang
+# License: BSD 3 clause
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
