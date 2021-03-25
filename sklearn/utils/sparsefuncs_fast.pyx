@@ -110,6 +110,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         unsigned long long row_ind
         integral col_ind
         floating diff
+        floating sw_sum = 0.
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
         # variances[j] contains the variance of feature j
@@ -125,11 +126,18 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     cdef:
         np.ndarray[floating, ndim=1] sum_weights = \
-            np.full(fill_value=np.sum(weights), shape=n_features, dtype=dtype)
+            np.zeros(shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nan = \
             np.zeros(shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nz = \
             np.zeros(shape=n_features, dtype=dtype)
+
+    # compute the sum manually instead of using np.sum(weights) to avoid
+    # rounding errors in sum_weights - sum_weights_nz.
+    for row_ind in range(n_samples):
+        sw_sum += weights[row_ind]
+    for col_ind in range(n_features):
+        sum_weights[col_ind] = sw_sum
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
@@ -214,6 +222,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         unsigned long long col_ind
         integral row_ind
         floating diff
+        floating sw_sum = 0.
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
         # variances[j] contains the variance of feature j
@@ -229,11 +238,18 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     cdef:
         np.ndarray[floating, ndim=1] sum_weights = \
-            np.full(fill_value=np.sum(weights), shape=n_features, dtype=dtype)
+            np.zeros(shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nan = \
             np.zeros(shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nz = \
             np.zeros(shape=n_features, dtype=dtype)
+
+    # compute the sum manually instead of using np.sum(weights) to avoid
+    # rounding errors in sum_weights - sum_weights_nz.
+    for row_ind in range(n_samples):
+        sw_sum += weights[row_ind]
+    for col_ind in range(n_features):
+        sum_weights[col_ind] = sw_sum
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
