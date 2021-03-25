@@ -230,7 +230,7 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
-    init = 'nndsvda'  # FIXME : should be removed in 1.1
+    init = 'nndsvd'  # FIXME : should be removed in 1.1
 
     est1 = Estimator(solver=solver, n_components=5, init=init,
                      beta_loss=beta_loss, max_iter=500,
@@ -256,7 +256,7 @@ def test_nmf_sparse_transform(Estimator, solver, beta_loss):
     A[1, 1] = 0
     A = csc_matrix(A)
 
-    init = 'nndsvda'  # FIXME : should be removed in 1.1
+    init = 'nndsvd'  # FIXME : should be removed in 1.1
 
     model = Estimator(solver=solver, random_state=0, n_components=2,
                       beta_loss=beta_loss, max_iter=400, init=init)

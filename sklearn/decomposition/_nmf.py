@@ -897,7 +897,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     batches = itertools.cycle(batches)
     n_batches = n_samples // batch_size
     n_steps = max_iter * n_batches
-    for n_i, batch in zip(range(n_steps + 1), batches):
+    for n_i, batch in zip(range(1, n_steps + 1), batches):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -942,7 +942,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
               (n_i, end_time - start_time))
 
     if batch_size is None:
-        n_iter = n_i + 1
+        n_iter = n_i
         return W, H, n_iter
     else:
         n_iter = n_i // n_batches
@@ -1926,10 +1926,9 @@ class MiniBatchNMF(NMF):
                 W, H, n_iter, iter_offset, A, B = _fit_multiplicative_update(
                     X, W, self.components_, self._components_numerator,
                     self._components_denominator, self._beta_loss,
-                    self._batch_size, 0, 1, self.tol,
+                    self._batch_size, self.iter_offset_, 1, self.tol,
                     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
-                    True, self.verbose, self.forget_factor
-                )
+                    True, self.verbose, self.forget_factor)
 
             self.n_components_ = H.shape[0]
             self.components_ = H
