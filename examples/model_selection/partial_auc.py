@@ -14,10 +14,10 @@ However, in real life cases, we sometimes have strict requirements
 on keeping low false positive rate,
 or keeping high true positive rate, or both of them.
 In such scenarios, we are interested in a portion of the ROC curve
-which satisfy certain restrictions.
+which satisfies certain restrictions.
 
 For example, in fraud detection domain,
-there are requirements on building a classifier
+there are requirements on building binary classifiers
 to distinguish fraud behavior from normal behavior.
 To reduce the workload of manually checking the model output on
 false positive cases (normal behavior),
@@ -37,7 +37,7 @@ which could be used as your model selection criteria.
 
 Let's visualize a ROC example to clarify the definitions.
 You could follow below examples and manually calculate
-standardized pAUC for a better understanding.
+standardized pAUC for better understanding.
 
 
 .. note::
@@ -130,7 +130,7 @@ plt.show()
 # where the max/min means the maximum/minimum value of AUC
 # under the `max_fpr` and `min_tpr` restrictions.
 #
-# Following the ideas proposed by [1]_ (McClish in 1989),
+# Following the ideas proposed by (McClish in 1989) [1]_,
 # under ``max_fpr`` and ``min_tpr`` restrictions,
 # we know the maximum area could attain is the rectangle with 4 endpoints:
 # ``(0, min_tpr), (0, 1), (max_fpr, min_tpr), (max_fpr, 1)`` .
@@ -139,6 +139,7 @@ plt.show()
 #
 # The minimum area could attain is the triangle with 3 endpoints:
 # ``(min_tpr, min_tpr), (max_fpr, min_tpr), and (max_fpr, max_fpr)``.
+#
 # Thus, the min area is
 # ``0.5 * (max_fpr - min_tpr) * (max_fpr - min_tpr) = 0.045``.
 #

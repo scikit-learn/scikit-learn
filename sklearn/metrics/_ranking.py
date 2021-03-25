@@ -466,14 +466,14 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
     max_fpr : float > 0 and <= 1, default=None
         Only used for partial AUC calculation.
 
-        If not ``None``, and if the ``min_tpr`` is not defined,
+        If not ``None``, and if the ``min_tpr`` is not given,
         the standardized partial AUC [2]_ over
         the range of fpr axis [0, max_fpr] is returned.
-        If not ``None``, and if the ``min_tpr`` is also defined,
+        If not ``None``, and if the ``min_tpr`` is also given,
         the standardized partial AUC over the ROC range
-        which conforms to both max_fpr and min_tpr limitations
+        which conforms to both ``max_fpr`` and ``min_tpr`` limitations
         is returned,
-        which is the standardized area of zone A described in [6]_ Figure 1.
+        which is the standardized area of zone A described in Figure 1 [6]_.
         If the ``max_fpr`` and ``min_tpr`` restrictions can't form
         an intersection shape with ROC curve, 0 is returned.
 
@@ -483,22 +483,22 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
     min_tpr : float > 0 and <= 1, default=None
         Only used for partial AUC calculation.
-        This option could also be used for setting limitations on max_fnr:
+        This option could also be used for setting limitations on maximum FNR:
         since TPR = 1 - FNR, set minimum TPR is equivalent to set maximum FNR.
 
-        If not ``None``, and if the ``max_fpr`` is not defined,
+        If not ``None``, and if the ``max_fpr`` is not given,
         the standardized top right tail area of full ROC over
         the tpr axis range [min_tpr, 1] is returned.
-        If not ``None``, and if the ``max_fpr`` is also defined,
+        If not ``None``, and if the ``max_fpr`` is also given,
         the standardized partial AUC over the ROC range which
         conforms to both max_fpr and min_tpr limitations
         is returned,
-        which is the standardized area of zone A described in [6]_ Figure 1.
+        which is the standardized area of zone A described in Figure 1 [6]_.
         If the ``max_fpr`` and ``min_tpr`` restrictions can't form
         an intersection shape with ROC, 0 is returned.
 
         For the multiclass case, ``min_tpr``,
-        should be either equal to ``None`` or ``1.0`` as AUC ROC partial
+        should be either equal to ``None`` or ``0.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
 
     multi_class : {'raise', 'ovr', 'ovo'}, default='raise'
@@ -550,7 +550,7 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
 
     .. [6] `Hanfang Yang, Kun Lu, Xiang Lyu, Feifang Hu (2017).
-            Two-Way Partial AUC and Its Properties
+            Two-Way Partial AUC and Its Properties.
             <https://arxiv.org/abs/1508.00298>`_
 
     See Also

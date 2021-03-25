@@ -71,6 +71,13 @@ Changelog
 - |Fix| Better contains the CSS provided by :func:`utils.estimator_html_repr`
   by giving CSS ids to the html representation. :pr:`19417` by `Thomas Fan`_.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| Add `min_tpr` parameter in :func:`metrics.roc_auc_score`,
+  allowing both `max_fpr` and `min_tpr` restrictions on partial AUC calculation.
+  :pr:`19751` by :user:`Fengjun Wang <Fengjun-Wang>`.
+
 .. _changes_0_24_1:
 
 Version 0.24.1
