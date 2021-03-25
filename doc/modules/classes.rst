@@ -762,6 +762,7 @@ Linear classifiers
    linear_model.RidgeClassifier
    linear_model.RidgeClassifierCV
    linear_model.SGDClassifier
+   linear_model.SGDOneClassSVM
 
 Classical linear regressors
 ---------------------------

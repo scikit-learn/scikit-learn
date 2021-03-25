@@ -10,7 +10,6 @@ import pytest
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
@@ -57,7 +56,12 @@ def test_covariance():
     # Create X with 1 sample and 5 features
     X_1sample = np.arange(5).reshape(1, 5)
     cov = EmpiricalCovariance()
-    assert_warns(UserWarning, cov.fit, X_1sample)
+    warn_msg = (
+        "Only one sample available. You may want to reshape your data array"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        cov.fit(X_1sample)
+
     assert_array_almost_equal(cov.covariance_,
                               np.zeros(shape=(5, 5), dtype=np.float64))
 
@@ -175,7 +179,13 @@ def test_ledoit_wolf():
     # warning should be raised when using only 1 sample
     X_1sample = np.arange(5).reshape(1, 5)
     lw = LedoitWolf()
-    assert_warns(UserWarning, lw.fit, X_1sample)
+
+    warn_msg = (
+        "Only one sample available. You may want to reshape your data array"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        lw.fit(X_1sample)
+
     assert_array_almost_equal(lw.covariance_,
                               np.zeros(shape=(5, 5), dtype=np.float64))
 
@@ -294,7 +304,12 @@ def test_oas():
     # warning should be raised when using only 1 sample
     X_1sample = np.arange(5).reshape(1, 5)
     oa = OAS()
-    assert_warns(UserWarning, oa.fit, X_1sample)
+    warn_msg = (
+        "Only one sample available. You may want to reshape your data array"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        oa.fit(X_1sample)
+
     assert_array_almost_equal(oa.covariance_,
                               np.zeros(shape=(5, 5), dtype=np.float64))
 

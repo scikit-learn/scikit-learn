@@ -613,6 +613,26 @@ def test_standard_scaler_trasform_with_partial_fit(sample_weight):
             )
 
 
+def test_standard_check_array_of_inverse_transform():
+    # Check if StandardScaler inverse_transform is
+    # converting the integer array to float
+    x = np.array([
+        [1, 1, 1, 0, 1, 0],
+        [1, 1, 1, 0, 1, 0],
+        [0, 8, 0, 1, 0, 0],
+        [1, 4, 1, 1, 0, 0],
+        [0, 1, 0, 0, 1, 0],
+        [0, 4, 0, 1, 0, 1]], dtype=np.int32)
+
+    scaler = StandardScaler()
+    scaler.fit(x)
+
+    # The of inverse_transform should be converted
+    # to a float array.
+    # If not X *= self.scale_ will fail.
+    scaler.inverse_transform(x)
+
+
 def test_min_max_scaler_iris():
     X = iris.data
     scaler = MinMaxScaler()
