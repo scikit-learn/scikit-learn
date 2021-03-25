@@ -147,6 +147,13 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
+  implementation of the linear One-Class SVM. Combined with kernel
+  approximation techniques, this implementation approximates the solution of
+  a kernelized One Class SVM while benefitting from a linear 
+  complexity in the number of samples.
+  :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
+
 - |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
   has been optimised for dense matrices when using `solver='newton-cg'` and
   `multi_class!='multinomial'`.
@@ -260,6 +267,9 @@ Changelog
   sparse data with a constant column with sample weights, in which case
   centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
   <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
+
+- |Fix| :meth:`preprocessing.StandardScaler.inverse_transform` now
+  correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
 
 :mod:`sklearn.tree`
 ...................
