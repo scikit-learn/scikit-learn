@@ -94,7 +94,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         y = y[idx]
 
         # normal data are those with attribute 2
-        # abnormal those with attribute 4
+        # abnormal data are those with attribute 4
         s = (y == 2) + (y == 4)
         X = X[s, :]
         y = y[s]
