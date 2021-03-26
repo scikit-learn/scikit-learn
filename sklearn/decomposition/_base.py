@@ -18,17 +18,16 @@ from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
 
-def _implicitly_center(X: spmatrix, mu: np.ndarray) -> LinearOperator:
+def _implicitly_center(X, mu):
     mu = mu[None, :]
-    XH = X.T.conj(copy=False)
-    _ones = np.ones(X.shape[0])[None, :].dot
+    XT = X.T.conj(copy=False)
     return LinearOperator(
-        matvec=lambda x: X.dot(x) - mu.dot(x),
+        matvec = lambda x: X @ x - mu @ x,
+        matmat = lambda x: X @ x - mu @ x,
+        rmatvec = lambda x: XT @ x - (mu * x.sum()),
+        rmatmat = lambda x: XT @ x - (mu * x.sum()),
         dtype=X.dtype,
-        matmat=lambda x: X.dot(x) - mu.dot(x),
-        shape=X.shape,
-        rmatvec=lambda x: XH.dot(x) - mu.T.dot(_ones(x)),
-        rmatmat=lambda x: XH.dot(x) - mu.T.dot(_ones(x)),
+        shape=X.shape
     )
 
 class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
