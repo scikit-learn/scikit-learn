@@ -134,7 +134,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     # compute the sum manually instead of using np.sum(weights) to avoid
     # rounding errors in sum_weights - sum_weights_nz.
-    for row_ind in range(n_samples):
+    for row_ind in range(weights.shape[0]):
         sw_sum += weights[row_ind]
     for col_ind in range(n_features):
         sum_weights[col_ind] = sw_sum
@@ -246,7 +246,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     # compute the sum manually instead of using np.sum(weights) to avoid
     # rounding errors in sum_weights - sum_weights_nz.
-    for row_ind in range(n_samples):
+    for row_ind in range(weights.shape[0]):
         sw_sum += weights[row_ind]
     for col_ind in range(n_features):
         sum_weights[col_ind] = sw_sum
