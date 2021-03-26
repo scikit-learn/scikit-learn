@@ -147,7 +147,7 @@ class IterativeImputer(_BaseImputer):
         the missing indicator even if there are missing values at
         transform/test time.
 
-    keep_missing_features : boolean, default=False
+    keep_missing_features : bool, default=False
         If true, features whose all values are missing during fit/train time
         are not removed during transform/test time.
 
