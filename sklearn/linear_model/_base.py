@@ -122,9 +122,10 @@ def _deprecate_normalize(normalize, default, estimator_name):
         )
     elif 'ElasticNet' in estimator_name:
         alpha_msg = (
-            'Set parameter alpha to original_alpha * np.sqrt(n_samples) if'
-            'l1_ratio is 1, and to original_alpha * n_samples if l1_ratio is 0. '
-            'For other values of l1_ratio, no analytic formula is available.'
+            'Set parameter alpha to original_alpha * np.sqrt(n_samples) if '
+            'l1_ratio is 1, and to original_alpha * n_samples if l1_ratio is '
+            '0. For other values of l1_ratio, no analytic formula is '
+            'available.'
         )
     elif estimator_name == 'RidgeCV' or estimator_name == 'RidgeClassifierCV':
         alpha_msg = 'Set parameter alphas to: original_alphas * n_samples. '
