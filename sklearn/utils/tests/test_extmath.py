@@ -8,11 +8,12 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
+from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
 import pytest
 from sklearn.utils import gen_batches
-
+from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
@@ -34,7 +35,7 @@ from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.datasets import make_low_rank_matrix
+from sklearn.datasets import make_low_rank_matrix, make_spd_matrix
 
 
 def test_density():
@@ -179,6 +180,58 @@ def test_randomized_eigsh(dtype):
     # with 'value' selection method, the negative eigenvalue does not show up
     with pytest.raises(NotImplementedError):
         _randomized_eigsh(X, n_components=2, selection='value')
+
+
+@pytest.mark.parametrize('k', (10, 100, 490, 500))
+def test_randomized_eigsh_compared_to_others(k):
+    """Test that `_randomized_eigsh` is similar to other `eigsh`"""
+
+    # make a random PSD matrix
+    n_features = 500
+    X = make_spd_matrix(n_features, random_state=0)
+
+    # compare two versions of randomized
+    # rough and fast
+    lambdas, alphas = _randomized_eigsh(X, n_components=k, selection='module')
+    # more accurate but slow (TODO find realistic settings here)
+    lambdasQr, alphasQr = _randomized_eigsh(X, n_components=k, n_iter=25,
+                                            n_oversamples=20,
+                                            power_iteration_normalizer="QR",
+                                            selection='module')
+
+    # with LAPACK
+    lambdas_lapack, alphas_lapack = linalg.eigh(X, eigvals=(n_features - k,
+                                                            n_features - 1))
+    indices = lambdas_lapack.argsort()[::-1]
+    lambdas_lapack = lambdas_lapack[indices]
+    alphas_lapack = alphas_lapack[:, indices]
+
+    # and ARPACK
+    v0 = _init_arpack_v0(n_features, random_state=0)
+    # Note: "LA" largest algebraic <=> selection="value" in randomized_eigsh
+    lambdas_arpack, alphas_arpack = eigsh(X, k, which="LA", tol=0,
+                                          maxiter=None, v0=v0)
+    indices = lambdas_arpack.argsort()[::-1]
+    lambdas_arpack = lambdas_arpack[indices]
+    alphas_arpack = alphas_arpack[:, indices]
+
+    # -- eigenvalues comparison
+    assert lambdas_lapack.shape == (k,)
+    assert_array_almost_equal(lambdas_lapack, lambdas_arpack, decimal=10)
+    # quite poor comparison precision. Is this related to the shape of the
+    # spectrum in the generated random dataset ?
+    assert_array_almost_equal(lambdas, lambdas_lapack, decimal=1)
+    assert_array_almost_equal(lambdasQr, lambdas_lapack, decimal=3)
+
+    # -- eigenvectors comparison
+    assert alphas_lapack.shape == (n_features, k)
+    # flip eigenvectors' sign to enforce deterministic output
+    alphas, _ = svd_flip(alphas, np.zeros_like(alphas).T)
+    alphas_lapack, _ = svd_flip(alphas_lapack, np.zeros_like(alphas_lapack).T)
+    alphas_arpack, _ = svd_flip(alphas_arpack, np.zeros_like(alphas_arpack).T)
+    assert_array_almost_equal(alphas_arpack, alphas_lapack, decimal=8)
+    assert_array_almost_equal(alphas, alphas_lapack, decimal=0)
+    assert_array_almost_equal(alphasQr, alphas_lapack, decimal=0)
 
 
 @pytest.mark.parametrize('dtype',
