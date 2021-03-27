@@ -428,8 +428,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             self.output_indices_[name] = slice(idx, idx + n_columns)
             idx += n_columns
 
-        # empty slices for transformers that generate no output; these
-        # are safe for indexing
+        # `_iter` only generates transformers that have a non empty
+        # selection. Here we set empty slices for transformers that
+        # generate no output, which are safe for indexing
         all_names = [t[0] for t in self.transformers] + ['remainder']
         for name in all_names:
             if name not in self.output_indices_:
