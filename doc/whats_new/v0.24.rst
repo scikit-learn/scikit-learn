@@ -19,9 +19,6 @@ Changelog
   :term:`get_feature_names` on transformers with an empty column selection.
   :pr:`19579` by `Thomas Fan`_.
 
-- |Enhancement| :class:`compose.ColumnTransformer` now records the output
-  of each transformer. :pr:`18393` by :user:`Luca Bittarello <lbittarello>`.
-
 :mod:`sklearn.ensemble`
 .......................
 
