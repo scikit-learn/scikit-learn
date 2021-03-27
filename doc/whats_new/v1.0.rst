@@ -115,7 +115,6 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
-
 :mod:`sklearn.compose`
 ......................
 
@@ -129,7 +128,6 @@ Changelog
   ensure determinism of the output. Achieved by flipping signs of the SVD
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
-
 
 :mod:`sklearn.ensemble`
 .......................

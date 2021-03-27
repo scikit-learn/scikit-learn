@@ -1427,4 +1427,3 @@ def test_get_feature_names_empty_selection(selector):
     ct = ColumnTransformer([('ohe', OneHotEncoder(drop='first'), selector)])
     ct.fit([[1, 2], [3, 4]])
     assert ct.get_feature_names() == []
-
