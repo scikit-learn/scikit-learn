@@ -112,7 +112,7 @@ if args.problem == 'classification':
 else:
     # regression
     if loss == 'default':
-        loss = 'least_squares'
+        loss = 'squared_error'
 sklearn_est.set_params(loss=loss)
 
 
