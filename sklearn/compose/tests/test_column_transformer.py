@@ -361,9 +361,13 @@ def test_column_transformer_output_indices():
     assert_array_equal(X_trans[:, [0, 1]],
                        X_trans[:, ct.output_indices_['remainder']])
 
-    # test with data frame
+
+def test_column_transformer_output_indices_df():
+    # Checks for the output_indices_ attribute with data frames
     pd = pytest.importorskip('pandas')
-    X_df = pd.DataFrame(X_array, columns=['first', 'second'])
+
+    X_df = pd.DataFrame(np.arange(6).reshape(3, 2),
+                        columns=['first', 'second'])
 
     ct = ColumnTransformer([('trans1', Trans(), ['first']),
                             ('trans2', Trans(), ['second'])])
