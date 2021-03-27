@@ -22,7 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-
+- |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
+  affinity matrix computation.
 
 Details are listed in the changelog below.
 
@@ -44,6 +45,37 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |API| The option for using the squared error via ``loss`` and
+  ``criterion`` parameters was made more consistent. The preferred way is by
+  setting the value to `"squared_error"`. Old option names are still valid,
+  produce the same models, but are deprecated and will be removed in version
+  1.2.
+  :pr:`19310` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`ensemble.ExtraTreesRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.GradientBoostingRegressor`, `loss="ls"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.RandomForestRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`ensemble.HistGradientBoostingRegressor`, `loss="least_squares"`
+    is deprecated, use `"squared_error"` instead which is now the default.
+
+  - For :class:`linear_model.RANSACRegressor`, `loss="squared_loss"` is
+    deprecated, use `"squared_error"` instead.
+
+  - For :class:`linear_model.SGDRegressor`, `loss="squared_loss"` is
+    deprecated, use `"squared_error"` instead which is now the default.
+
+  - For :class:`tree.DecisionTreeRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
+  - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
+    use `"squared_error"` instead which is now the default.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -59,8 +91,30 @@ Changelog
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.fetch_openml` now supports categories with
+  missing values when returning a pandas dataframe. :pr:`19365` by
+  `Thomas Fan`_ and :user:`Amanda Dsouza <amy12xx>` and
+  :user:`EL-ATEIF Sara <elateifsara>`.
+
+- |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
+  when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |API| In :class:`decomposition.DictionaryLearning`,
+  :class:`decomposition.MiniBatchDictionaryLearning`,
+  :func:`dict_learning` and :func:`dict_learning_online`,
+  `transform_alpha` will be equal to `alpha` instead of 1.0 by default
+  starting from version 1.2
+  :pr:`19159` by :user:`Benoît Malézieux <bmalezieux>`.
+
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
+
 
 :mod:`sklearn.compose`
 ......................
@@ -69,6 +123,13 @@ Changelog
   have its columns appear in a changed order in `transform`. Further, columns that
   are dropped will not be required in transform, and additional columns will be
   ignored if `remainder='drop'`. :pr:`19263` by `Thomas Fan`_
+
+
+- |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
+  ensure determinism of the output. Achieved by flipping signs of the SVD
+  output which is used to initialize the code.
+  :pr:`18433` by :user:`Bruno Charron <brcharron>`.
+
 
 :mod:`sklearn.ensemble`
 .......................
@@ -87,8 +148,27 @@ Changelog
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Allow multiple scorers input to
+  :func:`~sklearn.inspection.permutation_importance`.
+  :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
+  implementation of the linear One-Class SVM. Combined with kernel
+  approximation techniques, this implementation approximates the solution of
+  a kernelized One Class SVM while benefitting from a linear 
+  complexity in the number of samples.
+  :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
+
+- |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
+  has been optimised for dense matrices when using `solver='newton-cg'` and
+  `multi_class!='multinomial'`.
+  :pr:`19571` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
@@ -99,6 +179,12 @@ Changelog
 - |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
+  missing values by default. :pr:`19069` by `Thomas Fan`_.
 
 - |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
   is deprecated and will be removed in 1.2.
@@ -112,6 +198,19 @@ Changelog
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
+- |Fix|: `sample_weight` are now fully taken into account in linear models
+  when `normalize=True` for both feature centering and feature
+  scaling.
+  :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
+  :user:`Maria Telenczuk <maikia>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Change numerical precision to prevent underflow issues
+  during affinity matrix computation for :class:`manifold.TSNE`.
+  :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -122,6 +221,29 @@ Changelog
   :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
+
+- |Enhancement| A fix to raise an error in :func:`metrics.hinge_loss` when
+  ``pred_decision`` is 1d whereas it is a multiclass classification or when
+  ``pred_decision`` parameter is not consistent with the ``labels`` parameter.
+  :pr:`19643` by :user:`Pierre Attard <PierreAttard>`.
+
+- |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
+  quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
+  and :user:`Oliver Grisel <ogrisel>`.
+
+- |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
+  are integral.
+  :pr:`9843` by :user:`Jon Crall <Erotemic>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Feature| added :class:`model_selection.StratifiedGroupKFold`, that combines
+  :class:`model_selection.StratifiedKFold` and `model_selection.GroupKFold`,
+  providing an ability to split data preserving the distribution of classes in
+  each split while keeping each group within a single split.
+  :pr:`18649` by `Leandro Hermida <hermidalc>` and
+  `Rodion Martynov <marrodion>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -146,6 +268,19 @@ Changelog
   polynomial ``degree`` of the splines, number of knots ``n_knots`` and knot
   positioning strategy ``knots``.
   :pr:`18368` by :user:`Christian Lorentzen <lorentzenchr>`.
+  :class:`preprocessing.SplineTransformer` also supports periodic
+  splines via the ``extrapolation`` argument.
+  :pr:`19483` by :user:`Malte Londschien <mlondschien>`.
+
+- |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
+  and similar scalers detect near-constant features to avoid scaling them to
+  very large values. This problem happens in particular when using a scaler on
+  sparse data with a constant column with sample weights, in which case
+  centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
+  <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
+
+- |Fix| :meth:`preprocessing.StandardScaler.inverse_transform` now
+  correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
 
 :mod:`sklearn.tree`
 ...................
@@ -153,6 +288,22 @@ Changelog
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| Deprecated the default value of the `random_state=0` in 
+  :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
+  the default value of `random_state` will be set to `None`.
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
+
+:mod:`sklearn.calibration`
+............................
+
+- |Fix| The predict and predict_proba methods of
+  :class:`calibration.CalibratedClassifierCV can now properly be used on
+  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
 
 Code and Documentation Contributors
 -----------------------------------

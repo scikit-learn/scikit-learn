@@ -490,11 +490,6 @@ class PLSRegression(_PLS):
     scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
     max_iter : int, default=500
         The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
@@ -543,7 +538,10 @@ class PLSRegression(_PLS):
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        component.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------
@@ -653,6 +651,9 @@ class PLSCanonical(_PLS):
         Number of iterations of the power method, for each
         component. Empty if `algorithm='svd'`.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import PLSCanonical
@@ -759,6 +760,9 @@ class CCA(_PLS):
         Number of iterations of the power method, for each
         component.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import CCA
@@ -835,6 +839,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
            `y_scores_` is deprecated in 0.24 and will be removed in 1.1
            (renaming of 0.26). You can just call `transform` on the training
            data instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------

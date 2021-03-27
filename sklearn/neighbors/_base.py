@@ -355,7 +355,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             effective_p = self.p
 
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
-            raise ValueError("p must be greater than one for minkowski metric")
+            raise ValueError("p must be greater or equal to one for "
+                             "minkowski metric")
 
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
@@ -411,8 +412,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric == 'minkowski':
             p = self.effective_metric_params_.pop('p', 2)
             if p < 1:
-                raise ValueError("p must be greater than one "
-                                 "for minkowski metric")
+                raise ValueError("p must be greater or equal to one for "
+                                 "minkowski metric")
             elif p == 1:
                 self.effective_metric_ = 'manhattan'
             elif p == 2:

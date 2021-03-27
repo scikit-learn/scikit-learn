@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
+from .. import config_context
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import fast_logdet
@@ -234,6 +235,7 @@ class EmpiricalCovariance(BaseEstimator):
             The likelihood of the data set with `self.covariance_` as an
             estimator of its covariance matrix.
         """
+        X_test = self._validate_data(X_test, reset=False)
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(
             X_test - self.location_, assume_centered=True)
@@ -309,9 +311,12 @@ class EmpiricalCovariance(BaseEstimator):
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
         """
+        X = self._validate_data(X, reset=False)
+
         precision = self.get_precision()
-        # compute mahalanobis distances
-        dist = pairwise_distances(X, self.location_[np.newaxis, :],
-                                  metric='mahalanobis', VI=precision)
+        with config_context(assume_finite=True):
+            # compute mahalanobis distances
+            dist = pairwise_distances(X, self.location_[np.newaxis, :],
+                                      metric='mahalanobis', VI=precision)
 
         return np.reshape(dist, (len(X),)) ** 2

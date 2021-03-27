@@ -1417,3 +1417,14 @@ def test_feature_name_validation_missing_columns_drop_passthough():
     df_dropped_trans = tf.transform(df_dropped)
     df_fit_trans = tf.transform(df)
     assert_allclose(df_dropped_trans, df_fit_trans)
+
+
+@pytest.mark.parametrize("selector", [[], [False, False]])
+def test_get_feature_names_empty_selection(selector):
+    """Test that get_feature_names is only called for transformers that
+    were selected. Non-regression test for #19550.
+    """
+    ct = ColumnTransformer([('ohe', OneHotEncoder(drop='first'), selector)])
+    ct.fit([[1, 2], [3, 4]])
+    assert ct.get_feature_names() == []
+
