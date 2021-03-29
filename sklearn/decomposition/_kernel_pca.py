@@ -245,7 +245,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             n_components = K.shape[0]  # use all dimensions
         else:
             if self.n_components < 1:
-                raise ValueError("`n_components` should be >= 1")
+                raise ValueError(
+                    f"`n_components` should be >= 1, got: {self.n_component}"
+                )
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
