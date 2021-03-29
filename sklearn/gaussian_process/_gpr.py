@@ -358,7 +358,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     y_cov_x = y_cov.shape[0]
                     y_cov_y = y_cov.shape[1]
                     y_cov_copy = y_cov.reshape((y_cov_x, y_cov_y, 1))
-                    y_cov = np.zeros((y_cov_x, y_cov_x, 
+                    y_cov = np.zeros((y_cov_x, y_cov_x,
                                       self._y_train_std.shape[0]))
                     idx = 0
                     for line in y_cov_copy:
