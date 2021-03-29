@@ -110,7 +110,7 @@ def one_run(n_samples):
     else:
         # regression
         if loss == 'default':
-            loss = 'least_squares'
+            loss = 'squared_error'
     est.set_params(loss=loss)
     est.fit(X_train, y_train, sample_weight=sample_weight_train)
     sklearn_fit_duration = time() - tic

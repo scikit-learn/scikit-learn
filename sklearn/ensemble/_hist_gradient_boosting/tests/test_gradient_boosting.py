@@ -240,7 +240,7 @@ def test_poisson():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
                                                         random_state=rng)
     gbdt_pois = HistGradientBoostingRegressor(loss='poisson', random_state=rng)
-    gbdt_ls = HistGradientBoostingRegressor(loss='least_squares',
+    gbdt_ls = HistGradientBoostingRegressor(loss='squared_error',
                                             random_state=rng)
     gbdt_pois.fit(X_train, y_train)
     gbdt_ls.fit(X_train, y_train)
@@ -248,7 +248,7 @@ def test_poisson():
 
     for X, y in [(X_train, y_train), (X_test, y_test)]:
         metric_pois = mean_poisson_deviance(y, gbdt_pois.predict(X))
-        # least_squares might produce non-positive predictions => clip
+        # squared_error might produce non-positive predictions => clip
         metric_ls = mean_poisson_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15,
                                                      None))
         metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
@@ -652,7 +652,7 @@ def test_sample_weight_effect(problem, duplication):
                        est_dup._raw_predict(X_dup))
 
 
-@pytest.mark.parametrize('loss_name', ('least_squares',
+@pytest.mark.parametrize('loss_name', ('squared_error',
                                        'least_absolute_deviation'))
 def test_sum_hessians_are_sample_weight(loss_name):
     # For losses with constant hessians, the sum_hessians field of the
@@ -992,3 +992,17 @@ def test_uint8_predict(Est):
     est = Est()
     est.fit(X, y)
     est.predict(X)
+
+
+# TODO: Remove in v1.2
+def test_loss_least_squares_deprecated():
+    X, y = make_regression(n_samples=50, random_state=0)
+    est1 = HistGradientBoostingRegressor(loss="least_squares", random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match="The loss 'least_squares' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = HistGradientBoostingRegressor(loss="squared_error", random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))

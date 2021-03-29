@@ -406,7 +406,7 @@ def test_ransac_residual_loss():
                               ransac_estimator2.predict(X))
     ransac_estimator3 = RANSACRegressor(base_estimator, min_samples=2,
                                         residual_threshold=5, random_state=0,
-                                        loss="squared_loss")
+                                        loss="squared_error")
     ransac_estimator3.fit(X, y)
     assert_array_almost_equal(ransac_estimator0.predict(X),
                               ransac_estimator2.predict(X))
@@ -536,3 +536,16 @@ def test_ransac_final_model_fit_sample_weight():
     )
 
     assert_allclose(ransac.estimator_.coef_, final_model.coef_, atol=1e-12)
+
+
+# TODO: Remove in v1.2
+def test_loss_squared_loss_deprecated():
+    est1 = RANSACRegressor(loss="squared_loss", random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match="The loss 'squared_loss' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = RANSACRegressor(loss="squared_error", random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))
