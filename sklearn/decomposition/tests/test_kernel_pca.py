@@ -332,7 +332,7 @@ def test_gridsearch_pipeline_precomputed():
 def test_nested_circles():
     """Check that kPCA projects in a space where nested circles are separable
 
-    Tests that 2D nested cicrcles become separable with a perceptron when
+    Tests that 2D nested circles become separable with a perceptron when
     projected in the first 2 kPCA using an RBF kernel, while raw samples
     are not directly separable in the orginial space.
     """
