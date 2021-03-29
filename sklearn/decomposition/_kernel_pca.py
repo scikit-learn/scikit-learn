@@ -93,10 +93,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             run randomized SVD by the method of Halko et al.
 
         .. versionchanged:: 1.0
-           `'randomized'` was added and `'auto'`'s behavior has changed.  The
-           'auto' behaviour was different: if the number of components to
-           extract was n_components < 10 and if n_samples > 200 then the
-           'arpack' solver was enabled. Otherwise the 'dense' method was used.
+           `'randomized'` was added.
 
     tol : float, default=0
         Convergence tolerance for arpack.
