@@ -2460,13 +2460,16 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		bool *nonzero = Malloc(bool,l);
 		for(i=0;i<l;i++)
 			nonzero[i] = false;
-                NAMESPACE::decision_function *f = Malloc(NAMESPACE::decision_function,nr_class*(nr_class-1)/2);
+
+                long malSize = (long)nr_class*(long)(nr_class-1)/2;
+
+                NAMESPACE::decision_function *f = Malloc(NAMESPACE::decision_function,malSize);
 
 		double *probA=NULL,*probB=NULL;
 		if (param->probability)
 		{
-			probA=Malloc(double,nr_class*(nr_class-1)/2);
-			probB=Malloc(double,nr_class*(nr_class-1)/2);
+                       probA=Malloc(double,malSize);
+                       probB=Malloc(double,malSize);
 		}
 
 		int p = 0;
