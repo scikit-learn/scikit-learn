@@ -131,15 +131,15 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # The objective is defined as 1/n * sum(pinball loss) + alpha * L1.
         # So we rescale the penalty term, which is equivalent.
         alpha = np.sum(sample_weight) * self.alpha
-        c_vector = np.concatenate([
+        c = np.concatenate([
             np.ones(n_params * 2) * alpha,
             sample_weight * self.quantile,
             sample_weight * (1 - self.quantile),
         ])
         # do not penalize the intercept
         if self.fit_intercept:
-            c_vector[0] = 0
-            c_vector[n_params] = 0
+            c[0] = 0
+            c[n_params] = 0
 
         a_eq_matrix = np.concatenate([
             X_full,
@@ -159,7 +159,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 method = 'highs'
 
         result = linprog(
-            c=c_vector,
+            c=c,
             A_eq=a_eq_matrix,
             b_eq=b_eq_vector,
             method=method,
