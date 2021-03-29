@@ -430,9 +430,15 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     """
     X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
     X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
-    if sample_weight is not None and supports_sw:
-        estimator.fit(X_train, y_train,
-                      sample_weight=_safe_indexing(sample_weight, train))
+    if sample_weight is not None:
+        sw_train = _safe_indexing(sample_weight, train)
+        sw_test = _safe_indexing(sample_weight, test)
+    else:
+        sw_train = None
+        sw_test = None
+
+    if supports_sw:
+        estimator.fit(X_train, y_train, sample_weight=sw_train)
     else:
         estimator.fit(X_train, y_train)
 
@@ -440,9 +446,8 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     pred_method = _get_prediction_method(estimator)
     predictions = _compute_predictions(pred_method, X_test, n_classes)
 
-    sw = None if sample_weight is None else _safe_indexing(sample_weight, test)
     calibrated_classifier = _fit_calibrator(
-        estimator, predictions, y_test, classes, method, sample_weight=sw
+        estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
     return calibrated_classifier
 
