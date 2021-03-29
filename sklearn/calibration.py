@@ -335,7 +335,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
-        first_clf = next(iter(self.calibrated_classifiers_)).base_estimator
+        first_clf = self.calibrated_classifiers_[0].base_estimator
         if hasattr(first_clf, "n_features_in_"):
             self.n_features_in_ = first_clf.n_features_in_
         return self
