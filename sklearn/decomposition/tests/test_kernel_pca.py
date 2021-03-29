@@ -334,7 +334,7 @@ def test_nested_circles():
 
     Tests that 2D nested circles become separable with a perceptron when
     projected in the first 2 kPCA using an RBF kernel, while raw samples
-    are not directly separable in the orginial space.
+    are not directly separable in the original space.
     """
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
