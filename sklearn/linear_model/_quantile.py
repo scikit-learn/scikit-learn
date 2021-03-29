@@ -35,9 +35,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
-    copy_X : boolean, default=True
-        If True, X will be copied; else, it may be overwritten.
-
     solver : str, default='auto'
         Name of the solver used by scipy.optimize.linprog.
         If it is 'auto', will use 'highs' with scipy>=1.6.0
@@ -72,14 +69,12 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             quantile=0.5,
             alpha=0.0001,
             fit_intercept=True,
-            copy_X=True,
             solver='auto',
             solver_options=None,
     ):
         self.quantile = quantile
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.copy_X = copy_X
         self.solver = solver
         self.solver_options = solver_options
 
@@ -107,10 +102,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                                    y_numeric=True, multi_output=False)
 
         sample_weight = _check_sample_weight(sample_weight, X)
-
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, fit_intercept=self.fit_intercept, copy=self.copy_X,
-            sample_weight=sample_weight)
 
         if self.quantile >= 1.0 or self.quantile <= 0.0:
             raise ValueError(
@@ -184,9 +175,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # do not use self.set_intercept_, because it assumes intercept is zero
         # if the data is normalized, which is false in this case
         if self.fit_intercept:
-            self.coef_ = self.coef_ / X_scale
-            self.intercept_ = params[0] + y_offset \
-                - np.dot(X_offset, self.coef_.T)
+            self.coef_ = self.coef_
+            self.intercept_ = params[0]
         else:
             self.intercept_ = 0.0
         return self
