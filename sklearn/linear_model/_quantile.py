@@ -117,13 +117,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 f"Quantile should be strictly between 0.0 and 1.0, got "
                 f"{self.quantile}")
 
-        n_obs, n_slopes = X.shape
-        n_params = n_slopes
+        n_samples, n_features = X.shape
+        n_params = n_features
 
         X_full = X
         if self.fit_intercept:
             n_params += 1
-            X_full = np.concatenate([np.ones([n_obs, 1]), X], axis=1)
+            X_full = np.concatenate([np.ones([n_samples, 1]), X], axis=1)
 
         # the linear programming formulation of quantile regression
         # follows https://stats.stackexchange.com/questions/384909/
@@ -140,8 +140,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         a_eq_matrix = np.concatenate([
             X_full,
             -X_full,
-            np.eye(n_obs),
-            -np.eye(n_obs),
+            np.eye(n_samples),
+            -np.eye(n_samples),
         ], axis=1)
         b_eq_vector = y
 
