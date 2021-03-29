@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 import scipy.stats
 
-from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
@@ -116,9 +115,9 @@ def test_asymmetric_error(quantile):
     n_features = 3
     bias = 12.3
     param = 1.0
-    generator = check_random_state(42)
-    X = generator.randn(n_samples, n_features)
-    ground_truth = generator.rand(n_features)
+    rng = np.random.RandomState(42)
+    X = rng.randn(n_samples, n_features)
+    ground_truth = rng.rand(n_features)
     dist = scipy.stats.expon(param)
     noise = dist.rvs(size=n_samples, random_state=42)
     y = np.dot(X, ground_truth) + bias + noise
