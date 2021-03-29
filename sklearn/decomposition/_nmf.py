@@ -895,9 +895,9 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
-    n_batches = n_samples // batch_size
+    n_batches = n_samples // batch_size + 1
     n_steps = max_iter * n_batches
-    for n_i, batch in zip(range(1, n_steps + 1), batches):
+    for n_i, batch in zip(range(n_steps), batches):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -941,11 +941,11 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         print("Epoch %02d reached after %.3f seconds." %
               (n_i, end_time - start_time))
 
-    if batch_size is None:
-        n_iter = n_i
+    if forget_factor is None:
+        n_iter = n_i + 1
         return W, H, n_iter
     else:
-        n_iter = n_i // n_batches
+        n_iter = n_i // n_batches + 1
         iter_offset = n_i - (n_iter * n_batches)
         return W, H, n_iter, iter_offset, A, B
 

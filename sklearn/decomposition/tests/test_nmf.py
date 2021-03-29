@@ -698,7 +698,7 @@ def test_nmf_close_minibatch_nmf(batch_size):
     # gives close results
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
-    max_iter = 1000
+    max_iter = 5000
     solver = 'mu'
     beta_loss = 'kullback-leibler'
     init = 'nndsvda'  # FIXME : should be removed in 1.1
@@ -709,7 +709,7 @@ def test_nmf_close_minibatch_nmf(batch_size):
                          batch_size=batch_size)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW, decimal=2)
+    assert_array_almost_equal(W, mbW, decimal=1)
 
 
 def test_minibatch_nmf_partial_fit():
@@ -728,7 +728,7 @@ def test_minibatch_nmf_partial_fit():
 
     assert mbnmf1.n_iter_ == mbnmf2.n_iter_
     assert_array_almost_equal(mbnmf1.components_, mbnmf2.components_,
-                              decimal=7)
+                              decimal=1)
 
 
 # FIXME : should be removed in 1.1
