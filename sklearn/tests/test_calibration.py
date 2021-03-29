@@ -551,10 +551,8 @@ def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
 
     # Neither the pipeline nor the calibration meta-estimator
     # expose the n_features_in_ check on this kind of data.
-    with pytest.raises(AttributeError):
-        clf.n_features_in_
-    with pytest.raises(AttributeError):
-        calib_clf.n_features_in_
+    assert not hasattr(clf, 'n_features_in_')
+    assert not hasattr(calib_clf, 'n_features_in_')
 
     # Ensure that no error is thrown with predict and predict_proba
     calib_clf.predict(X)
