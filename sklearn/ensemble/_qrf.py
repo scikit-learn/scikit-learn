@@ -26,8 +26,8 @@ from types import MethodType
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-import numba as nb
 from numba import jit, float32, float64, int64, prange
+from numpy.lib.function_base import _quantile_is_valid
 
 from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
 from ..utils import check_array, check_X_y, check_random_state
@@ -417,7 +417,7 @@ class _ForestQuantileRegressor(ForestRegressor, metaclass=ABCMeta):
                                   "_RandomSampleForestQuantileRegressor")
 
     @abstractmethod
-    def predict(self, X, q):
+    def predict(self, X, q=0.5):
         """
         Predict quantile regression values for X.
 
@@ -460,6 +460,8 @@ class _DefaultForestQuantileRegressor(_ForestQuantileRegressor):
     fit and predict functions for forest quantile regressors based on:
     Nicolai Meinshausen, Quantile Regression Forests
         http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
+
+    todo; if y is 1D, the attributes might be presorted. This could speed up the processes a lot
     """
     def fit(self, X, y, sample_weight=None):
         # apply method requires X to be of dtype np.float32
@@ -475,6 +477,7 @@ class _DefaultForestQuantileRegressor(_ForestQuantileRegressor):
         if sample_weight is None:
             sample_weight = np.ones(self.n_samples_)
 
+        # todo; parallelization
         for i, est in enumerate(self.estimators_):
             if self.bootstrap:
                 bootstrap_indices = _generate_sample_indices(
@@ -489,10 +492,11 @@ class _DefaultForestQuantileRegressor(_ForestQuantileRegressor):
         return self
 
     def predict(self, X, q):
-        # apply method requires X to be of dtype np.float32
-        X = check_array(X, dtype=np.float32, accept_sparse="csc")
         if not 0 <= q <= 1:
             raise ValueError("q should be between 0 and 1")
+
+        # apply method requires X to be of dtype np.float32
+        X = check_array(X, dtype=np.float32, accept_sparse="csc")
 
         X_leaves = self.apply(X)
         return _quantile_forest_predict(X_leaves, self.y_train_, self.y_train_leaves_, self.y_weights_, q).squeeze()
@@ -517,6 +521,7 @@ class _RandomSampleForestQuantileRegressor(_ForestQuantileRegressor):
         if sample_weight is None:
             sample_weight = np.ones(self.n_samples_)
 
+        # todo; parallelisation
         for i, est in enumerate(self.estimators_):
             if self.verbose:
                 print(f"Sampling tree {i}")
@@ -546,12 +551,19 @@ class _RandomSampleForestQuantileRegressor(_ForestQuantileRegressor):
         return self
 
     def predict(self, X, q):
+        q = np.atleast_1d(q)
+        if not _quantile_is_valid(q):
+            raise ValueError("Quantiles must be in the range [0, 1]")
+
+        if q.ndim > 2:
+            raise ValueError("q must be a scalar or 1D")
+
         # apply method requires X to be of dtype np.float32
         X = check_array(X, dtype=np.float32, accept_sparse="csc")
-        if not 0 <= q <= 1:
-            raise ValueError("q should be between 0 and 1")
 
         quantiles = np.empty((len(X), self.n_outputs_, self.n_estimators))
+
+        # todo; parallelisation
         for i, est in enumerate(self.estimators_):
             if self.n_outputs_ == 1:
                 quantiles[:, 0, i] = est.predict(X)

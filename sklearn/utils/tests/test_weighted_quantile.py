@@ -23,6 +23,9 @@ def test_quantile_equal_weights():
     actual = np.asarray([weighted_quantile(x, q, weights) for q in np.arange(0.05, 1.05, 0.1)])
     assert_array_almost_equal(sorted_x, actual)
 
+    # it should be the same the calculated all quantiles at the same time instead of looping over them
+    assert_array_almost_equal(actual, weighted_quantile(x, weights=weights, q=np.arange(0.05, 1.05, 0.1)))
+
 
 def test_quantile_toy_data():
     x = [1, 2, 3]
@@ -52,12 +55,16 @@ def test_xd_shapes():
     rng = np.random.RandomState(0)
     x = rng.randn(100, 10, 20)
     weights = 0.01 * np.ones_like(x)
-    assert weighted_quantile(x, 0.5, weights, axis=0).shape == (10, 20)
-    assert weighted_quantile(x, 0.5, weights, axis=1).shape == (100, 20)
-    assert weighted_quantile(x, 0.5, weights, axis=2).shape == (100, 10)
+
+    # shape should be the same as the output of np.quantile
+    assert weighted_quantile(x, 0.5, weights, axis=0).shape == np.quantile(x, 0.5, axis=0).shape
+    assert weighted_quantile(x, 0.5, weights, axis=1).shape == np.quantile(x, 0.5, axis=1).shape
+    assert weighted_quantile(x, 0.5, weights, axis=2).shape == np.quantile(x, 0.5, axis=2).shape
+    assert isinstance(weighted_quantile(x, 0.5, weights, axis=None), float)
+    assert weighted_quantile(x, (0.5, 0.8), weights, axis=0).shape == np.quantile(x, (0.5, 0.8), axis=0).shape
 
     # axis should be integer
-    assert_raises(TypeError, weighted_quantile, x, 0.5, weights, axis=(1, 2))
+    assert_raises(NotImplementedError, weighted_quantile, x, 0.5, weights, axis=(1, 2))
 
     # weighted_quantile should yield very similar results to np.quantile
     assert np.allclose(weighted_quantile(x, 0.5, weights, axis=2), np.quantile(x, q=0.5, axis=2))
