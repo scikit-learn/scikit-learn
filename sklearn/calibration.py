@@ -9,7 +9,6 @@
 
 import warnings
 from inspect import signature
-from contextlib import suppress
 from functools import partial
 
 from math import log
@@ -33,7 +32,6 @@ from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight, _num_samples
-from .utils.validation import _num_features
 from .utils import _safe_indexing
 from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
