@@ -180,7 +180,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
 
-    For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
+    For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.eigsh`.
 
     For eigen_solver == 'randomized', see:
         `Finding structure with randomness: Stochastic algorithms
