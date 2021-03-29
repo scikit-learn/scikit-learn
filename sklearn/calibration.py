@@ -33,7 +33,6 @@ from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight, _num_samples
 from .utils import _safe_indexing
-from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
