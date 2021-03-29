@@ -54,14 +54,14 @@ def test_quantile_equals_huber_for_low_epsilon():
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
-def test_quantile_estimates_fraction():
+@pytest.mark.parametrize("q", [0.5, 0.9, 0.05])
+def test_quantile_estimates_fraction(q):
     # Test that model estimates percentage of points below the prediction
     X, y = make_regression(n_samples=1000, n_features=20, random_state=0,
                            noise=1.0)
-    for q in [0.5, 0.9, 0.05]:
-        quant = QuantileRegressor(quantile=q, alpha=0).fit(X, y)
-        fraction_below = np.mean(y < quant.predict(X))
-        assert_allclose(fraction_below, q, atol=1e-2)
+    quant = QuantileRegressor(quantile=q, alpha=0).fit(X, y)
+    fraction_below = np.mean(y < quant.predict(X))
+    assert_allclose(fraction_below, q, atol=1e-2)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
