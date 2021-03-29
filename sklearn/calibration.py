@@ -257,10 +257,7 @@ class CalibratedClassifierCV(ClassifierMixin,
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
             # `classes_` should be consistent with that of base_estimator
-            if isinstance(self.base_estimator, Pipeline):
-                check_is_fitted(self.base_estimator[-1])
-            else:
-                check_is_fitted(self.base_estimator)
+            check_is_fitted(self.base_estimator, attributes=["classes_"])
             self.classes_ = self.base_estimator.classes_
 
             pred_method = _get_prediction_method(base_estimator)
