@@ -1,7 +1,7 @@
 """
-==============
+===================
 Quantile regression
-==============
+===================
 This example illustrates how quantile regression can predict non-trivial
 conditional quantiles.
 
