@@ -1431,10 +1431,14 @@ Quantile Regression
 Quantile regression estimates the median or other quantiles of :math:`y`
 conditional on :math:`X`, while OLS estimates the conditional mean.
 
-As a linear model, the :class:`QuantileRegressor` gives linear predictions :math:`\hat{y}(w, x) = Xw` for the specified ``quantile`` :math:`q \in (0, 1)`. The weights or coefficients :math:`w` are then found by the following minimization problem:
+As a linear model, the :class:`QuantileRegressor` gives linear predictions
+:math:`\hat{y}(w, x) = Xw` for the specified ``quantile`` :math:`q \in (0, 1)`.
+The weights or coefficients :math:`w` are then found by the following
+minimization problem:
 
 .. math::
-    \min_{w} {\frac{1}{n_{\text{samples}}} \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}
+    \min_{w} {\frac{1}{n_{\text{samples}}}
+    \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}
 
 This consists of the pinball loss (also known as linear loss),
 see also :class:`~sklearn.metrics.mean_pinball_loss`,
@@ -1449,23 +1453,24 @@ see also :class:`~sklearn.metrics.mean_pinball_loss`,
 
 and the L1 penalty, similar to the :class:`Lasso`.
 
-As the pinball loss is only linear in the residuals, quantile regression
-is much morerobust to outliers than estimation of the mean by the squared error.
+As the pinball loss is only linear in the residuals, quantile regression is
+much more robust to outliers than estimation of the mean by the squared error.
 Somewhat in between is the :class:`HuberRegressor`.
 
-Quantile regression may be useful if one is interested in predicting an interval
-instead of point prediction. Sometimes, prediction intervals are calculated based
-on the assumption that prediction error is distributed normally with zero mean
-and constant variance. Quantile regression provides sensible prediction
-intervals even for errors with non-constant (but predictable) variance or
-non-normal distribution.
+Quantile regression may be useful if one is interested in predicting an
+interval instead of point prediction. Sometimes, prediction intervals are
+calculated based on the assumption that prediction error is distributed
+normally with zero mean and constant variance. Quantile regression provides
+sensible prediction intervals even for errors with non-constant (but
+predictable) variance or non-normal distribution.
 
 .. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_001.png
    :target: ../auto_examples/linear_model/plot_quantile_regression.html
    :align: center
    :scale: 50%
 
-Based on minimizing the pinball loss, conditional quantiles can also be estimated by models other than linear models. For example,
+Based on minimizing the pinball loss, conditional quantiles can also be
+estimated by models other than linear models. For example,
 :class:`GradientBoostingRegressor` can predict conditional quantiles
 if its parameter ``loss`` is set to ``"quantile"`` and parameter ``alpha`` is
 set to the quantile that should be predicted. See the example in
