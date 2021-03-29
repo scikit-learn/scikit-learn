@@ -111,34 +111,55 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         n_samples, n_features = X.shape
         n_params = n_features
 
-        X_full = X
         if self.fit_intercept:
             n_params += 1
-            X_full = np.concatenate([np.ones([n_samples, 1]), X], axis=1)
 
-        # the linear programming formulation of quantile regression
-        # follows https://stats.stackexchange.com/questions/384909/
-        #
         # The objective is defined as 1/n * sum(pinball loss) + alpha * L1.
         # So we rescale the penalty term, which is equivalent.
         alpha = np.sum(sample_weight) * self.alpha
+
+        # Use linear programming formulation of quantile regression
+        #     min_x c x
+        #           A_eq x = b_eq
+        #                0 <= x
+        # x = (s0, s, t0, t, u, v) = slack variables
+        # intercept = s0 + t0
+        # coef = s + t
+        # c = (alpha * 1_p, alpha * 1_p, quantile * 1_n, (1-quantile) * 1_n)
+        # residual = y - X@coef - intercept = u - v
+        # A_eq = (1_n, X, -1_n, -X, diag(1_n), -diag(1_n))
+        # b_eq = y
+        # p = n_features + fit_intercep
+        # n = n_samples
+        # 1_n = vector of length n with entries equal one
+        # see https://stats.stackexchange.com/questions/384909/
         c = np.concatenate([
             np.ones(n_params * 2) * alpha,
             sample_weight * self.quantile,
             sample_weight * (1 - self.quantile),
         ])
-        # do not penalize the intercept
         if self.fit_intercept:
+            # do not penalize the intercept
             c[0] = 0
             c[n_params] = 0
 
-        a_eq_matrix = np.concatenate([
-            X_full,
-            -X_full,
-            np.eye(n_samples),
-            -np.eye(n_samples),
-        ], axis=1)
-        b_eq_vector = y
+            A_eq = np.concatenate([
+                np.ones((n_samples, 1)),
+                X,
+                -np.ones((n_samples, 1)),
+                -X,
+                np.eye(n_samples),
+                -np.eye(n_samples),
+            ], axis=1)
+        else:
+            A_eq = np.concatenate([
+                X,
+                -X,
+                np.eye(n_samples),
+                -np.eye(n_samples),
+            ], axis=1)
+
+        b_eq = y
 
         method = self.solver
         if method == 'auto':
@@ -151,8 +172,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         result = linprog(
             c=c,
-            A_eq=a_eq_matrix,
-            b_eq=b_eq_vector,
+            A_eq=A_eq,
+            b_eq=b_eq,
             method=method,
             options=self.solver_options,
         )
@@ -163,21 +184,18 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 'Status is {}'.format(result.status), ConvergenceWarning
             )
             if solution is np.nan:
-                solution = np.zeros(a_eq_matrix.shape[1])
+                solution = np.zeros(A_eq.shape[1])
 
-        params_pos = solution[:n_params]
-        params_neg = solution[n_params:2 * n_params]
-        params = params_pos - params_neg
+        # positive - negative
+        params = solution[:n_params] - solution[n_params:2 * n_params]
 
         self.n_iter_ = result.nit
 
-        self.coef_ = params[self.fit_intercept:]
-        # do not use self.set_intercept_, because it assumes intercept is zero
-        # if the data is normalized, which is false in this case
         if self.fit_intercept:
-            self.coef_ = self.coef_
+            self.coef_ = params[1:]
             self.intercept_ = params[0]
         else:
+            self.coef_ = params
             self.intercept_ = 0.0
         return self
 

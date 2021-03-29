@@ -86,10 +86,10 @@ def test_quantile_sample_weight():
     X, y = make_regression(n_samples=n, n_features=10, random_state=0,
                            noise=10.0)
     weight = np.ones(n)
-    # when we increase weight of upper observaions,
+    # when we increase weight of upper observations,
     # estimate of quantile should go up
     weight[y > y.mean()] = 100
-    quant = QuantileRegressor(quantile=0.5, alpha=1e-4)
+    quant = QuantileRegressor(quantile=0.5, alpha=1e-8)
     quant.fit(X, y, sample_weight=weight)
     fraction_below = np.mean(y < quant.predict(X))
     assert fraction_below > 0.5
