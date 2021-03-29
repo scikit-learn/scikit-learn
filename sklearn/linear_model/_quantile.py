@@ -127,8 +127,12 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         # the linear programming formulation of quantile regression
         # follows https://stats.stackexchange.com/questions/384909/
+        #
+        # The objective is defined as 1/n * sum(pinball loss) + alpha * L1.
+        # So we rescale the penalty term, which is equivalent.
+        alpha = np.sum(sample_weight) * self.alpha
         c_vector = np.concatenate([
-            np.ones(n_params * 2) * self.alpha,
+            np.ones(n_params * 2) * alpha,
             sample_weight * self.quantile,
             sample_weight * (1 - self.quantile),
         ])
