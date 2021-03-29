@@ -149,6 +149,12 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.nbrs_.fit(X)
         self.n_features_in_ = self.nbrs_.n_features_in_
 
+        self.kernel_pca_ = KernelPCA(n_components=self.n_components,
+                                     kernel="precomputed",
+                                     eigen_solver=self.eigen_solver,
+                                     tol=self.tol, max_iter=self.max_iter,
+                                     n_jobs=self.n_jobs)
+
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                metric=self.metric, p=self.p,
                                metric_params=self.metric_params,
@@ -159,23 +165,6 @@ class Isomap(TransformerMixin, BaseEstimator):
                                                 directed=False)
         G = self.dist_matrix_ ** 2
         G *= -0.5
-
-        kpca_eigen_solver = self.eigen_solver
-        if kpca_eigen_solver == 'auto':
-            # use the legacy KPCA 'auto' to avoid the 'randomized' method as it
-            # selects n_components based on their module - this is ok
-            # for PSD matrices but here we can not guarantee PSD.
-            # See `KernelPCA` and `_randomized_eigsh` for details.
-            if G.shape[0] > 200 and self.n_components < 10:
-                kpca_eigen_solver = 'arpack'
-            else:
-                kpca_eigen_solver = 'dense'
-
-        self.kernel_pca_ = KernelPCA(n_components=self.n_components,
-                                     kernel="precomputed",
-                                     eigen_solver=kpca_eigen_solver,
-                                     tol=self.tol, max_iter=self.max_iter,
-                                     n_jobs=self.n_jobs)
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
 
