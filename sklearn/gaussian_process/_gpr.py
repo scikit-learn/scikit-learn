@@ -309,7 +309,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             Standard deviation of predictive distribution at query points.
             Only returned when `return_std` is True.
 
-        y_cov : ndarray of shape (n_samples, n_samples, [n_output_dims]), optional
+        y_cov : ndarray of shape (n_samples, n_samples,
+                                    [n_output_dims]), optional
             Covariance of joint predictive distribution a query points.
             Only returned when `return_cov` is True.
         """
