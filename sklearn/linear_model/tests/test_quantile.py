@@ -6,7 +6,7 @@ import pytest
 import scipy.stats
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_allclose, assert_raises
+from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.utils.fixes import sp_version, parse_version
@@ -102,7 +102,10 @@ def test_quantile_sample_weight():
 @pytest.mark.parametrize('quantile', [2.0, 1.0, 0.0, -1])
 def test_quantile_incorrect_quantile(quantile):
     X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
-    with assert_raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        msg="Quantile should be strictly between 0.0 and 1.0"
+    ):
         QuantileRegressor(quantile=quantile).fit(X, y)
 
 
