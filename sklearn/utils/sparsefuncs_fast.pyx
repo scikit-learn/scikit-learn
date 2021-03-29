@@ -140,7 +140,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
-                means[col_ind] += X_data[i] * weights[row_ind]
+                means[col_ind] += (X_data[i] * weights[row_ind])
             else:
                 sum_weights_nan[col_ind] += weights[row_ind]
                 counts[col_ind] -= 1
