@@ -264,7 +264,8 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
     equiv_random_state = check_random_state(tree_seed).randint(
         np.iinfo(np.int32).max)
     gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1,
-                                     criterion='mse', max_depth=max_depth,
+                                     criterion='squared_error',
+                                     max_depth=max_depth,
                                      random_state=equiv_random_state)
     tree = DecisionTreeRegressor(max_depth=max_depth,
                                  random_state=equiv_random_state)

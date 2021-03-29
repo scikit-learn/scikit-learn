@@ -31,9 +31,9 @@ from scipy.spatial.distance import pdist, cdist, squareform
 from ..metrics.pairwise import pairwise_kernels
 from ..base import clone
 from ..utils.validation import _num_samples
+from ..exceptions import ConvergenceWarning
 
 import warnings
-from sklearn.exceptions import ConvergenceWarning
 
 
 def _check_length_scale(X, length_scale):
