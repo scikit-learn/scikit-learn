@@ -66,8 +66,12 @@ def test_kernel_pca_invalid_parameters():
 
 
 def test_kernel_pca_consistent_transform():
-    """ Tests that after fitting a kPCA model, it is independent of the
-    original data object (uses an inner copy) """
+    """Check robustness to mutations in the original training array
+
+    Test that after fitting a kPCA model, it stays independent of any
+    mutation of the values of the original data object by relying on an
+    internal copy.
+    """
     # X_fit_ needs to retain the old, unmodified copy of X
     state = np.random.RandomState(0)
     X = state.rand(10, 10)
