@@ -104,7 +104,7 @@ def test_quantile_incorrect_quantile(quantile):
     X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
     with pytest.raises(
         ValueError,
-        msg="Quantile should be strictly between 0.0 and 1.0"
+        match="Quantile should be strictly between 0.0 and 1.0"
     ):
         QuantileRegressor(quantile=quantile).fit(X, y)
 
