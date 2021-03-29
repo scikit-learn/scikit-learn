@@ -258,26 +258,11 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
-            # `classes_` and `n_features_in_` should be consistent with that
-            # of base_estimator
+            # `classes_` should be consistent with that of base_estimator
             if isinstance(self.base_estimator, Pipeline):
                 check_is_fitted(self.base_estimator[-1])
             else:
                 check_is_fitted(self.base_estimator)
-            with suppress(AttributeError):
-                # Only perform the check and set self.n_features_in_ if the
-                # base estimator has the attribute defined.
-                expected_n_features_in = base_estimator.n_features_in_
-                actual_n_features_in = _num_features(X)
-                if expected_n_features_in != actual_n_features_in:
-                    raise ValueError(
-                        f"Base estimator {base_estimator.__class__.__name__} "
-                        f"was prefit on {expected_n_features_in} "
-                        f"features but CalibratedClassifierCV is fit "
-                        f"with {actual_n_features_in} features."
-                    )
-                else:
-                    self.n_features_in_ = actual_n_features_in
             self.classes_ = self.base_estimator.classes_
 
             pred_method = _get_prediction_method(base_estimator)
@@ -350,9 +335,9 @@ class CalibratedClassifierCV(ClassifierMixin,
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
-            first_clf = next(iter(self.calibrated_classifiers_)).base_estimator
-            if hasattr(first_clf, "n_features_in_"):
-                self.n_features_in_ = first_clf.n_features_in_
+        first_clf = next(iter(self.calibrated_classifiers_)).base_estimator
+        if hasattr(first_clf, "n_features_in_"):
+            self.n_features_in_ = first_clf.n_features_in_
         return self
 
     def predict_proba(self, X):

@@ -591,10 +591,7 @@ def test_calibration_inconsistent_prefit_n_features_in():
     clf = LinearSVC(C=1).fit(X, y)
     calib_clf = CalibratedClassifierCV(clf, cv='prefit')
 
-    msg = re.escape(
-        "Base estimator LinearSVC was prefit on 5 features "
-        "but CalibratedClassifierCV is fit with 3 features."
-    )
+    msg = "X has 3 features, but LinearSVC is expecting 5 features as input."
     with pytest.raises(ValueError, match=msg):
         calib_clf.fit(X[:, :3], y)
 
