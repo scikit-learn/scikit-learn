@@ -110,7 +110,6 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         unsigned long long row_ind
         integral col_ind
         floating diff
-        floating sw_sum = 0.
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
         # variances[j] contains the variance of feature j
@@ -126,26 +125,25 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     cdef:
         np.ndarray[floating, ndim=1] sum_weights = \
-            np.zeros(shape=n_features, dtype=dtype)
+            np.full(fill_value=np.sum(weights), shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nan = \
             np.zeros(shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nz = \
             np.zeros(shape=n_features, dtype=dtype)
 
-    # compute the sum manually instead of using np.sum(weights) to avoid
-    # rounding errors in sum_weights - sum_weights_nz.
-    for row_ind in range(weights.shape[0]):
-        sw_sum += weights[row_ind]
-    for col_ind in range(n_features):
-        sum_weights[col_ind] = sw_sum
+        np.ndarray[np.uint64_t, ndim=1] counts = np.full(
+            fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
+        np.ndarray[np.uint64_t, ndim=1] counts_nz = np.zeros(
+            shape=n_features, dtype=np.uint64)
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
-                means[col_ind] += (X_data[i] * weights[row_ind])
+                means[col_ind] += X_data[i] * weights[row_ind]
             else:
                 sum_weights_nan[col_ind] += weights[row_ind]
+                counts[col_ind] -= 1
 
     for i in range(n_features):
         sum_weights[i] -= sum_weights_nan[i]
@@ -158,9 +156,13 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
                 diff = X_data[i] - means[col_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
                 sum_weights_nz[col_ind] += weights[row_ind]
+                counts_nz[col_ind] += 1
 
     for i in range(n_features):
-        variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
+        if counts[i] != counts_nz[i]:
+            # only compute it when it's guaranteed to be non-zero to avoid
+            # catastrophic cancellation.
+            variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
         variances[i] /= sum_weights[i]
 
     return means, variances, sum_weights
@@ -222,7 +224,6 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         unsigned long long col_ind
         integral row_ind
         floating diff
-        floating sw_sum = 0.
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
         # variances[j] contains the variance of feature j
@@ -238,18 +239,16 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     cdef:
         np.ndarray[floating, ndim=1] sum_weights = \
-            np.zeros(shape=n_features, dtype=dtype)
+            np.full(fill_value=np.sum(weights), shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nan = \
             np.zeros(shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nz = \
             np.zeros(shape=n_features, dtype=dtype)
 
-    # compute the sum manually instead of using np.sum(weights) to avoid
-    # rounding errors in sum_weights - sum_weights_nz.
-    for row_ind in range(weights.shape[0]):
-        sw_sum += weights[row_ind]
-    for col_ind in range(n_features):
-        sum_weights[col_ind] = sw_sum
+        np.ndarray[np.uint64_t, ndim=1] counts = np.full(
+            fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
+        np.ndarray[np.uint64_t, ndim=1] counts_nz = np.zeros(
+            shape=n_features, dtype=np.uint64)
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
@@ -258,6 +257,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
                 means[col_ind] += (X_data[i] * weights[row_ind])
             else:
                 sum_weights_nan[col_ind] += weights[row_ind]
+                counts[col_ind] -= 1
 
     for i in range(n_features):
         sum_weights[i] -= sum_weights_nan[i]
@@ -270,9 +270,13 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
                 diff = X_data[i] - means[col_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
                 sum_weights_nz[col_ind] += weights[row_ind]
+                counts_nz[col_ind] += 1
 
     for i in range(n_features):
-        variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
+        if counts[i] != counts_nz[i]:
+            # only compute it when it's guaranteed to be non-zero to avoid
+            # catastrophic cancellation.
+            variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
         variances[i] /= sum_weights[i]
 
     return means, variances, sum_weights
