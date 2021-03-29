@@ -352,17 +352,23 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
 
                 # undo normalisation
-                if hasattr(self._y_train_std, "__len__"):   # for multitarget data
-                  y_cov_temp = y_cov.reshape((y_cov.shape[0], y_cov.shape[1], 1))
-                  y_cov = np.zeros((y_cov.shape[0], y_cov.shape[1], self._y_train_std.shape[0]))
-                  idx = 0
-                  for line in y_cov_temp:
-                    line = line * self._y_train_std**2
-                    y_cov[idx] = line
-                    idx += 1 
-                else:   # for single target data
-                  y_cov = y_cov * self._y_train_std**2 
 
+                # for multitarget data:
+                if hasattr(self._y_train_std, "__len__"):
+                    y_cov_x = y_cov.shape[0]
+                    y_cov_y = y_cov.shape[1]
+                    y_cov_copy = y_cov.reshape((y_cov_x, y_cov_y, 1))
+                    y_cov = np.zeros((y_cov_x, y_cov_x, 
+                                      self._y_train_std.shape[0]))
+                    idx = 0
+                    for line in y_cov_copy:
+                        line = line * self._y_train_std**2
+                        y_cov[idx] = line
+                        idx += 1
+
+                # for single target data
+                else:
+                    y_cov = y_cov * self._y_train_std**2
 
                 return y_mean, y_cov
             elif return_std:
@@ -388,12 +394,15 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                if hasattr(self._y_train_std, "__len__"):   # for multitarget data
-                  y_var = y_var.reshape((-1,1))
-                  y_var = y_var * self._y_train_std**2
-                else:   # for single target data 
-                  y_var = y_var * self._y_train_std**2
-                  
+
+                # for multitarget data
+                if hasattr(self._y_train_std, "__len__"):
+                    y_var = y_var.reshape((-1, 1))
+                    y_var = y_var * self._y_train_std**2
+                # for single target data
+                else:
+                    y_var = y_var * self._y_train_std**2
+
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
