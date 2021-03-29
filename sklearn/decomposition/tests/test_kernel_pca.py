@@ -18,10 +18,12 @@ from sklearn.utils.validation import _check_psd_eigenvalues
 
 
 def test_kernel_pca():
-    """ Nominal test for all solvers and all known kernels + a custom one.
+    """Nominal test for all solvers and all known kernels + a custom one
+
     It tests
      - that fit_transform is equivalent to fit+transform
-     - that the shapes of transforms and inverse transforms are correct """
+     - that the shapes of transforms and inverse transforms are correct
+    """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
@@ -61,13 +63,22 @@ def test_kernel_pca():
 
 
 def test_kernel_pca_invalid_parameters():
+    """Check that kPCA raises an error if the parameters are invalid
+
+    Tests fitting inverse transform with a precomputed kernel raises a
+    ValueError.
+    """
     with pytest.raises(ValueError):
         KernelPCA(10, fit_inverse_transform=True, kernel='precomputed')
 
 
 def test_kernel_pca_consistent_transform():
-    """ Tests that after fitting a kPCA model, it is independent of the
-    original data object (uses an inner copy) """
+    """Check robustness to mutations in the original training array
+
+    Test that after fitting a kPCA model, it stays independent of any
+    mutation of the values of the original data object by relying on an
+    internal copy.
+    """
     # X_fit_ needs to retain the old, unmodified copy of X
     state = np.random.RandomState(0)
     X = state.rand(10, 10)
@@ -81,6 +92,10 @@ def test_kernel_pca_consistent_transform():
 
 
 def test_kernel_pca_deterministic_output():
+    """Test that Kernel PCA produces deterministic output
+
+    Tests that the same inputs and random state produce the same output.
+    """
     rng = np.random.RandomState(0)
     X = rng.rand(10, 10)
     eigen_solver = ('arpack', 'dense')
@@ -96,9 +111,11 @@ def test_kernel_pca_deterministic_output():
 
 
 def test_kernel_pca_sparse():
-    """ Tests that kPCA works on a sparse data input. Same test as
-    test_kernel_pca except inverse_transform since it's not implemented
-    for sparse matrices"""
+    """Test that kPCA works on a sparse data input.
+
+    Same test as ``test_kernel_pca except inverse_transform`` since it's not
+    implemented for sparse matrices.
+    """
     rng = np.random.RandomState(0)
     X_fit = sp.csr_matrix(rng.random_sample((5, 4)))
     X_pred = sp.csr_matrix(rng.random_sample((2, 4)))
@@ -126,8 +143,10 @@ def test_kernel_pca_sparse():
 @pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
 @pytest.mark.parametrize("n_features", [4, 10])
 def test_kernel_pca_linear_kernel(solver, n_features):
-    """ Tests that kPCA with a linear kernel is equivalent to PCA for all
-    solvers"""
+    """Test that kPCA with linear kernel is equivalent to PCA for all solvers.
+
+    KernelPCA with linear kernel should produce the same output as PCA.
+    """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, n_features))
     X_pred = rng.random_sample((2, n_features))
@@ -145,8 +164,11 @@ def test_kernel_pca_linear_kernel(solver, n_features):
 
 
 def test_kernel_pca_n_components():
-    """ Tests that the number of components selected is correctly taken into
-    account for projections, for all solvers """
+    """Test that `n_components` is correctly taken into account for projections
+
+    For all solvers this tests that the output has the correct shape depending
+    on the selected number of components.
+    """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
@@ -160,8 +182,11 @@ def test_kernel_pca_n_components():
 
 
 def test_remove_zero_eig():
-    """ Tests that the null-space (Zero) eigenvalues are removed when
-    remove_zero_eig=True, whereas they are not by default """
+    """Check that the ``remove_zero_eig`` parameter works correctly.
+
+    Tests that the null-space (Zero) eigenvalues are removed when
+    remove_zero_eig=True, whereas they are not by default.
+    """
     X = np.array([[1 - 1e-30, 1], [1, 1], [1, 1 - 1e-20]])
 
     # n_components=None (default) => remove_zero_eig is True
@@ -179,9 +204,11 @@ def test_remove_zero_eig():
 
 
 def test_leave_zero_eig():
-    """This test checks that fit().transform() returns the same result as
+    """Non-regression test for issue #12141 (PR #12143)
+
+    This test checks that fit().transform() returns the same result as
     fit_transform() in case of non-removed zero eigenvalue.
-    Non-regression test for issue #12141 (PR #12143)"""
+    """
     X_fit = np.array([[1, 1], [0, 0]])
 
     # Assert that even with all np warnings on, there is no div by zero warning
@@ -205,8 +232,9 @@ def test_leave_zero_eig():
 
 
 def test_kernel_pca_precomputed():
-    """ Tests that kPCA works when the kernel has been precomputed, for all
-    solvers """
+    """Test that kPCA works with a precomputed kernel, for all solvers
+
+    """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
@@ -237,8 +265,11 @@ def test_kernel_pca_precomputed():
 
 @pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
 def test_kernel_pca_precomputed_non_symmetric(solver):
-    """Tests that a non symmetric precomputed kernel is actually accepted
-    because the kernel centerer does its job correctly"""
+    """Check that the kernel centerer works.
+
+    Tests that a non symmetric precomputed kernel is actually accepted
+    because the kernel centerer does its job correctly.
+    """
 
     K = [  # a non symmetric gram matrix
         [1, 2],
@@ -252,8 +283,10 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
 
 
 def test_kernel_pca_invalid_kernel():
-    """ Tests that using an invalid kernel name raises a ValueError at fit
-    time"""
+    """Tests that using an invalid kernel name raises a ValueError
+
+    An invalid kernel name should raise a ValueError at fit time.
+    """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((2, 4))
     kpca = KernelPCA(kernel="tototiti")
@@ -262,8 +295,11 @@ def test_kernel_pca_invalid_kernel():
 
 
 def test_gridsearch_pipeline():
-    # Test if we can do a grid-search to find parameters to separate
-    # circles with a perceptron model.
+    """Check that kPCA works as expected in a grid search pipeline
+
+    Test if we can do a grid-search to find parameters to separate
+    circles with a perceptron model.
+    """
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
     kpca = KernelPCA(kernel="rbf", n_components=2)
@@ -276,8 +312,11 @@ def test_gridsearch_pipeline():
 
 
 def test_gridsearch_pipeline_precomputed():
-    # Test if we can do a grid-search to find parameters to separate
-    # circles with a perceptron model using a precomputed kernel.
+    """Check that kPCA works as expected in a grid search pipeline (2)
+
+    Test if we can do a grid-search to find parameters to separate
+    circles with a perceptron model. This test uses a precomputed kernel.
+    """
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
     kpca = KernelPCA(kernel="precomputed", n_components=2)
@@ -291,7 +330,12 @@ def test_gridsearch_pipeline_precomputed():
 
 
 def test_nested_circles():
-    # Test the linear separability of the first 2D KPCA transform
+    """Check that kPCA projects in a space where nested circles are separable
+
+    Tests that 2D nested cicrcles become separable with a perceptron when
+    projected in the first 2 kPCA using an RBF kernel, while raw samples
+    are not directly separable in the orginial space.
+    """
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
 
@@ -314,8 +358,10 @@ def test_nested_circles():
 
 
 def test_kernel_conditioning():
-    """ Test that ``_check_psd_eigenvalues`` is correctly called
-    Non-regression test for issue #12140 (PR #12145)"""
+    """Check that ``_check_psd_eigenvalues`` is correctly called in kPCA
+
+    Non-regression test for issue #12140 (PR #12145).
+    """
 
     # create a pathological X leading to small non-zero eigenvalue
     X = [[5, 1],
@@ -332,9 +378,16 @@ def test_kernel_conditioning():
 
 @pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
 def test_precomputed_kernel_not_psd(solver):
-    """ Tests for all methods what happens with a non PSD gram matrix (this
+    """Check how KernelPCA works with non-PSD kernels depending on n_components
+
+    Tests for all methods what happens with a non PSD gram matrix (this
     can happen in an isomap scenario, or with custom kernel functions, or
-    maybe with ill-posed datasets)"""
+    maybe with ill-posed datasets).
+
+    When ``n_component`` is large enough to capture a negative eigenvalue, an
+    error should be raised. Otherwise, KernelPCA should run without error
+    since the negative eigenvalues are not selected.
+    """
 
     # a non PSD kernel with large eigenvalues, already centered
     # it was captured from an isomap call and multiplied by 100 for compacity
@@ -377,8 +430,9 @@ def test_precomputed_kernel_not_psd(solver):
 
 @pytest.mark.parametrize("n_components", [4, 10, 20])
 def test_kernel_pca_solvers_equivalence(n_components):
-    """Checks that 'dense', 'arpack' and 'randomized' solvers give similar
-    results"""
+    """Check that 'dense' 'arpack' & 'randomized' solvers give similar results
+
+    """
 
     # Generate random data
     n_train, n_test = 2000, 100
@@ -406,7 +460,8 @@ def test_kernel_pca_solvers_equivalence(n_components):
 @pytest.mark.parametrize("kernel",
                          ["linear", "poly", "rbf", "sigmoid", "cosine"])
 def test_kernel_pca_inverse_transform(kernel):
-    """
+    """Check that transform + inverse transform = identity
+
     Makes sure that whatever the solver, transforming and then inverse
     transforming the training set leads to the train set, if the
     number of components is large enough.
@@ -422,8 +477,11 @@ def test_kernel_pca_inverse_transform(kernel):
 
 
 def test_32_64_decomposition_shape():
-    """ Test that the decomposition is similar for 32 and 64 bits data """
-    # see https://github.com/scikit-learn/scikit-learn/issues/18146
+    """Test that the decomposition is similar for 32 and 64 bits data
+
+    Non regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/18146
+    """
     X, y = make_blobs(
         n_samples=30,
         centers=[[0, 0, 0], [1, 1, 1]],
@@ -441,6 +499,10 @@ def test_32_64_decomposition_shape():
 
 # TODO: Remove in 1.1
 def test_kernel_pcc_pairwise_is_deprecated():
+    """Check that `_pairwise` is correctly marked with deprecation warning
+
+    Tests that a `FutureWarning` is issued when `_pairwise` is accessed.
+    """
     kp = KernelPCA(kernel='precomputed')
     msg = r"Attribute _pairwise was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
