@@ -76,8 +76,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         auto :
             the solver is selected by a default policy based on n_samples
             (the number of training samples) and `n_components`:
-            if the number of components to extract is lower than 80% of
-            n_samples, then the more efficient 'randomized'
+            if the number of components to extract is less than 10 (strict) and
+            the number of samples is more than 200 (strict), the 'arpack'
             method is enabled. Otherwise the exact full eigenvalue
             decomposition is computed and optionally truncated afterwards
             ('dense' method).
@@ -253,9 +253,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         # compute eigenvectors
         if self.eigen_solver == 'auto':
-            if n_components >= 1 and n_components < .8 * K.shape[0]:
-                # For consistency this is the same criterion as in PCA
-                eigen_solver = 'randomized'
+            if K.shape[0] > 200 and n_components < 10:
+                eigen_solver = 'arpack'
             else:
                 eigen_solver = 'dense'
         else:

@@ -307,9 +307,6 @@ computation time, as data is mostly described by the first few components
 The optional parameter ``eigen_solver='randomized'`` can be used to
 *significantly* reduce the computation time when the number of requested
 ``n_components`` is small compared with the number of samples.
-This is done automatically by default if you do not specify any
-``eigen_solver`` and if the required ``n_components`` is less than 80% of
-the number of samples, see :class:`KernelPCA` for details.
 
 The time complexity of the randomized :class:`KernelPCA` is
 :math:`O(n_{\mathrm{samples}}^2 \cdot n_{\mathrm{components}})`
@@ -325,7 +322,9 @@ Note: this technique is the same as in :ref:`RandomizedPCA`.
 In addition to the above two solvers, ``eigen_solver='arpack'`` can be used as
 an alternate way to get an approximate decomposition. In practice, this method
 only provides reasonable execution times when the number of components to find
-is extremely small.
+is extremely small. It is enabled by default when the desired number of
+components is less than 10 (strict) and the number of samples is more than 200
+(strict). See :class:`KernelPCA` for details.
 
 .. topic:: References:
 
