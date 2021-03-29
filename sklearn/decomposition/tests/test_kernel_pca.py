@@ -431,7 +431,6 @@ def test_precomputed_kernel_not_psd(solver):
 @pytest.mark.parametrize("n_components", [4, 10, 20])
 def test_kernel_pca_solvers_equivalence(n_components):
     """Check that 'dense' 'arpack' & 'randomized' solvers give similar results
-
     """
 
     # Generate random data
