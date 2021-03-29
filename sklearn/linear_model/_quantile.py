@@ -113,6 +113,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if self.fit_intercept:
             n_params += 1
+            # Note that centering y and X with _preprocess_data does not work
+            # for quantile regression.
 
         # The objective is defined as 1/n * sum(pinball loss) + alpha * L1.
         # So we rescale the penalty term, which is equivalent.
