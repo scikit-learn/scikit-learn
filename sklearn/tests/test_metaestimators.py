@@ -215,7 +215,6 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
         "AdaBoostRegressor",
         "BaggingClassifier",
         "BaggingRegressor",
-        "CalibratedClassifierCV",
         "ClassifierChain",
         "IterativeImputer",
         "MultiOutputClassifier",
