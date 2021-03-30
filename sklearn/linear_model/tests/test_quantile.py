@@ -13,6 +13,28 @@ from sklearn.utils.fixes import sp_version, parse_version
 _SCIPY_TOO_OLD = "requires at least scipy 1.0.0"
 
 
+@pytest.fixture
+def X_y_data():
+    X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
+    return X, y
+
+
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [({"quantile": 2}, "Quantile should be strictly between 0.0 and 1.0"),
+     ({"quantile": 1}, "Quantile should be strictly between 0.0 and 1.0"),
+     ({"quantile": 0}, "Quantile should be strictly between 0.0 and 1.0"),
+     ({"quantile": -1}, "Quantile should be strictly between 0.0 and 1.0"),
+     ]
+)
+def test_init_parameters_validation(X_y_data, params, err_msg):
+    """Test that invalid init parameters raise errors."""
+    X, y = X_y_data
+    with pytest.raises(ValueError, match=err_msg):
+        QuantileRegressor(**params).fit(X, y)
+
+
 @pytest.mark.parametrize(
     'quantile, alpha, intercept, coef',
     [
@@ -95,17 +117,6 @@ def test_quantile_sample_weight():
     weighted_fraction_below = np.sum((y < quant.predict(X)) * weight) \
         / np.sum(weight)
     assert_allclose(weighted_fraction_below, 0.5, atol=1e-2)
-
-
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
-@pytest.mark.parametrize('quantile', [2.0, 1.0, 0.0, -1])
-def test_quantile_incorrect_quantile(quantile):
-    X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
-    with pytest.raises(
-        ValueError,
-        match="Quantile should be strictly between 0.0 and 1.0"
-    ):
-        QuantileRegressor(quantile=quantile).fit(X, y)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
