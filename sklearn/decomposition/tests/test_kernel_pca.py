@@ -413,10 +413,7 @@ def test_precomputed_kernel_not_psd(solver):
 
     # 2. ask for a small enough n_components to get only positive ones
     kpca = KernelPCA(kernel="precomputed", eigen_solver=solver, n_components=2)
-    if solver not in ('auto', 'randomized'):
-        # general case: make sure that it works
-        kpca.fit(K)
-    else:
+    if solver == 'randomized':
         # the randomized method is still inconsistent with the others on this
         # since it selects the eigenvalues based on the largest 2 modules, not
         # on the largest 2 values.
@@ -426,6 +423,9 @@ def test_precomputed_kernel_not_psd(solver):
         with pytest.raises(ValueError,
                            match="There are significant negative eigenvalues"):
             kpca.fit(K)
+    else:
+        # general case: make sure that it works
+        kpca.fit(K)
 
 
 @pytest.mark.parametrize("n_components", [4, 10, 20])
