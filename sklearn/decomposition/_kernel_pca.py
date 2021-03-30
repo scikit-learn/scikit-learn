@@ -278,6 +278,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                 K, n_components=n_components, n_iter=self.iterated_power,
                 random_state=self.random_state, selection='module'
             )
+        else:
+            raise ValueError("Unsupported value for `eigen_solver`: %r"
+                             % eigen_solver)
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.lambdas_ = _check_psd_eigenvalues(self.lambdas_,

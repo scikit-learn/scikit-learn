@@ -62,6 +62,14 @@ def test_kernel_pca():
                 assert X_pred2.shape == X_pred.shape
 
 
+def test_kernel_pca_invalid_solver():
+    """Check that kPCA raises an error if the solver parameter is invalid
+
+    """
+    with pytest.raises(ValueError):
+        KernelPCA(eigen_solver="unknown").fit(np.random.randn(10, 10))
+
+
 def test_kernel_pca_invalid_parameters():
     """Check that kPCA raises an error if the parameters are invalid
 
