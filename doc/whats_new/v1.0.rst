@@ -150,7 +150,7 @@ Changelog
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
-  a kernelized One Class SVM while benefitting from a linear 
+  a kernelized One Class SVM while benefitting from a linear
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
@@ -224,6 +224,9 @@ Changelog
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
+- |Fix| :meth:`metrics.ConfusionMatrixDisplay.plot` uses the correct max
+  for colormap. :pr:`19784` by `Thomas Fan`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -281,10 +284,10 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| Deprecated the default value of the `random_state=0` in 
+- |Enhancement| Deprecated the default value of the `random_state=0` in
   :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
   the default value of `random_state` will be set to `None`.
-  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
 :mod:`sklearn.calibration`
