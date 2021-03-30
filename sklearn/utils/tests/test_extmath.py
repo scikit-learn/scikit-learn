@@ -186,7 +186,7 @@ def test_randomized_eigsh(dtype):
         _randomized_eigsh(X, n_components=2, selection='value')
 
 
-@pytest.mark.parametrize('k', (10, 50, 100, 199))
+@pytest.mark.parametrize('k', (10, 50, 100, 199, 200))
 def test_randomized_eigsh_compared_to_others(k):
     """Check that `_randomized_eigsh` is similar to other `eigsh`
 
@@ -203,48 +203,51 @@ def test_randomized_eigsh_compared_to_others(k):
 
     # compare two versions of randomized
     # rough and fast
-    lambdas, alphas = _randomized_eigsh(X, n_components=k, selection='module',
-                                        random_state=0)
+    eigvals, eigvecs = _randomized_eigsh(X, n_components=k, selection='module',
+                                         n_iter=25, random_state=0)
     # more accurate but slow (TODO find realistic settings here)
-    lambdasQr, alphasQr = _randomized_eigsh(X, n_components=k, n_iter=25,
-                                            n_oversamples=20,
-                                            power_iteration_normalizer="QR",
-                                            selection='module', random_state=0)
+    eigvals_qr, eigvecs_qr = _randomized_eigsh(
+        X, n_components=k, n_iter=25, n_oversamples=20, random_state=0,
+        power_iteration_normalizer="QR", selection='module'
+    )
 
     # with LAPACK
-    lambdas_lapack, alphas_lapack = linalg.eigh(X, eigvals=(n_features - k,
-                                                            n_features - 1))
-    indices = lambdas_lapack.argsort()[::-1]
-    lambdas_lapack = lambdas_lapack[indices]
-    alphas_lapack = alphas_lapack[:, indices]
-
-    # and ARPACK
-    v0 = _init_arpack_v0(n_features, random_state=0)
-    # Note: "LA" largest algebraic <=> selection="value" in randomized_eigsh
-    lambdas_arpack, alphas_arpack = eigsh(X, k, which="LA", tol=0,
-                                          maxiter=None, v0=v0)
-    indices = lambdas_arpack.argsort()[::-1]
-    lambdas_arpack = lambdas_arpack[indices]
-    alphas_arpack = alphas_arpack[:, indices]
+    eigvals_lapack, eigvecs_lapack = linalg.eigh(X, eigvals=(n_features - k,
+                                                             n_features - 1))
+    indices = eigvals_lapack.argsort()[::-1]
+    eigvals_lapack = eigvals_lapack[indices]
+    eigvecs_lapack = eigvecs_lapack[:, indices]
 
     # -- eigenvalues comparison
-    assert lambdas_lapack.shape == (k,)
-    assert_array_almost_equal(lambdas_lapack, lambdas_arpack, decimal=10)
-    # quite poor comparison precision. Is this related to the shape of the
-    # spectrum in the generated random dataset ?
-    assert_array_almost_equal(lambdas, lambdas_lapack, decimal=1)
-    assert_array_almost_equal(lambdasQr, lambdas_lapack, decimal=6)
+    assert eigvals_lapack.shape == (k,)
+    # comparison precision
+    assert_array_almost_equal(eigvals, eigvals_lapack, decimal=6)
+    assert_array_almost_equal(eigvals_qr, eigvals_lapack, decimal=6)
 
     # -- eigenvectors comparison
-    assert alphas_lapack.shape == (n_features, k)
+    assert eigvecs_lapack.shape == (n_features, k)
     # flip eigenvectors' sign to enforce deterministic output
-    alphas, _ = svd_flip(alphas, np.zeros_like(alphas).T)
-    alphasQr, _ = svd_flip(alphasQr, np.zeros_like(alphasQr).T)
-    alphas_lapack, _ = svd_flip(alphas_lapack, np.zeros_like(alphas_lapack).T)
-    alphas_arpack, _ = svd_flip(alphas_arpack, np.zeros_like(alphas_arpack).T)
-    assert_array_almost_equal(alphas_arpack, alphas_lapack, decimal=8)
-    assert_array_almost_equal(alphas, alphas_lapack, decimal=0)
-    assert_array_almost_equal(alphasQr, alphas_lapack, decimal=6)
+    dummy_vecs = np.zeros_like(eigvecs).T
+    eigvecs, _ = svd_flip(eigvecs, dummy_vecs)
+    eigvecs_qr, _ = svd_flip(eigvecs_qr, dummy_vecs)
+    eigvecs_lapack, _ = svd_flip(eigvecs_lapack, dummy_vecs)
+    assert_array_almost_equal(eigvecs, eigvecs_lapack, decimal=4)
+    assert_array_almost_equal(eigvecs_qr, eigvecs_lapack, decimal=6)
+
+    # comparison ARPACK ~ LAPACK (some ARPACK implems do not support k=n)
+    if k < n_features:
+        v0 = _init_arpack_v0(n_features, random_state=0)
+        # "LA" largest algebraic <=> selection="value" in randomized_eigsh
+        eigvals_arpack, eigvecs_arpack = eigsh(X, k, which="LA", tol=0,
+                                               maxiter=None, v0=v0)
+        indices = eigvals_arpack.argsort()[::-1]
+        # eigenvalues
+        eigvals_arpack = eigvals_arpack[indices]
+        assert_array_almost_equal(eigvals_lapack, eigvals_arpack, decimal=10)
+        # eigenvectors
+        eigvecs_arpack = eigvecs_arpack[:, indices]
+        eigvecs_arpack, _ = svd_flip(eigvecs_arpack, dummy_vecs)
+        assert_array_almost_equal(eigvecs_arpack, eigvecs_lapack, decimal=8)
 
 
 @pytest.mark.parametrize('dtype',
