@@ -90,7 +90,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             `scipy.sparse.linalg.eigsh`. It requires strictly
             0 < n_components < n_samples
         randomized :
-            run randomized SVD by the method of Halko et al.
+            run randomized SVD by the method of Halko et al. The current
+            implementation selects eigenvalues based on their module; therefore
+            using this method can lead to unexpected results if the kernel is
+            not PSD.
 
         .. versionchanged:: 1.0
            `'randomized'` was added and `'auto'`'s behavior has changed.  The
