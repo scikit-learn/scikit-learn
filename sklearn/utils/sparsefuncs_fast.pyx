@@ -128,6 +128,8 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             fill_value=np.sum(weights), shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nz = np.zeros(
             shape=n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] correction = np.zeros(
+            shape=n_features, dtype=dtype)
 
         np.ndarray[np.uint64_t, ndim=1] counts = np.full(
             fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
@@ -157,14 +159,18 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
+                correction[col_ind] += diff * weights[row_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
 
     for i in range(n_features):
         if counts[i] != counts_nz[i]:
+            correction[i] -= (sum_weights[i] - sum_weights_nz[i]) * means[i]
+        correction[i] = correction[i]**2 / sum_weights[i]
+        if counts[i] != counts_nz[i]:
             # only compute it when it's guaranteed to be non-zero to avoid
             # catastrophic cancellation.
             variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
-        variances[i] /= sum_weights[i]
+        variances[i] = (variances[i] - correction[i]) / sum_weights[i]
 
     return means, variances, sum_weights
 
@@ -243,6 +249,8 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             fill_value=np.sum(weights), shape=n_features, dtype=dtype)
         np.ndarray[floating, ndim=1] sum_weights_nz = np.zeros(
             shape=n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] correction = np.zeros(
+            shape=n_features, dtype=dtype)
 
         np.ndarray[np.uint64_t, ndim=1] counts = np.full(
             fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
@@ -272,14 +280,18 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
+                correction[col_ind] += diff * weights[row_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
 
     for i in range(n_features):
         if counts[i] != counts_nz[i]:
+            correction[i] -= (sum_weights[i] - sum_weights_nz[i]) * means[i]
+        correction[i] = correction[i]**2 / sum_weights[i]
+        if counts[i] != counts_nz[i]:
             # only compute it when it's guaranteed to be non-zero to avoid
             # catastrophic cancellation.
             variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
-        variances[i] /= sum_weights[i]
+        variances[i] = (variances[i] - correction[i]) / sum_weights[i]
 
     return means, variances, sum_weights
 

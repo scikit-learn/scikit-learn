@@ -57,6 +57,21 @@ __all__ = [
 ]
 
 
+def _is_contant_feature(scale, mean, n_samples):
+    """Detect if a feature is undistinguishable from a constant feature
+
+    The detection is based on its computed variance and on the theoretical
+    error bounds of the '2 pass algorithm' for variance computation.
+
+    see "Algorithms for computing the sample variance: analysis and
+    recommendations", by Chan, Golub, and LeVeque.
+    """
+    eps = np.finfo(scale.dtype).eps
+    upper_bound = n_samples * eps * scale + (n_samples * mean * eps)**2
+    print(scale, upper_bound, scale < upper_bound)
+    return scale < upper_bound
+
+
 def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
     """Set scales of near constant features to 1.
 
@@ -863,7 +878,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         if self.with_std:
             # Extract the list of near constant features on the raw variances,
             # before taking the square root.
-            constant_mask = self.var_ < 10 * np.finfo(X.dtype).eps
+            constant_mask = _is_contant_feature(
+                self.var_, self.mean_, self.n_samples_seen_)
             self.scale_ = _handle_zeros_in_scale(
                 np.sqrt(self.var_), copy=False, constant_mask=constant_mask)
         else:
