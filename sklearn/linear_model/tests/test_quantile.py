@@ -3,7 +3,6 @@
 
 import numpy as np
 import pytest
-import scipy.stats
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
@@ -124,20 +123,33 @@ def test_quantile_sample_weight():
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
-@pytest.mark.parametrize('quantile', [0.1, 0.5, 0.9])
+@pytest.mark.parametrize('quantile', [0.2, 0.5, 0.8])
 def test_asymmetric_error(quantile):
+    """Test quantile regression for asymmetric distributed targets."""
     n_samples = 1000
-    n_features = 3
-    bias = 12.3
-    param = 1.0
     rng = np.random.RandomState(42)
-    X = rng.randn(n_samples, n_features)
-    ground_truth = rng.rand(n_features)
-    dist = scipy.stats.expon(param)
-    noise = dist.rvs(size=n_samples, random_state=42)
-    y = np.dot(X, ground_truth) + bias + noise
-    model = QuantileRegressor(quantile=quantile).fit(X, y)
-
-    assert_allclose(model.intercept_, bias + dist.ppf(quantile), atol=0.1)
-    assert_allclose(model.coef_, ground_truth, atol=0.3)
-    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=0.003)
+    # take care that X@coef + intercept > 0
+    X = np.concatenate((
+            np.abs(rng.randn(n_samples)[:, None]),
+            -rng.randint(2, size=(n_samples, 1))
+        ),
+        axis=1
+    )
+    intercept = 1.23
+    coef = np.array([0.5, -2])
+    # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
+    # the quantile at level q is:
+    #   quantile(q) = - log(1 - q) / lambda
+    #   scale = 1/lambda = -quantile(q) / log(1-q)
+    y = rng.exponential(
+        scale=-(X@coef + intercept) / np.log(1 - quantile),
+        size=n_samples
+    )
+    model = QuantileRegressor(
+        quantile=quantile,
+        alpha=0,
+        solver="interior-point",
+        solver_options={"tol": 1e-5}).fit(X, y)
+    assert_allclose(model.intercept_, intercept, rtol=0.2)
+    assert_allclose(model.coef_, coef, rtol=0.6)
+    assert_allclose(np.mean(model.predict(X) > y), quantile)
