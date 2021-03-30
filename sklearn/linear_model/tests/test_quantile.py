@@ -98,8 +98,7 @@ def test_quantile_estimates_calibration(q):
     X, y = make_regression(n_samples=1000, n_features=20, random_state=0,
                            noise=1.0)
     quant = QuantileRegressor(quantile=q, alpha=0).fit(X, y)
-    fraction_below = np.mean(y < quant.predict(X))
-    assert_allclose(fraction_below, q, atol=1e-2)
+    assert np.mean(y < quant.predict(X)) == pytest.approx(q, abs=1e-2)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
@@ -118,7 +117,7 @@ def test_quantile_sample_weight():
     assert fraction_below > 0.5
     weighted_fraction_below = np.sum((y < quant.predict(X)) * weight) \
         / np.sum(weight)
-    assert_allclose(weighted_fraction_below, 0.5, atol=1e-2)
+    assert weighted_fraction_below == pytest.approx(0.5, abs=1e-2)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
