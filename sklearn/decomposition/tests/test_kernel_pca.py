@@ -144,6 +144,8 @@ def test_kernel_pca_sparse():
                          X_fit_transformed.shape[1])
 
             # inverse transform: not available for sparse matrices
+            # XXX: should we raise another exception type here? For instance:
+            # NotImplementedError.
             with pytest.raises(NotFittedError):
                 kpca.inverse_transform(X_pred_transformed)
 
