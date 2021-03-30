@@ -68,7 +68,6 @@ def _is_contant_feature(scale, mean, n_samples):
     """
     eps = np.finfo(scale.dtype).eps
     upper_bound = n_samples * eps * scale + (n_samples * mean * eps)**2
-    print(scale, upper_bound, scale < upper_bound)
     return scale < upper_bound
 
 
