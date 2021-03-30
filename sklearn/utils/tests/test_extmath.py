@@ -169,14 +169,15 @@ def test_randomized_eigsh(dtype):
 
     rng = np.random.RandomState(42)
     X = np.diag(np.array([1., -2., 0., 3.], dtype=dtype))
-    # random rotation that preserves (but invert signs) the eigenvalues of X:
-    X = X @ np.linalg.qr(rng.normal(size=X.shape))[0]
+    # random rotation that preserves the eigenvalues of X
+    rand_rot = np.linalg.qr(rng.normal(size=X.shape))[0]
+    X = rand_rot @ X @ rand_rot.T
 
     # with 'module' selection method, the negative eigenvalue shows up
     lambd_, alph_ = _randomized_eigsh(X, n_components=2, selection='module')
     # eigenvalues
     assert lambd_.shape == (2,)
-    assert_array_almost_equal(lambd_, [-3., 2.])  # negative eigenvalue here
+    assert_array_almost_equal(lambd_, [3., -2.])  # negative eigenvalue here
     # eigenvectors
     assert alph_.shape == (4, 2)
 
