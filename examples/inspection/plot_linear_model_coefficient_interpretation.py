@@ -300,6 +300,41 @@ plt.subplots_adjust(left=.3)
 # Also, AGE, EXPERIENCE and EDUCATION are the three variables that most
 # influence the model.
 #
+# Interpreting coefficients: being cautious about causality
+# ---------------------------------------------------------
+#
+# Linear models are a great tool for measuring statistical association, but we
+# should be cautious when making statements about causality, after all
+# correlation doesn't always imply causation. This is particularly difficult in
+# the social sciences because the variables we observe only function as proxies
+# for the underlying causal process.
+#
+# In our particular case we can think of the EDUCATION of an individual as a
+# proxy for their professional aptitude, the real variable we're interested in
+# but can't observe. We'd certainly like to think that staying in school for
+# longer would increase technical competency, but it's also quite possible that
+# causality goes the other way too. That is, those who are technically competent
+# tend to stay in school for longer.
+#
+# An employer is unlikely to care which case it is (or if it's a mix of both),
+# as long as they remain convinced that a person with more EDUCATION is better
+# suited for the job, they will be happy to pay out a higher WAGE.
+#
+# This confounding of effects becomes problematic when thinking about some
+# form of intervention e.g. government subsidies of university degrees or
+# promotional material encouaring individuals to take up higher education.
+# The usefulness of these measures could end up being overstated, especially if
+# the degree of confounding is strong. Our model predicts a :math:`0.054699`
+# increase in hourly wage for each year of education. The actual causal effect
+# might be lower because of this confounding.
+#
+# Another problem when thinking about causality is that it may not make sense to
+# think about the causal effect of certain variables. In our example, while it
+# is perfectly valid to compare mean differences in WAGE based on race, it does
+# not make sense to think about the causal effect of race because (as far as we
+# know) it isn't possible to change one's race. Paul Holland coined the
+# phrase "no causation without manipulation" to reflect this idea.
+#
 # Checking the variability of the coefficients
 # --------------------------------------------
 #
