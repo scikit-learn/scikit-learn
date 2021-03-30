@@ -313,8 +313,8 @@ plt.subplots_adjust(left=.3)
 # proxy for their professional aptitude, the real variable we're interested in
 # but can't observe. We'd certainly like to think that staying in school for
 # longer would increase technical competency, but it's also quite possible that
-# causality goes the other way too. That is, those who are technically competent
-# tend to stay in school for longer.
+# causality goes the other way too. That is, those who are technically
+# competent tend to stay in school for longer.
 #
 # An employer is unlikely to care which case it is (or if it's a mix of both),
 # as long as they remain convinced that a person with more EDUCATION is better
@@ -328,11 +328,11 @@ plt.subplots_adjust(left=.3)
 # increase in hourly wage for each year of education. The actual causal effect
 # might be lower because of this confounding.
 #
-# Another problem when thinking about causality is that it may not make sense to
-# think about the causal effect of certain variables. In our example, while it
-# is perfectly valid to compare mean differences in WAGE based on race, it does
-# not make sense to think about the causal effect of race because (as far as we
-# know) it isn't possible to change one's race. Paul Holland coined the
+# Another problem when thinking about causality is that it may not make sense
+# to think about the causal effect of certain variables. In our example, while
+# it is perfectly valid to compare mean differences in WAGE based on race, it
+# does not make sense to think about the causal effect of race because (as far
+# as we know) it isn't possible to change one's race. Paul Holland coined the
 # phrase "no causation without manipulation" to reflect this idea.
 #
 # Checking the variability of the coefficients
