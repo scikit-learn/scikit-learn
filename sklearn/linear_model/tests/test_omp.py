@@ -3,9 +3,9 @@
 
 import numpy as np
 import pytest
+
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -75,12 +75,16 @@ def test_unreachable_accuracy():
     assert_array_almost_equal(
         orthogonal_mp(X, y, tol=0),
         orthogonal_mp(X, y, n_nonzero_coefs=n_features))
-
-    assert_array_almost_equal(
-        assert_warns(RuntimeWarning, orthogonal_mp, X, y, tol=0,
-                     precompute=True),
-        orthogonal_mp(X, y, precompute=True,
-                      n_nonzero_coefs=n_features))
+    warning_message = (
+        "Orthogonal matching pursuit ended prematurely "
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        assert_array_almost_equal(
+            orthogonal_mp(X, y, tol=0, precompute=True),
+            orthogonal_mp(X, y, precompute=True,
+                          n_nonzero_coefs=n_features))
 
 
 # Parametrizing the decorator to enhance the test
@@ -154,7 +158,13 @@ def test_identical_regressors():
     gamma = np.zeros(n_features)
     gamma[0] = gamma[1] = 1.
     newy = np.dot(newX, gamma)
-    assert_warns(RuntimeWarning, orthogonal_mp, newX, newy, 2)
+    warning_message = (
+        "Orthogonal matching pursuit ended prematurely "
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        orthogonal_mp(newX, newy, 2)
 
 
 def test_swapped_regressors():

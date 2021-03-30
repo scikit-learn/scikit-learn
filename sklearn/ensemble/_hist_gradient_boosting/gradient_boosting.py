@@ -3,12 +3,13 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
+import warnings
 
 import numpy as np
 from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
-from ...utils import check_random_state, check_array, resample
+from ...utils import check_random_state, resample
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length,
                                  _check_sample_weight,
@@ -733,7 +734,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         is_binned = getattr(self, '_in_fit', False)
         dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
-        X = check_array(X, dtype=dtype, force_all_finite=False)
+        X = self._validate_data(X, dtype=dtype, force_all_finite=False,
+                                reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -789,7 +791,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predictions of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
-        X = check_array(X, dtype=X_DTYPE, force_all_finite=False)
+        X = self._validate_data(X, dtype=X_DTYPE, force_all_finite=False,
+                                reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -901,8 +904,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'least_squares', 'least_absolute_deviation', 'poisson'}, \
-            default='least_squares'
+    loss : {'squared_error', 'least_squares', 'least_absolute_deviation', \
+            'poisson'}, default='squared_error'
         The loss function to use in the boosting process. Note that the
         "least squares" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
@@ -911,6 +914,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
+
+        .. deprecated:: 1.0
+            The loss 'least_squares' was deprecated in v1.0 and will be removed
+            in version 1.2. Use `loss='squared_error'` which is equivalent.
 
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
@@ -940,14 +947,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
-
     categorical_features : array-like of {bool, int} of shape (n_features) \
             or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
@@ -963,6 +962,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1043,11 +1050,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
-    _VALID_LOSSES = ('least_squares', 'least_absolute_deviation',
-                     'poisson')
+    _VALID_LOSSES = ('squared_error', 'least_squares',
+                     'least_absolute_deviation', 'poisson')
 
     @_deprecate_positional_args
-    def __init__(self, loss='least_squares', *, learning_rate=0.1,
+    def __init__(self, loss='squared_error', *, learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  categorical_features=None, monotonic_cst=None,
@@ -1119,6 +1126,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return y
 
     def _get_loss(self, sample_weight):
+        if self.loss == "least_squares":
+            warnings.warn(
+                "The loss 'least_squares' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use 'squared_error' which is "
+                "equivalent.",
+                FutureWarning)
+            return _LOSSES["squared_error"](sample_weight=sample_weight)
+
         return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
@@ -1193,14 +1208,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
-
     categorical_features : array-like of {bool, int} of shape (n_features) \
             or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
@@ -1216,6 +1223,14 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
