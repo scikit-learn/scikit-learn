@@ -695,6 +695,9 @@ plt.subplots_adjust(left=.3)
 # * Coefficients must be scaled to the same unit of measure to retrieve
 #   feature importance. Scaling them with the standard-deviation of the
 #   feature is a useful proxy.
+# * Interpreting causality is difficult when there are confounding effects. If
+#   the relationship between two variables is also affected by something
+#   unobserved, we should be careful when making conclusions about causality.
 # * Coefficients in multivariate linear models represent the dependency
 #   between a given feature and the target, **conditional** on the other
 #   features.
