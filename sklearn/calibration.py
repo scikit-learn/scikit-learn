@@ -430,7 +430,7 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     """
     X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
     X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
-    if sample_weight is not None:
+    if supports_sw and sample_weight is not None:
         sw_train = _safe_indexing(sample_weight, train)
         sw_test = _safe_indexing(sample_weight, test)
     else:
