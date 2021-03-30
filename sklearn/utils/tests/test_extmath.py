@@ -167,17 +167,16 @@ def test_randomized_svd_low_rank_all_dtypes(dtype):
 def test_randomized_eigsh(dtype):
     """Test that `_randomized_eigsh` returns the appropriate components"""
 
-rng = np.random.RandomState(42)
-
-X = np.diag(np.array([1., -2., 0., 3.], dtype=dtype))
-# random rotation that should preserve the eigenvalues of X:
-X = X @ np.linalg.qr(rng.normal(size=X.shape))[0]
+    rng = np.random.RandomState(42)
+    X = np.diag(np.array([1., -2., 0., 3.], dtype=dtype))
+    # random rotation that preserves (but invert signs) the eigenvalues of X:
+    X = X @ np.linalg.qr(rng.normal(size=X.shape))[0]
 
     # with 'module' selection method, the negative eigenvalue shows up
     lambd_, alph_ = _randomized_eigsh(X, n_components=2, selection='module')
     # eigenvalues
     assert lambd_.shape == (2,)
-    assert_array_almost_equal(lambd_, [3., -2.])  # negative eigenvalue here
+    assert_array_almost_equal(lambd_, [-3., 2.])  # negative eigenvalue here
     # eigenvectors
     assert alph_.shape == (4, 2)
 
