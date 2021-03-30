@@ -3,10 +3,12 @@
 
 import numpy as np
 import pytest
+from scipy.optimize import minimize
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
+from sklearn.metrics import mean_pinball_loss
 from sklearn.utils.fixes import sp_version, parse_version
 
 _SCIPY_TOO_OLD = "requires at least scipy 1.0.0"
@@ -150,6 +152,29 @@ def test_asymmetric_error(quantile):
         alpha=0,
         solver="interior-point",
         solver_options={"tol": 1e-5}).fit(X, y)
-    assert_allclose(model.intercept_, intercept, rtol=0.2)
+    assert model.intercept_ == pytest.approx(intercept, rel=0.2)
     assert_allclose(model.coef_, coef, rtol=0.6)
     assert_allclose(np.mean(model.predict(X) > y), quantile)
+
+    # Now compare to Nelder-Mead optimization with L1 penalty
+    alpha = 0.01
+    model.set_params(alpha=alpha).fit(X, y)
+    model_coef = np.r_[model.intercept_, model.coef_]
+
+    def func(coef):
+        loss = mean_pinball_loss(y, X @ coef[1:] + coef[0], alpha=quantile)
+        L1 = np.sum(np.abs(coef[1:]))
+        return loss + alpha * L1
+
+    res = minimize(
+        fun=func,
+        x0=[1, 0, -1],
+        method='Nelder-Mead',
+        tol=1e-12,
+        options={"maxiter": 2000}
+    )
+
+    assert func(model_coef) == pytest.approx(func(res.x), rel=1e-3)
+    assert_allclose(model.intercept_, res.x[0], rtol=1e-3)
+    assert_allclose(model.coef_, res.x[1:], rtol=1e-3)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=8e-3)
