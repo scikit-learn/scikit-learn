@@ -186,13 +186,15 @@ def test_randomized_eigsh(dtype):
         _randomized_eigsh(X, n_components=2, selection='value')
 
 
-@pytest.mark.parametrize('k', (10, 50, 100, 200))
+@pytest.mark.parametrize('k', (10, 50, 100, 199))
 def test_randomized_eigsh_compared_to_others(k):
     """Check that `_randomized_eigsh` is similar to other `eigsh`
 
     Tests that for a random PSD matrix, `_randomized_eigsh` provides results
     comparable to LAPACK (scipy.linalg.eigh) and ARPACK
-    (scipy.sparse.linalg.eigsh)
+    (scipy.sparse.linalg.eigsh).
+
+    Note: some versions of ARPACK do not support k=n_features.
     """
 
     # make a random PSD matrix
