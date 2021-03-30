@@ -70,13 +70,25 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef):
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
-def test_quantile_equals_huber_for_low_epsilon():
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
     X, y = make_regression(n_samples=100, n_features=20, random_state=0,
                            noise=1.0)
-    huber = HuberRegressor(epsilon=1+1e-4, alpha=1e-4).fit(X, y)
-    quant = QuantileRegressor(alpha=1e-4).fit(X, y)
-    assert_allclose(huber.intercept_, quant.intercept_, atol=1e-1)
+    alpha = 1e-4
+    huber = HuberRegressor(
+        epsilon=1 + 1e-4,
+        alpha=alpha,
+        fit_intercept=fit_intercept
+    ).fit(X, y)
+    quant = QuantileRegressor(
+        alpha=alpha,
+        fit_intercept=fit_intercept
+    ).fit(X, y)
+    if fit_intercept:
+        assert huber.intercept_ == pytest.approx(quant.intercept_, abs=1e-1)
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
+    # check that we still predict fraction
+    assert np.mean(y < quant.predict(X)) == pytest.approx(0.5, abs=1e-1)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
@@ -88,21 +100,6 @@ def test_quantile_estimates_calibration(q):
     quant = QuantileRegressor(quantile=q, alpha=0).fit(X, y)
     fraction_below = np.mean(y < quant.predict(X))
     assert_allclose(fraction_below, q, atol=1e-2)
-
-
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
-def test_quantile_without_intercept():
-    X, y = make_regression(n_samples=300, n_features=20, random_state=0,
-                           noise=1.0)
-    quant = QuantileRegressor(alpha=1e-4, fit_intercept=False).fit(X, y)
-    # check that result is similar to Huber
-    huber = HuberRegressor(epsilon=1 + 1e-4, alpha=1e-4, fit_intercept=False
-                           ).fit(X, y)
-    assert_allclose(huber.intercept_, quant.intercept_, atol=1e-1)
-    assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
-    # check that we still predict fraction
-    fraction_below = np.mean(y < quant.predict(X))
-    assert_allclose(fraction_below, 0.5, atol=1e-1)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
