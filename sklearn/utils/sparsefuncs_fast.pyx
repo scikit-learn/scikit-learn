@@ -159,6 +159,9 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
+                # correction term of the corrected 2 pass algorithm.
+                # See "Algorithms for computing the sample variance: analysis
+                # and recommendations", by Chan, Golub, and LeVeque.
                 correction[col_ind] += diff * weights[row_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
 
@@ -280,6 +283,9 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
+                # correction term of the corrected 2 pass algorithm.
+                # See "Algorithms for computing the sample variance: analysis
+                # and recommendations", by Chan, Golub, and LeVeque.
                 correction[col_ind] += diff * weights[row_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
 
