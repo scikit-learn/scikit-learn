@@ -332,9 +332,9 @@ def test_gridsearch_pipeline_precomputed():
 def test_nested_circles():
     """Check that kPCA projects in a space where nested circles are separable
 
-    Tests that 2D nested cicrcles become separable with a perceptron when
+    Tests that 2D nested circles become separable with a perceptron when
     projected in the first 2 kPCA using an RBF kernel, while raw samples
-    are not directly separable in the orginial space.
+    are not directly separable in the original space.
     """
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
@@ -413,10 +413,7 @@ def test_precomputed_kernel_not_psd(solver):
 
     # 2. ask for a small enough n_components to get only positive ones
     kpca = KernelPCA(kernel="precomputed", eigen_solver=solver, n_components=2)
-    if solver not in ('auto', 'randomized'):
-        # general case: make sure that it works
-        kpca.fit(K)
-    else:
+    if solver == 'randomized':
         # the randomized method is still inconsistent with the others on this
         # since it selects the eigenvalues based on the largest 2 modules, not
         # on the largest 2 values.
@@ -426,12 +423,14 @@ def test_precomputed_kernel_not_psd(solver):
         with pytest.raises(ValueError,
                            match="There are significant negative eigenvalues"):
             kpca.fit(K)
+    else:
+        # general case: make sure that it works
+        kpca.fit(K)
 
 
 @pytest.mark.parametrize("n_components", [4, 10, 20])
 def test_kernel_pca_solvers_equivalence(n_components):
     """Check that 'dense' 'arpack' & 'randomized' solvers give similar results
-
     """
 
     # Generate random data

@@ -96,10 +96,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             not PSD.
 
         .. versionchanged:: 1.0
-           `'randomized'` was added and `'auto'`'s behavior has changed.  The
-           'auto' behaviour was different: if the number of components to
-           extract was n_components < 10 and if n_samples > 200 then the
-           'arpack' solver was enabled. Otherwise the 'dense' method was used.
+           `'randomized'` was added.
 
     tol : float, default=0
         Convergence tolerance for arpack.
@@ -186,14 +183,14 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
 
-    For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
+    For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.eigsh`.
 
     For eigen_solver == 'randomized', see:
-        `Finding structure with randomness: Stochastic algorithms
+        Finding structure with randomness: Stochastic algorithms
         for constructing approximate matrix decompositions Halko, et al., 2009
-        (arXiv:909)`
-        `A randomized algorithm for the decomposition of matrices
-        Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert`
+        (arXiv:909)
+        A randomized algorithm for the decomposition of matrices
+        Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, kernel="linear",
@@ -251,7 +248,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             n_components = K.shape[0]  # use all dimensions
         else:
             if self.n_components < 1:
-                raise ValueError("`n_components` should be >= 1")
+                raise ValueError(
+                    f"`n_components` should be >= 1, got: {self.n_component}"
+                )
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
