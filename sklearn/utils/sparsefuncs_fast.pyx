@@ -139,10 +139,14 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
                 means[col_ind] += (X_data[i] * weights[row_ind])
+                # sum of weights where X[:, col_ind] is non-zero
                 sum_weights_nz[col_ind] += weights[row_ind]
+                # number of non-zero elements of X[:, col_ind]
                 counts_nz[col_ind] += 1
             else:
+                # sum of weights where X[:, col_ind] is not nan
                 sum_weights[col_ind] -= weights[row_ind]
+                # number of non nan elements of X[:, col_ind]
                 counts[col_ind] -= 1
 
     for i in range(n_features):
@@ -250,10 +254,14 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
                 means[col_ind] += (X_data[i] * weights[row_ind])
+                # sum of weights where X[:, col_ind] is non-zero
                 sum_weights_nz[col_ind] += weights[row_ind]
+                # number of non-zero elements of X[:, col_ind]
                 counts_nz[col_ind] += 1
             else:
+                # sum of weights where X[:, col_ind] is not nan
                 sum_weights[col_ind] -= weights[row_ind]
+                # number of non nan elements of X[:, col_ind]
                 counts[col_ind] -= 1
 
     for i in range(n_features):
