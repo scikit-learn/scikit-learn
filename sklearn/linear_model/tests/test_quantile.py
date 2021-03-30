@@ -26,6 +26,10 @@ def X_y_data():
      ({"quantile": 1}, "Quantile should be strictly between 0.0 and 1.0"),
      ({"quantile": 0}, "Quantile should be strictly between 0.0 and 1.0"),
      ({"quantile": -1}, "Quantile should be strictly between 0.0 and 1.0"),
+     ({"alpha": -1.5}, "Penalty alpha must be a non-negative number"),
+     ({"fit_intercept": "blah"}, "The argument fit_intercept must be bool"),
+     ({"fit_intercept": 0}, "The argument fit_intercept must be bool"),
+     ({"solver": "blah"}, "Invalid value for argument solver"),
      ]
 )
 def test_init_parameters_validation(X_y_data, params, err_msg):

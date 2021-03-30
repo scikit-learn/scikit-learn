@@ -35,7 +35,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
-    solver : str, default='auto'
+    solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
+            'revised simplex', 'simplex'}, default='interior-point'
         Name of the solver used by scipy.optimize.linprog.
         If it is 'auto', will use 'highs' with scipy>=1.6.0
         and 'interior-point' with older versions.
@@ -69,7 +70,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             quantile=0.5,
             alpha=0.0001,
             fit_intercept=True,
-            solver='auto',
+            solver="interior-point",
             solver_options=None,
     ):
         self.quantile = quantile
@@ -97,16 +98,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
-
         X, y = self._validate_data(X, y, accept_sparse=False,
                                    y_numeric=True, multi_output=False)
-
         sample_weight = _check_sample_weight(sample_weight, X)
-
-        if self.quantile >= 1.0 or self.quantile <= 0.0:
-            raise ValueError(
-                f"Quantile should be strictly between 0.0 and 1.0, got "
-                f"{self.quantile}")
 
         n_samples, n_features = X.shape
         n_params = n_features
@@ -118,7 +112,39 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         # The objective is defined as 1/n * sum(pinball loss) + alpha * L1.
         # So we rescale the penalty term, which is equivalent.
-        alpha = np.sum(sample_weight) * self.alpha
+        if self.alpha >= 0:
+            alpha = np.sum(sample_weight) * self.alpha
+        else:
+            raise ValueError(f"Penalty alpha must be a non-negative number, "
+                             f"got {self.alpha}".format(self.alpha))
+
+        if self.quantile >= 1.0 or self.quantile <= 0.0:
+            raise ValueError(
+                f"Quantile should be strictly between 0.0 and 1.0, got "
+                f"{self.quantile}")
+
+        if not isinstance(self.fit_intercept, bool):
+            raise ValueError(f"The argument fit_intercept must be bool, "
+                             f"got {self.fit_intercept}")
+
+        if self.solver not in (
+            "highs-ds", "highs-ipm", "highs", "interior-point",
+            "revised simplex", "simplex"
+        ):
+            raise ValueError(f"Invalid value for argument solver, "
+                             f"got {self.solver}")
+        elif (
+            self.solver == "revised simplex"
+            and sp_version < parse_version('1.3.0')
+        ):
+            raise ValueError(f"Solver 'revised simplex' is only available "
+                             f"with scipy>=1.3.0, got {sp_version}")
+        elif (
+            self.solver in ("highs-ds", "highs-ipm", "highs")
+            and sp_version < parse_version('1.6.0')
+        ):
+            raise ValueError(f"Solver {self.solver} is only available "
+                             f"with scipy>=1.6.0, got {sp_version}")
 
         # Use linear programming formulation of quantile regression
         #     min_x c x
@@ -163,20 +189,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         b_eq = y
 
-        method = self.solver
-        if method == 'auto':
-            if sp_version < parse_version('1.0.0'):
-                method = 'simplex'
-            elif sp_version < parse_version('1.6.0'):
-                method = 'interior-point'
-            else:
-                method = 'highs'
-
         result = linprog(
             c=c,
             A_eq=A_eq,
             b_eq=b_eq,
-            method=method,
+            method=self.solver,
             options=self.solver_options,
         )
         solution = result.x
