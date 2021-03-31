@@ -175,9 +175,9 @@ class BalancedDistributionAdaptation:
                         alpha = 1
 
                     tt = Ys == c
-                    e[np.where(tt == True)] = 1 / Ns
+                    e[tt] = 1 / Ns
                     yy = Y_tar_pseudo == c
-                    ind = np.where(yy == True)
+                    ind = np.where(yy)
                     inds = [item + ns for item in ind]
                     e[tuple(inds)] = -alpha / Nt
                     e[np.isinf(e)] = 0
