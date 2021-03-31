@@ -4,7 +4,7 @@ Transfer Component Analysis (TCA) is a famous domain adaptation method
 that can transform the different inputs from two domains into the same
 underlying subspace, i.e., the reproduing kernel Hilbert space (RKHS).
 If the two domains or two datasets are having totally different probability
-distributions, TCA can perform domain adaptation to mitigate the domain 
+distributions, TCA can perform domain adaptation to mitigate the domain
 mismatch in two domains. Eventually, better performance can be achieved
 after using TCA for feature transformation.
 
@@ -25,10 +25,9 @@ Examples
 Notes
 -----
 References:
-[1] Pan S J, Tsang I W, Kwok J T, et al. Domain adaptation via 
-transfer component analysis[J]. 
+[1] Pan S J, Tsang I W, Kwok J T, et al. Domain adaptation via
+transfer component analysis[J].
 IEEE Transactions on Neural Networks, 2010, 22(2): 199-210.
-
 """
 
 # Authors: Jindong Wang <jindongwang@outlook.com>
@@ -45,10 +44,10 @@ def kernel(X1, X2, ker='primal', gamma=1.0):
 
     Parameters
     ----------
-    X1 : array, (n1 x d), where n1 is the number of rows and d is the dimension.
+    X1 : array, (n1 x d), n1 is the number of rows and d is the dimension.
         Raw data from the first domain.
 
-    X2 : array, (n2 x d), where n2 is the number of rows and d is the dimension.
+    X2 : array, (n2 x d), n2 is the number of rows and d is the dimension.
         Raw data from the second domain.
 
     ker : {'primal', 'linear', 'rbf'}, default='primal'

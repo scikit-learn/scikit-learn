@@ -24,9 +24,8 @@ Notes
 -----
 References:
 [1] Wang J, Chen Y, Hao S, et al. Balanced distribution adaptation for
-transfer learning. 2017 IEEE international conference on data mining 
+transfer learning. 2017 IEEE international conference on data mining
 (ICDM).IEEE, 2017: 1129-1134.
-
 """
 
 # Authors: Jindong Wang <jindongwang@outlook.com>
