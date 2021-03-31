@@ -581,7 +581,8 @@ def _set_checking_parameters(estimator):
             # FIXME : init should be removed in 1.1
             estimator.set_params(max_iter=500, init='nndsvda')
         if estimator.__class__.__name__ == 'MiniBatchNMF':
-            estimator.set_params(max_iter=500, beta_loss='kullback-leibler')
+            estimator.set_params(max_iter=500, init='nndsvda',
+                                 beta_loss='kullback-leibler')
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
             estimator.set_params(max_iter=100)

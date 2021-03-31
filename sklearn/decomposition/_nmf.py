@@ -523,6 +523,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
             # preserve the XHt, which is not re-computed (update_H=False)
             numerator = XHt.copy()
 
+        numerator = numerator[0:W.shape[0], 0:W.shape[1]]
+
         # Denominator
         if HHt is None:
             HHt = np.dot(H, H.T)
@@ -563,6 +565,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
         # here numerator = dot(X * (dot(W, H) ** (beta_loss - 2)), H.T)
         numerator = safe_sparse_dot(WH_safe_X, H.T)
+        numerator = numerator[0:W.shape[0], 0:W.shape[1]]
 
         # Denominator
         if beta_loss == 1:
@@ -942,7 +945,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
               (n_i, end_time - start_time))
 
     if forget_factor is None:
-        n_iter = n_i + 1
+        n_iter = n_i
         return W, H, n_iter
     else:
         n_iter = n_i // n_batches + 1
