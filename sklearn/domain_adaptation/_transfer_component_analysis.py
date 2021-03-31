@@ -80,7 +80,7 @@ def kernel(X1, X2, ker='primal', gamma=1.0):
     return K
 
 
-class TCA:
+class TransferComponentAnalysis:
     """Class for transfer component analysis.
 
     Parameters

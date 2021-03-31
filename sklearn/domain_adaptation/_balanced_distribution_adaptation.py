@@ -37,9 +37,8 @@ References:
 import numpy as np
 import scipy.io
 import scipy.linalg
-import sklearn.metrics
-import sklearn.neighbors
-from ..metrics import pairwise
+
+from ..metrics import pairwise, accuracy_score
 
 
 def kernel(X1, X2, ker='primal', gamma=1.0):
@@ -80,7 +79,7 @@ def kernel(X1, X2, ker='primal', gamma=1.0):
     return K
 
 
-class BDA:
+class BalancedDistributionAdaptation:
     """Class for balanced distribution adaptation.
 
     Parameters
@@ -103,7 +102,7 @@ class BDA:
     T : int, default=10
         Number of iterations to solve the problem.
 
-    model: {'BDA', 'WBDA'}, default='BDA'
+    mode: {'BDA', 'WBDA'}, default='BDA'
         Model for plain BDA or weighted BDA for class imbalanced learning.
     """
     def __init__(self, kernel_type='primal', dim=30, lamb=1, mu=0.5, gamma=1, T=10, mode='BDA'):
@@ -202,7 +201,7 @@ class BDA:
                 return 0
             clf.fit(Xs_new, Ys.ravel())
             Y_tar_pseudo = clf.predict(Xt_new)
-            acc = sklearn.metrics.accuracy_score(Yt, Y_tar_pseudo)
+            acc = accuracy_score(Yt, Y_tar_pseudo)
             list_acc.append(acc)
             print('{} iteration [{}/{}]: Acc: {:.4f}'.format(self.mode, t + 1, self.T, acc))
         return acc, Y_tar_pseudo, list_acc, A

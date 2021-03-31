@@ -5,7 +5,7 @@ to improve the classification performance. This module includes Transfer
 Component Analysis (TCA) and Balanced Distribution Adaptation (BDA).
 """
 
-from .tca import TCA
-from .bda import BDA
+from ._transfer_component_analysis import TransferComponentAnalysis
+from ._balanced_distribution_adaptation import BalancedDistributionAdaptation
 
-__all__ = ['TCA', 'BDA']
+__all__ = ['TransferComponentAnalysis', 'BalancedDistributionAdaptation']
