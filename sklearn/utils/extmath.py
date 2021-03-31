@@ -790,9 +790,19 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
             # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
             new_unnormalized_variance = _safe_accumulator_op(
                 np.matmul, sample_weight, np.where(np.isnan(X), 0, (X - T)**2))
+            correction = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(np.isnan(X), 0, X - T))
         else:
             new_unnormalized_variance = _safe_accumulator_op(
                 np.nansum, (X - T)**2, axis=0)
+            correction = _safe_accumulator_op(
+                np.nansum, X - T, axis=0)
+
+        # correction term of the corrected 2 pass algorithm.
+        # See "Algorithms for computing the sample variance: analysis
+        # and recommendations", by Chan, Golub, and LeVeque.
+        new_unnormalized_variance -= correction**2 / new_sample_count
+
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):
