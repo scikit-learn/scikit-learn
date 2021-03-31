@@ -103,7 +103,8 @@ class BalancedDistributionAdaptation:
         Model for plain BDA or weighted BDA for class imbalanced learning.
     """
 
-    def __init__(self, kernel_type='primal', dim=30, lamb=1, mu=0.5, gamma=1, T=10,
+    def __init__(self, kernel_type='primal', dim=30, lamb=1, mu=0.5,
+                 gamma=1, T=10,
                  mode='BDA'):
         self.kernel_type = kernel_type
         self.dim = dim
