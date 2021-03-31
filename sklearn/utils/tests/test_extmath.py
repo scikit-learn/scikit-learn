@@ -174,12 +174,12 @@ def test_randomized_eigsh(dtype):
     X = rand_rot @ X @ rand_rot.T
 
     # with 'module' selection method, the negative eigenvalue shows up
-    lambd_, alph_ = _randomized_eigsh(X, n_components=2, selection='module')
+    eigvals, eigvecs = _randomized_eigsh(X, n_components=2, selection='module')
     # eigenvalues
-    assert lambd_.shape == (2,)
-    assert_array_almost_equal(lambd_, [3., -2.])  # negative eigenvalue here
+    assert eigvals.shape == (2,)
+    assert_array_almost_equal(eigvals, [3., -2.])  # negative eigenvalue here
     # eigenvectors
-    assert alph_.shape == (4, 2)
+    assert eigvecs.shape == (4, 2)
 
     # with 'value' selection method, the negative eigenvalue does not show up
     with pytest.raises(NotImplementedError):
