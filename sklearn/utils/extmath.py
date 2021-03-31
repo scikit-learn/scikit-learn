@@ -492,8 +492,8 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
             power_iteration_normalizer=power_iteration_normalizer,
             flip_sign=False, random_state=random_state)
 
-        alphas_ = U[:, :n_components]  # eigenvectors
-        lambdas_ = S[:n_components]  # eigenvalues
+        eigvecs = U[:, :n_components]
+        eigvals = S[:n_components]
 
         # Conversion of Singular values into Eigenvalues:
         # For any eigenvalue t, the corresponding singular value is |t|.
@@ -504,12 +504,12 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
         diag_VtU = np.einsum('ji,ij->j',
                              Vt[:n_components, :], U[:, :n_components])
         signs = np.sign(diag_VtU)
-        lambdas_ = lambdas_ * signs
+        eigvals = eigvals * signs
 
     else:  # pragma: no cover
         raise ValueError("Invalid `selection`: %r" % selection)
 
-    return lambdas_, alphas_
+    return eigvals, eigvecs
 
 
 @_deprecate_positional_args
