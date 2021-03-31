@@ -315,8 +315,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self._check_algorithm_metric()
 
     def _check_algorithm_metric(self):
-        if self.algorithm not in ['auto', 'brute',
-                                  'kd_tree', 'ball_tree']:
+        if self.algorithm not in ['auto', 'brute', 'kd_tree', 'ball_tree']:
             raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
         if self.algorithm == 'auto':
@@ -444,19 +443,18 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_samples_fit_ = X.data.shape[0]
             return self
 
-        if self.effective_metric_ == 'precomputed':
+        if self.metric == 'precomputed':
             X = _check_precomputed(X)
+            # Precomputed matrix X must be squared
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("Precomputed matrix must be square."
+                                 " Input is a {}x{} matrix."
+                                 .format(X.shape[0], X.shape[1]))
             self.n_features_in_ = X.shape[1]
 
         n_samples = X.shape[0]
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
-
-        # Precomputed matrix X must be squared
-        if self.metric == 'precomputed' and X.shape[0] != X.shape[1]:
-            raise ValueError("Precomputed matrix must be a square matrix."
-                             " Input is a {}x{} matrix."
-                             .format(X.shape[0], X.shape[1]))
 
         if issparse(X):
             if self.algorithm not in ('auto', 'brute'):
@@ -514,14 +512,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.n_neighbors <= 0:
                 raise ValueError(
                     "Expected n_neighbors > 0. Got %d" %
-                    self.n_neighbors
-                )
-            else:
-                if not isinstance(self.n_neighbors, numbers.Integral):
-                    raise TypeError(
-                        "n_neighbors does not take %s value, "
-                        "enter integer value" %
-                        type(self.n_neighbors))
+                    self.n_neighbors)
+            elif not isinstance(self.n_neighbors, numbers.Integral):
+                raise TypeError(
+                    "n_neighbors does not take %s value, "
+                    "enter integer value" %
+                    type(self.n_neighbors))
 
         return self
 
@@ -602,7 +598,7 @@ class KNeighborsMixin:
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
-            or (n_queries, n_indexed) if metric == 'precomputed', \
+            or (n_queries, n_samples_fit) if metric == 'precomputed', \
                 default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
@@ -654,18 +650,16 @@ class KNeighborsMixin:
         elif n_neighbors <= 0:
             raise ValueError(
                 "Expected n_neighbors > 0. Got %d" %
-                n_neighbors
-            )
-        else:
-            if not isinstance(n_neighbors, numbers.Integral):
-                raise TypeError(
-                    "n_neighbors does not take %s value, "
-                    "enter integer value" %
-                    type(n_neighbors))
+                n_neighbors)
+        elif not isinstance(n_neighbors, numbers.Integral):
+            raise TypeError(
+                "n_neighbors does not take %s value, "
+                "enter integer value" %
+                type(n_neighbors))
 
         if X is not None:
             query_is_train = False
-            if self.effective_metric_ == 'precomputed':
+            if self.metric == 'precomputed':
                 X = _check_precomputed(X)
             else:
                 X = self._validate_data(X, accept_sparse='csr', reset=False)
@@ -687,7 +681,7 @@ class KNeighborsMixin:
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
         if (self._fit_method == 'brute' and
-                self.effective_metric_ == 'precomputed' and issparse(X)):
+                self.metric == 'precomputed' and issparse(X)):
             results = _kneighbors_from_graph(
                 X, n_neighbors=n_neighbors,
                 return_distance=return_distance)
@@ -772,13 +766,13 @@ class KNeighborsMixin:
         Parameters
         ----------
         X : array-like of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed', \
+                or (n_queries, n_samples_fit) if metric == 'precomputed', \
                 default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
             For ``metric='precomputed'`` the shape should be
-            (n_queries, n_indexed). Otherwise the shape should be
+            (n_queries, n_samples_fit). Otherwise the shape should be
             (n_queries, n_features).
 
         n_neighbors : int, default=None
@@ -793,7 +787,7 @@ class KNeighborsMixin:
         Returns
         -------
         A : sparse-matrix of shape (n_queries, n_samples_fit)
-            `n_samples_fit` is the number of samples in the fitted data
+            `n_samples_fit` is the number of samples in the fitted data.
             `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
             The matrix is of CSR format.
 
@@ -980,7 +974,7 @@ class RadiusNeighborsMixin:
 
         if X is not None:
             query_is_train = False
-            if self.effective_metric_ == 'precomputed':
+            if self.metric == 'precomputed':
                 X = _check_precomputed(X)
             else:
                 X = self._validate_data(X, accept_sparse='csr', reset=False)
@@ -992,7 +986,7 @@ class RadiusNeighborsMixin:
             radius = self.radius
 
         if (self._fit_method == 'brute' and
-                self.effective_metric_ == 'precomputed' and issparse(X)):
+                self.metric == 'precomputed' and issparse(X)):
             results = _radius_neighbors_from_graph(
                 X, radius=radius, return_distance=return_distance)
 
@@ -1116,9 +1110,9 @@ class RadiusNeighborsMixin:
         Returns
         -------
         A : sparse-matrix of shape (n_queries, n_samples_fit)
-            `n_samples_fit` is the number of samples in the fitted data
+            `n_samples_fit` is the number of samples in the fitted data.
             `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
-            The matrix if of format CSR.
+            The matrix is of format CSR.
 
         Examples
         --------
