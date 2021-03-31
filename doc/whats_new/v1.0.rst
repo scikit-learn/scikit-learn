@@ -288,11 +288,18 @@ Changelog
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
 :mod:`sklearn.calibration`
-............................
+..........................
 
 - |Fix| The predict and predict_proba methods of
-  :class:`calibration.CalibratedClassifierCV can now properly be used on
+  :class:`calibration.CalibratedClassifierCV` can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
+
+:mod:`sklearn.utils`
+....................
+  
+  - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
+    precision of the computed variance was very poor when the real variance is
+    exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------
