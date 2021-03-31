@@ -116,12 +116,19 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     @staticmethod
     def _num_combinations(n_features, degree, interaction_only, include_bias):
+        """Calculate number of terms in polynomial expansion
+
+        This should be equivalent to counting the number of terms returned by
+        _combinations(...) but much faster.
+        """
+
         if interaction_only:
-            combinations = 0
-            for i in range(1, degree + 1):
-                if i > n_features:
-                    break
-                combinations += comb(n_features, i, exact=True)
+            combinations = sum(
+                [
+                    comb(n_features, i, exact=True)
+                    for i in range(1, min(degree + 1, n_features + 1))
+                ]
+            )
         else:
             combinations = comb(n_features + degree, degree, exact=True) - 1
 
