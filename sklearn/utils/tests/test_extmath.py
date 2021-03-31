@@ -259,10 +259,10 @@ def test_randomized_eigsh_compared_to_others(k):
     (500, 400),
 ])
 def test_randomized_eigsh_reconst_low_rank(n, rank):
-    """Check that _randomized_eigsh results reconstruct a low rank psd matrix
+    """Check that randomized_eigsh is able to reconstruct a low rank psd matrix
 
     Tests that a low rank PSD matrix can be effectively reconstructed with
-    good accuracy by `_rnadomized_eigsh`.
+    good accuracy using the decomposition provided by `_randomized_eigsh`.
     """
     assert rank < n
 
