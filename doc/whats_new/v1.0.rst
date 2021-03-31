@@ -186,6 +186,10 @@ Changelog
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
   :user:`Maria Telenczuk <maikia>`.
 
+- |Fix| The `inverse_transform` method of :class:`preprocessing.StandardScaler`
+  now raises error when the input data is 1d. 
+  :pr:`19752` by :user:`Zhehao Liu <Max1993Liu>`.
+
 :mod:`sklearn.manifold`
 .......................
 
