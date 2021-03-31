@@ -2230,11 +2230,11 @@ static double svm_svr_probability(
 
 // label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
 // perm, length l, must be allocated before calling this subroutine
-static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, int **label_ret, int **start_ret, int **count_ret, int *perm)
+static void svm_group_classes(const PREFIX(problem) *prob, long *nr_class_ret, int **label_ret, int **start_ret, int **count_ret, int *perm)
 {
 	int l = prob->l;
 	int max_nr_class = 16;
-	int nr_class = 0;
+	long nr_class = 0;
 	int *label = Malloc(int,max_nr_class);
 	int *count = Malloc(int,max_nr_class);
 	int *data_label = Malloc(int,l);	
@@ -2416,7 +2416,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 	{
 		// classification
 		int l = prob->l;
-		int nr_class;
+		long nr_class;
 		int *label = NULL;
 		int *start = NULL;
 		int *count = NULL;
@@ -2460,16 +2460,13 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		bool *nonzero = Malloc(bool,l);
 		for(i=0;i<l;i++)
 			nonzero[i] = false;
-
-                long malSize = (long)nr_class*(long)(nr_class-1)/2;
-
-                NAMESPACE::decision_function *f = Malloc(NAMESPACE::decision_function,malSize);
+                NAMESPACE::decision_function *f = Malloc(NAMESPACE::decision_function,nr_class*(nr_class-1)/2);
 
 		double *probA=NULL,*probB=NULL;
 		if (param->probability)
 		{
-                       probA=Malloc(double,malSize);
-                       probB=Malloc(double,malSize);
+			probA=Malloc(double,nr_class*(nr_class-1)/2);
+			probB=Malloc(double,nr_class*(nr_class-1)/2);
 		}
 
 		int p = 0;
@@ -2642,7 +2639,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int *fold_start = Malloc(int,nr_fold+1);
 	int l = prob->l;
 	int *perm = Malloc(int,l);
-	int nr_class;
+	long nr_class;
     if(param->random_seed >= 0)
     {
         set_seed(param->random_seed);
@@ -2889,7 +2886,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 
 double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x, BlasFunctions *blas_functions)
 {
-	int nr_class = model->nr_class;
+	long nr_class = (long)model->nr_class;
 	double *dec_values;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
@@ -2909,7 +2906,7 @@ double PREFIX(predict_probability)(
 	    model->probA!=NULL && model->probB!=NULL)
 	{
 		int i;
-		int nr_class = model->nr_class;
+		long nr_class = (long)model->nr_class;
 		double *dec_values = Malloc(double, nr_class*(nr_class-1)/2);
 		PREFIX(predict_values)(model, x, dec_values, blas_functions);
 
