@@ -40,6 +40,7 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
         QuantileRegressor(**params).fit(X, y)
 
 
+@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize(
     'quantile, alpha, intercept, coef',
     [
@@ -55,7 +56,6 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
         [0.5, 100, 2, 0],
     ]
 )
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 def test_quantile_toy_example(quantile, alpha, intercept, coef):
     # test how different parameters affect a small intuitive example
     X = [[0], [1], [1]]
