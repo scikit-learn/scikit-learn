@@ -554,10 +554,14 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
 
 @pytest.mark.parametrize("columns", [1, 2, 3, 1000])
 def test_polynomial_features_csr_wide(columns):
+    """
+    Test that very wide feature matrices do not cause integer overflow.
+
+    See https://github.com/scikit-learn/scikit-learn/issues/16803
+    """
     x = sparse.csr_matrix(([1], ([0], [columns])))
 
     est = PolynomialFeatures(3)
-    # this causes a crash with values of `columns` which are too large
     est.fit_transform(x)
 
 
@@ -566,6 +570,9 @@ def test_polynomial_features_csr_wide(columns):
 @pytest.mark.parametrize("interaction_only", [True, False])
 @pytest.mark.parametrize("include_bias", [True, False])
 def test_num_combinations(n_features, degree, interaction_only, include_bias):
+    """
+    Test that n_output_features_ is calculated correctly.
+    """
     x = sparse.csr_matrix(([1], ([0], [n_features - 1])))
     est = PolynomialFeatures(
         degree, interaction_only=interaction_only, include_bias=include_bias
