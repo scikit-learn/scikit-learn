@@ -138,9 +138,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         the total number of samples.
 
     loss : string, callable, default='absolute_loss'
-        String inputs, "absolute_loss" and "squared_loss" are supported which
-        find the absolute loss and squared loss per sample
-        respectively.
+        String inputs, 'absolute_loss' and 'squared_error' are supported which
+        find the absolute loss and squared error per sample respectively.
 
         If ``loss`` is a callable, then it should be a function that takes
         two arrays as inputs, the true and predicted value and returns a 1-D
@@ -151,6 +150,10 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         then this sample is classified as an outlier.
 
         .. versionadded:: 0.18
+
+        .. deprecated:: 1.0
+            The loss 'squared_loss' was deprecated in v1.0 and will be removed
+            in version 1.2. Use `loss='squared_error'` which is equivalent.
 
     random_state : int, RandomState instance, default=None
         The generator used to initialize the centers.
@@ -203,7 +206,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     .. [1] https://en.wikipedia.org/wiki/RANSAC
     .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
-    """
+    """  # noqa: E501
     @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, min_samples=None,
                  residual_threshold=None, is_data_valid=None,
@@ -296,8 +299,15 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             else:
                 loss_function = lambda \
                     y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
-
-        elif self.loss == "squared_loss":
+        # TODO: Remove squared_loss in v1.2.
+        elif self.loss in ("squared_error", "squared_loss"):
+            if self.loss == "squared_loss":
+                warnings.warn(
+                    "The loss 'squared_loss' was deprecated in v1.0 and will "
+                    "be removed in version 1.2. Use `loss='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
             if y.ndim == 1:
                 loss_function = lambda y_true, y_pred: (y_true - y_pred) ** 2
             else:
@@ -309,9 +319,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         else:
             raise ValueError(
-                "loss should be 'absolute_loss', 'squared_loss' or a callable."
-                "Got %s. " % self.loss)
-
+                "loss should be 'absolute_loss', 'squared_error' or a "
+                "callable. Got %s. " % self.loss)
 
         random_state = check_random_state(self.random_state)
 

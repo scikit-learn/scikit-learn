@@ -249,7 +249,8 @@ def test_randomized_svd_infinite_rank():
         # compute the singular values of X using the fast approximate method
         # without the iterated power method
         _, sa, _ = randomized_svd(X, k, n_iter=0,
-                                  power_iteration_normalizer=normalizer)
+                                  power_iteration_normalizer=normalizer,
+                                  random_state=0)
 
         # the approximation does not tolerate the noise:
         assert np.abs(s[:k] - sa).max() > 0.1
@@ -257,7 +258,8 @@ def test_randomized_svd_infinite_rank():
         # compute the singular values of X using the fast approximate method
         # with iterated power method
         _, sap, _ = randomized_svd(X, k, n_iter=5,
-                                   power_iteration_normalizer=normalizer)
+                                   power_iteration_normalizer=normalizer,
+                                   random_state=0)
 
         # the iterated power method is still managing to get most of the
         # structure at the requested rank
@@ -307,11 +309,13 @@ def test_randomized_svd_power_iteration_normalizer():
 
     # Check that it diverges with many (non-normalized) power iterations
     U, s, Vt = randomized_svd(X, n_components, n_iter=2,
-                              power_iteration_normalizer='none')
+                              power_iteration_normalizer='none',
+                              random_state=0)
     A = X - U.dot(np.diag(s).dot(Vt))
     error_2 = linalg.norm(A, ord='fro')
     U, s, Vt = randomized_svd(X, n_components, n_iter=20,
-                              power_iteration_normalizer='none')
+                              power_iteration_normalizer='none',
+                              random_state=0)
     A = X - U.dot(np.diag(s).dot(Vt))
     error_20 = linalg.norm(A, ord='fro')
     assert np.abs(error_2 - error_20) > 100
@@ -401,14 +405,15 @@ def test_randomized_svd_sign_flip_with_transpose():
     mat = np.arange(10 * 8).reshape(10, -1)
 
     # Without transpose
-    u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True)
+    u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True,
+                                             random_state=0)
     u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
     assert u_based
     assert not v_based
 
     # With transpose
     u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_svd(
-        mat, 3, flip_sign=True, transpose=True)
+        mat, 3, flip_sign=True, transpose=True, random_state=0)
     u_based, v_based = max_loading_is_positive(
         u_flipped_with_transpose, v_flipped_with_transpose)
     assert u_based
