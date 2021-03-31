@@ -14,66 +14,98 @@ from scipy.sparse import rand as sparse_rand
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
 
+N_per_side = 5
+Npts = N_per_side ** 2
 
-def test_isomap_simple_grid():
-    # Isomap should preserve distances when all neighbors are used
-    N_per_side = 5
-    Npts = N_per_side ** 2
-    n_neighbors = Npts - 1
 
+def create_sample_data(add_noise=False):
     # grid of equidistant points in 2D, n_components = n_dim
     X = np.array(list(product(range(N_per_side), repeat=2)))
+    if add_noise:
+        # add noise in a third dimension
+        rng = np.random.RandomState(0)
+        noise = 0.1 * rng.randn(Npts, 1)
+        X = np.concatenate((X, noise), 1)
+    return X
+
+
+@pytest.mark.parametrize(
+    "n_neighbors, radius",
+    [(Npts-1, None),
+     (None, np.inf)]
+)
+def test_isomap_simple_grid(n_neighbors, radius):
+    # Isomap should preserve distances when all neighbors are used
+    X = create_sample_data(add_noise=False)
 
     # distances from each point to all others
-    G = neighbors.kneighbors_graph(X, n_neighbors,
-                                   mode='distance').toarray()
+    if n_neighbors is not None:
+        G = neighbors.kneighbors_graph(X, n_neighbors,
+                                       mode="distance").toarray()
+    else:
+        G = neighbors.radius_neighbors_graph(X, radius,
+                                             mode="distance").toarray()
 
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
-            clf = manifold.Isomap(n_neighbors=n_neighbors, n_components=2,
+            clf = manifold.Isomap(n_neighbors=n_neighbors,
+                                  radius=radius,
+                                  n_components=2,
                                   eigen_solver=eigen_solver,
                                   path_method=path_method)
             clf.fit(X)
 
-            G_iso = neighbors.kneighbors_graph(clf.embedding_,
-                                               n_neighbors,
-                                               mode='distance').toarray()
+            if n_neighbors is not None:
+                G_iso = neighbors.kneighbors_graph(clf.embedding_,
+                                                   n_neighbors,
+                                                   mode='distance')
+            else:
+                G_iso = neighbors.radius_neighbors_graph(clf.embedding_,
+                                                         radius,
+                                                         mode='distance')
+            G_iso = G_iso.toarray()
             assert_array_almost_equal(G, G_iso)
 
 
-def test_isomap_reconstruction_error():
+@pytest.mark.parametrize(
+    "n_neighbors, radius",
+    [(24, None),
+     (Npts-1, np.inf)]
+)
+def test_isomap_reconstruction_error(n_neighbors, radius):
     # Same setup as in test_isomap_simple_grid, with an added dimension
-    N_per_side = 5
-    Npts = N_per_side ** 2
-    n_neighbors = Npts - 1
-
-    # grid of equidistant points in 2D, n_components = n_dim
-    X = np.array(list(product(range(N_per_side), repeat=2)))
-
-    # add noise in a third dimension
-    rng = np.random.RandomState(0)
-    noise = 0.1 * rng.randn(Npts, 1)
-    X = np.concatenate((X, noise), 1)
+    X = create_sample_data(add_noise=True)
 
     # compute input kernel
-    G = neighbors.kneighbors_graph(X, n_neighbors,
-                                   mode='distance').toarray()
+    if n_neighbors is not None:
+        G = neighbors.kneighbors_graph(X, n_neighbors,
+                                       mode="distance").toarray()
+    else:
+        G = neighbors.radius_neighbors_graph(X, radius,
+                                             mode="distance").toarray()
 
     centerer = preprocessing.KernelCenterer()
     K = centerer.fit_transform(-0.5 * G ** 2)
 
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
-            clf = manifold.Isomap(n_neighbors=n_neighbors, n_components=2,
+            clf = manifold.Isomap(n_neighbors=n_neighbors,
+                                  radius=radius,
+                                  n_components=2,
                                   eigen_solver=eigen_solver,
                                   path_method=path_method)
             clf.fit(X)
 
             # compute output kernel
-            G_iso = neighbors.kneighbors_graph(clf.embedding_,
-                                               n_neighbors,
-                                               mode='distance').toarray()
-
+            if n_neighbors is not None:
+                G_iso = neighbors.kneighbors_graph(clf.embedding_,
+                                                   n_neighbors,
+                                                   mode='distance')
+            else:
+                G_iso = neighbors.radius_neighbors_graph(clf.embedding_,
+                                                         radius,
+                                                         mode='distance')
+            G_iso = G_iso.toarray()
             K_iso = centerer.fit_transform(-0.5 * G_iso ** 2)
 
             # make sure error agrees
@@ -82,7 +114,12 @@ def test_isomap_reconstruction_error():
                                 clf.reconstruction_error())
 
 
-def test_transform():
+@pytest.mark.parametrize(
+    "n_neighbors, radius",
+    [(2, None),
+     (None, 0.5)]
+)
+def test_transform(n_neighbors, radius):
     n_samples = 200
     n_components = 10
     noise_scale = 0.01
@@ -91,7 +128,9 @@ def test_transform():
     X, y = datasets.make_s_curve(n_samples, random_state=0)
 
     # Compute isomap embedding
-    iso = manifold.Isomap(n_components=n_components, n_neighbors=2)
+    iso = manifold.Isomap(n_components=n_components,
+                          n_neighbors=n_neighbors,
+                          radius=radius)
     X_iso = iso.fit_transform(X)
 
     # Re-embed a noisy version of the points
@@ -103,13 +142,19 @@ def test_transform():
     assert np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * noise_scale
 
 
-def test_pipeline():
+@pytest.mark.parametrize(
+    "n_neighbors, radius",
+    [(2, None),
+     (None, 10.0)]
+)
+def test_pipeline(n_neighbors, radius):
     # check that Isomap works fine as a transformer in a Pipeline
     # only checks that no error is raised.
     # TODO check that it actually does something useful
     X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
-        [('isomap', manifold.Isomap()),
+        [('isomap', manifold.Isomap(n_neighbors=n_neighbors,
+                                    radius=radius)),
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
     assert .9 < clf.score(X, y)
@@ -186,3 +231,13 @@ def test_sparse_input():
                                   eigen_solver=eigen_solver,
                                   path_method=path_method)
             clf.fit(X)
+
+
+def test_isomap_fit_precomputed_radius_graph():
+    X, _ = datasets.load_digits(return_X_y=True)
+    X = preprocessing.StandardScaler().fit_transform(X)
+    g = neighbors.radius_neighbors_graph(X, radius=5.5, mode="distance")
+    isomap = manifold.Isomap(n_neighbors=None,
+                             radius=5.5,
+                             metric="precomputed")
+    isomap.fit(g)

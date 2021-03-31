@@ -5,7 +5,9 @@
 
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
-from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..neighbors import (
+    NearestNeighbors, kneighbors_graph, radius_neighbors_graph
+)
 from ..utils.validation import check_is_fitted
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
@@ -21,11 +23,16 @@ class Isomap(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_neighbors : int, default=5
-        number of neighbors to consider for each point.
+    n_neighbors : int or None, default=5
+        Number of neighbors to consider for each point. Use radis-based
+        neighbors when set to ``None``.
+
+    radius : float or None, default=None
+        Limiting distance of neighbors to return. Use k-neighbors
+        when set to ``None``.
 
     n_components : int, default=2
-        number of coordinates for the manifold
+        Number of coordinates for the manifold
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         'auto' : Attempt to choose the most efficient solver
@@ -127,11 +134,12 @@ class Isomap(TransformerMixin, BaseEstimator):
     .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
-    def __init__(self, *, n_neighbors=5, n_components=2, eigen_solver='auto',
-                 tol=0, max_iter=None, path_method='auto',
+    def __init__(self, *, n_neighbors=5, radius=None, n_components=2,
+                 eigen_solver='auto', tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
                  p=2, metric_params=None):
         self.n_neighbors = n_neighbors
+        self.radius = radius
         self.n_components = n_components
         self.eigen_solver = eigen_solver
         self.tol = tol
@@ -145,6 +153,7 @@ class Isomap(TransformerMixin, BaseEstimator):
 
     def _fit_transform(self, X):
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                      radius=self.radius,
                                       algorithm=self.neighbors_algorithm,
                                       metric=self.metric, p=self.p,
                                       metric_params=self.metric_params,
@@ -158,12 +167,18 @@ class Isomap(TransformerMixin, BaseEstimator):
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
 
-        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                               metric=self.metric, p=self.p,
-                               metric_params=self.metric_params,
-                               mode='distance', n_jobs=self.n_jobs)
+        if self.n_neighbors is not None:
+            nbg = kneighbors_graph(self.nbrs_, self.n_neighbors,
+                                   metric=self.metric, p=self.p,
+                                   metric_params=self.metric_params,
+                                   mode="distance", n_jobs=self.n_jobs)
+        else:
+            nbg = radius_neighbors_graph(self.nbrs_, radius=self.radius,
+                                         metric=self.metric, p=self.p,
+                                         metric_params=self.metric_params,
+                                         mode="distance", n_jobs=self.n_jobs)
 
-        self.dist_matrix_ = graph_shortest_path(kng,
+        self.dist_matrix_ = graph_shortest_path(nbg,
                                                 method=self.path_method,
                                                 directed=False)
         G = self.dist_matrix_ ** 2
@@ -255,7 +270,11 @@ class Isomap(TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_queries, n_components)
         """
         check_is_fitted(self)
-        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        if self.n_neighbors is not None:
+            distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        else:
+            distances, indices = self.nbrs_.\
+                                 radius_neighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to
         # training data via the nearest neighbors of X.
