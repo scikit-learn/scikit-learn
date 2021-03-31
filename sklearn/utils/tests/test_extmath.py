@@ -250,6 +250,35 @@ def test_randomized_eigsh_compared_to_others(k):
         assert_array_almost_equal(eigvecs_arpack, eigvecs_lapack, decimal=8)
 
 
+@pytest.mark.parametrize("n,rank", [
+    (10, 7),
+    (100, 10),
+    (100, 80),
+    (500, 10),
+    (500, 250),
+    (500, 400),
+])
+def test_randomized_eigsh_reconst_low_rank(n, rank):
+    """Check that _randomized_eigsh results reconstruct a low rank psd matrix
+
+    Tests that a low rank PSD matrix can be effectively reconstructed with
+    good accuracy by `_rnadomized_eigsh`.
+    """
+    assert rank < n
+
+    # create a low rank PSD
+    rng = np.random.RandomState(69)
+    X = rng.randn(n, rank)
+    A = X @ X.T
+
+    # approximate A with the "right" number of components
+    S, V = _randomized_eigsh(A, n_components=rank)
+    A_reconstruct = V @ np.diag(S) @ V.T
+
+    # test that the approximation is good
+    assert_array_almost_equal(A_reconstruct, A, decimal=6)
+
+
 @pytest.mark.parametrize('dtype',
                          (np.float32, np.float64))
 def test_row_norms(dtype):
