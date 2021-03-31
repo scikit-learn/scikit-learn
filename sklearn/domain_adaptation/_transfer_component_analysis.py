@@ -132,9 +132,8 @@ class TransferComponentAnalysis:
         H = np.eye(n) - 1 / n * np.ones((n, n))
         K = kernel(self.kernel_type, X, None, gamma=self.gamma)
         n_eye = m if self.kernel_type == 'primal' else n
-        a, b = np.linalg.multi_dot(
-            [K, M, K.T]) + self.lamb * np.eye(n_eye),
-        np.linalg.multi_dot([K, H, K.T])
+        a = K @ M @ K.T + self.lamb * np.eye(n_eye)
+        b = K @ H @ K.T
         w, V = scipy.linalg.eig(a, b)
         ind = np.argsort(w)
         A = V[:, ind[:self.dim]]
