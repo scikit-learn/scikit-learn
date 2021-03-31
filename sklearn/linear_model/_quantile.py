@@ -32,14 +32,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Constant that multiplies L1 penalty term.
 
     fit_intercept : bool, default=True
-        Whether or not to fit the intercept. This can be set to False
-        if the data is already centered around the origin.
+        Whether or not to fit the intercept.
 
     solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
             'revised simplex', 'simplex'}, default='interior-point'
-        Name of the solver used by scipy.optimize.linprog.
-        If it is 'auto', will use 'highs' with scipy>=1.6.0
-        and 'interior-point' with older versions.
+        Method used by scipy.optimize.linprog to solve the linear programming
+        formulation. Note that the 'highs' methods are only available with
+        scipy>=1.6.0.
 
     solver_options : dict, default=None
         Additional parameters passed to scipy.optimize.linprog as options.
