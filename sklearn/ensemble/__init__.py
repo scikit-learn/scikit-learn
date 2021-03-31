@@ -2,8 +2,6 @@
 The :mod:`sklearn.ensemble` module includes ensemble-based methods for
 classification, regression and anomaly detection.
 """
-import typing
-
 from ._base import BaseEnsemble
 from ._forest import RandomForestClassifier
 from ._forest import RandomForestRegressor
