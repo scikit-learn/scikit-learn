@@ -273,7 +273,7 @@ def test_randomized_eigsh_reconst_low_rank(n, rank):
     A = X @ X.T
 
     # approximate A with the "right" number of components
-    S, V = _randomized_eigsh(A, n_components=rank)
+    S, V = _randomized_eigsh(A, n_components=rank, random_state=rng)
     # orthonormality checks
     assert_array_almost_equal(np.linalg.norm(V, axis=0), np.ones(S.shape))
     assert_array_almost_equal(V.T @ V, np.diag(np.ones(S.shape)))
