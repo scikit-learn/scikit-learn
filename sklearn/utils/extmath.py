@@ -468,6 +468,15 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
     obtain further speed up, `n_iter` can be set <=2 (at the cost of
     loss of precision).
 
+    Returns
+    -------
+    eigvals : 1D array of shape (n_components,) containing the `n_components`
+        eigenvalues selected (see ``selection`` parameter).
+    eigvecs : 2D array of shape (M.shape[0], n_components) containing the
+        `n_components` eigenvectors corresponding to the `eigvals`, in the
+        corresponding order. Note that this follows the `scipy.linalg.eigh`
+        convention.
+
     See Also
     --------
     :func:`randomized_svd`
