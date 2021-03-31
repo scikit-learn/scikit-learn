@@ -15,16 +15,11 @@ Transfer component analysis:
 Examples
 --------
 >>> import numpy as np
->>> from sklearn import datasets
->>> from sklearn.semi_supervised import LabelPropagation
->>> label_prop_model = LabelPropagation()
->>> iris = datasets.load_iris()
->>> rng = np.random.RandomState(42)
->>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
->>> labels = np.copy(iris.target)
->>> labels[random_unlabeled_points] = -1
->>> label_prop_model.fit(iris.data, labels)
-LabelPropagation(...)
+>>> Xs, Xt = np.random.randn(100, 50), np.random.randn(90, 50)
+>>> Ys, Yt = np.random.randint(0, 3, 100), np.random.randint(0, 3, 90)
+>>> tca = TransferComponentAnalysis(kernel_type='primal', dim=30, lamb=1, gamma=1)
+>>> acc, ypre = tca.fit_predict(Xs, Ys, Xt, Yt)
+>>> TransferComponentAnalysis(...)
 
 Notes
 -----
@@ -36,6 +31,7 @@ IEEE Transactions on Neural Networks, 2010, 22(2): 199-210.
 
 # Authors: Jindong Wang <jindongwang@outlook.com>
 # License: BSD
+
 import numpy as np
 import scipy.io
 import scipy.linalg
@@ -97,6 +93,7 @@ class TransferComponentAnalysis:
     gamma : float, default=1
         Parameter for rbf kernel.
     """
+
     def __init__(self, kernel_type='primal', dim=30, lamb=1, gamma=1):
         self.kernel_type = kernel_type
         self.dim = dim
@@ -108,18 +105,18 @@ class TransferComponentAnalysis:
 
         Parameters
         ----------
-        Xs : array, (n1 x d), where n1 is the number of rows and d is the dimension.
+        Xs : array, (n1 x d), n1 is the number of rows and d is the dimension.
             Raw data from the first domain.
 
-        Xt : array, (n2 x d), where n2 is the number of rows and d is the dimension.
+        Xt : array, (n2 x d), n2 is the number of rows and d is the dimension.
             Raw data from the second domain.
 
         Returns
         -------
-        Xs_new : array, (n1 x dim), where n1 is the number of rows and dim is the dimension.
+        Xs_new : array, (n1 x dim), n1 is the number of rows and dim is the dimension.
             Transformed data from the first domain.
 
-        Xt_new : array, (n2 x d), where n2 is the number of rows and dim is the dimension.
+        Xt_new : array, (n2 x d), n2 is the number of rows and dim is the dimension.
             Transformed data from the second domain.
         """
         X = np.hstack((Xs.T, Xt.T))
@@ -132,7 +129,8 @@ class TransferComponentAnalysis:
         H = np.eye(n) - 1 / n * np.ones((n, n))
         K = kernel(self.kernel_type, X, None, gamma=self.gamma)
         n_eye = m if self.kernel_type == 'primal' else n
-        a, b = np.linalg.multi_dot([K, M, K.T]) + self.lamb * np.eye(n_eye), np.linalg.multi_dot([K, H, K.T])
+        a, b = np.linalg.multi_dot(
+            [K, M, K.T]) + self.lamb * np.eye(n_eye), np.linalg.multi_dot([K, H, K.T])
         w, V = scipy.linalg.eig(a, b)
         ind = np.argsort(w)
         A = V[:, ind[:self.dim]]

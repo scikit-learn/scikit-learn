@@ -1,9 +1,10 @@
 # coding=utf8
 """
-Balanced Distribution Adaptation (BDA) is a popular domain adaptation method that can 
-match the marginal and conditional probability distributions between two domains with
-tunable weight to dynamically tune their relative importance. Eventually, better 
-performance can be achieved after using TCA for feature transformation.
+Balanced Distribution Adaptation (BDA) is a popular domain adaptation method
+that can match the marginal and conditional probability distributions between
+two domains with tunable weight to dynamically tune their relative importance.
+Eventually, better performance can be achieved after using TCA for feature
+transformation.
 
 Model Features
 --------------
@@ -13,22 +14,18 @@ Balanced distribution adaptation:
 Examples
 --------
 >>> import numpy as np
->>> from sklearn import datasets
->>> from sklearn.semi_supervised import LabelPropagation
->>> label_prop_model = LabelPropagation()
->>> iris = datasets.load_iris()
->>> rng = np.random.RandomState(42)
->>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
->>> labels = np.copy(iris.target)
->>> labels[random_unlabeled_points] = -1
->>> label_prop_model.fit(iris.data, labels)
-LabelPropagation(...)
+>>> Xs, Xt = np.random.randn(100, 50), np.random.randn(90, 50)
+>>> Ys, Yt = np.random.randint(0, 3, 100), np.random.randint(0, 3, 90)
+>>> bda = BalancedDistributionAdaptation()
+>>> acc, ypre, _, _ = bda.fit_predict(Xs, Ys, Xt, Yt)
+>>> BalancedDistributionAdaptation(...)
 
 Notes
 -----
 References:
-[1] Wang J, Chen Y, Hao S, et al. Balanced distribution adaptation for transfer learning.
-2017 IEEE international conference on data mining (ICDM). IEEE, 2017: 1129-1134.
+[1] Wang J, Chen Y, Hao S, et al. Balanced distribution adaptation for
+transfer learning. 2017 IEEE international conference on data mining 
+(ICDM).IEEE, 2017: 1129-1134.
 
 """
 
@@ -46,10 +43,10 @@ def kernel(X1, X2, ker='primal', gamma=1.0):
 
     Parameters
     ----------
-    X1 : array, (n1 x d), where n1 is the number of rows and d is the dimension.
+    X1 : array, (n1 x d), n1 is the number of rows and d is the dimension.
         Raw data from the first domain.
 
-    X2 : array, (n2 x d), where n2 is the number of rows and d is the dimension.
+    X2 : array, (n2 x d), n2 is the number of rows and d is the dimension.
         Raw data from the second domain.
 
     ker : {'primal', 'linear', 'rbf'}, default='primal'
@@ -105,7 +102,9 @@ class BalancedDistributionAdaptation:
     mode: {'BDA', 'WBDA'}, default='BDA'
         Model for plain BDA or weighted BDA for class imbalanced learning.
     """
-    def __init__(self, kernel_type='primal', dim=30, lamb=1, mu=0.5, gamma=1, T=10, mode='BDA'):
+
+    def __init__(self, kernel_type='primal', dim=30, lamb=1, mu=0.5, gamma=1, T=10,
+                 mode='BDA'):
         self.kernel_type = kernel_type
         self.dim = dim
         self.lamb = lamb
@@ -116,16 +115,16 @@ class BalancedDistributionAdaptation:
 
     def fit_predict(self, Xs, Ys, Xt, Yt, clf):
         ''' Fit the data using BDA and use a classifier for classification.
-        Xs : array, (n1 x d), where n1 is the number of rows and d is the dimension.
+        Xs : array, (n1 x d), n1 is the number of rows and d is the dimension.
             Raw data from the first domain.
 
-        Ys : array, (n1 x 1), where n1 is the number of rows.
+        Ys : array, (n1 x 1), n1 is the number of rows.
             Raw labels from the first domain.
 
-        Xt : array, (n2 x d), where n2 is the number of rows and d is the dimension.
+        Xt : array, (n2 x d), n2 is the number of rows and d is the dimension.
             Raw data from the second domain.
 
-        Yt : array, (n2 x 1), where n2 is the number of rows.
+        Yt : array, (n2 x 1), n2 is the number of rows.
             Raw labels from the second domain.
 
         clf: classifier
@@ -141,10 +140,10 @@ class BalancedDistributionAdaptation:
 
         list_acc : list
             Predicted accuracy for the target domain in all iterations.
-        
+
         A : array, (n1+n2) x (n1+n2)
             Transformation matrix for BDA.
-        
+
         '''
         list_acc = []
         X = np.hstack((Xs.T, Xt.T))
@@ -188,7 +187,8 @@ class BalancedDistributionAdaptation:
             K = kernel(self.kernel_type, X, None, gamma=self.gamma)
             n_eye = m if self.kernel_type == 'primal' else n
             a, b = np.linalg.multi_dot(
-                [K, M, K.T]) + self.lamb * np.eye(n_eye), np.linalg.multi_dot([K, H, K.T])
+                [K, M, K.T]) + self.lamb * np.eye(n_eye),
+            np.linalg.multi_dot([K, H, K.T])
             w, V = scipy.linalg.eig(a, b)
             ind = np.argsort(w)
             A = V[:, ind[:self.dim]]
@@ -196,12 +196,9 @@ class BalancedDistributionAdaptation:
             Z /= np.linalg.norm(Z, axis=0)
             Xs_new, Xt_new = Z[:, :ns].T, Z[:, ns:].T
 
-            if not clf:
-                print('You should use a certain classifier!')
-                return 0
             clf.fit(Xs_new, Ys.ravel())
             Y_tar_pseudo = clf.predict(Xt_new)
             acc = accuracy_score(Yt, Y_tar_pseudo)
             list_acc.append(acc)
-            print('{} iteration [{}/{}]: Acc: {:.4f}'.format(self.mode, t + 1, self.T, acc))
+            # print('{} iteration [{}/{}]: Acc: {:.4f}'.format(self.mode, t + 1, self.T, acc))
         return acc, Y_tar_pseudo, list_acc, A

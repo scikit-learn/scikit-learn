@@ -1,27 +1,23 @@
-from math import ceil
-
 import numpy as np
-from numpy.testing import assert_array_equal
-import pytest
-
-from sklearn.ensemble import StackingClassifier
-from sklearn.exceptions import NotFittedError
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris, make_blobs
-from sklearn.metrics import accuracy_score
-
+import pytest
 from sklearn.domain_adaptation import TransferComponentAnalysis
 
-# Author: Oliver Rausch <rauscho@ethz.ch>
+# Author: Jindong Wang <jindongwang@outlook.com>
 # License: BSD 3 clause
 
-# load the iris dataset and randomly permute it
-iris = load_iris()
-X_train, X_test, y_train, y_test = train_test_split(iris.data,
-                                                    iris.target,
-                                                    random_state=0)
+Xs, Xt = np.random.randn(100, 50), np.random.randn(90, 50)
+Ys, Yt = np.random.randint(0, 3, 100), np.random.randint(0, 3, 90)
+
+
+def test_basic_output():
+    # expected_output = {
+    #     0.2227,
+    #     'ypre should be 90 x 1 array'
+    # }
+    clf = KNeighborsClassifier()
+    tca = TransferComponentAnalysis()
+    acc, ypre, _, _ = tca.fit_predict(Xs, Ys, Xt, Yt, clf)
 
 
 @pytest.mark.parametrize("dim, lamb",
@@ -30,8 +26,8 @@ def test_invalid_params(dim, lamb):
     # Test negative iterations
     tca = TransferComponentAnalysis(dim=dim)
     with pytest.raises(ValueError, match="dim must be >= 0 or None"):
-        tca.fit(X_train, X_test)
+        tca.fit(Xs, Xt)
 
     tca = TransferComponentAnalysis(lamb=lamb)
     with pytest.raises(ValueError, match="lamb must be >= 0 or None"):
-        tca.fit(X_train, X_test)
+        tca.fit(Xs, Xt)
