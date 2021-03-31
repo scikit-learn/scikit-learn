@@ -767,10 +767,12 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
     if sample_weight is not None:
-        new_sum = _safe_accumulator_op(np.nansum, X * sample_weight[:, None],
-                                       axis=0)
-        new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X)),
-                                  axis=0)
+        # equivalent to np.nansum(X * sample_weight, axis=0)
+        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+        new_sum = _safe_accumulator_op(
+            np.matmul, sample_weight, np.where(np.isnan(X), 0, X))
+        new_sample_count = _safe_accumulator_op(
+            np.sum, sample_weight[:, None] * (~np.isnan(X)), axis=0)
     else:
         new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
         new_sample_count = np.sum(~np.isnan(X), axis=0)
@@ -784,10 +786,13 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     else:
         T = new_sum / new_sample_count
         if sample_weight is not None:
-            new_unnormalized_variance = np.nansum(sample_weight[:, None] *
-                                                  (X - T)**2, axis=0)
+            # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
+            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+            new_unnormalized_variance = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(np.isnan(X), 0, (X - T)**2))
         else:
-            new_unnormalized_variance = np.nansum((X - T)**2, axis=0)
+            new_unnormalized_variance = _safe_accumulator_op(
+                np.nansum, (X - T)**2, axis=0)
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):
