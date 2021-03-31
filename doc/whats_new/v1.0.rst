@@ -79,6 +79,13 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports
+  `handle_unknown='ignore'` and dropping categories. :pr:`19041` by
+  `Thomas Fan`_.
+
 - |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
   :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
   settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
