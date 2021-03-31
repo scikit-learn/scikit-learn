@@ -200,5 +200,4 @@ class BalancedDistributionAdaptation:
             Y_tar_pseudo = clf.predict(Xt_new)
             acc = accuracy_score(Yt, Y_tar_pseudo)
             list_acc.append(acc)
-            # print('{} iteration [{}/{}]: Acc: {:.4f}'.format(self.mode, t + 1, self.T, acc))
         return acc, Y_tar_pseudo, list_acc, A
