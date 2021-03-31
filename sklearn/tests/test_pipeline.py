@@ -160,6 +160,14 @@ class DummyEstimatorParams(BaseEstimator):
         self.got_attribute = got_attribute
         return self
 
+    def predict_proba(self, X, got_attribute=False):
+        self.got_attribute = got_attribute
+        return self
+
+    def predict_log_proba(self, X, got_attribute=False):
+        self.got_attribute = got_attribute
+        return self
+
 
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
@@ -455,6 +463,26 @@ def test_predict_with_predict_params():
     pipe = Pipeline([('transf', Transf()), ('clf', DummyEstimatorParams())])
     pipe.fit(None, None)
     pipe.predict(X=None, got_attribute=True)
+
+    assert pipe.named_steps['clf'].got_attribute
+
+
+def test_predict_proba_with_predict_params():
+    # tests that Pipeline passes predict_params to the final estimator
+    # when predict is invoked
+    pipe = Pipeline([('transf', Transf()), ('clf', DummyEstimatorParams())])
+    pipe.fit(None, None)
+    pipe.predict_proba(X=None, got_attribute=True)
+
+    assert pipe.named_steps['clf'].got_attribute
+
+
+def test_predict_log_proba_with_predict_params():
+    # tests that Pipeline passes predict_params to the final estimator
+    # when predict is invoked
+    pipe = Pipeline([('transf', Transf()), ('clf', DummyEstimatorParams())])
+    pipe.fit(None, None)
+    pipe.predict_log_proba(X=None, got_attribute=True)
 
     assert pipe.named_steps['clf'].got_attribute
 
