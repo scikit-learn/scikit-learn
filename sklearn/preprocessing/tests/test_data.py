@@ -2517,3 +2517,9 @@ def test_minmax_scaler_clip(feature_range):
         X_transformed,
         [[feature_range[0], feature_range[0],
           feature_range[1], feature_range[1]]])
+
+
+def test_standard_scaler_raise_error_for_1d_input():
+    scaler = StandardScaler().fit(X_2d)
+    with pytest.raises(ValueError):
+        scaler.inverse_transform(X_2d[:, 0])
