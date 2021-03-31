@@ -262,6 +262,37 @@ def test_standard_scaler_constant_features(
             assert_allclose(X_scaled_2, X_scaled_2)
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("array_constructor",
+                         [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
+def test_standard_scaler_near_constant_features(array_constructor, dtype):
+    # Check that when the variance is too small (var << mean**2) the feature
+    # is considered constant and not scaled.
+
+    scale_max = 15 if dtype == np.float64 else 7
+    scales = np.array([10**i for i in range(-scale_max, scale_max + 1, 2)],
+                      dtype=dtype)
+
+    n_samples, n_features = 100, scales.shape[0]
+    X = np.empty((n_samples, n_features), dtype=dtype)
+    # Make a dataset of known var = scales**2 and mean = 1
+    X[:n_samples//2, :] = 1 + scales
+    X[n_samples//2:, :] = 1 - scales
+    X_array = array_constructor(X)
+
+    scaler = StandardScaler(with_mean=False).fit(X_array)
+
+    # if var < bound = N.eps.var + N².eps².mean², the feature is considered
+    # constant and the scale_ attribute is set to 1.
+    eps = np.finfo(np.float64).eps  # we use float64 accumulators
+    bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2
+    assert_allclose(scaler.scale_[scales**2 < bounds], 1.)
+
+    # The other features are scaled and scale_ is equal to sqrt(var_)
+    assert_allclose(scaler.scale_[scales**2 > bounds],
+                    np.sqrt(scaler.var_)[scales**2 > bounds])
+
+
 def test_scale_1d():
     # 1-d inputs
     X_list = [1., 3., 5., 0.]
