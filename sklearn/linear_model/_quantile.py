@@ -157,7 +157,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # residual = y - X@coef - intercept = u - v
         # A_eq = (1_n, X, -1_n, -X, diag(1_n), -diag(1_n))
         # b_eq = y
-        # p = n_features + fit_intercep
+        # p = n_features + fit_intercept
         # n = n_samples
         # 1_n = vector of length n with entries equal one
         # see https://stats.stackexchange.com/questions/384909/
