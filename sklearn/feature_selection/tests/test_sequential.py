@@ -8,7 +8,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 

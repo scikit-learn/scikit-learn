@@ -362,8 +362,8 @@ experimental features / estimators that are subject to change without
 deprecation cycle.
 
 To create an experimental module, you can just copy and modify the content of
-`enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`_,
+`enable_halving_search_cv.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_halving_search_cv.py>`_,
 or
 `enable_iterative_imputer.py
 <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_iterative_imputer.py>`_.
@@ -372,7 +372,7 @@ Note that the public import path must be to a public subpackage (like
 ``sklearn/ensemble`` or ``sklearn/impute``), not just a ``.py`` module.
 Also, the (private) experimental features that are imported must be in a
 submodule/subpackage of the public subpackage, e.g.
-``sklearn/ensemble/_hist_gradient_boosting/`` or
+``sklearn/ensemble/_halving_search_cv/`` or
 ``sklearn/impute/_iterative.py``. This is needed so that pickles still work
 in the future when the features aren't experimental anymore.
 
@@ -385,15 +385,15 @@ or `sklearn/impute/__init__.py
 for an example.
 
 Please also write basic tests following those in
-`test_enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
+`test_enable_halving_search_cv.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_halving_search_cv.py>`_.
 
 Make sure every user-facing code you write explicitly mentions that the feature
 is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
 
     # To use this experimental feature, we need to explicitly ask for it:
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    from sklearn.ensemble import HistGradientBoostingRegressor
+    from sklearn.experimental import enable_halving_search_cv  # noqa
+    from sklearn.model_selection import HalvingGridSearchCV
 
 For the docs to render properly, please also import
 ``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be
