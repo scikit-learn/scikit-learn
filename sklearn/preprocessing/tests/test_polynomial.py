@@ -565,7 +565,7 @@ def test_polynomial_features_csr_wide(columns):
     est.fit_transform(x)
 
 
-@pytest.mark.parametrize("n_features", range(1, 5))
+@pytest.mark.parametrize("n_features", [1, 4, 5])
 @pytest.mark.parametrize("degree", range(1, 5))
 @pytest.mark.parametrize("interaction_only", [True, False])
 @pytest.mark.parametrize("include_bias", [True, False])
