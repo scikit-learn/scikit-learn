@@ -116,7 +116,7 @@ def test_gnb_neg_priors():
     """Test whether an error is raised in case of negative priors"""
     clf = GaussianNB(priors=np.array([-1., 2.]))
 
-    msg = re.escape('Priors must be non-negative.')
+    msg = 'Priors must be non-negative'
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
 
