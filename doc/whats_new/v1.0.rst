@@ -395,6 +395,10 @@ Changelog
   be scaled to have standard deviation 1e-4 in 1.2.
   :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
 
+- |Feature| :class:`sklearn.manifold.Isomap` now supports radius-based
+  neighbors via the `radius` argument.
+  :pr:`19794` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.metrics`
 ......................
 
