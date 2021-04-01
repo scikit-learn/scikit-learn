@@ -372,7 +372,8 @@ or
 
   These are permalink as in 0.24, where these estimators are still
   experimental. They might be stable at the time of reading - hence the
-  permalink. See below for instructions on the transition to experimental to stable.
+  permalink. See below for instructions on the transition from experimental
+  to stable.
 
 Note that the public import path must be to a public subpackage (like
 ``sklearn/ensemble`` or ``sklearn/impute``), not just a ``.py`` module.
@@ -399,8 +400,8 @@ Make sure every user-facing code you write explicitly mentions that the feature
 is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
 
     # To use this experimental feature, we need to explicitly ask for it:
-    from sklearn.experimental import enable_hist_gradient_boosting# noqa
-    from sklearn.ensemble import HistGradientBoostingClassifier
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    from sklearn.ensemble import HistGradientBoostingRegressor
 
 For the docs to render properly, please also import
 ``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be
