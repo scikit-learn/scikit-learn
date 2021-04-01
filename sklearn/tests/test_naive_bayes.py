@@ -481,7 +481,7 @@ def test_mnnb(kind):
     # Check the ability to predict the learning set.
     clf = MultinomialNB()
 
-    msg = re.escape('Negative values in data passed to')
+    msg = 'Negative values in data passed to'
     with pytest.raises(ValueError, match=msg):
         clf.fit(-X, y2)
     y_pred = clf.fit(X, y2).predict(X)
