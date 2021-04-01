@@ -814,7 +814,7 @@ def test_alpha():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
     nb = BernoulliNB(alpha=0.)
-    msg = re.escape(
+    msg = (
         "alpha too small will result in numeric errors,"
         " setting alpha = 1.0e-10"
     )
