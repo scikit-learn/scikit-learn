@@ -345,7 +345,7 @@ def test_discretenb_provide_prior(DiscreteNaiveBayes):
     assert_array_almost_equal(prior, np.array([.5, .5]))
 
     # Inconsistent number of classes with prior
-    msg = re.escape('Number of priors must match number of classes')
+    msg = 'Number of priors must match number of classes'
     with pytest.raises(ValueError, match=msg):
         clf.fit([[0], [1], [2]], [0, 1, 2])
 
