@@ -174,3 +174,44 @@ def test_asymmetric_error(quantile):
     assert_allclose(model.intercept_, res.x[0], rtol=1e-3)
     assert_allclose(model.coef_, res.x[1:], rtol=1e-3)
     assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=8e-3)
+
+
+@pytest.mark.parametrize('quantile', [0.2, 0.5, 0.8])
+def test_equivariance(quantile):
+    """Test equivariace of quantile regression.
+
+    See Koenker (2005) Quantile Regression, Chapter 2.2.3.
+    """
+    rng = np.random.RandomState(42)
+    n_samples, n_features = 100, 5
+    X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                           n_informative=n_features, noise=1.0,
+                           random_state=rng)
+    # make y asymmetric
+    y += rng.exponential(scale=100, size=y.shape)
+    model1 = QuantileRegressor(quantile=quantile, alpha=0).fit(X, y)
+
+    # coef(q; a*y, X) = a * coef(q; y, X)
+    a = 2.5
+    model2 = QuantileRegressor(quantile=quantile, alpha=0).fit(X, a * y)
+    assert model2.intercept_ == pytest.approx(a * model1.intercept_)
+    assert_allclose(model2.coef_, a * model1.coef_, rtol=1e-6)
+
+    # coef(1-q; -a*y, X) = -a * coef(q; y, X)
+    model2 = QuantileRegressor(quantile=1 - quantile, alpha=0).fit(X, -a * y)
+    assert model2.intercept_ == pytest.approx(-a * model1.intercept_)
+    assert_allclose(model2.coef_, -a * model1.coef_, rtol=1e-6)
+
+    # coef(q; y + X @ g, X) = coef(q; y, X) + g
+    g_intercept, g_coef = rng.randn(), rng.randn(n_features)
+    model2 = QuantileRegressor(quantile=quantile, alpha=0)
+    model2.fit(X, y + X @ g_coef + g_intercept)
+    assert model2.intercept_ == pytest.approx(model1.intercept_ + g_intercept)
+    assert_allclose(model2.coef_, model1.coef_ + g_coef, rtol=1e-6)
+
+    # coef(q; y, X @ A) = A^-1 @ coef(q; y, X)
+    A = rng.randn(n_features, n_features)
+    model2 = QuantileRegressor(quantile=quantile, alpha=0)
+    model2.fit(X@A, y)
+    assert model2.intercept_ == pytest.approx(model1.intercept_)
+    assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=2e-6)
