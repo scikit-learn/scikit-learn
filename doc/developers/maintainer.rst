@@ -411,7 +411,7 @@ sklearn.experimental import *`` **does not work**.
 Note that some experimental classes / functions are not included in the
 :mod:`sklearn.experimental` module: ``sklearn.datasets.fetch_openml``.
 
-Once the feature become stable, remove all `enable_my_ecperimental_feature`
+Once the feature become stable, remove all `enable_my_experimental_feature`
 in the scikit-learn code (even feature highlights etc.) and make the
 `enable_my_experimental_feature` a no-op that just raises a warning:
 `test_enable_hist_gradient_boosting.py
