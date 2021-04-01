@@ -531,16 +531,18 @@ def test_mnb_prior_unobserved_targets():
 
     clf = MultinomialNB()
 
-    with pytest.warns(None):
+    with pytest.warns(None) as record:
         clf.partial_fit(X, y, classes=[0, 1, 2])
+    assert len(record) == 0
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
     assert clf.predict([[1, 1]]) == 0
 
     # add a training example with previously unobserved class
-    with pytest.warns(None):
+    with pytest.warns(None) as record:
         clf.partial_fit([[1, 1]], [2])
+    assert len(record) == 0
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
