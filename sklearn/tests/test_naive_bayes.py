@@ -345,12 +345,12 @@ def test_discretenb_provide_prior(DiscreteNaiveBayes):
     assert_array_almost_equal(prior, np.array([.5, .5]))
 
     # Inconsistent number of classes with prior
-    msg_1 = re.escape('Number of priors must match number of classes')
-    with pytest.raises(ValueError, match=msg_1):
+    msg = re.escape('Number of priors must match number of classes')
+    with pytest.raises(ValueError, match=msg):
         clf.fit([[0], [1], [2]], [0, 1, 2])
 
-    msg_2 = re.escape('is not the same as on last call to partial_fit')
-    with pytest.raises(ValueError, match=msg_2):
+    msg = re.escape('is not the same as on last call to partial_fit')
+    with pytest.raises(ValueError, match=msg):
         clf.partial_fit([[0], [1]], [0, 1], classes=[0, 1, 1])
 
 
