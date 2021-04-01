@@ -349,7 +349,7 @@ def test_discretenb_provide_prior(DiscreteNaiveBayes):
     with pytest.raises(ValueError, match=msg):
         clf.fit([[0], [1], [2]], [0, 1, 2])
 
-    msg = re.escape('is not the same as on last call to partial_fit')
+    msg = 'is not the same as on last call to partial_fit'
     with pytest.raises(ValueError, match=msg):
         clf.partial_fit([[0], [1]], [0, 1], classes=[0, 1, 1])
 
