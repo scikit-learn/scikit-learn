@@ -147,7 +147,7 @@ def test_gnb_wrong_nb_priors():
     from the number of class"""
     clf = GaussianNB(priors=np.array([.25, .25, .25, .25]))
 
-    msg = re.escape('Number of priors must match number of classes')
+    msg = 'Number of priors must match number of classes'
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
 
