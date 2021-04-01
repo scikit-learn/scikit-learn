@@ -16,8 +16,8 @@ def test_basic_output():
     #     'ypre should be 90 x 1 array'
     # }
     clf = KNeighborsClassifier()
-    tca = BalancedDistributionAdaptation()
-    acc, ypre, _, _ = tca.fit_predict(Xs, Ys, Xt, Yt, clf)
+    bda = BalancedDistributionAdaptation()
+    acc, ypre, _, _ = bda.fit_predict(Xs, Ys, Xt, Yt, clf)
     print(acc, ypre)
 
 
@@ -27,8 +27,8 @@ def test_invalid_params(dim, lamb):
     # Test negative iterations
     bda = BalancedDistributionAdaptation(dim=dim)
     with pytest.raises(ValueError, match="dim must be >= 0 or None"):
-        bda.fit(Xs, Xt)
+        bda.fit_predict(Xs, Xt)
 
     bda = BalancedDistributionAdaptation(lamb=lamb)
     with pytest.raises(ValueError, match="lamb must be >= 0 or None"):
-        bda.fit(Xs, Xt)
+        bda.fit_predict(Xs, Xt)
