@@ -412,7 +412,7 @@ Note that some experimental classes / functions are not included in the
 Once the feature become stable, remove all `enable_my_experimental_feature`
 in the scikit-learn code (even feature highlights etc.) and make the
 `enable_my_experimental_feature` a no-op that just raises a warning:
-`test_enable_hist_gradient_boosting.py
+`enable_hist_gradient_boosting.py
 <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`_,
 and update the tests accordingly `test_enable_hist_gradient_boosting.py
 <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
