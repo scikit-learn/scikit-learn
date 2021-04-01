@@ -54,7 +54,7 @@ plt.show()
 
 #########################################################################
 #
-# The second part of the example shows that LinearRegression minimizes RMSE,
+# The second part of the example shows that LinearRegression minimizes MSE,
 # while QuantileRegressor minimizes MAE, and both do their own job well.
 
 models = [LinearRegression(), QuantileRegressor(alpha=0)]

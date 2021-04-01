@@ -1432,13 +1432,13 @@ Quantile regression estimates the median or other quantiles of :math:`y`
 conditional on :math:`X`, while OLS estimates the conditional mean.
 
 As a linear model, the :class:`QuantileRegressor` gives linear predictions
-:math:`\hat{y}(w, x) = Xw` for the specified ``quantile`` :math:`q \in (0, 1)`.
+:math:`\hat{y}(w, x) = Xw` for the :math:`q`-th quantile, :math:`q \in (0, 1)`.
 The weights or coefficients :math:`w` are then found by the following
 minimization problem:
 
 .. math::
     \min_{w} {\frac{1}{n_{\text{samples}}}
-    \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}
+    \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}.
 
 This consists of the pinball loss (also known as linear loss),
 see also :class:`~sklearn.metrics.mean_pinball_loss`,
@@ -1454,7 +1454,7 @@ see also :class:`~sklearn.metrics.mean_pinball_loss`,
 and the L1 penalty, similar to the :class:`Lasso`.
 
 As the pinball loss is only linear in the residuals, quantile regression is
-much more robust to outliers than estimation of the mean by the squared error.
+much more robust to outliers than squared error based estimation of the mean.
 Somewhat in between is the :class:`HuberRegressor`.
 
 Quantile regression may be useful if one is interested in predicting an
@@ -1474,7 +1474,7 @@ estimated by models other than linear models. For example,
 :class:`GradientBoostingRegressor` can predict conditional quantiles
 if its parameter ``loss`` is set to ``"quantile"`` and parameter ``alpha`` is
 set to the quantile that should be predicted. See the example in
-:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`.
 
 Most implementations of quantile regression are based on linear programming
 problem. The current implementation is based on :mod:`scipy.optimize.linprog`.
