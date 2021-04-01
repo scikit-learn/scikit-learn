@@ -156,7 +156,7 @@ def test_gnb_prior_greater_one():
     """Test if an error is raised if the sum of prior greater than one"""
     clf = GaussianNB(priors=np.array([2., 1.]))
 
-    msg = re.escape('The sum of the priors should be 1')
+    msg = 'The sum of the priors should be 1'
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
 
