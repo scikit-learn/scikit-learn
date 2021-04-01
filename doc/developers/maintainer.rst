@@ -396,12 +396,10 @@ Please also write basic tests following those in
 <https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
 
 
-Make sure every user-facing code you write explicitly mentions that the feature
-is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
-
-    # To use this experimental feature, we need to explicitly ask for it:
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    from sklearn.ensemble import HistGradientBoostingRegressor
+Make sure every user-facing code you write explicitly mentions that the
+feature is experimental, and add a ``# noqa`` comment to avoid pep8-related
+warnings, as done `here
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_hist_gradient_boosting.py#L11-L15>`_.
 
 For the docs to render properly, please also import
 ``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be
