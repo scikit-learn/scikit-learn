@@ -1485,11 +1485,13 @@ problem. The current implementation is based on :mod:`scipy.optimize.linprog`.
 
 .. topic:: References:
 
-  * Koenker, R., & Bassett Jr, G. (1978). `Regression quantiles. <http://web.stanford.edu/~doubleh/otherpapers/koenker.pdf>`_
-            Econometrica: journal of the Econometric Society, 33-50.
+  * Koenker, R., & Bassett Jr, G. (1978). `Regression quantiles.
+    <https://gib.people.uic.edu/RQ.pdf>`_
+    Econometrica: journal of the Econometric Society, 33-50.
 
-  * Chen, C., & Wei, Y. (2005). `Computational issues for quantile regression. <http://pdfs.semanticscholar.org/5cf3/f9fe77c423dc394c8766cbdcfb41ea44b7d4.pdf>`_
-           Sankhya: The Indian Journal of Statistics, 399-417.
+  * Portnoy, S., & Koenker, R. (1997). The Gaussian hare and the Laplacian
+    tortoise: computability of squared-error versus absolute-error estimators.
+    Statistical Science, 12, 279-300. https://doi.org/10.1214/ss/1030037960
 
 
 .. _polynomial_regression:
