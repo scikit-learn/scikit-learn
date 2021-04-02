@@ -109,6 +109,13 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
   when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
 
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| :class:`compose.ColumnTransformer` now records the output
+  of each transformer in `output_indices_`. :pr:`18393` by
+  :user:`Luca Bittarello <lbittarello>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
