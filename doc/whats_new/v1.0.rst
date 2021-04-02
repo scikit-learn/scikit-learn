@@ -137,6 +137,11 @@ Changelog
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` are no longer
+  experimental. They are now considered stable and are subject to the same
+  deprecation cycles as all other estimators. :pr:`19799` by `Nicolas Hug`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
