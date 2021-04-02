@@ -6,6 +6,7 @@
 #          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #          Empty radius support by Andreas Bjerre-Nielsen
+#          Quantile methods by Jasper Roebroek <roebroek.jasper@gmail.com>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam,
 #                           University of Copenhagen
@@ -19,6 +20,7 @@ from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
+from ..utils.weighted_quantile import weighted_quantile
 
 
 class KNeighborsRegressor(KNeighborsMixin,
@@ -221,6 +223,48 @@ class KNeighborsRegressor(KNeighborsMixin,
             for j in range(_y.shape[1]):
                 num = np.sum(_y[neigh_ind, j] * weights, axis=1)
                 y_pred[:, j] = num / denom
+
+        if self._y.ndim == 1:
+            y_pred = y_pred.ravel()
+
+        return y_pred
+
+
+class KNeighborsQuantileRegressor(KNeighborsRegressor):
+    """
+    Quantile regression on K nearest neighbours.
+    """
+    def predict(self, X, q=0.5):
+        """
+        Predict conditional quantile `q` of the nearest neighbours.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
+            Test samples.
+
+        Returns
+        -------
+        y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=float
+            Target values.
+        """
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
+
+        neigh_dist, neigh_ind = self.kneighbors(X)
+
+        weights = _get_weights(neigh_dist, self.weights)
+
+        _y = self._y
+        if _y.ndim == 1:
+            _y = _y.reshape((-1, 1))
+
+        a = _y[neigh_ind]
+        if weights is not None:
+            weights = np.broadcast_to(weights[:, :, np.newaxis], a.shape)
+
+        # this falls back on np.quantile if weights is None
+        y_pred = weighted_quantile(a, q, weights, axis=1)
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
