@@ -824,7 +824,7 @@ class CategoricalCrossEntropy(
         y : ndarray
         """
         return is_in_interval_range(y, self.interval_y_true) and np.all(
-            y.astype(np.int) == y
+            y.astype(int) == y
         )
 
     def fit_intercept_only(self, y_true, sample_weight=None):
