@@ -552,19 +552,6 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-@pytest.mark.parametrize("columns", [1, 2, 3, 1000])
-def test_polynomial_features_csr_wide(columns):
-    """
-    Test that very wide feature matrices do not cause integer overflow.
-
-    See https://github.com/scikit-learn/scikit-learn/issues/16803
-    """
-    x = sparse.csr_matrix(([1], ([0], [columns])))
-
-    est = PolynomialFeatures(3)
-    est.fit_transform(x)
-
-
 @pytest.mark.parametrize("n_features", [1, 4, 5])
 @pytest.mark.parametrize("degree", range(1, 5))
 @pytest.mark.parametrize("interaction_only", [True, False])
