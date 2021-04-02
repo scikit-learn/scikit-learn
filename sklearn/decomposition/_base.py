@@ -109,17 +109,6 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-
-        Examples
-        --------
-
-        >>> import numpy as np
-        >>> from sklearn.decomposition import IncrementalPCA
-        >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-        >>> ipca = IncrementalPCA(n_components=2, batch_size=3)
-        >>> ipca.fit(X)
-        IncrementalPCA(batch_size=3, n_components=2)
-        >>> ipca.transform(X) # doctest: +SKIP
         """
         check_is_fitted(self)
 

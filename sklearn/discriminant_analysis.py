@@ -18,7 +18,6 @@ from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
-from .utils import check_array
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
@@ -477,8 +476,12 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
         # (n_classes) centers
         _, S, Vt = linalg.svd(X, full_matrices=0)
 
-        self.explained_variance_ratio_ = (S**2 / np.sum(
-            S**2))[:self._max_components]
+        if self._max_components == 0:
+            self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
+        else:
+            self.explained_variance_ratio_ = (S**2 / np.sum(
+                S**2))[:self._max_components]
+
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
@@ -586,7 +589,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
                                       "solver (use 'svd' or 'eigen').")
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         if self.solver == 'svd':
             X_new = np.dot(X - self.xbar_, self.scalings_)
         elif self.solver == 'eigen':
@@ -824,7 +827,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         # return log posterior, see eq (4.12) p. 110 of the ESL.
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]

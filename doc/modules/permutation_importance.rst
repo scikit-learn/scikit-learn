@@ -16,6 +16,16 @@ indicative of how much the model depends on the feature. This technique
 benefits from being model agnostic and can be calculated many times with
 different permutations of the feature.
 
+.. warning::
+
+  Features that are deemed of **low importance for a bad model** (low
+  cross-validation score) could be **very important for a good model**.
+  Therefore it is always important to evaluate the predictive power of a model
+  using a held-out set (or better with cross-validation) prior to computing
+  importances. Permutation importance does not reflect to the intrinsic
+  predictive value of a feature by itself but **how important this feature is
+  for a particular model**.
+
 The :func:`permutation_importance` function calculates the feature importance
 of :term:`estimators` for a given dataset. The ``n_repeats`` parameter sets the
 number of times a feature is randomly shuffled and returns a sample of feature
@@ -64,15 +74,49 @@ highlight which features contribute the most to the generalization power of the
 inspected model. Features that are important on the training set but not on the
 held-out set might cause the model to overfit.
 
-.. warning::
+The permutation feature importance is the decrease in a model score when a single
+feature value is randomly shuffled. The score function to be used for the
+computation of importances can be specified with the `scoring` argument,
+which also accepts multiple scorers. Using multiple scorers is more computationally
+efficient than sequentially calling :func:`permutation_importance` several times
+with a different scorer, as it reuses model predictions.
 
-  Features that are deemed of **low importance for a bad model** (low
-  cross-validation score) could be **very important for a good model**.
-  Therefore it is always important to evaluate the predictive power of a model
-  using a held-out set (or better with cross-validation) prior to computing
-  importances. Permutation importance does not reflect to the intrinsic
-  predictive value of a feature by itself but **how important this feature is
-  for a particular model**.
+An example of using multiple scorers is shown below, employing a list of metrics,
+but more input formats are possible, as documented in :ref:`multimetric_scoring`.
+
+  >>> scoring = ['r2', 'neg_mean_absolute_percentage_error', 'neg_mean_squared_error']
+  >>> r_multi = permutation_importance(
+  ...     model, X_val, y_val, n_repeats=30, random_state=0, scoring=scoring)
+  ...
+  >>> for metric in r_multi:
+  ...     print(f"{metric}")
+  ...     r = r_multi[metric]
+  ...     for i in r.importances_mean.argsort()[::-1]:
+  ...         if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
+  ...             print(f"    {diabetes.feature_names[i]:<8}"
+  ...                   f"{r.importances_mean[i]:.3f}"
+  ...                   f" +/- {r.importances_std[i]:.3f}")
+  ...
+  r2
+    s5      0.204 +/- 0.050
+    bmi     0.176 +/- 0.048
+    bp      0.088 +/- 0.033
+    sex     0.056 +/- 0.023
+  neg_mean_absolute_percentage_error
+    s5      0.081 +/- 0.020
+    bmi     0.064 +/- 0.015
+    bp      0.029 +/- 0.010
+  neg_mean_squared_error
+    s5      1013.903 +/- 246.460
+    bmi     872.694 +/- 240.296
+    bp      438.681 +/- 163.025
+    sex     277.382 +/- 115.126
+
+The ranking of the features is approximately the same for different metrics even
+if the scales of the importance values are very different. However, this is not
+guaranteed and different metrics might lead to significantly different feature
+importances, in particular for models trained for imbalanced classification problems,
+for which the choice of the classification metric can be critical.
 
 Outline of the permutation importance algorithm
 -----------------------------------------------
