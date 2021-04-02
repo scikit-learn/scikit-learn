@@ -393,13 +393,15 @@ for an example.
 
 Please also write basic tests following those in
 `test_enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`__.
 
 
-Make sure every user-facing code you write explicitly mentions that the
-feature is experimental, and add a ``# noqa`` comment to avoid pep8-related
-warnings, as done `here
-<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_hist_gradient_boosting.py#L11-L15>`_.
+Make sure every user-facing code you write explicitly mentions that the feature
+is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
+
+    # To use this experimental feature, we need to explicitly ask for it:
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    from sklearn.ensemble import HistGradientBoostingRegressor
 
 For the docs to render properly, please also import
 ``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be
@@ -412,7 +414,7 @@ Note that some experimental classes / functions are not included in the
 Once the feature become stable, remove all `enable_my_experimental_feature`
 in the scikit-learn code (even feature highlights etc.) and make the
 `enable_my_experimental_feature` a no-op that just raises a warning:
-`test_enable_hist_gradient_boosting.py
+`enable_hist_gradient_boosting.py
 <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`_,
 and update the tests accordingly `test_enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`__.
