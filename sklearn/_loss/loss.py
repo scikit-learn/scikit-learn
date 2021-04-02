@@ -155,7 +155,7 @@ class BaseLoss(BaseLink, cLossFunction):
         loss : None or C-contiguous array of shape (n_samples,)
             A location into which the result is stored. If None, a new array
             might be created.
-        n_threads : int
+        n_threads : int, default=1
             Might use openmp thread parallelism.
 
         Returns
@@ -203,7 +203,7 @@ class BaseLoss(BaseLink, cLossFunction):
             of shape (n_samples, n_classes)
             A location into which the gradient is stored. If None, a new array
             might be created.
-        n_threads : int
+        n_threads : int, default=1
             Might use openmp thread parallelism.
 
         Returns
@@ -261,7 +261,7 @@ class BaseLoss(BaseLink, cLossFunction):
             of shape (n_samples, n_classes)
             A location into which the result is stored. If None, a new array
             might be created.
-        n_threads : int
+        n_threads : int, default=1
             Might use openmp thread parallelism.
 
         Returns
@@ -314,7 +314,7 @@ class BaseLoss(BaseLink, cLossFunction):
             of shape (n_samples, n_classes)
             A location into which the hessian is stored. If None, a new array
             might be created.
-        n_threads : int
+        n_threads : int, default=1
             Might use openmp thread parallelism.
 
         Returns
@@ -365,7 +365,7 @@ class BaseLoss(BaseLink, cLossFunction):
             Raw prediction values (in link space).
         sample_weight : None or C-contiguous array of shape (n_samples,)
             Sample weights.
-        n_threads : int
+        n_threads : int, default=1
             Might use openmp thread parallelism.
 
         Returns
@@ -868,7 +868,7 @@ class CategoricalCrossEntropy(
         proba : None or array of shape (n_samples, n_classes)
             A location into which the class probabilities are stored. If None,
             a new array might be created.
-        n_threads : int
+        n_threads : int, default=1
             Might use openmp thread parallelism.
 
         Returns
