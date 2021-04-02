@@ -417,7 +417,7 @@ in the scikit-learn code (even feature highlights etc.) and make the
 `enable_hist_gradient_boosting.py
 <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`__.
 The file should stay there indefinitely as we don't want to break users code:
-we just incentive them to remove that import with the warning.
+we just incentivize them to remove that import with the warning.
 
 Also update the tests accordingly: `test_enable_hist_gradient_boosting.py
 <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`__.
