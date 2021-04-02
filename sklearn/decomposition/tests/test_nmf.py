@@ -216,12 +216,10 @@ def test_n_components_greater_n_features(Estimator):
     Estimator(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
 
-@pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
-                         [[NMF, 'cd', 2], [NMF, 'mu', 2],
-                          [MiniBatchNMF, 'mu', 1]])
+@pytest.mark.parametrize('solver', ['cd', 'mu'])
 @pytest.mark.parametrize('regularization',
                          [None, 'both', 'components', 'transformation'])
-def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
+def test_nmf_sparse_input(solver, regularization):
     # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
 
@@ -230,11 +228,36 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
-    init = 'nndsvd'  # FIXME : should be removed in 1.1
 
-    est1 = Estimator(solver=solver, n_components=5, init=init,
-                     beta_loss=beta_loss, max_iter=500,
-                     regularization=regularization, random_state=0)
+    est1 = NMF(solver=solver, n_components=5, init='random',
+               regularization=regularization, random_state=0,
+               tol=1e-2)
+    est2 = clone(est1)
+
+    W1 = est1.fit_transform(A)
+    W2 = est2.fit_transform(A_sparse)
+    H1 = est1.components_
+    H2 = est2.components_
+
+    assert_array_almost_equal(W1, W2)
+    assert_array_almost_equal(H1, H2)
+
+
+@pytest.mark.parametrize('regularization',
+                         [None, 'both', 'components', 'transformation'])
+def test_mbnmf_sparse_input(regularization):
+    # Test that sparse matrices are accepted as input
+    from scipy.sparse import csc_matrix
+
+    rng = np.random.mtrand.RandomState(42)
+    A = np.abs(rng.randn(10, 10))
+    A[:, 2 * np.arange(5)] = 0
+    A_sparse = csc_matrix(A)
+
+
+    est1 = MiniBatchNMF(solver='mu', n_components=5, init='random',
+                        regularization=regularization, random_state=0,
+                        beta_loss='kullback-leibler', tol=1e-2)
     est2 = clone(est1)
 
     W1 = est1.fit_transform(A)
@@ -262,7 +285,7 @@ def test_nmf_sparse_transform(Estimator, solver, beta_loss):
                       beta_loss=beta_loss, max_iter=400, init=init)
     A_fit_tr = model.fit_transform(A)
     A_tr = model.transform(A)
-    assert_array_almost_equal(A_fit_tr, A_tr, decimal=4)
+    assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
 
 
 @pytest.mark.parametrize('init', ['random', 'nndsvd'])
@@ -555,8 +578,7 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
 
 
 @ignore_warnings(category=ConvergenceWarning)
-@pytest.mark.parametrize('forget_factor',
-                         [None, 0.7])
+@pytest.mark.parametrize('forget_factor', [None, 0.7])
 def test_nmf_decreasing(forget_factor):
     # test that the objective function is decreasing at each iteration
     n_samples = 20
@@ -677,7 +699,7 @@ def test_nmf_custom_init_dtype_error(Estimator):
 
 def test_nmf_is_minibatch_nmf():
     # Test that the standard nmf is the minibatch nmf after 1 iteration
-    # with batch_size = n_samples and forget_factor = None
+    # with batch_size = n_samples and forget_factor 0.0
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
     max_iter = 1
@@ -687,10 +709,10 @@ def test_nmf_is_minibatch_nmf():
               max_iter=max_iter, beta_loss=beta_loss)
     mbnmf = MiniBatchNMF(5, solver='mu', init=init, random_state=0,
                          max_iter=max_iter, beta_loss=beta_loss,
-                         batch_size=X.shape[0], forget_factor=0.01)
+                         batch_size=X.shape[0], forget_factor=0.0)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW, decimal=4)
+    assert_array_almost_equal(W, mbW)
 
 
 @pytest.mark.parametrize('batch_size', [24, 32, 48])
@@ -729,7 +751,7 @@ def test_minibatch_nmf_partial_fit():
 
     assert mbnmf1.n_iter_ == mbnmf2.n_iter_
     assert_array_almost_equal(mbnmf1.components_, mbnmf2.components_,
-                              decimal=1)
+                              decimal=0)
 
 
 # FIXME : should be removed in 1.1
