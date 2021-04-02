@@ -140,6 +140,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         inspect which transformer is responsible for which transformed
         feature(s).
 
+        .. versionadded:: 1.0
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
