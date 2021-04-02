@@ -106,6 +106,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
                                    multi_output=True,
                                    accept_sparse=True,
                                    reset=first_time)
+
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
                              "multi-output regression but has only one.")
@@ -202,7 +203,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a predict method")
 
-        X = self._validate_data(X, force_all_finite=False, accept_sparse=True, reset=False)
+        X = self._validate_data(X, force_all_finite=False,
+                                accept_sparse=True, reset=False)
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X)
             for e in self.estimators_)
@@ -533,7 +535,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=True,reset=False)
+        X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -684,7 +686,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         -------
         Y_prob : array-like of shape (n_samples, n_classes)
         """
-        X = self._validate_data(X, accept_sparse=True,reset=False)
+        X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
