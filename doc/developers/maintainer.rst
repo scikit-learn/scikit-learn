@@ -415,6 +415,9 @@ Once the feature become stable, remove all `enable_my_experimental_feature`
 in the scikit-learn code (even feature highlights etc.) and make the
 `enable_my_experimental_feature` a no-op that just raises a warning:
 `enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`__,
-and update the tests accordingly `test_enable_hist_gradient_boosting.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`__.
+The file should stay there indefinitely as we don't want to break users code:
+we just incentive them to remove that import with the warning.
+
+Also update the tests accordingly: `test_enable_hist_gradient_boosting.py
 <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`__.
