@@ -417,7 +417,7 @@ class _ForestQuantileRegressor(ForestRegressor, metaclass=ABCMeta):
                                   "_RandomSampleForestQuantileRegressor")
 
     @abstractmethod
-    def predict(self, X, q=0.5):
+    def predict(self, X, q):
         """
         Predict quantile regression values for X.
 

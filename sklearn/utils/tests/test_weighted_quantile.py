@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.utils.weighted_quantile import weighted_quantile
+from .._weighted_quantile import weighted_quantile
 
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_almost_equal
@@ -63,11 +63,23 @@ def test_xd_shapes():
     assert isinstance(weighted_quantile(x, 0.5, weights, axis=None), float)
     assert weighted_quantile(x, (0.5, 0.8), weights, axis=0).shape == np.quantile(x, (0.5, 0.8), axis=0).shape
 
+    # keepdims
+    # shape should be the same as the output of np.quantile
+    assert weighted_quantile(x, 0.5, weights, axis=0, keepdims=True).shape == \
+           np.quantile(x, 0.5, axis=0, keepdims=True).shape
+    assert weighted_quantile(x, 0.5, weights, axis=1, keepdims=True).shape == \
+           np.quantile(x, 0.5, axis=1, keepdims=True).shape
+    assert weighted_quantile(x, 0.5, weights, axis=2).shape == \
+           np.quantile(x, 0.5, axis=2).shape
+    assert isinstance(weighted_quantile(x, 0.5, weights, axis=None), float)
+    assert weighted_quantile(x, (0.5, 0.8), weights, axis=0).shape == \
+           np.quantile(x, (0.5, 0.8), axis=0).shape
+
     # axis should be integer
     assert_raises(NotImplementedError, weighted_quantile, x, 0.5, weights, axis=(1, 2))
 
     # weighted_quantile should yield very similar results to np.quantile
-    assert np.allclose(weighted_quantile(x, 0.5, weights, axis=2), np.quantile(x, q=0.5, axis=2))
+    assert np.allclose(weighted_quantile(x, 0.5, weights, axis=2), np.quantile(x, q=0.5, axis=2), rtol=0.01)
 
 
 if __name__ == "sklearn.utils.tests.test_utils":

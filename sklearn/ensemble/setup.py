@@ -51,6 +51,10 @@ def configuration(parent_package="", top_path=None):
 
     config.add_subpackage("_hist_gradient_boosting.tests")
 
+    config.add_extension("_qrf",
+                         sources=["_qrf.pyx"],
+                         include_dirs=[numpy.get_include()])
+
     return config
 
 if __name__ == "__main__":

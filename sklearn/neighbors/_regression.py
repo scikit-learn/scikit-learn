@@ -20,7 +20,7 @@ from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
-from ..utils.weighted_quantile import weighted_quantile
+from ..utils._weighted_quantile import weighted_quantile
 
 
 class KNeighborsRegressor(KNeighborsMixin,

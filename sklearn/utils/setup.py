@@ -70,6 +70,11 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
+    config.add_extension("_weighted_quantile",
+                         sources=["_weighted_quantile.pyx"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
     config.add_subpackage('tests')
 
     return config

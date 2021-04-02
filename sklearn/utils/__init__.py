@@ -26,6 +26,7 @@ from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
+from ._weighted_quantile import weighted_quantile
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
@@ -52,7 +53,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_html_repr"]
+           "DataConversionWarning", "estimator_html_repr",
+           "weighted_quantile"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
