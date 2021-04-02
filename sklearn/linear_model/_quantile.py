@@ -56,12 +56,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """
 
     def __init__(
-            self,
-            quantile=0.5,
-            alpha=0.0001,
-            fit_intercept=True,
-            solver="interior-point",
-            solver_options=None,
+        self,
+        *,
+        quantile=0.5,
+        alpha=0.0001,
+        fit_intercept=True,
+        solver="interior-point",
+        solver_options=None,
     ):
         self.quantile = quantile
         self.alpha = alpha
