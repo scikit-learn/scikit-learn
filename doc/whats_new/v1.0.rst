@@ -79,6 +79,13 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports
+  `handle_unknown='ignore'` and dropping categories. :pr:`19041` by
+  `Thomas Fan`_.
+
 - |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
   :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
   settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
@@ -129,6 +136,11 @@ Changelog
   since scikit-learn does not provide any metric supporting this type of
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` are no longer
+  experimental. They are now considered stable and are subject to the same
+  deprecation cycles as all other estimators. :pr:`19799` by `Nicolas Hug`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -192,6 +204,10 @@ Changelog
   scaling.
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
   :user:`Maria Telenczuk <maikia>`.
+
+- |Efficiency| The implementation of `fit` for `PolynomialFeatures` transformer
+  is now faster. This is especially noticeable on large sparse input.
+  :pr:`19734` by :user:`Fred Robinson <frrad>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -288,11 +304,18 @@ Changelog
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
 :mod:`sklearn.calibration`
-............................
+..........................
 
 - |Fix| The predict and predict_proba methods of
-  :class:`calibration.CalibratedClassifierCV can now properly be used on
+  :class:`calibration.CalibratedClassifierCV` can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
+
+:mod:`sklearn.utils`
+....................
+  
+  - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
+    precision of the computed variance was very poor when the real variance is
+    exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------
