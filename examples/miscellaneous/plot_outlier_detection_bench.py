@@ -3,8 +3,9 @@
 Evaluation of outlier detection estimators
 ==========================================
 
-This example benchmarks outlier detection algorithms using ROC curves
-on classical anomaly detection datasets. The algorithm performance
+This example benchmarks outlier detection algorithms, Local Outlier
+Factor (LOF) and Isolation Forest (IForest), using ROC curves on
+classical anomaly detection datasets. The algorithm performance
 is assessed in an outlier detection context:
 
 1. The algorithms are trained on the whole dataset which is assumed to
@@ -13,6 +14,8 @@ contain outliers.
 2. The ROC curve is computed on the same dataset using the knowledge
 of the labels.
 
+There is no particular reason to choose algorithms LOF and ROC. The goal
+is to show that different algorithm performs well on different datasets.
 
 Interpreting the ROC plot
 -------------------------
@@ -94,7 +97,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         y = y[idx]
 
         # normal data are those with attribute 2
-        # abnormal data are those with attribute 4
+        # abnormal those with attribute 4
         s = (y == 2) + (y == 4)
         X = X[s, :]
         y = y[s]
