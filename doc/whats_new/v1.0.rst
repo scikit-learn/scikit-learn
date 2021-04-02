@@ -200,6 +200,10 @@ Changelog
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
   :user:`Maria Telenczuk <maikia>`.
 
+- |Efficiency| The implementation of `fit` for `PolynomialFeatures` transformer
+  is now faster. This is especially noticeable on large sparse input.
+  :pr:`19734` by :user:`Fred Robinson <frrad>`.
+
 :mod:`sklearn.manifold`
 .......................
 
