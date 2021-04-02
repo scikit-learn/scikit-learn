@@ -71,13 +71,15 @@ def weighted_quantile(a, q, weights=None, axis=None, overwrite_input=False, inte
         raise ValueError("q must be a scalar or 1D")
 
     if weights is None:
-        return np.quantile(a, q, axis=-1, keepdims=keepdims)
+        return np.quantile(a, q, axis=-1, keepdims=keepdims, overwrite_input=overwrite_input,
+                           interpolation=interpolation)
     else:
         # a needs to be able to store NaN-values, thus it needs to be casted to float
         a = np.asarray(a)
         weights = np.asarray(weights)
         if a.shape[:-1] == weights.shape:
-            return np.quantile(a, q, axis=axis, keepdims=keepdims)
+            return np.quantile(a, q, axis=axis, keepdims=keepdims, overwrite_input=overwrite_input,
+                               interpolation=interpolation)
         elif a.shape != weights.shape:
             raise IndexError("the data and weights need to be of the same shape")
 
