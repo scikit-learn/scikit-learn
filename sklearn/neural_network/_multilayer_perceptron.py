@@ -825,6 +825,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         validation score is not improving by at least tol for
         ``n_iter_no_change`` consecutive epochs. The split is stratified,
         except in a multilabel setting.
+        If early stopping is activated, the validation score is used to stop
+        the neural network. Otherwise, the loss is used. 
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, default=0.1
