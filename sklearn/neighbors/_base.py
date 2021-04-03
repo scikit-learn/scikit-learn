@@ -789,7 +789,7 @@ class KNeighborsMixin:
         -------
         A : sparse-matrix of shape (n_queries, n_samples_fit)
             `n_samples_fit` is the number of samples in the fitted data.
-            `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
+            `A[i, j]` gives the weight of the edge connecting `i` to `j`.
             The matrix is of CSR format.
 
         Examples
@@ -1112,8 +1112,8 @@ class RadiusNeighborsMixin:
         -------
         A : sparse-matrix of shape (n_queries, n_samples_fit)
             `n_samples_fit` is the number of samples in the fitted data.
-            `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
-            The matrix is of format CSR.
+            `A[i, j]` gives the weight of the edge connecting `i` to `j`.
+            The matrix is of CSR format.
 
         Examples
         --------
