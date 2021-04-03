@@ -315,7 +315,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self._check_algorithm_metric()
 
     def _check_algorithm_metric(self):
-        if self.algorithm not in ['auto', 'brute', 'kd_tree', 'ball_tree']:
+        if self.algorithm not in ['auto', 'brute',
+                                  'kd_tree', 'ball_tree']:
             raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
         if self.algorithm == 'auto':
@@ -598,7 +599,7 @@ class KNeighborsMixin:
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
-            or (n_queries, n_samples_fit) if metric == 'precomputed', \
+            or (n_queries, n_indexed) if metric == 'precomputed', \
                 default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
@@ -766,13 +767,13 @@ class KNeighborsMixin:
         Parameters
         ----------
         X : array-like of shape (n_queries, n_features), \
-                or (n_queries, n_samples_fit) if metric == 'precomputed', \
+                or (n_queries, n_indexed) if metric == 'precomputed', \
                 default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
             For ``metric='precomputed'`` the shape should be
-            (n_queries, n_samples_fit). Otherwise the shape should be
+            (n_queries, n_indexed). Otherwise the shape should be
             (n_queries, n_features).
 
         n_neighbors : int, default=None
