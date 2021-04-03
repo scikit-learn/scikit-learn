@@ -471,8 +471,8 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if self.whiten:
             # Centering the features of X
-            XT_mean = XT.mean(axis=-1)
-            XT -= XT_mean[:, np.newaxis]
+            X_mean = XT.mean(axis=-1)
+            XT -= X_mean[:, np.newaxis]
 
             # Whitening and preprocessing by PCA
             u, d, _ = linalg.svd(XT, full_matrices=False, check_finite=False)
@@ -528,7 +528,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if self.whiten:
             self.components_ = np.dot(W, K)
-            self.mean_ = XT_mean
+            self.mean_ = X_mean
             self.whitening_ = K
         else:
             self.components_ = W
