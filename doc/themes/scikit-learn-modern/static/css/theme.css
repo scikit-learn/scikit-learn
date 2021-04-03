@@ -787,12 +787,16 @@ div.admonition p.admonition-title + p, div.deprecated p {
 }
 
 div.admonition, div.deprecated,
-div.versionchanged, div.versionadded{
+div.versionchanged {
   margin-top: 0.5rem;
   padding: 0.5rem;
   border-radius: 0.5rem;
   margin-bottom: 0.5rem;
   border: 1px solid #ddd;
+}
+
+div.versionadded {
+  margin: 1rem 0;
 }
 
 div.admonition {
