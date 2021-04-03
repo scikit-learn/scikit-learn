@@ -3,6 +3,7 @@
 import warnings
 import pytest
 import re
+import pandas as pd
 import numpy as np
 
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
@@ -540,3 +541,30 @@ def test_voting_verbose(estimator, capsys):
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
+
+
+def test_voting_classifier_with_class_weights():
+    # check that VotingClassifier handles class weight for both
+    # numerical labels and string labels
+    X, y = datasets.load_breast_cancer(return_X_y=True)
+
+    # numerical labels
+    class_weight = {0: 1.5, 1: 2.0}
+    estimators = [
+            ('LR', LogisticRegression(class_weight=class_weight)),
+            ('Tree', DecisionTreeClassifier(class_weight=class_weight))
+            ('RF', RandomForestClassifier(class_weight=class_weight))
+        ]
+    model = VotingClassifier(estimators)
+    model.fit(X, y)
+
+    # string labels
+    y = pd.Series(y).map({0: 'N', 1: 'Y'})
+    class_weight = {'N': 1.5, 'Y': 2.0}
+    estimators = [
+            ('LR', LogisticRegression(class_weight=class_weight)),
+            ('Tree', DecisionTreeClassifier(class_weight=class_weight))
+            ('RF', RandomForestClassifier(class_weight=class_weight))
+        ]
+    model = VotingClassifier(estimators)
+    model.fit(X, y)
