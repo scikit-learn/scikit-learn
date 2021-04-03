@@ -1667,7 +1667,7 @@ def test_top_k_accuracy_score_binary(y_score, k, true_score):
 def test_top_k_accuracy_score_multiclass_with_labels(
         y_true, true_score, labels, labels_as_ndarray
 ):
-    """Test when y_true looks binary, but labels and y_score are multiclass."""
+    """Test when labels and y_score are multiclass."""
     if labels_as_ndarray:
         labels = np.asarray(labels)
     y_score = np.array([
