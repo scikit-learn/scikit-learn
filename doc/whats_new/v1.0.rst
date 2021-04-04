@@ -76,15 +76,15 @@ Changelog
   - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
     use `"squared_error"` instead which is now the default.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| The predict and predict_proba methods of
+  :class:`calibration.CalibratedClassifierCV` can now properly be used on
+  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
 :mod:`sklearn.cluster`
 ......................
-
-:mod:`sklearn.preprocessing`
-............................
-
-- |Feature| :class:`preprocessing.OneHotEncoder` now supports
-  `handle_unknown='ignore'` and dropping categories. :pr:`19041` by
-  `Thomas Fan`_.
 
 - |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
   :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
@@ -98,6 +98,13 @@ Changelog
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| :class:`compose.ColumnTransformer` now records the output
+  of each transformer in `output_indices_`. :pr:`18393` by
+  :user:`Luca Bittarello <lbittarello>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -108,13 +115,6 @@ Changelog
 
 - |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
   when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
-
-:mod:`sklearn.compose`
-......................
-
-- |Enhancement| :class:`compose.ColumnTransformer` now records the output
-  of each transformer in `output_indices_`. :pr:`18393` by
-  :user:`Luca Bittarello <lbittarello>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -169,7 +169,7 @@ Changelog
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
-  a kernelized One Class SVM while benefitting from a linear 
+  a kernelized One Class SVM while benefitting from a linear
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
@@ -187,12 +187,6 @@ Changelog
 - |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
-
-:mod:`sklearn.preprocessing`
-............................
-
-- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
-  missing values by default. :pr:`19069` by `Thomas Fan`_.
 
 - |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
   is deprecated and will be removed in 1.2.
@@ -284,6 +278,9 @@ Changelog
   splines via the ``extrapolation`` argument.
   :pr:`19483` by :user:`Malte Londschien <mlondschien>`.
 
+- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
+  missing values by default. :pr:`19069` by `Thomas Fan`_.
+
 - |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
   and similar scalers detect near-constant features to avoid scaling them to
   very large values. This problem happens in particular when using a scaler on
@@ -293,6 +290,10 @@ Changelog
 
 - |Fix| :meth:`preprocessing.StandardScaler.inverse_transform` now
   correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
+
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports
+  `handle_unknown='ignore'` and dropping categories. :pr:`19041` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
@@ -304,22 +305,12 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| Deprecated the default value of the `random_state=0` in 
+- |Enhancement| Deprecated the default value of the `random_state=0` in
   :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
   the default value of `random_state` will be set to `None`.
-  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
-:mod:`sklearn.calibration`
-..........................
-
-- |Fix| The predict and predict_proba methods of
-  :class:`calibration.CalibratedClassifierCV` can now properly be used on
-  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
-
-:mod:`sklearn.utils`
-....................
-  
   - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
     precision of the computed variance was very poor when the real variance is
     exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
