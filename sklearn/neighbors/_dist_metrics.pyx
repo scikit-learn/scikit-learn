@@ -110,8 +110,10 @@ cdef class DistanceMetric:
     This class provides a uniform interface to fast distance metric
     functions.  The various metrics can be accessed via the :meth:`get_metric`
     class method and the metric string identifier (see below).
-    For example, to use the Euclidean distance:
 
+    Examples
+    --------
+    >>> from sklearn.neighbors import DistanceMetric
     >>> dist = DistanceMetric.get_metric('euclidean')
     >>> X = [[0, 1, 2],
              [3, 4, 5]]
@@ -181,7 +183,7 @@ cdef class DistanceMetric:
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
-    "russellrao"       RussellRaoDistance       NNZ / N
+    "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
     "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
     =================  =======================  ===============================
@@ -290,6 +292,14 @@ cdef class DistanceMetric:
         if self.__class__ is DistanceMetric:
             raise NotImplementedError("DistanceMetric is an abstract class")
 
+    def _validate_data(self, X):
+        """Validate the input data.
+
+        This should be overridden in a base class if a specific input format
+        is required.
+        """
+        return
+
     cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                       ITYPE_t size) nogil except -1:
         """Compute the distance between vectors x1 and x2
@@ -368,9 +378,9 @@ cdef class DistanceMetric:
 
         Parameters
         ----------
-        X : array_like
+        X : array-like
             Array of shape (Nx, D), representing Nx points in D dimensions.
-        Y : array_like (optional)
+        Y : array-like (optional)
             Array of shape (Ny, D), representing Ny points in D dimensions.
             If not specified, then Y=X.
         Returns
@@ -384,6 +394,7 @@ cdef class DistanceMetric:
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
 
         Xarr = np.asarray(X, dtype=DTYPE, order='C')
+        self._validate_data(Xarr)
         if Y is None:
             Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
                          dtype=DTYPE, order='C')
@@ -391,6 +402,7 @@ cdef class DistanceMetric:
                        get_memview_DTYPE_2D(Darr))
         else:
             Yarr = np.asarray(Y, dtype=DTYPE, order='C')
+            self._validate_data(Yarr)
             Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
                          dtype=DTYPE, order='C')
             self.cdist(get_memview_DTYPE_2D(Xarr),
@@ -447,11 +459,12 @@ cdef class SEuclideanDistance(DistanceMetric):
         self.size = self.vec.shape[0]
         self.p = 2
 
+    def _validate_data(self, X):
+        if X.shape[1] != self.size:
+            raise ValueError('SEuclidean dist: size of V does not match')
+
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != self.size:
-            with gil:
-                raise ValueError('SEuclidean dist: size of V does not match')
         cdef DTYPE_t tmp, d=0
         cdef np.intp_t j
         for j in range(size):
@@ -505,6 +518,18 @@ cdef class ChebyshevDistance(DistanceMetric):
 
     .. math::
        D(x, y) = max_i (|x_i - y_i|)
+
+    Examples
+    --------
+    >>> from sklearn.neighbors.dist_metrics import DistanceMetric
+    >>> dist = DistanceMetric.get_metric('chebyshev')
+    >>> X = [[0, 1, 2],
+    ...      [3, 4, 5]]
+    >>> Y = [[-1, 0, 1],
+    ...      [3, 4, 5]]
+    >>> dist.pairwise(X, Y)
+    array([[1.732..., 5.196...],
+           [6.928..., 0....   ]])
     """
     def __init__(self):
         self.p = INF
@@ -580,7 +605,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
     ----------
     p : int
         The order of the norm of the difference :math:`{||u-v||}_p`.
-    w : (N,) array_like
+    w : (N,) array-like
         The weight vector.
 
     """
@@ -595,12 +620,13 @@ cdef class WMinkowskiDistance(DistanceMetric):
         self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
 
+    def _validate_data(self, X):
+        if X.shape[1] != self.size:
+            raise ValueError('WMinkowskiDistance dist: '
+                             'size of w does not match')
+
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != self.size:
-            with gil:
-                raise ValueError('WMinkowskiDistance dist: '
-                                 'size of w does not match')
         cdef DTYPE_t d=0
         cdef np.intp_t j
         for j in range(size):
@@ -635,10 +661,10 @@ cdef class MahalanobisDistance(DistanceMetric):
 
     Parameters
     ----------
-    V : array_like
+    V : array-like
         Symmetric positive-definite covariance matrix.
         The inverse of this matrix will be explicitly computed.
-    VI : array_like
+    VI : array-like
         optionally specify the inverse directly.  If VI is passed,
         then V is not referenced.
     """
@@ -660,12 +686,12 @@ cdef class MahalanobisDistance(DistanceMetric):
         self.vec = np.zeros(self.size, dtype=DTYPE)
         self.vec_ptr = get_vec_ptr(self.vec)
 
+    def _validate_data(self, X):
+        if X.shape[1] != self.size:
+            raise ValueError('Mahalanobis dist: size of V does not match')
+
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != self.size:
-            with gil:
-                raise ValueError('Mahalanobis dist: size of V does not match')
-
         cdef DTYPE_t tmp, d = 0
         cdef np.intp_t i, j
 
@@ -984,25 +1010,21 @@ cdef class HaversineDistance(DistanceMetric):
        D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
                                 + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
     """
+
+    def _validate_data(self, X):
+        if X.shape[1] != 2:
+            raise ValueError("Haversine distance only valid "
+                             "in 2 dimensions")
+
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != 2:
-            with gil:
-                raise ValueError("Haversine distance only valid "
-                                 "in 2 dimensions")
         cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
         cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
         return (sin_0 * sin_0 + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1)
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                              ITYPE_t size) nogil except -1:
-        if size != 2:
-            with gil:
-                raise ValueError("Haversine distance only valid in 2 dimensions")
-        cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
-        cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
-        return 2 * asin(sqrt(sin_0 * sin_0
-                             + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1))
+                             ITYPE_t size) nogil except -1:
+        return 2 * asin(sqrt(self.rdist(x1, x2, size)))
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return 2 * asin(sqrt(rdist))

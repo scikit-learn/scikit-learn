@@ -14,13 +14,13 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation, Kernel, CompoundKernel)
+            Exponentiation, CompoundKernel)
 from sklearn.base import clone
 
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
                                     assert_array_almost_equal,
                                     assert_allclose,
-                                    assert_raise_message)
+                                    fails_if_pypy)
 
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
@@ -49,6 +49,8 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
     kernels.append(PairwiseKernel(gamma=1.0, metric=metric))
 
 
+# Numerical precisions errors in PyPy
+@fails_if_pypy
 @pytest.mark.parametrize('kernel', kernels)
 def test_kernel_gradient(kernel):
     # Compare analytic and numeric gradient of kernels.
@@ -356,30 +358,12 @@ def test_repr_kernels(kernel):
     repr(kernel)
 
 
-def test_warns_on_get_params_non_attribute():
-    class MyKernel(Kernel):
-        def __init__(self, param=5):
-            pass
-
-        def __call__(self, X, Y=None, eval_gradient=False):
-            return X
-
-        def diag(self, X):
-            return np.ones(X.shape[0])
-
-        def is_stationary(self):
-            return False
-
-    est = MyKernel()
-    with pytest.warns(FutureWarning, match='AttributeError'):
-        params = est.get_params()
-
-    assert params['param'] is None
-
-
 def test_rational_quadratic_kernel():
     kernel = RationalQuadratic(length_scale=[1., 1.])
-    assert_raise_message(AttributeError,
-                         "RationalQuadratic kernel only supports isotropic "
-                         "version, please use a single "
-                         "scalar for length_scale", kernel, X)
+    message = (
+        "RationalQuadratic kernel only supports isotropic "
+        "version, please use a single "
+        "scalar for length_scale"
+    )
+    with pytest.raises(AttributeError, match=message):
+        kernel(X)

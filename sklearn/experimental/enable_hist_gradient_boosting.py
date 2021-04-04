@@ -1,32 +1,21 @@
-"""Enables histogram-based gradient boosting estimators.
+"""This is now a no-op and can be safely removed from your code.
 
-The API and results of these estimators might change without any deprecation
-cycle.
-
-Importing this file dynamically sets the
-:class:`sklearn.ensemble.HistGradientBoostingClassifier` and
-:class:`sklearn.ensemble.HistGradientBoostingRegressor` as attributes of the
-ensemble module::
-
-    >>> # explicitly require this experimental feature
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    >>> # now you can import normally from ensemble
-    >>> from sklearn.ensemble import HistGradientBoostingClassifier
-    >>> from sklearn.ensemble import HistGradientBoostingRegressor
-
-
-The ``# noqa`` comment comment can be removed: it just tells linters like
-flake8 to ignore the import, which appears as unused.
+It used to enable the use of
+:class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` when they were still
+:term:`experimental`, but these estimators are now stable and can be imported
+normally from `sklearn.ensemble`.
 """
+# Don't remove this file, we don't want to break users code just because the
+# feature isn't experimental anymore.
 
-from ..ensemble._hist_gradient_boosting.gradient_boosting import (
-    HistGradientBoostingClassifier,
-    HistGradientBoostingRegressor
+
+import warnings
+
+
+warnings.warn(
+    "Since version 1.0, "
+    "it is not needed to import enable_hist_gradient_boosting anymore. "
+    "HistGradientBoostingClassifier and HistGradientBoostingRegressor are now "
+    "stable and can be normally imported from sklearn.ensemble."
 )
-
-from .. import ensemble
-
-ensemble.HistGradientBoostingClassifier = HistGradientBoostingClassifier
-ensemble.HistGradientBoostingRegressor = HistGradientBoostingRegressor
-ensemble.__all__ += ['HistGradientBoostingClassifier',
-                     'HistGradientBoostingRegressor']

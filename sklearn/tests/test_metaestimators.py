@@ -2,17 +2,18 @@
 import functools
 
 import numpy as np
+import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 
-from sklearn.utils._testing import assert_raises
 from sklearn.utils.validation import check_is_fitted
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.semi_supervised import SelfTrainingClassifier
 
 
 class DelegatorData:
@@ -41,7 +42,11 @@ DELEGATING_METAESTIMATORS = [
     DelegatorData('BaggingClassifier', BaggingClassifier,
                   skip_methods=['transform', 'inverse_transform', 'score',
                                 'predict_proba', 'predict_log_proba',
-                                'predict'])
+                                'predict']),
+    DelegatorData('SelfTrainingClassifier',
+                  lambda est: SelfTrainingClassifier(est),
+                  skip_methods=['transform', 'inverse_transform',
+                                'predict_proba']),
 ]
 
 
@@ -62,6 +67,7 @@ def test_metaestimator_delegation():
 
         def fit(self, X, y=None, *args, **kwargs):
             self.coef_ = np.arange(X.shape[1])
+            self.classes_ = []
             return True
 
         def _check_fit(self):
@@ -118,12 +124,12 @@ def test_metaestimator_delegation():
                     % (delegator_data.name, method))
             # delegation before fit raises a NotFittedError
             if method == 'score':
-                assert_raises(NotFittedError, getattr(delegator, method),
-                              delegator_data.fit_args[0],
-                              delegator_data.fit_args[1])
+                with pytest.raises(NotFittedError):
+                    getattr(delegator, method)(delegator_data.fit_args[0],
+                                               delegator_data.fit_args[1])
             else:
-                assert_raises(NotFittedError, getattr(delegator, method),
-                              delegator_data.fit_args[0])
+                with pytest.raises(NotFittedError):
+                    getattr(delegator, method)(delegator_data.fit_args[0])
 
         delegator.fit(*delegator_data.fit_args)
         for method in methods:

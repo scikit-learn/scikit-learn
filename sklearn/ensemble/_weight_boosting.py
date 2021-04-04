@@ -1,19 +1,19 @@
-"""Weight Boosting
+"""Weight Boosting.
 
 This module contains weight boosting estimators for both classification and
 regression.
 
 The module structure is the following:
 
-- The ``BaseWeightBoosting`` base class implements a common ``fit`` method
+- The `BaseWeightBoosting` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
   only differ from each other in the loss function that is optimized.
 
-- ``AdaBoostClassifier`` implements adaptive boosting (AdaBoost-SAMME) for
-  classification problems.
+- :class:`~sklearn.ensemble.AdaBoostClassifier` implements adaptive boosting
+  (AdaBoost-SAMME) for classification problems.
 
-- ``AdaBoostRegressor`` implements adaptive boosting (AdaBoost.R2) for
-  regression problems.
+- :class:`~sklearn.ensemble.AdaBoostRegressor` implements adaptive boosting
+  (AdaBoost.R2) for regression problems.
 """
 
 # Authors: Noel Dawe <noel@dawe.me>
@@ -33,7 +33,7 @@ from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_array, check_random_state, _safe_indexing
+from ..utils import check_random_state, _safe_indexing
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -41,6 +41,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 
 __all__ = [
     'AdaBoostClassifier',
@@ -57,7 +58,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self,
-                 base_estimator=None,
+                 base_estimator=None, *,
                  n_estimators=50,
                  estimator_params=tuple(),
                  learning_rate=1.,
@@ -72,8 +73,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
 
     def _check_X(self, X):
-        return check_array(X, accept_sparse=['csr', 'csc'], ensure_2d=True,
-                           allow_nd=True, dtype=None)
+        # Only called to validate X in non-fit methods, therefore reset=False
+        return self._validate_data(
+            X, accept_sparse=['csr', 'csc'], ensure_2d=True, allow_nd=True,
+            dtype=None, reset=False)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -254,11 +257,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                     in zip(self.estimator_weights_, self.estimators_))
                     / norm)
 
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(
                 "Unable to compute feature importances "
                 "since base_estimator does not have a "
-                "feature_importances_ attribute")
+                "feature_importances_ attribute") from e
 
 
 def _samme_proba(estimator, n_classes, X):
@@ -302,7 +305,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper
         ``classes_`` and ``n_classes_`` attributes. If ``None``, then
-        the base estimator is ``DecisionTreeClassifier(max_depth=1)``.
+        the base estimator is :class:`~sklearn.tree.DecisionTreeClassifier`
+        initialized with `max_depth=1`.
 
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
@@ -320,7 +324,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -358,20 +362,19 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     See Also
     --------
-    AdaBoostRegressor
-        An AdaBoost regressor that begins by fitting a regressor on the
-        original dataset and then fits additional copies of the regressor
-        on the same dataset but where the weights of instances are
-        adjusted according to the error of the current prediction.
+    AdaBoostRegressor : An AdaBoost regressor that begins by fitting a
+        regressor on the original dataset and then fits additional copies of
+        the regressor on the same dataset but where the weights of instances
+        are adjusted according to the error of the current prediction.
 
-    GradientBoostingClassifier
-        GB builds an additive model in a forward stage-wise fashion. Regression
-        trees are fit on the negative gradient of the binomial or multinomial
-        deviance loss function. Binary classification is a special case where
-        only a single regression tree is induced.
+    GradientBoostingClassifier : GB builds an additive model in a forward
+        stage-wise fashion. Regression trees are fit on the negative gradient
+        of the binomial or multinomial deviance loss function. Binary
+        classification is a special case where only a single regression tree is
+        induced.
 
-    sklearn.tree.DecisionTreeClassifier
-        A non-parametric supervised learning method used for classification.
+    sklearn.tree.DecisionTreeClassifier : A non-parametric supervised learning
+        method used for classification.
         Creates a model that predicts the value of a target variable by
         learning simple decision rules inferred from the data features.
 
@@ -397,8 +400,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     >>> clf.score(X, y)
     0.983...
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 base_estimator=None,
+                 base_estimator=None, *,
                  n_estimators=50,
                  learning_rate=1.,
                  algorithm='SAMME.R',
@@ -479,7 +483,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
-        random_state : RandomState
+        random_state : RandomState instance
             The RandomState instance used if the base estimator accepts a
             `random_state` attribute.
 
@@ -886,7 +890,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     base_estimator : object, default=None
         The base estimator from which the boosted ensemble is built.
         If ``None``, then the base estimator is
-        ``DecisionTreeRegressor(max_depth=3)``.
+        :class:`~sklearn.tree.DecisionTreeRegressor` initialized with
+        `max_depth=3`.
 
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
@@ -901,7 +906,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -946,7 +951,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     >>> regr.score(X, y)
     0.9771...
 
-    See also
+    See Also
     --------
     AdaBoostClassifier, GradientBoostingRegressor,
     sklearn.tree.DecisionTreeRegressor
@@ -959,8 +964,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 base_estimator=None,
+                 base_estimator=None, *,
                  n_estimators=50,
                  learning_rate=1.,
                  loss='linear',

@@ -17,6 +17,7 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..base import is_classifier
 
 from . import _criterion
@@ -77,7 +78,8 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
-def plot_tree(decision_tree, max_depth=None, feature_names=None,
+@_deprecate_positional_args
+def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
               impurity=True, node_ids=False,
               proportion=False, rotate='deprecated', rounded=False,
@@ -100,59 +102,60 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     decision_tree : decision tree regressor or classifier
         The decision tree to be plotted.
 
-    max_depth : int, optional (default=None)
+    max_depth : int, default=None
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of strings, optional (default=None)
+    feature_names : list of strings, default=None
         Names of each of the features.
+        If None, generic names will be used ("X[0]", "X[1]", ...).
 
-    class_names : list of strings, bool or None, optional (default=None)
+    class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
 
-    label : {'all', 'root', 'none'}, optional (default='all')
+    label : {'all', 'root', 'none'}, default='all'
         Whether to show informative labels for impurity, etc.
         Options include 'all' to show at every node, 'root' to show only at
         the top root node, or 'none' to not show at any node.
 
-    filled : bool, optional (default=False)
+    filled : bool, default=False
         When set to ``True``, paint nodes to indicate majority class for
         classification, extremity of values for regression, or purity of node
         for multi-output.
 
-    impurity : bool, optional (default=True)
+    impurity : bool, default=True
         When set to ``True``, show the impurity at each node.
 
-    node_ids : bool, optional (default=False)
+    node_ids : bool, default=False
         When set to ``True``, show the ID number on each node.
 
-    proportion : bool, optional (default=False)
+    proportion : bool, default=False
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
 
-    rotate : bool, optional (default=False)
+    rotate : bool, default=False
         This parameter has no effect on the matplotlib tree visualisation and
         it is kept here for backward compatibility.
 
         .. deprecated:: 0.23
-           ``rotate`` is deprecated in 0.23 and will be removed in 0.25.
+           ``rotate`` is deprecated in 0.23 and will be removed in 1.0
+           (renaming of 0.25).
 
-
-    rounded : bool, optional (default=False)
+    rounded : bool, default=False
         When set to ``True``, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
 
-    precision : int, optional (default=3)
+    precision : int, default=3
         Number of digits of precision for floating point in the values of
         impurity, threshold and value attributes of each node.
 
-    ax : matplotlib axis, optional (default=None)
+    ax : matplotlib axis, default=None
         Axes to plot to. If None, use current axis. Any previous content
         is cleared.
 
-    fontsize : int, optional (default=None)
+    fontsize : int, default=None
         Size of text font. If None, determined automatically to fit figure.
 
     Returns
@@ -179,7 +182,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
 
     if rotate != 'deprecated':
         warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
-                       "It will be removed in 0.25."),
+                       "It will be removed in 1.0 (renaming of 0.25)."),
                       FutureWarning)
 
     exporter = _MPLTreeExporter(
@@ -296,6 +299,9 @@ class _BaseTreeExporter:
         if self.impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
                 criterion = "friedman_mse"
+            elif (isinstance(criterion, _criterion.MSE)
+                  or criterion == "squared_error"):
+                criterion = "squared_error"
             elif not isinstance(criterion, str):
                 criterion = "impurity"
             if labels:
@@ -368,18 +374,17 @@ class _DOTTreeExporter(_BaseTreeExporter):
                  feature_names=None, class_names=None, label='all',
                  filled=False, leaves_parallel=False, impurity=True,
                  node_ids=False, proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3):
+                 special_characters=False, precision=3, fontname='helvetica'):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
-            impurity=impurity,
-            node_ids=node_ids, proportion=proportion, rotate=rotate,
-            rounded=rounded,
-            precision=precision)
+            impurity=impurity, node_ids=node_ids, proportion=proportion,
+            rotate=rotate, rounded=rounded, precision=precision)
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
+        self.fontname = fontname
 
         # PostScript compatibility for special characters
         if special_characters:
@@ -446,16 +451,17 @@ class _DOTTreeExporter(_BaseTreeExporter):
             self.out_file.write(
                 ', style="%s", color="black"'
                 % ", ".join(rounded_filled))
-        if self.rounded:
-            self.out_file.write(', fontname=helvetica')
+
+        self.out_file.write(', fontname="%s"' % self.fontname)
         self.out_file.write('] ;\n')
 
         # Specify graph & edge aesthetics
         if self.leaves_parallel:
             self.out_file.write(
                 'graph [ranksep=equally, splines=polyline] ;\n')
-        if self.rounded:
-            self.out_file.write('edge [fontname=helvetica] ;\n')
+
+        self.out_file.write('edge [fontname="%s"] ;\n' % self.fontname)
+
         if self.rotate:
             self.out_file.write('rankdir=LR ;\n')
 
@@ -550,8 +556,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         self.colors = {'bounds': None}
 
         self.characters = ['#', '[', ']', '<=', '\n', '', '']
-
-        self.bbox_args = dict(fc='w')
+        self.bbox_args = dict()
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
 
@@ -623,8 +628,11 @@ class _MPLTreeExporter(_BaseTreeExporter):
         return anns
 
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
-        kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
-                      zorder=100 - 10 * depth, xycoords='axes pixels')
+        import matplotlib.pyplot as plt
+        kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
+                      zorder=100 - 10 * depth, xycoords='axes pixels',
+                      arrowprops=self.arrow_args.copy())
+        kwargs['arrowprops']['edgecolor'] = plt.rcParams['text.color']
 
         if self.fontsize is not None:
             kwargs['fontsize'] = self.fontsize
@@ -636,13 +644,15 @@ class _MPLTreeExporter(_BaseTreeExporter):
             if self.filled:
                 kwargs['bbox']['fc'] = self.get_fill_color(tree,
                                                            node.tree.node_id)
+            else:
+                kwargs['bbox']['fc'] = ax.get_facecolor()
+
             if node.parent is None:
                 # root
                 ax.annotate(node.tree.label, xy, **kwargs)
             else:
                 xy_parent = ((node.parent.x + .5) * scale_x,
                              height - (node.parent.y + .5) * scale_y)
-                kwargs["arrowprops"] = self.arrow_args
                 ax.annotate(node.tree.label, xy_parent, xy, **kwargs)
             for child in node.children:
                 self.recurse(child, tree, ax, scale_x, scale_y, height,
@@ -651,16 +661,17 @@ class _MPLTreeExporter(_BaseTreeExporter):
         else:
             xy_parent = ((node.parent.x + .5) * scale_x,
                          height - (node.parent.y + .5) * scale_y)
-            kwargs["arrowprops"] = self.arrow_args
             kwargs['bbox']['fc'] = 'grey'
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
-def export_graphviz(decision_tree, out_file=None, max_depth=None,
+@_deprecate_positional_args
+def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False, precision=3):
+                    rounded=False, special_characters=False, precision=3,
+                    fontname='helvetica'):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -680,62 +691,65 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     decision_tree : decision tree classifier
         The decision tree to be exported to GraphViz.
 
-    out_file : file object or string, optional (default=None)
+    out_file : object or str, default=None
         Handle or name of the output file. If ``None``, the result is
         returned as a string.
 
         .. versionchanged:: 0.20
             Default of out_file changed from "tree.dot" to None.
 
-    max_depth : int, optional (default=None)
+    max_depth : int, default=None
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of strings, optional (default=None)
+    feature_names : list of str, default=None
         Names of each of the features.
+        If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : list of strings, bool or None, optional (default=None)
+    class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
 
-    label : {'all', 'root', 'none'}, optional (default='all')
+    label : {'all', 'root', 'none'}, default='all'
         Whether to show informative labels for impurity, etc.
         Options include 'all' to show at every node, 'root' to show only at
         the top root node, or 'none' to not show at any node.
 
-    filled : bool, optional (default=False)
+    filled : bool, default=False
         When set to ``True``, paint nodes to indicate majority class for
         classification, extremity of values for regression, or purity of node
         for multi-output.
 
-    leaves_parallel : bool, optional (default=False)
+    leaves_parallel : bool, default=False
         When set to ``True``, draw all leaf nodes at the bottom of the tree.
 
-    impurity : bool, optional (default=True)
+    impurity : bool, default=True
         When set to ``True``, show the impurity at each node.
 
-    node_ids : bool, optional (default=False)
+    node_ids : bool, default=False
         When set to ``True``, show the ID number on each node.
 
-    proportion : bool, optional (default=False)
+    proportion : bool, default=False
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
 
-    rotate : bool, optional (default=False)
+    rotate : bool, default=False
         When set to ``True``, orient tree left to right rather than top-down.
 
-    rounded : bool, optional (default=False)
-        When set to ``True``, draw node boxes with rounded corners and use
-        Helvetica fonts instead of Times-Roman.
+    rounded : bool, default=False
+        When set to ``True``, draw node boxes with rounded corners.
 
-    special_characters : bool, optional (default=False)
+    special_characters : bool, default=False
         When set to ``False``, ignore special characters for PostScript
         compatibility.
 
-    precision : int, optional (default=3)
+    precision : int, default=3
         Number of digits of precision for floating point in the values of
         impurity, threshold and value attributes of each node.
+
+    fontname : str, default='helvetica'
+        Name of font used to render text.
 
     Returns
     -------
@@ -776,7 +790,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
             filled=filled, leaves_parallel=leaves_parallel, impurity=impurity,
             node_ids=node_ids, proportion=proportion, rotate=rotate,
             rounded=rounded, special_characters=special_characters,
-            precision=precision)
+            precision=precision, fontname=fontname)
         exporter.export(decision_tree)
 
         if return_string:
@@ -807,7 +821,8 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
-def export_text(decision_tree, feature_names=None, max_depth=10,
+@_deprecate_positional_args
+def export_text(decision_tree, *, feature_names=None, max_depth=10,
                 spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.
 
@@ -820,21 +835,21 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         It can be an instance of
         DecisionTreeClassifier or DecisionTreeRegressor.
 
-    feature_names : list, optional (default=None)
+    feature_names : list of str, default=None
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    max_depth : int, optional (default=10)
+    max_depth : int, default=10
         Only the first max_depth levels of the tree are exported.
         Truncated branches will be marked with "...".
 
-    spacing : int, optional (default=3)
+    spacing : int, default=3
         Number of spaces between edges. The higher it is, the wider the result.
 
-    decimals : int, optional (default=2)
+    decimals : int, default=2
         Number of decimal digits to display.
 
-    show_weights : bool, optional (default=False)
+    show_weights : bool, default=False
         If true the classification weights will be exported on each leaf.
         The classification weights are the number of samples each class.
 

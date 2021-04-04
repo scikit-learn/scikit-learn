@@ -111,14 +111,14 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         y : Ignored
 
         """
         if self.n_jobs != 'deprecated':
             warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 0.25.", FutureWarning)
+                          " removed in 1.0 (renaming of 0.25).", FutureWarning)
 
         X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
@@ -177,6 +177,19 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         centroid = model.cluster_centers_
         labels = model.labels_
         return centroid, labels
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_estimators_dtypes": "raises nan error",
+                "check_fit2d_1sample": "_scale_normalize fails",
+                "check_fit2d_1feature": "raises apply_along_axis error",
+                "check_estimator_sparse_data": "does not fail gracefully",
+                "check_methods_subset_invariance": "empty array passed inside",
+                "check_dont_overwrite_parameters": "empty array passed inside",
+                "check_fit2d_predict1d": "emptry array passed inside",
+            }
+        }
 
 
 class SpectralCoclustering(BaseSpectral):
@@ -240,7 +253,7 @@ class SpectralCoclustering(BaseSpectral):
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            0.25.
+            1.0 (renaming of 0.25).
 
     random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
@@ -392,7 +405,7 @@ class SpectralBiclustering(BaseSpectral):
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            0.25.
+            1.0 (renaming of 0.25).
 
     random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
@@ -466,11 +479,11 @@ class SpectralBiclustering(BaseSpectral):
                 r, c = self.n_clusters
                 int(r)
                 int(c)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as e:
                 raise ValueError("Incorrect parameter n_clusters has value:"
                                  " {}. It should either be a single integer"
                                  " or an iterable with two integers:"
-                                 " (n_row_clusters, n_column_clusters)")
+                                 " (n_row_clusters, n_column_clusters)") from e
         if self.n_components < 1:
             raise ValueError("Parameter n_components must be greater than 0,"
                              " but its value is {}".format(self.n_components))

@@ -13,16 +13,19 @@ import time
 
 import numpy as np
 from scipy import linalg
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state
 from ..utils.validation import _deprecate_positional_args
-from ..linear_model import _cd_fast as cd_fast
+from ..utils.fixes import delayed
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
+from ..utils.deprecation import deprecated
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -74,14 +77,17 @@ def alpha_max(emp_cov):
 
 
 # The g-lasso algorithm
-
-def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
+@_deprecate_positional_args
+def graphical_lasso(emp_cov, alpha, *, cov_init=None, mode='cd', tol=1e-4,
                     enet_tol=1e-4, max_iter=100, verbose=False,
                     return_costs=False, eps=np.finfo(np.float64).eps,
                     return_n_iter=False):
     """l1-penalized covariance estimator
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
+    .. versionchanged:: v0.20
+        graph_lasso has been renamed to graphical_lasso
 
     Parameters
     ----------
@@ -94,7 +100,8 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         Range is (0, inf].
 
     cov_init : array of shape (n_features, n_features), default=None
-        The initial guess for the covariance.
+        The initial guess for the covariance. If None, then the empirical
+        covariance is used.
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
@@ -282,6 +289,9 @@ class GraphicalLasso(EmpiricalCovariance):
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
+    .. versionchanged:: v0.20
+        GraphLasso has been renamed to GraphicalLasso
+
     Parameters
     ----------
     alpha : float, default=0.01
@@ -376,7 +386,7 @@ class GraphicalLasso(EmpiricalCovariance):
             Data from which to compute the covariance estimate
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -508,6 +518,9 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
+    .. versionchanged:: v0.20
+        GraphLassoCV has been renamed to GraphicalLassoCV
+
     Parameters
     ----------
     alphas : int or array-like of shape (n_alphas,), dtype=float, default=4
@@ -562,6 +575,9 @@ class GraphicalLassoCV(GraphicalLasso):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     verbose : bool, default=False
         If verbose is True, the objective function and duality gap are
         printed at each iteration.
@@ -589,8 +605,35 @@ class GraphicalLassoCV(GraphicalLasso):
     cv_alphas_ : list of shape (n_alphas,), dtype=float
         All penalization parameters explored.
 
+        .. deprecated:: 0.24
+            The `cv_alphas_` attribute is deprecated in version 0.24 in favor
+            of `cv_results_['alphas']` and will be removed in version
+            1.1 (renaming of 0.26).
+
     grid_scores_ : ndarray of shape (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
+
+        .. deprecated:: 0.24
+            The `grid_scores_` attribute is deprecated in version 0.24 in favor
+            of `cv_results_` and will be removed in version
+            1.1 (renaming of 0.26).
+
+    cv_results_ : dict of ndarrays
+        A dict with keys:
+
+        alphas : ndarray of shape (n_alphas,)
+            All penalization parameters explored.
+
+        split(k)_score : ndarray of shape (n_alphas,)
+            Log-likelihood score on left-out data across (k)th fold.
+
+        mean_score : ndarray of shape (n_alphas,)
+            Mean of scores over the folds.
+
+        std_score : ndarray of shape (n_alphas,)
+            Standard deviation of scores over the folds.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         Number of iterations run for the optimal alpha.
@@ -653,7 +696,7 @@ class GraphicalLassoCV(GraphicalLasso):
             Data from which to compute the covariance estimate
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -768,10 +811,17 @@ class GraphicalLassoCV(GraphicalLasso):
         grid_scores.append(cross_val_score(EmpiricalCovariance(), X,
                                            cv=cv, n_jobs=self.n_jobs,
                                            verbose=inner_verbose))
-        self.grid_scores_ = np.array(grid_scores)
+        grid_scores = np.array(grid_scores)
+        self.cv_results_ = {'alphas': np.array(alphas)}
+        for i in range(grid_scores.shape[1]):
+            key = "split{}_score".format(i)
+            self.cv_results_[key] = grid_scores[:, i]
+
+        self.cv_results_["mean_score"] = np.mean(grid_scores, axis=1)
+        self.cv_results_["std_score"] = np.std(grid_scores, axis=1)
+
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
-        self.cv_alphas_ = alphas
 
         # Finally fit the model with the selected alpha
         self.covariance_, self.precision_, self.n_iter_ = graphical_lasso(
@@ -779,3 +829,28 @@ class GraphicalLassoCV(GraphicalLasso):
             enet_tol=self.enet_tol, max_iter=self.max_iter,
             verbose=inner_verbose, return_n_iter=True)
         return self
+
+    # TODO: Remove in 1.1 when grid_scores_ is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "The grid_scores_ attribute is deprecated in version 0.24 in favor "
+        "of cv_results_ and will be removed in version 1.1 (renaming of 0.26)."
+    )
+    @property
+    def grid_scores_(self):
+        # remove 3 for mean_score, std_score, and alphas
+        n_alphas = len(self.cv_results_) - 3
+        return np.asarray(
+            [self.cv_results_["split{}_score".format(i)]
+             for i in range(n_alphas)]).T
+
+    # TODO: Remove in 1.1 when cv_alphas_ is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "The cv_alphas_ attribute is deprecated in version 0.24 in favor "
+        "of cv_results_['alpha'] and will be removed in version 1.1 "
+        "(renaming of 0.26)."
+    )
+    @property
+    def cv_alphas_(self):
+        return self.cv_results_['alphas'].tolist()

@@ -25,6 +25,7 @@ from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
 from ..utils import check_random_state, Bunch
+from ..utils.validation import _deprecate_positional_args
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -35,7 +36,8 @@ FACES = RemoteFileMetadata(
               'd5fca46a4b8906c18e454d41af987794'))
 
 
-def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
+@_deprecate_positional_args
+def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True, return_X_y=False):
     """Load the Olivetti faces data-set from AT&T (classification).
 
@@ -52,11 +54,11 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    shuffle : boolean, optional
+    shuffle : bool, default=False
         If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
@@ -65,11 +67,11 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns `(data, target)` instead of a `Bunch` object. See
         below for more information about the `data` and `target` object.
 

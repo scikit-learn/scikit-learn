@@ -1,5 +1,6 @@
 
 import functools
+from typing import List, Any
 
 import numpy as np
 import scipy.sparse as sp
@@ -9,9 +10,7 @@ from sklearn.metrics import euclidean_distances
 
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import _gaussian_random_matrix
-from sklearn.random_projection import gaussian_random_matrix
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn.random_projection import sparse_random_matrix
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import GaussianRandomProjection
 
@@ -23,12 +22,12 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.exceptions import DataDimensionalityWarning
 
-all_sparse_random_matrix = [_sparse_random_matrix]
-all_dense_random_matrix = [_gaussian_random_matrix]
+all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
+all_dense_random_matrix: List[Any] = [_gaussian_random_matrix]
 all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
-all_SparseRandomProjection = [SparseRandomProjection]
-all_DenseRandomProjection = [GaussianRandomProjection]
+all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
+all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
 all_RandomProjection = set(all_SparseRandomProjection +
                            all_DenseRandomProjection)
 
@@ -61,21 +60,21 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 # test on JL lemma
 ###############################################################################
 def test_invalid_jl_domain():
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 1.1)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 0.0)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, 0.5)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=1.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=0.0)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=-0.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, eps=0.5)
 
 
 def test_input_size_jl_min_dim():
     assert_raises(ValueError, johnson_lindenstrauss_min_dim,
-                  3 * [100], 2 * [0.9])
+                  3 * [100], eps=2 * [0.9])
 
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 3 * [100],
-                  2 * [0.9])
+                  eps=2 * [0.9])
 
     johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
-                                  np.full((10, 10), 0.5))
+                                  eps=np.full((10, 10), 0.5))
 
 
 ###############################################################################
@@ -355,11 +354,9 @@ def test_works_with_sparse_data():
                                   densify(rp_sparse.components_))
 
 
-# TODO remove in 0.24
-def test_deprecations():
+def test_johnson_lindenstrauss_min_dim():
+    """Test Johnson-Lindenstrauss for small eps.
 
-    with pytest.warns(FutureWarning, match="deprecated in 0.22"):
-        gaussian_random_matrix(10, 100)
-
-    with pytest.warns(FutureWarning, match="deprecated in 0.22"):
-        sparse_random_matrix(10, 100)
+    Regression test for #17111: before #19374, 32-bit systems would fail.
+    """
+    assert johnson_lindenstrauss_min_dim(100, eps=1e-5) == 368416070986

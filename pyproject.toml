@@ -4,6 +4,12 @@ requires = [
     "setuptools",
     "wheel",
     "Cython>=0.28.5",
-    "numpy>=1.13.3",
+
+    # use oldest-supported-numpy which provides the oldest numpy version with
+    # wheels on PyPI
+    #
+    # see: https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
+    "oldest-supported-numpy",
+
     "scipy>=0.19.1",
 ]
