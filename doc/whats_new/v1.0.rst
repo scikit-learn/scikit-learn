@@ -149,6 +149,10 @@ Changelog
   experimental. They are now considered stable and are subject to the same
   deprecation cycles as all other estimators. :pr:`19799` by `Nicolas Hug`_.
 
+- |Enhancement| add support to use pre-fit model in :class:`ensemble.StackingClassifier`
+  and :class:`ensemble.StackingRegressor`.
+  :pr:`16748` by :user:`Siqi He <siqi-he>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
