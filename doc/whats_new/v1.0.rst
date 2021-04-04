@@ -169,7 +169,7 @@ Changelog
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
-  a kernelized One Class SVM while benefitting from a linear 
+  a kernelized One Class SVM while benefitting from a linear
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
@@ -247,6 +247,12 @@ Changelog
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
+- |Fix| Samples with zero `sample_weight` values do not affect the results
+  from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
+  and :func:`metrics.roc_curve`.
+  :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -304,10 +310,10 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| Deprecated the default value of the `random_state=0` in 
+- |Enhancement| Deprecated the default value of the `random_state=0` in
   :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
   the default value of `random_state` will be set to `None`.
-  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
 :mod:`sklearn.calibration`
@@ -319,7 +325,7 @@ Changelog
 
 :mod:`sklearn.utils`
 ....................
-  
+
   - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
     precision of the computed variance was very poor when the real variance is
     exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
