@@ -456,7 +456,7 @@ class Pipeline(_BaseComposition):
         return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_proba(self, X, **predict_params):
+    def predict_proba(self, X, **predict_proba_params):
         """Apply transforms, and predict_proba of the final estimator
 
         Parameters
@@ -465,7 +465,7 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
-        **predict_params : dict of string -> object
+        **predict_proba_params : dict of string -> object
             Parameters to the ``predict_proba`` called at the end of all
             transformations in the pipeline.
 
@@ -476,7 +476,7 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt, **predict_params)
+        return self.steps[-1][-1].predict_proba(Xt, **predict_proba_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
@@ -517,7 +517,7 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][-1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_log_proba(self, X, **predict_params):
+    def predict_log_proba(self, X, **predict_log_proba_params):
         """Apply transforms, and predict_log_proba of the final estimator
 
         Parameters
@@ -526,7 +526,7 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
-        **predict_params : dict of string -> object
+        **predict_log_proba_params : dict of string -> object
             Parameters to the ``predict_log_proba`` called at the end of all
             transformations in the pipeline.
 
@@ -537,7 +537,9 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt, **predict_params)
+        return self.steps[-1][-1].predict_log_proba(
+            Xt, **predict_log_proba_params
+        )
 
     @property
     def transform(self):
