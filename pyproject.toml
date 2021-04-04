@@ -5,26 +5,11 @@ requires = [
     "wheel",
     "Cython>=0.28.5",
 
-    # PyPy needs numpy >= 1.14.0
-    # platform_python_implementation!='CPython' not needed >= Python 3.7 which is numpy 1.14.5
-    "numpy==1.13.3; python_version=='3.6' and platform_machine!='aarch64' and platform_system!='AIX' and platform_python_implementation=='CPython'",
-    "numpy==1.14.0; python_version=='3.6' and platform_machine!='aarch64' and platform_system!='AIX' and platform_python_implementation!='CPython'",
-
-    # AIX needs numpy >= 1.16.0
-    # platform_system!='AIX' not needed >= Python 3.8 which is numpy 1.17.3
-    "numpy==1.16.0; python_version=='3.6' and platform_machine!='aarch64' and platform_system=='AIX'",
-    "numpy==1.16.0; python_version=='3.7' and platform_machine!='aarch64' and platform_system=='AIX'",
-
-    # ARM needs numpy >= 1.19.0
-    # platform_machine!='aarch64' not needed >= Python 3.9 which is numpy 1.19.3
-    "numpy==1.19.0; python_version=='3.6' and platform_machine=='aarch64'",
-    "numpy==1.19.0; python_version=='3.7' and platform_machine=='aarch64'",
-    "numpy==1.19.0; python_version=='3.8' and platform_machine=='aarch64'",
-
-    # default numpy requirements
-    "numpy==1.14.5; python_version=='3.7' and platform_machine!='aarch64' and platform_system!='AIX'",
-    "numpy==1.17.3; python_version=='3.8' and platform_machine!='aarch64'",
-    "numpy==1.19.3; python_version=='3.9'",
+    # use oldest-supported-numpy which provides the oldest numpy version with
+    # wheels on PyPI
+    #
+    # see: https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
+    "oldest-supported-numpy",
 
     "scipy>=0.19.1",
 ]

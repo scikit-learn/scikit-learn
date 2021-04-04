@@ -1,10 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
-
 from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris
 from sklearn.linear_model import Perceptron
@@ -67,7 +66,8 @@ def test_perceptron_correctness():
 def test_undefined_methods():
     clf = Perceptron(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba"):
-        assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
+        with pytest.raises(AttributeError):
+            getattr(clf, meth)
 
 
 def test_perceptron_l1_ratio():

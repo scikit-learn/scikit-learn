@@ -4,7 +4,7 @@
 
 import numpy as np
 from . import MinCovDet
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..metrics import accuracy_score
 from ..base import OutlierMixin
@@ -37,7 +37,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     contamination : float, default=0.1
         The amount of contamination of the data set, i.e. the proportion
-        of outliers in the data set. Range is (0, 0.5).
+        of outliers in the data set. Range is (0, 0.5].
 
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling
@@ -142,6 +142,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         y : Ignored
             Not used, present for API consistency by convention.
         """
+        if self.contamination != 'auto':
+            if not(0. < self.contamination <= .5):
+                raise ValueError("contamination must be in (0, 0.5], "
+                                 "got: %f" % self.contamination)
+
         super().fit(X)
         self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
         return self
@@ -180,6 +185,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
             Opposite of the Mahalanobis distances.
         """
         check_is_fitted(self)
+        X = self._validate_data(X, reset=False)
         return -self.mahalanobis(X)
 
     def predict(self, X):
@@ -197,9 +203,8 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        X = check_array(X)
-        is_inlier = np.full(X.shape[0], -1, dtype=int)
         values = self.decision_function(X)
+        is_inlier = np.full(values.shape[0], -1, dtype=int)
         is_inlier[values >= 0] = 1
 
         return is_inlier
