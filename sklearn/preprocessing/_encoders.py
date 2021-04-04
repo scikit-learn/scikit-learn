@@ -406,7 +406,7 @@ class OneHotEncoder(_BaseEncoder):
                                  "1 or a float in (0.0, 1.0); got the "
                                  f"integer {self.min_frequency}")
         else:  # float
-            if not 0.0 < self.min_frequency < 1.0:
+            if not (0.0 < self.min_frequency < 1.0):
                 raise ValueError("min_frequency must be an integer at least "
                                  "1 or a float in (0.0, 1.0); got the "
                                  f"float {self.min_frequency}")
