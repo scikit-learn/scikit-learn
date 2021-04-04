@@ -321,7 +321,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         cross-validation strategies that can be used here.
 
         If “prefit” is passed, it is assumed that all base_estimators have
-        been fitted already.
+        been fitted already. Please note that if the models have been trained
+        on the same data to train the stacking model, there is a very high
+        risk of overfitting.
 
         .. note::
            A larger number of split will provide no benefits if the number
