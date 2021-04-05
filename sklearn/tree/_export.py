@@ -299,6 +299,9 @@ class _BaseTreeExporter:
         if self.impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
                 criterion = "friedman_mse"
+            elif (isinstance(criterion, _criterion.MSE)
+                  or criterion == "squared_error"):
+                criterion = "squared_error"
             elif not isinstance(criterion, str):
                 criterion = "impurity"
             if labels:
