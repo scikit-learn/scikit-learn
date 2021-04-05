@@ -943,7 +943,7 @@ def test_ohe_infrequent_three_levels(kwargs):
 
 
 def test_ohe_infrequent_handle_unknown_error():
-    """Test that different parameters for combing 'a', and 'd' into
+    """Test that different parameters for combining 'a', and 'd' into
     the infrequent category works as expected."""
 
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3]).T
