@@ -844,7 +844,7 @@ def test_ohe_infrequent_infrequent_is_a_cat():
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['infrequent'] * 10 +
                         ['d'] * 3]).T
     ohe = OneHotEncoder(handle_unknown='auto', sparse=False,
-                        max_categories=3).fit(X_train)
+                        max_categories=3)
     ohe.fit(X_train)
 
     X_test = [['b'], ['a'], ['infrequent'], ['d']]
