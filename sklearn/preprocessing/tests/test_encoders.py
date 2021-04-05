@@ -903,6 +903,19 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
     feature_names = ohe.get_feature_names()
     assert_array_equal(['x0_b', 'x0_infrequent'], feature_names)
 
+    # dropping the first category which is 'b'
+    drops = ['if_binary', 'first', ['b']]
+    X_test = [['b'], ['c']]
+    for drop in drops:
+        ohe.set_params(drop=drop).fit(X_train)
+        assert_allclose([[0], [1]], ohe.transform(X_test))
+
+    # dropping categories that are infrequent will remove the entire category
+    drops = [['a'], ['c'], ['d']]
+    for drop in drops:
+        ohe.set_params(drop=drop).fit(X_train)
+        assert_allclose([[1], [0]], ohe.transform(X_test))
+
 
 @pytest.mark.parametrize("kwargs", [
     {'max_categories': 3},
@@ -940,6 +953,19 @@ def test_ohe_infrequent_three_levels(kwargs):
 
     feature_names = ohe.get_feature_names()
     assert_array_equal(['x0_b', 'x0_c', 'x0_infrequent'], feature_names)
+
+    # dropping the first category which is 'b'
+    drops = ['first', ['b']]
+    X_test = [['b'], ['c'], ['d']]
+    for drop in drops:
+        ohe.set_params(drop=drop).fit(X_train)
+        assert_allclose([[0, 0], [1, 0], [0, 1]], ohe.transform(X_test))
+
+    # dropping categories that are infrequent will remove the entire category
+    drops = [['a'], ['d']]
+    for drop in drops:
+        ohe.set_params(drop=drop).fit(X_train)
+        assert_allclose([[1, 0], [0, 1], [0, 0]], ohe.transform(X_test))
 
 
 def test_ohe_infrequent_handle_unknown_error():
@@ -990,6 +1016,18 @@ def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
 
     X_trans = ohe.transform(X_test)
     assert_allclose(expected, X_trans)
+
+    # 'a' is dropped
+    drops = ['first', 'if_binary', ['a']]
+    X_test = [['a'], ['c']]
+    for drop in drops:
+        ohe.set_params(drop=drop).fit(X_train)
+        assert_allclose([[0], [1]], ohe.transform(X_test))
+
+    # dropping 'c' means the infrequent category is dropped because
+    # 'c' in infrequent
+    ohe.set_params(drop=['c']).fit(X_train)
+    assert_allclose([[1], [0]], ohe.transform(X_test))
 
 
 def test_ohe_infrequent_two_levels_user_cats():
@@ -1226,8 +1264,6 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     ({'max_categories': -2}, 'max_categories must be greater than 1'),
     ({'min_frequency': -1}, 'min_frequency must be an integer at least'),
     ({'min_frequency': 1.1}, 'min_frequency must be an integer at least'),
-    ({'max_categories': 2, 'drop': 'first', 'handle_unknown': 'error'},
-     "infrequent categories are not supported when drop is specified"),
     ({'handle_unknown': 'ignore', 'max_categories': 2},
      "infrequent categories are only supported when handle_unknown is "
      "'error' or 'auto'")
@@ -1347,6 +1383,8 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type,
     assert np.isnan(ohe.categories_[0][-1])
 
 
+# TODO: Remove when 'ignore' is deprecated in 0.26
+@pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "auto"])
 def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'auto' during transform.
@@ -1380,6 +1418,8 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([['a', 0]], dtype=object))
 
 
+# TODO: Remove when 'ignore' is deprecated in 0.26
+@pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "auto"])
 def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='if_binary' and handle_unknown='ignore' during transform."""
@@ -1412,6 +1452,8 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([['a', None]], dtype=object))
 
 
+# TODO: Remove when 'ignore' is deprecated in 0.26
+@pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "auto"])
 def test_ohe_drop_first_explicit_categories(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'auto' during fit with

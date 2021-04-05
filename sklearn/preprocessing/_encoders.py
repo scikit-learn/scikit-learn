@@ -249,6 +249,9 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
+        If there are infrequent categories and drop selects any of the
+        infrequent categories, than the whole category is dropped.
+
         .. versionchanged:: 0.23
            Added option 'if_binary'.
 
@@ -422,11 +425,6 @@ class OneHotEncoder(_BaseEncoder):
              self.min_frequency < 1.0)
         )
 
-        # validates infrequent category features
-        if self.drop is not None and self._infrequent_enabled:
-            raise ValueError("infrequent categories are not supported when "
-                             "drop is specified")
-
         # TODO: Remove when handle_unknown='ignore' is deprecated
         if self.handle_unknown == 'ignore':
             warnings.warn("handle_unknown='ignore' is deprecated in favor "
@@ -443,8 +441,16 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop == 'first':
                 return np.zeros(len(self.categories_), dtype=object)
             elif self.drop == 'if_binary':
-                return np.array([0 if len(cats) == 2 else None
-                                for cats in self.categories_], dtype=object)
+                n_features_out_no_drop = [len(cat) for cat in self.categories_]
+                if self._infrequent_enabled:
+                    for i, infreq_idx in enumerate(self.infrequent_indices_):
+                        if infreq_idx is None:
+                            continue
+                        n_features_out_no_drop[i] -= (infreq_idx.size - 1)
+
+                return np.array([0 if n_features_out == 2 else None
+                                for n_features_out in n_features_out_no_drop],
+                                dtype=object)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
@@ -469,12 +475,25 @@ class OneHotEncoder(_BaseEncoder):
                                             len(self.drop)))
             missing_drops = []
             drop_indices = []
+
+            def _convert_to_infrequent_idx(idx, col_idx):
+                if not self._infrequent_enabled:
+                    return idx
+
+                default_to_infrequent = (
+                    self._default_to_infrequent_mappings[col_idx]
+                )
+                if default_to_infrequent is None:
+                    return idx
+                return default_to_infrequent[idx]
+
             for col_idx, (val, cat_list) in enumerate(zip(self.drop,
                                                           self.categories_)):
                 if not is_scalar_nan(val):
                     drop_idx = np.where(cat_list == val)[0]
                     if drop_idx.size:  # found drop idx
-                        drop_indices.append(drop_idx[0])
+                        drop_indices.append(
+                            _convert_to_infrequent_idx(drop_idx[0], col_idx))
                     else:
                         missing_drops.append((col_idx, val))
                     continue
@@ -482,7 +501,8 @@ class OneHotEncoder(_BaseEncoder):
                 # val is nan, find nan in categories manually
                 for cat_idx, cat in enumerate(cat_list):
                     if is_scalar_nan(cat):
-                        drop_indices.append(cat_idx)
+                        drop_indices.append(
+                            _convert_to_infrequent_idx(cat_idx, col_idx))
                         break
                 else:  # loop did not break thus drop is missing
                     missing_drops.append((col_idx, val))
@@ -661,17 +681,12 @@ class OneHotEncoder(_BaseEncoder):
 
     def _compute_n_features_outs(self):
         """Compute the n_features_out for each input feature."""
-        if self.drop_idx_ is not None:
-            output = []
-            for drop_idx, cats in zip(self.drop_idx_, self.categories_):
-                if drop_idx is None:
-                    output.append(len(cats))
-                else:
-                    output.append(len(cats) - 1)
-            return output
-
-        # drop is None
         output = [len(cats) for cats in self.categories_]
+
+        if self.drop_idx_ is not None:
+            for i, drop_idx in enumerate(self.drop_idx_):
+                if drop_idx is not None:
+                    output[i] -= 1
 
         if not self._infrequent_enabled:
             return output
@@ -681,7 +696,7 @@ class OneHotEncoder(_BaseEncoder):
         for i, infreq_idx in enumerate(self.infrequent_indices_):
             if infreq_idx is None:
                 continue
-            output[i] = output[i] - infreq_idx.size + 1
+            output[i] -= (infreq_idx.size - 1)
 
         return output
 
