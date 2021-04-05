@@ -266,6 +266,14 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |API| The `predict_proba` and `predict_log_proba` methods of the
+  :class:`Pipeline` class now support passing prediction kwargs to
+  the final estimator.
+  :pr:`19790` by :user:`Christopher Flynn <crflynn>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
