@@ -261,22 +261,30 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=float
         Desired dtype of output.
 
-    handle_unknown : {'error', 'ignore', 'auto'}, default='error'
-        Whether to raise an error or ignore if an unknown categorical feature
-        is present during transform (default is to raise). When this parameter
-        is set to 'auto' and an unknown category is encountered during
-        transform, the resulting one-hot encoded columns for this feature
-        will be all zeros. In the inverse transform, an unknown category
-        will be denoted as None. Read more in the
-        :ref:`User Guide <one_hot_encoder_infrequent_categories>`
+    handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
+                     default='error'
+        Specifies a methodology for handling unknown categories during
+        :meth:`transform`.
+
+        - 'error' : Raise an error if an unknown categorical feature
+          is present during transform.
+        - 'ignore' : When an unknown category is encountered during
+          transform, the resulting one-hot encoded columns for this feature
+          will be all zeros. In the inverse transform, an unknown category
+          will be denoted as None.
+        - 'infrequent_if_exist' : When an unknown category is encountered
+          during transform, the resulting one-hot encoded columns for this
+          feature will map to the infrequent category if it exists. In the
+          inverse transform, an unknown category will be denoted as
+          'infrequent' if the category if it exists.
+          Read more in the
+          :ref:`User Guide <one_hot_encoder_infrequent_categories>`
+          If a infrequent category does not exist, then :meth:`transform`
+          and :meth:`inverse_transform` will handle as 'ignore'.
 
         .. versionadded:: 0.24
-            `'auto'` was added to automatically handle unknown categories
-            and infrequent categories.
-
-        .. deprecated:: 1.0
-            `'ignore'` is deprecated in favor of `'auto'`. This option will be
-            removed in 1.2.
+            `'infrequent_if_exist'` was added to automatically handle unknown
+            categories and infrequent categories.
 
     min_frequency : int or float, default=1
         Specifies the minimum frequency below which a category will be
@@ -349,10 +357,10 @@ class OneHotEncoder(_BaseEncoder):
 
     One can discard categories not seen during `fit`:
 
-    >>> enc = OneHotEncoder(handle_unknown='auto')
+    >>> enc = OneHotEncoder(handle_unknown='ignore')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    OneHotEncoder(handle_unknown='auto')
+    OneHotEncoder(handle_unknown='ignore')
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
@@ -383,8 +391,8 @@ class OneHotEncoder(_BaseEncoder):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, categories='auto', drop=None, sparse=True,
-                 dtype=np.float64, handle_unknown='error',
+    def __init__(self, *, categories='auto', drop=None,
+                 sparse=True, dtype=np.float64, handle_unknown='error',
                  min_frequency=1, max_categories=None):
         self.categories = categories
         self.sparse = sparse
@@ -396,9 +404,10 @@ class OneHotEncoder(_BaseEncoder):
 
     def _validate_keywords(self):
 
-        if self.handle_unknown not in ('error', 'ignore', 'auto'):
-            msg = (f"handle_unknown should be one of 'error', 'ignore', 'auto'"
-                   f"got {self.handle_unknown}.")
+        if self.handle_unknown not in {'error', 'ignore',
+                                       'infrequent_if_exist'}:
+            msg = (f"handle_unknown should be one of 'error', 'ignore', "
+                   f"'infrequent_if_exist' got {self.handle_unknown}.")
             raise ValueError(msg)
 
         if self.max_categories is not None and self.max_categories <= 1:
@@ -424,15 +433,6 @@ class OneHotEncoder(_BaseEncoder):
             (isinstance(self.min_frequency, numbers.Real) and
              self.min_frequency < 1.0)
         )
-
-        # TODO: Remove when handle_unknown='ignore' is deprecated
-        if self.handle_unknown == 'ignore':
-            warnings.warn("handle_unknown='ignore' is deprecated in favor "
-                          "of 'auto' in version 1.0 and will be removed in "
-                          "version 1.2", FutureWarning)
-            if self._infrequent_enabled:
-                raise ValueError("infrequent categories are only supported "
-                                 "when handle_unknown is 'error' or 'auto'")
 
     def _compute_drop_idx(self):
         if self.drop is None:
@@ -632,7 +632,7 @@ class OneHotEncoder(_BaseEncoder):
                 continue
 
             X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
-            if self.handle_unknown == 'auto':
+            if self.handle_unknown == 'infrequent_if_exist':
                 # All the unknown values are now mapped to the
                 # infrequent_idx[0], which makes the unknown values valid
                 # This is needed in `transform` when the encoding is formed
@@ -768,8 +768,9 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        warn_on_unknown = (self.handle_unknown in {"ignore", "auto"}
-                           and self.drop is not None)
+        warn_on_unknown = (
+            self.drop is not None and
+            self.handle_unknown in {"ignore", "infrequent_if_exist"})
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
                                         force_all_finite='allow-nan',
                                         warn_on_unknown=warn_on_unknown)
@@ -881,7 +882,7 @@ class OneHotEncoder(_BaseEncoder):
             X_tr[:, i] = cats[labels]
 
             if (self.handle_unknown == 'ignore' or
-                (self.handle_unknown == 'auto' and
+                (self.handle_unknown == 'infrequent_if_exist' and
                  infrequent_indices[i] is None)):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero

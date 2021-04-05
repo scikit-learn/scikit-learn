@@ -539,18 +539,19 @@ dataset::
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
 If there is a possibility that the training data might have missing categorical
-features, it can often be better to specify ``handle_unknown='auto'`` instead
-of setting the ``categories`` manually as above. When
-``handle_unknown='auto'`` is specified and unknown categories are encountered
-during transform, no error will be raised but the resulting one-hot encoded
-columns for this feature will be all zeros or considered as an infrequent
-category if enabled. (``handle_unknown='auto'`` is only supported for one-hot
+features, it can often be better to specify
+`handle_unknown='infrequent_if_exist'` instead of setting the `categories`
+manually as above. When `handle_unknown='infrequent_if_exist'` is specified
+and unknown categories are encountered during transform, no error will be
+raised but the resulting one-hot encoded columns for this feature will be all
+zeros or considered as an infrequent category if enabled.
+(`handle_unknown='infrequent_if_exist'` is only supported for one-hot
 encoding)::
 
-    >>> enc = preprocessing.OneHotEncoder(handle_unknown='auto')
+    >>> enc = preprocessing.OneHotEncoder(handle_unknown='infrequent_if_exist')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X)
-    OneHotEncoder(handle_unknown='auto')
+    OneHotEncoder(handle_unknown='infrequent_if_exist')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
@@ -677,10 +678,10 @@ infrequent::
           [0., 1., 0.],
           [0., 0., 1.]])
 
-By setting handle_unknown to `'auto'`, unknown categories will be considered
-infrequent::
+By setting handle_unknown to `'infrequent_if_exist'`, unknown categories will
+be considered infrequent::
 
-   >>> enc = preprocessing.OneHotEncoder(handle_unknown='auto',
+   >>> enc = preprocessing.OneHotEncoder(handle_unknown='infrequent_if_exist',
    ...                                   min_frequency=6).fit(X)
    >>> enc.transform([['dragon']]).toarray()
    array([[0., 0., 1.]])
@@ -691,8 +692,8 @@ feature name::
    >>> enc.get_feature_names()
    array(['x0_cat', 'x0_rabbit', 'x0_infrequent'], dtype=object)
 
-When this `'handle_unknown'` is set to 'auto' and an unknown category is
-encountered in transform:
+When this `'handle_unknown'` is set to `'infrequent_if_exist'` and an unknown
+category is encountered in transform:
 
 1. If infrequent category support was not configured or there was no
    infrequent category during training, the resulting one-hot encoded columns
