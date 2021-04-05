@@ -241,6 +241,12 @@ Changelog
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
+- |Fix| Samples with zero `sample_weight` values do not affect the results
+  from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
+  and :func:`metrics.roc_curve`.
+  :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -319,9 +325,9 @@ Changelog
   :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
-  - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
-    precision of the computed variance was very poor when the real variance is
-    exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
+  precision of the computed variance was very poor when the real variance is
+  exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------
