@@ -993,9 +993,9 @@ def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
 
 
 def test_ohe_infrequent_two_levels_user_cats():
-    # Test that the order of the categories provided by a user is respected.
-    # Specifically, the infrequent_indices_ correspond to the user provided
-    # categories.
+    """Test that the order of the categories provided by a user is respected.
+    Specifically, the infrequent_indices_ correspond to the user provided
+    categories."""
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3],
                        dtype=object).T
     ohe = OneHotEncoder(categories=[['c', 'd', 'a', 'b']],
@@ -1022,9 +1022,9 @@ def test_ohe_infrequent_two_levels_user_cats():
 
 
 def test_ohe_infrequent_three_levels_user_cats():
-    # Test that the order of the categories provided by a user is respected.
-    # In this case 'c' is encoded as the first category and 'b' is encoded
-    # as the second one
+    """Test that the order of the categories provided by a user is respected.
+    In this case 'c' is encoded as the first category and 'b' is encoded
+    as the second one."""
 
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3],
                        dtype=object).T
@@ -1053,7 +1053,7 @@ def test_ohe_infrequent_three_levels_user_cats():
 
 
 def test_ohe_infrequent_multiple_categories():
-    # Test infrequent categories with feature matrix with 3 features
+    """Test infrequent categories with feature matrix with 3 features."""
 
     X = np.c_[[0, 1, 3, 3, 3, 3, 2, 0, 3],
               [0, 0, 5, 1, 1, 10, 5, 5, 0],
@@ -1129,7 +1129,8 @@ def test_ohe_infrequent_multiple_categories():
 
 
 def test_ohe_infrequent_multiple_categories_dtypes():
-    # Test infrequent categories with a pandas dataframe with multiple dtypes
+    """Test infrequent categories with a pandas dataframe with multiple dtypes.
+    """
 
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame(
@@ -1194,6 +1195,7 @@ def test_ohe_infrequent_multiple_categories_dtypes():
 
 @pytest.mark.parametrize("min_frequency", [21])
 def test_ohe_infrequent_one_level_errors(min_frequency):
+    """All user provided categories are infrequent."""
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 2]).T
 
     ohe = OneHotEncoder(handle_unknown='auto', sparse=False,
@@ -1206,7 +1208,7 @@ def test_ohe_infrequent_one_level_errors(min_frequency):
 
 @pytest.mark.parametrize("kwargs", [{'min_frequency': 2, 'max_categories': 3}])
 def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
-    # All user provided categories are infrequent
+    """All user provided categories are infrequent."""
 
     X_train = np.array([['e'] * 3], dtype=object).T
     ohe = OneHotEncoder(categories=[['c', 'd', 'a', 'b']],
@@ -1345,11 +1347,14 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type,
     assert np.isnan(ohe.categories_[0][-1])
 
 
-def test_ohe_drop_first_handle_unknown_ignore_warns():
-    """Check drop='first' and handle_unknown='ignore' during transform."""
+@pytest.mark.parametrize("handle_unknown", ["ignore", "auto"])
+def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
+    """Check drop='first' and handle_unknown='ignore'/'auto' during transform.
+    """
     X = [['a', 0], ['b', 2], ['b', 1]]
 
-    ohe = OneHotEncoder(drop='first', sparse=False, handle_unknown='ignore')
+    ohe = OneHotEncoder(drop='first', sparse=False,
+                        handle_unknown=handle_unknown)
     X_trans = ohe.fit_transform(X)
 
     X_expected = np.array([
@@ -1375,12 +1380,13 @@ def test_ohe_drop_first_handle_unknown_ignore_warns():
     assert_array_equal(X_inv, np.array([['a', 0]], dtype=object))
 
 
-def test_ohe_drop_if_binary_handle_unknown_ignore_warns():
+@pytest.mark.parametrize("handle_unknown", ["ignore", "auto"])
+def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='if_binary' and handle_unknown='ignore' during transform."""
     X = [['a', 0], ['b', 2], ['b', 1]]
 
     ohe = OneHotEncoder(drop='if_binary', sparse=False,
-                        handle_unknown='ignore')
+                        handle_unknown=handle_unknown)
     X_trans = ohe.fit_transform(X)
 
     X_expected = np.array([
@@ -1406,13 +1412,15 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns():
     assert_array_equal(X_inv, np.array([['a', None]], dtype=object))
 
 
-def test_ohe_drop_first_explicit_categories():
-    """Check drop='first' and handle_unknown='ignore' during fit with
+@pytest.mark.parametrize("handle_unknown", ["ignore", "auto"])
+def test_ohe_drop_first_explicit_categories(handle_unknown):
+    """Check drop='first' and handle_unknown='ignore'/'auto' during fit with
     categories passed in."""
 
     X = [['a', 0], ['b', 2], ['b', 1]]
 
-    ohe = OneHotEncoder(drop='first', sparse=False, handle_unknown='ignore',
+    ohe = OneHotEncoder(drop='first', sparse=False,
+                        handle_unknown=handle_unknown,
                         categories=[['b', 'a'], [1, 2]])
     ohe.fit(X)
 

@@ -753,7 +753,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        warn_on_unknown = (self.handle_unknown == "ignore"
+        warn_on_unknown = (self.handle_unknown in {"ignore", "auto"}
                            and self.drop is not None)
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
                                         force_all_finite='allow-nan',
