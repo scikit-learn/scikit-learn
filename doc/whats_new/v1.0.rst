@@ -193,11 +193,17 @@ Changelog
   Motivation for this deprecation: ``normalize`` parameter did not take any
   effect if ``fit_intercept`` was set to False and therefore was deemed
   confusing.
-  The behavior of the deprecated LinearRegression(normalize=True) can be
+  The behavior of the deprecated LinearModel(normalize=True) can be
   reproduced with :class:`~sklearn.pipeline.Pipeline` with
-  :class:`~sklearn.preprocessing.StandardScaler`as follows:
-  make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
+  :class:`~sklearn.preprocessing.LinearModel` (where LinearModel is
+  LinearRegression, Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV) as
+  follows:
+  make_pipeline(StandardScaler(with_mean=False), LinearModel()).
+  LinearRegression was deprecated in:
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
+  Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV were deprecated in:
+  :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
 - |Fix|: `sample_weight` are now fully taken into account in linear models
