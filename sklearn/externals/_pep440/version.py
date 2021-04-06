@@ -1,4 +1,6 @@
-"""Utility to compare pep440 compatible version strings."""
+"""Vendoered from
+https://github.com/pypa/packaging/blob/main/packaging/version.py
+"""
 # Copyright (c) Donald Stufft and individual contributors.
 # All rights reserved.
 
@@ -29,73 +31,7 @@ import re
 import warnings
 from typing import Callable, Iterator, List, Optional, SupportsInt, Tuple, Union
 
-
-# BEGIN packaging/_structures.py
-class InfinityType:
-    def __repr__(self) -> str:
-        return "Infinity"
-
-    def __hash__(self) -> int:
-        return hash(repr(self))
-
-    def __lt__(self, other: object) -> bool:
-        return False
-
-    def __le__(self, other: object) -> bool:
-        return False
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, self.__class__)
-
-    def __ne__(self, other: object) -> bool:
-        return not isinstance(other, self.__class__)
-
-    def __gt__(self, other: object) -> bool:
-        return True
-
-    def __ge__(self, other: object) -> bool:
-        return True
-
-    def __neg__(self: object) -> "NegativeInfinityType":
-        return NegativeInfinity
-
-
-Infinity = InfinityType()
-
-
-class NegativeInfinityType:
-    def __repr__(self) -> str:
-        return "-Infinity"
-
-    def __hash__(self) -> int:
-        return hash(repr(self))
-
-    def __lt__(self, other: object) -> bool:
-        return True
-
-    def __le__(self, other: object) -> bool:
-        return True
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, self.__class__)
-
-    def __ne__(self, other: object) -> bool:
-        return not isinstance(other, self.__class__)
-
-    def __gt__(self, other: object) -> bool:
-        return False
-
-    def __ge__(self, other: object) -> bool:
-        return False
-
-    def __neg__(self: object) -> InfinityType:
-        return Infinity
-
-
-NegativeInfinity = NegativeInfinityType()
-
-
-# BEGIN packaging/version.py
+from ._structures import Infinity, InfinityType, NegativeInfinity, NegativeInfinityType
 
 __all__ = ["parse", "Version", "LegacyVersion", "InvalidVersion", "VERSION_PATTERN"]
 
@@ -589,5 +525,3 @@ def _cmpkey(
         )
 
     return epoch, _release, _pre, _post, _dev, _local
-
-# END packaging/version.py
