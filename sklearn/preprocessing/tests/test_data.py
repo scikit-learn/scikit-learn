@@ -262,10 +262,12 @@ def test_standard_scaler_constant_features(
             assert_allclose(X_scaled_2, X_scaled_2)
 
 
+@pytest.mark.parametrize("n_samples", [10, 100, 10_000])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("array_constructor",
                          [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
-def test_standard_scaler_near_constant_features(array_constructor, dtype):
+def test_standard_scaler_near_constant_features(n_samples, array_constructor,
+                                                dtype):
     # Check that when the variance is too small (var << mean**2) the feature
     # is considered constant and not scaled.
 
@@ -273,7 +275,7 @@ def test_standard_scaler_near_constant_features(array_constructor, dtype):
     scales = np.array([10**i for i in range(-scale_max, scale_max + 1, 2)],
                       dtype=dtype)
 
-    n_samples, n_features = 100, scales.shape[0]
+    n_features = scales.shape[0]
     X = np.empty((n_samples, n_features), dtype=dtype)
     # Make a dataset of known var = scales**2 and mean = 1
     X[:n_samples//2, :] = 1 + scales
