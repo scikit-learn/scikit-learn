@@ -22,7 +22,7 @@ from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 1.0
 from .._config import config_context, get_config
 
 from .deprecation import deprecated
-from ..externals._pep440.version import parse as parse_version
+from ..externals._packaging.version import parse as parse_version
 
 
 np_version = parse_version(np.__version__)
