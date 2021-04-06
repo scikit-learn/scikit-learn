@@ -158,6 +158,52 @@ def test_nmf_fit_close(Estimator, solver, regularization):
     assert pnmf.fit(X).reconstruction_err_ < 0.1
 
 
+@pytest.mark.parametrize('regularization',
+                         (None, 'both', 'components', 'transformation'))
+def test_nmf_true_reconstruction(regularization):
+    # Test that the fit is not too far away from an exact solution
+    # (by construction)
+    n_samples = 6
+    n_components = 5
+    n_features = 5
+    beta_loss = 1
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
+    batch_size = 2
+    max_iter = 600
+
+    rng = np.random.mtrand.RandomState(42)
+    W_true = np.abs(rng.randn(n_samples, n_components))
+    H_true = np.abs(rng.randn(n_components, n_features))
+    X = np.dot(W_true, H_true)
+
+    model = NMF(n_components=n_components, solver='mu',
+                init=init, beta_loss=1, max_iter=max_iter,
+                regularization=regularization, random_state=0)
+    transf = model.fit_transform(X)
+    X_calc = np.dot(transf, model.components_)
+
+    assert model.reconstruction_err_ < 0.1
+
+    #print(np.sqrt(sum(sum((W_true - transf)*(W_true - transf))))/(n_samples*n_components))
+    #print(np.sqrt(sum(sum((H_true - model.components_)*(H_true - model.components_))))/(n_components*n_features))
+    #print(np.sqrt(sum(sum((X - X_calc)*(X - X_calc))))/(n_samples*n_features))
+    #print(f"reconstruction error = {model.reconstruction_err_/(n_samples*n_features)}")
+
+    mbmodel = MiniBatchNMF(n_components=n_components, solver='mu',
+                           init=init, beta_loss=1, batch_size=batch_size,
+                           regularization=regularization, random_state=0,
+                           max_iter=max_iter)
+    transf = mbmodel.fit_transform(X)
+    X_calc = np.dot(transf, mbmodel.components_)
+
+    #print(np.sqrt(sum(sum((W_true - transf)*(W_true - transf))))/(n_samples*n_components))
+    #print(np.sqrt(sum(sum((H_true - mbmodel.components_)*(H_true - mbmodel.components_))))/(n_components*n_features))
+    #print(np.sqrt(sum(sum((X - X_calc)*(X - X_calc))))/(n_samples*n_features))
+    #print(f"reconstruction error = {mbmodel.reconstruction_err_/(n_samples*n_features)}")
+
+    assert mbmodel.reconstruction_err_ < 0.1
+
+
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
                          [[NMF, 'cd', 2], [NMF, 'mu', 2],
                           [MiniBatchNMF, 'mu', 1]])
