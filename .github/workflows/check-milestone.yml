@@ -22,6 +22,8 @@ jobs:
         run: |
           set -xe
           if [ $TAGGED_MILESTONE == "" ]
+          then
               echo "No milestone has been set."
               exit 1
+          fi
 
