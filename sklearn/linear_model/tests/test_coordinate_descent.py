@@ -1432,6 +1432,7 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
+# FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("ridge_alpha", [1e-1, 1., 1e6])
 @pytest.mark.parametrize("normalize", [True, False])
