@@ -271,8 +271,8 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
     # Check that when the variance is too small (var << mean**2) the feature
     # is considered constant and not scaled.
 
-    scale_max = 15 if dtype == np.float64 else 7
-    scales = np.array([10**i for i in range(-scale_max, scale_max + 1, 2)],
+    scale_min, scale_max = -42, 32
+    scales = np.array([10**i for i in range(scale_min, scale_max + 1)],
                       dtype=dtype)
 
     n_features = scales.shape[0]
@@ -288,11 +288,28 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
     # constant and the scale_ attribute is set to 1.
     eps = np.finfo(np.float64).eps  # we use float64 accumulators
     bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2
+
+    # Check that scale_min is small enough to have some scales below the
+    # bound and therefore detected as constant:
+    assert np.any(scales**2 < bounds)
+
+    # Check that such features are actually treated as constant by the scaler:
     assert_allclose(scaler.scale_[scales**2 < bounds], 1.)
 
-    # The other features are scaled and scale_ is equal to sqrt(var_)
-    assert_allclose(scaler.scale_[scales**2 > bounds],
-                    np.sqrt(scaler.var_)[scales**2 > bounds])
+    # Depending the on the dtype of X, some features might not actually be
+    # representable as non constant for small scales (even if above the
+    # precision bound of the float64 variance estimate). Such feature should
+    # be correctly detected as constants with 0 variance by StandardScaler.
+    precision_mask = (1 + scales) != (1 - scales)
+    assert_allclose(scaler.var_[np.logical_not(precision_mask)], 0)
+    assert_allclose(scaler.scale_[np.logical_not(precision_mask)], 1)
+
+    # The other features are scaled and scale_ is equal to sqrt(var_) assuming
+    # that scales are large enough for 1 + scale and 1 - scale to be distinct
+    # in X (depending on X's dtype).
+    common_mask = np.logical_and(scales**2 > bounds, precision_mask)
+    assert_allclose(scaler.scale_[common_mask],
+                    np.sqrt(scaler.var_)[common_mask])
 
 
 def test_scale_1d():
