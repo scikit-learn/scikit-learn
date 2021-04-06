@@ -271,7 +271,7 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
     # Check that when the variance is too small (var << mean**2) the feature
     # is considered constant and not scaled.
 
-    scale_min, scale_max = -42, 32
+    scale_min, scale_max = -17, 32
     scales = np.array([10**i for i in range(scale_min, scale_max + 1)],
                       dtype=dtype)
 
@@ -300,14 +300,14 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
     # representable as non constant for small scales (even if above the
     # precision bound of the float64 variance estimate). Such feature should
     # be correctly detected as constants with 0 variance by StandardScaler.
-    precision_mask = (1 + scales) != (1 - scales)
-    assert_allclose(scaler.var_[np.logical_not(precision_mask)], 0)
-    assert_allclose(scaler.scale_[np.logical_not(precision_mask)], 1)
+    representable_diff = (1 + scales) != (1 - scales)
+    assert_allclose(scaler.var_[np.logical_not(representable_diff)], 0)
+    assert_allclose(scaler.scale_[np.logical_not(representable_diff)], 1)
 
     # The other features are scaled and scale_ is equal to sqrt(var_) assuming
     # that scales are large enough for 1 + scale and 1 - scale to be distinct
     # in X (depending on X's dtype).
-    common_mask = np.logical_and(scales**2 > bounds, precision_mask)
+    common_mask = np.logical_and(scales**2 > bounds, representable_diff)
     assert_allclose(scaler.scale_[common_mask],
                     np.sqrt(scaler.var_)[common_mask])
 
