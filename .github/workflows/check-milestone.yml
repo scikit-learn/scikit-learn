@@ -24,3 +24,4 @@ jobs:
           if [ $TAGGED_MILESTONE == "" ]
               echo "No milestone has been set."
               exit 1
+
