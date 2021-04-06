@@ -85,11 +85,12 @@ def test_max_depth_None_rfqr():
     ]
     for rfqr in rfqr_estimators:
         rfqr.fit(X, y)
-
+        rfqr.quantiles = 0.5
+        a = rfqr.predict(X)
         for quantile in (0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1):
+            rfqr.quantiles = quantile
             assert_array_almost_equal(
-                rfqr.predict(X, q=0.5),
-                rfqr.predict(X, q=quantile), 5)
+                a, rfqr.predict(X), 5)
 
 
 def test_forest_toy_data():
@@ -108,11 +109,12 @@ def test_forest_toy_data():
         est.set_params(max_depth=1)
         est.fit(X, y)
         for quantile in (0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1):
+            est.quantiles = quantile
             assert_array_almost_equal(
-                est.predict(x1, q=quantile),
+                est.predict(x1),
                 [np.quantile(y1, quantile)], 3)
             assert_array_almost_equal(
-                est.predict(x2, q=quantile),
+                est.predict(x2),
                 [np.quantile(y2, quantile)], 3)
 
     # the approximate methods have a lower precision, which is to be expected
@@ -120,11 +122,12 @@ def test_forest_toy_data():
         est.set_params(max_depth=1)
         est.fit(X, y)
         for quantile in (0.2, 0.3, 0.5, 0.7):
+            est.quantiles = quantile
             assert_array_almost_equal(
-                est.predict(x1, q=quantile),
+                est.predict(x1),
                 [np.quantile(y1, quantile)], 0)
             assert_array_almost_equal(
-                est.predict(x2, q=quantile),
+                est.predict(x2),
                 [np.quantile(y2, quantile)], 0)
 
 

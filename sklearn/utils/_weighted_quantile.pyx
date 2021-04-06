@@ -5,7 +5,6 @@
 cimport numpy as np
 import numpy as np
 from numpy.lib.function_base import _quantile_is_valid
-
 from libc.math cimport isnan
 
 cdef void _weighted_quantile_presorted_1D(float[:] a,
