@@ -6,6 +6,7 @@
 
 from scipy.sparse import csr_matrix
 from numpy cimport ndarray
+import numpy as np
 cimport numpy as np
 cdef int MAX_INT32 = 2147483647
 # TODO: use finfo instead
@@ -110,7 +111,7 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
         # in the expanded space, so we cast to int64
         # before the expansion computation to
         # avoid overflow:
-        nnz = <long>(indptr[row_i + 1] - indptr[row_i])
+        nnz = np.int64(indptr[row_i + 1] - indptr[row_i])
         # TODO: check that the casting is indeed done
         if degree == 2:
             total_nnz += (nnz ** 2 + nnz) / 2 - interaction_only * nnz
@@ -132,10 +133,10 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     # expanded_indptr to int64 too.
     # TODO: check that the casting is indeed done
     if expanded_dimensionality > MAX_INT32:
-        indices = <ndarray[np.int64_t, ndim=1]> indices
-        expanded_indices = <ndarray[np.int64_t, ndim=1]> expanded_indices
+        indices = np.array(indices, dtype=np.int64)
+        expanded_indices = np.array(expanded_indices, dtype=np.int64)
     if total_nnz > MAX_INT32:
-        expanded_indptr = <ndarray[np.int64_t, ndim=1]> expanded_indptr
+        expanded_indptr = np.array(expanded_indptr, dtype=np.int64)
 
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
                  i_ptr, j_ptr, k_ptr, num_cols_in_row, col
