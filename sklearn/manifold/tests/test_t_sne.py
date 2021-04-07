@@ -998,8 +998,8 @@ def test_tsne_square_distances_futurewarning(metric, square_distances):
 @pytest.mark.parametrize('init', [None, 'random', 'pca'])
 # This test can be deleted in 1.2
 def test_tsne_init_futurewarning(init):
-    # Make sure that a FutureWarning is only raised when the
-    # init is not specified or is 'pca'
+    """Make sure that a FutureWarning is only raised when the
+    init is not specified or is 'pca'."""
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
