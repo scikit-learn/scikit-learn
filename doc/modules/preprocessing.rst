@@ -560,9 +560,7 @@ parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-since co-linearity would cause the covariance matrix to be non-invertible.
-When this parameter is not None, ``handle_unknown`` must be set to
-``error``::
+since co-linearity would cause the covariance matrix to be non-invertible::
 
     >>> X = [['male', 'from US', 'uses Safari'],
     ...      ['female', 'from Europe', 'uses Firefox']]
@@ -590,6 +588,30 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
 In the transformed `X`, the first column is the encoding of the feature with
 categories "male"/"female", while the remaining 6 columns is the encoding of
 the 2 features with respectively 3 categories each.
+
+When `handle_unknown='ignore'` and `drop` is not None, unknown categories will
+be encoded as all zeros::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='first',
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> drop_enc.transform(X_test).toarray()
+    array([[0., 0., 0., 0., 0.]])
+
+All the categories in `X_test` are unknown during transform and will be mapped
+to all zeros. This means that unknown categories will have the same mapping as
+the dropped category. :meth`OneHotEncoder.inverse_transform` will map all zeros
+to the dropped category if a category is dropped and `None` if a category is
+not dropped::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse=False,
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> X_trans = drop_enc.transform(X_test)
+    >>> X_trans
+    array([[0., 0., 0., 0., 0., 0., 0.]])
+    >>> drop_enc.inverse_transform(X_trans)
+    array([['female', None, None]], dtype=object)
 
 :class:`OneHotEncoder` supports categorical features with missing values by
 considering the missing values as an additional category::
