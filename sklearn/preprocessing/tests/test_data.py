@@ -263,35 +263,39 @@ def test_standard_scaler_constant_features(
 
 
 @pytest.mark.parametrize("n_samples", [10, 100, 10_000])
+@pytest.mark.parametrize("average", [1e-10, 1, 1e10])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("array_constructor",
                          [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
 def test_standard_scaler_near_constant_features(n_samples, array_constructor,
-                                                dtype):
+                                                average, dtype):
     # Check that when the variance is too small (var << mean**2) the feature
     # is considered constant and not scaled.
 
-    scale_min, scale_max = -17, 32
+    scale_min, scale_max = -30, 30
     scales = np.array([10**i for i in range(scale_min, scale_max + 1)],
                       dtype=dtype)
 
     n_features = scales.shape[0]
     X = np.empty((n_samples, n_features), dtype=dtype)
     # Make a dataset of known var = scales**2 and mean = 1
-    X[:n_samples//2, :] = 1 + scales
-    X[n_samples//2:, :] = 1 - scales
+    X[:n_samples//2, :] = average + scales
+    X[n_samples//2:, :] = average - scales
     X_array = array_constructor(X)
 
     scaler = StandardScaler(with_mean=False).fit(X_array)
 
+    # StandardScaler uses float64 accumulators even if the data has a float32
+    # dtype.
+    eps = np.finfo(np.float64).eps
+
     # if var < bound = N.eps.var + N².eps².mean², the feature is considered
     # constant and the scale_ attribute is set to 1.
-    eps = np.finfo(np.float64).eps  # we use float64 accumulators
-    bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2
+    bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2 * average**2
 
     # Check that scale_min is small enough to have some scales below the
     # bound and therefore detected as constant:
-    assert np.any(scales**2 < bounds)
+    assert np.any(scales**2 <= bounds)
 
     # Check that such features are actually treated as constant by the scaler:
     assert_allclose(scaler.scale_[scales**2 < bounds], 1.)
@@ -300,7 +304,7 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
     # representable as non constant for small scales (even if above the
     # precision bound of the float64 variance estimate). Such feature should
     # be correctly detected as constants with 0 variance by StandardScaler.
-    representable_diff = (1 + scales) != (1 - scales)
+    representable_diff = average + scales != average - scales
     assert_allclose(scaler.var_[np.logical_not(representable_diff)], 0)
     assert_allclose(scaler.scale_[np.logical_not(representable_diff)], 1)
 
