@@ -278,7 +278,7 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
 
     n_features = scales.shape[0]
     X = np.empty((n_samples, n_features), dtype=dtype)
-    # Make a dataset of known var = scales**2 and mean = 1
+    # Make a dataset of known var = scales**2 and mean = average
     X[:n_samples//2, :] = average + scales
     X[n_samples//2:, :] = average - scales
     X_array = array_constructor(X)
