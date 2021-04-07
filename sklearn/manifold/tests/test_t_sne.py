@@ -647,7 +647,8 @@ def test_chebyshev_metric():
     tsne.fit_transform(X)
 
 
-@ignore_warnings(category=FutureWarning)  # Delete in 1.2
+# TODO: Remove ignore_warnings in 1.2 when default init changes to 'pca'
+@ignore_warnings(category=FutureWarning)
 def test_reduction_to_one_component():
     # t-SNE should allow reduction to one component (issue #4154).
     random_state = check_random_state(0)
