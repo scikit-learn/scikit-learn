@@ -1309,7 +1309,7 @@ def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
     ----------
 
     X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-        The original data array. In sparse, must be in CSR format.
+        The original data array. If sparse, must be in CSR format.
 
     x_squared_norms : ndarray of shape (n_samples,)
         Squared euclidean norm of each data point.
@@ -1356,6 +1356,8 @@ def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
         the centers.
     """
     # Perform label assignment to nearest centers
+    # For better efficiency, it's better to run _mini_batch_step in a
+    # threadpool_limit context then using _labels_inertia_threadpool_limit here
     labels, inertia = _labels_inertia(X, sample_weight,
                                       x_squared_norms, centers,
                                       n_threads=n_threads)
@@ -1493,8 +1495,8 @@ class MiniBatchKMeans(KMeans):
         Control the fraction of the maximum number of counts for a center to
         be reassigned. A higher value means that low count centers are more
         easily reassigned, which means that the model will take longer to
-        converge, but should converge in a better clustering. A too high value
-        may however cause convergence issues, especially with a small batch
+        converge, but should converge in a better clustering. However, too high
+        a value may cause convergence issues, especially with a small batch
         size.
 
     Attributes
@@ -1503,7 +1505,7 @@ class MiniBatchKMeans(KMeans):
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers.
 
-    labels_ : ndarray of shape (n_samples)
+    labels_ : ndarray of shape (n_samples,)
         Labels of each point (if compute_labels is set to True).
 
     inertia_ : float
@@ -1869,8 +1871,11 @@ class MiniBatchKMeans(KMeans):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Coordinates of the data points to cluster. It must be noted that
-            X will be copied if it is not C-contiguous.
+            Training instances to cluster. It must be noted that the data
+            will be converted to C ordering, which will cause a memory copy
+            if the given data is not C-contiguous.
+            If a sparse matrix is passed, a copy will be made if it's not in
+            CSR format.
 
         y : Ignored
             Not used, present here for API consistency by convention.

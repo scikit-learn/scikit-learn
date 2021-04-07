@@ -2,7 +2,7 @@
 
 # TODO: We still need to use ndarrays instead of typed memoryviews when using
 # fused types and when the array may be read-only (for instance when it's
-# provided by the user). This is fixed in cython > 0.3.
+# provided by the user). This will be fixed in cython >= 0.3.
 
 cimport numpy as np
 from cython cimport floating
@@ -79,7 +79,7 @@ cdef void update_center_dense(
     cdef:
         int n_samples = sample_weight.shape[0]
         int n_features = centers_old.shape[1]
-        floating alpha, tmp
+        floating alpha
         int n_indices
         int k, sample_idx, feature_idx
 
@@ -189,7 +189,7 @@ cdef void update_center_sparse(
     cdef:
         int n_samples = sample_weight.shape[0]
         int n_features = centers_old.shape[1]
-        floating alpha, tmp
+        floating alpha
         int n_indices
         int k, sample_idx, feature_idx
 

@@ -999,9 +999,9 @@ def test_inertia(dtype):
     expected = np.sum(distances * sample_weight)
 
     inertia_dense = _inertia_dense(
-        X_dense, sample_weight, centers, labels, 1)
+        X_dense, sample_weight, centers, labels, n_threads=1)
     inertia_sparse = _inertia_sparse(
-        X_sparse, sample_weight, centers, labels, 1)
+        X_sparse, sample_weight, centers, labels, n_threads=1)
 
     assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
     assert_allclose(inertia_dense, expected, rtol=1e-6)
