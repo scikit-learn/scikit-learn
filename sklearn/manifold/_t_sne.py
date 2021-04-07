@@ -567,8 +567,8 @@ class TSNE(BaseEstimator):
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
-        usually more globally stable than random initialization. It will
-        become default in 1.2.
+        usually more globally stable than random initialization. `init='pca'`
+        will become default in 1.2.
 
     verbose : int, default=0
         Verbosity level.
