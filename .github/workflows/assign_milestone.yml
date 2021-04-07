@@ -31,8 +31,8 @@ jobs:
           then
             echo "assign the milestone to the main version"
           elif [[ "$changelogs_modified" == "" ]]
-            echo "assign the milestone to TAGGED_MILESTONE"
           then
+            echo "assign the milestone to TAGGED_MILESTONE"
           else
             expected_changelog=doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst
             if [[ ! "$changelogs_modified" ==  "$expected_changelog"]]
