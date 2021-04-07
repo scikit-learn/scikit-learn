@@ -35,7 +35,7 @@ jobs:
             echo "assign the milestone to TAGGED_MILESTONE"
           else
             expected_changelog=doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst
-            if [[ ! "$changelogs_modified" ==  "$expected_changelog"]]
+            if [[ "$changelogs_modified" ~=  "$expected_changelog"]]
             then
               echo "assign the milestone to the version of the changelog modified"
             fi
