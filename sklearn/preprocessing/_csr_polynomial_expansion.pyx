@@ -90,11 +90,6 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
     assert degree in (2, 3)
 
-    # Dimensionality of the expanded space can become very
-    # large so we cast d to int64 when computing
-    # expanded_dimensionality to avoid overflow
-    d = <np.int64_t>d
-
     if degree == 2:
         expanded_dimensionality = int((d**2 + d) / 2 - interaction_only*d)
     else:

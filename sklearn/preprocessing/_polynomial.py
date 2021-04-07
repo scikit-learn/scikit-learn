@@ -249,8 +249,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
             to_stack.append(X)
             for deg in range(2, self.degree+1):
+                # Dimensionality of the expanded space can become very
+                # large so we cast X.shape[1] to int64 to avoid overflow
+                # when computing expanded_dimensionality
                 Xp_next = _csr_polynomial_expansion(X.data, X.indices,
-                                                    X.indptr, X.shape[1],
+                                                    X.indptr,
+                                                    np.int64(X.shape[1]),
                                                     self.interaction_only,
                                                     deg)
                 if Xp_next is None:
