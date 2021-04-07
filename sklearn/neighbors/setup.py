@@ -20,8 +20,8 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('_nth_element',
-                         sources=['_nth_element.pyx'],
+    config.add_extension('_partition_nodes',
+                         sources=['_partition_nodes.pyx'],
                          include_dirs=[numpy.get_include()],
                          language="c++",
                          libraries=libraries)
