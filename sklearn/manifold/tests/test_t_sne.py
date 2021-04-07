@@ -1021,8 +1021,8 @@ def test_tsne_init_futurewarning(init):
 @pytest.mark.parametrize('learning_rate', [None, 200.0])
 # This test can be deleted in 1.2
 def test_tsne_learning_rate_futurewarning(learning_rate):
-    # Make sure that a FutureWarning is only raised when the learning rate
-    # is not specified
+    """Make sure that a FutureWarning is only raised when the learning rate
+    is not specified"""
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
