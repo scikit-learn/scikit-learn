@@ -274,6 +274,14 @@ Changelog
   :class:`calibration.CalibratedClassifierCV can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
 
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Enhancement| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis` 
+  will now raise 'LinAlgError' in case of collinear variables. These errors
+  can be silenced by the 'reg_param' attribute.:pr:`19731` by 
+  :user:`Alihan Zihna <azihna>`
+
 Code and Documentation Contributors
 -----------------------------------
 
