@@ -1,3 +1,7 @@
+# We can not use pytest here, because we run
+# build_tools/azure/test_pytest_soft_dependency.sh on these
+# tests to make sure estimator_checks works without pytest.
+
 import unittest
 import sys
 
@@ -138,6 +142,7 @@ class HasImmutableParameters(BaseEstimator):
     def fit(self, X, y=None):
         X, y = self._validate_data(X, y)
         return self
+
 
 class ModifiesValueInsteadOfRaisingError(BaseEstimator):
     def __init__(self, p=0):
