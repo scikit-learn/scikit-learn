@@ -3113,7 +3113,8 @@ def check_requires_y_none(name, estimator_orig):
             warnings.warn(warning_msg, FutureWarning)
 
 
-@ignore_warnings(category=FutureWarning)  # Can be removed in 1.2
+# TODO: Remove ignore_warnings in 1.2 when default init changes to 'pca'
+@ignore_warnings(category=FutureWarning)
 def check_n_features_in_after_fitting(name, estimator_orig):
     # Make sure that n_features_in are checked after fitting
     tags = _safe_tags(estimator_orig)

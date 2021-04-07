@@ -112,7 +112,8 @@ def test_isomap():
     assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
-@ignore_warnings(category=FutureWarning)  # Delete in 1.2
+# TODO: Remove ignore_warnings in 1.2 when default init changes to 'pca'
+@ignore_warnings(category=FutureWarning)
 def test_tsne():
     # Test chaining KNeighborsTransformer and TSNE
     n_iter = 250
