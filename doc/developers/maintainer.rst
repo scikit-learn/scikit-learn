@@ -363,10 +363,17 @@ deprecation cycle.
 
 To create an experimental module, you can just copy and modify the content of
 `enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`_,
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_hist_gradient_boosting.py>`__,
 or
 `enable_iterative_imputer.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_iterative_imputer.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_iterative_imputer.py>`_.
+
+.. note::
+
+  These are permalink as in 0.24, where these estimators are still
+  experimental. They might be stable at the time of reading - hence the
+  permalink. See below for instructions on the transition from experimental
+  to stable.
 
 Note that the public import path must be to a public subpackage (like
 ``sklearn/ensemble`` or ``sklearn/impute``), not just a ``.py`` module.
@@ -379,14 +386,15 @@ in the future when the features aren't experimental anymore.
 To avoid type checker (e.g. mypy) errors a direct import of experimental
 estimators should be done in the parent module, protected by the
 ``if typing.TYPE_CHECKING`` check. See `sklearn/ensemble/__init__.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/ensemble/__init__.py>`_,
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/ensemble/__init__.py>`_,
 or `sklearn/impute/__init__.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/impute/__init__.py>`_
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/impute/__init__.py>`_
 for an example.
 
 Please also write basic tests following those in
 `test_enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`__.
+
 
 Make sure every user-facing code you write explicitly mentions that the feature
 is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
@@ -402,3 +410,14 @@ sklearn.experimental import *`` **does not work**.
 
 Note that some experimental classes / functions are not included in the
 :mod:`sklearn.experimental` module: ``sklearn.datasets.fetch_openml``.
+
+Once the feature become stable, remove all `enable_my_experimental_feature`
+in the scikit-learn code (even feature highlights etc.) and make the
+`enable_my_experimental_feature` a no-op that just raises a warning:
+`enable_hist_gradient_boosting.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`__.
+The file should stay there indefinitely as we don't want to break users code:
+we just incentivize them to remove that import with the warning.
+
+Also update the tests accordingly: `test_enable_hist_gradient_boosting.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`__.
