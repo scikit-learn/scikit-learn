@@ -1123,6 +1123,8 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
+        y : Ignored
+
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)

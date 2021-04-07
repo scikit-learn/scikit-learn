@@ -3,6 +3,8 @@ import numpy as np
 from joblib import Parallel
 
 from ..metrics import check_scoring
+from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
+from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
@@ -28,9 +30,10 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
     # (memmap). X.copy() on the other hand is always guaranteed to return a
     # writable data-structure whose columns can be shuffled inplace.
     X_permuted = X.copy()
-    scores = np.zeros(n_repeats)
+
+    scores = []
     shuffling_idx = np.arange(X.shape[0])
-    for n_round in range(n_repeats):
+    for _ in range(n_repeats):
         random_state.shuffle(shuffling_idx)
         if hasattr(X_permuted, "iloc"):
             col = X_permuted.iloc[shuffling_idx, col_idx]
@@ -38,12 +41,43 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        feature_score = _weights_scorer(
-            scorer, estimator, X_permuted, y, sample_weight
+        scores.append(
+            _weights_scorer(scorer, estimator, X_permuted, y, sample_weight)
         )
-        scores[n_round] = feature_score
+
+    if isinstance(scores[0], dict):
+        scores = _aggregate_score_dicts(scores)
+    else:
+        scores = np.array(scores)
 
     return scores
+
+
+def _create_importances_bunch(baseline_score, permuted_score):
+    """Compute the importances as the decrease in score.
+
+    Parameters
+    ----------
+    baseline_score : ndarray of shape (n_features,)
+        The baseline score without permutation.
+    permuted_score : ndarray of shape (n_features, n_repeats)
+        The permuted scores for the `n` repetitions.
+
+    Returns
+    -------
+    importances : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+        importances_mean : ndarray, shape (n_features, )
+            Mean of feature importance over `n_repeats`.
+        importances_std : ndarray, shape (n_features, )
+            Standard deviation over `n_repeats`.
+        importances : ndarray, shape (n_features, n_repeats)
+            Raw permutation importance scores.
+    """
+    importances = baseline_score - permuted_score
+    return Bunch(importances_mean=np.mean(importances, axis=1),
+                 importances_std=np.std(importances, axis=1),
+                 importances=importances)
 
 
 @_deprecate_positional_args
@@ -74,10 +108,25 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     y : array-like or None, shape (n_samples, ) or (n_samples, n_classes)
         Targets for supervised or `None` for unsupervised.
 
-    scoring : string, callable or None, default=None
-        Scorer to use. It can be a single
-        string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer is used.
+    scoring : str, callable, list, tuple, or dict, default=None
+        Scorer to use.
+        If `scoring` represents a single score, one can use:
+
+        - a single string (see :ref:`scoring_parameter`);
+        - a callable (see :ref:`scoring`) that returns a single value.
+
+        If `scoring` represents multiple scores, one can use:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where the keys are the metric
+          names and the values are the metric scores;
+        - a dictionary with metric names as keys and callables a values.
+
+        Passing multiple scores to `scoring` is more efficient than calling
+        `permutation_importance` for each of the scores as it reuses
+        predictions to avoid redundant computation.
+
+        If None, the estimator's default scorer is used.
 
     n_repeats : int, default=5
         Number of times to permute a feature.
@@ -102,15 +151,19 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
 
     Returns
     -------
-    result : :class:`~sklearn.utils.Bunch`
+    result : :class:`~sklearn.utils.Bunch` or dict of such instances
         Dictionary-like object, with the following attributes.
 
-        importances_mean : ndarray, shape (n_features, )
+        importances_mean : ndarray of shape (n_features, )
             Mean of feature importance over `n_repeats`.
-        importances_std : ndarray, shape (n_features, )
+        importances_std : ndarray of shape (n_features, )
             Standard deviation over `n_repeats`.
-        importances : ndarray, shape (n_features, n_repeats)
+        importances : ndarray of shape (n_features, n_repeats)
             Raw permutation importance scores.
+
+        If there are multiple scoring metrics in the scoring parameter
+        `result` is a dict with scorer names as keys (e.g. 'roc_auc') and
+        `Bunch` objects like above as values.
 
     References
     ----------
@@ -143,14 +196,33 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
-    scorer = check_scoring(estimator, scoring=scoring)
-    baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
+    if callable(scoring):
+        scorer = scoring
+    elif scoring is None or isinstance(scoring, str):
+        scorer = check_scoring(estimator, scoring=scoring)
+    else:
+        scorers_dict = _check_multimetric_scoring(estimator, scoring)
+        scorer = _MultimetricScorer(**scorers_dict)
 
-    scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, sample_weight, col_idx, random_seed, n_repeats, scorer
-    ) for col_idx in range(X.shape[1]))
+    baseline_score = _weights_scorer(scorer, estimator, X, y,
+                                     sample_weight)
 
-    importances = baseline_score - np.array(scores)
-    return Bunch(importances_mean=np.mean(importances, axis=1),
-                 importances_std=np.std(importances, axis=1),
-                 importances=importances)
+    scores = Parallel(n_jobs=n_jobs)(
+        delayed(_calculate_permutation_scores)(
+            estimator, X, y, sample_weight, col_idx, random_seed,
+            n_repeats, scorer
+        ) for col_idx in range(X.shape[1]))
+
+    if isinstance(baseline_score, dict):
+        return {
+            name: _create_importances_bunch(
+                baseline_score[name],
+                # unpack the permuted scores
+                np.array([
+                    scores[col_idx][name] for col_idx in range(X.shape[1])
+                ])
+            )
+            for name in baseline_score
+        }
+    else:
+        return _create_importances_bunch(baseline_score, np.array(scores))
