@@ -555,7 +555,10 @@ between natural clusters in the data. If the factor is too high, the KL
 divergence could increase during this phase. Usually it does not have to be
 tuned. A critical parameter is the learning rate. If it is too low gradient
 descent will get stuck in a bad local minimum. If it is too high the KL
-divergence will increase during optimization. More tips can be found in
+divergence will increase during optimization. A heuristic suggested in
+Belkina et al. (2019) is to set the learning rate to the sample size
+divided by the early exaggeration factor. We implement this heuristic
+as `learning_rate='auto'` argument. More tips can be found in
 Laurens van der Maaten's FAQ (see references). The last parameter, angle,
 is a tradeoff between performance and accuracy. Larger angles imply that we
 can approximate larger regions by a single point, leading to better speed
@@ -614,9 +617,15 @@ the internal structure of the data.
     <https://lvdmaaten.github.io/tsne/>`_
     van der Maaten, L.J.P.
 
-  * `"Accelerating t-SNE using Tree-Based Algorithms."
+  * `"Accelerating t-SNE using Tree-Based Algorithms"
     <https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
-    L.J.P. van der Maaten.  Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
+    van der Maaten, L.J.P.; Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
+    
+  * `"Automated optimized parameters for T-distributed stochastic neighbor
+    embedding improve visualization and analysis of large datasets"
+    <https://www.nature.com/articles/s41467-019-13055-y>`_
+    Belkina, A.C., Ciccolella, C.O., Anno, R., Halpert, R., Spidlen, J.,
+    Snyder-Cappione, J.E., Nature Communications 10, 5415 (2019). 
 
 Tips on practical use
 =====================
