@@ -248,6 +248,9 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    flip_sign=True, random_state='warn'):
     """Computes a truncated randomized SVD.
 
+    This method solves the fixed-rank approximation problem described in the
+    Halko et al paper (problem (1.5), p5).
+
     Parameters
     ----------
     M : {ndarray, sparse matrix}
@@ -261,13 +264,23 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples. Smaller
         number can improve speed but can negatively impact the quality of
-        approximation of singular vectors and singular values.
+        approximation of singular vectors and singular values. Users might wish
+        to increase this parameter up to `2*k - n_components` where k is the
+        effective rank, for large matrices, noisy problems, matrices with
+        slowly decaying spectrums, or to increase precision accuracy. See Halko
+        et al (pages 5, 23 and 26).
 
     n_iter : int or 'auto', default='auto'
         Number of power iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
-        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
-        This improves precision with few components.
+        (< .1 * min(X.shape)) in which case `n_iter` is set to 7.
+        This improves precision with few components. Note that in general
+        users should rather increase `n_oversamples` before increasing `n_iter`
+        as the principle of the randomized method is to avoid usage of these
+        more costly power iterations steps. When `n_components` is equal
+        or greater to the effective matrix rank and the spectrum does not
+        present a slow decay, `n_iter=0` or `1` should even work fine in theory
+        (see Halko et al paper, page 9).
 
         .. versionchanged:: 0.18
 
@@ -315,7 +328,10 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     computations. It is particularly fast on large matrices on which
     you wish to extract only a small number of components. In order to
     obtain further speed up, `n_iter` can be set <=2 (at the cost of
-    loss of precision).
+    loss of precision). To increase the precision it is recommended to
+    increase `n_oversamples`, up to `2*k-n_components` where k is the
+    effective rank. Usually, `n_components` is chosen to be greater than k
+    so increasing `n_oversamples` up to `n_components` should be enough.
 
     References
     ----------
@@ -398,7 +414,10 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
                       selection='module', random_state=None):
     """Computes a truncated eigendecomposition using randomized methods
 
-    The choice of components to select can be tuned with the `selection`
+    This method solves the fixed-rank approximation problem described in the
+    Halko et al paper.
+
+    The choice of which components to select can be tuned with the `selection`
     parameter.
 
     .. versionadded:: 0.24
@@ -417,13 +436,23 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples. Smaller
         number can improve speed but can negatively impact the quality of
-        approximation of eigenvectors and eigenvalues.
+        approximation of eigenvectors and eigenvalues. Users might wish
+        to increase this parameter up to `2*k - n_components` where k is the
+        effective rank, for large matrices, noisy problems, matrices with
+        slowly decaying spectrums, or to increase precision accuracy. See Halko
+        et al (pages 5, 23 and 26).
 
     n_iter : int or 'auto', default='auto'
         Number of power iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
-        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
-        This improves precision with few components.
+        (< .1 * min(X.shape)) in which case `n_iter` is set to 7.
+        This improves precision with few components. Note that in general
+        users should rather increase `n_oversamples` before increasing `n_iter`
+        as the principle of the randomized method is to avoid usage of these
+        more costly power iterations steps. When `n_components` is equal
+        or greater to the effective matrix rank and the spectrum does not
+        present a slow decay, `n_iter=0` or `1` should even work fine in theory
+        (see Halko et al paper, page 9).
 
     power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Whether the power iterations are normalized with step-by-step
@@ -451,8 +480,17 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
     This algorithm finds a (usually very good) approximate truncated
     eigendecomposition using randomized methods to speed up the computations.
 
-    Strategy 'value': not implemented yet. An algorithm can be found in the
-    Halko et al reference below, for future implementation.
+    This method is particularly fast on large matrices on which
+    you wish to extract only a small number of components. In order to
+    obtain further speed up, `n_iter` can be set <=2 (at the cost of
+    loss of precision). To increase the precision it is recommended to
+    increase `n_oversamples`, up to `2*k-n_components` where k is the
+    effective rank. Usually, `n_components` is chosen to be greater than k
+    so increasing `n_oversamples` up to `n_components` should be enough.
+
+    Strategy 'value': not implemented yet.
+    Algorithms 5.3, 5.4 and 5.5 in the Halko et al paper should provide good
+    condidates for a future implementation.
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
@@ -462,11 +500,6 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
     modules, and then uses the signs of the singular vectors to find the true
     sign of t: if the sign of left and right singular vectors are different
     then the corresponding eigenvalue is negative.
-
-    This method is particularly fast on large matrices on which
-    you wish to extract only a small number of components. In order to
-    obtain further speed up, `n_iter` can be set <=2 (at the cost of
-    loss of precision).
 
     Returns
     -------
