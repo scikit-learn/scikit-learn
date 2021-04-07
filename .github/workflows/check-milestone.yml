@@ -10,17 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ contains(github.event.pull_request.labels.*.name, 'Long Term') == 0 }}
     steps:
-      - name: Get PR number and milestone
-        run: |
-          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          echo "TAGGED_MILESTONE=${{ github.event.pull_request.milestone.title }}" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: '0'
       - name: Check the milestone
         run: |
           set -xe
-          if [ $TAGGED_MILESTONE == "" ]
+          if [ ${{ github.event.pull_request.milestone.title }} == "" ]
           then
               echo "No milestone has been set."
               exit 1
