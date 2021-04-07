@@ -1,0 +1,42 @@
+name: Assign Milestone
+
+# only trigger on pull request closed events
+# on:
+#   pull_request:
+#     types: [ closed ]
+on:
+  pull_request:
+    types: [opened, edited, labeled, unlabeled, synchronize]
+
+jobs:
+  assign_milestone:
+    # this job will only run if the PR has been merged
+    # if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR number and milestone
+        run: |
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          echo "TAGGED_MILESTONE=${{ github.event.pull_request.milestone.title }}" >> $GITHUB_ENV
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - name: Check the changelog
+        run: |
+          set -xe
+          # Get the last changelogs modified
+          changelogs_modified=$(git diff --name-only origin/main | grep doc/whats_new/v | tail -1)
+          latest_changelogs=$(ls doc/whats_new/v*.rst | tail -1)
+          if [[ "$TAGGED_MILESTONE" == "" ]]
+          then
+            echo "assign the milestone to the main version"
+          elif [[ "$changelogs_modified" == "" ]]
+            echo "assign the milestone to TAGGED_MILESTONE"
+          then
+          else
+            expected_changelog=doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst
+            if [[ ! "$changelogs_modified" ==  "$expected_changelog"]]
+            then
+              echo "assign the milestone to the version of the changelog modified"
+            fi
+          fi
