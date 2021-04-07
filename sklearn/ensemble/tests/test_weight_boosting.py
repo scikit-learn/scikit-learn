@@ -11,7 +11,6 @@ from scipy.sparse import lil_matrix
 
 from sklearn.utils._testing import assert_array_equal, assert_array_less
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises, assert_raises_regexp
 
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
@@ -270,17 +269,15 @@ def test_importances():
 
 def test_error():
     # Test that it gives proper exception on deficient input.
-    assert_raises(ValueError,
-                  AdaBoostClassifier(learning_rate=-1).fit,
-                  X, y_class)
 
-    assert_raises(ValueError,
-                  AdaBoostClassifier(algorithm="foo").fit,
-                  X, y_class)
+    with pytest.raises(ValueError):
+        AdaBoostClassifier(learning_rate=-1).fit(X, y_class)
 
-    assert_raises(ValueError,
-                  AdaBoostClassifier().fit,
-                  X, y_class, sample_weight=np.asarray([-1]))
+    with pytest.raises(ValueError):
+        AdaBoostClassifier(algorithm="foo").fit(X, y_class)
+
+    with pytest.raises(ValueError):
+        AdaBoostClassifier().fit(X, y_class, sample_weight=np.asarray([-1]))
 
 
 def test_base_estimator():
@@ -307,8 +304,8 @@ def test_base_estimator():
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
     clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
-    assert_raises_regexp(ValueError, "worse than random",
-                         clf.fit, X_fail, y_fail)
+    with pytest.raises(ValueError, match="worse than random"):
+        clf.fit(X_fail, y_fail)
 
 
 def test_sparse_classification():

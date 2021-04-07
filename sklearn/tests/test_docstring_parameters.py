@@ -83,8 +83,9 @@ def test_docstring_parameters():
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
-        # Exclude imported classes
-        classes = [cls for cls in classes if cls[1].__module__ == name]
+        # Exclude non-scikit-learn classes
+        classes = [cls for cls in classes
+                   if cls[1].__module__.startswith('sklearn')]
         for cname, cls in classes:
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
@@ -175,7 +176,6 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'calibration',
     'cluster',
     'compose',
     'covariance',
@@ -192,7 +192,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'kernel_ridge',
     'linear_model',
     'manifold',
-    'mixture',
     'model_selection',
     'multiclass',
     'multioutput',
