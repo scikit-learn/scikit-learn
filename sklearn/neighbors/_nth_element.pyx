@@ -52,6 +52,43 @@ cdef int partition_node_indices(
         ITYPE_t split_index,
         ITYPE_t n_features,
         ITYPE_t n_points) except -1:
+    """Partition points in the node into two equal-sized groups.
+
+    Upon return, the values in node_indices will be rearranged such that
+    (assuming numpy-style indexing):
+
+        data[node_indices[0:split_index], split_dim]
+          <= data[node_indices[split_index], split_dim]
+
+    and
+
+        data[node_indices[split_index], split_dim]
+          <= data[node_indices[split_index:n_points], split_dim]
+
+    The algorithm is essentially a partial in-place quicksort around a
+    set pivot.
+
+    Parameters
+    ----------
+    data : double pointer
+        Pointer to a 2D array of the training data, of shape [N, n_features].
+        N must be greater than any of the values in node_indices.
+    node_indices : int pointer
+        Pointer to a 1D array of length n_points.  This lists the indices of
+        each of the points within the current node.  This will be modified
+        in-place.
+    split_dim : int
+        the dimension on which to split.  This will usually be computed via
+        the routine ``find_node_split_dim``
+    split_index : int
+        the index within node_indices around which to split the points.
+
+    Returns
+    -------
+    status : int
+        integer exit status.  On return, the contents of node_indices are
+        modified as noted above.
+    """
     partition_node_indices_inner(
         data,
         node_indices,
