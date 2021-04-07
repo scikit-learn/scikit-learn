@@ -1,9 +1,5 @@
 name: Assign Milestone
 
-# only trigger on pull request closed events
-# on:
-#   pull_request:
-#     types: [ closed ]
 on:
   pull_request:
     types: [opened, edited, labeled, unlabeled, synchronize]
@@ -11,7 +7,7 @@ on:
 jobs:
   assign_milestone:
     # this job will only run if the PR has been merged
-    # if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Get PR number and milestone
