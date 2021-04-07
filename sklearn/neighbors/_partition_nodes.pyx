@@ -1,12 +1,13 @@
 # distutils : language = c++
 
-# KDTrees rely on partial sorts to partition their nodes.
+# BinaryTrees rely on partial sorts to partition their nodes during their
+# initialisation.
 #
 # The C++ std library exposes nth_element, an efficient partial sort for this
 # situation which has a linear time complexity as well as the best performances.
 #
 # To use std::algorithm::nth_element, a few fixture are defined using Cython:
-# - partition_node_indices, a cython function used within KDTree, that calls
+# - partition_node_indices, a Cython function used in BinaryTrees, that calls
 # - partition_node_indices_inner, a C++ function that wraps nth_element and uses
 # - an IndexComparator to state how to compare KDTrees' indices
 #

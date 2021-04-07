@@ -282,9 +282,9 @@ Changelog
 :mod:`sklearn.neighbors`
 ..........................
 
-- |Enhancement| Improve :class:`neighbors.KDTree` worst-case time complexity
-  from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n)` on sorted and
-  on duplicate inputs.
+- |Enhancement| The creation of :class:`neighbors.KDTree` and
+  :class:`neighbors.BallTree` has been improved for their worst-cases time
+  complexity from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n)`.
   :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
   :user:`Julien Jerphanion <jjerphan>`.
 
