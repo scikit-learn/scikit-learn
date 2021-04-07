@@ -298,7 +298,8 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
     assert np.any(scales**2 <= bounds)
 
     # Check that such features are actually treated as constant by the scaler:
-    assert_allclose(scaler.scale_[scales**2 < bounds], 1.)
+    assert all(scaler.var_[scales**2 <= bounds] <= bounds[scales**2 <= bounds])
+    assert_allclose(scaler.scale_[scales**2 <= bounds], 1.)
 
     # Depending the on the dtype of X, some features might not actually be
     # representable as non constant for small scales (even if above the
