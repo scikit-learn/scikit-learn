@@ -13,7 +13,7 @@ jobs:
       - name: Check the milestone
         run: |
           set -xe
-          if [ ${{ github.event.pull_request.milestone.title }} == "" ]
+          if [ "${{ github.event.pull_request.milestone.title }}" == "" ]
           then
               echo "No milestone has been set."
               exit 1
