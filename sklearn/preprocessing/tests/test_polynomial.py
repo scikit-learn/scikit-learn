@@ -552,6 +552,18 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
+def test_polynomial_features_csr_int64():
+    """Tests that if the number of features fits in an int32 BUT the
+    expanded number of features is too big for int32 (so needs int64),
+    there is no overflow in the result."""
+    rng = np.random.RandomState(42)
+    x = sparse.rand(3, 70000, density=0.0001, format='csr',
+                    random_state=rng)
+    pf = PolynomialFeatures(interaction_only=True, include_bias=False,
+                            degree=2)
+    pf.fit_transform(x)
+
+
 @pytest.mark.parametrize("n_features", [1, 4, 5])
 @pytest.mark.parametrize("degree", range(1, 5))
 @pytest.mark.parametrize("interaction_only", [True, False])
