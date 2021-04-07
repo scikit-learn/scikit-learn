@@ -63,7 +63,8 @@ from ..datasets import (
     load_iris,
     make_blobs,
     make_multilabel_classification,
-    make_regression
+    make_regression,
+    make_classification
 )
 
 REGRESSION_DATASET = None
@@ -119,6 +120,7 @@ def _yield_checks(estimator):
     yield check_estimators_pickle
 
     yield check_estimator_get_tags_default_keys
+
 
 def _yield_classifier_checks(classifier):
     tags = _safe_tags(classifier)
@@ -649,6 +651,9 @@ def _set_checking_parameters(estimator):
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
 
+    if name == 'QuadraticDiscriminantAnalysis':
+        estimator.set_params(reg_param=0.5)
+
 
 class _NotAnArray:
     """An object that is convertible to an array.
@@ -927,11 +932,19 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
 @ignore_warnings(category=(FutureWarning, UserWarning))
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
-    rng = np.random.RandomState(0)
-    X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
+    seed = 0
+    if name == 'QuadraticDiscriminantAnalysis':
+        X, y = make_classification(random_state=seed, n_samples=40,
+                                   n_informative=8, n_features=10,
+                                   n_classes=4)
+    else:
+        rng = np.random.RandomState(seed)
+        X = rng.rand(40, 10)
+        y = (X[:, 0] * 4).astype(int)
+
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     X = X.astype(object)
     tags = _safe_tags(estimator_orig)
-    y = (X[:, 0] * 4).astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1440,13 +1453,22 @@ def check_fit_score_takes_y(name, estimator_orig):
 
 @ignore_warnings
 def check_estimators_dtypes(name, estimator_orig):
-    rnd = np.random.RandomState(0)
-    X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
+    seed = 0
+    if name == 'QuadraticDiscriminantAnalysis':
+        X, y = make_classification(random_state=seed, n_samples=20,
+                                   n_informative=3, n_features=5,
+                                   n_classes=4)
+
+    else:
+        rng = np.random.RandomState(seed)
+        X = rng.uniform(size=(20, 5)) * 3
+        y = (X[:, 0]).astype(np.int64)
+
+    X_train_32 = X.astype(np.float32)
     X_train_32 = _pairwise_estimator_convert_X(X_train_32, estimator_orig)
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
-    y = X_train_int_64[:, 0]
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
