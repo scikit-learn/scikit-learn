@@ -26,7 +26,9 @@ jobs:
           set -xe
           # Get the last changelogs modified
           changelogs_modified=$(git diff --name-only origin/main | grep doc/whats_new/v | tail -1)
+          echo "$changelogs_modified"
           latest_changelogs=$(ls doc/whats_new/v*.rst | tail -1)
+          echo "$latest_changelogs"
           if [[ "$TAGGED_MILESTONE" == "" ]]
           then
             echo "assign the milestone to the main version"
