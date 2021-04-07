@@ -181,7 +181,8 @@ def _generate_meta_estimator_instances_with_pipeline():
 
             if "param_grid" in sig or "param_distributions" in sig:
                 # SearchCV estimators
-                yield Estimator(estimator, param_grid)
+                extra_params = {"n_iter": 2} if "n_iter" in sig else {}
+                yield Estimator(estimator, param_grid, **extra_params)
             else:
                 yield Estimator(estimator)
 
