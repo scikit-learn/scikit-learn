@@ -996,8 +996,8 @@ def test_tsne_square_distances_futurewarning(metric, square_distances):
         assert not record
 
 
+# TODO: Remove in 1.2
 @pytest.mark.parametrize('init', [None, 'random', 'pca'])
-# This test can be deleted in 1.2
 def test_tsne_init_futurewarning(init):
     """Make sure that a FutureWarning is only raised when the
     init is not specified or is 'pca'."""
