@@ -302,11 +302,16 @@ features, in :class:`KernelPCA` the number of components is bounded by the
 number of samples. Many real-world datasets have large number of samples! In
 these cases finding *all* the components with a full kPCA is a waste of
 computation time, as data is mostly described by the first few components
-(e.g. ``n_components<=100``).
+(e.g. ``n_components<=100``). In other words, the centered gram matrix that
+is eigendecomposed in the Kernel PCA fitting process has an effective rank that
+is much smaller than its size. This is a situation where approximate
+eigensolvers can provide speedup with very low precision loss.
 
 The optional parameter ``eigen_solver='randomized'`` can be used to
 *significantly* reduce the computation time when the number of requested
-``n_components`` is small compared with the number of samples.
+``n_components`` is small compared with the number of samples. It relies on
+randomized decomposition methods to find an approximate solution in a shorter
+time.
 
 The time complexity of the randomized :class:`KernelPCA` is
 :math:`O(n_{\mathrm{samples}}^2 \cdot n_{\mathrm{components}})`
