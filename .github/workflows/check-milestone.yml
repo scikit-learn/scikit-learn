@@ -1,4 +1,4 @@
-name: Check Milestone
+name: Check Milestone (when failing needs Triage intervention)
 # This check makes sure that the milestone is properly set.
 # To bypass this check, label the PR with "Long Term".
 on:
