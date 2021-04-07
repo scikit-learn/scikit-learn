@@ -247,9 +247,10 @@ def test_trustworthiness():
     assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
 
 
+# TODO: Remove filterwarning in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change from.*:FutureWarning")
 @pytest.mark.parametrize("method", ['exact', 'barnes_hut'])
 @pytest.mark.parametrize("init", ('random', 'pca'))
-@ignore_warnings(category=FutureWarning)  # Delete in 1.2
 def test_preserve_trustworthiness_approximately(method, init):
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
