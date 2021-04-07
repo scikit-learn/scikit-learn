@@ -1358,6 +1358,23 @@ def test_min_impurity_decrease():
             # will suffice for the actual working of this param
             assert tree.min_impurity_decrease == 0.1
 
+def test_poisson_y_positive_check():
+    est = RandomForestRegressor(criterion="poisson")
+    X = np.zeros((3, 3))
+
+    y = [-1, 1, 3]
+    with pytest.raises(
+        ValueError,
+        match="Some.*y are negative.*Poisson.*\."
+    ):
+        est.fit(X, y)
+
+    y = [0, 0, 0]
+    with pytest.raises(
+        ValueError,
+        match="Sum of y is not positive.*Poisson regression\."
+    ):
+        est.fit(X, y)
 
 # mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
 class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
