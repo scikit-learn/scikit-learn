@@ -216,7 +216,6 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
         "AdaBoostRegressor",
         "BaggingClassifier",
         "BaggingRegressor",
-        "CalibratedClassifierCV",
         "ClassifierChain",
         "IterativeImputer",
         "MultiOutputClassifier",
@@ -261,6 +260,9 @@ def test_meta_estimators_delegate_data_validation(estimator):
     X = _enforce_estimator_tags_x(estimator, X)
     y = _enforce_estimator_tags_y(estimator, y)
 
+    # Calling fit should not raise any data validation exception since X is a
+    # valid input datastructure for the first step of the pipeline passed as
+    # base estimator to the meta estimator.
     estimator.fit(X, y)
 
     # n_features_in_ should not be defined since data is not tabular data.

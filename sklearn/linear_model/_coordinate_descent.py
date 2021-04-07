@@ -570,7 +570,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
 
-            a * L1 + b * L2
+            a * ||w||_1 + 0.5 * b * ||w||_2^2
 
     where::
 
