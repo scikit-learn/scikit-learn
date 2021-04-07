@@ -248,7 +248,7 @@ def test_trustworthiness():
 
 
 # TODO: Remove filterwarning in 1.2
-@pytest.mark.filterwarnings("ignore:.*TSNE will change from.*:FutureWarning")
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize("method", ['exact', 'barnes_hut'])
 @pytest.mark.parametrize("init", ('random', 'pca'))
 def test_preserve_trustworthiness_approximately(method, init):
