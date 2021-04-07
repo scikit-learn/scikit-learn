@@ -176,10 +176,10 @@ def load_files(container_path, *, description=None, categories=None,
         See :term:`Glossary <random_state>`.
 
     allowed_extensions :list of str, default=None
-        list of desired file extensions
+        List of desired file extensions
 
     ignored_extensions : list of str, default=None
-        list of file extensions to exclude
+        List of file extensions to exclude from loading
 
     Returns
     -------
@@ -205,6 +205,12 @@ def load_files(container_path, *, description=None, categories=None,
         raise AssertionError("Ignored extensions and allowed extensions cannot"
                              " both be present. Please choose one or the"
                              " other.")
+
+    allowed_extensions = None if allowed_extensions is None else set(
+        allowed_extensions)
+
+    ignored_extensions = None if ignored_extensions is None else set(
+        ignored_extensions)
 
     target = []
     target_names = []
@@ -262,9 +268,9 @@ def _check_valid_document(file_name, allowed_extensions, ignored_extensions):
     ----------
     file_name: str
         The name of the file to check
-    allowed_extensions : list or set of str,
+    allowed_extensions : set of str or None
         List of desired file extensions
-    ignored_extensions : list or set of str,
+    ignored_extensions : set of str or None
         List of file extensions to exclude
     Returns
     -------
