@@ -52,7 +52,7 @@ Changelog
 ..........................
 
 - |Fix| :class:`multioutput.MultiOutputRegressor` now works with estimators
-  that dynamically define `predict` during fitted, such as
+  that dynamically define `predict` during fitting, such as
   :class:`ensemble.StackingRegressor`. :pr:`19308` by `Thomas Fan`_.
 
 :mod:`sklearn.semi_supervised`
