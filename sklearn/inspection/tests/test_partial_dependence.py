@@ -15,7 +15,6 @@ from sklearn.inspection._partial_dependence import (
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
@@ -264,7 +263,8 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
     equiv_random_state = check_random_state(tree_seed).randint(
         np.iinfo(np.int32).max)
     gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1,
-                                     criterion='mse', max_depth=max_depth,
+                                     criterion='squared_error',
+                                     max_depth=max_depth,
                                      random_state=equiv_random_state)
     tree = DecisionTreeRegressor(max_depth=max_depth,
                                  random_state=equiv_random_state)
