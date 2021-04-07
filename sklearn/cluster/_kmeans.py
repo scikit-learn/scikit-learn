@@ -1357,7 +1357,7 @@ def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
     """
     # Perform label assignment to nearest centers
     # For better efficiency, it's better to run _mini_batch_step in a
-    # threadpool_limit context then using _labels_inertia_threadpool_limit here
+    # threadpool_limit context than using _labels_inertia_threadpool_limit here
     labels, inertia = _labels_inertia(X, sample_weight,
                                       x_squared_norms, centers,
                                       n_threads=n_threads)
