@@ -272,7 +272,7 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
     # Check that when the variance is too small (var << mean**2) the feature
     # is considered constant and not scaled.
 
-    scale_min, scale_max = -30, 30
+    scale_min, scale_max = -30, 19
     scales = np.array([10**i for i in range(scale_min, scale_max + 1)],
                       dtype=dtype)
 
@@ -292,26 +292,27 @@ def test_standard_scaler_near_constant_features(n_samples, array_constructor,
     # if var < bound = N.eps.var + N².eps².mean², the feature is considered
     # constant and the scale_ attribute is set to 1.
     bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2 * average**2
+    within_bounds = scales**2 <= bounds
 
     # Check that scale_min is small enough to have some scales below the
     # bound and therefore detected as constant:
-    assert np.any(scales**2 <= bounds)
+    assert np.any(within_bounds)
 
     # Check that such features are actually treated as constant by the scaler:
-    assert all(scaler.var_[scales**2 <= bounds] <= bounds[scales**2 <= bounds])
-    assert_allclose(scaler.scale_[scales**2 <= bounds], 1.)
+    assert all(scaler.var_[within_bounds] <= bounds[within_bounds])
+    assert_allclose(scaler.scale_[within_bounds], 1.)
 
     # Depending the on the dtype of X, some features might not actually be
     # representable as non constant for small scales (even if above the
     # precision bound of the float64 variance estimate). Such feature should
     # be correctly detected as constants with 0 variance by StandardScaler.
-    representable_diff = average + scales != average - scales
+    representable_diff = X[0, :] - X[-1, :] != 0
     assert_allclose(scaler.var_[np.logical_not(representable_diff)], 0)
     assert_allclose(scaler.scale_[np.logical_not(representable_diff)], 1)
 
     # The other features are scaled and scale_ is equal to sqrt(var_) assuming
-    # that scales are large enough for 1 + scale and 1 - scale to be distinct
-    # in X (depending on X's dtype).
+    # that scales are large enough for average + scale and average - scale to
+    # be distinct in X (depending on X's dtype).
     common_mask = np.logical_and(scales**2 > bounds, representable_diff)
     assert_allclose(scaler.scale_[common_mask],
                     np.sqrt(scaler.var_)[common_mask])
