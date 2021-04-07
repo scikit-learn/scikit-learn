@@ -177,7 +177,7 @@ configurations = [
      'prediction_performance_label': 'MSE',
      'n_samples': 30},
     {'estimator': GradientBoostingRegressor,
-     'tuned_params': {'loss': 'ls'},
+     'tuned_params': {'loss': 'squared_error'},
      'changing_param': 'n_estimators',
      'changing_param_values': [10, 50, 100, 200, 500],
      'complexity_label': 'n_trees',

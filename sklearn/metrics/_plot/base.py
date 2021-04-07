@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn.base import is_classifier
+from ...base import is_classifier
 
 
 def _check_classifier_response_method(estimator, response_method):
