@@ -2,6 +2,7 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import sparse
 import numbers
@@ -110,7 +111,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error', force_all_finite=True):
+    def _transform(self, X, handle_unknown='error', force_all_finite=True,
+                   warn_on_unknown=False):
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite)
 
@@ -125,6 +127,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 .format(len(self.categories_,), n_features)
             )
 
+        columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
             diff, valid_mask = _check_unknown(Xi, self.categories_[i],
@@ -136,6 +139,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                            " during transform".format(diff, i))
                     raise ValueError(msg)
                 else:
+                    if warn_on_unknown:
+                        columns_with_unknown.append(i)
                     # Set the problematic rows to an acceptable value and
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
@@ -153,6 +158,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # already called above.
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
                                   check_unknown=False)
+        if columns_with_unknown:
+            warnings.warn("Found unknown categories in columns "
+                          f"{columns_with_unknown} during transform. These "
+                          "unknown categories will be encoded as all zeros",
+                          UserWarning)
 
         return X_int, X_mask
 
@@ -327,14 +337,6 @@ class OneHotEncoder(_BaseEncoder):
             msg = ("handle_unknown should be either 'error' or 'ignore', "
                    "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
-        # If we have both dropped columns and ignored unknown
-        # values, there will be ambiguous cells. This creates difficulties
-        # in interpreting the model.
-        if self.drop is not None and self.handle_unknown != 'error':
-            raise ValueError(
-                "`handle_unknown` must be 'error' when the drop parameter is "
-                "specified, as both would create categories that are all "
-                "zero.")
 
     def _compute_drop_idx(self):
         if self.drop is None:
@@ -459,8 +461,11 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
+        warn_on_unknown = (self.handle_unknown == "ignore"
+                           and self.drop is not None)
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
-                                        force_all_finite='allow-nan')
+                                        force_all_finite='allow-nan',
+                                        warn_on_unknown=warn_on_unknown)
 
         n_samples, n_features = X_int.shape
 
@@ -509,8 +514,10 @@ class OneHotEncoder(_BaseEncoder):
         """
         Convert the data back to the original representation.
 
-        In case unknown categories are encountered (all zeros in the
-        one-hot encoding), ``None`` is used to represent this category.
+        When unknown categories are encountered (all zeros in the
+        one-hot encoding), ``None`` is used to represent this category. If the
+        feature with the unknown category has a dropped caregory, the dropped
+        category will be its inverse.
 
         Parameters
         ----------
@@ -571,7 +578,14 @@ class OneHotEncoder(_BaseEncoder):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():
-                    found_unknown[i] = unknown
+                    # if categories were dropped then unknown categories will
+                    # be mapped to the dropped category
+                    if self.drop_idx_ is None or self.drop_idx_[i] is None:
+                        found_unknown[i] = unknown
+                    else:
+                        X_tr[unknown, i] = self.categories_[i][
+                            self.drop_idx_[i]
+                        ]
             else:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():

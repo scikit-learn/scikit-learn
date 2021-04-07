@@ -76,6 +76,13 @@ Changelog
   - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
     use `"squared_error"` instead which is now the default.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| The predict and predict_proba methods of
+  :class:`calibration.CalibratedClassifierCV` can now properly be used on
+  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -90,6 +97,13 @@ Changelog
 
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
+
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| :class:`compose.ColumnTransformer` now records the output
+  of each transformer in `output_indices_`. :pr:`18393` by
+  :user:`Luca Bittarello <lbittarello>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -133,6 +147,11 @@ Changelog
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` are no longer
+  experimental. They are now considered stable and are subject to the same
+  deprecation cycles as all other estimators. :pr:`19799` by `Nicolas Hug`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -150,6 +169,13 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
+  implementation of the linear One-Class SVM. Combined with kernel
+  approximation techniques, this implementation approximates the solution of
+  a kernelized One Class SVM while benefitting from a linear
+  complexity in the number of samples.
+  :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
+
 - |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
   has been optimised for dense matrices when using `solver='newton-cg'` and
   `multi_class!='multinomial'`.
@@ -165,22 +191,22 @@ Changelog
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
 
-:mod:`sklearn.preprocessing`
-............................
-
-- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
-  missing values by default. :pr:`19069` by `Thomas Fan`_.
-
 - |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
   is deprecated and will be removed in 1.2.
   Motivation for this deprecation: ``normalize`` parameter did not take any
   effect if ``fit_intercept`` was set to False and therefore was deemed
   confusing.
-  The behavior of the deprecated LinearRegression(normalize=True) can be
+  The behavior of the deprecated LinearModel(normalize=True) can be
   reproduced with :class:`~sklearn.pipeline.Pipeline` with
-  :class:`~sklearn.preprocessing.StandardScaler`as follows:
-  make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
+  :class:`~sklearn.preprocessing.LinearModel` (where LinearModel is
+  LinearRegression, Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV) as
+  follows:
+  make_pipeline(StandardScaler(with_mean=False), LinearModel()).
+  LinearRegression was deprecated in:
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
+  Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV were deprecated in:
+  :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
 - |Fix|: `sample_weight` are now fully taken into account in linear models
@@ -188,6 +214,10 @@ Changelog
   scaling.
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
   :user:`Maria Telenczuk <maikia>`.
+
+- |Efficiency| The implementation of `fit` for `PolynomialFeatures` transformer
+  is now faster. This is especially noticeable on large sparse input.
+  :pr:`19734` by :user:`Fred Robinson <frrad>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -220,6 +250,12 @@ Changelog
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
+- |Fix| Samples with zero `sample_weight` values do not affect the results
+  from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
+  and :func:`metrics.roc_curve`.
+  :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -245,6 +281,14 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |API| The `predict_proba` and `predict_log_proba` methods of the
+  :class:`Pipeline` class now support passing prediction kwargs to
+  the final estimator.
+  :pr:`19790` by :user:`Christopher Flynn <crflynn>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -257,12 +301,22 @@ Changelog
   splines via the ``extrapolation`` argument.
   :pr:`19483` by :user:`Malte Londschien <mlondschien>`.
 
+- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
+  missing values by default. :pr:`19069` by `Thomas Fan`_.
+
 - |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
   and similar scalers detect near-constant features to avoid scaling them to
   very large values. This problem happens in particular when using a scaler on
   sparse data with a constant column with sample weights, in which case
   centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
   <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
+
+- |Fix| :meth:`preprocessing.StandardScaler.inverse_transform` now
+  correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
+
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports
+  `handle_unknown='ignore'` and dropping categories. :pr:`19041` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
@@ -274,18 +328,15 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| Deprecated the default value of the `random_state=0` in 
+- |Enhancement| Deprecated the default value of the `random_state=0` in
   :func:`~sklearn.utils.extmath.randomized_svd`. Starting in 1.2,
   the default value of `random_state` will be set to `None`.
-  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and 
+  :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
-:mod:`sklearn.calibration`
-............................
-
-- |Fix| The predict and predict_proba methods of
-  :class:`calibration.CalibratedClassifierCV can now properly be used on
-  prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`
+- |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
+  precision of the computed variance was very poor when the real variance is
+  exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------

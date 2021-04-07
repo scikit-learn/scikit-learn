@@ -176,7 +176,6 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'calibration',
     'cluster',
     'compose',
     'covariance',
@@ -193,7 +192,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'kernel_ridge',
     'linear_model',
     'manifold',
-    'mixture',
     'model_selection',
     'multiclass',
     'multioutput',
