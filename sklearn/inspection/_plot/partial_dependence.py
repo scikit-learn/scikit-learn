@@ -193,11 +193,13 @@ def plot_partial_dependence(
         For ICE lines in the one-way partial dependence plots.
         Takes priority over ```line_kw`` when not ``None``.
 
+        .. versionadded:: 1.0
     pd_line_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For partial dependence in one-way partial dependence plots.
         Takes priority over ```line_kw`` when not ``None``.
 
+        .. versionadded:: 1.0
     contour_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
         For two-way partial dependence plots.
@@ -873,11 +875,13 @@ class PartialDependenceDisplay:
             For ICE lines in the one-way partial dependence plots.
             Takes priority over ```line_kw`` when not ``None``.
 
+            .. versionadded:: 1.0
         pd_line_kw : dict, default=None
             Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
             For partial dependence in one-way partial dependence plots.
             Takes priority over ```line_kw`` when not ``None``.
 
+            .. versionadded:: 1.0
         contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
