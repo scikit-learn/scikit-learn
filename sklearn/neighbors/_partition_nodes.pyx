@@ -98,10 +98,14 @@ cdef int partition_node_indices(
         in-place.
     split_dim : int
         the dimension on which to split.  This will usually be computed via
-        the routine ``find_node_split_dim``
+        the routine ``find_node_split_dim``.
     split_index : int
         the index within node_indices around which to split the points.
-
+    n_features: int
+        the number of features (i.e columns) in the 2D array pointed by data.
+    n_points : int
+        the length of node_indices. This is also the number of points in
+        the original dataset.
     Returns
     -------
     status : int
