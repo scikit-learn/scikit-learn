@@ -56,18 +56,23 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 ###############################################################################
 # test on JL lemma
 ###############################################################################
-def test_invalid_jl_domain():
+
+@pytest.mark.parametrize("n_samples, eps", [
+    (100, 1.1),
+    (100, 0.0),
+    (100, -0.1),
+    (0, 0.5)
+])
+def test_invalid_jl_domain(n_samples, eps):
     with pytest.raises(ValueError):
-        johnson_lindenstrauss_min_dim(100, eps=1.1)
-        johnson_lindenstrauss_min_dim(100, eps=0.0)
-        johnson_lindenstrauss_min_dim(100, eps=-0.1)
-        johnson_lindenstrauss_min_dim(0, eps=0.5)
+        johnson_lindenstrauss_min_dim(n_samples, eps=eps)
 
 
-def test_input_size_jl_min_dim():
+
+@pytest.mark.parametrize("n_samples, eps",[(3 * [100],2 * [0.9]),(3 * [100],2 * [0.9])])
+def test_input_size_jl_min_dim(n_samples,eps):
     with pytest.raises(ValueError):
-        johnson_lindenstrauss_min_dim(3 * [100], eps=2 * [0.9])
-        johnson_lindenstrauss_min_dim(3 * [100], eps=2 * [0.9])
+        johnson_lindenstrauss_min_dim(n_samples, eps=eps)
 
     johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
                                   eps=np.full((10, 10), 0.5))
@@ -76,20 +81,17 @@ def test_input_size_jl_min_dim():
 ###############################################################################
 # tests random matrix generation
 ###############################################################################
-def check_input_size_random_matrix(random_matrix):
+@pytest.mark.parametrize("random_matrix", all_random_matrix)
+@pytest.mark.parametrize("n_components, n_features",[(0,0),(-1,1),(1,-1),(1,0),(-1,0)])
+def test_input_size_random_matrix(random_matrix,n_components,n_features):
     with pytest.raises(ValueError):
-        random_matrix(0, 0)
-        random_matrix(-1, 1)
-        random_matrix(1, -1)
-        random_matrix(1, 0)
-        random_matrix(-1, 0)
+        random_matrix(n_components, n_features)
 
 
-def check_size_generated(random_matrix):
-    assert random_matrix(1, 5).shape == (1, 5)
-    assert random_matrix(5, 1).shape == (5, 1)
-    assert random_matrix(5, 5).shape == (5, 5)
-    assert random_matrix(1, 1).shape == (1, 1)
+@pytest.mark.parametrize("random_matrix", all_random_matrix)
+@pytest.mark.parametrize("n_components, n_features",[(1,5),(5,1),(5,5),(1,1)])
+def test_size_generated(random_matrix,n_components,n_features):
+    assert random_matrix(n_components, n_features).shape == (n_components, n_features)
 
 
 def check_zero_mean_and_unit_norm(random_matrix):
@@ -113,8 +115,6 @@ def check_input_with_sparse_random_matrix(random_matrix):
 @pytest.mark.parametrize("random_matrix", all_random_matrix)
 def test_basic_property_of_random_matrix(random_matrix):
     # Check basic properties of random matrix generation
-    check_input_size_random_matrix(random_matrix)
-    check_size_generated(random_matrix)
     check_zero_mean_and_unit_norm(random_matrix)
 
 
@@ -193,20 +193,19 @@ def test_sparse_random_matrix():
 ###############################################################################
 # tests on random projection transformer
 ###############################################################################
-def test_sparse_random_projection_transformer_invalid_density():
+
+@pytest.mark.parametrize("density",[1.1,0,-0.1])
+def test_sparse_random_projection_transformer_invalid_density(density):
     for RandomProjection in all_SparseRandomProjection:
         with pytest.raises(ValueError):
-            RandomProjection(density=1.1).fit(data)
-            RandomProjection(density=0).fit(data)
-            RandomProjection(density=-0.1).fit(data)
+            RandomProjection(density=density).fit(data)
 
 
-
-def test_random_projection_transformer_invalid_input():
+@pytest.mark.parametrize("n_components, fit_data",[('auto',[[0,1,2]]),(-10,data)])
+def test_random_projection_transformer_invalid_input(n_components,fit_data):
     for RandomProjection in all_RandomProjection:
         with pytest.raises(ValueError):
-            RandomProjection(n_components='auto').fit([[0, 1, 2]])
-            RandomProjection(n_components=-10).fit(data)
+            RandomProjection(n_components=n_components).fit(fit_data)
 
 
 def test_try_to_transform_before_fit():
