@@ -278,6 +278,16 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+
+:mod:`sklearn.neighbors`
+..........................
+
+- |Enhancement| The creation of :class:`neighbors.KDTree` and
+  :class:`neighbors.BallTree` has been improved for their worst-cases time
+  complexity from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n)`.
+  :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
+  :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
