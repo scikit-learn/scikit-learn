@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 from joblib import cpu_count
+import re
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -18,6 +19,7 @@ from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import jaccard_score, mean_squared_error
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
@@ -657,4 +659,32 @@ def test_classifier_chain_tuple_invalid_order():
     chain = ClassifierChain(RandomForestClassifier(), order=order)
 
     with pytest.raises(ValueError, match='invalid order'):
+        chain.fit(X, y)
+
+
+def test_multi_label_y():
+    err_msg = "invalid Y for multi-label fit. " \
+        "Y must be of shape (n_samples, n_classes)"
+
+    X, y = datasets.make_classification(
+        n_samples=100,
+        n_features=4,
+        n_classes=1,
+        n_informative=1,
+        random_state=0)
+    base_clf = RandomForestClassifier()
+    chain = ClassifierChain(
+        base_clf,
+        order='random',
+        random_state=0)
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        chain.fit(X, y)
+
+    X, y = datasets.make_regression(n_samples=100, n_targets=1, random_state=0)
+    base_reg = LinearRegression()
+    chain = RegressorChain(
+        base_reg,
+        order='random',
+        random_state=0)
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
         chain.fit(X, y)
