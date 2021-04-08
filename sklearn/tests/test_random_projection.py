@@ -81,17 +81,16 @@ def test_input_size_jl_min_dim(n_samples,eps):
 ###############################################################################
 # tests random matrix generation
 ###############################################################################
-@pytest.mark.parametrize("random_matrix", all_random_matrix)
-@pytest.mark.parametrize("n_components, n_features",[(0,0),(-1,1),(1,-1),(1,0),(-1,0)])
-def test_input_size_random_matrix(random_matrix,n_components,n_features):
-    with pytest.raises(ValueError):
-        random_matrix(n_components, n_features)
+def check_input_size_random_matrix(random_matrix):
+    inputs = [(0,0), (-1,1), (1,-1), (1,0), (-1,0)]
+    for n_components, n_features in inputs:
+        with pytest.raises(ValueError):
+            random_matrix(n_components, n_features)
 
-
-@pytest.mark.parametrize("random_matrix", all_random_matrix)
-@pytest.mark.parametrize("n_components, n_features",[(1,5),(5,1),(5,5),(1,1)])
-def test_size_generated(random_matrix,n_components,n_features):
-    assert random_matrix(n_components, n_features).shape == (n_components, n_features)
+def check_size_generated(random_matrix):
+    inputs = [(1,5),(5,1),(5,5),(1,1)]
+    for n_components, n_features in inputs:
+        assert random_matrix(n_components, n_features).shape == (n_components, n_features)
 
 
 def check_zero_mean_and_unit_norm(random_matrix):
@@ -115,6 +114,8 @@ def check_input_with_sparse_random_matrix(random_matrix):
 @pytest.mark.parametrize("random_matrix", all_random_matrix)
 def test_basic_property_of_random_matrix(random_matrix):
     # Check basic properties of random matrix generation
+    check_input_size_random_matrix(random_matrix)
+    check_size_generated(random_matrix)
     check_zero_mean_and_unit_norm(random_matrix)
 
 
