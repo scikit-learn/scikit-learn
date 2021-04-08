@@ -353,7 +353,7 @@ Example of 2-fold cross-validation on a dataset with 4 samples::
 Here is a visualization of the cross-validation behavior. Note that
 :class:`KFold` is not affected by classes or groups.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_004.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_006.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -509,7 +509,7 @@ Here is a usage example::
 Here is a visualization of the cross-validation behavior. Note that
 :class:`ShuffleSplit` is not affected by classes or groups.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_006.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_008.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -566,7 +566,7 @@ We can see that :class:`StratifiedKFold` preserves the class ratios
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_009.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -585,7 +585,7 @@ percentage for each target class as in the complete set.
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_009.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_012.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -644,6 +644,58 @@ both testing and training. Notice that the folds do not have exactly the same
 size due to the imbalance in the data.
 
 Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
+.. _stratified_group_k_fold:
+
+StratifiedGroupKFold
+^^^^^^^^^^^^^^^^^^^^
+
+:class:`StratifiedGroupKFold` is a cross-validation scheme that combines both
+:class:`StratifiedKFold` and :class:`GroupKFold`. The idea is to try to
+preserve the distribution of classes in each split while keeping each group
+within a single split. That might be useful when you have an unbalanced
+dataset so that using just :class:`GroupKFold` might produce skewed splits.
+
+Example::
+
+  >>> from sklearn.model_selection import StratifiedGroupKFold
+  >>> X = list(range(18))
+  >>> y = [1] * 6 + [0] * 12
+  >>> groups = [1, 2, 3, 3, 4, 4, 1, 1, 2, 2, 3, 4, 5, 5, 5, 6, 6, 6]
+  >>> sgkf = StratifiedGroupKFold(n_splits=3)
+  >>> for train, test in sgkf.split(X, y, groups=groups):
+  ...     print("%s %s" % (train, test))
+  [ 0  2  3  4  5  6  7 10 11 15 16 17] [ 1  8  9 12 13 14]
+  [ 0  1  4  5  6  7  8  9 11 12 13 14] [ 2  3 10 15 16 17]
+  [ 1  2  3  8  9 10 12 13 14 15 16 17] [ 0  4  5  6  7 11]
+
+Implementation notes:
+
+- With the current implementation full shuffle is not possible in most
+  scenarios. When shuffle=True, the following happens:
+
+  1. All groups a shuffled.
+  2. Groups are sorted by standard deviation of classes using stable sort.
+  3. Sorted groups are iterated over and assigned to folds.
+
+  That means that only groups with the same standard deviation of class
+  distribution will be shuffled, which might be useful when each group has only
+  a single class.
+- The algorithm greedily assigns each group to one of n_splits test sets,
+  choosing the test set that minimises the variance in class distribution
+  across test sets. Group assignment proceeds from groups with highest to
+  lowest variance in class frequency, i.e. large groups peaked on one or few
+  classes are assigned first.
+- This split is suboptimal in a sense that it might produce imbalanced splits
+  even if perfect stratification is possible. If you have relatively close
+  distribution of classes in each group, using :class:`GroupKFold` is better.
+
+Here is a visualization of cross-validation behavior for uneven groups:
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_005.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
@@ -733,7 +785,7 @@ Here is a usage example::
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_008.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_011.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
@@ -835,7 +887,7 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_010.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_013.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%

@@ -53,6 +53,26 @@ def test_mean_variance_axis0():
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("sparse_constructor", [sp.csr_matrix, sp.csc_matrix])
+def test_mean_variance_axis0_precision(dtype, sparse_constructor):
+    # Check that there's no big loss of precision when the real variance is
+    # exactly 0. (#19766)
+    rng = np.random.RandomState(0)
+    X = np.full(fill_value=100., shape=(1000, 1), dtype=dtype)
+    # Add some missing records which should be ignored:
+    missing_indices = rng.choice(np.arange(X.shape[0]), 10, replace=False)
+    X[missing_indices, 0] = np.nan
+    X = sparse_constructor(X)
+
+    # Random positive weights:
+    sample_weight = rng.rand(X.shape[0]).astype(dtype)
+
+    _, var = mean_variance_axis(X, weights=sample_weight, axis=0)
+
+    assert var < np.finfo(dtype).eps
+
+
 def test_mean_variance_axis1():
     X, _ = make_classification(5, 4, random_state=0)
     # Sparsify the array a little bit
