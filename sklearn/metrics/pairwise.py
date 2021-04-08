@@ -748,7 +748,7 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
-    from sklearn.neighbors import DistanceMetric
+    from ..neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
 

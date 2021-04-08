@@ -482,6 +482,17 @@ scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
 
+:class:`OrdinalEncoder` will also passthrough missing values that are
+indicated by `np.nan`.
+
+    >>> enc = preprocessing.OrdinalEncoder()
+    >>> X = [['male'], ['female'], [np.nan], ['female']]
+    >>> enc.fit_transform(X)
+    array([[ 1.],
+           [ 0.],
+           [nan],
+           [ 0.]])
+
 Another possibility to convert categorical features to features that can be used
 with scikit-learn estimators is to use a one-of-K, also known as one-hot or
 dummy encoding.
@@ -549,9 +560,7 @@ parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-since co-linearity would cause the covariance matrix to be non-invertible.
-When this parameter is not None, ``handle_unknown`` must be set to
-``error``::
+since co-linearity would cause the covariance matrix to be non-invertible::
 
     >>> X = [['male', 'from US', 'uses Safari'],
     ...      ['female', 'from Europe', 'uses Firefox']]
@@ -579,6 +588,30 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
 In the transformed `X`, the first column is the encoding of the feature with
 categories "male"/"female", while the remaining 6 columns is the encoding of
 the 2 features with respectively 3 categories each.
+
+When `handle_unknown='ignore'` and `drop` is not None, unknown categories will
+be encoded as all zeros::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='first',
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> drop_enc.transform(X_test).toarray()
+    array([[0., 0., 0., 0., 0.]])
+
+All the categories in `X_test` are unknown during transform and will be mapped
+to all zeros. This means that unknown categories will have the same mapping as
+the dropped category. :meth`OneHotEncoder.inverse_transform` will map all zeros
+to the dropped category if a category is dropped and `None` if a category is
+not dropped::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse=False,
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> X_trans = drop_enc.transform(X_test)
+    >>> X_trans
+    array([[0., 0., 0., 0., 0., 0., 0.]])
+    >>> drop_enc.inverse_transform(X_trans)
+    array([['female', None, None]], dtype=object)
 
 :class:`OneHotEncoder` supports categorical features with missing values by
 considering the missing values as an additional category::
@@ -878,8 +911,9 @@ three middle diagonals are non-zero for ``degree=2``. The higher the degree,
 the more overlapping of the splines.
 
 Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
-:class:`~sklearn.preprocessing.KBinsDiscretizer` with ``encode='onehot-dense``
-and ``n_bins = n_knots - 1`` if ``knots = strategy``.
+:class:`~sklearn.preprocessing.KBinsDiscretizer` with
+``encode='onehot-dense'`` and ``n_bins = n_knots - 1`` if
+``knots = strategy``.
 
 .. topic:: Examples:
 

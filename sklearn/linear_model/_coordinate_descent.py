@@ -332,7 +332,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     For multi-output tasks it is::
 
-        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        (1 / (2 * n_samples)) * ||Y - XW||_Fro^2
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
@@ -570,7 +570,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
 
-            a * L1 + b * L2
+            a * ||w||_1 + 0.5 * b * ||w||_2^2
 
     where::
 
