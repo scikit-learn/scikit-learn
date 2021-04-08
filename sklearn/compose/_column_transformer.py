@@ -376,7 +376,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
-            feature_names.extend([name + "__" + f for f in
+            feature_names.extend([f"{name}__{f}" for f in
                                   trans.get_feature_names()])
         return feature_names
 
