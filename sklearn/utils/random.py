@@ -117,17 +117,17 @@ def sample_erdos_renyi_gnm(n, m, samples=1, random_state=None, method="auto",
     samples : int, default=1
         Number of independent realizations of the `G(n, m)` random variable.
 
-    method : {"auto", "tracking_selection", "reservoir_sampling", "pool"}, \
-            default="auto"
-        Determines which algorithm is used for sampling.
-        See :class:`~sklearn.utils.random.sample_without_replacement` for
-        more info.
-
     random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    method : {"auto", "tracking_selection", "reservoir_sampling", "pool"}, \
+            default="auto"
+        Determines which algorithm is used for sampling.
+        See :class:`~sklearn.utils.random.sample_without_replacement` for
+        more info.
 
     return_as : "adjacency_matrix" or "edge_array", default="edge_array"
         Determines whether the output is an an array containing pairs of
