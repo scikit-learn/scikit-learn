@@ -1,4 +1,3 @@
-from sklearn.utils._random import _our_rand_r_py
 import numpy as np
 import pytest
 import scipy.sparse as sp
@@ -9,6 +8,7 @@ from sklearn.utils.random import (_random_choice_csc,
                                   sample_without_replacement,
                                   sample_erdos_renyi_gnm,
                                   check_random_state)
+from sklearn.utils._random import _our_rand_r_py
 
 
 ###############################################################################
