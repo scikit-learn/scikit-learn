@@ -33,6 +33,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
@@ -40,7 +41,6 @@ from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
 
 from ..utils.fixes import delayed
-from ..preprocessing import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -101,38 +101,59 @@ def _deprecate_normalize(normalize, default, estimator_name):
     else:
         _normalize = normalize
 
+    pipeline_msg = (
+        "If you wish to scale the data, use Pipeline with a StandardScaler "
+        "in a preprocessing stage. To reproduce the previous behavior:\n\n"
+        "from sklearn.pipeline import make_pipeline\n\n"
+        "model = make_pipeline(StandardScaler(with_mean=False), "
+        f"{estimator_name}())\n\n"
+        "If you wish to pass a sample_weight parameter, you need to pass it "
+        "as a fit parameter to each step of the pipeline as follows:\n\n"
+        "kwargs = {s[0] + '__sample_weight': sample_weight for s "
+        "in model.steps}\n"
+        "model.fit(X, y, **kwargs)\n\n"
+    )
+
+    if estimator_name == 'Ridge' or estimator_name == 'RidgeClassifier':
+        alpha_msg = 'Set parameter alpha to: original_alpha * n_samples. '
+    elif 'Lasso' in estimator_name:
+        alpha_msg = (
+            'Set parameter alpha to: original_alpha * np.sqrt(n_samples). '
+        )
+    elif 'ElasticNet' in estimator_name:
+        alpha_msg = (
+            'Set parameter alpha to original_alpha * np.sqrt(n_samples) if '
+            'l1_ratio is 1, and to original_alpha * n_samples if l1_ratio is '
+            '0. For other values of l1_ratio, no analytic formula is '
+            'available.'
+        )
+    elif estimator_name == 'RidgeCV' or estimator_name == 'RidgeClassifierCV':
+        alpha_msg = 'Set parameter alphas to: original_alphas * n_samples. '
+    else:
+        alpha_msg = ""
+
     if default and normalize == 'deprecated':
         warnings.warn(
             "The default of 'normalize' will be set to False in version 1.2 "
-            "and deprecated in version 1.4. \nPass normalize=False and use "
-            "Pipeline with a StandardScaler in a preprocessing stage if you "
-            "wish to reproduce the previous behavior:\n"
-            "model = make_pipeline(StandardScaler(with_mean=False), \n"
-            f"{estimator_name}(normalize=False))\n"
-            "If you wish to use additional parameters in "
-            "the fit() you can include them as follows:\n"
-            "kwargs = {model.steps[-1][0] + "
-            "'__<your_param_name>': <your_param_value>}\n"
-            "model.fit(X, y, **kwargs)", FutureWarning
+            "and deprecated in version 1.4.\n" +
+            pipeline_msg + alpha_msg,
+            FutureWarning
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
             "'normalize' was deprecated in version 1.0 and will be "
-            "removed in 1.2 \nIf you still wish to normalize use "
-            "Pipeline with a StandardScaler in a preprocessing stage if you "
-            "wish to reproduce the previous behavior:\n"
-            "model = make_pipeline(StandardScaler(with_mean=False), "
-            f"{estimator_name}()). \nIf you wish to use additional "
-            "parameters in the fit() you can include them as follows: "
-            "kwargs = {model.steps[-1][0] + "
-            "'__<your_param_name>': <your_param_value>}\n"
-            "model.fit(X, y, **kwargs)", FutureWarning
+            "removed in 1.2.\n" +
+            pipeline_msg + alpha_msg, FutureWarning
         )
     elif not normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be"
-            " removed in 1.2 Don't set 'normalize' parameter"
-            " and leave it to its default value", FutureWarning
+            "'normalize' was deprecated in version 1.0 and will be "
+            "removed in 1.2. "
+            "Please leave the normalize parameter to its default value to "
+            "silence this warning. The default behavior of this estimator "
+            "is to not do any normalization. If normalization is needed "
+            "please use sklearn.preprocessing.StandardScaler instead.",
+            FutureWarning
         )
 
     return _normalize
@@ -229,33 +250,39 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
     if fit_intercept:
         if sp.issparse(X):
-            X_offset, X_var = mean_variance_axis(X, axis=0)
+            X_offset, X_var = mean_variance_axis(
+                X, axis=0, weights=sample_weight
+            )
             if not return_mean:
                 X_offset[:] = X.dtype.type(0)
-
+        else:
             if normalize:
+                X_offset, X_var, _ = _incremental_mean_and_var(
+                    X, last_mean=0., last_variance=0., last_sample_count=0.,
+                    sample_weight=sample_weight
+                )
+            else:
+                X_offset = np.average(X, axis=0, weights=sample_weight)
 
-                # TODO: f_normalize could be used here as well but the function
-                # inplace_csr_row_normalize_l2 must be changed such that it
-                # can return also the norms computed internally
+            X_offset = X_offset.astype(X.dtype, copy=False)
+            X -= X_offset
 
-                # transform variance to norm in-place
-                X_var *= X.shape[0]
-                X_scale = np.sqrt(X_var, X_var)
-                del X_var
-                X_scale[X_scale == 0] = 1
+        if normalize:
+            X_var = X_var.astype(X.dtype, copy=False)
+            # Detect constant features on the computed variance, before taking
+            # the np.sqrt. Otherwise constant features cannot be detected with
+            # sample_weights.
+            constant_mask = X_var < 10 * np.finfo(X.dtype).eps
+            X_var *= X.shape[0]
+            X_scale = np.sqrt(X_var, out=X_var)
+            X_scale[constant_mask] = 1.
+            if sp.issparse(X):
                 inplace_column_scale(X, 1. / X_scale)
             else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
-
+                X /= X_scale
         else:
-            X_offset = np.average(X, axis=0, weights=sample_weight)
-            X -= X_offset
-            if normalize:
-                X, X_scale = f_normalize(X, axis=0, copy=False,
-                                         return_norm=True)
-            else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
+            X_scale = np.ones(X.shape[1], dtype=X.dtype)
+
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y = y - y_offset
     else:

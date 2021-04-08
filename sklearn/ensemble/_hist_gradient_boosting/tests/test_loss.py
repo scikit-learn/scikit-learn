@@ -47,9 +47,9 @@ def get_derivatives_helper(loss):
 
 
 @pytest.mark.parametrize('loss, x0, y_true', [
-    ('least_squares', -2., 42),
-    ('least_squares', 117., 1.05),
-    ('least_squares', 0., 0.),
+    ("squared_error", -2., 42),
+    ("squared_error", 117., 1.05),
+    ("squared_error", 0., 0.),
     # The argmin of binary_crossentropy for y_true=0 and y_true=1 is resp. -inf
     # and +inf due to logit, cf. "complete separation". Therefore, we use
     # 0 < y_true < 1.
@@ -102,7 +102,7 @@ def test_derivatives(loss, x0, y_true):
 
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
-    ('least_squares', 0, 1),
+    ("squared_error", 0, 1),
     ('least_absolute_deviation', 0, 1),
     ('binary_crossentropy', 2, 1),
     ('categorical_crossentropy', 3, 3),
@@ -118,7 +118,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
 
     rng = np.random.RandomState(seed)
     n_samples = 100
-    if loss in ('least_squares', 'least_absolute_deviation'):
+    if loss in ("squared_error", 'least_absolute_deviation'):
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
     elif loss in ('poisson'):
         y_true = rng.poisson(size=n_samples).astype(Y_DTYPE)
@@ -161,7 +161,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
 def test_baseline_least_squares():
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['least_squares'](sample_weight=None)
+    loss = _LOSSES["squared_error"](sample_weight=None)
     y_train = rng.normal(size=100)
     baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
     assert baseline_prediction.shape == tuple()  # scalar
@@ -255,7 +255,7 @@ def test_baseline_categorical_crossentropy():
 
 
 @pytest.mark.parametrize('loss, problem', [
-    ('least_squares', 'regression'),
+    ("squared_error", 'regression'),
     ('least_absolute_deviation', 'regression'),
     ('binary_crossentropy', 'classification'),
     ('categorical_crossentropy', 'classification'),
@@ -317,7 +317,7 @@ def test_init_gradient_and_hessians_sample_weight():
     prediction_dim = 2
     n_samples = 5
     sample_weight = None
-    loss = _LOSSES['least_squares'](sample_weight=sample_weight)
+    loss = _LOSSES["squared_error"](sample_weight=sample_weight)
     _, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=prediction_dim,
         sample_weight=None)
@@ -325,7 +325,7 @@ def test_init_gradient_and_hessians_sample_weight():
     assert hessians.shape == (1, 1)
 
     sample_weight = np.ones(n_samples)
-    loss = _LOSSES['least_squares'](sample_weight=sample_weight)
+    loss = _LOSSES["squared_error"](sample_weight=sample_weight)
     _, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=prediction_dim,
         sample_weight=sample_weight)

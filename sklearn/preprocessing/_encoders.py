@@ -2,6 +2,7 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import sparse
 import numbers
@@ -10,6 +11,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
 
@@ -109,7 +111,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error', force_all_finite=True):
+    def _transform(self, X, handle_unknown='error', force_all_finite=True,
+                   warn_on_unknown=False):
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite)
 
@@ -124,6 +127,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 .format(len(self.categories_,), n_features)
             )
 
+        columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
             diff, valid_mask = _check_unknown(Xi, self.categories_[i],
@@ -135,6 +139,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                            " during transform".format(diff, i))
                     raise ValueError(msg)
                 else:
+                    if warn_on_unknown:
+                        columns_with_unknown.append(i)
                     # Set the problematic rows to an acceptable value and
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
@@ -152,6 +158,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # already called above.
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
                                   check_unknown=False)
+        if columns_with_unknown:
+            warnings.warn("Found unknown categories in columns "
+                          f"{columns_with_unknown} during transform. These "
+                          "unknown categories will be encoded as all zeros",
+                          UserWarning)
 
         return X_int, X_mask
 
@@ -326,14 +337,6 @@ class OneHotEncoder(_BaseEncoder):
             msg = ("handle_unknown should be either 'error' or 'ignore', "
                    "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
-        # If we have both dropped columns and ignored unknown
-        # values, there will be ambiguous cells. This creates difficulties
-        # in interpreting the model.
-        if self.drop is not None and self.handle_unknown != 'error':
-            raise ValueError(
-                "`handle_unknown` must be 'error' when the drop parameter is "
-                "specified, as both would create categories that are all "
-                "zero.")
 
     def _compute_drop_idx(self):
         if self.drop is None:
@@ -458,8 +461,11 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
+        warn_on_unknown = (self.handle_unknown == "ignore"
+                           and self.drop is not None)
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
-                                        force_all_finite='allow-nan')
+                                        force_all_finite='allow-nan',
+                                        warn_on_unknown=warn_on_unknown)
 
         n_samples, n_features = X_int.shape
 
@@ -508,8 +514,10 @@ class OneHotEncoder(_BaseEncoder):
         """
         Convert the data back to the original representation.
 
-        In case unknown categories are encountered (all zeros in the
-        one-hot encoding), ``None`` is used to represent this category.
+        When unknown categories are encountered (all zeros in the
+        one-hot encoding), ``None`` is used to represent this category. If the
+        feature with the unknown category has a dropped caregory, the dropped
+        category will be its inverse.
 
         Parameters
         ----------
@@ -570,7 +578,14 @@ class OneHotEncoder(_BaseEncoder):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():
-                    found_unknown[i] = unknown
+                    # if categories were dropped then unknown categories will
+                    # be mapped to the dropped category
+                    if self.drop_idx_ is None or self.drop_idx_[i] is None:
+                        found_unknown[i] = unknown
+                    else:
+                        X_tr[unknown, i] = self.categories_[i][
+                            self.drop_idx_[i]
+                        ]
             else:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
@@ -752,7 +767,7 @@ class OrdinalEncoder(_BaseEncoder):
                 if np.dtype(self.dtype).kind != 'f':
                     raise ValueError(
                         f"When unknown_value is np.nan, the dtype "
-                        "parameter should be "
+                        f"parameter should be "
                         f"a float dtype. Got {self.dtype}."
                     )
             elif not isinstance(self.unknown_value, numbers.Integral):
@@ -765,7 +780,7 @@ class OrdinalEncoder(_BaseEncoder):
                             f"handle_unknown is 'use_encoded_value', "
                             f"got {self.unknown_value}.")
 
-        self._fit(X)
+        self._fit(X, force_all_finite='allow-nan')
 
         if self.handle_unknown == 'use_encoded_value':
             for feature_cats in self.categories_:
@@ -774,6 +789,21 @@ class OrdinalEncoder(_BaseEncoder):
                                      f"{self.unknown_value} is one of the "
                                      f"values already used for encoding the "
                                      f"seen categories.")
+
+        # stores the missing indices per category
+        self._missing_indices = {}
+        for cat_idx, categories_for_idx in enumerate(self.categories_):
+            for i, cat in enumerate(categories_for_idx):
+                if is_scalar_nan(cat):
+                    self._missing_indices[cat_idx] = i
+                    continue
+
+        if np.dtype(self.dtype).kind != 'f' and self._missing_indices:
+            raise ValueError(
+                "There are missing values in features "
+                f"{list(self._missing_indices)}. For OrdinalEncoder to "
+                "passthrough missing values, the dtype parameter must be a "
+                "float")
 
         return self
 
@@ -791,8 +821,13 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
+                                        force_all_finite='allow-nan')
         X_trans = X_int.astype(self.dtype, copy=False)
+
+        for cat_idx, missing_idx in self._missing_indices.items():
+            X_missing_mask = X_int[:, cat_idx] == missing_idx
+            X_trans[X_missing_mask, cat_idx] = np.nan
 
         # create separate category for unknown values
         if self.handle_unknown == 'use_encoded_value':
@@ -814,7 +849,7 @@ class OrdinalEncoder(_BaseEncoder):
             Inverse transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', force_all_finite='allow-nan')
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
@@ -833,6 +868,12 @@ class OrdinalEncoder(_BaseEncoder):
 
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
+
+            # replace values of X[:, i] that were nan with actual indices
+            if i in self._missing_indices:
+                X_i_mask = _get_mask(X[:, i], np.nan)
+                labels[X_i_mask] = self._missing_indices[i]
+
             if self.handle_unknown == 'use_encoded_value':
                 unknown_labels = labels == self.unknown_value
                 X_tr[:, i] = self.categories_[i][np.where(
