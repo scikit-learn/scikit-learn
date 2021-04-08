@@ -41,6 +41,8 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
+from ._base import _check_pos_label_consistency
+
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
@@ -253,11 +255,14 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         Confusion matrix whose i-th row and j-th
         column entry indicates the number of
         samples with true label being i-th class
-        and prediced label being j-th class.
+        and predicted label being j-th class.
 
     See Also
     --------
-    plot_confusion_matrix : Plot Confusion Matrix.
+    ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
+        given an estimator, the data, and the label.
+    ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
+        given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     References
@@ -304,7 +309,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
             raise ValueError("'labels' should contains at least one label.")
         elif y_true.size == 0:
             return np.zeros((n_labels, n_labels), dtype=int)
-        elif np.all([l not in y_true for l in labels]):
+        elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
@@ -319,17 +324,25 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                          "'all', None}")
 
     n_labels = labels.size
-    label_to_ind = {y: x for x, y in enumerate(labels)}
-    # convert yt, yp into index
-    y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
-    y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
+    # If labels are not consecutive integers starting from zero, then
+    # y_true and y_pred must be converted into index form
+    need_index_conversion = not (
+        labels.dtype.kind in {'i', 'u', 'b'} and
+        np.all(labels == np.arange(n_labels)) and
+        y_true.min() >= 0 and y_pred.min() >= 0
+    )
+    if need_index_conversion:
+        label_to_ind = {y: x for x, y in enumerate(labels)}
+        y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
+        y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
     ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
-    y_pred = y_pred[ind]
-    y_true = y_true[ind]
-    # also eliminate weights of eliminated items
-    sample_weight = sample_weight[ind]
+    if not np.all(ind):
+        y_pred = y_pred[ind]
+        y_true = y_true[ind]
+        # also eliminate weights of eliminated items
+        sample_weight = sample_weight[ind]
 
     # Choose the accumulator dtype to always have high precision
     if sample_weight.dtype.kind in {'i', 'u', 'b'}:
@@ -1804,7 +1817,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
 
     adjusted : bool, default=False
         When true, the result is adjusted for chance, so that random
-        performance would score 0, and perfect performance scores 1.
+        performance would score 0, while keeping perfect performance at a score
+        of 1.
 
     Returns
     -------
@@ -2364,11 +2378,29 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
     y_true_unique = np.unique(labels if labels is not None else y_true)
+
     if y_true_unique.size > 2:
-        if (labels is None and pred_decision.ndim > 1 and
-                (np.size(y_true_unique) != pred_decision.shape[1])):
-            raise ValueError("Please include all labels in y_true "
-                             "or pass labels as third argument")
+
+        if pred_decision.ndim <= 1:
+            raise ValueError("The shape of pred_decision cannot be 1d array"
+                             "with a multiclass target. pred_decision shape "
+                             "must be (n_samples, n_classes), that is "
+                             f"({y_true.shape[0]}, {y_true_unique.size})."
+                             f" Got: {pred_decision.shape}")
+
+        # pred_decision.ndim > 1 is true
+        if y_true_unique.size != pred_decision.shape[1]:
+            if labels is None:
+                raise ValueError("Please include all labels in y_true "
+                                 "or pass labels as third argument")
+            else:
+                raise ValueError("The shape of pred_decision is not "
+                                 "consistent with the number of classes. "
+                                 "With a multiclass target, pred_decision "
+                                 "shape must be "
+                                 "(n_samples, n_classes), that is "
+                                 f"({y_true.shape[0]}, {y_true_unique.size}). "
+                                 f"Got: {pred_decision.shape}")
         if labels is None:
             labels = y_true_unique
         le = LabelEncoder()
@@ -2437,9 +2469,14 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
         Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class.
-        Defaults to the greater label unless y_true is all 0 or all -1
-        in which case pos_label defaults to 1.
+        Label of the positive class. `pos_label` will be infered in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitely specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
 
     Returns
     -------
@@ -2473,25 +2510,27 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
-    labels = np.unique(y_true)
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Labels in y_true: %s." % labels)
+    y_type = type_of_target(y_true)
+    if y_type != "binary":
+        raise ValueError(
+            f"Only binary classification is supported. The type of the target "
+            f"is {y_type}."
+        )
+
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
-    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
-    # otherwise pos_label is set to the greater label
-    # (different from precision_recall_curve/roc_curve,
-    # the purpose is to keep backward compatibility).
-    if pos_label is None:
-        if (np.array_equal(labels, [0]) or
-                np.array_equal(labels, [-1])):
-            pos_label = 1
+    try:
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ('O', 'U', 'S'):
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
+            pos_label = classes[-1]
         else:
-            pos_label = y_true.max()
+            raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)

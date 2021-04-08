@@ -9,7 +9,7 @@
 
 import warnings
 from inspect import signature
-from contextlib import suppress
+from functools import partial
 
 from math import log
 import numpy as np
@@ -18,43 +18,25 @@ from joblib import Parallel
 from scipy.special import expit
 from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
-from .preprocessing import LabelEncoder
 
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
-from .preprocessing import label_binarize, LabelBinarizer
-from .utils import check_array, indexable, column_or_1d
+from .preprocessing import label_binarize, LabelEncoder
+from .utils import (
+    column_or_1d,
+    deprecated,
+    indexable,
+)
+
+from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight
-from .pipeline import Pipeline
+from .utils.validation import _check_sample_weight, _num_samples
+from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
-from .model_selection import check_cv
+from .model_selection import check_cv, cross_val_predict
 from .utils.validation import _deprecate_positional_args
-
-
-def _fit_calibrated_classifer(estimator, X, y, train, test, supports_sw,
-                              method, classes, sample_weight=None):
-    """Fit calibrated classifier for a given dataset split.
-
-    Returns
-    -------
-    calibrated_classifier : estimator object
-        The calibrated estimator.
-    """
-    if sample_weight is not None and supports_sw:
-        estimator.fit(X[train], y[train],
-                      sample_weight=sample_weight[train])
-    else:
-        estimator.fit(X[train], y[train])
-
-    calibrated_classifier = _CalibratedClassifier(estimator,
-                                                  method=method,
-                                                  classes=classes)
-    sw = None if sample_weight is None else sample_weight[test]
-    calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
-    return calibrated_classifier
 
 
 class CalibratedClassifierCV(ClassifierMixin,
@@ -63,15 +45,21 @@ class CalibratedClassifierCV(ClassifierMixin,
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
-    classifier and subsequently calibrate a classifier. For each cv split it
-    fits a copy of the base estimator to the training folds, and calibrates it
-    using the testing fold. For prediction, predicted probabilities are
-    averaged across these individual calibrated classifiers.
+    classifier and subsequently calibrate a classifier. With default
+    `ensemble=True`, for each cv split it
+    fits a copy of the base estimator to the training subset, and calibrates it
+    using the testing subset. For prediction, predicted probabilities are
+    averaged across these individual calibrated classifiers. When
+    `ensemble=False`, cross-validation is used to obtain unbiased predictions,
+    via :func:`~sklearn.model_selection.cross_val_predict`, which are then
+    used for calibration. For prediction, the base estimator, trained using all
+    the data, is used. This is the method implemented when `probabilities=True`
+    for :mod:`sklearn.svm` estimators.
 
-    Already fitted classifiers can be calibrated via the parameter cv="prefit".
-    In this case, no cross-validation is used and all provided data is used
-    for calibration. The user has to take care manually that data for model
-    fitting and calibration are disjoint.
+    Already fitted classifiers can be calibrated via the parameter
+    `cv="prefit"`. In this case, no cross-validation is used and all provided
+    data is used for calibration. The user has to take care manually that data
+    for model fitting and calibration are disjoint.
 
     The calibration is based on the :term:`decision_function` method of the
     `base_estimator` if it exists, else on :term:`predict_proba`.
@@ -122,9 +110,28 @@ class CalibratedClassifierCV(ClassifierMixin,
         ``-1`` means using all processors.
 
         Base estimator clones are fitted in parallel across cross-validation
-        iterations. Therefore parallelism happens only when cv != "prefit".
+        iterations. Therefore parallelism happens only when `cv != "prefit"`.
 
         See :term:`Glossary <n_jobs>` for more details.
+
+        .. versionadded:: 0.24
+
+    ensemble : bool, default=True
+        Determines how the calibrator is fitted when `cv` is not `'prefit'`.
+        Ignored if `cv='prefit'`.
+
+        If `True`, the `base_estimator` is fitted using training data and
+        calibrated using testing data, for each `cv` fold. The final estimator
+        is an ensemble of `n_cv` fitted classifer and calibrator pairs, where
+        `n_cv` is the number of cross-validation folds. The output is the
+        average predicted probabilities of all pairs.
+
+        If `False`, `cv` is used to compute unbiased predictions, via
+        :func:`~sklearn.model_selection.cross_val_predict`, which are then
+        used for calibration. At prediction time, the classifier used is the
+        `base_estimator` trained on all the data.
+        Note that this method is also internally implemented  in
+        :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
         .. versionadded:: 0.24
 
@@ -133,10 +140,26 @@ class CalibratedClassifierCV(ClassifierMixin,
     classes_ : ndarray of shape (n_classes,)
         The class labels.
 
-    calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit")
-        The list of calibrated classifiers, one for each cross-validation
-        split, which has been fitted on training folds and
-        calibrated on the testing fold.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying base_estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
+    calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
+            or `ensemble=False`)
+        The list of classifier and calibrator pairs.
+
+        - When `cv="prefit"`, the fitted `base_estimator` and fitted
+          calibrator.
+        - When `cv` is not "prefit" and `ensemble=True`, `n_cv` fitted
+          `base_estimator` and calibrator pairs. `n_cv` is the number of
+          cross-validation folds.
+        - When `cv` is not "prefit" and `ensemble=False`, the `base_estimator`,
+          fitted on all the data, and fitted calibrator.
+
+        .. versionchanged:: 0.24
+            Single calibrated classifier case when `ensemble=False`.
 
     Examples
     --------
@@ -194,14 +217,15 @@ class CalibratedClassifierCV(ClassifierMixin,
     """
     @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, method='sigmoid',
-                 cv=None, n_jobs=None):
+                 cv=None, n_jobs=None, ensemble=True):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
+        self.ensemble = ensemble
 
     def fit(self, X, y, sample_weight=None):
-        """Fit the calibrated model
+        """Fit the calibrated model.
 
         Parameters
         ----------
@@ -219,9 +243,9 @@ class CalibratedClassifierCV(ClassifierMixin,
         self : object
             Returns an instance of self.
         """
+        check_classification_targets(y)
         X, y = indexable(X, y)
 
-        self.calibrated_classifiers_ = []
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
@@ -229,27 +253,37 @@ class CalibratedClassifierCV(ClassifierMixin,
         else:
             base_estimator = self.base_estimator
 
+        self.calibrated_classifiers_ = []
         if self.cv == "prefit":
-            # Set `n_features_in_` attribute
-            if isinstance(self.base_estimator, Pipeline):
-                check_is_fitted(self.base_estimator[-1])
-            else:
-                check_is_fitted(self.base_estimator)
-            with suppress(AttributeError):
-                self.n_features_in_ = base_estimator.n_features_in_
+            # `classes_` should be consistent with that of base_estimator
+            check_is_fitted(self.base_estimator, attributes=["classes_"])
             self.classes_ = self.base_estimator.classes_
 
-            calibrated_classifier = _CalibratedClassifier(
-                base_estimator, method=self.method)
-            calibrated_classifier.fit(X, y, sample_weight)
+            pred_method = _get_prediction_method(base_estimator)
+            n_classes = len(self.classes_)
+            predictions = _compute_predictions(pred_method, X, n_classes)
+
+            calibrated_classifier = _fit_calibrator(
+                base_estimator, predictions, y, self.classes_, self.method,
+                sample_weight
+            )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
-            X, y = self._validate_data(
-                X, y, accept_sparse=['csc', 'csr', 'coo'],
-                force_all_finite=False, allow_nd=True
-            )
-            le = LabelBinarizer().fit(y)
-            self.classes_ = le.classes_
+            # Set `classes_` using all `y`
+            label_encoder_ = LabelEncoder().fit(y)
+            self.classes_ = label_encoder_.classes_
+            n_classes = len(self.classes_)
+
+            # sample_weight checks
+            fit_parameters = signature(base_estimator.fit).parameters
+            supports_sw = "sample_weight" in fit_parameters
+            if sample_weight is not None:
+                sample_weight = _check_sample_weight(sample_weight, X)
+                if not supports_sw:
+                    estimator_name = type(base_estimator).__name__
+                    warnings.warn(f"Since {estimator_name} does not support "
+                                  "sample_weights, sample weights will only be"
+                                  " used for the calibration itself.")
 
             # Check that each cross-validation fold can have at least one
             # example per class
@@ -261,48 +295,54 @@ class CalibratedClassifierCV(ClassifierMixin,
                 n_folds = None
             if n_folds and np.any([np.sum(y == class_) < n_folds
                                    for class_ in self.classes_]):
-                raise ValueError(f"Requesting {n_folds}-fold cross-validation "
-                                 f"but provided less than {n_folds} examples "
-                                 "for at least one class.")
-
+                raise ValueError(f"Requesting {n_folds}-fold "
+                                 "cross-validation but provided less than "
+                                 f"{n_folds} examples for at least one class.")
             cv = check_cv(self.cv, y, classifier=True)
-            fit_parameters = signature(base_estimator.fit).parameters
-            supports_sw = "sample_weight" in fit_parameters
 
-            if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
+            if self.ensemble:
+                parallel = Parallel(n_jobs=self.n_jobs)
 
-                if not supports_sw:
-                    estimator_name = type(base_estimator).__name__
-                    warnings.warn("Since %s does not support sample_weights, "
-                                  "sample weights will only be used for the "
-                                  "calibration itself." % estimator_name)
+                self.calibrated_classifiers_ = parallel(
+                    delayed(_fit_classifier_calibrator_pair)(
+                        clone(base_estimator), X, y, train=train, test=test,
+                        method=self.method, classes=self.classes_,
+                        supports_sw=supports_sw, sample_weight=sample_weight)
+                    for train, test in cv.split(X, y)
+                )
+            else:
+                this_estimator = clone(base_estimator)
+                method_name = _get_prediction_method(this_estimator).__name__
+                pred_method = partial(
+                    cross_val_predict, estimator=this_estimator, X=X, y=y,
+                    cv=cv, method=method_name, n_jobs=self.n_jobs
+                )
+                predictions = _compute_predictions(pred_method, X, n_classes)
 
-            parallel = Parallel(n_jobs=self.n_jobs)
+                if sample_weight is not None and supports_sw:
+                    this_estimator.fit(X, y, sample_weight)
+                else:
+                    this_estimator.fit(X, y)
+                calibrated_classifier = _fit_calibrator(
+                    this_estimator, predictions, y, self.classes_, self.method,
+                    sample_weight
+                )
+                self.calibrated_classifiers_.append(calibrated_classifier)
 
-            self.calibrated_classifiers_ = parallel(delayed(
-                _fit_calibrated_classifer)(clone(base_estimator),
-                                           X, y,
-                                           train=train, test=test,
-                                           method=self.method,
-                                           classes=self.classes_,
-                                           supports_sw=supports_sw,
-                                           sample_weight=sample_weight)
-                                                    for train, test
-                                                    in cv.split(X, y))
-
+        first_clf = self.calibrated_classifiers_[0].base_estimator
+        if hasattr(first_clf, "n_features_in_"):
+            self.n_features_in_ = first_clf.n_features_in_
         return self
 
     def predict_proba(self, X):
-        """Posterior probabilities of classification
+        """Calibrated probabilities of classification.
 
-        This function returns posterior probabilities of classification
+        This function returns calibrated probabilities of classification
         according to each class on an array of test vectors X.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : The samples, as accepted by base_estimator.predict_proba
 
         Returns
         -------
@@ -310,11 +350,9 @@ class CalibratedClassifierCV(ClassifierMixin,
             The predicted probas.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
-                        force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        mean_proba = np.zeros((X.shape[0], len(self.classes_)))
+        mean_proba = np.zeros((_num_samples(X), len(self.classes_)))
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -330,8 +368,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : The samples, as accepted by base_estimator.predict
 
         Returns
         -------
@@ -350,154 +387,283 @@ class CalibratedClassifierCV(ClassifierMixin,
         }
 
 
-class _CalibratedClassifier:
-    """Probability calibration with isotonic regression or sigmoid.
+def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
+                                    method, classes, sample_weight=None):
+    """Fit a classifier/calibration pair on a given train/test split.
 
-    It assumes that base_estimator has already been fit, and trains the
-    calibration on the input set of the fit function. Note that this class
-    should not be used as an estimator directly. Use CalibratedClassifierCV
-    with cv="prefit" instead.
+    Fit the classifier on the train set, compute its predictions on the test
+    set and use the predictions as input to fit the calibrator along with the
+    test labels.
 
     Parameters
     ----------
-    base_estimator : instance BaseEstimator
-        The classifier whose output decision function needs to be calibrated
-        to offer more accurate predict_proba outputs. No default value since
-        it has to be an already fitted estimator.
+    estimator : estimator instance
+        Cloned base estimator.
+
+    X : array-like, shape (n_samples, n_features)
+        Sample data.
+
+    y : array-like, shape (n_samples,)
+        Targets.
+
+    train : ndarray, shape (n_train_indicies,)
+        Indices of the training subset.
+
+    test : ndarray, shape (n_test_indicies,)
+        Indices of the testing subset.
+
+    supports_sw : bool
+        Whether or not the `estimator` supports sample weights.
+
+    method : {'sigmoid', 'isotonic'}
+        Method to use for calibration.
+
+    classes : ndarray, shape (n_classes,)
+        The target classes.
+
+    sample_weight : array-like, default=None
+        Sample weights for `X`.
+
+    Returns
+    -------
+    calibrated_classifier : _CalibratedClassifier instance
+    """
+    X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
+    X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
+    if supports_sw and sample_weight is not None:
+        sw_train = _safe_indexing(sample_weight, train)
+        sw_test = _safe_indexing(sample_weight, test)
+    else:
+        sw_train = None
+        sw_test = None
+
+    if supports_sw:
+        estimator.fit(X_train, y_train, sample_weight=sw_train)
+    else:
+        estimator.fit(X_train, y_train)
+
+    n_classes = len(classes)
+    pred_method = _get_prediction_method(estimator)
+    predictions = _compute_predictions(pred_method, X_test, n_classes)
+
+    calibrated_classifier = _fit_calibrator(
+        estimator, predictions, y_test, classes, method, sample_weight=sw_test
+    )
+    return calibrated_classifier
+
+
+def _get_prediction_method(clf):
+    """Return prediction method.
+
+    `decision_function` method of `clf` returned, if it
+    exists, otherwise `predict_proba` method returned.
+
+    Parameters
+    ----------
+    clf : Estimator instance
+        Fitted classifier to obtain the prediction method from.
+
+    Returns
+    -------
+    prediction_method : callable
+        The prediction method.
+    """
+    if hasattr(clf, 'decision_function'):
+        method = getattr(clf, 'decision_function')
+    elif hasattr(clf, 'predict_proba'):
+        method = getattr(clf, 'predict_proba')
+    else:
+        raise RuntimeError("'base_estimator' has no 'decision_function' or "
+                           "'predict_proba' method.")
+    return method
+
+
+def _compute_predictions(pred_method, X, n_classes):
+    """Return predictions for `X` and reshape binary outputs to shape
+    (n_samples, 1).
+
+    Parameters
+    ----------
+    pred_method : callable
+        Prediction method.
+
+    X : array-like or None
+        Data used to obtain predictions.
+
+    n_classes : int
+        Number of classes present.
+
+    Returns
+    -------
+    predictions : array-like, shape (X.shape[0], len(clf.classes_))
+        The predictions. Note if there are 2 classes, array is of shape
+        (X.shape[0], 1).
+    """
+    predictions = pred_method(X=X)
+    if hasattr(pred_method, '__name__'):
+        method_name = pred_method.__name__
+    else:
+        method_name = signature(pred_method).parameters['method'].default
+
+    if method_name == 'decision_function':
+        if predictions.ndim == 1:
+            predictions = predictions[:, np.newaxis]
+    elif method_name == 'predict_proba':
+        if n_classes == 2:
+            predictions = predictions[:, 1:]
+    else:  # pragma: no cover
+        # this branch should be unreachable.
+        raise ValueError(f"Invalid prediction method: {method_name}")
+    return predictions
+
+
+def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
+    """Fit calibrator(s) and return a `_CalibratedClassifier`
+    instance.
+
+    `n_classes` (i.e. `len(clf.classes_)`) calibrators are fitted.
+    However, if `n_classes` equals 2, one calibrator is fitted.
+
+    Parameters
+    ----------
+    clf : estimator instance
+        Fitted classifier.
+
+    predictions : array-like, shape (n_samples, n_classes) or (n_samples, 1) \
+                    when binary.
+        Raw predictions returned by the un-calibrated base classifier.
+
+    y : array-like, shape (n_samples,)
+        The targets.
+
+    classes : ndarray, shape (n_classes,)
+        All the prediction classes.
+
+    method : {'sigmoid', 'isotonic'}
+        The method to use for calibration.
+
+    sample_weight : ndarray, shape (n_samples,), default=None
+        Sample weights. If None, then samples are equally weighted.
+
+    Returns
+    -------
+    pipeline : _CalibratedClassifier instance
+    """
+    Y = label_binarize(y, classes=classes)
+    label_encoder = LabelEncoder().fit(classes)
+    pos_class_indices = label_encoder.transform(clf.classes_)
+    calibrators = []
+    for class_idx, this_pred in zip(pos_class_indices, predictions.T):
+        if method == 'isotonic':
+            calibrator = IsotonicRegression(out_of_bounds='clip')
+        elif method == 'sigmoid':
+            calibrator = _SigmoidCalibration()
+        else:
+            raise ValueError("'method' should be one of: 'sigmoid' or "
+                             f"'isotonic'. Got {method}.")
+        calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+        calibrators.append(calibrator)
+
+    pipeline = _CalibratedClassifier(
+        clf, calibrators, method=method, classes=classes
+    )
+    return pipeline
+
+
+class _CalibratedClassifier:
+    """Pipeline-like chaining a fitted classifier and its fitted calibrators.
+
+    Parameters
+    ----------
+    base_estimator : estimator instance
+        Fitted classifier.
+
+    calibrators : list of fitted estimator instances
+        List of fitted calibrators (either 'IsotonicRegression' or
+        '_SigmoidCalibration'). The number of calibrators equals the number of
+        classes. However, if there are 2 classes, the list contains only one
+        fitted calibrator.
+
+    classes : array-like of shape (n_classes,)
+        All the prediction classes.
 
     method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach based on isotonic regression.
 
-    classes : array-like of shape (n_classes,), default=None
-            Contains unique classes used to fit the base estimator.
-            if None, then classes is extracted from the given target values
-            in fit().
-
-    See Also
-    --------
-    CalibratedClassifierCV
-
-    References
+    Attributes
     ----------
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    calibrators_ : list of fitted estimator instances
+        Same as `calibrators`. Exposed for backward-compatibility. Use
+        `calibrators` instead.
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
-
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
-
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+        .. deprecated:: 0.24
+           `calibrators_` is deprecated from 0.24 and will be removed in
+           1.1 (renaming of 0.26). Use `calibrators` instead.
     """
-    @_deprecate_positional_args
-    def __init__(self, base_estimator, *, method='sigmoid', classes=None):
+    def __init__(self, base_estimator, calibrators, *, classes,
+                 method='sigmoid'):
         self.base_estimator = base_estimator
-        self.method = method
+        self.calibrators = calibrators
         self.classes = classes
+        self.method = method
 
-    def _preproc(self, X):
-        n_classes = len(self.classes_)
-        if hasattr(self.base_estimator, "decision_function"):
-            df = self.base_estimator.decision_function(X)
-            if df.ndim == 1:
-                df = df[:, np.newaxis]
-        elif hasattr(self.base_estimator, "predict_proba"):
-            df = self.base_estimator.predict_proba(X)
-            if n_classes == 2:
-                df = df[:, 1:]
-        else:
-            raise RuntimeError('classifier has no decision_function or '
-                               'predict_proba method.')
-
-        idx_pos_class = self.label_encoder_.\
-            transform(self.base_estimator.classes_)
-
-        return df, idx_pos_class
-
-    def fit(self, X, y, sample_weight=None):
-        """Calibrate the fitted model
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Training data.
-
-        y : array-like of shape (n_samples,)
-            Target values.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-
-        Returns
-        -------
-        self : object
-            Returns an instance of self.
-        """
-
-        self.label_encoder_ = LabelEncoder()
-        if self.classes is None:
-            self.label_encoder_.fit(y)
-        else:
-            self.label_encoder_.fit(self.classes)
-
-        self.classes_ = self.label_encoder_.classes_
-        Y = label_binarize(y, classes=self.classes_)
-
-        df, idx_pos_class = self._preproc(X)
-        self.calibrators_ = []
-
-        for k, this_df in zip(idx_pos_class, df.T):
-            if self.method == 'isotonic':
-                calibrator = IsotonicRegression(out_of_bounds='clip')
-            elif self.method == 'sigmoid':
-                calibrator = _SigmoidCalibration()
-            else:
-                raise ValueError('method should be "sigmoid" or '
-                                 '"isotonic". Got %s.' % self.method)
-            calibrator.fit(this_df, Y[:, k], sample_weight)
-            self.calibrators_.append(calibrator)
-
-        return self
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "calibrators_ is deprecated in 0.24 and will be removed in 1.1"
+        "(renaming of 0.26). Use calibrators instead."
+    )
+    @property
+    def calibrators_(self):
+        return self.calibrators
 
     def predict_proba(self, X):
-        """Posterior probabilities of classification
+        """Calculate calibrated probabilities.
 
-        This function returns posterior probabilities of classification
-        according to each class on an array of test vectors X.
+        Calculates classification calibrated probabilities
+        for each class, in a one-vs-all manner, for `X`.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : ndarray of shape (n_samples, n_features)
+            The sample data.
 
         Returns
         -------
-        C : ndarray of shape (n_samples, n_classes)
-            The predicted probas. Can be exact zeros.
+        proba : array, shape (n_samples, n_classes)
+            The predicted probabilities. Can be exact zeros.
         """
-        n_classes = len(self.classes_)
-        proba = np.zeros((X.shape[0], n_classes))
+        n_classes = len(self.classes)
+        pred_method = _get_prediction_method(self.base_estimator)
+        predictions = _compute_predictions(pred_method, X, n_classes)
 
-        df, idx_pos_class = self._preproc(X)
+        label_encoder = LabelEncoder().fit(self.classes)
+        pos_class_indices = label_encoder.transform(
+            self.base_estimator.classes_
+        )
 
-        for k, this_df, calibrator in \
-                zip(idx_pos_class, df.T, self.calibrators_):
+        proba = np.zeros((_num_samples(X), n_classes))
+        for class_idx, this_pred, calibrator in \
+                zip(pos_class_indices, predictions.T, self.calibrators):
             if n_classes == 2:
-                k += 1
-            proba[:, k] = calibrator.predict(this_df)
+                # When binary, `predictions` consists only of predictions for
+                # clf.classes_[1] but `pos_class_indices` = 0
+                class_idx += 1
+            proba[:, class_idx] = calibrator.predict(this_pred)
 
         # Normalize the probabilities
         if n_classes == 2:
             proba[:, 0] = 1. - proba[:, 1]
         else:
-            proba /= np.sum(proba, axis=1)[:, np.newaxis]
-
-        # XXX : for some reason all probas can be 0
-        proba[np.isnan(proba)] = 1. / n_classes
+            denominator = np.sum(proba, axis=1)[:, np.newaxis]
+            # In the edge case where for each class calibrator returns a null
+            # probability for a given sample, use the uniform distribution
+            # instead.
+            uniform_proba = np.full_like(proba, 1 / n_classes)
+            proba = np.divide(proba, denominator, out=uniform_proba,
+                              where=denominator != 0)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
@@ -505,12 +671,12 @@ class _CalibratedClassifier:
         return proba
 
 
-def _sigmoid_calibration(df, y, sample_weight=None):
+def _sigmoid_calibration(predictions, y, sample_weight=None):
     """Probability Calibration with sigmoid method (Platt 2000)
 
     Parameters
     ----------
-    df : ndarray of shape (n_samples,)
+    predictions : ndarray of shape (n_samples,)
         The decision function or predict proba for the samples.
 
     y : ndarray of shape (n_samples,)
@@ -531,10 +697,10 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     ----------
     Platt, "Probabilistic Outputs for Support Vector Machines"
     """
-    df = column_or_1d(df)
+    predictions = column_or_1d(predictions)
     y = column_or_1d(y)
 
-    F = df  # F follows Platt's notations
+    F = predictions  # F follows Platt's notations
 
     # Bayesian priors (see Platt end of section 2.2)
     prior0 = float(np.sum(y <= 0))

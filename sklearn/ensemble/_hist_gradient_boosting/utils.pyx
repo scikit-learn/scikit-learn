@@ -42,7 +42,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
         raise NotImplementedError('Early stopping should be deactivated.')
 
     lightgbm_loss_mapping = {
-        'least_squares': 'regression_l2',
+        'squared_error': 'regression_l2',
         'least_absolute_deviation': 'regression_l1',
         'binary_crossentropy': 'binary',
         'categorical_crossentropy': 'multiclass'
@@ -75,7 +75,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
 
     # XGB
     xgboost_loss_mapping = {
-        'least_squares': 'reg:linear',
+        'squared_error': 'reg:linear',
         'least_absolute_deviation': 'LEAST_ABSOLUTE_DEV_NOT_SUPPORTED',
         'binary_crossentropy': 'reg:logistic',
         'categorical_crossentropy': 'multi:softmax'
@@ -99,7 +99,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
 
     # Catboost
     catboost_loss_mapping = {
-        'least_squares': 'RMSE',
+        'squared_error': 'RMSE',
         # catboost does not support MAE when leaf_estimation_method is Newton
         'least_absolute_deviation': 'LEAST_ASBOLUTE_DEV_NOT_SUPPORTED',
         'binary_crossentropy': 'Logloss',

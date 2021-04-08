@@ -4,8 +4,6 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
-# To use this experimental feature, we need to explicitly ask for it:
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.datasets import make_classification
@@ -110,7 +108,7 @@ def one_run(n_samples):
     else:
         # regression
         if loss == 'default':
-            loss = 'least_squares'
+            loss = 'squared_error'
     est.set_params(loss=loss)
     est.fit(X_train, y_train, sample_weight=sample_weight_train)
     sklearn_fit_duration = time() - tic

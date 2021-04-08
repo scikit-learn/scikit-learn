@@ -9,7 +9,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
-    assert_warns_message,
     assert_allclose_dense_sparse
 )
 
@@ -101,14 +100,6 @@ def test_fit_transform_n_bins_array(strategy, expected):
         assert bin_edges.shape == (n_bins + 1, )
 
 
-def test_invalid_n_features():
-    est = KBinsDiscretizer(n_bins=3).fit(X)
-    bad_X = np.arange(25).reshape(5, -1)
-    err_msg = "Incorrect number of features. Expecting 4, received 5"
-    with pytest.raises(ValueError, match=err_msg):
-        est.transform(bad_X)
-
-
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
 def test_same_min_max(strategy):
     warnings.simplefilter("always")
@@ -117,9 +108,10 @@ def test_same_min_max(strategy):
                   [1, 0],
                   [1, 1]])
     est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode='ordinal')
-    assert_warns_message(UserWarning,
-                         "Feature 0 is constant and will be replaced "
-                         "with 0.", est.fit, X)
+    warning_message = ("Feature 0 is constant and will be replaced "
+                       "with 0.")
+    with pytest.warns(UserWarning, match=warning_message):
+        est.fit(X)
     assert est.n_bins_[0] == 1
     # replace the feature with zeros
     Xt = est.transform(X)
@@ -265,9 +257,9 @@ def test_overwrite():
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
     kbd = KBinsDiscretizer(n_bins=3, strategy=strategy)
-    msg = ("Bins whose width are too small (i.e., <= 1e-8) in feature 0 "
-           "are removed. Consider decreasing the number of bins.")
-    assert_warns_message(UserWarning, msg, kbd.fit, X)
+    warning_message = ("Consider decreasing the number of bins.")
+    with pytest.warns(UserWarning, match=warning_message):
+        kbd.fit(X)
     assert_array_almost_equal(kbd.bin_edges_[0], expected_bin_edges)
 
 
@@ -277,9 +269,10 @@ def test_percentile_numeric_stability():
     Xt = np.array([0, 0, 4]).reshape(-1, 1)
     kbd = KBinsDiscretizer(n_bins=10, encode='ordinal',
                            strategy='quantile')
-    msg = ("Bins whose width are too small (i.e., <= 1e-8) in feature 0 "
-           "are removed. Consider decreasing the number of bins.")
-    assert_warns_message(UserWarning, msg, kbd.fit, X)
+    warning_message = ("Consider decreasing the number of bins.")
+    with pytest.warns(UserWarning, match=warning_message):
+        kbd.fit(X)
+
     assert_array_almost_equal(kbd.bin_edges_[0], bin_edges)
     assert_array_almost_equal(kbd.transform(X), Xt)
 

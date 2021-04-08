@@ -233,7 +233,10 @@ def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
 
     def Hs(s):
         ret = np.empty_like(s)
-        ret[:n_features] = X.T.dot(dX.dot(s[:n_features]))
+        if sparse.issparse(X):
+            ret[:n_features] = X.T.dot(dX.dot(s[:n_features]))
+        else:
+            ret[:n_features] = np.linalg.multi_dot([X.T, dX, s[:n_features]])
         ret[:n_features] += alpha * s[:n_features]
 
         # For the fit intercept case.
@@ -656,7 +659,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # and check length
     # Otherwise set them to 1 for all examples
     sample_weight = _check_sample_weight(sample_weight, X,
-                                         dtype=X.dtype)
+                                         dtype=X.dtype, copy=True)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
@@ -1388,9 +1391,6 @@ class LogisticRegression(LinearClassifierMixin,
                                         self.intercept_[:, np.newaxis],
                                         axis=1)
 
-        self.coef_ = list()
-        self.intercept_ = np.zeros(n_classes)
-
         # Hack so that we iterate only once for the multinomial case.
         if multi_class == 'multinomial':
             classes_ = [None]
@@ -1432,6 +1432,8 @@ class LogisticRegression(LinearClassifierMixin,
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
             self.coef_ = self.coef_[:, :-1]
+        else:
+            self.intercept_ = np.zeros(n_classes)
 
         return self
 

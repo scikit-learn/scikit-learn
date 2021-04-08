@@ -8,7 +8,7 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ._base import _BasePCA
-from ..utils import check_array, gen_batches
+from ..utils import gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
 from ..utils.validation import _deprecate_positional_args
 
@@ -234,15 +234,18 @@ class IncrementalPCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
+        first_pass = not hasattr(self, "components_")
         if check_input:
             if sparse.issparse(X):
                 raise TypeError(
                     "IncrementalPCA.partial_fit does not support "
                     "sparse input. Either convert data to dense "
                     "or use IncrementalPCA.fit to do so in batches.")
-            X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
+            X = self._validate_data(
+                X, copy=self.copy, dtype=[np.float64, np.float32],
+                reset=first_pass)
         n_samples, n_features = X.shape
-        if not hasattr(self, 'components_'):
+        if first_pass:
             self.components_ = None
 
         if self.n_components is None:
@@ -295,7 +298,7 @@ class IncrementalPCA(_BasePCA):
             X = np.vstack((self.singular_values_.reshape((-1, 1)) *
                            self.components_, X, mean_correction))
 
-        U, S, Vt = linalg.svd(X, full_matrices=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
         U, Vt = svd_flip(U, Vt, u_based_decision=False)
         explained_variance = S ** 2 / (n_total_samples - 1)
         explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)

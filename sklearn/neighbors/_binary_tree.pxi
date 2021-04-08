@@ -159,6 +159,8 @@ from ._typedefs import DTYPE, ITYPE
 from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                              euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
+from ._partition_nodes cimport partition_node_indices
+
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
 
@@ -776,73 +778,6 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
     return j_max
 
 
-cdef int partition_node_indices(DTYPE_t* data,
-                                ITYPE_t* node_indices,
-                                ITYPE_t split_dim,
-                                ITYPE_t split_index,
-                                ITYPE_t n_features,
-                                ITYPE_t n_points) except -1:
-    """Partition points in the node into two equal-sized groups.
-
-    Upon return, the values in node_indices will be rearranged such that
-    (assuming numpy-style indexing):
-
-        data[node_indices[0:split_index], split_dim]
-          <= data[node_indices[split_index], split_dim]
-
-    and
-
-        data[node_indices[split_index], split_dim]
-          <= data[node_indices[split_index:n_points], split_dim]
-
-    The algorithm is essentially a partial in-place quicksort around a
-    set pivot.
-
-    Parameters
-    ----------
-    data : double pointer
-        Pointer to a 2D array of the training data, of shape [N, n_features].
-        N must be greater than any of the values in node_indices.
-    node_indices : int pointer
-        Pointer to a 1D array of length n_points.  This lists the indices of
-        each of the points within the current node.  This will be modified
-        in-place.
-    split_dim : int
-        the dimension on which to split.  This will usually be computed via
-        the routine ``find_node_split_dim``
-    split_index : int
-        the index within node_indices around which to split the points.
-
-    Returns
-    -------
-    status : int
-        integer exit status.  On return, the contents of node_indices are
-        modified as noted above.
-    """
-    cdef ITYPE_t left, right, midindex, i
-    cdef DTYPE_t d1, d2
-    left = 0
-    right = n_points - 1
-
-    while True:
-        midindex = left
-        for i in range(left, right):
-            d1 = data[node_indices[i] * n_features + split_dim]
-            d2 = data[node_indices[right] * n_features + split_dim]
-            if d1 < d2:
-                swap(node_indices, i, midindex)
-                midindex += 1
-        swap(node_indices, midindex, right)
-        if midindex == split_index:
-            break
-        elif midindex < split_index:
-            left = midindex + 1
-        else:
-            right = midindex - 1
-
-    return 0
-
-
 ######################################################################
 # NodeHeap : min-heap used to keep track of nodes during
 #            breadth-first query
@@ -1049,17 +984,17 @@ cdef class BinaryTree:
     def __init__(self, data,
                  leaf_size=40, metric='minkowski', sample_weight=None, **kwargs):
         # validate data
-        if data.size == 0:
+        self.data_arr = check_array(data, dtype=DTYPE, order='C')
+        if self.data_arr.size == 0:
             raise ValueError("X is an empty array")
+
+        n_samples = self.data_arr.shape[0]
+        n_features = self.data_arr.shape[1]
 
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
-
-        n_samples = data.shape[0]
-        n_features = data.shape[1]
-
-        self.data_arr = np.asarray(data, dtype=DTYPE, order='C')
         self.leaf_size = leaf_size
+
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
@@ -1069,12 +1004,13 @@ cdef class BinaryTree:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
-        self.dist_metric._validate_data(data)
+        self.dist_metric._validate_data(self.data_arr)
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes
         # with numbers of points between leaf_size and 2 * leaf_size
-        self.n_levels = np.log2(fmax(1, (n_samples - 1) / self.leaf_size)) + 1
+        self.n_levels = int(
+            np.log2(fmax(1, (n_samples - 1) / self.leaf_size)) + 1)
         self.n_nodes = (2 ** self.n_levels) - 1
 
         # allocate arrays for storage
@@ -1322,11 +1258,11 @@ cdef class BinaryTree:
         i    : if return_distance == False
         (d,i) : if return_distance == True
 
-        d : ndarray of shape X.shape[:-1] + k, dtype=double
+        d : ndarray of shape X.shape[:-1] + (k,), dtype=double
             Each entry gives the list of distances to the neighbors of the
             corresponding point.
 
-        i : ndarray of shape X.shape[:-1] + k, dtype=int
+        i : ndarray of shape X.shape[:-1] + (k,), dtype=int
             Each entry gives the list of indices of neighbors of the
             corresponding point.
         """

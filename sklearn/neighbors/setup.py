@@ -20,6 +20,12 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
+    config.add_extension('_partition_nodes',
+                         sources=['_partition_nodes.pyx'],
+                         include_dirs=[numpy.get_include()],
+                         language="c++",
+                         libraries=libraries)
+
     config.add_extension('_dist_metrics',
                          sources=['_dist_metrics.pyx'],
                          include_dirs=[numpy.get_include(),

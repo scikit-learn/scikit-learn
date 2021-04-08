@@ -19,7 +19,12 @@ from joblib import Parallel
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch, _print_elapsed_time
+from .utils import (
+    Bunch,
+    _print_elapsed_time,
+)
+from .utils.deprecation import deprecated
+from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
 from .utils.fixes import delayed
@@ -235,7 +240,7 @@ class Pipeline(_BaseComposition):
     def _log_message(self, step_idx):
         if not self.verbose:
             return None
-        name, step = self.steps[step_idx]
+        name, _ = self.steps[step_idx]
 
         return '(step %d of %d) Processing %s' % (step_idx + 1,
                                                   len(self.steps),
@@ -451,7 +456,7 @@ class Pipeline(_BaseComposition):
         return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_proba(self, X):
+    def predict_proba(self, X, **predict_proba_params):
         """Apply transforms, and predict_proba of the final estimator
 
         Parameters
@@ -460,6 +465,10 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
+        **predict_proba_params : dict of string -> object
+            Parameters to the ``predict_proba`` called at the end of all
+            transformations in the pipeline.
+
         Returns
         -------
         y_proba : array-like of shape (n_samples, n_classes)
@@ -467,7 +476,7 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt)
+        return self.steps[-1][-1].predict_proba(Xt, **predict_proba_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
@@ -508,7 +517,7 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][-1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **predict_log_proba_params):
         """Apply transforms, and predict_log_proba of the final estimator
 
         Parameters
@@ -517,6 +526,10 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
+        **predict_log_proba_params : dict of string -> object
+            Parameters to the ``predict_log_proba`` called at the end of all
+            transformations in the pipeline.
+
         Returns
         -------
         y_score : array-like of shape (n_samples, n_classes)
@@ -524,7 +537,9 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt)
+        return self.steps[-1][-1].predict_log_proba(
+            Xt, **predict_log_proba_params
+        )
 
     @property
     def transform(self):
@@ -620,6 +635,14 @@ class Pipeline(_BaseComposition):
     def classes_(self):
         return self.steps[-1][-1].classes_
 
+    def _more_tags(self):
+        # check if first estimator expects pairwise input
+        return {'pairwise': _safe_tags(self.steps[0][1], "pairwise")}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
