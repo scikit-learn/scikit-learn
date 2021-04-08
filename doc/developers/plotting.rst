@@ -50,7 +50,7 @@ attributes::
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
 
-Read more in :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
+Read more in :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
 and the :ref:`User Guide <visualizations>`.
 
 Plotting with Multiple Axes

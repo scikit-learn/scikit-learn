@@ -24,7 +24,7 @@ def _build_sparse_mtx():
     # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_components = 3
-    block = np.full((3, 3), n_components, dtype=np.int)
+    block = np.full((3, 3), n_components, dtype=int)
     blocks = [block] * n_components
     X = block_diag(*blocks)
     X = csr_matrix(X)
@@ -137,21 +137,6 @@ def test_lda_fit_transform(method):
     assert_array_almost_equal(X_fit, X_trans, 4)
 
 
-def test_lda_partial_fit_dim_mismatch():
-    # test `n_features` mismatch in `partial_fit`
-    rng = np.random.RandomState(0)
-    n_components = rng.randint(3, 6)
-    n_col = rng.randint(6, 10)
-    X_1 = np.random.randint(4, size=(10, n_col))
-    X_2 = np.random.randint(4, size=(10, n_col + 1))
-    lda = LatentDirichletAllocation(n_components=n_components,
-                                    learning_offset=5., total_samples=20,
-                                    random_state=rng)
-    lda.partial_fit(X_1)
-    with pytest.raises(ValueError, match=r"^The provided data has"):
-        lda.partial_fit(X_2)
-
-
 def test_invalid_params():
     # test `_check_params` method
     X = np.ones((5, 10))
@@ -188,20 +173,6 @@ def test_lda_no_component_error():
              "estimator.")
     with pytest.raises(NotFittedError, match=regex):
         lda.perplexity(X)
-
-
-def test_lda_transform_mismatch():
-    # test `n_features` mismatch in partial_fit and transform
-    rng = np.random.RandomState(0)
-    X = rng.randint(4, size=(20, 10))
-    X_2 = rng.randint(4, size=(10, 8))
-
-    n_components = rng.randint(3, 6)
-    lda = LatentDirichletAllocation(n_components=n_components,
-                                    random_state=rng)
-    lda.partial_fit(X)
-    with pytest.raises(ValueError, match=r"^The provided data has"):
-        lda.partial_fit(X_2)
 
 
 @if_safe_multiprocessing_with_blas

@@ -1,3 +1,4 @@
+# TODO: remove this file when plot_confusion_matrix will be deprecated in 1.2
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
@@ -20,6 +21,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
     "matplotlib.*")
+
 
 @pytest.fixture(scope="module")
 def n_classes():
@@ -44,6 +46,9 @@ def y_pred(data, fitted_clf):
     return fitted_clf.predict(X)
 
 
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
 def test_error_on_regressor(pyplot, data):
     X, y = data
     est = SVR().fit(X, y)
@@ -53,6 +58,9 @@ def test_error_on_regressor(pyplot, data):
         plot_confusion_matrix(est, X, y)
 
 
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
 def test_error_on_invalid_option(pyplot, fitted_clf, data):
     X, y = data
     msg = (r"normalize must be one of \{'true', 'pred', 'all', "
@@ -62,6 +70,9 @@ def test_error_on_invalid_option(pyplot, fitted_clf, data):
         plot_confusion_matrix(fitted_clf, X, y, normalize='invalid')
 
 
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("with_display_labels", [True, False])
 def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
@@ -97,6 +108,9 @@ def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
     assert_array_equal(y_ticks, expected_display_labels_str)
 
 
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
 @pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
 @pytest.mark.parametrize("include_values", [True, False])
 def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
@@ -155,6 +169,9 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
         assert disp.text_ is None
 
 
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
 def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
     X, y = data
 
@@ -226,6 +243,9 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[1, 1].get_color(), min_color)
 
 
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
 @pytest.mark.parametrize(
     "clf", [LogisticRegression(),
             make_pipeline(StandardScaler(), LogisticRegression()),
@@ -245,6 +265,29 @@ def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
     assert disp.text_.shape == (n_classes, n_classes)
 
 
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
+@pytest.mark.parametrize("colorbar", [True, False])
+def test_plot_confusion_matrix_colorbar(pyplot, data, fitted_clf, colorbar):
+    X, y = data
+
+    def _check_colorbar(disp, has_colorbar):
+        if has_colorbar:
+            assert disp.im_.colorbar is not None
+            assert disp.im_.colorbar.__class__.__name__ == "Colorbar"
+        else:
+            assert disp.im_.colorbar is None
+    disp = plot_confusion_matrix(fitted_clf, X, y, colorbar=colorbar)
+    _check_colorbar(disp, colorbar)
+    # attempt a plot with the opposite effect of colorbar
+    disp.plot(colorbar=not colorbar)
+    _check_colorbar(disp, not colorbar)
+
+
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
 @pytest.mark.parametrize("values_format", ['e', 'n'])
 def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
                                       fitted_clf, values_format):
@@ -262,3 +305,65 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
     text_text = np.array([
         t.get_text() for t in disp.text_.ravel()])
     assert_array_equal(expected_text, text_text)
+
+
+def test_confusion_matrix_standard_format(pyplot):
+    cm = np.array([[10000000, 0], [123456, 12345678]])
+    plotted_text = ConfusionMatrixDisplay(
+        cm, display_labels=[False, True]).plot().text_
+    # Values should be shown as whole numbers 'd',
+    # except the first number which should be shown as 1e+07 (longer length)
+    # and the last number will be shown as 1.2e+07 (longer length)
+    test = [t.get_text() for t in plotted_text.ravel()]
+    assert test == ['1e+07', '0', '123456', '1.2e+07']
+
+    cm = np.array([[0.1, 10], [100, 0.525]])
+    plotted_text = ConfusionMatrixDisplay(
+        cm, display_labels=[False, True]).plot().text_
+    # Values should now formatted as '.2g', since there's a float in
+    # Values are have two dec places max, (e.g 100 becomes 1e+02)
+    test = [t.get_text() for t in plotted_text.ravel()]
+    assert test == ['0.1', '10', '1e+02', '0.53']
+
+
+@pytest.mark.parametrize("display_labels, expected_labels", [
+    (None, ["0", "1"]),
+    (["cat", "dog"], ["cat", "dog"]),
+])
+def test_default_labels(pyplot, display_labels, expected_labels):
+    cm = np.array([[10, 0], [12, 120]])
+    disp = ConfusionMatrixDisplay(cm, display_labels=display_labels).plot()
+
+    x_ticks = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
+    y_ticks = [tick.get_text() for tick in disp.ax_.get_yticklabels()]
+
+    assert_array_equal(x_ticks, expected_labels)
+    assert_array_equal(y_ticks, expected_labels)
+
+
+@pytest.mark.filterwarnings(
+    "ignore: Function plot_confusion_matrix is deprecated"
+)
+def test_error_on_a_dataset_with_unseen_labels(
+    pyplot, fitted_clf, data, n_classes
+):
+    """Check that when labels=None, the unique values in `y_pred` and `y_true`
+    will be used.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/18405
+    """
+    X, y = data
+
+    # create unseen labels in `y_true` not seen during fitting and not present
+    # in 'fitted_clf.classes_'
+    y = y + 1
+    disp = plot_confusion_matrix(fitted_clf, X, y)
+
+    display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
+    expected_labels = [str(i) for i in range(n_classes + 1)]
+    assert_array_equal(expected_labels, display_labels)
+
+
+def test_plot_confusion_matrix_deprecation_warning(pyplot, fitted_clf, data):
+    with pytest.warns(FutureWarning):
+        plot_confusion_matrix(fitted_clf, *data)

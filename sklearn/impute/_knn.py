@@ -10,10 +10,10 @@ from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
 from ..neighbors._base import _check_weights
-from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 class KNNImputer(_BaseImputer):
@@ -29,9 +29,11 @@ class KNNImputer(_BaseImputer):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan or None, default=`np.nan`
+    missing_values : int, float, str, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to np.nan, since `pd.NA` will be converted to np.nan.
 
     n_neighbors : int, default=5
         Number of neighboring samples to use for imputation.
@@ -71,7 +73,7 @@ class KNNImputer(_BaseImputer):
 
     Attributes
     ----------
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
@@ -94,8 +96,8 @@ class KNNImputer(_BaseImputer):
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
     """
-
-    def __init__(self, missing_values=np.nan, n_neighbors=5,
+    @_deprecate_positional_args
+    def __init__(self, *, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean", copy=True,
                  add_indicator=False):
         super().__init__(
@@ -178,13 +180,16 @@ class KNNImputer(_BaseImputer):
             raise ValueError(
                 "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
 
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
-        super()._fit_indicator(X)
+        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+                                force_all_finite=force_all_finite,
+                                copy=self.copy)
 
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
+
+        super()._fit_indicator(self._mask_fit_X)
+
         return self
 
     def transform(self, X):
@@ -207,18 +212,17 @@ class KNNImputer(_BaseImputer):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
-        X_indicator = super()._transform_indicator(X)
-
-        if X.shape[1] != self._fit_X.shape[1]:
-            raise ValueError("Incompatible dimension between the fitted "
-                             "dataset and the one to be transformed")
+        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+                                force_all_finite=force_all_finite,
+                                copy=self.copy, reset=False)
 
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
         valid_mask = ~np.all(mask_fit_X, axis=0)
 
+        X_indicator = super()._transform_indicator(mask)
+
+        # Removes columns where the training data is all nan
         if not np.any(mask):
             # No missing values in X
             # Remove columns where the training data is all nan
@@ -229,7 +233,7 @@ class KNNImputer(_BaseImputer):
         non_missing_fix_X = np.logical_not(mask_fit_X)
 
         # Maps from indices from X to indices in dist matrix
-        dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
+        dist_idx_map = np.zeros(X.shape[0], dtype=int)
         dist_idx_map[row_missing_idx] = np.arange(row_missing_idx.shape[0])
 
         def process_chunk(dist_chunk, start):

@@ -94,7 +94,7 @@ class RandomData:
             n_samples, n_features, self.weights, self.means, self.covariances,
             covar_type) for covar_type in COVARIANCE_TYPE]))
         self.Y = np.hstack([np.full(int(np.round(w * n_samples)), k,
-                                    dtype=np.int)
+                                    dtype=int)
                             for k, w in enumerate(self.weights)])
 
 
@@ -170,30 +170,6 @@ def test_gaussian_mixture_attributes():
     assert gmm.max_iter == max_iter
     assert gmm.n_init == n_init
     assert gmm.init_params == init_params
-
-
-def test_check_X():
-    from sklearn.mixture._base import _check_X
-    rng = np.random.RandomState(0)
-
-    n_samples, n_components, n_features = 10, 2, 2
-
-    X_bad_dim = rng.rand(n_components - 1, n_features)
-    assert_raise_message(ValueError,
-                         'Expected n_samples >= n_components '
-                         'but got n_components = %d, n_samples = %d'
-                         % (n_components, X_bad_dim.shape[0]),
-                         _check_X, X_bad_dim, n_components)
-
-    X_bad_dim = rng.rand(n_components, n_features + 1)
-    assert_raise_message(ValueError,
-                         'Expected the input data X have %d features, '
-                         'but got %d features'
-                         % (n_features, X_bad_dim.shape[1]),
-                         _check_X, X_bad_dim, n_components, n_features)
-
-    X = rng.rand(n_samples, n_features)
-    assert_array_equal(X, _check_X(X, n_components, n_features))
 
 
 def test_check_weights():

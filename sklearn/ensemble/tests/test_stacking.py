@@ -17,6 +17,8 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import make_regression
+from sklearn.datasets import make_classification
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
@@ -25,8 +27,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import scale
@@ -38,11 +38,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 
+from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
@@ -261,7 +260,7 @@ def test_stacking_classifier_drop_binary_prob():
     assert X_meta.shape[1] == 2
 
 
-class NoWeightRegressor(BaseEstimator, RegressorMixin):
+class NoWeightRegressor(RegressorMixin, BaseEstimator):
     def fit(self, X, y):
         self.reg = DummyRegressor()
         return self.reg.fit(X, y)
@@ -270,7 +269,7 @@ class NoWeightRegressor(BaseEstimator, RegressorMixin):
         return np.ones(X.shape[0])
 
 
-class NoWeightClassifier(BaseEstimator, ClassifierMixin):
+class NoWeightClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         self.clf = DummyClassifier(strategy='stratified')
         return self.clf.fit(X, y)
@@ -365,24 +364,6 @@ def test_stacking_randomness(estimator, X, y):
     )
 
 
-# These warnings are raised due to _BaseComposition
-@pytest.mark.filterwarnings("ignore:TypeError occurred during set_params")
-@pytest.mark.filterwarnings("ignore:Estimator's parameters changed after")
-@pytest.mark.parametrize(
-    "estimator",
-    [StackingClassifier(
-        estimators=[('lr', LogisticRegression(random_state=0)),
-                    ('tree', DecisionTreeClassifier(random_state=0))]),
-     StackingRegressor(
-         estimators=[('lr', LinearRegression()),
-                     ('tree', DecisionTreeRegressor(random_state=0))])],
-    ids=['StackingClassifier', 'StackingRegressor']
-)
-def test_check_estimators_stacking_estimator(estimator):
-    check_estimator(estimator)
-    check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
-
-
 def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
@@ -439,6 +420,19 @@ def test_stacking_with_sample_weight(stacker, X, y):
     assert np.abs(y_pred_no_weight - y_pred_biased).sum() > 0
 
 
+def test_stacking_classifier_sample_weight_fit_param():
+    # check sample_weight is passed to all invocations of fit
+    stacker = StackingClassifier(
+        estimators=[
+            ('lr', CheckingClassifier(expected_fit_params=['sample_weight']))
+        ],
+        final_estimator=CheckingClassifier(
+            expected_fit_params=['sample_weight']
+        )
+    )
+    stacker.fit(X_iris, y_iris, sample_weight=np.ones(X_iris.shape[0]))
+
+
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "stacker, X, y",
@@ -477,3 +471,32 @@ def test_stacking_cv_influence(stacker, X, y):
     with pytest.raises(AssertionError, match='Not equal'):
         assert_allclose(stacker_cv_3.final_estimator_.coef_,
                         stacker_cv_5.final_estimator_.coef_)
+
+
+@pytest.mark.parametrize("make_dataset, Stacking, Estimator", [
+    (make_classification, StackingClassifier, LogisticRegression),
+    (make_regression, StackingRegressor, LinearRegression)
+])
+def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
+    # Stacking supports estimators without `n_features_in_`. Regression test
+    # for #17353
+
+    class MyEstimator(Estimator):
+        """Estimator without n_features_in_"""
+        def fit(self, X, y):
+            super().fit(X, y)
+            del self.n_features_in_
+
+    X, y = make_dataset(random_state=0, n_samples=100)
+    stacker = Stacking(estimators=[('lr', MyEstimator())])
+
+    msg = f"{Stacking.__name__} object has no attribute n_features_in_"
+    with pytest.raises(AttributeError, match=msg):
+        stacker.n_features_in_
+
+    # Does not raise
+    stacker.fit(X, y)
+
+    msg = "'MyEstimator' object has no attribute 'n_features_in_'"
+    with pytest.raises(AttributeError, match=msg):
+        stacker.n_features_in_

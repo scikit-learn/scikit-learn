@@ -13,20 +13,20 @@ Link: https://github.com/blei-lab/onlineldavb
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.special import gammaln
-from joblib import Parallel, delayed, effective_n_jobs
+from scipy.special import gammaln, logsumexp
+from joblib import Parallel, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices)
-from ..utils.fixes import logsumexp
+from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
                                _dirichlet_expectation_2d)
 
-EPS = np.finfo(np.float).eps
+EPS = np.finfo(float).eps
 
 
 def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
@@ -36,10 +36,10 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape=(n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Document word matrix.
 
-    exp_topic_word_distr : dense matrix, shape=(n_topics, n_features)
+    exp_topic_word_distr : ndarray of shape (n_topics, n_features)
         Exponential value of expectation of log topic word distribution.
         In the literature, this is `exp(E[log(beta)])`.
 
@@ -53,7 +53,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     mean_change_tol : float
         Stopping tolerance for updating document topic distribution in E-setp.
 
-    cal_sstats : boolean
+    cal_sstats : bool
         Parameter that indicate to calculate sufficient statistics or not.
         Set `cal_sstats` to `True` when we need to run M-step.
 
@@ -141,20 +141,23 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional (default=10)
+    n_components : int, default=10
         Number of topics.
 
-    doc_topic_prior : float, optional (default=None)
+        .. versionchanged:: 0.19
+            ``n_topics`` was renamed to ``n_components``
+
+    doc_topic_prior : float, default=None
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.
         In [1]_, this is called `alpha`.
 
-    topic_word_prior : float, optional (default=None)
+    topic_word_prior : float, default=None
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
         In [1]_, this is called `eta`.
 
-    learning_method : 'batch' | 'online', default='batch'
+    learning_method : {'batch', 'online'}, default='batch'
         Method used to update `_component`. Only used in :meth:`fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
@@ -172,26 +175,26 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         .. versionchanged:: 0.20
             The default learning method is now ``"batch"``.
 
-    learning_decay : float, optional (default=0.7)
+    learning_decay : float, default=0.7
         It is a parameter that control learning rate in the online learning
         method. The value should be set between (0.5, 1.0] to guarantee
         asymptotic convergence. When the value is 0.0 and batch_size is
         ``n_samples``, the update method is same as batch learning. In the
         literature, this is called kappa.
 
-    learning_offset : float, optional (default=10.)
+    learning_offset : float, default=10.
         A (positive) parameter that downweights early iterations in online
         learning.  It should be greater than 1.0. In the literature, this is
         called tau_0.
 
-    max_iter : integer, optional (default=10)
+    max_iter : int, default=10
         The maximum number of iterations.
 
-    batch_size : int, optional (default=128)
+    batch_size : int, default=128
         Number of documents to use in each EM iteration. Only used in online
         learning.
 
-    evaluate_every : int, optional (default=0)
+    evaluate_every : int, default=-1
         How often to evaluate perplexity. Only used in `fit` method.
         set it to 0 or negative number to not evaluate perplexity in
         training at all. Evaluating perplexity can help you check convergence
@@ -199,36 +202,36 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         Evaluating perplexity in every iteration might increase training time
         up to two-fold.
 
-    total_samples : int, optional (default=1e6)
+    total_samples : int, default=1e6
         Total number of documents. Only used in the :meth:`partial_fit` method.
 
-    perp_tol : float, optional (default=1e-1)
+    perp_tol : float, default=1e-1
         Perplexity tolerance in batch learning. Only used when
         ``evaluate_every`` is greater than 0.
 
-    mean_change_tol : float, optional (default=1e-3)
+    mean_change_tol : float, default=1e-3
         Stopping tolerance for updating document topic distribution in E-step.
 
-    max_doc_update_iter : int (default=100)
+    max_doc_update_iter : int, default=100
         Max number of iterations for updating document topic distribution in
         the E-step.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use in the E-step.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Verbosity level.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Variational parameters for topic word distribution. Since the complete
         conditional for topic word distribution is a Dirichlet,
         ``components_[i, j]`` can be viewed as pseudocount that represents the
@@ -236,6 +239,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         It can also be viewed as distribution over the words for each topic
         after normalization:
         ``model.components_ / model.components_.sum(axis=1)[:, np.newaxis]``.
+
+    exp_dirichlet_component_ : ndarray of shape (n_components, n_features)
+        Exponential value of expectation of log topic word distribution.
+        In the literature, this is `exp(E[log(beta)])`.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
@@ -249,6 +256,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     doc_topic_prior_ : float
         Prior of document topic distribution `theta`. If the value is None,
         it is `1 / n_components`.
+
+    random_state_ : RandomState instance
+        RandomState instance that is generated either from a seed, the random
+        number generator or by `np.random`.
 
     topic_word_prior_ : float
         Prior of topic word distribution `beta`. If the value is None, it is
@@ -282,8 +293,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         https://github.com/blei-lab/onlineldavb
 
     """
-
-    def __init__(self, n_components=10, doc_topic_prior=None,
+    @_deprecate_positional_args
+    def __init__(self, n_components=10, *, doc_topic_prior=None,
                  topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
@@ -356,19 +367,19 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
-        cal_sstats : boolean
+        cal_sstats : bool
             Parameter that indicate whether to calculate sufficient statistics
             or not. Set ``cal_sstats`` to True when we need to run M-step.
 
-        random_init : boolean
+        random_init : bool
             Parameter that indicate whether to initialize document topic
             distribution randomly in the E-step. Set it to True in training
             steps.
 
-        parallel : joblib.Parallel (optional)
+        parallel : joblib.Parallel, default=None
             Pre-initialized instance of joblib.Parallel.
 
         Returns
@@ -421,23 +432,23 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
-        total_samples : integer
+        total_samples : int
             Total number of documents. It is only used when
             batch_update is `False`.
 
-        batch_update : boolean
+        batch_update : bool
             Parameter that controls updating method.
             `True` for batch learning, `False` for online learning.
 
-        parallel : joblib.Parallel
+        parallel : joblib.Parallel, default=None
             Pre-initialized instance of joblib.Parallel
 
         Returns
         -------
-        doc_topic_distr : array, shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Unnormalized document topic distribution.
         """
 
@@ -467,7 +478,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'requires_positive_X': True}
 
-    def _check_non_neg_array(self, X, whom):
+    def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format
 
         check X format and make sure no negative value in X.
@@ -477,7 +488,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         X :  array-like or sparse matrix
 
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, reset=reset_n_features,
+                                accept_sparse='csr')
         check_non_negative(X, whom)
         return X
 
@@ -486,7 +498,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         y : Ignored
@@ -496,13 +508,15 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self
         """
         self._check_params()
-        X = self._check_non_neg_array(X,
-                                      "LatentDirichletAllocation.partial_fit")
+        first_time = not hasattr(self, 'components_')
+        X = self._check_non_neg_array(
+            X, reset_n_features=first_time,
+            whom="LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size
 
         # initialize parameters or check
-        if not hasattr(self, 'components_'):
+        if first_time:
             self._init_latent_vars(n_features)
 
         if n_features != self.components_.shape[1]:
@@ -530,7 +544,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         y : Ignored
@@ -540,7 +554,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self
         """
         self._check_params()
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.fit")
+        X = self._check_non_neg_array(X, reset_n_features=True,
+                                      whom="LatentDirichletAllocation.fit")
         n_samples, n_features = X.shape
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
@@ -598,18 +613,20 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         Returns
         -------
-        doc_topic_distr : shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Document topic distribution for X.
         """
         check_is_fitted(self)
 
         # make sure feature size is the same in fitted model and in X
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
+        X = self._check_non_neg_array(
+            X, reset_n_features=True,
+            whom="LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
         if n_features != self.components_.shape[1]:
             raise ValueError(
@@ -630,14 +647,18 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         Returns
         -------
-        doc_topic_distr : shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Document topic distribution for X.
         """
+        check_is_fitted(self)
+        X = self._check_non_neg_array(
+            X, reset_n_features=False,
+            whom="LatentDirichletAllocation.transform")
         doc_topic_distr = self._unnormalized_transform(X)
         doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
@@ -651,14 +672,14 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
-        doc_topic_distr : array, shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Document topic distribution. In the literature, this is called
             gamma.
 
-        sub_sampling : boolean, optional, (default=False)
+        sub_sampling : bool, default=False
             Compensate for subsampling of documents.
             It is used in calculate bound in online learning.
 
@@ -723,7 +744,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         y : Ignored
@@ -733,7 +754,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Use approximate bound as score.
         """
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.score")
+        check_is_fitted(self)
+        X = self._check_non_neg_array(X, reset_n_features=False,
+                                      whom="LatentDirichletAllocation.score")
 
         doc_topic_distr = self._unnormalized_transform(X)
         score = self._approx_bound(X, doc_topic_distr, sub_sampling=False)
@@ -748,10 +771,11 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
-        doc_topic_distr : None or array, shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components), \
+                default=None
             Document topic distribution.
             If it is None, it will be generated by applying transform on X.
 
@@ -762,8 +786,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._check_non_neg_array(X,
-                                      "LatentDirichletAllocation.perplexity")
+        X = self._check_non_neg_array(
+            X, reset_n_features=True,
+            whom="LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:
             doc_topic_distr = self._unnormalized_transform(X)
@@ -798,7 +823,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         sub_sampling : bool

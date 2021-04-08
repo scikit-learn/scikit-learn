@@ -9,9 +9,8 @@ from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils._testing import (assert_warns,
-                                   assert_raise_message, ignore_warnings,
-                                   skip_if_32bit)
+from sklearn.utils._testing import (assert_raise_message, ignore_warnings,
+                                    skip_if_32bit)
 
 
 # test sample 1
@@ -181,7 +180,7 @@ def test_sparse_decision_function():
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.classes_[(clf.decision_function(X) > 0).astype(np.int).ravel()])
+        clf.classes_[(clf.decision_function(X) > 0).astype(int).ravel()])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
@@ -348,8 +347,12 @@ def test_sparse_svc_clone_with_callable_kernel():
 def test_timeout():
     sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T,
                  probability=True, random_state=0, max_iter=1)
-
-    assert_warns(ConvergenceWarning, sp.fit, X_sp, Y)
+    warning_msg = (
+        r'Solver terminated early \(max_iter=1\).  Consider pre-processing '
+        r'your data with StandardScaler or MinMaxScaler.'
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
+        sp.fit(X_sp, Y)
 
 
 def test_consistent_proba():

@@ -17,6 +17,7 @@ from scipy.stats import chi2
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 # Minimum Covariance Determinant
@@ -37,7 +38,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         Data set in which we look for the n_support observations whose
         scatter matrix has minimum determinant.
 
-    n_support : int,
+    n_support : int
         Number of observations to compute the robust estimates of location
         and covariance from. This parameter must be greater than
         `n_samples / 2`.
@@ -54,7 +55,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         - initial_estimates[0]: an initial location estimate
         - initial_estimates[1]: an initial covariance estimate
 
-    verbose : bool, defaut=False
+    verbose : bool, default=False
         Verbose mode.
 
     cov_computation_method : callable, \
@@ -62,7 +63,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         The function which will be used to compute the covariance.
         Must return array of shape (n_features, n_features).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -227,7 +228,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         (2 is enough to be close to the final solution. "Never" exceeds 20).
         This parameter must be a strictly positive integer.
 
-    verbose : bool, default False
+    verbose : bool, default=False
         Control the output verbosity.
 
     cov_computation_method : callable, \
@@ -235,7 +236,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         The function which will be used to compute the covariance.
         Must return an array of shape (n_features, n_features).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -330,7 +331,7 @@ def fast_mcd(X, support_fraction=None,
         The function which will be used to compute the covariance.
         Must return an array of shape (n_features, n_features).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -546,7 +547,7 @@ class MinCovDet(EmpiricalCovariance):
         `(n_sample + n_features + 1) / 2`. The parameter must be in the range
         (0, 1).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -614,7 +615,8 @@ class MinCovDet(EmpiricalCovariance):
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, random_state=None):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
@@ -630,14 +632,14 @@ class MinCovDet(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y: Ignored
-            Not used, present for API consistence purpose.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
         """
-        X = check_array(X, ensure_min_samples=2, estimator='MinCovDet')
+        X = self._validate_data(X, ensure_min_samples=2, estimator='MinCovDet')
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank

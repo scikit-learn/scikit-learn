@@ -4,8 +4,6 @@ from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-# To use this experimental feature, we need to explicitly ask for it:
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
@@ -46,7 +44,6 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
 
@@ -99,7 +96,6 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
 
@@ -160,7 +156,6 @@ def test_same_predictions_multiclass_classification(
     pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
     lr = 1

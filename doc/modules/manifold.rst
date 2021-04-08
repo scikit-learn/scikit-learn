@@ -116,7 +116,7 @@ Complexity
 The Isomap algorithm comprises three stages:
 
 1. **Nearest neighbor search.**  Isomap uses
-   :class:`sklearn.neighbors.BallTree` for efficient neighbor search.
+   :class:`~sklearn.neighbors.BallTree` for efficient neighbor search.
    The cost is approximately :math:`O[D \log(k) N \log(N)]`, for :math:`k`
    nearest neighbors of :math:`N` points in :math:`D` dimensions.
 
@@ -132,7 +132,7 @@ The Isomap algorithm comprises three stages:
    :math:`N \times N` isomap kernel.  For a dense solver, the cost is
    approximately :math:`O[d N^2]`.  This cost can often be improved using
    the ``ARPACK`` solver.  The eigensolver can be specified by the user
-   with the ``path_method`` keyword of ``Isomap``.  If unspecified, the
+   with the ``eigen_solver`` keyword of ``Isomap``.  If unspecified, the
    code attempts to choose the best algorithm for the input data.
 
 The overall complexity of Isomap is
@@ -579,7 +579,7 @@ Barnes-Hut method improves on the exact method where t-SNE complexity is
   or less. The 2D case is typical when building visualizations.
 * Barnes-Hut only works with dense input data. Sparse data matrices can only be
   embedded with the exact method or can be approximated by a dense low rank
-  projection for instance using :class:`sklearn.decomposition.TruncatedSVD`
+  projection for instance using :class:`~sklearn.decomposition.TruncatedSVD`
 * Barnes-Hut is an approximation of the exact method. The approximation is
   parameterized with the angle parameter, therefore the angle parameter is
   unused when method="exact"

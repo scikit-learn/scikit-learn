@@ -10,167 +10,38 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
+from functools import update_wrapper
 from distutils.version import LooseVersion
+import functools
 
 import numpy as np
 import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
+from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 1.0
+from .._config import config_context, get_config
 
+from .deprecation import deprecated
 
-def _parse_version(version_string):
-    version = []
-    for x in version_string.split('.'):
-        try:
-            version.append(int(x))
-        except ValueError:
-            # x may be of the form dev-1ea1592
-            version.append(x)
-    return tuple(version)
-
-
-np_version = _parse_version(np.__version__)
-sp_version = _parse_version(scipy.__version__)
-
-
-try:  # SciPy >= 0.19
-    from scipy.special import comb, logsumexp
+try:
+    from pkg_resources import parse_version  # type: ignore
 except ImportError:
-    from scipy.misc import comb, logsumexp  # noqa
+    # setuptools not installed
+    parse_version = LooseVersion  # type: ignore
 
-if sp_version >= (1, 4):
+
+np_version = parse_version(np.__version__)
+sp_version = parse_version(scipy.__version__)
+
+
+if sp_version >= parse_version('1.4'):
     from scipy.sparse.linalg import lobpcg
 else:
     # Backport of lobpcg functionality from scipy 1.4.0, can be removed
-    # once support for sp_version < (1, 4) is dropped
-    from ..externals._lobpcg import lobpcg  # noqa
-
-if sp_version >= (1, 3):
-    # Preserves earlier default choice of pinvh cutoff `cond` value.
-    # Can be removed once issue #14055 is fully addressed.
-    from ..externals._scipy_linalg import pinvh
-else:
-    from scipy.linalg import pinvh # noqa
-
-if sp_version >= (0, 19):
-    def _argmax(arr_or_spmatrix, axis=None):
-        return arr_or_spmatrix.argmax(axis=axis)
-else:
-    # Backport of argmax functionality from scipy 0.19.1, can be removed
-    # once support for scipy 0.18 and below is dropped
-
-    def _find_missing_index(ind, n):
-        for k, a in enumerate(ind):
-            if k != a:
-                return k
-
-        k += 1
-        if k < n:
-            return k
-        else:
-            return -1
-
-    def _arg_min_or_max_axis(self, axis, op, compare):
-        if self.shape[axis] == 0:
-            raise ValueError("Can't apply the operation along a zero-sized "
-                             "dimension.")
-
-        if axis < 0:
-            axis += 2
-
-        zero = self.dtype.type(0)
-
-        mat = self.tocsc() if axis == 0 else self.tocsr()
-        mat.sum_duplicates()
-
-        ret_size, line_size = mat._swap(mat.shape)
-        ret = np.zeros(ret_size, dtype=int)
-
-        nz_lines, = np.nonzero(np.diff(mat.indptr))
-        for i in nz_lines:
-            p, q = mat.indptr[i:i + 2]
-            data = mat.data[p:q]
-            indices = mat.indices[p:q]
-            am = op(data)
-            m = data[am]
-            if compare(m, zero) or q - p == line_size:
-                ret[i] = indices[am]
-            else:
-                zero_ind = _find_missing_index(indices, line_size)
-                if m == zero:
-                    ret[i] = min(am, zero_ind)
-                else:
-                    ret[i] = zero_ind
-
-        if axis == 1:
-            ret = ret.reshape(-1, 1)
-
-        return np.asmatrix(ret)
-
-    def _arg_min_or_max(self, axis, out, op, compare):
-        if out is not None:
-            raise ValueError("Sparse matrices do not support "
-                             "an 'out' parameter.")
-
-        # validateaxis(axis)
-
-        if axis is None:
-            if 0 in self.shape:
-                raise ValueError("Can't apply the operation to "
-                                 "an empty matrix.")
-
-            if self.nnz == 0:
-                return 0
-            else:
-                zero = self.dtype.type(0)
-                mat = self.tocoo()
-                mat.sum_duplicates()
-                am = op(mat.data)
-                m = mat.data[am]
-
-                if compare(m, zero):
-                    return mat.row[am] * mat.shape[1] + mat.col[am]
-                else:
-                    size = np.product(mat.shape)
-                    if size == mat.nnz:
-                        return am
-                    else:
-                        ind = mat.row * mat.shape[1] + mat.col
-                        zero_ind = _find_missing_index(ind, size)
-                        if m == zero:
-                            return min(zero_ind, am)
-                        else:
-                            return zero_ind
-
-        return _arg_min_or_max_axis(self, axis, op, compare)
-
-    def _sparse_argmax(self, axis=None, out=None):
-        return _arg_min_or_max(self, axis, out, np.argmax, np.greater)
-
-    def _argmax(arr_or_matrix, axis=None):
-        if sp.issparse(arr_or_matrix):
-            return _sparse_argmax(arr_or_matrix, axis=axis)
-        else:
-            return arr_or_matrix.argmax(axis=axis)
-
-
-if np_version < (1, 12):
-    class MaskedArray(np.ma.MaskedArray):
-        # Before numpy 1.12, np.ma.MaskedArray object is not picklable
-        # This fix is needed to make our model_selection.GridSearchCV
-        # picklable as the ``cv_results_`` param uses MaskedArray
-        def __getstate__(self):
-            """Return the internal state of the masked array, for pickling
-            purposes.
-
-            """
-            cf = 'CF'[self.flags.fnc]
-            data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
-            return data_state + (np.ma.getmaskarray(self).tostring(cf),
-                                 self._fill_value)
-else:
-    from numpy.ma import MaskedArray    # noqa
+    # once support for sp_version < parse_version('1.4') is dropped
+    # mypy error: Name 'lobpcg' already defined (possibly by an import)
+    from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
 
 def _object_dtype_isnan(X):
@@ -183,7 +54,7 @@ def _astype_copy_false(X):
     {ndarray, csr_matrix, csc_matrix}.astype when possible,
     otherwise don't specify
     """
-    if sp_version >= (1, 1) or not sp.issparse(X):
+    if sp_version >= parse_version('1.1') or not sp.issparse(X):
         return {'copy': False}
     else:
         return {}
@@ -212,7 +83,7 @@ def _joblib_parallel_args(**kwargs):
     """
     import joblib
 
-    if joblib.__version__ >= LooseVersion('0.12'):
+    if parse_version(joblib.__version__) >= parse_version('0.12'):
         return kwargs
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
@@ -267,7 +138,7 @@ class loguniform(scipy.stats.reciprocal):
 
     The logarithmic probability density function (PDF) is uniform. When
     ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
-    are random variales that are equally likely to be returned.
+    are random variables that are equally likely to be returned.
 
     This class is an alias to ``scipy.stats.reciprocal``, which uses the
     reciprocal distribution:
@@ -284,3 +155,116 @@ class loguniform(scipy.stats.reciprocal):
     >>> rvs.max()  # doctest: +SKIP
     9.97403052786026
     """
+
+
+@deprecated(
+    'MaskedArray is deprecated in version 0.23 and will be removed in version '
+    '1.0 (renaming of 0.25). Use numpy.ma.MaskedArray instead.'
+)
+class MaskedArray(_MaskedArray):
+    pass  # TODO: remove in 1.0
+
+
+def _take_along_axis(arr, indices, axis):
+    """Implements a simplified version of np.take_along_axis if numpy
+    version < 1.15"""
+    if np_version >= parse_version('1.15'):
+        return np.take_along_axis(arr=arr, indices=indices, axis=axis)
+    else:
+        if axis is None:
+            arr = arr.flatten()
+
+        if not np.issubdtype(indices.dtype, np.intp):
+            raise IndexError('`indices` must be an integer array')
+        if arr.ndim != indices.ndim:
+            raise ValueError(
+                "`indices` and `arr` must have the same number of dimensions")
+
+        shape_ones = (1,) * indices.ndim
+        dest_dims = (
+            list(range(axis)) +
+            [None] +
+            list(range(axis+1, indices.ndim))
+        )
+
+        # build a fancy index, consisting of orthogonal aranges, with the
+        # requested index inserted at the right location
+        fancy_index = []
+        for dim, n in zip(dest_dims, arr.shape):
+            if dim is None:
+                fancy_index.append(indices)
+            else:
+                ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim+1:]
+                fancy_index.append(np.arange(n).reshape(ind_shape))
+
+        fancy_index = tuple(fancy_index)
+        return arr[fancy_index]
+
+
+# remove when https://github.com/joblib/joblib/issues/1071 is fixed
+def delayed(function):
+    """Decorator used to capture the arguments of a function."""
+    @functools.wraps(function)
+    def delayed_function(*args, **kwargs):
+        return _FuncWrapper(function), args, kwargs
+    return delayed_function
+
+
+class _FuncWrapper:
+    """"Load the global configuration before calling the function."""
+    def __init__(self, function):
+        self.function = function
+        self.config = get_config()
+        update_wrapper(self, self.function)
+
+    def __call__(self, *args, **kwargs):
+        with config_context(**self.config):
+            return self.function(*args, **kwargs)
+
+
+def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
+             axis=0):
+    """Implements a simplified linspace function as of numpy verion >= 1.16.
+
+    As of numpy 1.16, the arguments start and stop can be array-like and
+    there is an optional argument `axis`.
+    For simplicity, we only allow 1d array-like to be passed to start and stop.
+    See: https://github.com/numpy/numpy/pull/12388 and numpy 1.16 release
+    notes about start and stop arrays for linspace logspace and geomspace.
+
+    Returns
+    -------
+    out : ndarray of shape (num, n_start) or (num,)
+        The output array with `n_start=start.shape[0]` columns.
+    """
+    if np_version < parse_version('1.16'):
+        start = np.asanyarray(start) * 1.0
+        stop = np.asanyarray(stop) * 1.0
+        dt = np.result_type(start, stop, float(num))
+        if dtype is None:
+            dtype = dt
+
+        if start.ndim == 0 == stop.ndim:
+            return np.linspace(start=start, stop=stop, num=num,
+                               endpoint=endpoint, retstep=retstep, dtype=dtype)
+
+        if start.ndim != 1 or stop.ndim != 1 or start.shape != stop.shape:
+            raise ValueError("start and stop must be 1d array-like of same"
+                             " shape.")
+        n_start = start.shape[0]
+        out = np.empty((num, n_start), dtype=dtype)
+        step = np.empty(n_start, dtype=np.float)
+        for i in range(n_start):
+            out[:, i], step[i] = np.linspace(start=start[i], stop=stop[i],
+                                             num=num, endpoint=endpoint,
+                                             retstep=True, dtype=dtype)
+        if axis != 0:
+            out = np.moveaxis(out, 0, axis)
+
+        if retstep:
+            return out, step
+        else:
+            return out
+    else:
+        return np.linspace(start=start, stop=stop, num=num, endpoint=endpoint,
+                           retstep=retstep, dtype=dtype, axis=axis)

@@ -24,6 +24,7 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from sklearn import svm
 
 # we create 40 separable points
@@ -62,8 +63,9 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     plt.plot(xx, yy_up, 'k--')
 
     plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
-                facecolors='none', zorder=10, edgecolors='k')
-    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired,
+                facecolors='none', zorder=10, edgecolors='k',
+                cmap=cm.get_cmap('RdBu'))
+    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=cm.get_cmap('RdBu'),
                 edgecolors='k')
 
     plt.axis('tight')
@@ -72,13 +74,13 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     y_min = -6
     y_max = 6
 
-    XX, YY = np.mgrid[x_min:x_max:200j, y_min:y_max:200j]
-    Z = clf.predict(np.c_[XX.ravel(), YY.ravel()])
+    YY, XX = np.meshgrid(yy, xx)
+    xy = np.vstack([XX.ravel(), YY.ravel()]).T
+    Z = clf.decision_function(xy).reshape(XX.shape)
 
-    # Put the result into a color plot
-    Z = Z.reshape(XX.shape)
-    plt.figure(fignum, figsize=(4, 3))
-    plt.pcolormesh(XX, YY, Z, cmap=plt.cm.Paired)
+    # Put the result into a contour plot
+    plt.contourf(XX, YY, Z, cmap=cm.get_cmap('RdBu'),
+                 alpha=0.5, linestyles=['-'])
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)

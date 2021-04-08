@@ -34,4 +34,3 @@ A tutorial on statistical-learning for scientific data processing
    model_selection
    unsupervised_learning
    putting_together
-   finding_help

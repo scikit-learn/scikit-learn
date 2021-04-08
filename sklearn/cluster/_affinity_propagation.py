@@ -10,10 +10,12 @@ import warnings
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_array
-from ..utils.validation import check_is_fitted
+from ..utils import as_float_array, check_random_state
+from ..utils.deprecation import deprecated
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
+from .._config import config_context
 
 
 def _equal_similarities_and_preferences(S, preference):
@@ -30,20 +32,21 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
-def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.5, copy=True, verbose=False,
-                         return_n_iter=False):
-    """Perform Affinity Propagation Clustering of data
+@_deprecate_positional_args
+def affinity_propagation(S, *, preference=None, convergence_iter=15,
+                         max_iter=200, damping=0.5, copy=True, verbose=False,
+                         return_n_iter=False, random_state='warn'):
+    """Perform Affinity Propagation Clustering of data.
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
 
     Parameters
     ----------
 
-    S : array-like, shape (n_samples, n_samples)
-        Matrix of similarities between points
+    S : array-like of shape (n_samples, n_samples)
+        Matrix of similarities between points.
 
-    preference : array-like, shape (n_samples,) or float, optional
+    preference : array-like of shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -52,37 +55,45 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    convergence_iter : int, optional, default: 15
+    convergence_iter : int, default=15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    max_iter : int, optional, default: 200
+    max_iter : int, default=200
         Maximum number of iterations
 
-    damping : float, optional, default: 0.5
+    damping : float, default=0.5
         Damping factor between 0.5 and 1.
 
-    copy : boolean, optional, default: True
+    copy : bool, default=True
         If copy is False, the affinity matrix is modified inplace by the
-        algorithm, for memory efficiency
+        algorithm, for memory efficiency.
 
-    verbose : boolean, optional, default: False
-        The verbosity level
+    verbose : bool, default=False
+        The verbosity level.
 
-    return_n_iter : bool, default False
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
+
+    random_state : int, RandomState instance or None, default=0
+        Pseudo-random number generator to control the starting state.
+        Use an int for reproducible results across function calls.
+        See the :term:`Glossary <random_state>`.
+
+        .. versionadded:: 0.23
+            this parameter was previously hardcoded as 0.
 
     Returns
     -------
 
-    cluster_centers_indices : array, shape (n_clusters,)
-        index of clusters centers
+    cluster_centers_indices : ndarray of shape (n_clusters,)
+        Index of clusters centers.
 
-    labels : array, shape (n_samples,)
-        cluster labels for each point
+    labels : ndarray of shape (n_samples,)
+        Cluster labels for each point.
 
     n_iter : int
-        number of iterations run. Returned only if `return_n_iter` is
+        Number of iterations run. Returned only if `return_n_iter` is
         set to True.
 
     Notes
@@ -133,7 +144,17 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                     if return_n_iter
                     else (np.array([0]), np.array([0] * n_samples)))
 
-    random_state = np.random.RandomState(0)
+    if random_state == 'warn':
+        warnings.warn(
+            "'random_state' has been introduced in 0.23. It will be set to "
+            "None starting from 1.0 (renaming of 0.25) which means that "
+            "results will differ at every function call. Set 'random_state' "
+            "to None to silence this warning, or to 0 to keep the behavior of "
+            "versions <0.23.",
+            FutureWarning
+        )
+        random_state = 0
+    random_state = check_random_state(random_state)
 
     # Place preference on the diagonal of S
     S.flat[::(n_samples + 1)] = preference
@@ -144,7 +165,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     tmp = np.zeros((n_samples, n_samples))
 
     # Remove degeneracies
-    S += ((np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) *
+    S += ((np.finfo(S.dtype).eps * S + np.finfo(S.dtype).tiny * 100) *
           random_state.randn(n_samples, n_samples))
 
     # Execute parallel affinity propagation updates
@@ -274,40 +295,30 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
+    random_state : int, RandomState instance or None, default=0
+        Pseudo-random number generator to control the starting state.
+        Use an int for reproducible results across function calls.
+        See the :term:`Glossary <random_state>`.
+
+        .. versionadded:: 0.23
+            this parameter was previously hardcoded as 0.
 
     Attributes
     ----------
     cluster_centers_indices_ : ndarray of shape (n_clusters,)
-        Indices of cluster centers
+        Indices of cluster centers.
 
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Cluster centers (if affinity != ``precomputed``).
 
     labels_ : ndarray of shape (n_samples,)
-        Labels of each point
+        Labels of each point.
 
     affinity_matrix_ : ndarray of shape (n_samples, n_samples)
         Stores the affinity matrix used in ``fit``.
 
     n_iter_ : int
         Number of iterations taken to converge.
-
-    Examples
-    --------
-    >>> from sklearn.cluster import AffinityPropagation
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [4, 2], [4, 4], [4, 0]])
-    >>> clustering = AffinityPropagation().fit(X)
-    >>> clustering
-    AffinityPropagation()
-    >>> clustering.labels_
-    array([0, 0, 0, 1, 1, 1])
-    >>> clustering.predict([[0, 0], [4, 4]])
-    array([0, 1])
-    >>> clustering.cluster_centers_
-    array([[1, 2],
-           [4, 2]])
 
     Notes
     -----
@@ -333,11 +344,28 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
-    """
 
-    def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
+    Examples
+    --------
+    >>> from sklearn.cluster import AffinityPropagation
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> clustering = AffinityPropagation(random_state=5).fit(X)
+    >>> clustering
+    AffinityPropagation(random_state=5)
+    >>> clustering.labels_
+    array([0, 0, 0, 1, 1, 1])
+    >>> clustering.predict([[0, 0], [4, 4]])
+    array([0, 1])
+    >>> clustering.cluster_centers_
+    array([[1, 2],
+           [4, 2]])
+    """
+    @_deprecate_positional_args
+    def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
-                 verbose=False):
+                 verbose=False, random_state='warn'):
 
         self.damping = damping
         self.max_iter = max_iter
@@ -346,18 +374,26 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.verbose = verbose
         self.preference = preference
         self.affinity = affinity
+        self.random_state = random_state
 
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
+
+    def _more_tags(self):
+        return {'pairwise': self.affinity == 'precomputed'}
 
     def fit(self, X, y=None):
         """Fit the clustering from features, or affinity matrix.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features), or \
-            array-like, shape (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
+                array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse feature matrix
             is provided, it will be converted into a sparse ``csr_matrix``.
@@ -374,7 +410,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             accept_sparse = False
         else:
             accept_sparse = 'csr'
-        X = check_array(X, accept_sparse=accept_sparse)
+        X = self._validate_data(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":
@@ -386,9 +422,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
             affinity_propagation(
-                self.affinity_matrix_, self.preference, max_iter=self.max_iter,
+                self.affinity_matrix_, preference=self.preference,
+                max_iter=self.max_iter,
                 convergence_iter=self.convergence_iter, damping=self.damping,
-                copy=self.copy, verbose=self.verbose, return_n_iter=True)
+                copy=self.copy, verbose=self.verbose, return_n_iter=True,
+                random_state=self.random_state)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
@@ -400,23 +438,24 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels.
         """
         check_is_fitted(self)
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
 
         if self.cluster_centers_.shape[0] > 0:
-            return pairwise_distances_argmin(X, self.cluster_centers_)
+            with config_context(assume_finite=True):
+                return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
             warnings.warn("This model does not have any cluster centers "
                           "because affinity propagation did not converge. "
@@ -429,8 +468,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features), or \
-            array-like, shape (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
+                array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse feature matrix
             is provided, it will be converted into a sparse ``csr_matrix``.
@@ -440,7 +479,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels.
         """
         return super().fit_predict(X, y)

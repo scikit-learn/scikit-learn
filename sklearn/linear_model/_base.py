@@ -11,6 +11,7 @@ Generalized Linear Models.
 #         Lars Buitinck
 #         Maryan Morel <maryan.morel@polytechnique.edu>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
+#         Maria Telenczuk <https://github.com/maikia>
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
@@ -20,22 +21,26 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
+from scipy import optimize
 from scipy import sparse
 from scipy.special import expit
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
-from ..utils import check_array, check_X_y
+from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..preprocessing import normalize as f_normalize
+
+from ..utils.fixes import delayed
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -43,6 +48,115 @@ from ..preprocessing import normalize as f_normalize
 SPARSE_INTERCEPT_DECAY = 0.01
 # For sparse data intercept updates are scaled by this decay factor to avoid
 # intercept oscillation.
+
+
+# FIXME in 1.2: parameter 'normalize' should be removed from linear models
+# in cases where now normalize=False. The default value of 'normalize' should
+# be changed to False in linear models where now normalize=True
+def _deprecate_normalize(normalize, default, estimator_name):
+    """ Normalize is to be deprecated from linear models and a use of
+    a pipeline with a StandardScaler is to be recommended instead.
+    Here the appropriate message is selected to be displayed to the user
+    depending on the default normalize value (as it varies between the linear
+    models and normalize value selected by the user).
+
+    Parameters
+    ----------
+    normalize : bool,
+        normalize value passed by the user
+
+    default : bool,
+        default normalize value used by the estimator
+
+    estimator_name : string,
+        name of the linear estimator which calls this function.
+        The name will be used for writing the deprecation warnings
+
+    Returns
+    -------
+    normalize : bool,
+        normalize value which should further be used by the estimator at this
+        stage of the depreciation process
+
+    Notes
+    -----
+    This function should be updated in 1.2 depending on the value of
+    `normalize`:
+    - True, warning: `normalize` was deprecated in 1.2 and will be removed in
+      1.4. Suggest to use pipeline instead.
+    - False, `normalize` was deprecated in 1.2 and it will be removed in 1.4.
+      Leave normalize to its default value.
+    - `deprecated` - this should only be possible with default == False as from
+      1.2 `normalize` in all the linear models should be either removed or the
+      default should be set to False.
+    This function should be completely removed in 1.4.
+    """
+
+    if normalize not in [True, False, 'deprecated']:
+        raise ValueError("Leave 'normalize' to its default value or set it "
+                         "to True or False")
+
+    if normalize == 'deprecated':
+        _normalize = default
+    else:
+        _normalize = normalize
+
+    pipeline_msg = (
+        "If you wish to scale the data, use Pipeline with a StandardScaler "
+        "in a preprocessing stage. To reproduce the previous behavior:\n\n"
+        "from sklearn.pipeline import make_pipeline\n\n"
+        "model = make_pipeline(StandardScaler(with_mean=False), "
+        f"{estimator_name}())\n\n"
+        "If you wish to pass a sample_weight parameter, you need to pass it "
+        "as a fit parameter to each step of the pipeline as follows:\n\n"
+        "kwargs = {s[0] + '__sample_weight': sample_weight for s "
+        "in model.steps}\n"
+        "model.fit(X, y, **kwargs)\n\n"
+    )
+
+    if estimator_name == 'Ridge' or estimator_name == 'RidgeClassifier':
+        alpha_msg = 'Set parameter alpha to: original_alpha * n_samples. '
+    elif 'Lasso' in estimator_name:
+        alpha_msg = (
+            'Set parameter alpha to: original_alpha * np.sqrt(n_samples). '
+        )
+    elif 'ElasticNet' in estimator_name:
+        alpha_msg = (
+            'Set parameter alpha to original_alpha * np.sqrt(n_samples) if '
+            'l1_ratio is 1, and to original_alpha * n_samples if l1_ratio is '
+            '0. For other values of l1_ratio, no analytic formula is '
+            'available.'
+        )
+    elif estimator_name == 'RidgeCV' or estimator_name == 'RidgeClassifierCV':
+        alpha_msg = 'Set parameter alphas to: original_alphas * n_samples. '
+    else:
+        alpha_msg = ""
+
+    if default and normalize == 'deprecated':
+        warnings.warn(
+            "The default of 'normalize' will be set to False in version 1.2 "
+            "and deprecated in version 1.4.\n" +
+            pipeline_msg + alpha_msg,
+            FutureWarning
+        )
+    elif normalize != 'deprecated' and normalize and not default:
+        warnings.warn(
+            "'normalize' was deprecated in version 1.0 and will be "
+            "removed in 1.2.\n" +
+            pipeline_msg + alpha_msg, FutureWarning
+        )
+    elif not normalize and not default:
+        warnings.warn(
+            "'normalize' was deprecated in version 1.0 and will be "
+            "removed in 1.2. "
+            "Please leave the normalize parameter to its default value to "
+            "silence this warning. The default behavior of this estimator "
+            "is to not do any normalization. If normalization is needed "
+            "please use sklearn.preprocessing.StandardScaler instead.",
+            FutureWarning
+        )
+
+    return _normalize
 
 
 def make_dataset(X, y, sample_weight, random_state=None):
@@ -53,10 +167,10 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     Parameters
     ----------
-    X : array_like, shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         Training data
 
-    y : array_like, shape (n_samples, )
+    y : array-like, shape (n_samples, )
         Target values.
 
     sample_weight : numpy array of shape (n_samples,)
@@ -136,33 +250,39 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
     if fit_intercept:
         if sp.issparse(X):
-            X_offset, X_var = mean_variance_axis(X, axis=0)
+            X_offset, X_var = mean_variance_axis(
+                X, axis=0, weights=sample_weight
+            )
             if not return_mean:
                 X_offset[:] = X.dtype.type(0)
-
+        else:
             if normalize:
+                X_offset, X_var, _ = _incremental_mean_and_var(
+                    X, last_mean=0., last_variance=0., last_sample_count=0.,
+                    sample_weight=sample_weight
+                )
+            else:
+                X_offset = np.average(X, axis=0, weights=sample_weight)
 
-                # TODO: f_normalize could be used here as well but the function
-                # inplace_csr_row_normalize_l2 must be changed such that it
-                # can return also the norms computed internally
+            X_offset = X_offset.astype(X.dtype, copy=False)
+            X -= X_offset
 
-                # transform variance to norm in-place
-                X_var *= X.shape[0]
-                X_scale = np.sqrt(X_var, X_var)
-                del X_var
-                X_scale[X_scale == 0] = 1
+        if normalize:
+            X_var = X_var.astype(X.dtype, copy=False)
+            # Detect constant features on the computed variance, before taking
+            # the np.sqrt. Otherwise constant features cannot be detected with
+            # sample_weights.
+            constant_mask = X_var < 10 * np.finfo(X.dtype).eps
+            X_var *= X.shape[0]
+            X_scale = np.sqrt(X_var, out=X_var)
+            X_scale[constant_mask] = 1.
+            if sp.issparse(X):
                 inplace_column_scale(X, 1. / X_scale)
             else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
-
+                X /= X_scale
         else:
-            X_offset = np.average(X, axis=0, weights=sample_weight)
-            X -= X_offset
-            if normalize:
-                X, X_scale = f_normalize(X, axis=0, copy=False,
-                                         return_norm=True)
-            else:
-                X_scale = np.ones(X.shape[1], dtype=X.dtype)
+            X_scale = np.ones(X.shape[1], dtype=X.dtype)
+
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y = y - y_offset
     else:
@@ -214,7 +334,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _decision_function(self, X):
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                reset=False)
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
 
@@ -224,7 +345,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -245,6 +366,9 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         else:
             self.intercept_ = 0.
 
+    def _more_tags(self):
+        return {'requires_y': True}
+
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
 # Maybe the n_features checking can be moved to LinearModel.
@@ -258,12 +382,12 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         Predict confidence scores for samples.
 
-        The confidence score for a sample is the signed distance of that
-        sample to the hyperplane.
+        The confidence score for a sample is proportional to the signed
+        distance of that sample to the hyperplane.
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -275,13 +399,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr')
-
-        n_features = self.coef_.shape[1]
-        if X.shape[1] != n_features:
-            raise ValueError("X has %d features per sample; expecting %d"
-                             % (X.shape[1], n_features))
-
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel() if scores.shape[1] == 1 else scores
@@ -292,7 +410,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -302,7 +420,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = (scores > 0).astype(np.int)
+            indices = (scores > 0).astype(int)
         else:
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
@@ -402,8 +520,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
-        an estimator with ``normalize=False``.
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+           `normalize` was deprecated in version 1.0 and will be
+           removed in 1.2.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -414,6 +536,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive. This
+        option is only supported for dense arrays.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -435,19 +563,20 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     See Also
     --------
-    sklearn.linear_model.Ridge : Ridge regression addresses some of the
+    Ridge : Ridge regression addresses some of the
         problems of Ordinary Least Squares by imposing a penalty on the
         size of the coefficients with l2 regularization.
-    sklearn.linear_model.Lasso : The Lasso is a linear model that estimates
+    Lasso : The Lasso is a linear model that estimates
         sparse coefficients with l1 regularization.
-    sklearn.linear_model.ElasticNet : Elastic-Net is a linear regression
+    ElasticNet : Elastic-Net is a linear regression
         model trained with both l1 and l2 -norm regularization of the
         coefficients.
 
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
+    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
+    (scipy.optimize.nnls) wrapped as a predictor object.
 
     Examples
     --------
@@ -466,13 +595,14 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
-
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, normalize='deprecated',
+                 copy_X=True, n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
+        self.positive = positive
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -497,16 +627,24 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
 
+        _normalize = _deprecate_normalize(
+            self.normalize, default=False,
+            estimator_name=self.__class__.__name__
+        )
+
         n_jobs_ = self.n_jobs
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         y_numeric=True, multi_output=True)
+
+        accept_sparse = False if self.positive else ['csr', 'csc', 'coo']
+
+        X, y = self._validate_data(X, y, accept_sparse=accept_sparse,
+                                   y_numeric=True, multi_output=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
                                                  dtype=X.dtype)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
+            X, y, fit_intercept=self.fit_intercept, normalize=_normalize,
             copy=self.copy_X, sample_weight=sample_weight,
             return_mean=True)
 
@@ -514,7 +652,16 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
-        if sp.issparse(X):
+        if self.positive:
+            if y.ndim < 2:
+                self.coef_, self._residues = optimize.nnls(X, y)
+            else:
+                # scipy.optimize.nnls cannot handle y with shape (M, K)
+                outs = Parallel(n_jobs=n_jobs_)(
+                        delayed(optimize.nnls)(X, y[:, j])
+                        for j in range(y.shape[1]))
+                self.coef_, self._residues = map(np.vstack, zip(*outs))
+        elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
             def matvec(b):
@@ -549,6 +696,61 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         return self
 
 
+def _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale,
+                                   rtol=1e-7,
+                                   atol=1e-5):
+    """Computes a single element of the gram matrix and compares it to
+    the corresponding element of the user supplied gram matrix.
+
+    If the values do not match a ValueError will be thrown.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Data array.
+
+    precompute : array-like of shape (n_features, n_features)
+        User-supplied gram matrix.
+
+    X_offset : ndarray of shape (n_features,)
+        Array of feature means used to center design matrix.
+
+    X_scale : ndarray of shape (n_features,)
+        Array of feature scale factors used to normalize design matrix.
+
+    rtol : float, default=1e-7
+        Relative tolerance; see numpy.allclose.
+
+    atol : float, default=1e-5
+        absolute tolerance; see :func`numpy.allclose`. Note that the default
+        here is more tolerant than the default for
+        :func:`numpy.testing.assert_allclose`, where `atol=0`.
+
+    Raises
+    ------
+    ValueError
+        Raised when the provided Gram matrix is not consistent.
+    """
+
+    n_features = X.shape[1]
+    f1 = n_features // 2
+    f2 = min(f1+1, n_features-1)
+
+    v1 = (X[:, f1] - X_offset[f1]) * X_scale[f1]
+    v2 = (X[:, f2] - X_offset[f2]) * X_scale[f2]
+
+    expected = np.dot(v1, v2)
+    actual = precompute[f1, f2]
+
+    if not np.isclose(expected, actual, rtol=rtol, atol=atol):
+        raise ValueError("Gram matrix passed in via 'precompute' parameter "
+                         "did not pass validation when a single element was "
+                         "checked - please check that it was computed "
+                         f"properly. For element ({f1},{f2}) we computed "
+                         f"{expected} but the user-supplied value was "
+                         f"{actual}.")
+
+
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
              check_input=True, sample_weight=None):
     """Aux function used at beginning of fit in linear models
@@ -574,16 +776,24 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
             check_input=check_input, sample_weight=sample_weight)
     if sample_weight is not None:
         X, y = _rescale_data(X, y, sample_weight=sample_weight)
-    if hasattr(precompute, '__array__') and (
-        fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
-            normalize and not np.allclose(X_scale, np.ones(n_features))):
-        warnings.warn("Gram matrix was provided but X was centered"
-                      " to fit intercept, "
-                      "or X was normalized : recomputing Gram matrix.",
-                      UserWarning)
-        # recompute Gram
-        precompute = 'auto'
-        Xy = None
+
+    # FIXME: 'normalize' to be removed in 1.2
+    if hasattr(precompute, '__array__'):
+        if (fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
+                or normalize and not np.allclose(X_scale, np.ones(n_features)
+                                                 )):
+            warnings.warn(
+                "Gram matrix was provided but X was centered to fit "
+                "intercept, or X was normalized : recomputing Gram matrix.",
+                UserWarning
+            )
+            # recompute Gram
+            precompute = 'auto'
+            Xy = None
+        elif check_input:
+            # If we're going to use the user's precomputed gram matrix, we
+            # do a quick check to make sure its not totally bogus.
+            _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale)
 
     # precompute if n_samples > n_features
     if isinstance(precompute, str) and precompute == 'auto':

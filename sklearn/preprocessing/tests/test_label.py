@@ -12,7 +12,6 @@ from scipy.sparse import lil_matrix
 from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import _to_object_array
 
@@ -23,7 +22,6 @@ from sklearn.preprocessing._label import label_binarize
 
 from sklearn.preprocessing._label import _inverse_binarize_thresholding
 from sklearn.preprocessing._label import _inverse_binarize_multiclass
-from sklearn.preprocessing._label import _encode
 
 from sklearn import datasets
 
@@ -178,7 +176,7 @@ def test_label_binarizer_errors():
     with pytest.raises(ValueError):
         LabelBinarizer().fit(np.array([[1, 3], [2, 1]]))
     with pytest.raises(ValueError):
-        label_binarize(np.array([[1, 3], [2, 1]]), [1, 2, 3])
+        label_binarize(np.array([[1, 3], [2, 1]]), classes=[1, 2, 3])
 
 
 @pytest.mark.parametrize(
@@ -352,15 +350,14 @@ def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
     Y = np.array([[1, 0], [0, 1]])
-    w = 'unknown class(es) [0, 4] will be ignored'
-    matrix = assert_warns_message(UserWarning, w,
-                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
-    assert_array_equal(matrix, Y)
+    warning_message = 'unknown class.* will be ignored'
+    with pytest.warns(UserWarning, match=warning_message):
+        matrix = mlb.fit(y).transform([[4, 1], [2, 0]])
 
     Y = np.array([[1, 0, 0], [0, 1, 0]])
     mlb = MultiLabelBinarizer(classes=[1, 2, 3])
-    matrix = assert_warns_message(UserWarning, w,
-                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
+    with pytest.warns(UserWarning, match=warning_message):
+        matrix = mlb.fit(y).transform([[4, 1], [2, 0]])
     assert_array_equal(matrix, Y)
 
 
@@ -446,15 +443,20 @@ def test_multilabel_binarizer_non_integer_labels():
     for inp, classes in inputs:
         # fit_transform()
         mlb = MultiLabelBinarizer()
+        inp = np.array(inp, dtype=object)
         assert_array_equal(mlb.fit_transform(inp), indicator_mat)
         assert_array_equal(mlb.classes_, classes)
-        assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
+        indicator_mat_inv = np.array(mlb.inverse_transform(indicator_mat),
+                                     dtype=object)
+        assert_array_equal(indicator_mat_inv, inp)
 
         # fit().transform()
         mlb = MultiLabelBinarizer()
         assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
         assert_array_equal(mlb.classes_, classes)
-        assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
+        indicator_mat_inv = np.array(mlb.inverse_transform(indicator_mat),
+                                     dtype=object)
+        assert_array_equal(indicator_mat_inv, inp)
 
     mlb = MultiLabelBinarizer()
     with pytest.raises(TypeError):
@@ -509,13 +511,13 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
     for sparse_output in [True, False]:
         if ((pos_label == 0 or neg_label != 0) and sparse_output):
             with pytest.raises(ValueError):
-                label_binarize(y, classes, neg_label=neg_label,
+                label_binarize(y, classes=classes, neg_label=neg_label,
                                pos_label=pos_label,
                                sparse_output=sparse_output)
             continue
 
         # check label_binarize
-        binarized = label_binarize(y, classes, neg_label=neg_label,
+        binarized = label_binarize(y, classes=classes, neg_label=neg_label,
                                    pos_label=pos_label,
                                    sparse_output=sparse_output)
         assert_array_equal(toarray(binarized), expected)
@@ -531,7 +533,7 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
                                                       output_type=y_type,
                                                       classes=classes,
                                                       threshold=((neg_label +
-                                                                 pos_label) /
+                                                                  pos_label) /
                                                                  2.))
 
         assert_array_equal(toarray(inversed), toarray(y))
@@ -576,7 +578,7 @@ def test_label_binarize_multiclass():
     check_binarized_results(y, classes, pos_label, neg_label, expected)
 
     with pytest.raises(ValueError):
-        label_binarize(y, classes, neg_label=-1, pos_label=pos_label,
+        label_binarize(y, classes=classes, neg_label=-1, pos_label=pos_label,
                        sparse_output=True)
 
 
@@ -595,7 +597,7 @@ def test_label_binarize_multilabel():
                                 expected)
 
     with pytest.raises(ValueError):
-        label_binarize(y, classes, neg_label=-1, pos_label=pos_label,
+        label_binarize(y, classes=classes, neg_label=-1, pos_label=pos_label,
                        sparse_output=True)
 
 
@@ -614,43 +616,3 @@ def test_inverse_binarize_multiclass():
                                                    [0, 0, 0]]),
                                        np.arange(3))
     assert_array_equal(got, np.array([1, 1, 0]))
-
-
-@pytest.mark.parametrize(
-        "values, expected",
-        [(np.array([2, 1, 3, 1, 3], dtype='int64'),
-          np.array([1, 2, 3], dtype='int64')),
-         (np.array(['b', 'a', 'c', 'a', 'c'], dtype=object),
-          np.array(['a', 'b', 'c'], dtype=object)),
-         (np.array(['b', 'a', 'c', 'a', 'c']),
-          np.array(['a', 'b', 'c']))],
-        ids=['int64', 'object', 'str'])
-def test_encode_util(values, expected):
-    uniques = _encode(values)
-    assert_array_equal(uniques, expected)
-    uniques, encoded = _encode(values, encode=True)
-    assert_array_equal(uniques, expected)
-    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
-    _, encoded = _encode(values, uniques, encode=True)
-    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
-
-
-def test_encode_check_unknown():
-    # test for the check_unknown parameter of _encode()
-    uniques = np.array([1, 2, 3])
-    values = np.array([1, 2, 3, 4])
-
-    # Default is True, raise error
-    with pytest.raises(ValueError,
-                       match='y contains previously unseen labels'):
-        _encode(values, uniques, encode=True, check_unknown=True)
-
-    # dont raise error if False
-    _encode(values, uniques, encode=True, check_unknown=False)
-
-    # parameter is ignored for object dtype
-    uniques = np.array(['a', 'b', 'c'], dtype=object)
-    values = np.array(['a', 'b', 'c', 'd'], dtype=object)
-    with pytest.raises(ValueError,
-                       match='y contains previously unseen labels'):
-        _encode(values, uniques, encode=True, check_unknown=False)

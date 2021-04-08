@@ -1,0 +1,20 @@
+name: Pull Request Regex Title Labeler
+on:
+  pull_request_target:
+    types: [opened, edited]
+
+jobs:
+
+  labeler:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - name: Install ghapi
+      run: pip install -Uq ghapi
+    - name: Label pull request
+      run: python .github/scripts/label_title_regex.py
+      env:
+        CONTEXT_GITHUB: ${{ toJson(github) }}

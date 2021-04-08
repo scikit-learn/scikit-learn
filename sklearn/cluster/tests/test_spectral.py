@@ -1,4 +1,5 @@
 """Testing for Spectral Clustering methods"""
+import re
 
 import numpy as np
 from scipy import sparse
@@ -9,7 +10,6 @@ import pickle
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster._spectral import discretize
@@ -131,7 +131,8 @@ def test_affinities():
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
-    assert_warns_message(UserWarning, 'not fully connected', sp.fit, X)
+    with pytest.warns(UserWarning, match='not fully connected'):
+        sp.fit(X)
     assert adjusted_rand_score(y, sp.labels_) == 1
 
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
@@ -177,7 +178,7 @@ def test_discretize(n_samples):
     for n_class in range(2, 10):
         # random class labels
         y_true = random_state.randint(0, n_class + 1, n_samples)
-        y_true = np.array(y_true, np.float)
+        y_true = np.array(y_true, float)
         # noise class assignment matrix
         y_indicator = sparse.coo_matrix((np.ones(n_samples),
                                          (np.arange(n_samples),
@@ -187,7 +188,7 @@ def test_discretize(n_samples):
         y_true_noisy = (y_indicator.toarray()
                         + 0.1 * random_state.randn(n_samples,
                                                    n_class + 1))
-        y_pred = discretize(y_true_noisy, random_state)
+        y_pred = discretize(y_true_noisy, random_state=random_state)
         assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
@@ -195,6 +196,9 @@ def test_discretize(n_samples):
 # https://github.com/scikit-learn/scikit-learn/issues/15913
 @pytest.mark.filterwarnings(
     "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
+# TODO: Remove when pyamg removes the use of np.float
+@pytest.mark.filterwarnings(
+    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*")
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py
@@ -248,3 +252,30 @@ def test_n_components():
     labels_diff_ncomp = SpectralClustering(n_components=2,
                                            random_state=0).fit(X).labels_
     assert not np.array_equal(labels, labels_diff_ncomp)
+
+
+@pytest.mark.parametrize('assign_labels', ('kmeans', 'discretize'))
+def test_verbose(assign_labels, capsys):
+    # Check verbose mode of KMeans for better coverage.
+    X, y = make_blobs(n_samples=20, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+
+    SpectralClustering(n_clusters=2, random_state=42, verbose=1).fit(X)
+
+    captured = capsys.readouterr()
+
+    assert re.search(r"Computing label assignment using", captured.out)
+
+    if assign_labels == "kmeans":
+        assert re.search(r"Initialization complete", captured.out)
+        assert re.search(r"Iteration [0-9]+, inertia", captured.out)
+
+
+# TODO: Remove in 1.1
+@pytest.mark.parametrize("affinity", ["precomputed",
+                                      "precomputed_nearest_neighbors"])
+def test_pairwise_is_deprecated(affinity):
+    sp = SpectralClustering(affinity=affinity)
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        sp._pairwise

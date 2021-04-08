@@ -64,7 +64,7 @@ if __name__ == '__main__':
     alpha = 0.01  # regularization parameter
 
     n_features = 10
-    list_n_samples = np.linspace(100, 1000000, 5).astype(np.int)
+    list_n_samples = np.linspace(100, 1000000, 5).astype(int)
     lasso_results, lars_lasso_results = compute_bench(alpha, list_n_samples,
                                             [n_features], precompute=True)
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     plt.axis('tight')
 
     n_samples = 2000
-    list_n_features = np.linspace(500, 3000, 5).astype(np.int)
+    list_n_features = np.linspace(500, 3000, 5).astype(int)
     lasso_results, lars_lasso_results = compute_bench(alpha, [n_samples],
                                            list_n_features, precompute=False)
     plt.subplot(212)

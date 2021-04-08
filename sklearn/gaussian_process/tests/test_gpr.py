@@ -5,7 +5,9 @@
 # License: BSD 3 clause
 
 import sys
+import re
 import numpy as np
+import warnings
 
 from scipy.optimize import approx_fprime
 
@@ -14,14 +16,14 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
-from sklearn.gaussian_process.kernels import DotProduct
+from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils._testing \
     import (assert_array_less,
-            assert_almost_equal, assert_raise_message,
-            assert_array_almost_equal, assert_array_equal,
-            assert_allclose)
+            assert_almost_equal, assert_array_almost_equal,
+            assert_array_equal, assert_allclose)
 
 
 def f(x):
@@ -402,12 +404,15 @@ def test_gpr_correct_error_message():
     y = np.ones(6)
     kernel = DotProduct()
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
-    assert_raise_message(np.linalg.LinAlgError,
-                         "The kernel, %s, is not returning a "
-                         "positive definite matrix. Try gradually increasing "
-                         "the 'alpha' parameter of your "
-                         "GaussianProcessRegressor estimator."
-                         % kernel, gpr.fit, X, y)
+    message = (
+        "The kernel, %s, is not returning a "
+        "positive definite matrix. Try gradually increasing "
+        "the 'alpha' parameter of your "
+        "GaussianProcessRegressor estimator."
+        % kernel
+    )
+    with pytest.raises(np.linalg.LinAlgError, match=re.escape(message)):
+        gpr.fit(X, y)
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -467,3 +472,77 @@ def test_K_inv_reset(kernel):
     gpr2.predict(X2, return_std=True)
     # the value of K_inv should be independent of the first fit
     assert_array_equal(gpr._K_inv, gpr2._K_inv)
+
+
+def test_warning_bounds():
+    kernel = RBF(length_scale_bounds=[1e-5, 1e-3])
+    gpr = GaussianProcessRegressor(kernel=kernel)
+    warning_message = (
+        "The optimal value found for dimension 0 of parameter "
+        "length_scale is close to the specified upper bound "
+        "0.001. Increasing the bound and calling fit again may "
+        "find a better value."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        gpr.fit(X, y)
+
+    kernel_sum = (WhiteKernel(noise_level_bounds=[1e-5, 1e-3]) +
+                  RBF(length_scale_bounds=[1e3, 1e5]))
+    gpr_sum = GaussianProcessRegressor(kernel=kernel_sum)
+    with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            gpr_sum.fit(X, y)
+
+    assert len(record) == 2
+    assert record[0].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "k1__noise_level is close to the "
+                                         "specified upper bound 0.001. "
+                                         "Increasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    assert record[1].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "k2__length_scale is close to the "
+                                         "specified lower bound 1000.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    X_tile = np.tile(X, 2)
+    kernel_dims = RBF(length_scale=[1., 2.],
+                      length_scale_bounds=[1e1, 1e2])
+    gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
+
+    with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            gpr_dims.fit(X_tile, y)
+
+    assert len(record) == 2
+    assert record[0].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "length_scale is close to the "
+                                         "specified lower bound 10.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    assert record[1].message.args[0] == ("The optimal value found for "
+                                         "dimension 1 of parameter "
+                                         "length_scale is close to the "
+                                         "specified lower bound 10.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
+
+
+def test_bound_check_fixed_hyperparameter():
+    # Regression test for issue #17943
+    # Check that having a hyperparameter with fixed bounds doesn't cause an
+    # error
+    k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
+    k2 = ExpSineSquared(length_scale=1.0, periodicity=1.0,
+                        periodicity_bounds="fixed")  # seasonal component
+    kernel = k1 + k2
+    GaussianProcessRegressor(kernel=kernel).fit(X, y)

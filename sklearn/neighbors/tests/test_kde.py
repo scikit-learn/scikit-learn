@@ -2,13 +2,14 @@ import numpy as np
 
 import pytest
 
-from sklearn.utils._testing import assert_allclose, assert_raises
+from sklearn.utils._testing import assert_allclose
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors._ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.exceptions import NotFittedError
 import joblib
 
 
@@ -73,7 +74,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
     for kernel in ['gaussian', 'tophat']:
         # draw a tophat sample
-        kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
+        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         samp = kde.sample(100)
         assert X.shape == samp.shape
 
@@ -90,8 +91,9 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
     # check unsupported kernels
     for kernel in ['epanechnikov', 'exponential', 'linear', 'cosine']:
-        kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
-        assert_raises(NotImplementedError, kde.sample, 100)
+        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
+        with pytest.raises(NotImplementedError):
+            kde.sample(100)
 
     # non-regression test: used to return a scalar
     X = rng.randn(4, 1)
@@ -110,8 +112,8 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
     Y = rng.randn(10, 2)
 
     if algorithm == 'kd_tree' and metric not in KDTree.valid_metrics:
-        assert_raises(ValueError, KernelDensity,
-                      algorithm=algorithm, metric=metric)
+        with pytest.raises(ValueError):
+            KernelDensity(algorithm=algorithm, metric=metric)
     else:
         kde = KernelDensity(algorithm=algorithm, metric=metric)
         kde.fit(X)
@@ -128,21 +130,23 @@ def test_kde_score(n_samples=100, n_features=3):
 
 
 def test_kde_badargs():
-    assert_raises(ValueError, KernelDensity,
-                  algorithm='blah')
-    assert_raises(ValueError, KernelDensity,
-                  bandwidth=0)
-    assert_raises(ValueError, KernelDensity,
-                  kernel='blah')
-    assert_raises(ValueError, KernelDensity,
-                  metric='blah')
-    assert_raises(ValueError, KernelDensity,
-                  algorithm='kd_tree', metric='blah')
+    with pytest.raises(ValueError):
+        KernelDensity(algorithm='blah')
+    with pytest.raises(ValueError):
+        KernelDensity(bandwidth=0)
+    with pytest.raises(ValueError):
+        KernelDensity(kernel='blah')
+    with pytest.raises(ValueError):
+        KernelDensity(metric='blah')
+    with pytest.raises(ValueError):
+        KernelDensity(algorithm='kd_tree', metric='blah')
     kde = KernelDensity()
-    assert_raises(ValueError, kde.fit, np.random.random((200, 10)),
-                  sample_weight=np.random.random((200, 10)))
-    assert_raises(ValueError, kde.fit, np.random.random((200, 10)),
-                  sample_weight=-np.random.random(200))
+    with pytest.raises(ValueError):
+        kde.fit(np.random.random((200, 10)),
+                sample_weight=np.random.random((200, 10)))
+    with pytest.raises(ValueError):
+        kde.fit(np.random.random((200, 10)),
+                sample_weight=-np.random.random(200))
 
 
 def test_kde_pipeline_gridsearch():
@@ -235,3 +239,15 @@ def test_pickling(tmpdir, sample_weight):
     scores_pickled = kde.score_samples(X)
 
     assert_allclose(scores, scores_pickled)
+
+
+@pytest.mark.parametrize('method', ['score_samples', 'sample'])
+def test_check_is_fitted(method):
+    # Check that predict raises an exception in an unfitted estimator.
+    # Unfitted estimators should raise a NotFittedError.
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    kde = KernelDensity()
+
+    with pytest.raises(NotFittedError):
+        getattr(kde, method)(X)
