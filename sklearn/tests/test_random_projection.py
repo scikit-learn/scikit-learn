@@ -68,9 +68,8 @@ def test_invalid_jl_domain(n_samples, eps):
         johnson_lindenstrauss_min_dim(n_samples, eps=eps)
 
 
-
-@pytest.mark.parametrize("n_samples, eps",[(3 * [100],2 * [0.9]),(3 * [100],2 * [0.9])])
-def test_input_size_jl_min_dim(n_samples,eps):
+@pytest.mark.parametrize("n_samples, eps", [(3 * [100], 2 * [0.9]), (3 * [100], 2 * [0.9])])
+def test_input_size_jl_min_dim(n_samples, eps):
     with pytest.raises(ValueError):
         johnson_lindenstrauss_min_dim(n_samples, eps=eps)
 
@@ -82,15 +81,17 @@ def test_input_size_jl_min_dim(n_samples,eps):
 # tests random matrix generation
 ###############################################################################
 def check_input_size_random_matrix(random_matrix):
-    inputs = [(0,0), (-1,1), (1,-1), (1,0), (-1,0)]
+    inputs = [(0, 0), (-1, 1), (1, -1), (1, 0), (-1, 0)]
     for n_components, n_features in inputs:
         with pytest.raises(ValueError):
             random_matrix(n_components, n_features)
 
+
 def check_size_generated(random_matrix):
-    inputs = [(1,5),(5,1),(5,5),(1,1)]
+    inputs = [(1, 5), (5, 1), (5, 5), (1, 1)]
     for n_components, n_features in inputs:
-        assert random_matrix(n_components, n_features).shape == (n_components, n_features)
+        assert random_matrix(n_components, n_features).shape == (
+            n_components, n_features)
 
 
 def check_zero_mean_and_unit_norm(random_matrix):
@@ -151,9 +152,9 @@ def test_sparse_random_matrix():
         s = 1 / density
 
         A = _sparse_random_matrix(n_components,
-                                 n_features,
-                                 density=density,
-                                 random_state=0)
+                                  n_features,
+                                  density=density,
+                                  random_state=0)
         A = densify(A)
 
         # Check possible values
@@ -195,15 +196,15 @@ def test_sparse_random_matrix():
 # tests on random projection transformer
 ###############################################################################
 
-@pytest.mark.parametrize("density",[1.1,0,-0.1])
+@pytest.mark.parametrize("density", [1.1, 0, -0.1])
 def test_sparse_random_projection_transformer_invalid_density(density):
     for RandomProjection in all_SparseRandomProjection:
         with pytest.raises(ValueError):
             RandomProjection(density=density).fit(data)
 
 
-@pytest.mark.parametrize("n_components, fit_data",[('auto',[[0,1,2]]),(-10,data)])
-def test_random_projection_transformer_invalid_input(n_components,fit_data):
+@pytest.mark.parametrize("n_components, fit_data", [('auto', [[0, 1, 2]]), (-10, data)])
+def test_random_projection_transformer_invalid_input(n_components, fit_data):
     for RandomProjection in all_RandomProjection:
         with pytest.raises(ValueError):
             RandomProjection(n_components=n_components).fit(fit_data)
