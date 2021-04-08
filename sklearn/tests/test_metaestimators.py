@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator
-from sklearn.base import RegressorMixin
 from sklearn.base import is_regressor
 from sklearn.datasets import make_classification
 from sklearn.utils import all_estimators
@@ -168,10 +167,10 @@ def _generate_meta_estimator_instances_with_pipeline():
     "base_estimator" or "estimators".
     """
     for _, Estimator in sorted(all_estimators()):
-        sig = list(signature(Estimator).parameters)
+        sig = set(signature(Estimator).parameters)
 
         if "estimator" in sig or "base_estimator" in sig:
-            if issubclass(Estimator, RegressorMixin):
+            if is_regressor(Estimator):
                 estimator = make_pipeline(TfidfVectorizer(), Ridge())
                 param_grid = {"ridge__alpha": [0.1, 1.0]}
             else:
@@ -188,7 +187,7 @@ def _generate_meta_estimator_instances_with_pipeline():
 
         elif "estimators" in sig:
             # stacking, voting
-            if issubclass(Estimator, RegressorMixin):
+            if is_regressor(Estimator):
                 estimator = [
                     ("est1", make_pipeline(TfidfVectorizer(),
                                            Ridge(alpha=0.1))),
