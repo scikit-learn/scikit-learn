@@ -24,7 +24,7 @@ class Isomap(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_neighbors : int or None, default=5
-        Number of neighbors to consider for each point. Use radis-based
+        Number of neighbors to consider for each point. Use radius-based
         neighbors when set to ``None``.
 
     radius : float or None, default=None
