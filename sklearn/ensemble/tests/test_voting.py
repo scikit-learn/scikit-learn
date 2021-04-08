@@ -3,7 +3,6 @@
 import warnings
 import pytest
 import re
-import pandas as pd
 import numpy as np
 
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
@@ -26,6 +25,8 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
+from sklearn.decomposition import PCA
+from sklearn.pipeline import make_pipeline
 
 
 # Load datasets
@@ -552,19 +553,31 @@ def test_voting_classifier_with_class_weights():
     class_weight = {0: 1.5, 1: 2.0}
     estimators = [
             ('LR', LogisticRegression(class_weight=class_weight)),
-            ('Tree', DecisionTreeClassifier(class_weight=class_weight))
+            ('Tree', DecisionTreeClassifier(class_weight=class_weight)),
             ('RF', RandomForestClassifier(class_weight=class_weight))
         ]
     model = VotingClassifier(estimators)
     model.fit(X, y)
 
     # string labels
-    y = pd.Series(y).map({0: 'N', 1: 'Y'})
+    y_string = np.array(['N', 'Y'], dtype='object')[y]
     class_weight = {'N': 1.5, 'Y': 2.0}
     estimators = [
             ('LR', LogisticRegression(class_weight=class_weight)),
-            ('Tree', DecisionTreeClassifier(class_weight=class_weight))
+            ('Tree', DecisionTreeClassifier(class_weight=class_weight)),
             ('RF', RandomForestClassifier(class_weight=class_weight))
         ]
     model = VotingClassifier(estimators)
-    model.fit(X, y)
+    model.fit(X, y_string)
+
+    # string labels with nested meta-estimators
+    log_reg = LogisticRegression(multi_class='multinomial',
+                                 class_weight=class_weight,
+                                 random_state=1)
+    rf = RandomForestClassifier(n_estimators=50,
+                                class_weight=class_weight,
+                                random_state=1)
+    rf_pipe = make_pipeline(PCA(), rf)
+    eclf1 = VotingClassifier(estimators=[
+            ('lr', log_reg), ('rf', rf_pipe)], voting='hard')
+    eclf1 = eclf1.fit(X, y_string)
