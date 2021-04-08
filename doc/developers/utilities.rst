@@ -127,6 +127,11 @@ Efficient Linear Algebra & Array Operations
 Efficient Random Sampling
 =========================
 
+- :func:`random.sample_erdos_renyi_gnm`: implements sampling of the
+  `G(n,m)`-model of Erdos-Renyi random graphs. The space complexity of
+  the method is asymptotically constant in the number of vertices `n`
+  (`n` must be representable in the `int64` data type).
+
 - :func:`random.sample_without_replacement`: implements efficient algorithms
   for sampling ``n_samples`` integers from a population of size ``n_population``
   without replacement.
@@ -196,7 +201,7 @@ Helper Functions
   to ``n``.  Used in :func:`~sklearn.decomposition.dict_learning` and
   :func:`~sklearn.cluster.k_means`.
 
-- :class:`gen_batches`: generator to create slices containing batch size elements 
+- :class:`gen_batches`: generator to create slices containing batch size elements
   from 0 to ``n``
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected

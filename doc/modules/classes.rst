@@ -1621,6 +1621,7 @@ Plotting
    utils.sparsefuncs.inplace_csr_column_scale
    utils.sparsefuncs_fast.inplace_csr_row_normalize_l1
    utils.sparsefuncs_fast.inplace_csr_row_normalize_l2
+   utils.random.sample_erdos_renyi_gnm
    utils.random.sample_without_replacement
    utils.validation.check_is_fitted
    utils.validation.check_memory
