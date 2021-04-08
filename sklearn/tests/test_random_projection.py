@@ -205,7 +205,9 @@ def test_sparse_random_projection_transformer_invalid_density(density):
             RandomProjection(density=density).fit(data)
 
 
-@pytest.mark.parametrize("n_components, fit_data", [('auto', [[0, 1, 2]]), (-10, data)])
+@pytest.mark.parametrize("n_components, fit_data", [
+    ('auto', [[0, 1, 2]]), (-10, data)]
+)
 def test_random_projection_transformer_invalid_input(n_components, fit_data):
     for RandomProjection in all_RandomProjection:
         with pytest.raises(ValueError):
