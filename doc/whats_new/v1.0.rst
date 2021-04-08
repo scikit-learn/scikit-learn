@@ -105,6 +105,11 @@ Changelog
   of each transformer in `output_indices_`. :pr:`18393` by
   :user:`Luca Bittarello <lbittarello>`.
 
+- |FIX| :meth:`compose.ColumnTransformer.get_feature_names` supports
+  non-string feature names returned by any of its transformers.
+  :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
 :mod:`sklearn.datasets`
 .......................
 
