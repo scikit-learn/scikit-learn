@@ -20,9 +20,9 @@ from sklearn.linear_model import Lasso
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 
-diabetes = datasets.load_diabetes()
-X = diabetes.data[:150]
-y = diabetes.target[:150]
+X, y = datasets.load_diabetes(return_X_y=True)
+X = X[:150]
+y = y[:150]
 
 lasso = Lasso(random_state=0, max_iter=10000)
 alphas = np.logspace(-4, -0.5, 30)

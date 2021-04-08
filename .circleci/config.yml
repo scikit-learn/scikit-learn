@@ -7,14 +7,15 @@ jobs:
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.5
-      - NUMPY_VERSION: 1.11.0
-      - SCIPY_VERSION: 0.17.0
-      - MATPLOTLIB_VERSION: 1.5.1
-      - CYTHON_VERSION: 0.28.5
-      - SCIKIT_IMAGE_VERSION: 0.12.3
+      - PYTHON_VERSION: 3.6
+      - NUMPY_VERSION: 'min'
+      - SCIPY_VERSION: 'min'
+      - MATPLOTLIB_VERSION: 'min'
+      - CYTHON_VERSION: 'min'
+      - SCIKIT_IMAGE_VERSION: 'min'
+      - SPHINX_VERSION: 'min'
+      - PANDAS_VERSION: 'min'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -47,10 +48,15 @@ jobs:
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
-      # TODO: Revert to 3 when wheel issue with conda installation of python 3.7.4
-      - PYTHON_VERSION: 3.7.3
+      - PYTHON_VERSION: 3
+      - NUMPY_VERSION: 'latest'
+      - SCIPY_VERSION: 'latest'
+      - MATPLOTLIB_VERSION: 'latest'
+      - CYTHON_VERSION: 'latest'
+      - SCIKIT_IMAGE_VERSION: 'latest'
+      - SPHINX_VERSION: 'min'
+      - PANDAS_VERSION: 'latest'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -92,21 +98,23 @@ jobs:
           name: dependencies
           command: sudo pip install flake8
       - run:
-          name: flake8
-          command: ./build_tools/circle/flake8_diff.sh
-      - run:
-          name: deprecated_properties_checks
-          command: ./build_tools/circle/check_deprecated_properties.sh
+          name: linting
+          command: ./build_tools/circle/linting.sh
 
   pypy3:
     docker:
-      - image: pypy:3.6-7.1.1
+      - image: condaforge/miniforge3
+    environment:
+      # Avoid the interactive dialog when installing tzdata
+      - DEBIAN_FRONTEND: noninteractive
     steps:
       - restore_cache:
           keys:
             - pypy3-ccache-{{ .Branch }}
             - pypy3-ccache
+      - run: apt-get -yq update && apt-get -yq install git ssh
       - checkout
+      - run: conda init bash && source ~/.bashrc
       - run: ./build_tools/circle/build_test_pypy.sh
       - save_cache:
           key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
@@ -127,7 +135,7 @@ jobs:
       - run: ls -ltrh doc/_build/html/stable
       - deploy:
           command: |
-            if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
+            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
 
@@ -157,6 +165,6 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - pypy3

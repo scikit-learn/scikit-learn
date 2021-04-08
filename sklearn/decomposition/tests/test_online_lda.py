@@ -8,14 +8,13 @@ from scipy.special import psi
 import pytest
 
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
-                                               _dirichlet_expectation_2d)
+from sklearn.decomposition._lda import (_dirichlet_expectation_1d,
+                                        _dirichlet_expectation_2d)
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 
 from sklearn.exceptions import NotFittedError
 from io import StringIO
@@ -25,7 +24,7 @@ def _build_sparse_mtx():
     # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_components = 3
-    block = np.full((3, 3), n_components, dtype=np.int)
+    block = np.full((3, 3), n_components, dtype=int)
     blocks = [block] * n_components
     X = block_diag(*blocks)
     X = csr_matrix(X)
@@ -138,21 +137,6 @@ def test_lda_fit_transform(method):
     assert_array_almost_equal(X_fit, X_trans, 4)
 
 
-def test_lda_partial_fit_dim_mismatch():
-    # test `n_features` mismatch in `partial_fit`
-    rng = np.random.RandomState(0)
-    n_components = rng.randint(3, 6)
-    n_col = rng.randint(6, 10)
-    X_1 = np.random.randint(4, size=(10, n_col))
-    X_2 = np.random.randint(4, size=(10, n_col + 1))
-    lda = LatentDirichletAllocation(n_components=n_components,
-                                    learning_offset=5., total_samples=20,
-                                    random_state=rng)
-    lda.partial_fit(X_1)
-    assert_raises_regexp(ValueError, r"^The provided data has",
-                         lda.partial_fit, X_2)
-
-
 def test_invalid_params():
     # test `_check_params` method
     X = np.ones((5, 10))
@@ -166,7 +150,8 @@ def test_invalid_params():
     )
     for param, model in invalid_models:
         regex = r"^Invalid %r parameter" % param
-        assert_raises_regexp(ValueError, regex, model.fit, X)
+        with pytest.raises(ValueError, match=regex):
+            model.fit(X)
 
 
 def test_lda_negative_input():
@@ -174,7 +159,8 @@ def test_lda_negative_input():
     X = np.full((5, 10), -1.)
     lda = LatentDirichletAllocation()
     regex = r"^Negative values in data passed"
-    assert_raises_regexp(ValueError, regex, lda.fit, X)
+    with pytest.raises(ValueError, match=regex):
+        lda.fit(X)
 
 
 def test_lda_no_component_error():
@@ -183,22 +169,10 @@ def test_lda_no_component_error():
     X = rng.randint(4, size=(20, 10))
     lda = LatentDirichletAllocation()
     regex = ("This LatentDirichletAllocation instance is not fitted yet. "
-             "Call 'fit' with appropriate arguments before using this method.")
-    assert_raises_regexp(NotFittedError, regex, lda.perplexity, X)
-
-
-def test_lda_transform_mismatch():
-    # test `n_features` mismatch in partial_fit and transform
-    rng = np.random.RandomState(0)
-    X = rng.randint(4, size=(20, 10))
-    X_2 = rng.randint(4, size=(10, 8))
-
-    n_components = rng.randint(3, 6)
-    lda = LatentDirichletAllocation(n_components=n_components,
-                                    random_state=rng)
-    lda.partial_fit(X)
-    assert_raises_regexp(ValueError, r"^The provided data has",
-                         lda.partial_fit, X_2)
+             "Call 'fit' with appropriate arguments before using this "
+             "estimator.")
+    with pytest.raises(NotFittedError, match=regex):
+        lda.perplexity(X)
 
 
 @if_safe_multiprocessing_with_blas
@@ -247,13 +221,12 @@ def test_lda_preplexity_mismatch():
     lda.fit(X)
     # invalid samples
     invalid_n_samples = rng.randint(4, size=(n_samples + 1, n_components))
-    assert_raises_regexp(ValueError, r'Number of samples',
-                         lda._perplexity_precomp_distr, X, invalid_n_samples)
+    with pytest.raises(ValueError, match=r'Number of samples'):
+        lda._perplexity_precomp_distr(X, invalid_n_samples)
     # invalid topic number
     invalid_n_components = rng.randint(4, size=(n_samples, n_components + 1))
-    assert_raises_regexp(ValueError, r'Number of topics',
-                         lda._perplexity_precomp_distr, X,
-                         invalid_n_components)
+    with pytest.raises(ValueError, match=r'Number of topics'):
+        lda._perplexity_precomp_distr(X, invalid_n_components)
 
 
 @pytest.mark.parametrize('method', ('online', 'batch'))

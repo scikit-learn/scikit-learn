@@ -8,17 +8,15 @@ from scipy import stats, sparse
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns_message
 from sklearn.utils import safe_mask
 
-from sklearn.datasets.samples_generator import (make_classification,
-                                                make_regression)
+from sklearn.datasets import make_classification, make_regression
 from sklearn.feature_selection import (
     chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
     mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
@@ -48,7 +46,7 @@ def test_f_oneway_ints():
     fint, pint = f_oneway(X, y)
 
     # test that is gives the same result as with float
-    f, p = f_oneway(X.astype(np.float), y)
+    f, p = f_oneway(X.astype(float), y)
     assert_array_almost_equal(f, fint, decimal=4)
     assert_array_almost_equal(p, pint, decimal=4)
 
@@ -104,10 +102,10 @@ def test_f_regression_input_dtype():
     # for any numeric data_type
     rng = np.random.RandomState(0)
     X = rng.rand(10, 20)
-    y = np.arange(10).astype(np.int)
+    y = np.arange(10).astype(int)
 
     F1, pv1 = f_regression(X, y)
-    F2, pv2 = f_regression(X, y.astype(np.float))
+    F2, pv2 = f_regression(X, y.astype(float))
     assert_array_almost_equal(F1, F2, 5)
     assert_array_almost_equal(pv1, pv2, 5)
 
@@ -324,12 +322,14 @@ def test_invalid_percentile():
     X, y = make_regression(n_samples=10, n_features=20,
                            n_informative=2, shuffle=False, random_state=0)
 
-    assert_raises(ValueError, SelectPercentile(percentile=-1).fit, X, y)
-    assert_raises(ValueError, SelectPercentile(percentile=101).fit, X, y)
-    assert_raises(ValueError, GenericUnivariateSelect(mode='percentile',
-                                                      param=-1).fit, X, y)
-    assert_raises(ValueError, GenericUnivariateSelect(mode='percentile',
-                                                      param=101).fit, X, y)
+    with pytest.raises(ValueError):
+        SelectPercentile(percentile=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        SelectPercentile(percentile=101).fit(X, y)
+    with pytest.raises(ValueError):
+        GenericUnivariateSelect(mode='percentile', param=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        GenericUnivariateSelect(mode='percentile', param=101).fit(X, y)
 
 
 def test_select_kbest_regression():
@@ -367,7 +367,7 @@ def test_select_heuristics_regression():
             f_regression, mode=mode, param=0.01).fit(X, y).transform(X)
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
-        assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+        assert_array_equal(support[:5], np.ones((5, ), dtype=bool))
         assert np.sum(support[5:] == 1) < 3
 
 
@@ -462,7 +462,7 @@ def test_select_fwe_regression():
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+    assert_array_equal(support[:5], np.ones((5, ), dtype=bool))
     assert np.sum(support[5:] == 1) < 2
 
 
@@ -552,7 +552,7 @@ def test_nans():
     X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
-    for select in (SelectKBest(f_classif, 2),
+    for select in (SelectKBest(f_classif, k=2),
                    SelectPercentile(f_classif, percentile=67)):
         ignore_warnings(select.fit)(X, y)
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
@@ -564,19 +564,22 @@ def test_score_func_error():
 
     for SelectFeatures in [SelectKBest, SelectPercentile, SelectFwe,
                            SelectFdr, SelectFpr, GenericUnivariateSelect]:
-        assert_raises(TypeError, SelectFeatures(score_func=10).fit, X, y)
+        with pytest.raises(TypeError):
+            SelectFeatures(score_func=10).fit(X, y)
 
 
 def test_invalid_k():
     X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
-    assert_raises(ValueError, SelectKBest(k=-1).fit, X, y)
-    assert_raises(ValueError, SelectKBest(k=4).fit, X, y)
-    assert_raises(ValueError,
-                  GenericUnivariateSelect(mode='k_best', param=-1).fit, X, y)
-    assert_raises(ValueError,
-                  GenericUnivariateSelect(mode='k_best', param=4).fit, X, y)
+    with pytest.raises(ValueError):
+        SelectKBest(k=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        SelectKBest(k=4).fit(X, y)
+    with pytest.raises(ValueError):
+        GenericUnivariateSelect(mode='k_best', param=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        GenericUnivariateSelect(mode='k_best', param=4).fit(X, y)
 
 
 def test_f_classif_constant_feature():

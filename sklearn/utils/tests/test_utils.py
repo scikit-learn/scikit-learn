@@ -1,5 +1,5 @@
-from collections.abc import Iterable
-from itertools import chain, product
+from copy import copy
+from itertools import chain
 import warnings
 import string
 import timeit
@@ -8,26 +8,27 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import (assert_raises,
-                                   assert_array_equal,
-                                   assert_allclose_dense_sparse,
-                                   assert_raises_regex,
-                                   assert_warns_message, assert_no_warnings)
-from sklearn.utils import _array_indexing
+from sklearn.utils._testing import (assert_array_equal,
+                                    assert_allclose_dense_sparse,
+                                    assert_warns_message,
+                                    assert_no_warnings,
+                                    _convert_container)
 from sklearn.utils import check_random_state
-from sklearn.utils import _check_key_type
+from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
+from sklearn.utils import gen_batches
 from sklearn.utils import _get_column_indices
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
-from sklearn.utils import safe_indexing
+from sklearn.utils import _safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils import _to_object_array
+from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 
 # toy array
@@ -48,7 +49,24 @@ def test_make_rng():
     rng_42 = np.random.RandomState(42)
     assert check_random_state(43).randint(100) != rng_42.randint(100)
 
-    assert_raises(ValueError, check_random_state, "some invalid seed")
+    with pytest.raises(ValueError):
+        check_random_state("some invalid seed")
+
+
+def test_gen_batches():
+    # Make sure gen_batches errors on invalid batch_size
+
+    assert_array_equal(
+        list(gen_batches(4, 2)),
+        [slice(0, 2, None), slice(2, 4, None)]
+    )
+    msg_zero = "gen_batches got batch_size=0, must be positive"
+    with pytest.raises(ValueError, match=msg_zero):
+        next(gen_batches(4, 0))
+
+    msg_float = "gen_batches got batch_size=0.5, must be an integer"
+    with pytest.raises(TypeError, match=msg_float):
+        next(gen_batches(4, 0.5))
 
 
 def test_deprecated():
@@ -68,7 +86,7 @@ def test_deprecated():
         assert spam == "spam"     # function must remain usable
 
         assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
     # ... then a class.
@@ -84,7 +102,7 @@ def test_deprecated():
         assert hasattr(ham, "SPAM")
 
         assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
 
@@ -93,10 +111,11 @@ def test_resample():
     assert resample() is None
 
     # Check that invalid arguments yield ValueError
-    assert_raises(ValueError, resample, [0], [0, 1])
-    assert_raises(ValueError, resample, [0, 1], [0, 1],
-                  replace=False, n_samples=3)
-    assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
+    with pytest.raises(ValueError):
+        resample([0], [0, 1])
+    with pytest.raises(ValueError):
+        resample([0, 1], [0, 1], replace=False, n_samples=3)
+
     # Issue:6581, n_samples can be more when replace is True (default).
     assert len(resample([1, 2], n_samples=5)) == 5
 
@@ -195,124 +214,241 @@ def test_column_or_1d():
         if y_type in ["binary", 'multiclass', "continuous"]:
             assert_array_equal(column_or_1d(y), np.ravel(y))
         else:
-            assert_raises(ValueError, column_or_1d, y)
+            with pytest.raises(ValueError):
+                column_or_1d(y)
 
 
 @pytest.mark.parametrize(
-    "key, clazz, is_expected_type",
-    [(0, int, True),
-     ('0', int, False),
-     ([0, 1, 2], int, True),
-     (['0', '1', '2'], int, False),
-     (slice(0, 2), int, True),
-     (np.array([0, 1, 2], dtype=np.int32), int, True),
-     (np.array([0, 1, 2], dtype=np.int64), int, True),
-     (np.array([0, 1, 2], dtype=np.uint8), int, False),
-     ([True, False], bool, True),
-     (np.array([True, False]), bool, True),
-     (np.array([True, False]), int, False),
-     ('col_0', str, True),
-     (['col_0', 'col_1', 'col_2'], str, True),
-     (slice('begin', 'end'), str, True),
-     (np.array(['col_0', 'col_1', 'col_2']), str, True),
-     (np.array(['col_0', 'col_1', 'col_2'], dtype=object), str, True)]
+    "key, dtype",
+    [(0, 'int'),
+     ('0', 'str'),
+     (True, 'bool'),
+     (np.bool_(True), 'bool'),
+     ([0, 1, 2], 'int'),
+     (['0', '1', '2'], 'str'),
+     ((0, 1, 2), 'int'),
+     (('0', '1', '2'), 'str'),
+     (slice(None, None), None),
+     (slice(0, 2), 'int'),
+     (np.array([0, 1, 2], dtype=np.int32), 'int'),
+     (np.array([0, 1, 2], dtype=np.int64), 'int'),
+     (np.array([0, 1, 2], dtype=np.uint8), 'int'),
+     ([True, False], 'bool'),
+     ((True, False), 'bool'),
+     (np.array([True, False]), 'bool'),
+     ('col_0', 'str'),
+     (['col_0', 'col_1', 'col_2'], 'str'),
+     (('col_0', 'col_1', 'col_2'), 'str'),
+     (slice('begin', 'end'), 'str'),
+     (np.array(['col_0', 'col_1', 'col_2']), 'str'),
+     (np.array(['col_0', 'col_1', 'col_2'], dtype=object), 'str')]
 )
-def test_check_key_type(key, clazz, is_expected_type):
-    assert _check_key_type(key, clazz) is is_expected_type
+def test_determine_key_type(key, dtype):
+    assert _determine_key_type(key) == dtype
 
 
-@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
-def test_safe_indexing_axis_0(asarray):
-    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    inds = np.array([1, 2]) if asarray else [1, 2]
-    X_inds = safe_indexing(X, inds)
-    X_arrays = safe_indexing(np.array(X), inds)
-    assert_array_equal(np.array(X_inds), X_arrays)
-    assert_array_equal(np.array(X_inds), np.array(X)[inds])
+def test_determine_key_type_error():
+    with pytest.raises(ValueError, match="No valid specification of the"):
+        _determine_key_type(1.0)
 
 
-@pytest.mark.parametrize("idx", [0, [0, 1]], ids=['scalar', 'list'])
-@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
-def test_safe_indexing_axis_1_sparse(idx, asarray):
-    if isinstance(idx, Iterable) and asarray:
-        idx = np.asarray(idx)
-    X_true = safe_indexing(X_toy, idx, axis=1)
+def test_determine_key_type_slice_error():
+    with pytest.raises(TypeError, match="Only array-like or scalar are"):
+        _determine_key_type(slice(0, 2, 1), accept_slice=False)
 
-    # scipy matrix will always return a 2D array
-    if X_true.ndim == 1:
-        X_true = X_true[:, np.newaxis]
 
-    X_sparse = sp.csc_matrix(X_toy)
-    assert_array_equal(
-        safe_indexing(X_sparse, idx, axis=1).toarray(), X_true
+@pytest.mark.parametrize(
+    "array_type", ["list", "array", "sparse", "dataframe"]
+)
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
+def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
+    indices = [1, 2]
+    if indices_type == 'slice' and isinstance(indices[1], int):
+        indices[1] += 1
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
+    indices = _convert_container(indices, indices_type)
+    subset = _safe_indexing(array, indices, axis=0)
+    assert_allclose_dense_sparse(
+        subset, _convert_container([[4, 5, 6], [7, 8, 9]], array_type)
+    )
+
+
+@pytest.mark.parametrize("array_type", ["list", "array", "series"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
+def test_safe_indexing_1d_container(array_type, indices_type):
+    indices = [1, 2]
+    if indices_type == 'slice' and isinstance(indices[1], int):
+        indices[1] += 1
+    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
+    indices = _convert_container(indices, indices_type)
+    subset = _safe_indexing(array, indices, axis=0)
+    assert_allclose_dense_sparse(
+        subset, _convert_container([2, 3], array_type)
+    )
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
+@pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
+def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
+    # validation of the indices
+    # we make a copy because indices is mutable and shared between tests
+    indices_converted = copy(indices)
+    if indices_type == 'slice' and isinstance(indices[1], int):
+        indices_converted[1] += 1
+
+    columns_name = ['col_0', 'col_1', 'col_2']
+    array = _convert_container(
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+    )
+    indices_converted = _convert_container(indices_converted, indices_type)
+
+    if isinstance(indices[0], str) and array_type != 'dataframe':
+        err_msg = ("Specifying the columns using strings is only supported "
+                   "for pandas DataFrames")
+        with pytest.raises(ValueError, match=err_msg):
+            _safe_indexing(array, indices_converted, axis=1)
+    else:
+        subset = _safe_indexing(array, indices_converted, axis=1)
+        assert_allclose_dense_sparse(
+            subset, _convert_container([[2, 3], [5, 6], [8, 9]], array_type)
+        )
+
+
+@pytest.mark.parametrize("array_read_only", [True, False])
+@pytest.mark.parametrize("indices_read_only", [True, False])
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize("indices_type", ["array", "series"])
+@pytest.mark.parametrize(
+    "axis, expected_array",
+    [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])]
+)
+def test_safe_indexing_2d_read_only_axis_1(array_read_only, indices_read_only,
+                                           array_type, indices_type, axis,
+                                           expected_array):
+    array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    if array_read_only:
+        array.setflags(write=False)
+    array = _convert_container(array, array_type)
+    indices = np.array([1, 2])
+    if indices_read_only:
+        indices.setflags(write=False)
+    indices = _convert_container(indices, indices_type)
+    subset = _safe_indexing(array, indices, axis=axis)
+    assert_allclose_dense_sparse(
+        subset, _convert_container(expected_array, array_type)
+    )
+
+
+@pytest.mark.parametrize("array_type", ["list", "array", "series"])
+@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
+def test_safe_indexing_1d_container_mask(array_type, indices_type):
+    indices = [False] + [True] * 2 + [False] * 6
+    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
+    indices = _convert_container(indices, indices_type)
+    subset = _safe_indexing(array, indices, axis=0)
+    assert_allclose_dense_sparse(
+        subset, _convert_container([2, 3], array_type)
+    )
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
+@pytest.mark.parametrize(
+    "axis, expected_subset",
+    [(0, [[4, 5, 6], [7, 8, 9]]),
+     (1, [[2, 3], [5, 6], [8, 9]])]
+)
+def test_safe_indexing_2d_mask(array_type, indices_type, axis,
+                               expected_subset):
+    columns_name = ['col_0', 'col_1', 'col_2']
+    array = _convert_container(
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+    )
+    indices = [False, True, True]
+    indices = _convert_container(indices, indices_type)
+
+    subset = _safe_indexing(array, indices, axis=axis)
+    assert_allclose_dense_sparse(
+        subset, _convert_container(expected_subset, array_type)
     )
 
 
 @pytest.mark.parametrize(
-    "idx_array, idx_df",
-    [(0, 0),
-     (0, 'col_0'),
-     ([0, 1], [0, 1]),
-     ([0, 1], ['col_0', 'col_1']),
-     ([0, 1], slice(0, 2)),
-     ([1, 2], slice(1, None)),
-     ([0, 1], [True, True, False])],
-    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'slice',
-         'slice-no-stop', 'mask']
+    "array_type, expected_output_type",
+    [("list", "list"), ("array", "array"),
+     ("sparse", "sparse"), ("dataframe", "series")]
 )
-@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
-def test_safe_indexing_axis_1_pandas(idx_array, idx_df, asarray):
+def test_safe_indexing_2d_scalar_axis_0(array_type, expected_output_type):
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
+    indices = 2
+    subset = _safe_indexing(array, indices, axis=0)
+    expected_array = _convert_container([7, 8, 9], expected_output_type)
+    assert_allclose_dense_sparse(subset, expected_array)
+
+
+@pytest.mark.parametrize("array_type", ["list", "array", "series"])
+def test_safe_indexing_1d_scalar(array_type):
+    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
+    indices = 2
+    subset = _safe_indexing(array, indices, axis=0)
+    assert subset == 3
+
+
+@pytest.mark.parametrize(
+    "array_type, expected_output_type",
+    [("array", "array"), ("sparse", "sparse"), ("dataframe", "series")]
+)
+@pytest.mark.parametrize("indices", [2, "col_2"])
+def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type,
+                                        indices):
+    columns_name = ['col_0', 'col_1', 'col_2']
+    array = _convert_container(
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+    )
+
+    if isinstance(indices, str) and array_type != 'dataframe':
+        err_msg = ("Specifying the columns using strings is only supported "
+                   "for pandas DataFrames")
+        with pytest.raises(ValueError, match=err_msg):
+            _safe_indexing(array, indices, axis=1)
+    else:
+        subset = _safe_indexing(array, indices, axis=1)
+        expected_output = [3, 6, 9]
+        if expected_output_type == 'sparse':
+            # sparse matrix are keeping the 2D shape
+            expected_output = [[3], [6], [9]]
+        expected_array = _convert_container(
+            expected_output, expected_output_type
+        )
+        assert_allclose_dense_sparse(subset, expected_array)
+
+
+@pytest.mark.parametrize("array_type", ["list", "array", "sparse"])
+def test_safe_indexing_None_axis_0(array_type):
+    X = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
+    X_subset = _safe_indexing(X, None, axis=0)
+    assert_allclose_dense_sparse(X_subset, X)
+
+
+def test_safe_indexing_pandas_no_matching_cols_error():
     pd = pytest.importorskip('pandas')
-    if asarray and isinstance(idx_array, Iterable):
-        idx_array = np.asarray(idx_array)
-    if (asarray and (not isinstance(idx_df, str) and
-                     isinstance(idx_df, Iterable))):
-        idx_df = np.asarray(idx_df)
-
-    X_true = safe_indexing(X_toy, idx_array, axis=1)
-    X_df = pd.DataFrame(X_toy, columns=['col_{}'.format(i) for i in range(3)])
-    assert_array_equal(
-        safe_indexing(X_df, idx_df, axis=1).values, X_true
-    )
-
-
-def test_safe_indexing_pandas():
-    pd = pytest.importorskip("pandas")
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    X_df = pd.DataFrame(X)
-    inds = np.array([1, 2])
-    X_df_indexed = safe_indexing(X_df, inds)
-    X_indexed = safe_indexing(X_df, inds)
-    assert_array_equal(np.array(X_df_indexed), X_indexed)
-    # fun with read-only data in dataframes
-    # this happens in joblib memmapping
-    X.setflags(write=False)
-    X_df_readonly = pd.DataFrame(X)
-    inds_readonly = inds.copy()
-    inds_readonly.setflags(write=False)
-
-    for this_df, this_inds in product([X_df, X_df_readonly],
-                                      [inds, inds_readonly]):
-        with warnings.catch_warnings(record=True):
-            X_df_indexed = safe_indexing(this_df, this_inds)
-
-        assert_array_equal(np.array(X_df_indexed), X_indexed)
-
-
-@pytest.mark.parametrize(
-    "X, key, err_msg",
-    [(X_toy, 1.0, "No valid specification of the columns."),
-     (X_toy, ['col_0'], "Specifying the columns using strings is only")]
-)
-def test_safe_indexing_axis_1_error(X, key, err_msg):
+    err_msg = "No valid specification of the columns."
+    X = pd.DataFrame(X_toy)
     with pytest.raises(ValueError, match=err_msg):
-        safe_indexing(X, key, axis=1)
+        _safe_indexing(X, [1.0], axis=1)
 
 
 @pytest.mark.parametrize("axis", [None, 3])
 def test_safe_indexing_error_axis(axis):
     with pytest.raises(ValueError, match="'axis' should be either 0"):
-        safe_indexing(X_toy, [0, 1], axis=axis)
+        _safe_indexing(X_toy, [0, 1], axis=axis)
 
 
 @pytest.mark.parametrize("X_constructor", ['array', 'series'])
@@ -328,7 +464,15 @@ def test_safe_indexing_1d_array_error(X_constructor):
 
     err_msg = "'X' should be a 2D NumPy array, 2D sparse matrix or pandas"
     with pytest.raises(ValueError, match=err_msg):
-        safe_indexing(X_constructor, [0, 1], axis=1)
+        _safe_indexing(X_constructor, [0, 1], axis=1)
+
+
+def test_safe_indexing_container_axis_0_unsupported_type():
+    indices = ["col_1", "col_2"]
+    array = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    err_msg = "String indexing is not supported with 'axis=0'"
+    with pytest.raises(ValueError, match=err_msg):
+        _safe_indexing(array, indices, axis=0)
 
 
 @pytest.mark.parametrize(
@@ -345,54 +489,19 @@ def test_get_column_indices_error(key, err_msg):
 
 
 @pytest.mark.parametrize(
-    "idx",
-    [[0, 1],
-     [True, True, False]]
+    "key",
+    [['col1'], ['col2'], ['col1', 'col2'], ['col1', 'col3'], ['col2', 'col3']]
 )
-@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
-def test_safe_indexing_pandas_series(idx, asarray):
-    pd = pytest.importorskip("pandas")
-    idx = np.asarray(idx) if asarray else idx
-    serie = pd.Series(np.arange(3))
-    assert_array_equal(safe_indexing(serie, idx).values, [0, 1])
+def test_get_column_indices_pandas_nonunique_columns_error(key):
+    pd = pytest.importorskip('pandas')
+    toy = np.zeros((1, 5), dtype=int)
+    columns = ['col1', 'col1', 'col2', 'col3', 'col2']
+    X = pd.DataFrame(toy, columns=columns)
 
-
-@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
-def test_safe_indexing_mock_pandas(asarray):
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    X_df = MockDataFrame(X)
-    inds = np.array([1, 2]) if asarray else [1, 2]
-    X_df_indexed = safe_indexing(X_df, inds)
-    X_indexed = safe_indexing(X_df, inds)
-    assert_array_equal(np.array(X_df_indexed), X_indexed)
-
-
-@pytest.mark.parametrize("array_type", ['array', 'sparse', 'dataframe'])
-def test_safe_indexing_mask_axis_1(array_type):
-    # regression test for #14510
-    # check that boolean array-like and boolean array lead to the same indexing
-    # even in NumPy < 1.12
-    if array_type == 'array':
-        array_constructor = np.asarray
-    elif array_type == 'sparse':
-        array_constructor = sp.csr_matrix
-    elif array_type == 'dataframe':
-        pd = pytest.importorskip('pandas')
-        array_constructor = pd.DataFrame
-
-    X = array_constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    mask = [True, False, True]
-    mask_array = np.array(mask)
-    X_masked = safe_indexing(X, mask, axis=1)
-    X_masked_array = safe_indexing(X, mask_array, axis=1)
-    assert_allclose_dense_sparse(X_masked, X_masked_array)
-
-
-def test_array_indexing_array_error():
-    X = np.array([[0, 1], [2, 3]])
-    mask = [True, False]
-    with pytest.raises(ValueError, match="'axis' should be either 0"):
-        _array_indexing(X, mask, axis=3)
+    err_msg = "Selected columns, {}, are not unique in dataframe".format(key)
+    with pytest.raises(ValueError) as exc_info:
+        _get_column_indices(X, key)
+    assert str(exc_info.value) == err_msg
 
 
 def test_shuffle_on_ndim_equals_three():
@@ -447,8 +556,9 @@ def test_gen_even_slices():
 
     # check that passing negative n_chunks raises an error
     slices = gen_even_slices(10, -1)
-    assert_raises_regex(ValueError, "gen_even_slices got n_packs=-1, must be"
-                        " >=1", next, slices)
+    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1,"
+                                         " must be >=1"):
+        next(slices)
 
 
 @pytest.mark.parametrize(
@@ -545,9 +655,9 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
 
 @pytest.mark.parametrize("value, result", [(float("nan"), True),
                                            (np.nan, True),
-                                           (np.float("nan"), True),
-                                           (np.float32("nan"), True),
-                                           (np.float64("nan"), True),
+                                           (float(np.nan), True),
+                                           (np.float32(np.nan), True),
+                                           (np.float64(np.nan), True),
                                            (0, False),
                                            (0., False),
                                            (None, False),
@@ -563,19 +673,6 @@ def dummy_func():
 
 
 def test_deprecation_joblib_api(tmpdir):
-    def check_warning(*args, **kw):
-        return assert_warns_message(
-            DeprecationWarning, "deprecated in version 0.20.1", *args, **kw)
-
-    # Ensure that the joblib API is deprecated in sklearn.util
-    from sklearn.utils import Parallel, Memory, delayed
-    from sklearn.utils import cpu_count, hash, effective_n_jobs
-    check_warning(Memory, str(tmpdir))
-    check_warning(hash, 1)
-    check_warning(Parallel)
-    check_warning(cpu_count)
-    check_warning(effective_n_jobs, 1)
-    check_warning(delayed, dummy_func)
 
     # Only parallel_backend and register_parallel_backend are not deprecated in
     # sklearn.utils
@@ -583,19 +680,16 @@ def test_deprecation_joblib_api(tmpdir):
     assert_no_warnings(parallel_backend, 'loky', None)
     assert_no_warnings(register_parallel_backend, 'failing', None)
 
-    # Ensure that the deprecation have no side effect in sklearn.utils._joblib
-    from sklearn.utils._joblib import Parallel, Memory, delayed
-    from sklearn.utils._joblib import cpu_count, hash, effective_n_jobs
-    from sklearn.utils._joblib import parallel_backend
-    from sklearn.utils._joblib import register_parallel_backend
-    assert_no_warnings(Memory, str(tmpdir))
-    assert_no_warnings(hash, 1)
-    assert_no_warnings(Parallel)
-    assert_no_warnings(cpu_count)
-    assert_no_warnings(effective_n_jobs, 1)
-    assert_no_warnings(delayed, dummy_func)
-    assert_no_warnings(parallel_backend, 'loky', None)
-    assert_no_warnings(register_parallel_backend, 'failing', None)
-
     from sklearn.utils._joblib import joblib
     del joblib.parallel.BACKENDS['failing']
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [[np.array(1), np.array(2)], [[1, 2], [3, 4]]]
+)
+def test_to_object_array(sequence):
+    out = _to_object_array(sequence)
+    assert isinstance(out, np.ndarray)
+    assert out.dtype.kind == 'O'
+    assert out.ndim == 1

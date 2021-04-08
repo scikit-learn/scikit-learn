@@ -1,13 +1,16 @@
+from .base import _get_response
+
 from .. import auc
 from .. import roc_curve
 
 from ...utils import check_matplotlib_support
+from ...utils.validation import _deprecate_positional_args
 
 
 class RocCurveDisplay:
     """ROC Curve visualization.
 
-    It is recommend to use `sklearn.metrics.plot_roc_curve` to create a
+    It is recommend to use :func:`~sklearn.metrics.plot_roc_curve` to create a
     visualizer. All parameters are stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
@@ -16,67 +19,123 @@ class RocCurveDisplay:
     ----------
     fpr : ndarray
         False positive rate.
+
     tpr : ndarray
         True positive rate.
-    roc_auc : float
-        Area under ROC curve.
-    estimator_name : str
-        Name of estimator.
+
+    roc_auc : float, default=None
+        Area under ROC curve. If None, the roc_auc score is not shown.
+
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
     line_ : matplotlib Artist
         ROC Curve.
-    ax_ : matplotlib Axes
-        Axes with ROC Curve
-    figure_ : matplotlib Figure
-        Figure containing the curve
-    """
 
-    def __init__(self, fpr, tpr, roc_auc, estimator_name):
+    ax_ : matplotlib Axes
+        Axes with ROC Curve.
+
+    figure_ : matplotlib Figure
+        Figure containing the curve.
+
+    See Also
+    --------
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    roc_auc_score : Compute the area under the ROC curve.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import numpy as np
+    >>> from sklearn import metrics
+    >>> y = np.array([0, 0, 1, 1])
+    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> roc_auc = metrics.auc(fpr, tpr)
+    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,\
+                                          estimator_name='example estimator')
+    >>> display.plot()  # doctest: +SKIP
+    >>> plt.show()      # doctest: +SKIP
+    """
+    @_deprecate_positional_args
+    def __init__(self, *, fpr, tpr,
+                 roc_auc=None, estimator_name=None, pos_label=None):
+        self.estimator_name = estimator_name
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
-        self.estimator_name = estimator_name
+        self.pos_label = pos_label
 
-    def plot(self, ax=None, name=None, **kwargs):
+    @_deprecate_positional_args
+    def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
 
         Parameters
         ----------
-        ax : Matplotlib Axes or None, default=None
-            Axes object to plot on.
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
 
-        name : str or None, default=None
+        name : str, default=None
             Name of ROC Curve for labeling. If `None`, use the name of the
             estimator.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+            Object that stores computed values.
         """
-        check_matplotlib_support('plot_roc_curve')
+        check_matplotlib_support('RocCurveDisplay.plot')
+
+        name = self.estimator_name if name is None else name
+
+        line_kwargs = {}
+        if self.roc_auc is not None and name is not None:
+            line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
+        elif self.roc_auc is not None:
+            line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
+        elif name is not None:
+            line_kwargs["label"] = name
+
+        line_kwargs.update(**kwargs)
+
         import matplotlib.pyplot as plt
 
         if ax is None:
             fig, ax = plt.subplots()
 
-        name = self.estimator_name if name is None else name
+        self.line_, = ax.plot(self.fpr, self.tpr, **line_kwargs)
+        info_pos_label = (f" (Positive label: {self.pos_label})"
+                          if self.pos_label is not None else "")
 
-        if 'label' not in kwargs:
-            label = "{} (AUC = {:0.2f})".format(name, self.roc_auc)
-            kwargs['label'] = label
-        self.line_ = ax.plot(self.fpr, self.tpr, **kwargs)[0]
-        ax.set_xlabel("False Positive Rate")
-        ax.set_ylabel("True Positive Rate")
-        ax.legend(loc='lower right')
+        xlabel = "False Positive Rate" + info_pos_label
+        ylabel = "True Positive Rate" + info_pos_label
+        ax.set(xlabel=xlabel, ylabel=ylabel)
+
+        if "label" in line_kwargs:
+            ax.legend(loc="lower right")
 
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
 
 
-def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
+@_deprecate_positional_args
+def plot_roc_curve(estimator, X, y, *, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
-                   name=None, ax=None, **kwargs):
+                   name=None, ax=None, pos_label=None, **kwargs):
     """Plot Receiver operating characteristic (ROC) curve.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -86,20 +145,16 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
     Parameters
     ----------
     estimator : estimator instance
-        Trained classifier.
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
 
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like, shape (n_samples, )
+    y : array-like of shape (n_samples,)
         Target values.
 
-    pos_label : int or str, default=None
-        The label of the positive class.
-        When `pos_label=None`, if y_true is in {-1, 1} or {0, 1},
-        `pos_label` is set to 1, otherwise an error will be raised.
-
-    sample_weight : array-like, shape (n_samples, ) or None, default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     drop_intermediate : boolean, default=True
@@ -109,48 +164,67 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     response_method : {'predict_proba', 'decision_function', 'auto'} \
     default='auto'
-        Specifies whether to use `predict_proba` or `decision_function` as the
-        target response. If set to 'auto', `predict_proba` is tried first
-        and if it does not exist `decision_function` is tried next.
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` is tried next.
 
-    name : str or None, default=None
+    name : str, default=None
         Name of ROC Curve for labeling. If `None`, use the name of the
         estimator.
 
     ax : matplotlib axes, default=None
-        axes object to plot on
+        Axes object to plot on. If `None`, a new figure and axes is created.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
-    viz : :class:`sklearn.metrics.plot.RocCurveDisplay`
-        object that stores computed values
+    display : :class:`~sklearn.metrics.RocCurveDisplay`
+        Object that stores computed values.
+
+    See Also
+    --------
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay : ROC Curve visualization.
+    roc_auc_score : Compute the area under the ROC curve.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> from sklearn import datasets, metrics, model_selection, svm
+    >>> X, y = datasets.make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = model_selection.train_test_split(
+    ...     X, y, random_state=0)
+    >>> clf = svm.SVC(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    SVC(random_state=0)
+    >>> metrics.plot_roc_curve(clf, X_test, y_test)  # doctest: +SKIP
+    >>> plt.show()                                   # doctest: +SKIP
     """
-    if response_method not in ("predict_proba", "decision_function", "auto"):
-        raise ValueError("response_method must be 'predict_proba', "
-                         "'decision_function' or 'auto'")
+    check_matplotlib_support('plot_roc_curve')
 
-    if response_method != "auto":
-        prediction_method = getattr(estimator, response_method, None)
-        if prediction_method is None:
-            raise ValueError(
-                "response method {} is not defined".format(response_method))
-    else:
-        predict_proba = getattr(estimator, 'predict_proba', None)
-        decision_function = getattr(estimator, 'decision_function', None)
-        prediction_method = predict_proba or decision_function
+    y_pred, pos_label = _get_response(
+        X, estimator, response_method, pos_label=pos_label)
 
-        if prediction_method is None:
-            raise ValueError('response methods not defined')
-
-    y_pred = prediction_method(X)
-
-    if y_pred.ndim != 1:
-        if y_pred.shape[1] > 2:
-            raise ValueError("Estimator should solve a "
-                             "binary classification problem")
-        y_pred = y_pred[:, 1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
+                            sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
-    viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator.__class__.__name__)
+
+    name = estimator.__class__.__name__ if name is None else name
+
+    viz = RocCurveDisplay(
+        fpr=fpr,
+        tpr=tpr,
+        roc_auc=roc_auc,
+        estimator_name=name,
+        pos_label=pos_label
+    )
+
     return viz.plot(ax=ax, name=name, **kwargs)

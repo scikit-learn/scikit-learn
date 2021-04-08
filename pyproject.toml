@@ -1,0 +1,15 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = [
+    "setuptools",
+    "wheel",
+    "Cython>=0.28.5",
+
+    # use oldest-supported-numpy which provides the oldest numpy version with
+    # wheels on PyPI
+    #
+    # see: https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
+    "oldest-supported-numpy",
+
+    "scipy>=0.19.1",
+]

@@ -29,14 +29,14 @@ from sklearn.tree import DecisionTreeClassifier
 
 print(__doc__)
 
-###############################################################################
+# %%
 # Running ``GridSearchCV`` using multiple evaluation metrics
 # ----------------------------------------------------------
 #
 
 X, y = make_hastie_10_2(n_samples=8000, random_state=42)
 
-# The scorers can be either be one of the predefined metric strings or a scorer
+# The scorers can be either one of the predefined metric strings or a scorer
 # callable, like the one returned by make_scorer
 scoring = {'AUC': 'roc_auc', 'Accuracy': make_scorer(accuracy_score)}
 
@@ -51,7 +51,7 @@ gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
 gs.fit(X, y)
 results = gs.cv_results_
 
-###############################################################################
+# %%
 # Plotting the result
 # -------------------
 

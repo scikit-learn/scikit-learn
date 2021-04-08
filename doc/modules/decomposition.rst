@@ -24,7 +24,7 @@ that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
 PCA centers but does not scale the input data for each feature before
-applying the SVD. The optional parameter parameter ``whiten=True`` makes it
+applying the SVD. The optional parameter ``whiten=True`` makes it
 possible to project the data onto the singular space while scaling each
 component to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example the case
@@ -43,7 +43,7 @@ features, projected on the 2 dimensions that explain most variance:
 The :class:`PCA` object also provides a
 probabilistic interpretation of the PCA that can give a likelihood of
 data based on the amount of variance it explains. As such it implements a
-`score` method that can be used in cross-validation:
+:term:`score` method that can be used in cross-validation:
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_pca_vs_fa_model_selection_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
@@ -288,7 +288,8 @@ Truncated singular value decomposition and latent semantic analysis
 where :math:`k` is a user-specified parameter.
 
 When truncated SVD is applied to term-document matrices
-(as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
+(as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
+:class:`~sklearn.feature_extraction.text.TfidfVectorizer`),
 this transformation is known as
 `latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 (LSA), because it transforms such matrices
@@ -309,7 +310,7 @@ produces a low-rank approximation :math:`X`:
 .. math::
     X \approx X_k = U_k \Sigma_k V_k^\top
 
-After this operation, :math:`U_k \Sigma_k^\top`
+After this operation, :math:`U_k \Sigma_k`
 is the transformed training set with :math:`k` features
 (called ``n_components`` in the API).
 
@@ -327,8 +328,7 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     but the singular values found are the same.
 
 :class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
-in that it works on sample matrices :math:`X` directly
-instead of their covariance matrices.
+in that the matrix :math:`X` does not need to be centered.
 When the columnwise (per-feature) means of :math:`X`
 are subtracted from the feature values,
 truncated SVD on the resulting matrix is equivalent to PCA.
@@ -338,7 +338,7 @@ matrices without the need to densify them,
 as densifying may fill up memory even for medium-sized document collections.
 
 While the :class:`TruncatedSVD` transformer
-works with any (sparse) feature matrix,
+works with any feature matrix,
 using it on tf–idf matrices is recommended over raw frequency counts
 in an LSA/document processing setting.
 In particular, sublinear scaling and inverse document frequency
@@ -622,10 +622,17 @@ of heteroscedastic noise:
     :align: center
     :scale: 75%
 
+Factor Analysis is often followed by a rotation of the factors (with the
+parameter `rotation`), usually to improve interpretability. For example,
+Varimax rotation maximizes the sum of the variances of the squared loadings,
+i.e., it tends to produce sparser factors, which are influenced by only a few
+features each (the "simple structure"). See e.g., the first example below.
 
 .. topic:: Examples:
 
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_varimax_fa.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
+
 
 .. _ICA:
 
@@ -752,9 +759,9 @@ and the regularized objective function is:
     + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
     + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
 
-:class:`NMF` regularizes both W and H. The public function
-:func:`non_negative_factorization` allows a finer control through the
-:attr:`regularization` attribute, and may regularize only W, only H, or both.
+:class:`NMF` regularizes both W and H by default. The :attr:`regularization`
+parameter allows for finer control, with which only W, only H,
+or both can be regularized.
 
 NMF with a beta-divergence
 --------------------------
@@ -865,34 +872,34 @@ The graphical model of LDA is a three-level generative model:
 .. image:: ../images/lda_model_graph.png
    :align: center
 
-Note on notations presented in the graphical model above, which can be found in 
+Note on notations presented in the graphical model above, which can be found in
 Hoffman et al. (2013):
 
   * The corpus is a collection of :math:`D` documents.
   * A document is a sequence of :math:`N` words.
-  * There are :math:`K` topics in the corpus. 
-  * The boxes represent repeated sampling. 
+  * There are :math:`K` topics in the corpus.
+  * The boxes represent repeated sampling.
 
-In the graphical model, each node is a random variable and has a role in the 
-generative process. A shaded node indicates an observed variable and an unshaded 
-node indicates a hidden (latent) variable. In this case, words in the corpus are 
-the only data that we observe. The latent variables determine the random mixture 
-of topics in the corpus and the distribution of words in the documents. 
-The goal of LDA is to use the observed words to infer the hidden topic 
-structure. 
+In the graphical model, each node is a random variable and has a role in the
+generative process. A shaded node indicates an observed variable and an unshaded
+node indicates a hidden (latent) variable. In this case, words in the corpus are
+the only data that we observe. The latent variables determine the random mixture
+of topics in the corpus and the distribution of words in the documents.
+The goal of LDA is to use the observed words to infer the hidden topic
+structure.
 
-When modeling text corpora, the model assumes the following generative process 
-for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K` 
+When modeling text corpora, the model assumes the following generative process
+for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
 corresponding to :attr:`n_components` in the API:
 
-  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim 
-     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words, 
-     i.e. the probability of a word appearing in topic :math:`k`. 
-     :math:`\eta` corresponds to :attr:`topic_word_prior`. 
+  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
+     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
+     i.e. the probability of a word appearing in topic :math:`k`.
+     :math:`\eta` corresponds to :attr:`topic_word_prior`.
 
-  2. For each document :math:`d \in D`, draw the topic proportions 
-     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha` 
-     corresponds to :attr:`doc_topic_prior`. 
+  2. For each document :math:`d \in D`, draw the topic proportions
+     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
+     corresponds to :attr:`doc_topic_prior`.
 
   3. For each word :math:`i` in document :math:`d`:
 
@@ -909,8 +916,8 @@ For parameter estimation, the posterior distribution is:
 
 Since the posterior is intractable, variational Bayesian method
 uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
-to approximate it, and those variational parameters :math:`\lambda`, 
-:math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence 
+to approximate it, and those variational parameters :math:`\lambda`,
+:math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence
 Lower Bound (ELBO):
 
 .. math::
@@ -921,10 +928,10 @@ Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
-:class:`LatentDirichletAllocation` implements the online variational Bayes 
+:class:`LatentDirichletAllocation` implements the online variational Bayes
 algorithm and supports both online and batch update methods.
-While the batch method updates variational variables after each full pass through 
-the data, the online method updates variational variables from mini-batch data 
+While the batch method updates variational variables after each full pass through
+the data, the online method updates variational variables from mini-batch data
 points.
 
 .. note::
@@ -959,6 +966,9 @@ when data can be fetched sequentially.
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
 
+    * `"The varimax criterion for analytic rotation in factor analysis"
+      <https://link.springer.com/article/10.1007%2FBF02289233>`_
+      H. F. Kaiser, 1958
 
 See also :ref:`nca_dim_reduction` for dimensionality reduction with
 Neighborhood Components Analysis.

@@ -215,7 +215,7 @@ cdef np.ndarray dijkstra(dist_matrix,
                                       graph, &heap, nodes)
     else:
         #use the csr -> csc sparse matrix conversion to quickly get
-        # both directions of neigbors
+        # both directions of neighbors
         dist_matrix_T = dist_matrix.T.tocsr()
 
         distances2 = np.asarray(dist_matrix_T.data,

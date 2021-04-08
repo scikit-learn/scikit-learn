@@ -77,8 +77,8 @@ Loading an example dataset
 `scikit-learn` comes with a few standard datasets, for instance the
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
-datasets for classification and the `boston house prices dataset
-<https://archive.ics.uci.edu/ml/machine-learning-databases/housing/>`_ for regression.
+datasets for classification and the `diabetes dataset
+<https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html>`_ for regression.
 
 In the following, we start a Python interpreter from our shell and then
 load the ``iris`` and ``digits`` datasets.  Our notational convention is that
@@ -203,53 +203,6 @@ resolution. Do you agree with the classifier?
 A complete example of this classification problem is available as an
 example that you can run and study:
 :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`.
-
-
-Model persistence
------------------
-
-It is possible to save a model in scikit-learn by using Python's built-in
-persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
-
-  >>> from sklearn import svm
-  >>> from sklearn import datasets
-  >>> clf = svm.SVC()
-  >>> iris = datasets.load_iris()
-  >>> X, y = iris.data, iris.target
-  >>> clf.fit(X, y)
-  SVC()
-
-  >>> import pickle
-  >>> s = pickle.dumps(clf)
-  >>> clf2 = pickle.loads(s)
-  >>> clf2.predict(X[0:1])
-  array([0])
-  >>> y[0]
-  0
-
-In the specific case of scikit-learn, it may be more interesting to use
-joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
-which is more efficient on big data but it can only pickle to the disk
-and not to a string::
-
-  >>> from joblib import dump, load
-  >>> dump(clf, 'filename.joblib') # doctest: +SKIP
-
-Later, you can reload the pickled model (possibly in another Python process)
-with::
-
-  >>> clf = load('filename.joblib') # doctest:+SKIP
-
-.. note::
-
-    ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
-    instead of filenames. More information on data persistence with Joblib is
-    available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
-
-Note that pickle has some security and maintainability issues. Please refer to
-section :ref:`model_persistence` for more detailed information about model
-persistence with scikit-learn.
-
 
 Conventions
 -----------

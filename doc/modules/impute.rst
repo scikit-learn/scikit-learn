@@ -105,9 +105,12 @@ imputation round are returned.
 
 .. note::
 
-   This estimator is still **experimental** for now: the predictions
-   and the API might change without any deprecation cycle. To use it,
-   you need to explicitly import ``enable_iterative_imputer``.
+   This estimator is still **experimental** for now: default parameters or
+   details of behaviour might change without any deprecation cycle. Resolving
+   the following issues would help stabilize :class:`IterativeImputer`:
+   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
+   and use of random state (:issue:`15611`). To use it, you need to explicitly
+   import ``enable_iterative_imputer``.
 
 ::
 
@@ -137,7 +140,7 @@ out to be a particular instance of different sequential imputation algorithms
 that can all be implemented with :class:`IterativeImputer` by passing in
 different regressors to be used for predicting missing feature values. In the
 case of missForest, this regressor is a Random Forest.
-See :ref:`sphx_glr_auto_examples_plot_iterative_imputer_variants_comparison.py`.
+See :ref:`sphx_glr_auto_examples_impute_plot_iterative_imputer_variants_comparison.py`.
 
 
 .. _multiple_imputation:
@@ -179,6 +182,47 @@ References
 
 .. [2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis
    with Missing Data". John Wiley & Sons, Inc., New York, NY, USA.
+
+.. _knnimpute:
+
+Nearest neighbors imputation
+============================
+
+The :class:`KNNImputer` class provides imputation for filling in missing values
+using the k-Nearest Neighbors approach. By default, a euclidean distance metric
+that supports missing values, :func:`~sklearn.metrics.nan_euclidean_distances`,
+is used to find the nearest neighbors. Each missing feature is imputed using
+values from ``n_neighbors`` nearest neighbors that have a value for the
+feature. The feature of the neighbors are averaged uniformly or weighted by
+distance to each neighbor. If a sample has more than one feature missing, then
+the neighbors for that sample can be different depending on the particular
+feature being imputed. When the number of available neighbors is less than
+`n_neighbors` and there are no defined distances to the training set, the
+training set average for that feature is used during imputation. If there is at
+least one neighbor with a defined distance, the weighted or unweighted average
+of the remaining neighbors will be used during imputation. If a feature is
+always missing in training, it is removed during `transform`. For more
+information on the methodology, see ref. [OL2001]_.
+
+The following snippet demonstrates how to replace missing values,
+encoded as ``np.nan``, using the mean feature value of the two nearest
+neighbors of samples with missing values::
+
+    >>> import numpy as np
+    >>> from sklearn.impute import KNNImputer
+    >>> nan = np.nan
+    >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
+    >>> imputer.fit_transform(X)
+    array([[1. , 2. , 4. ],
+           [3. , 4. , 3. ],
+           [5.5, 6. , 5. ],
+           [8. , 8. , 7. ]])
+
+.. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
+    Missing value estimation methods for DNA microarrays, BIOINFORMATICS
+    Vol. 17 no. 6, 2001 Pages 520-525.
 
 .. _missing_indicator:
 
@@ -241,14 +285,14 @@ some missing values to it.
   >>> from sklearn.pipeline import FeatureUnion, make_pipeline
   >>> from sklearn.tree import DecisionTreeClassifier
   >>> X, y = load_iris(return_X_y=True)
-  >>> mask = np.random.randint(0, 2, size=X.shape).astype(np.bool)
+  >>> mask = np.random.randint(0, 2, size=X.shape).astype(bool)
   >>> X[mask] = np.nan
   >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
   ...                                                random_state=0)
 
 Now we create a :class:`FeatureUnion`. All features will be imputed using
 :class:`SimpleImputer`, in order to enable classifiers to work with this data.
-Additionally, it adds the the indicator variables from
+Additionally, it adds the indicator variables from
 :class:`MissingIndicator`.
 
   >>> transformer = FeatureUnion(
@@ -269,4 +313,3 @@ wrap this in a :class:`Pipeline` with a classifier (e.g., a
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
-

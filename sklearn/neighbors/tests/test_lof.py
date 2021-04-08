@@ -6,17 +6,15 @@ from math import sqrt
 
 import numpy as np
 from sklearn import neighbors
-
+import re
+import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_outlier_corruption
 
@@ -124,9 +122,9 @@ def test_n_neighbors_attribute():
     assert clf.n_neighbors_ == X.shape[0] - 1
 
     clf = neighbors.LocalOutlierFactor(n_neighbors=500)
-    assert_warns_message(UserWarning,
-                         "n_neighbors will be set to (n_samples - 1)",
-                         clf.fit, X)
+    msg = "n_neighbors will be set to (n_samples - 1)"
+    with pytest.warns(UserWarning, match=re.escape(msg)):
+        clf.fit(X)
     assert clf.n_neighbors_ == X.shape[0] - 1
 
 
@@ -148,7 +146,8 @@ def test_score_samples():
 def test_contamination():
     X = [[1, 1], [1, 0]]
     clf = neighbors.LocalOutlierFactor(contamination=0.6)
-    assert_raises(ValueError, clf.fit, X)
+    with pytest.raises(ValueError):
+        clf.fit(X)
 
 
 def test_novelty_errors():
@@ -160,12 +159,14 @@ def test_novelty_errors():
     # predict, decision_function and score_samples raise ValueError
     for method in ['predict', 'decision_function', 'score_samples']:
         msg = ('{} is not available when novelty=False'.format(method))
-        assert_raises_regex(AttributeError, msg, getattr, clf, method)
+        with pytest.raises(AttributeError, match=msg):
+            getattr(clf, method)
 
     # check errors for novelty=True
     clf = neighbors.LocalOutlierFactor(novelty=True)
     msg = 'fit_predict is not available when novelty=True'
-    assert_raises_regex(AttributeError, msg, getattr, clf, 'fit_predict')
+    with pytest.raises(AttributeError, match=msg):
+        getattr(clf, 'fit_predict')
 
 
 def test_novelty_training_scores():
@@ -214,12 +215,12 @@ def test_novelty_true_common_tests():
     check_estimator(neighbors.LocalOutlierFactor(novelty=True))
 
 
-def test_predicted_outlier_number():
+@pytest.mark.parametrize('expected_outliers', [30, 53])
+def test_predicted_outlier_number(expected_outliers):
     # the number of predicted outliers should be equal to the number of
     # expected outliers unless there are ties in the abnormality scores.
     X = iris.data
     n_samples = X.shape[0]
-    expected_outliers = 30
     contamination = float(expected_outliers)/n_samples
 
     clf = neighbors.LocalOutlierFactor(contamination=contamination)

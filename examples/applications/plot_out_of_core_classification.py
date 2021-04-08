@@ -11,16 +11,6 @@ that the features space remains the same over time we leverage a
 HashingVectorizer that will project each example into the same feature space.
 This is especially useful in the case of text classification where new
 features (words) may appear in each batch.
-
-The dataset used in this example is Reuters-21578 as provided by the UCI ML
-repository. It will be automatically downloaded and uncompressed on first run.
-
-The plot represents the learning curve of the classifier: the evolution
-of classification accuracy over the course of the mini-batches. Accuracy is
-measured on the first 1000 samples, held out as a validation set.
-
-To limit the memory consumption, we queue examples up to a fixed amount before
-feeding them to the learner.
 """
 
 # Authors: Eustache Diemert <eustache@diemert.fr>
@@ -53,10 +43,14 @@ def _not_in_sphinx():
     # Hack to detect whether we are running by the sphinx builder
     return '__file__' in globals()
 
-###############################################################################
+# %%
 # Reuters Dataset related routines
 # --------------------------------
 #
+# The dataset used in this example is Reuters-21578 as provided by the UCI ML
+# repository. It will be automatically downloaded and uncompressed on first
+# run.
+
 
 
 class ReutersParser(HTMLParser):
@@ -184,7 +178,7 @@ def stream_reuters_documents(data_path=None):
             yield doc
 
 
-###############################################################################
+# %%
 # Main
 # ----
 #
@@ -210,7 +204,7 @@ partial_fit_classifiers = {
     'SGD': SGDClassifier(max_iter=5),
     'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(tol=1e-3),
+    'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
 
@@ -317,9 +311,16 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
         print('\n')
 
 
-###############################################################################
+# %%
 # Plot results
 # ------------
+#
+# The plot represents the learning curve of the classifier: the evolution
+# of classification accuracy over the course of the mini-batches. Accuracy is
+# measured on the first 1000 samples, held out as a validation set.
+#
+# To limit the memory consumption, we queue examples up to a fixed amount
+# before feeding them to the learner.
 
 
 def plot_accuracy(x, y, x_legend):

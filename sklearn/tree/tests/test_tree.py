@@ -3,32 +3,36 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
-from functools import partial
 from itertools import product
 import struct
 
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
+
+from sklearn.dummy import DummyRegressor
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_poisson_deviance
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import TempMemmap
+from sklearn.model_selection import train_test_split
 
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import create_memmap_backed_data
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import skip_if_32bit
+
+from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
 
 from sklearn.exceptions import NotFittedError
@@ -39,27 +43,23 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
-from sklearn.tree._tree import TREE_LEAF
-from sklearn.tree.tree import CRITERIA_CLF
-from sklearn.tree.tree import CRITERIA_REG
+from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
+from sklearn.tree._classes import CRITERIA_CLF
+from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("mse", "mae", "friedman_mse")
+REG_CRITERIONS = ("squared_error", "mae", "friedman_mse", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
-    "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
-                                              presort=True),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
-    "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
-                                             presort=True),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
@@ -115,12 +115,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+diabetes = datasets.load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 digits = datasets.load_digits()
 perm = rng.permutation(digits.target.size)
@@ -135,13 +135,13 @@ X_multilabel, y_multilabel = datasets.make_multilabel_classification(
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
 y_random = random_state.randint(0, 4, size=(20, ))
-X_sparse_mix = sparse_random_matrix(20, 10, density=0.25,
-                                    random_state=0).toarray()
+X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25,
+                                     random_state=0).toarray()
 
 
 DATASETS = {
     "iris": {"X": iris.data, "y": iris.target},
-    "boston": {"X": boston.data, "y": boston.target},
+    "diabetes": {"X": diabetes.data, "y": diabetes.target},
     "digits": {"X": digits.data, "y": digits.target},
     "toy": {"X": X, "y": y},
     "clf_small": {"X": X_small, "y": y_small},
@@ -214,18 +214,27 @@ def test_weighted_classification_toy():
                            "Failed with {0}".format(name))
 
 
-def test_regression_toy():
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+def test_regression_toy(Tree, criterion):
     # Check regression on a toy dataset.
-    for name, Tree in REG_TREES.items():
-        reg = Tree(random_state=1)
-        reg.fit(X, y)
-        assert_almost_equal(reg.predict(T), true_result,
-                            err_msg="Failed with {0}".format(name))
+    if criterion == "poisson":
+        # make target positive while not touching the original y and
+        # true_result
+        a = np.abs(np.min(y)) + 1
+        y_train = np.array(y) + a
+        y_test = np.array(true_result) + a
+    else:
+        y_train = y
+        y_test = true_result
 
-        clf = Tree(max_features=1, random_state=1)
-        clf.fit(X, y)
-        assert_almost_equal(reg.predict(T), true_result,
-                            err_msg="Failed with {0}".format(name))
+    reg = Tree(criterion=criterion, random_state=1)
+    reg.fit(X, y_train)
+    assert_allclose(reg.predict(T), y_test)
+
+    clf = Tree(criterion=criterion, max_features=1, random_state=1)
+    clf.fit(X, y_train)
+    assert_allclose(reg.predict(T), y_test)
 
 
 def test_xor():
@@ -267,25 +276,39 @@ def test_iris():
             "".format(name, criterion, score))
 
 
-def test_boston():
-    # Check consistency on dataset boston house prices.
+@pytest.mark.parametrize("name, Tree", REG_TREES.items())
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+def test_diabetes_overfit(name, Tree, criterion):
+    # check consistency of overfitted trees on the diabetes dataset
+    # since the trees will overfit, we expect an MSE of 0
+    reg = Tree(criterion=criterion, random_state=0)
+    reg.fit(diabetes.data, diabetes.target)
+    score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
+    assert score == pytest.approx(0), (
+        f"Failed with {name}, criterion = {criterion} and score = {score}"
+    )
 
-    for (name, Tree), criterion in product(REG_TREES.items(), REG_CRITERIONS):
-        reg = Tree(criterion=criterion, random_state=0)
-        reg.fit(boston.data, boston.target)
-        score = mean_squared_error(boston.target, reg.predict(boston.data))
-        assert score < 1, (
-            "Failed with {0}, criterion = {1} and score = {2}"
-            "".format(name, criterion, score))
 
-        # using fewer features reduces the learning ability of this tree,
-        # but reduces training time.
-        reg = Tree(criterion=criterion, max_features=6, random_state=0)
-        reg.fit(boston.data, boston.target)
-        score = mean_squared_error(boston.target, reg.predict(boston.data))
-        assert score < 2, (
-            "Failed with {0}, criterion = {1} and score = {2}"
-            "".format(name, criterion, score))
+@skip_if_32bit
+@pytest.mark.parametrize("name, Tree", REG_TREES.items())
+@pytest.mark.parametrize(
+    "criterion, max_depth, metric, max_loss",
+    [("squared_error", 15, mean_squared_error, 60),
+     ("mae", 20, mean_squared_error, 60),
+     ("friedman_mse", 15, mean_squared_error, 60),
+     ("poisson", 15, mean_poisson_deviance, 30)]
+)
+def test_diabetes_underfit(name, Tree, criterion, max_depth, metric, max_loss):
+    # check consistency of trees when the depth and the number of features are
+    # limited
+
+    reg = Tree(
+        criterion=criterion, max_depth=max_depth,
+        max_features=6, random_state=0
+    )
+    reg.fit(diabetes.data, diabetes.target)
+    loss = metric(diabetes.target, reg.predict(diabetes.data))
+    assert 0 < loss < max_loss
 
 
 def test_probability():
@@ -393,11 +416,12 @@ def test_importances():
 def test_importances_raises():
     # Check if variable importance before fit raises ValueError.
     clf = DecisionTreeClassifier()
-    assert_raises(ValueError, getattr, clf, 'feature_importances_')
+    with pytest.raises(ValueError):
+        getattr(clf, 'feature_importances_')
 
 
-def test_importances_gini_equal_mse():
-    # Check that gini is equivalent to mse for binary output variable
+def test_importances_gini_equal_squared_error():
+    # Check that gini is equivalent to squared_error for binary output variable
 
     X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
@@ -412,7 +436,7 @@ def test_importances_gini_equal_mse():
     # high tree depth, we restrict this maximal depth.
     clf = DecisionTreeClassifier(criterion="gini", max_depth=5,
                                  random_state=0).fit(X, y)
-    reg = DecisionTreeRegressor(criterion="mse", max_depth=5,
+    reg = DecisionTreeRegressor(criterion="squared_error", max_depth=5,
                                 random_state=0).fit(X, y)
 
     assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
@@ -426,8 +450,8 @@ def test_max_features():
     # Check max_features.
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(max_features="auto")
-        reg.fit(boston.data, boston.target)
-        assert reg.max_features_ == boston.data.shape[1]
+        reg.fit(diabetes.data, diabetes.target)
+        assert reg.max_features_ == diabetes.data.shape[1]
 
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(max_features="auto")
@@ -438,12 +462,12 @@ def test_max_features():
         est = TreeEstimator(max_features="sqrt")
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(np.sqrt(iris.data.shape[1])))
+                int(np.sqrt(iris.data.shape[1])))
 
         est = TreeEstimator(max_features="log2")
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(np.log2(iris.data.shape[1])))
+                int(np.log2(iris.data.shape[1])))
 
         est = TreeEstimator(max_features=1)
         est.fit(iris.data, iris.target)
@@ -460,7 +484,7 @@ def test_max_features():
         est = TreeEstimator(max_features=0.5)
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(0.5 * iris.data.shape[1]))
+                int(0.5 * iris.data.shape[1]))
 
         est = TreeEstimator(max_features=1.0)
         est.fit(iris.data, iris.target)
@@ -472,19 +496,24 @@ def test_max_features():
 
         # use values of max_features that are invalid
         est = TreeEstimator(max_features=10)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
         est = TreeEstimator(max_features=-1)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
         est = TreeEstimator(max_features=0.0)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
         est = TreeEstimator(max_features=1.5)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
         est = TreeEstimator(max_features="foobar")
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
 
 def test_error():
@@ -492,44 +521,51 @@ def test_error():
     for name, TreeEstimator in CLF_TREES.items():
         # predict before fit
         est = TreeEstimator()
-        assert_raises(NotFittedError, est.predict_proba, X)
+        with pytest.raises(NotFittedError):
+            est.predict_proba(X)
 
         est.fit(X, y)
         X2 = [[-2, -1, 1]]  # wrong feature shape for sample
-        assert_raises(ValueError, est.predict_proba, X2)
+        with pytest.raises(ValueError):
+            est.predict_proba(X2)
 
     for name, TreeEstimator in ALL_TREES.items():
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=3.).fit, X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_weight_fraction_leaf=-1).fit,
-                      X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_weight_fraction_leaf=0.51).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=-1).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=0.0).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=1.1).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=2.5).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_leaf=-1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_leaf=.6).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_leaf=0.).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_leaf=3.).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_weight_fraction_leaf=-1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_weight_fraction_leaf=0.51).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_split=-1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_split=0.0).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_split=1.1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_split=2.5).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(max_depth=-1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(max_features=42).fit(X, y)
         # min_impurity_split warning
-        with ignore_warnings(category=DeprecationWarning):
-            assert_raises(ValueError,
-                          TreeEstimator(min_impurity_split=-1.0).fit, X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_impurity_decrease=-1.0).fit, X, y)
+        with ignore_warnings(category=FutureWarning):
+            with pytest.raises(ValueError):
+                TreeEstimator(min_impurity_split=-1.0).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_impurity_decrease=-1.0).fit(X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
         y2 = y[:-1]
-        assert_raises(ValueError, est.fit, X, y2)
+        with pytest.raises(ValueError):
+            est.fit(X, y2)
 
         # Test with arrays that are non-contiguous.
         Xf = np.asfortranarray(X)
@@ -539,29 +575,43 @@ def test_error():
 
         # predict before fitting
         est = TreeEstimator()
-        assert_raises(NotFittedError, est.predict, T)
+        with pytest.raises(NotFittedError):
+            est.predict(T)
 
         # predict on vector with different dims
         est.fit(X, y)
         t = np.asarray(T)
-        assert_raises(ValueError, est.predict, t[:, 1:])
+        with pytest.raises(ValueError):
+            est.predict(t[:, 1:])
 
         # wrong sample shape
         Xt = np.array(X).T
 
         est = TreeEstimator()
         est.fit(np.dot(X, Xt), y)
-        assert_raises(ValueError, est.predict, X)
-        assert_raises(ValueError, est.apply, X)
+        with pytest.raises(ValueError):
+            est.predict(X)
+        with pytest.raises(ValueError):
+            est.apply(X)
 
         clf = TreeEstimator()
         clf.fit(X, y)
-        assert_raises(ValueError, clf.predict, Xt)
-        assert_raises(ValueError, clf.apply, Xt)
+        with pytest.raises(ValueError):
+            clf.predict(Xt)
+        with pytest.raises(ValueError):
+            clf.apply(Xt)
 
         # apply before fitting
         est = TreeEstimator()
-        assert_raises(NotFittedError, est.apply, T)
+        with pytest.raises(NotFittedError):
+            est.apply(T)
+
+    # non positive target for Poisson splitting Criterion
+    est = DecisionTreeRegressor(criterion="poisson")
+    with pytest.raises(ValueError, match="y is not positive.*Poisson"):
+        est.fit([[0, 1, 2]], [0, 0, 0])
+    with pytest.raises(ValueError, match="Some.*y are negative.*Poisson"):
+        est.fit([[0, 1, 2]], [5, -0.1, 2])
 
 
 def test_min_samples_split():
@@ -701,8 +751,8 @@ def test_min_weight_fraction_leaf_on_sparse_input(name):
 
 def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                                                          sparse=False):
-    """Test the interaction between min_weight_fraction_leaf and min_samples_leaf
-    when sample_weights is not provided in fit."""
+    """Test the interaction between min_weight_fraction_leaf and
+    min_samples_leaf when sample_weights is not provided in fit."""
     if sparse:
         X = DATASETS[datasets]["X_sparse"].astype(np.float32)
     else:
@@ -790,10 +840,10 @@ def test_min_impurity_split():
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
         assert est.min_impurity_split is None, (
-            "Failed, min_impurity_split = {0} > 1e-7".format(
+            "Failed, min_impurity_split = {0} != None".format(
                 est.min_impurity_split))
         try:
-            assert_warns(DeprecationWarning, est.fit, X, y)
+            assert_warns(FutureWarning, est.fit, X, y)
         except AssertionError:
             pass
         for node in range(est.tree_.node_count):
@@ -809,7 +859,7 @@ def test_min_impurity_split():
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             min_impurity_split=min_impurity_split,
                             random_state=0)
-        assert_warns_message(DeprecationWarning,
+        assert_warns_message(FutureWarning,
                              "Use the min_impurity_decrease",
                              est.fit, X, y)
         for node in range(est.tree_.node_count):
@@ -889,7 +939,7 @@ def test_min_impurity_decrease():
         if "Classifier" in name:
             X, y = iris.data, iris.target
         else:
-            X, y = boston.data, boston.target
+            X, y = diabetes.data, diabetes.target
 
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
@@ -1027,16 +1077,15 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        if not est.presort:
-            # csr matrix
-            X = csr_matrix(iris.data, dtype=dtype)
-            y = iris.target
-            assert_array_equal(est.fit(X, y).predict(X), y)
+        # csr matrix
+        X = csr_matrix(iris.data, dtype=dtype)
+        y = iris.target
+        assert_array_equal(est.fit(X, y).predict(X), y)
 
-            # csc_matrix
-            X = csc_matrix(iris.data, dtype=dtype)
-            y = iris.target
-            assert_array_equal(est.fit(X, y).predict(X), y)
+        # csc_matrix
+        X = csc_matrix(iris.data, dtype=dtype)
+        y = iris.target
+        assert_array_equal(est.fit(X, y).predict(X), y)
 
         # Strided
         X = np.asarray(iris.data[::3], dtype=dtype)
@@ -1104,16 +1153,13 @@ def test_sample_weight_invalid():
     clf = DecisionTreeClassifier(random_state=0)
 
     sample_weight = np.random.rand(100, 1)
-    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+    with pytest.raises(ValueError):
+        clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.array(0)
-    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(101)
-    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(99)
-    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+    expected_err = r"Singleton.* cannot be considered a valid collection"
+    with pytest.raises(TypeError, match=expected_err):
+        clf.fit(X, y, sample_weight=sample_weight)
 
 
 def check_class_weights(name):
@@ -1171,16 +1217,20 @@ def check_class_weight_errors(name):
 
     # Invalid preset string
     clf = TreeClassifier(class_weight='the larch', random_state=0)
-    assert_raises(ValueError, clf.fit, X, y)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
     # Not a list or preset for multi-output
     clf = TreeClassifier(class_weight=1, random_state=0)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
     # Incorrect length list for multi-output
     clf = TreeClassifier(class_weight=[{-1: 0.5, 1: 1.}], random_state=0)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
 
 @pytest.mark.parametrize("name", CLF_TREES)
@@ -1198,11 +1248,14 @@ def test_max_leaf_nodes():
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
         est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
 
 def test_max_leaf_nodes_max_depth():
@@ -1279,7 +1332,8 @@ def test_big_input():
 
 def test_realloc():
     from sklearn.tree._utils import _realloc_test
-    assert_raises(MemoryError, _realloc_test)
+    with pytest.raises(MemoryError):
+        _realloc_test()
 
 
 def test_huge_allocations():
@@ -1292,13 +1346,15 @@ def test_huge_allocations():
     # space. Currently raises OverflowError.
     huge = 2 ** (n_bits + 1)
     clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
-    assert_raises(Exception, clf.fit, X, y)
+    with pytest.raises(Exception):
+        clf.fit(X, y)
 
     # Non-regression test: MemoryError used to be dropped by Cython
     # because of missing "except *".
     huge = 2 ** (n_bits - 1) - 1
     clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
-    assert_raises(MemoryError, clf.fit, X, y)
+    with pytest.raises(MemoryError):
+        clf.fit(X, y)
 
 
 def check_sparse_input(tree, dataset, max_depth=None):
@@ -1308,7 +1364,7 @@ def check_sparse_input(tree, dataset, max_depth=None):
     y = DATASETS[dataset]["y"]
 
     # Gain testing time
-    if dataset in ["digits", "boston"]:
+    if dataset in ["digits", "diabetes"]:
         n_samples = X.shape[0] // 5
         X = X[:n_samples]
         X_sparse = X_sparse[:n_samples]
@@ -1356,7 +1412,7 @@ def test_sparse_input(tree_type, dataset):
 
 @pytest.mark.parametrize("tree_type",
                          sorted(set(SPARSE_TREES).intersection(REG_TREES)))
-@pytest.mark.parametrize("dataset", ["boston", "reg_small"])
+@pytest.mark.parametrize("dataset", ["diabetes", "reg_small"])
 def test_sparse_input_reg_trees(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
@@ -1518,11 +1574,13 @@ def check_raise_error_on_1d_input(name):
     X_2d = iris.data[:, 0].reshape((-1, 1))
     y = iris.target
 
-    assert_raises(ValueError, TreeEstimator(random_state=0).fit, X, y)
+    with pytest.raises(ValueError):
+        TreeEstimator(random_state=0).fit(X, y)
 
     est = TreeEstimator(random_state=0)
     est.fit(X_2d, y)
-    assert_raises(ValueError, est.predict, [X])
+    with pytest.raises(ValueError):
+        est.predict([X])
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -1549,9 +1607,8 @@ def check_min_weight_leaf_split_level(name):
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
-    if not TreeEstimator().presort:
-        _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y,
-                                           sample_weight)
+    _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y,
+                                       sample_weight)
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -1585,36 +1642,6 @@ def test_public_apply_all_trees(name):
 @pytest.mark.parametrize("name", SPARSE_TREES)
 def test_public_apply_sparse_trees(name):
     check_public_apply_sparse(name)
-
-
-def check_presort_sparse(est, X, y):
-    assert_raises(ValueError, est.fit, X, y)
-
-
-def test_presort_sparse():
-    ests = (DecisionTreeClassifier(presort=True),
-            DecisionTreeRegressor(presort=True))
-    sparse_matrices = (csr_matrix, csc_matrix, coo_matrix)
-
-    y, X = datasets.make_multilabel_classification(random_state=0,
-                                                   n_samples=50,
-                                                   n_features=1,
-                                                   n_classes=20)
-    y = y[:, 0]
-
-    for est, sparse_matrix in product(ests, sparse_matrices):
-        check_presort_sparse(est, sparse_matrix(X), y)
-
-
-@pytest.mark.parametrize('cls',
-                         (DecisionTreeRegressor, DecisionTreeClassifier))
-def test_invalid_presort(cls):
-    allowed_presort = ('auto', True, False)
-    invalid_presort = 'invalid'
-    msg = ("'presort' should be in {}. "
-           "Got {!r} instead.".format(allowed_presort, invalid_presort))
-    est = cls(presort=invalid_presort)
-    assert_raise_message(ValueError, msg, est.fit, X, y)
 
 
 def test_decision_path_hardcoded():
@@ -1661,7 +1688,8 @@ def test_decision_path(name):
 def check_no_sparse_y_support(name):
     X, y = X_multilabel, csr_matrix(y_multilabel)
     TreeEstimator = ALL_TREES[name]
-    assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)
+    with pytest.raises(TypeError):
+        TreeEstimator(random_state=0).fit(X, y)
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -1811,30 +1839,294 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
-@pytest.mark.parametrize('name', CLF_TREES)
-def test_multi_target(name):
-    Tree = CLF_TREES[name]
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS)
+@pytest.mark.parametrize(
+    "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "diabetes"}))
+@pytest.mark.parametrize(
+    "tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
+def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
+    dataset = DATASETS[dataset]
+    X, y = dataset["X"], dataset["y"]
+    est = tree_cls(max_leaf_nodes=20, random_state=0)
+    info = est.cost_complexity_pruning_path(X, y)
 
-    clf = Tree()
+    pruning_path = info.ccp_alphas
+    impurities = info.impurities
+    assert np.all(np.diff(pruning_path) >= 0)
+    assert np.all(np.diff(impurities) >= 0)
 
-    X = iris.data
+    assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
 
-    # Make multi column mixed type target.
-    y = np.vstack([
-        iris.target.astype(float),
-        iris.target.astype(int),
-        iris.target.astype(str),
-    ]).T
 
-    # Try to fit and predict.
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+@pytest.mark.parametrize("dataset", DATASETS.keys())
+@pytest.mark.parametrize(
+    "tree_cls", [DecisionTreeRegressor, ExtraTreeRegressor])
+def test_prune_tree_regression_are_subtrees(criterion, dataset, tree_cls):
+    dataset = DATASETS[dataset]
+    X, y = dataset["X"], dataset["y"]
+
+    est = tree_cls(max_leaf_nodes=20, random_state=0)
+    info = est.cost_complexity_pruning_path(X, y)
+
+    pruning_path = info.ccp_alphas
+    impurities = info.impurities
+    assert np.all(np.diff(pruning_path) >= 0)
+    assert np.all(np.diff(impurities) >= 0)
+
+    assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
+
+
+def test_prune_single_node_tree():
+    # single node tree
+    clf1 = DecisionTreeClassifier(random_state=0)
+    clf1.fit([[0], [1]], [0, 0])
+
+    # pruned single node tree
+    clf2 = DecisionTreeClassifier(random_state=0, ccp_alpha=10)
+    clf2.fit([[0], [1]], [0, 0])
+
+    assert_is_subtree(clf1.tree_, clf2.tree_)
+
+
+def assert_pruning_creates_subtree(estimator_cls, X, y, pruning_path):
+    # generate trees with increasing alphas
+    estimators = []
+    for ccp_alpha in pruning_path:
+        est = estimator_cls(
+            max_leaf_nodes=20, ccp_alpha=ccp_alpha, random_state=0).fit(X, y)
+        estimators.append(est)
+
+    # A pruned tree must be a subtree of the previous tree (which had a
+    # smaller ccp_alpha)
+    for prev_est, next_est in zip(estimators, estimators[1:]):
+        assert_is_subtree(prev_est.tree_, next_est.tree_)
+
+
+def assert_is_subtree(tree, subtree):
+    assert tree.node_count >= subtree.node_count
+    assert tree.max_depth >= subtree.max_depth
+
+    tree_c_left = tree.children_left
+    tree_c_right = tree.children_right
+    subtree_c_left = subtree.children_left
+    subtree_c_right = subtree.children_right
+
+    stack = [(0, 0)]
+    while stack:
+        tree_node_idx, subtree_node_idx = stack.pop()
+        assert_array_almost_equal(tree.value[tree_node_idx],
+                                  subtree.value[subtree_node_idx])
+        assert_almost_equal(tree.impurity[tree_node_idx],
+                            subtree.impurity[subtree_node_idx])
+        assert_almost_equal(tree.n_node_samples[tree_node_idx],
+                            subtree.n_node_samples[subtree_node_idx])
+        assert_almost_equal(tree.weighted_n_node_samples[tree_node_idx],
+                            subtree.weighted_n_node_samples[subtree_node_idx])
+
+        if (subtree_c_left[subtree_node_idx] ==
+                subtree_c_right[subtree_node_idx]):
+            # is a leaf
+            assert_almost_equal(TREE_UNDEFINED,
+                                subtree.threshold[subtree_node_idx])
+        else:
+            # not a leaf
+            assert_almost_equal(tree.threshold[tree_node_idx],
+                                subtree.threshold[subtree_node_idx])
+            stack.append((tree_c_left[tree_node_idx],
+                          subtree_c_left[subtree_node_idx]))
+            stack.append((tree_c_right[tree_node_idx],
+                          subtree_c_right[subtree_node_idx]))
+
+
+def test_prune_tree_raises_negative_ccp_alpha():
+    clf = DecisionTreeClassifier()
+    msg = "ccp_alpha must be greater than or equal to 0"
+
+    with pytest.raises(ValueError, match=msg):
+        clf.set_params(ccp_alpha=-1.0)
+        clf.fit(X, y)
+
+    clf.set_params(ccp_alpha=0.0)
     clf.fit(X, y)
-    clf.predict(X)
+
+    with pytest.raises(ValueError, match=msg):
+        clf.set_params(ccp_alpha=-1.0)
+        clf._prune_tree()
 
 
-def test_decision_tree_memmap():
-    # check that decision trees supports read-only buffer (#13626)
-    X = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
-    y = np.zeros(10)
+def check_apply_path_readonly(name):
+    X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE,
+                                                          copy=False))
+    y_readonly = create_memmap_backed_data(np.array(y_small,
+                                                    dtype=tree._tree.DTYPE))
+    est = ALL_TREES[name]()
+    est.fit(X_readonly, y_readonly)
+    assert_array_equal(est.predict(X_readonly),
+                       est.predict(X_small))
+    assert_array_equal(est.decision_path(X_readonly).todense(),
+                       est.decision_path(X_small).todense())
 
-    with TempMemmap((X, y)) as (X_read_only, y_read_only):
-        DecisionTreeClassifier().fit(X_read_only, y_read_only)
+
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_apply_path_readonly_all_trees(name):
+    check_apply_path_readonly(name)
+
+
+@pytest.mark.parametrize(
+    "criterion", ["squared_error", "friedman_mse", "poisson"]
+)
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+def test_balance_property(criterion, Tree):
+    # Test that sum(y_pred)=sum(y_true) on training set.
+    # This works if the mean is predicted (should even be true for each leaf).
+    # MAE predicts the median and is therefore excluded from this test.
+
+    # Choose a training set with non-negative targets (for poisson)
+    X, y = diabetes.data, diabetes.target
+    reg = Tree(criterion=criterion)
+    reg.fit(X, y)
+    assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
+
+
+@pytest.mark.parametrize("seed", range(3))
+def test_poisson_zero_nodes(seed):
+    # Test that sum(y)=0 and therefore y_pred=0 is forbidden on nodes.
+    X = [[0, 0], [0, 1], [0, 2], [0, 3],
+         [1, 0], [1, 2], [1, 2], [1, 3]]
+    y = [0, 0, 0, 0, 1, 2, 3, 4]
+    # Note that X[:, 0] == 0 is a 100% indicator for y == 0. The tree can
+    # easily learn that:
+    reg = DecisionTreeRegressor(criterion="squared_error", random_state=seed)
+    reg.fit(X, y)
+    assert np.amin(reg.predict(X)) == 0
+    # whereas Poisson must predict strictly positive numbers
+    reg = DecisionTreeRegressor(criterion="poisson", random_state=seed)
+    reg.fit(X, y)
+    assert np.all(reg.predict(X) > 0)
+
+    # Test additional dataset where something could go wrong.
+    n_features = 10
+    X, y = datasets.make_regression(
+        effective_rank=n_features * 2 // 3, tail_strength=0.6,
+        n_samples=1_000,
+        n_features=n_features,
+        n_informative=n_features * 2 // 3,
+        random_state=seed,
+    )
+    # some excess zeros
+    y[(-1 < y) & (y < 0)] = 0
+    # make sure the target is positive
+    y = np.abs(y)
+    reg = DecisionTreeRegressor(criterion='poisson', random_state=seed)
+    reg.fit(X, y)
+    assert np.all(reg.predict(X) > 0)
+
+
+def test_poisson_vs_mse():
+    # For a Poisson distributed target, Poisson loss should give better results
+    # than squared error measured in Poisson deviance as metric.
+    # We have a similar test, test_poisson(), in
+    # sklearn/ensemble/_hist_gradient_boosting/tests/test_gradient_boosting.py
+    # Note: Some fine tuning was needed to have metric_poi < metric_dummy on
+    # the test set!
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 500, 10
+    X = datasets.make_low_rank_matrix(n_samples=n_train + n_test,
+                                      n_features=n_features, random_state=rng)
+    # We create a log-linear Poisson model and downscale coef as it will get
+    # exponentiated.
+    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
+    y = rng.poisson(lam=np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
+                                                        random_state=rng)
+    # We prevent some overfitting by setting min_samples_split=10.
+    tree_poi = DecisionTreeRegressor(criterion="poisson",
+                                     min_samples_split=10,
+                                     random_state=rng)
+    tree_mse = DecisionTreeRegressor(criterion="squared_error",
+                                     min_samples_split=10,
+                                     random_state=rng)
+
+    tree_poi.fit(X_train, y_train)
+    tree_mse.fit(X_train, y_train)
+    dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
+
+    for X, y, val in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
+        metric_poi = mean_poisson_deviance(y, tree_poi.predict(X))
+        # squared_error might produce non-positive predictions => clip
+        metric_mse = mean_poisson_deviance(y, np.clip(tree_mse.predict(X),
+                                                      1e-15, None))
+        metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
+        # As squared_error might correctly predict 0 in train set, its train
+        # score can be better than Poisson. This is no longer the case for the
+        # test set.
+        if val == "test":
+            assert metric_poi < metric_mse
+        assert metric_poi < metric_dummy
+
+
+@pytest.mark.parametrize('criterion', REG_CRITERIONS)
+def test_decision_tree_regressor_sample_weight_consistentcy(
+        criterion):
+    """Test that the impact of sample_weight is consistent."""
+    tree_params = dict(criterion=criterion)
+    tree = DecisionTreeRegressor(**tree_params, random_state=42)
+    for kind in ['zeros', 'ones']:
+        check_sample_weights_invariance("DecisionTreeRegressor_" + criterion,
+                                        tree, kind='zeros')
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = np.mean(X, axis=1) + rng.rand(n_samples)
+    # make it positive in order to work also for poisson criterion
+    y += np.min(y) + 0.1
+
+    # check that multiplying sample_weight by 2 is equivalent
+    # to repeating corresponding samples twice
+    X2 = np.concatenate([X, X[:n_samples//2]], axis=0)
+    y2 = np.concatenate([y, y[:n_samples//2]])
+    sample_weight_1 = np.ones(len(y))
+    sample_weight_1[:n_samples//2] = 2
+
+    tree1 = DecisionTreeRegressor(**tree_params).fit(
+            X, y, sample_weight=sample_weight_1
+    )
+
+    tree2 = DecisionTreeRegressor(**tree_params).fit(
+            X2, y2, sample_weight=None
+    )
+
+    assert tree1.tree_.node_count == tree2.tree_.node_count
+    # Thresholds, tree.tree_.threshold, and values, tree.tree_.value, are not
+    # exactly the same, but on the training set, those differences do not
+    # matter and thus predictions are the same.
+    assert_allclose(tree1.predict(X), tree2.predict(X))
+
+
+# TODO: Remove in v1.1
+@pytest.mark.parametrize("TreeEstimator", [DecisionTreeClassifier,
+                                           DecisionTreeRegressor])
+def test_X_idx_sorted_deprecated(TreeEstimator):
+    X_idx_sorted = np.argsort(X, axis=0)
+
+    tree = TreeEstimator()
+
+    with pytest.warns(FutureWarning,
+                      match="The parameter 'X_idx_sorted' is deprecated"):
+        tree.fit(X, y, X_idx_sorted=X_idx_sorted)
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+def test_mse_deprecated(Tree):
+    tree = Tree(criterion="mse")
+
+    with pytest.warns(FutureWarning,
+                      match="Criterion 'mse' was deprecated"):
+        tree.fit(X, y)
+
+    tree_sqer = Tree(criterion="squared_error").fit(X, y)
+    assert_allclose(tree.predict(X), tree_sqer.predict(X))

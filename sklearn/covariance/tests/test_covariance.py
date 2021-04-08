@@ -5,19 +5,18 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
     ShrunkCovariance, shrunk_covariance, \
     LedoitWolf, ledoit_wolf, ledoit_wolf_shrinkage, OAS, oas
 
-X = datasets.load_diabetes().data
+X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]
 n_samples, n_features = X.shape
 
@@ -38,8 +37,8 @@ def test_covariance():
         cov.error_norm(emp_cov, scaling=False), 0)
     assert_almost_equal(
         cov.error_norm(emp_cov, squared=False), 0)
-    assert_raises(NotImplementedError,
-                  cov.error_norm, emp_cov, norm='foo')
+    with pytest.raises(NotImplementedError):
+        cov.error_norm(emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
     assert np.amin(mahal_dist) > 0
@@ -57,7 +56,12 @@ def test_covariance():
     # Create X with 1 sample and 5 features
     X_1sample = np.arange(5).reshape(1, 5)
     cov = EmpiricalCovariance()
-    assert_warns(UserWarning, cov.fit, X_1sample)
+    warn_msg = (
+        "Only one sample available. You may want to reshape your data array"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        cov.fit(X_1sample)
+
     assert_array_almost_equal(cov.covariance_,
                               np.zeros(shape=(5, 5), dtype=np.float64))
 
@@ -175,7 +179,13 @@ def test_ledoit_wolf():
     # warning should be raised when using only 1 sample
     X_1sample = np.arange(5).reshape(1, 5)
     lw = LedoitWolf()
-    assert_warns(UserWarning, lw.fit, X_1sample)
+
+    warn_msg = (
+        "Only one sample available. You may want to reshape your data array"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        lw.fit(X_1sample)
+
     assert_array_almost_equal(lw.covariance_,
                               np.zeros(shape=(5, 5), dtype=np.float64))
 
@@ -294,7 +304,12 @@ def test_oas():
     # warning should be raised when using only 1 sample
     X_1sample = np.arange(5).reshape(1, 5)
     oa = OAS()
-    assert_warns(UserWarning, oa.fit, X_1sample)
+    warn_msg = (
+        "Only one sample available. You may want to reshape your data array"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        oa.fit(X_1sample)
+
     assert_array_almost_equal(oa.covariance_,
                               np.zeros(shape=(5, 5), dtype=np.float64))
 
@@ -303,3 +318,13 @@ def test_oas():
     oa.fit(X)
     assert_almost_equal(oa.score(X), score_, 4)
     assert(oa.precision_ is None)
+
+
+def test_EmpiricalCovariance_validates_mahalanobis():
+    """Checks that EmpiricalCovariance validates data with mahalanobis."""
+    cov = EmpiricalCovariance().fit(X)
+
+    msg = (f"X has 2 features, but \\w+ is expecting {X.shape[1]} "
+           "features as input")
+    with pytest.raises(ValueError, match=msg):
+        cov.mahalanobis(X[:, :2])

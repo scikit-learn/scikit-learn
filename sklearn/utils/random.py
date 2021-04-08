@@ -11,8 +11,8 @@ from ._random import sample_without_replacement
 __all__ = ['sample_without_replacement']
 
 
-def random_choice_csc(n_samples, classes, class_probability=None,
-                      random_state=None):
+def _random_choice_csc(n_samples, classes, class_probability=None,
+                       random_state=None):
     """Generate a sparse random matrix given column class distributions
 
     Parameters
@@ -23,15 +23,14 @@ def random_choice_csc(n_samples, classes, class_probability=None,
     classes : list of size n_outputs of arrays of size (n_classes,)
         List of classes for each column.
 
-    class_probability : list of size n_outputs of arrays of size (n_classes,)
-        Optional (default=None). Class distribution of each column. If None the
-        uniform distribution is assumed.
+    class_probability : list of size n_outputs of arrays of \
+        shape (n_classes,), default=None
+        Class distribution of each column. If None, uniform distribution is
+        assumed.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the sampled classes.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------

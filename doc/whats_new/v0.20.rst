@@ -709,7 +709,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| |Fix| :class:`decomposition.SparsePCA` now exposes
   ``normalize_components``. When set to True, the train and test data are
-  centered with the train mean repsectively during the fit phase and the
+  centered with the train mean respectively during the fit phase and the
   transform phase. This fixes the behavior of SparsePCA. When set to False,
   which is the default, the previous abnormal behaviour still holds. The False
   value is for backward compatibility and should not be used. :issue:`11585`

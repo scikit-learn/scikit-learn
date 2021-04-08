@@ -19,11 +19,11 @@ data can be found in the ``labels_`` attribute.
 
     One important thing to note is that the algorithms implemented in
     this module can take different kinds of matrix as input. All the
-    methods accept standard data matrices of shape ``[n_samples, n_features]``.
+    methods accept standard data matrices of shape ``(n_samples, n_features)``.
     These can be obtained from the classes in the :mod:`sklearn.feature_extraction`
     module. For :class:`AffinityPropagation`, :class:`SpectralClustering`
     and :class:`DBSCAN` one can also input similarity matrices of shape
-    ``[n_samples, n_samples]``. These can be obtained from the functions
+    ``(n_samples, n_samples)``. These can be obtained from the functions
     in the :mod:`sklearn.metrics.pairwise` module.
 
 Overview of clustering methods
@@ -51,62 +51,64 @@ Overview of clustering methods
      - number of clusters
      - Very large ``n_samples``, medium ``n_clusters`` with
        :ref:`MiniBatch code <mini_batch_kmeans>`
-     - General-purpose, even cluster size, flat geometry, not too many clusters
+     - General-purpose, even cluster size, flat geometry,
+       not too many clusters, inductive
      - Distances between points
 
    * - :ref:`Affinity propagation <affinity_propagation>`
      - damping, sample preference
      - Not scalable with n_samples
-     - Many clusters, uneven cluster size, non-flat geometry
+     - Many clusters, uneven cluster size, non-flat geometry, inductive
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Mean-shift <mean_shift>`
      - bandwidth
      - Not scalable with ``n_samples``
-     - Many clusters, uneven cluster size, non-flat geometry
+     - Many clusters, uneven cluster size, non-flat geometry, inductive
      - Distances between points
 
    * - :ref:`Spectral clustering <spectral_clustering>`
      - number of clusters
      - Medium ``n_samples``, small ``n_clusters``
-     - Few clusters, even cluster size, non-flat geometry
+     - Few clusters, even cluster size, non-flat geometry, transductive
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Ward hierarchical clustering <hierarchical_clustering>`
      - number of clusters or distance threshold
      - Large ``n_samples`` and ``n_clusters``
-     - Many clusters, possibly connectivity constraints
+     - Many clusters, possibly connectivity constraints, transductive
      - Distances between points
 
    * - :ref:`Agglomerative clustering <hierarchical_clustering>`
      - number of clusters or distance threshold, linkage type, distance
      - Large ``n_samples`` and ``n_clusters``
      - Many clusters, possibly connectivity constraints, non Euclidean
-       distances
+       distances, transductive
      - Any pairwise distance
 
    * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
      - Very large ``n_samples``, medium ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes
+     - Non-flat geometry, uneven cluster sizes, transductive
      - Distances between nearest points
 
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, variable cluster density
+     - Non-flat geometry, uneven cluster sizes, variable cluster density,
+       transductive
      - Distances between points
 
    * - :ref:`Gaussian mixtures <mixture>`
      - many
      - Not scalable
-     - Flat geometry, good for density estimation
+     - Flat geometry, good for density estimation, inductive
      - Mahalanobis distances to  centers
 
-   * - :ref:`Birch`
+   * - :ref:`BIRCH <birch>`
      - branching factor, threshold, optional global clusterer.
      - Large ``n_clusters`` and ``n_samples``
-     - Large dataset, outlier removal, data reduction.
+     - Large dataset, outlier removal, data reduction, inductive
      - Euclidean distance between points
 
 Non-flat geometry clustering is useful when the clusters have a specific
@@ -118,6 +120,10 @@ Gaussian mixture models, useful for clustering, are described in
 :ref:`another chapter of the documentation <mixture>` dedicated to
 mixture models. KMeans can be seen as a special case of Gaussian mixture
 model with equal covariance per component.
+
+:term:`Transductive <transductive>` clustering methods (in contrast to
+:term:`inductive` clustering methods) are not designed to be applied to new,
+unseen data.
 
 .. _k_means:
 
@@ -197,7 +203,11 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
-random initialization, as shown in the reference.
+random initialization, as shown in the reference. 
+
+K-means++ can also be called independently to select seeds for other 
+clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
+and example usage.
 
 The algorithm supports sample weights, which can be given by a parameter
 ``sample_weight``. This allows to assign more weight to some samples when
@@ -205,22 +215,16 @@ computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
-A parameter can be given to allow K-means to be run in parallel, called
-``n_jobs``. Giving this parameter a positive value uses that many processors
-(default: 1). A value of -1 uses all available processors, with -2 using one
-less, and so on. Parallelization generally speeds up computation at the cost of
-memory (in this case, multiple copies of centroids need to be stored, one for
-each job).
-
-.. warning::
-
-    The parallel version of K-Means is broken on OS X when `numpy` uses the
-    `Accelerate` Framework. This is expected behavior: `Accelerate` can be called
-    after a fork but you need to execv the subprocess with the Python binary
-    (which multiprocessing does not do under posix).
-
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
+
+Low-level parallelism
+---------------------
+
+:class:`KMeans` benefits from OpenMP based parallelism through Cython. Small
+chunks of data (256 samples) are processed in parallel, which in addition
+yields a low memory footprint. For more details on how to control the number of
+threads, please refer to our :ref:`parallelism` notes.
 
 .. topic:: Examples:
 
@@ -434,21 +438,24 @@ given sample.
 Spectral clustering
 ===================
 
-:class:`SpectralClustering` does a low-dimension embedding of the
-affinity matrix between samples, followed by a KMeans in the low
-dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
-SpectralClustering requires the number of clusters to be specified. It
-works well for a small number of clusters but is not advised when using
-many clusters.
+:class:`SpectralClustering` performs a low-dimension embedding of the
+affinity matrix between samples, followed by clustering, e.g., by KMeans,
+of the components of the eigenvectors in the low dimensional space.
+It is especially computationally efficient if the affinity matrix is sparse
+and the `amg` solver is used for the eigenvalue problem (Note, the `amg` solver
+requires that the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.)
 
-For two clusters, it solves a convex relaxation of the `normalised
-cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
-the similarity graph: cutting the graph in two so that the weight of the
-edges cut is small compared to the weights of the edges inside each
-cluster. This criteria is especially interesting when working on images:
-graph vertices are pixels, and edges of the similarity graph are a
-function of the gradient of the image.
+The present version of SpectralClustering requires the number of clusters
+to be specified in advance. It works well for a small number of clusters,
+but is not advised for many clusters.
+
+For two clusters, SpectralClustering solves a convex relaxation of the
+`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+problem on the similarity graph: cutting the graph in two so that the weight of
+the edges cut is small compared to the weights of the edges inside each
+cluster. This criteria is especially interesting when working on images, where
+graph vertices are pixels, and weights of the edges of the similarity graph are
+computed using a function of a gradient of the image.
 
 
 .. |noisy_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_001.png
@@ -495,12 +502,11 @@ Different label assignment strategies
 
 Different label assignment strategies can be used, corresponding to the
 ``assign_labels`` parameter of :class:`SpectralClustering`.
-The ``"kmeans"`` strategy can match finer details of the data, but it can be
-more unstable. In particular, unless you control the ``random_state``, it
-may not be reproducible from run-to-run, as it depends on a random
-initialization. On the other hand, the ``"discretize"`` strategy is 100%
-reproducible, but it tends to create parcels of fairly even and
-geometrical shape.
+``"kmeans"`` strategy can match finer details, but can be unstable.
+In particular, unless you control the ``random_state``, it may not be
+reproducible from run-to-run, as it depends on random initialization.
+The alternative ``"discretize"`` strategy is 100% reproducible, but tends
+to create parcels of fairly even and geometrical shape.
 
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
@@ -511,7 +517,7 @@ geometrical shape.
 Spectral Clustering Graphs
 --------------------------
 
-Spectral Clustering can also be used to cluster graphs by their spectral
+Spectral Clustering can also be used to partition graphs via their spectral
 embeddings.  In this case, the affinity matrix is the adjacency matrix of the
 graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
@@ -538,6 +544,10 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
+ * `"Preconditioned Spectral Clustering for Stochastic
+   Block Partition Streaming Graph Challenge"
+   <https://arxiv.org/abs/1708.07481>`_
+   David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
 
@@ -769,7 +779,7 @@ core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
 While the parameter ``min_samples`` primarily controls how tolerant the
-algorithm is towards noise (on noisy and large data sets it may be desiable
+algorithm is towards noise (on noisy and large data sets it may be desirable
 to increase this parameter), the parameter ``eps`` is *crucial to choose
 appropriately* for the data set and distance function and usually cannot be
 left at the default value. It controls the local neighborhood of the points.
@@ -777,7 +787,7 @@ When chosen too small, most data will not be clustered at all (and labeled
 as ``-1`` for "noise"). When chosen too large, it causes close clusters to
 be merged into one cluster, and eventually the entire data set to be returned
 as a single cluster. Some heuristics for choosing this parameter have been
-discussed in literature, for example based on a knee in the nearest neighbor
+discussed in the literature, for example based on a knee in the nearest neighbor
 distances plot (as discussed in the references below).
 
 In the figure below, the color indicates cluster membership, with large circles
@@ -821,7 +831,7 @@ by black points below.
 
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g., with sparse matrices). This matrix will consume n^2 floats.
+    be used (e.g., with sparse matrices). This matrix will consume :math:`n^2` floats.
     A couple of mechanisms for getting around this are:
 
     - Use :ref:`OPTICS <optics>` clustering in conjunction with the
@@ -926,8 +936,8 @@ represented as children of a larger parent cluster.
     `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
     multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
-    exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
-    to *n^2*) memory scaling; however, tuning of the ``max_eps`` parameter
+    exhaust system memory using HDBSCAN, OPTICS will maintain :math:`n` (as opposed
+    to :math:`n^2`) memory scaling; however, tuning of the ``max_eps`` parameter
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 
@@ -939,13 +949,13 @@ represented as children of a larger parent cluster.
 
 .. _birch:
 
-Birch
+BIRCH
 =====
 
-The :class:`Birch` builds a tree called the Characteristic Feature Tree (CFT)
+The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
 for the given data. The data is essentially lossy compressed to a set of
-Characteristic Feature nodes (CF Nodes). The CF Nodes have a number of
-subclusters called Characteristic Feature subclusters (CF Subclusters)
+Clustering Feature nodes (CF Nodes). The CF Nodes have a number of
+subclusters called Clustering Feature subclusters (CF Subclusters)
 and these CF Subclusters located in the non-terminal CF Nodes
 can have CF Nodes as children.
 
@@ -953,12 +963,12 @@ The CF Subclusters hold the necessary information for clustering which prevents
 the need to hold the entire input data in memory. This information includes:
 
 - Number of samples in a subcluster.
-- Linear Sum - A n-dimensional vector holding the sum of all samples
+- Linear Sum - An n-dimensional vector holding the sum of all samples
 - Squared Sum - Sum of the squared L2 norm of all samples.
 - Centroids - To avoid recalculation linear sum / n_samples.
 - Squared norm of the centroids.
 
-The Birch algorithm has two parameters, the threshold and the branching factor.
+The BIRCH algorithm has two parameters, the threshold and the branching factor.
 The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
@@ -992,13 +1002,13 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
   then this node is again split into two and the process is continued
   recursively, till it reaches the root.
 
-**Birch or MiniBatchKMeans?**
+**BIRCH or MiniBatchKMeans?**
 
- - Birch does not scale very well to high dimensional data. As a rule of thumb if
+ - BIRCH does not scale very well to high dimensional data. As a rule of thumb if
    ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
  - If the number of instances of data needs to be reduced, or if one wants a
    large number of subclusters either as a preprocessing step or otherwise,
-   Birch is more useful than MiniBatchKMeans.
+   BIRCH is more useful than MiniBatchKMeans.
 
 
 **How to use partial_fit?**
@@ -1038,91 +1048,126 @@ classification algorithm. In particular any evaluation metric should not
 take the absolute values of the cluster labels into account but rather
 if this clustering define separations of the data similar to some ground
 truth set of classes or satisfying some assumption such that members
-belong to the same class are more similar that members of different
+belong to the same class are more similar than members of different
 classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
 
+.. _rand_score:
 .. _adjusted_rand_score:
 
-Adjusted Rand index
--------------------
+Rand index
+----------
 
-Given the knowledge of the ground truth class assignments ``labels_true``
-and our clustering algorithm assignments of the same samples
-``labels_pred``, the **adjusted Rand index** is a function that measures
-the **similarity** of the two assignments, ignoring permutations and **with
-chance normalization**::
+Given the knowledge of the ground truth class assignments
+``labels_true`` and our clustering algorithm assignments of the same
+samples ``labels_pred``, the **(adjusted or unadjusted) Rand index**
+is a function that measures the **similarity** of the two assignments,
+ignoring permutations::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.66...
+
+The Rand index does not ensure to obtain a value close to 0.0 for a
+random labelling. The adjusted Rand index **corrects for chance** and
+will give such a baseline.
 
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
-One can permute 0 and 1 in the predicted labels, rename 2 to 3, and get
-the same score::
+As with all clustering metrics, one can permute 0 and 1 in the predicted
+labels, rename 2 to 3, and get the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.66...
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
-Furthermore, :func:`adjusted_rand_score` is **symmetric**: swapping the argument
-does not change the score. It can thus be used as a **consensus
-measure**::
+Furthermore, both :func:`rand_score` :func:`adjusted_rand_score` are
+**symmetric**: swapping the argument does not change the scores. They can
+thus be used as **consensus measures**::
 
+  >>> metrics.rand_score(labels_pred, labels_true)
+  0.66...
   >>> metrics.adjusted_rand_score(labels_pred, labels_true)
   0.24...
 
 Perfect labeling is scored 1.0::
 
   >>> labels_pred = labels_true[:]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  1.0
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   1.0
 
-Bad (e.g. independent labelings) have negative or close to 0.0 scores::
+Poorly agreeing labels (e.g. independent labelings) have lower scores,
+and for the adjusted Rand index the score will be negative or close to
+zero. However, for the unadjusted Rand index the score, while lower,
+will not necessarily be close to zero.::
 
-  >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
-  >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
+  >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
+  >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.39...
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  -0.12...
+  -0.07...
 
 
 Advantages
 ~~~~~~~~~~
 
-- **Random (uniform) label assignments have a ARI score close to 0.0**
-  for any value of ``n_clusters`` and ``n_samples`` (which is not the
-  case for raw Rand index or the V-measure for instance).
+- **Interpretability**: The unadjusted Rand index is proportional
+  to the number of sample pairs whose labels are the same in both
+  `labels_pred` and `labels_true`, or are different in both.
 
-- **Bounded range [-1, 1]**: negative values are bad (independent
-  labelings), similar clusterings have a positive ARI, 1.0 is the perfect
-  match score.
+- **Random (uniform) label assignments have an adjusted Rand index
+  score close to 0.0** for any value of ``n_clusters`` and
+  ``n_samples`` (which is not the case for the unadjusted Rand index
+  or the V-measure for instance).
 
-- **No assumption is made on the cluster structure**: can be used
-  to compare clustering algorithms such as k-means which assumes isotropic
-  blob shapes with results of spectral clustering algorithms which can
-  find cluster with "folded" shapes.
+- **Bounded range**: Lower values indicate different labelings,
+  similar clusterings have a high (adjusted or unadjusted) Rand index,
+  1.0 is the perfect match score. The score range is [0, 1] for the
+  unadjusted Rand index and [-1, 1] for the adjusted Rand index.
+
+- **No assumption is made on the cluster structure**: The (adjusted or
+  unadjusted) Rand index can be used to compare all kinds of
+  clustering algorithms, and can be used to compare clustering
+  algorithms such as k-means which assumes isotropic blob shapes with
+  results of spectral clustering algorithms which can find cluster
+  with "folded" shapes.
 
 
 Drawbacks
 ~~~~~~~~~
 
-- Contrary to inertia, **ARI requires knowledge of the ground truth
-  classes** while is almost never available in practice or requires manual
-  assignment by human annotators (as in the supervised learning setting).
+- Contrary to inertia, the **(adjusted or unadjusted) Rand index
+  requires knowledge of the ground truth classes** which is almost
+  never available in practice or requires manual assignment by human
+  annotators (as in the supervised learning setting).
 
-  However ARI can also be useful in a purely unsupervised setting as a
-  building block for a Consensus Index that can be used for clustering
-  model selection (TODO).
+  However (adjusted or unadjusted) Rand index can also be useful in a
+  purely unsupervised setting as a building block for a Consensus
+  Index that can be used for clustering model selection (TODO).
 
+- The **unadjusted Rand index is often close to 1.0** even if the
+  clusterings themselves differ significantly. This can be understood
+  when interpreting the Rand index as the accuracy of element pair
+  labeling resulting from the clusterings: In practice there often is
+  a majority of element pairs that are assigned the ``different`` pair
+  label under both the predicted and the ground truth clustering
+  resulting in a high proportion of pair labels that agree, which
+  leads subsequently to a high score.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
-   the impact of the dataset size on the value of clustering measures
-   for random assignments.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
+   Analysis of the impact of the dataset size on the value of
+   clustering measures for random assignments.
 
 
 Mathematical formulation
@@ -1137,14 +1182,16 @@ define :math:`a` and :math:`b` as:
 - :math:`b`, the number of pairs of elements that are in different sets
   in C and in different sets in K
 
-The raw (unadjusted) Rand index is then given by:
+The unadjusted Rand index is then given by:
 
 .. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
 
-Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
-in the dataset (without ordering).
+where :math:`C_2^{n_{samples}}` is the total number of possible pairs
+in the dataset. It does not matter if the calculation is performed on
+ordered pairs or unordered pairs as long as the calculation is
+performed consistently.
 
-However the RI score does not guarantee that random label assignments
+However, the Rand index does not guarantee that random label assignments
 will get a value close to zero (esp. if the number of clusters is in
 the same order of magnitude as the number of samples).
 
@@ -1159,8 +1206,16 @@ random labelings by defining the adjusted Rand index as follows:
    <https://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
+ * `Properties of the Hubert-Arabie adjusted Rand index
+   <https://psycnet.apa.org/record/2004-17801-007>`_
+   D. Steinley, Psychological Methods 2004
+
+ * `Wikipedia entry for the Rand index
+   <https://en.wikipedia.org/wiki/Rand_index>`_
+
  * `Wikipedia entry for the adjusted Rand index
    <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
+
 
 .. _mutual_info_score:
 
@@ -1384,7 +1439,7 @@ Their harmonic mean called **V-measure** is computed by
   >>> metrics.v_measure_score(labels_true, labels_pred)
   0.51...
 
-This function's formula is as follows:::
+This function's formula is as follows:
 
 .. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
 
@@ -1633,9 +1688,7 @@ Silhouette Coefficient for each sample.
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Silhouette Coefficient is applied to the results of a
 cluster analysis.
@@ -1683,21 +1736,20 @@ Drawbacks
 Calinski-Harabasz Index
 -----------------------
 
+
 If the ground truth labels are not known, the Calinski-Harabasz index
 (:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
 Calinski-Harabasz score relates to a model with better defined clusters.
 
 The index is the ratio of the sum of between-clusters dispersion and of
-inter-cluster dispersion for all clusters (where dispersion is defined as the
+within-cluster dispersion for all clusters (where dispersion is defined as the
 sum of distances squared):
 
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Calinski-Harabasz index is applied to the results of a
 cluster analysis:
@@ -1812,7 +1864,7 @@ this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
   the centroid of that cluster -- also know as cluster diameter.
 - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
 
-A simple choice to construct :math:`R_ij` so that it is nonnegative and
+A simple choice to construct :math:`R_{ij}` so that it is nonnegative and
 symmetric is:
 
 .. math::
@@ -1896,3 +1948,85 @@ Drawbacks
 
  * `Wikipedia entry for contingency matrix
    <https://en.wikipedia.org/wiki/Contingency_table>`_
+
+.. _pair_confusion_matrix:
+
+Pair Confusion Matrix
+---------------------
+
+The pair confusion matrix
+(:func:`sklearn.metrics.cluster.pair_confusion_matrix`) is a 2x2
+similarity matrix
+
+.. math::
+   C = \left[\begin{matrix}
+   C_{00} & C_{01} \\
+   C_{10} & C_{11}
+   \end{matrix}\right]
+
+between two clusterings computed by considering all pairs of samples and
+counting pairs that are assigned into the same or into different clusters
+under the true and predicted clusterings.
+
+It has the following entries:
+
+  :math:`C_{00}` : number of pairs with both clusterings having the samples
+  not clustered together
+
+  :math:`C_{10}` : number of pairs with the true label clustering having the
+  samples clustered together but the other clustering not having the samples
+  clustered together
+
+  :math:`C_{01}` : number of pairs with the true label clustering not having
+  the samples clustered together but the other clustering having the samples
+  clustered together
+
+  :math:`C_{11}` : number of pairs with both clusterings having the samples
+  clustered together
+
+Considering a pair of samples that is clustered together a positive pair,
+then as in binary classification the count of true negatives is
+:math:`C_{00}`, false negatives is :math:`C_{10}`, true positives is
+:math:`C_{11}` and false positives is :math:`C_{01}`.
+
+Perfectly matching labelings have all non-zero entries on the
+diagonal regardless of actual label values::
+
+   >>> from sklearn.metrics.cluster import pair_confusion_matrix
+   >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 1])
+   array([[8, 0],
+          [0, 4]])
+
+::
+
+   >>> pair_confusion_matrix([0, 0, 1, 1], [1, 1, 0, 0])
+   array([[8, 0],
+          [0, 4]])
+
+Labelings that assign all classes members to the same clusters
+are complete but may not always be pure, hence penalized, and
+have some off-diagonal non-zero entries::
+
+   >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])
+   array([[8, 2],
+          [0, 2]])
+
+The matrix is not symmetric::
+
+   >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])
+   array([[8, 0],
+          [2, 2]])
+
+If classes members are completely split across different clusters, the
+assignment is totally incomplete, hence the matrix has all zero
+diagonal entries::
+
+   >>> pair_confusion_matrix([0, 0, 0, 0], [0, 1, 2, 3])
+   array([[ 0,  0],
+          [12,  0]])
+
+.. topic:: References
+
+ * L. Hubert and P. Arabie, Comparing Partitions, Journal of
+   Classification 1985
+   <https://link.springer.com/article/10.1007%2FBF01908075>_
