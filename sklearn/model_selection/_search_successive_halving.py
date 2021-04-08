@@ -210,7 +210,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         self._n_samples_orig = _num_samples(X)
 
-        super().fit(X, y=y, groups=None, **fit_params)
+        super().fit(X, y=y, groups=groups, **fit_params)
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = (
