@@ -252,6 +252,26 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.flatten_transform = flatten_transform
         self.verbose = verbose
 
+    def _validate_estimators(self):
+        names, clfs = super()._validate_estimators()
+        # mapping from original labels to encoded ones
+        label_mapping = {c: i for i, c in enumerate(self.classes_)}
+
+        updated_clfs = tuple()
+        for clf in clfs:
+            if clf == 'drop':
+                continue
+            is_clone = False
+            for k, v in clf.get_params(deep=True).items():
+                if k.endswith('class_weight') and v is not None:
+                    if not is_clone:
+                        clf, is_clone = clone(clf), True
+                    updated_class_weight = {label_mapping[i]: w
+                                            for i, w in v.items()}
+                    clf.set_params(**{k: updated_class_weight})
+            updated_clfs += (clf, )
+        return names, updated_clfs
+
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -288,16 +308,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
-
-        # mapping from original labels to encoded ones
-        label_mapping = {c: i for i, c in enumerate(self.classes_)}
-        for _, est in self.estimators:
-            # check if the base estimator has provided class_weight argument
-            if hasattr(est, 'class_weight') and \
-                    isinstance(est.class_weight, dict):
-                est.class_weight = {label_mapping[i]: w
-                                    for i, w in est.class_weight.items()}
-
         return super().fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
