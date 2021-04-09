@@ -17,11 +17,12 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import _convert_container
+
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.sparsefuncs import mean_variance_axis
@@ -48,6 +49,7 @@ from sklearn.linear_model import (
     OrthogonalMatchingPursuit,
     Ridge,
     RidgeClassifier,
+    RidgeClassifierCV,
     RidgeCV,
 )
 
@@ -303,9 +305,13 @@ def _scale_alpha_inplace(estimator, n_samples):
     normalize set to True to when it is evoked in a Pipeline with normalize set
     to False and with a StandardScaler.
     """
-    if 'alpha' not in estimator.get_params():
+    if (('alpha' not in estimator.get_params()) and
+            ('alphas' not in estimator.get_params())):
         return
 
+    if isinstance(estimator, (RidgeCV, RidgeClassifierCV)):
+        alphas = estimator.alphas * n_samples
+        return estimator.set_params(alphas=alphas)
     if isinstance(estimator, (Lasso, LassoLars, MultiTaskLasso)):
         alpha = estimator.alpha * np.sqrt(n_samples)
     if isinstance(estimator, (Ridge, RidgeClassifier)):
@@ -342,7 +348,9 @@ def _scale_alpha_inplace(estimator, n_samples):
      (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
      (Lars, {}),
      (LinearRegression, {}),
-     (LassoLarsIC, {})]
+     (LassoLarsIC, {}),
+     (RidgeCV, {"alphas": [0.1, 0.4]}),
+     (RidgeClassifierCV, {"alphas": [0.1, 0.4]})]
 )
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # Test that linear models (LinearModel) set with normalize set to True are
@@ -404,6 +412,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
          (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
          (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
          (LinearRegression, {}),
+         (RidgeCV, {"alphas": [0.1, 0.4]}),
+         (RidgeClassifierCV, {"alphas": [0.1, 0.4]})
      ]
 )
 @pytest.mark.parametrize(
@@ -494,7 +504,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.01}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
      (LinearRegression, {}),
-     (RidgeCV, {})]
+     (RidgeCV, {}),
+     (RidgeClassifierCV, {})]
  )
 def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     # Test that linear model preceeded by StandardScaler in the pipeline and
@@ -657,11 +668,11 @@ def test_lasso_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, positive=True)
+    lasso = Lasso(alpha=0.1, positive=True)
     lasso.fit(X, y)
     assert min(lasso.coef_) >= 0
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True)
+    lasso = Lasso(alpha=0.1, precompute=True, positive=True)
     lasso.fit(X, y)
     assert min(lasso.coef_) >= 0
 
@@ -670,7 +681,7 @@ def test_enet_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True)
+    enet = ElasticNet(alpha=0.1, positive=True)
     enet.fit(X, y)
     assert min(enet.coef_) >= 0
 
@@ -1244,7 +1255,7 @@ def test_convergence_warnings():
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
-        MultiTaskElasticNet(max_iter=1000).fit(X, y)
+        MultiTaskElasticNet().fit(X, y)
 
     assert not record.list
 
@@ -1258,7 +1269,7 @@ def test_sparse_input_convergence_warning():
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
-        Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
+        Lasso().fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
 
@@ -1421,6 +1432,8 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("ridge_alpha", [1e-1, 1., 1e6])
 @pytest.mark.parametrize("normalize", [True, False])
 def test_enet_ridge_consistency(normalize, ridge_alpha):
