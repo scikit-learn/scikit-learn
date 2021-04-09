@@ -68,12 +68,9 @@ def test_invalid_jl_domain(n_samples, eps):
         johnson_lindenstrauss_min_dim(n_samples, eps=eps)
 
 
-@pytest.mark.parametrize("n_samples, eps", [
-    (3 * [100], 2 * [0.9]), (3 * [100], 2 * [0.9])
-])
-def test_input_size_jl_min_dim(n_samples, eps):
+def test_input_size_jl_min_dim():
     with pytest.raises(ValueError):
-        johnson_lindenstrauss_min_dim(n_samples, eps=eps)
+        johnson_lindenstrauss_min_dim(3 * [100], eps=2 * [0.9])
 
     johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
                                   eps=np.full((10, 10), 0.5))
