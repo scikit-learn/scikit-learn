@@ -78,3 +78,8 @@ module:tree:
 
 module:utils:
 - sklearn/utils/**/*
+
+cython:
+- sklearn/**/*.pyx
+- sklearn/**/*.pxd
+- sklearn/**/*.pxi
