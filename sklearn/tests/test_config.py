@@ -117,7 +117,7 @@ def test_config_threadsafe_joblib(backend):
 
 def test_config_threadsafe():
     """Uses threads directly to test that the global config does not change
-    between threads. Same test as `test_config_threadsafe_joblib` by with
+    between threads. Same test as `test_config_threadsafe_joblib` but with
     `ThreadPoolExecutor`."""
 
     assume_finites = [False, True]
