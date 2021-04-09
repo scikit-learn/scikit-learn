@@ -131,8 +131,7 @@ def config_context(**new_config):
     Notes
     -----
     All settings, not just those presently modified, will be returned to
-    their previous values when the context manager is exited. This is not
-    thread-safe.
+    their previous values when the context manager is exited.
 
     Examples
     --------
