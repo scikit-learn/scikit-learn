@@ -10,6 +10,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
+from sklearn.datasets import load_linnerud
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
@@ -30,6 +31,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
+from sklearn.ensemble import StackingRegressor
 
 
 def test_multi_target_regression():
@@ -658,3 +660,19 @@ def test_classifier_chain_tuple_invalid_order():
 
     with pytest.raises(ValueError, match='invalid order'):
         chain.fit(X, y)
+
+
+def test_multioutputregressor_ducktypes_fitted_estimator():
+    """Test that MultiOutputRegressor checks the fitted estimator for
+    predict. Non-regression test for #16549."""
+    X, y = load_linnerud(return_X_y=True)
+    stacker = StackingRegressor(
+        estimators=[("sgd", SGDRegressor(random_state=1))],
+        final_estimator=Ridge(),
+        cv=2
+    )
+
+    reg = MultiOutputRegressor(estimator=stacker).fit(X, y)
+
+    # Does not raise
+    reg.predict(X)
