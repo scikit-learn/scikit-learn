@@ -585,7 +585,8 @@ def test_groups_support():
 
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2),
                  GroupKFold(n_splits=3), GroupShuffleSplit()]
-    error_msg = "The 'groups' parameter should not be None."
+    error_msg = 'The cv parameter must yield consistent folds across calls to \
+                split(). Set its random_state to an int, or set shuffle=False.'
     for cv in group_cvs:
         hgs = HalvingGridSearchCV(clf, grid, cv=cv)
         with pytest.raises(ValueError, match=error_msg):
