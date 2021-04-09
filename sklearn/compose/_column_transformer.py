@@ -134,6 +134,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
 
+    output_indices_ : dict
+        A dictionary from each transformer name to a slice, where the slice
+        corresponds to indices in the transformed output. This is useful to
+        inspect which transformer is responsible for which transformed
+        feature(s).
+
+        .. versionadded:: 1.0
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
@@ -351,8 +359,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         check_is_fitted(self)
         feature_names = []
         for name, trans, column, _ in self._iter(fitted=True):
-            if trans == 'drop' or (
-                    hasattr(column, '__len__') and not len(column)):
+            if trans == 'drop' or _is_empty_column_selection(column):
                 continue
             if trans == 'passthrough':
                 if self._feature_names_in is not None:
@@ -369,7 +376,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
-            feature_names.extend([name + "__" + f for f in
+            feature_names.extend([f"{name}__{f}" for f in
                                   trans.get_feature_names()])
         return feature_names
 
@@ -408,6 +415,28 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise ValueError(
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
+
+    def _record_output_indices(self, Xs):
+        """
+        Record which transformer produced which column.
+        """
+        idx = 0
+        self.output_indices_ = {}
+
+        for transformer_idx, (name, _, _, _) in enumerate(
+            self._iter(fitted=True, replace_strings=True)
+        ):
+            n_columns = Xs[transformer_idx].shape[1]
+            self.output_indices_[name] = slice(idx, idx + n_columns)
+            idx += n_columns
+
+        # `_iter` only generates transformers that have a non empty
+        # selection. Here we set empty slices for transformers that
+        # generate no output, which are safe for indexing
+        all_names = [t[0] for t in self.transformers] + ['remainder']
+        for name in all_names:
+            if name not in self.output_indices_:
+                self.output_indices_[name] = slice(0, 0)
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -519,6 +548,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
+        self._record_output_indices(Xs)
 
         return self._hstack(list(Xs))
 

@@ -224,5 +224,5 @@ def binary_log_loss(y_true, y_prob):
              xlogy(1 - y_true, 1 - y_prob).sum()) / y_prob.shape[0]
 
 
-LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss,
+LOSS_FUNCTIONS = {'squared_error': squared_loss, 'log_loss': log_loss,
                   'binary_log_loss': binary_log_loss}

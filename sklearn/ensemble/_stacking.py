@@ -302,6 +302,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         either binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used.
         In all other cases, :class:`~sklearn.model_selection.KFold` is used.
+        These splitters are instantiated with `shuffle=False` so the splits
+        will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -575,6 +577,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         either binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used.
         In all other cases, :class:`~sklearn.model_selection.KFold` is used.
+        These splitters are instantiated with `shuffle=False` so the splits
+        will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

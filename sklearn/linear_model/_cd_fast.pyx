@@ -244,10 +244,20 @@ def enet_coordinate_descent(floating[::1] w,
         else:
             # for/else, runs if for doesn't end with a `break`
             with gil:
-                warnings.warn("Objective did not converge. You might want to "
-                              "increase the number of iterations. Duality "
-                              "gap: {}, tolerance: {}".format(gap, tol),
-                              ConvergenceWarning)
+                message = (
+                    "Objective did not converge. You might want to increase "
+                    "the number of iterations, check the scale of the "
+                    "features or consider increasing regularisation. "
+                    f"Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                )
+                if alpha < np.finfo(np.float64).eps:
+                    message += (
+                        " Linear regression models with null weight for the "
+                        "l1 regularization term are more efficiently fitted "
+                        "using one of the solvers implemented in "
+                        "sklearn.linear_model.Ridge/RidgeCV instead."
+                    )
+                warnings.warn(message, ConvergenceWarning)
 
     return w, gap, tol, n_iter + 1
 

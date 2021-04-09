@@ -131,7 +131,6 @@ plt.show()
 # support for missing values (NaNs). This means that there is no need for
 # imputing data when training or predicting.
 
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 
 X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
