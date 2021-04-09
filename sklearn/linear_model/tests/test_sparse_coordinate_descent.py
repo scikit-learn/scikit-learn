@@ -1,11 +1,11 @@
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.linear_model import Lasso, ElasticNet, LassoCV, ElasticNetCV
@@ -63,7 +63,7 @@ def test_enet_toy_list_input():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=1000)
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.3)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
@@ -102,7 +102,7 @@ def test_enet_toy_explicit_sparse_input():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=1000)
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.3)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
@@ -297,4 +297,9 @@ def test_sparse_enet_coordinate_descent():
     n_features = 2
     X = sp.csc_matrix((n_samples, n_features)) * 1e50
     y = np.ones(n_samples)
-    assert_warns(ConvergenceWarning, clf.fit, X, y)
+    warning_message = (
+        "Objective did not converge. You might want "
+        "to increase the number of iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        clf.fit(X, y)
