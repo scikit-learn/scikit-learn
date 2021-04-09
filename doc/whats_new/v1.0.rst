@@ -96,6 +96,10 @@ Changelog
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Improve the HTML rendering of the
+  :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
+  :pr:`19564` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
