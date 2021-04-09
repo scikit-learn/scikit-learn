@@ -10,7 +10,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.exceptions import ConvergenceWarning
@@ -372,7 +371,11 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
                 + alpha * linalg.norm(coef, 1))
 
     lars = linear_model.LassoLars(alpha=alpha, normalize=False)
-    assert_warns(ConvergenceWarning, lars.fit, X, y)
+    warning_message = (
+        "Regressors in active set degenerate."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        lars.fit(X, y)
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 

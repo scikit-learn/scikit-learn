@@ -27,6 +27,7 @@ from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
+from ..utils.validation import _check_sample_weight
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
@@ -291,13 +292,13 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    if len(np.unique(y_true)) != 2:
-        raise ValueError("Only one class present in y_true. Detection error "
-                         "tradeoff curve is not defined in that case.")
-
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
+
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("Only one class present in y_true. Detection error "
+                         "tradeoff curve is not defined in that case.")
 
     fns = tps[-1] - tps
     p_count = tps[-1]
@@ -696,8 +697,14 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     assert_all_finite(y_true)
     assert_all_finite(y_score)
 
+    # Filter out zero-weighted samples, as they should not impact the result
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, y_true)
+        nonzero_weight_mask = sample_weight != 0
+        y_true = y_true[nonzero_weight_mask]
+        y_score = y_score[nonzero_weight_mask]
+        sample_weight = sample_weight[nonzero_weight_mask]
 
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
@@ -759,7 +766,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
         pos_label should be explicitly given.
 
     probas_pred : ndarray of shape (n_samples,)
-        Estimated probabilities or output of a decision function.
+        Target scores, can either be probability estimates of the positive
+        class, or non-thresholded measure of decisions (as returned by
+        `decision_function` on some classifiers).
 
     pos_label : int or str, default=None
         The label of the positive class.

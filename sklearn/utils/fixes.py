@@ -19,7 +19,7 @@ import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 0.25
+from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 1.0
 from .._config import config_context, get_config
 
 from .deprecation import deprecated
@@ -138,7 +138,7 @@ class loguniform(scipy.stats.reciprocal):
 
     The logarithmic probability density function (PDF) is uniform. When
     ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
-    are random variales that are equally likely to be returned.
+    are random variables that are equally likely to be returned.
 
     This class is an alias to ``scipy.stats.reciprocal``, which uses the
     reciprocal distribution:
@@ -159,10 +159,10 @@ class loguniform(scipy.stats.reciprocal):
 
 @deprecated(
     'MaskedArray is deprecated in version 0.23 and will be removed in version '
-    '0.25. Use numpy.ma.MaskedArray instead.'
+    '1.0 (renaming of 0.25). Use numpy.ma.MaskedArray instead.'
 )
 class MaskedArray(_MaskedArray):
-    pass  # TODO: remove in 0.25
+    pass  # TODO: remove in 1.0
 
 
 def _take_along_axis(arr, indices, axis):
@@ -220,3 +220,51 @@ class _FuncWrapper:
     def __call__(self, *args, **kwargs):
         with config_context(**self.config):
             return self.function(*args, **kwargs)
+
+
+def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
+             axis=0):
+    """Implements a simplified linspace function as of numpy verion >= 1.16.
+
+    As of numpy 1.16, the arguments start and stop can be array-like and
+    there is an optional argument `axis`.
+    For simplicity, we only allow 1d array-like to be passed to start and stop.
+    See: https://github.com/numpy/numpy/pull/12388 and numpy 1.16 release
+    notes about start and stop arrays for linspace logspace and geomspace.
+
+    Returns
+    -------
+    out : ndarray of shape (num, n_start) or (num,)
+        The output array with `n_start=start.shape[0]` columns.
+    """
+    if np_version < parse_version('1.16'):
+        start = np.asanyarray(start) * 1.0
+        stop = np.asanyarray(stop) * 1.0
+        dt = np.result_type(start, stop, float(num))
+        if dtype is None:
+            dtype = dt
+
+        if start.ndim == 0 == stop.ndim:
+            return np.linspace(start=start, stop=stop, num=num,
+                               endpoint=endpoint, retstep=retstep, dtype=dtype)
+
+        if start.ndim != 1 or stop.ndim != 1 or start.shape != stop.shape:
+            raise ValueError("start and stop must be 1d array-like of same"
+                             " shape.")
+        n_start = start.shape[0]
+        out = np.empty((num, n_start), dtype=dtype)
+        step = np.empty(n_start, dtype=np.float)
+        for i in range(n_start):
+            out[:, i], step[i] = np.linspace(start=start[i], stop=stop[i],
+                                             num=num, endpoint=endpoint,
+                                             retstep=True, dtype=dtype)
+        if axis != 0:
+            out = np.moveaxis(out, 0, axis)
+
+        if retstep:
+            return out, step
+        else:
+            return out
+    else:
+        return np.linspace(start=start, stop=stop, num=num, endpoint=endpoint,
+                           retstep=retstep, dtype=dtype, axis=axis)

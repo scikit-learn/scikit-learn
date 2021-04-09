@@ -2,6 +2,7 @@
 
 import warnings
 import os
+import re
 
 from tempfile import NamedTemporaryFile
 from itertools import product
@@ -18,6 +19,7 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _convert_container
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
@@ -44,6 +46,7 @@ from sklearn.utils.validation import (
     _deprecate_positional_args,
     _check_sample_weight,
     _allclose_dense_sparse,
+    _num_features,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
 from sklearn.utils.fixes import parse_version
@@ -55,6 +58,8 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
@@ -111,6 +116,8 @@ def test_as_float_array_nan(X):
     assert_allclose_dense_sparse(X_converted, X)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_np_matrix():
     # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
@@ -338,7 +345,7 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 0.26 when implicit conversation is removed
+# TODO: Check for error in 1.1 when implicit conversation is removed
 @pytest.mark.parametrize("X", [
    [['1', '2'], ['3', '4']],
    np.array([['1', '2'], ['3', '4']], dtype='U'),
@@ -350,12 +357,12 @@ def test_check_array_numeric_warns(X):
     """Test that check_array warns when it converts a bytes/string into a
     float."""
     expected_msg = (r"Arrays of bytes/strings is being converted to decimal .*"
-                    r"deprecated in 0.24 and will be removed in 0.26")
+                    r"deprecated in 0.24 and will be removed in 1.1")
     with pytest.warns(FutureWarning, match=expected_msg):
         check_array(X, dtype="numeric")
 
 
-# TODO: remove in 0.26
+# TODO: remove in 1.1
 @ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("X", [
    [['11', '12'], ['13', 'xx']],
@@ -405,7 +412,7 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
         check_array(X, force_all_finite=True)
 
 
-# TODO: remove test in 0.26 once this behavior is deprecated
+# TODO: remove test in 1.1 once this behavior is deprecated
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
     # get converted
@@ -1168,6 +1175,16 @@ def test_deprecate_positional_args_warns_for_function():
         f3(1, 2)
 
 
+def test_deprecate_positional_args_warns_for_function_version():
+    @_deprecate_positional_args(version="1.1")
+    def f1(a, *, b):
+        pass
+
+    with pytest.warns(FutureWarning,
+                      match=r"From version 1.1 passing these as positional"):
+        f1(1, 2)
+
+
 def test_deprecate_positional_args_warns_for_class():
 
     class A1:
@@ -1310,3 +1327,60 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
                                                      dtype=ntype2)})
     arr = check_array(df, accept_sparse=['csr', 'csc'])
     assert np.issubdtype(arr.dtype, expected_subtype)
+
+
+@pytest.mark.parametrize("constructor_name", [
+    "list", "tuple", "array", "dataframe", "sparse_csr", "sparse_csc"
+])
+def test_num_features(constructor_name):
+    """Check _num_features for array-likes."""
+    X = [[1, 2, 3], [4, 5, 6]]
+    X = _convert_container(X, constructor_name)
+    assert _num_features(X) == 3
+
+
+@pytest.mark.parametrize(
+    "X",
+    [
+        [1, 2, 3],
+        ["a", "b", "c"],
+        [False, True, False],
+        [1.0, 3.4, 4.0],
+        [{"a": 1}, {"b": 2}, {"c": 3}],
+    ],
+    ids=["int", "str", "bool", "float", "dict"]
+)
+@pytest.mark.parametrize("constructor_name", [
+    "list", "tuple", "array", "series"
+])
+def test_num_features_errors_1d_containers(X, constructor_name):
+    X = _convert_container(X, constructor_name)
+    if constructor_name == "array":
+        expected_type_name = "numpy.ndarray"
+    elif constructor_name == "series":
+        expected_type_name = "pandas.core.series.Series"
+    else:
+        expected_type_name = constructor_name
+    message = (
+        "Unable to find the number of features from X of type "
+        f"{expected_type_name}"
+    )
+    if hasattr(X, "shape"):
+        message += " with shape (3,)"
+    elif isinstance(X[0], str):
+        message += " where the samples are of type str"
+    elif isinstance(X[0], dict):
+        message += " where the samples are of type dict"
+    with pytest.raises(TypeError, match=re.escape(message)):
+        _num_features(X)
+
+
+@pytest.mark.parametrize("X", [1, 'b', False, 3.0],
+                         ids=["int", "str", "bool", "float"])
+def test_num_features_errors_scalars(X):
+    msg = (
+        "Unable to find the number of features from X of type "
+        f"{type(X).__qualname__}"
+    )
+    with pytest.raises(TypeError, match=msg):
+        _num_features(X)

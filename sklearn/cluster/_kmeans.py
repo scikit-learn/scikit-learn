@@ -20,6 +20,7 @@ from threadpoolctl import threadpool_info
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
@@ -45,6 +46,99 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 
 ###############################################################################
 # Initialization heuristic
+
+def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
+                    random_state=None, n_local_trials=None):
+    """Init n_clusters seeds according to k-means++
+
+    .. versionadded:: 0.24
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The data to pick seeds from.
+
+    n_clusters : int
+        The number of centroids to initialize
+
+    x_squared_norms : array-like of shape (n_samples,), default=None
+        Squared Euclidean norm of each data point.
+
+    random_state : int or RandomState instance, default=None
+        Determines random number generation for centroid initialization. Pass
+        an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    n_local_trials : int, default=None
+        The number of seeding trials for each center (except the first),
+        of which the one reducing inertia the most is greedily chosen.
+        Set to None to make the number of trials depend logarithmically
+        on the number of seeds (2+log(k)).
+
+    Returns
+    -------
+    centers : ndarray of shape (n_clusters, n_features)
+        The inital centers for k-means.
+
+    indices : ndarray of shape (n_clusters,)
+        The index location of the chosen centers in the data array X. For a
+        given index and center, X[index] = center.
+
+    Notes
+    -----
+    Selects initial cluster centers for k-mean clustering in a smart way
+    to speed up convergence. see: Arthur, D. and Vassilvitskii, S.
+    "k-means++: the advantages of careful seeding". ACM-SIAM symposium
+    on Discrete algorithms. 2007
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import kmeans_plusplus
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0]])
+    >>> centers, indices = kmeans_plusplus(X, n_clusters=2, random_state=0)
+    >>> centers
+    array([[10,  4],
+           [ 1,  0]])
+    >>> indices
+    array([4, 2])
+    """
+
+    # Check data
+    check_array(X, accept_sparse='csr',
+                dtype=[np.float64, np.float32])
+
+    if X.shape[0] < n_clusters:
+        raise ValueError(f"n_samples={X.shape[0]} should be >= "
+                         f"n_clusters={n_clusters}.")
+
+    # Check parameters
+    if x_squared_norms is None:
+        x_squared_norms = row_norms(X, squared=True)
+    else:
+        x_squared_norms = check_array(x_squared_norms,
+                                      dtype=X.dtype,
+                                      ensure_2d=False)
+
+    if x_squared_norms.shape[0] != X.shape[0]:
+        raise ValueError(
+            f"The length of x_squared_norms {x_squared_norms.shape[0]} should "
+            f"be equal to the length of n_samples {X.shape[0]}.")
+
+    if n_local_trials is not None and n_local_trials < 1:
+        raise ValueError(
+            f"n_local_trials is set to {n_local_trials} but should be an "
+            f"integer value greater than zero.")
+
+    random_state = check_random_state(random_state)
+
+    # Call private k-means++
+    centers, indices = _kmeans_plusplus(X, n_clusters, x_squared_norms,
+                                        random_state, n_local_trials)
+
+    return centers, indices
 
 
 def _kmeans_plusplus(X, n_clusters, x_squared_norms,
@@ -103,7 +197,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
     indices[0] = center_id
 
     # Initialize list of closest distances and calculate current potential
-    closest_dist_sq = euclidean_distances(
+    closest_dist_sq = _euclidean_distances(
         centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
         squared=True)
     current_pot = closest_dist_sq.sum()
@@ -120,7 +214,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
                 out=candidate_ids)
 
         # Compute distances to center candidates
-        distance_to_candidates = euclidean_distances(
+        distance_to_candidates = _euclidean_distances(
             X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
         # update closest distances squared and potential for each candidate
@@ -148,7 +242,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
 # K-means batch estimation by EM (expectation maximization)
 
 def _tolerance(X, tol):
-    """Return a tolerance which is independent of the dataset."""
+    """Return a tolerance which is dependent on the dataset."""
     if tol == 0:
         return 0
     if sp.issparse(X):
@@ -212,7 +306,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
 
         .. deprecated:: 0.23
             'precompute_distances' was deprecated in version 0.23 and will be
-            removed in 0.25. It has no effect.
+            removed in 1.0 (renaming of 0.25). It has no effect.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -254,7 +348,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            0.25.
+            1.0 (renaming of 0.25).
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -263,7 +357,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         intensive due to the allocation of an extra array of shape
         (n_samples, n_clusters).
 
-        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        For now "auto" (kept for backward compatibility) chooses "elkan" but it
         might change in the future for a better heuristic.
 
     return_n_iter : bool, default=False
@@ -657,7 +751,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         .. deprecated:: 0.23
             'precompute_distances' was deprecated in version 0.22 and will be
-            removed in 0.25. It has no effect.
+            removed in 1.0 (renaming of 0.25). It has no effect.
 
     verbose : int, default=0
         Verbosity mode.
@@ -686,7 +780,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            0.25.
+            1.0 (renaming of 0.25).
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -728,7 +822,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     -----
     The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
-    The average complexity is given by O(k n T), were n is the number of
+    The average complexity is given by O(k n T), where n is the number of
     samples and T is the number of iteration.
 
     The worst case complexity is given by O(n^(k+2/p)) with
@@ -784,13 +878,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute_distances
         if self.precompute_distances != 'deprecated':
             warnings.warn("'precompute_distances' was deprecated in version "
-                          "0.23 and will be removed in 0.25. It has no "
-                          "effect", FutureWarning)
+                          "0.23 and will be removed in 1.0 (renaming of 0.25)"
+                          ". It has no effect", FutureWarning)
 
         # n_jobs
         if self.n_jobs != 'deprecated':
             warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 0.25.", FutureWarning)
+                          " removed in 1.0 (renaming of 0.25).", FutureWarning)
             self._n_threads = self.n_jobs
         else:
             self._n_threads = None
@@ -1512,13 +1606,15 @@ class MiniBatchKMeans(KMeans):
         Weigth sum of each cluster.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in
+           1.1 (renaming of 0.26).
 
     init_size_ : int
         The effective number of samples used for the initialization.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in
+           1.1 (renaming of 0.26).
 
     See Also
     --------
@@ -1577,19 +1673,19 @@ class MiniBatchKMeans(KMeans):
         self.reassignment_ratio = reassignment_ratio
 
     @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
-                " and will be removed in 0.26.")
+                " and will be removed in 1.1 (renaming of 0.26).")
     @property
     def counts_(self):
         return self._counts
 
     @deprecated("The attribute 'init_size_' is deprecated in "  # type: ignore
-                "0.24 and will be removed in 0.26.")
+                "0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def init_size_(self):
         return self._init_size
 
     @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 0.26.")
+                "in 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def random_state_(self):
         return getattr(self, "_random_state", None)
@@ -1921,97 +2017,3 @@ class MiniBatchKMeans(KMeans):
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
-
-
-def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
-                    random_state=None, n_local_trials=None):
-    """Init n_clusters seeds according to k-means++
-
-    .. versionadded:: 0.24
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        The data to pick seeds from.
-
-    n_clusters : int
-        The number of centroids to initialize
-
-    x_squared_norms : array-like of shape (n_samples,), default=None
-        Squared Euclidean norm of each data point.
-
-    random_state : int or RandomState instance, default=None
-        Determines random number generation for centroid initialization. Pass
-        an int for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
-
-    n_local_trials : int, default=None
-        The number of seeding trials for each center (except the first),
-        of which the one reducing inertia the most is greedily chosen.
-        Set to None to make the number of trials depend logarithmically
-        on the number of seeds (2+log(k)).
-
-    Returns
-    -------
-    centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
-
-    indices : ndarray of shape (n_clusters,)
-        The index location of the chosen centers in the data array X. For a
-        given index and center, X[index] = center.
-
-    Notes
-    -----
-    Selects initial cluster centers for k-mean clustering in a smart way
-    to speed up convergence. see: Arthur, D. and Vassilvitskii, S.
-    "k-means++: the advantages of careful seeding". ACM-SIAM symposium
-    on Discrete algorithms. 2007
-
-    Examples
-    --------
-
-    >>> from sklearn.cluster import kmeans_plusplus
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [10, 2], [10, 4], [10, 0]])
-    >>> centers, indices = kmeans_plusplus(X, n_clusters=2, random_state=0)
-    >>> centers
-    array([[10,  4],
-           [ 1,  0]])
-    >>> indices
-    array([4, 2])
-    """
-
-    # Check data
-    check_array(X, accept_sparse='csr',
-                dtype=[np.float64, np.float32])
-
-    if X.shape[0] < n_clusters:
-        raise ValueError(f"n_samples={X.shape[0]} should be >= "
-                         f"n_clusters={n_clusters}.")
-
-    # Check parameters
-    if x_squared_norms is None:
-        x_squared_norms = row_norms(X, squared=True)
-    else:
-        x_squared_norms = check_array(x_squared_norms,
-                                      dtype=X.dtype,
-                                      ensure_2d=False)
-
-    if x_squared_norms.shape[0] != X.shape[0]:
-        raise ValueError(
-            f"The length of x_squared_norms {x_squared_norms.shape[0]} should "
-            f"be equal to the length of n_samples {X.shape[0]}.")
-
-    if n_local_trials is not None and n_local_trials < 1:
-        raise ValueError(
-            f"n_local_trials is set to {n_local_trials} but should be an "
-            f"integer value greater than zero.")
-
-    random_state = check_random_state(random_state)
-
-    # Call private k-means++
-    centers, indices = _kmeans_plusplus(X, n_clusters, x_squared_norms,
-                                        random_state, n_local_trials)
-
-    return centers, indices

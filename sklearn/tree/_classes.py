@@ -16,6 +16,7 @@ randomized trees. Single and multi-output problems are both handled.
 
 import numbers
 import warnings
+import copy
 from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
@@ -61,7 +62,9 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _criterion.Gini,
                 "entropy": _criterion.Entropy}
-CRITERIA_REG = {"mse": _criterion.MSE,
+# TODO: Remove "mse" in version 1.2.
+CRITERIA_REG = {"squared_error": _criterion.MSE,
+                "mse": _criterion.MSE,
                 "friedman_mse": _criterion.FriedmanMSE,
                 "mae": _criterion.MAE,
                 "poisson": _criterion.Poisson}
@@ -312,11 +315,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         min_impurity_split = self.min_impurity_split
         if min_impurity_split is not None:
-            warnings.warn("The min_impurity_split parameter is deprecated. "
-                          "Its default value has changed from 1e-7 to 0 in "
-                          "version 0.23, and it will be removed in 0.25. "
-                          "Use the min_impurity_decrease parameter instead.",
-                          FutureWarning)
+            warnings.warn(
+                "The min_impurity_split parameter is deprecated. Its default "
+                "value has changed from 1e-7 to 0 in version 0.23, and it "
+                "will be removed in 1.0 (renaming of 0.25). Use the "
+                "min_impurity_decrease parameter instead.",
+                FutureWarning
+            )
 
             if min_impurity_split < 0.:
                 raise ValueError("min_impurity_split must be greater than "
@@ -328,12 +333,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
 
-        # TODO: Remove in v0.26
+        # TODO: Remove in 1.1
         if X_idx_sorted != "deprecated":
-            warnings.warn("The parameter 'X_idx_sorted' is deprecated and has "
-                          "no effect. It will be removed in v0.26. You can "
-                          "suppress this warning by not passing any value to "
-                          "the 'X_idx_sorted' parameter.", FutureWarning)
+            warnings.warn(
+                "The parameter 'X_idx_sorted' is deprecated and has no "
+                "effect. It will be removed in 1.1 (renaming of 0.26). You "
+                "can suppress this warning by not passing any value to the "
+                "'X_idx_sorted' parameter.",
+                FutureWarning
+            )
 
         # Build tree
         criterion = self.criterion
@@ -344,6 +352,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_,
                                                          n_samples)
+            # TODO: Remove in v1.2
+            if self.criterion == "mse":
+                warnings.warn(
+                    "Criterion 'mse' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
+        else:
+            # Make a deepcopy in case the criterion has mutable attributes that
+            # might be shared and modified concurrently during parallel fitting
+            criterion = copy.deepcopy(criterion)
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
@@ -710,7 +730,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dict or "balanced", default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -879,7 +900,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         X_idx_sorted : deprecated, default="deprecated"
             This parameter is deprecated and has no effect.
-            It will be removed in v0.26.
+            It will be removed in 1.1 (renaming of 0.26).
 
             .. deprecated :: 0.24
 
@@ -980,21 +1001,26 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae", "poisson"}, default="mse"
+    criterion : {"squared_error", "mse", "friedman_mse", "mae", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion and minimizes the L2 loss
-        using the mean of each terminal node, "friedman_mse", which uses mean
-        squared error with Friedman's improvement score for potential splits,
-        "mae" for the mean absolute error, which minimizes the L1 loss using
-        the median of each terminal node, and "poisson" which uses reduction in
-        Poisson deviance to find splits.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "mae" for the mean absolute error, which minimizes the L1 loss
+        using the median of each terminal node, and "poisson" which uses
+        reduction in Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1096,7 +1122,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -1175,7 +1202,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     """
     @_deprecate_positional_args
     def __init__(self, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  splitter="best",
                  max_depth=None,
                  min_samples_split=2,
@@ -1227,7 +1254,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         X_idx_sorted : deprecated, default="deprecated"
             This parameter is deprecated and has no effect.
-            It will be removed in v0.26.
+            It will be removed in 1.1 (renaming of 0.26).
 
             .. deprecated :: 0.24
 
@@ -1382,7 +1409,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dict or "balanced", default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1532,17 +1560,22 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
+    criterion : {"squared_error", "mse", "friedman_mse", "mae"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion and "mae" for the
+        mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1631,7 +1664,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     max_leaf_nodes : int, default=None
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -1708,7 +1742,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     """
     @_deprecate_positional_args
     def __init__(self, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  splitter="random",
                  max_depth=None,
                  min_samples_split=2,

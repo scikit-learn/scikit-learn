@@ -255,11 +255,14 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         Confusion matrix whose i-th row and j-th
         column entry indicates the number of
         samples with true label being i-th class
-        and prediced label being j-th class.
+        and predicted label being j-th class.
 
     See Also
     --------
-    plot_confusion_matrix : Plot Confusion Matrix.
+    ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
+        given an estimator, the data, and the label.
+    ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
+        given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     References
@@ -306,7 +309,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
             raise ValueError("'labels' should contains at least one label.")
         elif y_true.size == 0:
             return np.zeros((n_labels, n_labels), dtype=int)
-        elif np.all([l not in y_true for l in labels]):
+        elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
@@ -321,17 +324,25 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                          "'all', None}")
 
     n_labels = labels.size
-    label_to_ind = {y: x for x, y in enumerate(labels)}
-    # convert yt, yp into index
-    y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
-    y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
+    # If labels are not consecutive integers starting from zero, then
+    # y_true and y_pred must be converted into index form
+    need_index_conversion = not (
+        labels.dtype.kind in {'i', 'u', 'b'} and
+        np.all(labels == np.arange(n_labels)) and
+        y_true.min() >= 0 and y_pred.min() >= 0
+    )
+    if need_index_conversion:
+        label_to_ind = {y: x for x, y in enumerate(labels)}
+        y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
+        y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
     ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
-    y_pred = y_pred[ind]
-    y_true = y_true[ind]
-    # also eliminate weights of eliminated items
-    sample_weight = sample_weight[ind]
+    if not np.all(ind):
+        y_pred = y_pred[ind]
+        y_true = y_true[ind]
+        # also eliminate weights of eliminated items
+        sample_weight = sample_weight[ind]
 
     # Choose the accumulator dtype to always have high precision
     if sample_weight.dtype.kind in {'i', 'u', 'b'}:
@@ -1806,7 +1817,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
 
     adjusted : bool, default=False
         When true, the result is adjusted for chance, so that random
-        performance would score 0, and perfect performance scores 1.
+        performance would score 0, while keeping perfect performance at a score
+        of 1.
 
     Returns
     -------
@@ -2366,11 +2378,29 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
     y_true_unique = np.unique(labels if labels is not None else y_true)
+
     if y_true_unique.size > 2:
-        if (labels is None and pred_decision.ndim > 1 and
-                (np.size(y_true_unique) != pred_decision.shape[1])):
-            raise ValueError("Please include all labels in y_true "
-                             "or pass labels as third argument")
+
+        if pred_decision.ndim <= 1:
+            raise ValueError("The shape of pred_decision cannot be 1d array"
+                             "with a multiclass target. pred_decision shape "
+                             "must be (n_samples, n_classes), that is "
+                             f"({y_true.shape[0]}, {y_true_unique.size})."
+                             f" Got: {pred_decision.shape}")
+
+        # pred_decision.ndim > 1 is true
+        if y_true_unique.size != pred_decision.shape[1]:
+            if labels is None:
+                raise ValueError("Please include all labels in y_true "
+                                 "or pass labels as third argument")
+            else:
+                raise ValueError("The shape of pred_decision is not "
+                                 "consistent with the number of classes. "
+                                 "With a multiclass target, pred_decision "
+                                 "shape must be "
+                                 "(n_samples, n_classes), that is "
+                                 f"({y_true.shape[0]}, {y_true_unique.size}). "
+                                 f"Got: {pred_decision.shape}")
         if labels is None:
             labels = y_true_unique
         le = LabelEncoder()

@@ -13,21 +13,22 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_allclose,
+    assert_almost_equal,
+    ignore_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import clone
+from sklearn.base import clone, is_classifier
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
@@ -63,11 +64,11 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import r2_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
@@ -171,7 +172,8 @@ def test_parameter_grid():
     assert len(empty) == 1
     assert list(empty) == [{}]
     assert_grid_iter_equals_getitem(empty)
-    assert_raises(IndexError, lambda: empty[1])
+    with pytest.raises(IndexError):
+        empty[1]
 
     has_empty = ParameterGrid([{'C': [1, 10]}, {}, {'C': [.5]}])
     assert len(has_empty) == 4
@@ -201,7 +203,8 @@ def test_grid_search():
 
     # Test exception handling on scoring
     grid_search.scoring = 'sklearn'
-    assert_raises(ValueError, grid_search.fit, X, y)
+    with pytest.raises(ValueError):
+        grid_search.fit(X, y)
 
 
 def test_grid_search_pipeline_steps():
@@ -265,8 +268,8 @@ def test_grid_search_no_score():
 
     # giving no scoring function raises an error
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
-    assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
-                         [[1]])
+    with pytest.raises(TypeError, match="no scoring"):
+        grid_search_no_score.fit([[1]])
 
 
 def test_grid_search_score_method():
@@ -311,11 +314,11 @@ def test_grid_search_groups():
 
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2),
                  GroupKFold(n_splits=3), GroupShuffleSplit()]
+    error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
         gs = GridSearchCV(clf, grid, cv=cv)
-        assert_raise_message(ValueError,
-                             "The 'groups' parameter should not be None.",
-                             gs.fit, X, y)
+        with pytest.raises(ValueError, match=error_msg):
+            gs.fit(X, y)
         gs.fit(X, y, groups=groups)
 
     non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
@@ -380,20 +383,21 @@ def test_no_refit():
         # error messages
         for fn_name in ('predict', 'predict_proba', 'predict_log_proba',
                         'transform', 'inverse_transform'):
-            assert_raise_message(NotFittedError,
-                                 ('refit=False. %s is available only after '
-                                  'refitting on the best parameters'
-                                  % fn_name), getattr(grid_search, fn_name), X)
+            error_msg = (f"refit=False. {fn_name} is available only after "
+                         f"refitting on the best parameters")
+            with pytest.raises(NotFittedError, match=error_msg):
+                getattr(grid_search, fn_name)(X)
 
     # Test that an invalid refit param raises appropriate error messages
+    error_msg = ("For multi-metric scoring, the parameter refit must be set to"
+                 " a scorer key")
     for refit in ["", 5, True, 'recall', 'accuracy']:
-        assert_raise_message(ValueError, "For multi-metric scoring, the "
-                             "parameter refit must be set to a scorer key",
-                             GridSearchCV(clf, {}, refit=refit,
-                                          scoring={'acc': 'accuracy',
-                                                   'prec': 'precision'}
-                                          ).fit,
-                             X, y)
+        with pytest.raises(ValueError, match=error_msg):
+            GridSearchCV(
+                clf, {},
+                refit=refit,
+                scoring={'acc': 'accuracy', 'prec': 'precision'}
+            ).fit(X, y)
 
 
 def test_grid_search_error():
@@ -402,7 +406,8 @@ def test_grid_search_error():
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    assert_raises(ValueError, cv.fit, X_[:180], y_)
+    with pytest.raises(ValueError):
+        cv.fit(X_[:180], y_)
 
 
 def test_grid_search_one_grid_point():
@@ -431,34 +436,38 @@ def test_grid_search_when_param_grid_includes_range():
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1}
     clf = SVC(gamma='auto')
-    assert_raise_message(
-        ValueError,
+    error_msg = re.escape(
         "Parameter grid for parameter (C) needs to"
         " be a list or numpy array, but got (<class 'int'>)."
         " Single values need to be wrapped in a list"
-        " with one element.",
-        GridSearchCV, clf, param_dict)
+        " with one element."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": []}
     clf = SVC()
-    assert_raise_message(
-        ValueError,
-        "Parameter values for parameter (C) need to be a non-empty sequence.",
-        GridSearchCV, clf, param_dict)
+    error_msg = re.escape(
+        "Parameter values for parameter (C) need to be a non-empty sequence."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": "1,2,3"}
     clf = SVC(gamma='auto')
-    assert_raise_message(
-        ValueError,
+    error_msg = re.escape(
         "Parameter grid for parameter (C) needs to"
         " be a list or numpy array, but got (<class 'str'>)."
         " Single values need to be wrapped in a list"
-        " with one element.",
-        GridSearchCV, clf, param_dict)
+        " with one element."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": np.ones((3, 2))}
     clf = SVC()
-    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+    with pytest.raises(ValueError):
+        GridSearchCV(clf, param_dict)
 
 
 def test_grid_search_sparse():
@@ -542,7 +551,8 @@ def test_grid_search_precomputed_kernel():
 
     # test error is raised when the precomputed kernel is not array-like
     # or sparse
-    assert_raises(ValueError, cv.fit, K_train.tolist(), y_train)
+    with pytest.raises(ValueError):
+        cv.fit(K_train.tolist(), y_train)
 
 
 def test_grid_search_precomputed_kernel_error_nonsquare():
@@ -552,7 +562,8 @@ def test_grid_search_precomputed_kernel_error_nonsquare():
     y_train = np.ones((10, ))
     clf = SVC(kernel='precomputed')
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    assert_raises(ValueError, cv.fit, K_train, y_train)
+    with pytest.raises(ValueError):
+        cv.fit(K_train, y_train)
 
 
 class BrokenClassifier(BaseEstimator):
@@ -1260,7 +1271,7 @@ def test_grid_search_correct_score_results():
                 assert_almost_equal(correct_score, cv_scores[i])
 
 
-# FIXME remove test_fit_grid_point as the function will be removed on 0.25
+# FIXME remove test_fit_grid_point as the function will be removed on 1.0
 @ignore_warnings(category=FutureWarning)
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
@@ -1284,20 +1295,23 @@ def test_fit_grid_point():
             assert n_test_samples == test.size
 
     # Should raise an error upon multimetric scorer
-    assert_raise_message(ValueError, "For evaluating multiple scores, use "
-                         "sklearn.model_selection.cross_validate instead.",
-                         fit_grid_point, X, y, svc, params, train, test,
-                         {'score': scorer}, verbose=True)
+    error_msg = ("For evaluating multiple scores, use "
+                 "sklearn.model_selection.cross_validate instead.")
+    with pytest.raises(ValueError, match=error_msg):
+        fit_grid_point(
+            X, y, svc, params, train, test, {'score': scorer},
+            verbose=True
+        )
 
 
 # FIXME remove test_fit_grid_point_deprecated as
-# fit_grid_point will be removed on 0.25
+# fit_grid_point will be removed on 1.0
 def test_fit_grid_point_deprecated():
     X, y = make_classification(random_state=0)
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
     msg = ("fit_grid_point is deprecated in version 0.23 "
-           "and will be removed in version 0.25")
+           "and will be removed in version 1.0")
     params = {'C': 0.1}
     train, test = next(StratifiedKFold().split(X, y))
 
@@ -1422,7 +1436,12 @@ def test_grid_search_failing_classifier():
     # error in this test.
     gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
                       refit=False, error_score=0.0)
-    assert_warns(FitFailedWarning, gs.fit, X, y)
+    warning_message = (
+        "Estimator fit failed. The score on this train-test partition "
+        "for these parameters will be set to 0.0.*."
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        gs.fit(X, y)
     n_candidates = len(gs.cv_results_['params'])
 
     # Ensure that grid scores were set to zero as required for those fits
@@ -1438,7 +1457,12 @@ def test_grid_search_failing_classifier():
 
     gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
                       refit=False, error_score=float('nan'))
-    assert_warns(FitFailedWarning, gs.fit, X, y)
+    warning_message = (
+        "Estimator fit failed. The score on this train-test partition "
+        "for these parameters will be set to nan."
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        gs.fit(X, y)
     n_candidates = len(gs.cv_results_['params'])
     assert all(np.all(np.isnan(get_cand_scores(cand_i)))
                for cand_i in range(n_candidates)
@@ -1466,7 +1490,8 @@ def test_grid_search_failing_classifier_raise():
                       refit=False, error_score='raise')
 
     # FailingClassifier issues a ValueError so this is what we look for.
-    assert_raises(ValueError, gs.fit, X, y)
+    with pytest.raises(ValueError):
+        gs.fit(X, y)
 
 
 def test_parameters_sampler_replacement():
@@ -1480,8 +1505,8 @@ def test_parameters_sampler_replacement():
                         'than n_iter=%d. Running %d iterations. For '
                         'exhaustive searches, use GridSearchCV.'
                         % (grid_size, n_iter, grid_size))
-    assert_warns_message(UserWarning, expected_warning,
-                         list, sampler)
+    with pytest.warns(UserWarning, match=expected_warning):
+        list(sampler)
 
     # degenerates to GridSearchCV if n_iter the same as grid_size
     sampler = ParameterSampler(params, n_iter=8)
@@ -1957,7 +1982,7 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     assert pairwise == cv._get_tags()['pairwise'], attr_message
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @ignore_warnings(category=FutureWarning)
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """
@@ -2079,3 +2104,54 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
         'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
+
+
+# FIXME: Replace this test with a full `check_estimator` once we have API only
+# checks.
+@pytest.mark.filterwarnings("ignore:The total space of parameters 4 is")
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+@pytest.mark.parametrize("Predictor", [MinimalRegressor, MinimalClassifier])
+def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
+    # Check that third-party library can run tests without inheriting from
+    # BaseEstimator.
+    rng = np.random.RandomState(0)
+    X, y = rng.randn(25, 2), np.array([0] * 5 + [1] * 20)
+
+    model = Pipeline([
+        ("transformer", MinimalTransformer()), ("predictor", Predictor())
+    ])
+
+    params = {
+        "transformer__param": [1, 10], "predictor__parama": [1, 10],
+    }
+    search = SearchCV(model, params, error_score="raise")
+    search.fit(X, y)
+
+    assert search.best_params_.keys() == params.keys()
+
+    y_pred = search.predict(X)
+    if is_classifier(search):
+        assert_array_equal(y_pred, 1)
+        assert search.score(X, y) == pytest.approx(accuracy_score(y, y_pred))
+    else:
+        assert_allclose(y_pred, y.mean())
+        assert search.score(X, y) == pytest.approx(r2_score(y, y_pred))
+
+
+@pytest.mark.parametrize("return_train_score", [True, False])
+def test_search_cv_verbose_3(capsys, return_train_score):
+    """Check that search cv with verbose>2 shows the score for single
+    metrics. non-regression test fo #19658."""
+    X, y = make_classification(n_samples=100, n_classes=2, flip_y=.2,
+                               random_state=0)
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [.1]}
+
+    GridSearchCV(clf, grid, scoring='accuracy', verbose=3, cv=3,
+                 return_train_score=return_train_score).fit(X, y)
+    captured = capsys.readouterr().out
+    if return_train_score:
+        match = re.findall(r"score=\(train=[\d\.]+, test=[\d.]+\)", captured)
+    else:
+        match = re.findall(r"score=[\d\.]+", captured)
+    assert len(match) == 3

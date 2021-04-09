@@ -1048,7 +1048,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
+        "removed in version 1.0 (renaming of 0.25).")
     @property
     def probA_(self):
         return self._probA
@@ -1056,7 +1056,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
+        "removed in version 1.0 (renaming of 0.25).")
     @property
     def probB_(self):
         return self._probB
@@ -1334,6 +1334,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+
+    See also
+    --------
+    sklearn.linear_model.SGDOneClassSVM
     """
 
     _impl = 'one_class'
@@ -1434,7 +1438,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
+        "removed in version 1.0.")
     @property
     def probA_(self):
         return self._probA
@@ -1442,7 +1446,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
+        "removed in version 1.0.")
     @property
     def probB_(self):
         return self._probB
