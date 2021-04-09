@@ -7,10 +7,10 @@
 import itertools
 
 import numpy as np
+import pytest
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns_message
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet
@@ -163,6 +163,6 @@ def test_mcd_increasing_det_warning():
          [5.2, 3.5, 1.5, 0.2]]
 
     mcd = MinCovDet(random_state=1)
-    assert_warns_message(RuntimeWarning,
-                         "Determinant has increased",
-                         mcd.fit, X)
+    warn_msg = "Determinant has increased"
+    with pytest.warns(RuntimeWarning, match=warn_msg):
+        mcd.fit(X)
