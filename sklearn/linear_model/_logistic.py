@@ -1042,10 +1042,12 @@ class LogisticRegression(LinearClassifierMixin,
     Parameters
     ----------
     penalty : {'l1', 'l2', 'elasticnet', 'none'}, default='l2'
-        Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
-        only supported by the 'saga' solver. If 'none' (not supported by the
-        liblinear solver), no regularization is applied.
+        Used to specify the norm used in the penalization.
+        If 'none' (not supported by the liblinear solver),
+        no regularization is applied.
+
+        Note: Some of penalties may not work with specific solver.
+        See parameter 'solver' below.
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
@@ -1108,10 +1110,14 @@ class LogisticRegression(LinearClassifierMixin,
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
           handle multinomial loss; 'liblinear' is limited to one-versus-rest
           schemes.
-        - 'newton-cg', 'lbfgs', 'sag' and 'saga' handle L2 or no penalty
-        - 'liblinear' and 'saga' also handle L1 penalty
-        - 'saga' also supports 'elasticnet' penalty
-        - 'liblinear' does not support setting ``penalty='none'``
+
+        Note that those algorithms may not work with specific penalty.
+        Supported penalties by solver:
+        - 'newton-cg'   -   ['l2', 'none']
+        - 'lbfgs'       -   ['l2', 'none']
+        - 'liblinear'   -   ['l1', 'l2']
+        - 'sag'         -   ['l2', 'none']
+        - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
