@@ -110,6 +110,10 @@ Changelog
   :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
+- |Fix| :class:`compose.TransformedTargetRegressor` now takes nD targets with
+  an adequate transformer.
+  :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
+
 :mod:`sklearn.datasets`
 .......................
 
