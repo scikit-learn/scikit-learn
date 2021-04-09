@@ -1,0 +1,4 @@
+cython:
+- sklearn/**/*.pyx
+- sklearn/**/*.pxd
+- sklearn/**/*.pxi
