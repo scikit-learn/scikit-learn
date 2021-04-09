@@ -154,6 +154,10 @@ Changelog
   experimental. They are now considered stable and are subject to the same
   deprecation cycles as all other estimators. :pr:`19799` by `Nicolas Hug`_.
 
+- |Enhancement| Improve the HTML rendering of the
+  :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
+  :pr:`19564` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 

@@ -250,9 +250,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         names, estimators = zip(*self.estimators)
         parallel = _VisualBlock('parallel', estimators, names=names,
                                 dash_wrapped=False)
-        serial = _VisualBlock('serial', (parallel, final_estimator),
-                              dash_wrapped=False)
-        return _VisualBlock('serial', [serial])
+
+        # final estimator is wrapped in a parallel block to show the label:
+        # 'final_estimator' in the html repr
+        final_block = _VisualBlock('parallel', [final_estimator],
+                                   names=['final_estimator'],
+                                   dash_wrapped=False)
+        return _VisualBlock('serial', (parallel, final_block),
+                            dash_wrapped=False)
 
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
