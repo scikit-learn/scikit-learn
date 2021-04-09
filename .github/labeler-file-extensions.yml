@@ -2,3 +2,7 @@ cython:
 - sklearn/**/*.pyx
 - sklearn/**/*.pxd
 - sklearn/**/*.pxi
+# Tapita templates
+- sklearn/**/*.pyx.tp
+- sklearn/**/*.pxd.tp
+- sklearn/**/*.pxi.tp
