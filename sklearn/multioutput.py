@@ -198,7 +198,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             Note: Separate models are generated for each predictor.
         """
         check_is_fitted(self)
-        if not hasattr(self.estimator, "predict"):
+        if not hasattr(self.estimators_[0], "predict"):
             raise ValueError("The base estimator should implement"
                              " a predict method")
 
