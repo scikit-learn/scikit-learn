@@ -7,9 +7,16 @@ import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeavePGroupsOut
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.model_selection import KFold, ShuffleSplit
+from sklearn.svm import LinearSVC
 from sklearn.model_selection._search_successive_halving import (
     _SubsampleMetaSplitter, _top_k, _refit_callable)
 
@@ -562,3 +569,41 @@ def test_base_estimator_inputs(Est):
 
     assert (cv_results_df['params'] == passed_params).all()
     assert (cv_results_df['n_resources'] == passed_n_samples).all()
+
+
+def test_groups_support():
+    # Check if ValueError (when groups is None) propagates to 
+    # HalvingGridSearchCV and HalvingRandomSearchCV
+    # And also check if groups is correctly passed to the cv object
+    rng = np.random.RandomState(0)
+
+    X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
+    groups = rng.randint(0, 3, 15)
+
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [1]}
+
+    group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2),
+                 GroupKFold(n_splits=3), GroupShuffleSplit()]
+    error_msg = "The 'groups' parameter should not be None."
+    for cv in group_cvs:
+        hgs = HalvingGridSearchCV(clf, grid, cv=cv)
+        with pytest.raises(ValueError, match=error_msg):
+            hgs.fit(X, y)
+        hgs.fit(X, y, groups=groups)
+
+        hrs = HalvingRandomSearchCV(clf, grid, cv=cv)
+        with pytest.raises(ValueError, match=error_msg):
+            hrs.fit(X, y)
+        hrs.fit(X, y, groups=groups)
+
+    non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
+    for cv in non_group_cvs:
+        hgs = HalvingGridSearchCV(clf, grid, cv=cv)
+        # Should not raise an error
+        hgs.fit(X, y)
+
+        hrs = HalvingGridSearchCV(clf, grid, cv=cv)
+        # Should not raise an error
+        hrs.fit(X, y)
+
