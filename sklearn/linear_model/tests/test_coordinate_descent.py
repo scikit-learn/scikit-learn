@@ -668,11 +668,11 @@ def test_lasso_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, positive=True)
+    lasso = Lasso(alpha=0.1, positive=True)
     lasso.fit(X, y)
     assert min(lasso.coef_) >= 0
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True)
+    lasso = Lasso(alpha=0.1, precompute=True, positive=True)
     lasso.fit(X, y)
     assert min(lasso.coef_) >= 0
 
@@ -681,7 +681,7 @@ def test_enet_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True)
+    enet = ElasticNet(alpha=0.1, positive=True)
     enet.fit(X, y)
     assert min(enet.coef_) >= 0
 
@@ -1255,7 +1255,7 @@ def test_convergence_warnings():
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
-        MultiTaskElasticNet(max_iter=1000).fit(X, y)
+        MultiTaskElasticNet().fit(X, y)
 
     assert not record.list
 
@@ -1269,7 +1269,7 @@ def test_sparse_input_convergence_warning():
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
-        Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
+        Lasso().fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
 
