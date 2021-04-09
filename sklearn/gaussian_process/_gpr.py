@@ -203,8 +203,13 @@ class GaussianProcessRegressor(MultiOutputMixin,
             y = (y - self._y_train_mean) / self._y_train_std
 
         else:
-            self._y_train_mean = np.zeros(1)
-            self._y_train_std = 1
+            if hasattr(y[0], "__len__"):
+                self._y_train_mean = np.zeros(3)
+                self._y_train_std = np.ones(3)
+            else:
+                self._y_train_mean = np.zeros(1)
+                self._y_train_std = 1
+
 
         if np.iterable(self.alpha) \
            and self.alpha.shape[0] != y.shape[0]:
