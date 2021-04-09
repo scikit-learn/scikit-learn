@@ -13,10 +13,11 @@ _global_config = {
 _threadlocal = threading.local()
 
 
-def _set_threadlocal():
+def _get_threadlocal():
     """Set the configuration that is local to the thread."""
     if not hasattr(_threadlocal, 'global_config'):
         _threadlocal.global_config = _global_config.copy()
+    return _threadlocal.global_config
 
 
 def get_config():
@@ -32,8 +33,7 @@ def get_config():
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
     """
-    _set_threadlocal()
-    return _threadlocal.global_config.copy()
+    return _get_threadlocal()
 
 
 def set_config(assume_finite=None, working_memory=None,
@@ -81,16 +81,16 @@ def set_config(assume_finite=None, working_memory=None,
     config_context : Context manager for global scikit-learn configuration.
     get_config : Retrieve current values of the global configuration.
     """
-    _set_threadlocal()
+    local_config = _get_threadlocal()
 
     if assume_finite is not None:
-        _threadlocal.global_config['assume_finite'] = assume_finite
+        local_config['assume_finite'] = assume_finite
     if working_memory is not None:
-        _threadlocal.global_config['working_memory'] = working_memory
+        local_config['working_memory'] = working_memory
     if print_changed_only is not None:
-        _threadlocal.global_config['print_changed_only'] = print_changed_only
+        local_config['print_changed_only'] = print_changed_only
     if display is not None:
-        _threadlocal.global_config['display'] = display
+        local_config['display'] = display
 
 
 @contextmanager
