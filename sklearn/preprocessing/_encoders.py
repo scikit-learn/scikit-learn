@@ -182,8 +182,6 @@ class OneHotEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
-    .. versionchanged:: 0.20
-
     Parameters
     ----------
     categories : 'auto' or a list of array-like, default='auto'
@@ -219,8 +217,11 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
+        .. versionadded:: 0.21
+           The parameter `drop` was added in 0.21.
+
         .. versionchanged:: 0.23
-           Added option 'if_binary'.
+           The option `drop='if_binary'` was added in 0.23.
 
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
