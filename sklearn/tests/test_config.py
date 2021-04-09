@@ -83,7 +83,6 @@ def test_set_config():
     assert get_config()['assume_finite'] is False
 
     # No unknown arguments
-<<<<<<< HEAD
     assert_raises(TypeError, set_config, do_something_else=True)
 
 
@@ -132,7 +131,6 @@ def test_config_threadsafe():
                  e.map(set_assume_finite, assume_finites, sleep_durations)]
 
     assert items == [False, True]
-=======
+
     with pytest.raises(TypeError):
         set_config(do_something_else=True)
->>>>>>> upstream/main
