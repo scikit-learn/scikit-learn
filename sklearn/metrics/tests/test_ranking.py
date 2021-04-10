@@ -13,6 +13,7 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
+from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -711,17 +712,15 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
     precision_recall_curve,
     roc_curve
 ])
-@pytest.mark.parametrize("labels", [
-    np.array([b"a", b"b"], dtype='<S1'),
-    [b'a', b'b']
-])
-def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels):
+@pytest.mark.parametrize("labels_type", ['list', 'array'])
+def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
     # Check that using bytes class labels raises an informative
     # error for any supported string dtype:
+    labels = _convert_container([b'a', b'b'], labels_type)
     msg = ('Labels are represented as bytes and are not supported. '
            'Convert the labels to Python string or integral format.')
     with pytest.raises(ValueError, match=msg):
-        roc_curve(labels, [0., 1.])
+        curve_func(labels, [0., 1.])
 
 
 def test_precision_recall_curve():

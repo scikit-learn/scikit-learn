@@ -11,6 +11,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
+from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -439,17 +440,15 @@ def test_ovr_decision_function():
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
 
 
-@pytest.mark.parametrize("test_input,msg", [
-    (np.array([b'a', b'b'], dtype='<S1'),
-     ('Labels are represented as bytes and are not supported. '
-      'Convert the labels to Python string or integral format.')),
-    ([b'a', b'b'],
-     ('Labels are represented as bytes and are not supported. '
-      'Convert the labels to Python string or integral format.')),
-])
-def test_labels_in_bytes_format(test_input, msg):
+@pytest.mark.parametrize("input_type", ['list', 'array'])
+def test_labels_in_bytes_format(input_type):
     # check that we raise an error with bytes encoded labels
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16980
-    with pytest.raises(ValueError, match=msg):
-        type_of_target(test_input)
+    target = _convert_container([b'a', b'b'], input_type)
+    err_msg = (
+        "Labels are represented as bytes and are not supported. "
+        "Convert the labels to Python string or integral format."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        type_of_target(target)
