@@ -572,21 +572,20 @@ def test_base_estimator_inputs(Est):
 
 
 def test_groups_support():
-    # Check if ValueError (when groups is None) propagates to 
+    # Check if ValueError (when groups is None) propagates to
     # HalvingGridSearchCV and HalvingRandomSearchCV
     # And also check if groups is correctly passed to the cv object
     rng = np.random.RandomState(0)
 
-    X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
-    groups = rng.randint(0, 3, 15)
+    X, y = make_classification(n_samples=50, n_classes=2, random_state=0)
+    groups = rng.randint(0, 3, 50)
 
     clf = LinearSVC(random_state=0)
     grid = {'C': [1]}
 
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2),
-                 GroupKFold(n_splits=3), GroupShuffleSplit()]
-    error_msg = 'The cv parameter must yield consistent folds across calls to \
-                split(). Set its random_state to an int, or set shuffle=False.'
+                 GroupKFold(n_splits=3), GroupShuffleSplit(random_state=0)]
+    error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
         hgs = HalvingGridSearchCV(clf, grid, cv=cv)
         with pytest.raises(ValueError, match=error_msg):
@@ -598,7 +597,7 @@ def test_groups_support():
             hrs.fit(X, y)
         hrs.fit(X, y, groups=groups)
 
-    non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
+    non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit(random_state=0)]
     for cv in non_group_cvs:
         hgs = HalvingGridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
@@ -607,4 +606,3 @@ def test_groups_support():
         hrs = HalvingGridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         hrs.fit(X, y)
-
