@@ -265,8 +265,7 @@ Changelog
 
 - |Fix| The `fit` method of the successive halving parameter search 
   (:class:`HalvingGridSearchCV`, and :class:`HalvingRandomSearchCV`) now 
-  correctly handles `groups` parameter that supports the grouped labels for 
-  the samples used while splitting the dataset into train/test set. 
+  correctly handles the `groups` parameter. 
   :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
 
 :mod:`sklearn.naive_bayes`

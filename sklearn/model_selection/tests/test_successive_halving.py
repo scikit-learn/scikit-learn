@@ -571,7 +571,8 @@ def test_base_estimator_inputs(Est):
     assert (cv_results_df['n_resources'] == passed_n_samples).all()
 
 
-def test_groups_support():
+@pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
+def test_groups_support(Est):
     # Check if ValueError (when groups is None) propagates to
     # HalvingGridSearchCV and HalvingRandomSearchCV
     # And also check if groups is correctly passed to the cv object
@@ -587,22 +588,13 @@ def test_groups_support():
                  GroupKFold(n_splits=3), GroupShuffleSplit(random_state=0)]
     error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
-        hgs = HalvingGridSearchCV(clf, grid, cv=cv)
+        gs = Est(clf, grid, cv=cv)
         with pytest.raises(ValueError, match=error_msg):
-            hgs.fit(X, y)
-        hgs.fit(X, y, groups=groups)
-
-        hrs = HalvingRandomSearchCV(clf, grid, cv=cv)
-        with pytest.raises(ValueError, match=error_msg):
-            hrs.fit(X, y)
-        hrs.fit(X, y, groups=groups)
+            gs.fit(X, y)
+        gs.fit(X, y, groups=groups)
 
     non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit(random_state=0)]
     for cv in non_group_cvs:
-        hgs = HalvingGridSearchCV(clf, grid, cv=cv)
+        gs = Est(clf, grid, cv=cv)
         # Should not raise an error
-        hgs.fit(X, y)
-
-        hrs = HalvingGridSearchCV(clf, grid, cv=cv)
-        # Should not raise an error
-        hrs.fit(X, y)
+        gs.fit(X, y)
