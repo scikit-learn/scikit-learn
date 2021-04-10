@@ -204,8 +204,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         else:
             if hasattr(y[0], "__len__"):
-                self._y_train_mean = np.zeros(3)
-                self._y_train_std = np.ones(3)
+                self._y_train_mean = np.zeros(y.shape[1])
+                self._y_train_std = np.ones(y.shape[1])
             else:
                 self._y_train_mean = np.zeros(1)
                 self._y_train_std = 1
