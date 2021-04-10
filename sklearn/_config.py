@@ -152,7 +152,7 @@ def config_context(**new_config):
     set_config : Set global scikit-learn configuration.
     get_config : Retrieve current values of the global configuration.
     """
-    old_config = _get_threadlocal_config().copy()
+    old_config = get_config()
     set_config(**new_config)
 
     try:
