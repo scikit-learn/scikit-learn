@@ -37,6 +37,7 @@ from sklearn import linear_model, datasets, metrics
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import BernoulliRBM
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import minmax_scale
 from sklearn.base import clone
 
 
@@ -79,7 +80,7 @@ def nudge_dataset(X, Y):
 X, y = datasets.load_digits(return_X_y=True)
 X = np.asarray(X, 'float32')
 X, Y = nudge_dataset(X, y)
-X = (X - np.min(X, 0)) / (np.max(X, 0) + 0.0001)  # 0-1 scaling
+X = minmax_scale(X, feature_range=(0, 1))  # 0-1 scaling
 
 X_train, X_test, Y_train, Y_test = train_test_split(
     X, Y, test_size=0.2, random_state=0)

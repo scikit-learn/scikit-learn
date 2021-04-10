@@ -105,6 +105,15 @@ Changelog
   of each transformer in `output_indices_`. :pr:`18393` by
   :user:`Luca Bittarello <lbittarello>`.
 
+- |FIX| :meth:`compose.ColumnTransformer.get_feature_names` supports
+  non-string feature names returned by any of its transformers.
+  :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
+- |Fix| :class:`compose.TransformedTargetRegressor` now takes nD targets with
+  an adequate transformer.
+  :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -149,9 +158,13 @@ Changelog
   experimental. They are now considered stable and are subject to the same
   deprecation cycles as all other estimators. :pr:`19799` by `Nicolas Hug`_.
 
+- |Enhancement| Improve the HTML rendering of the
+  :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
+  :pr:`19564` by `Thomas Fan`_.
+
 - |Enhancement| Documented and tested support of the Poisson criterion for
-  :class:`ensemble.RandomForestRegressor`. :pr:`19836` by
-  :user:`Brian Sun <bsun94>`.
+:class:`ensemble.RandomForestRegressor`. :pr:`19836` by
+:user:`Brian Sun <bsun94>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -197,11 +210,17 @@ Changelog
   Motivation for this deprecation: ``normalize`` parameter did not take any
   effect if ``fit_intercept`` was set to False and therefore was deemed
   confusing.
-  The behavior of the deprecated LinearRegression(normalize=True) can be
+  The behavior of the deprecated LinearModel(normalize=True) can be
   reproduced with :class:`~sklearn.pipeline.Pipeline` with
-  :class:`~sklearn.preprocessing.StandardScaler`as follows:
-  make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
+  :class:`~sklearn.preprocessing.LinearModel` (where LinearModel is
+  LinearRegression, Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV) as
+  follows:
+  make_pipeline(StandardScaler(with_mean=False), LinearModel()).
+  LinearRegression was deprecated in:
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
+  Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV were deprecated in:
+  :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
 - |Fix|: `sample_weight` are now fully taken into account in linear models
@@ -245,6 +264,12 @@ Changelog
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
+- |Fix| Samples with zero `sample_weight` values do not affect the results
+  from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
+  and :func:`metrics.roc_curve`.
+  :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -269,6 +294,24 @@ Changelog
   :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
+
+
+:mod:`sklearn.neighbors`
+..........................
+
+- |Enhancement| The creation of :class:`neighbors.KDTree` and
+  :class:`neighbors.BallTree` has been improved for their worst-cases time
+  complexity from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n)`.
+  :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
+  :user:`Julien Jerphanion <jjerphan>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |API| The `predict_proba` and `predict_log_proba` methods of the
+  :class:`Pipeline` class now support passing prediction kwargs to
+  the final estimator.
+  :pr:`19790` by :user:`Christopher Flynn <crflynn>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -315,9 +358,9 @@ Changelog
   :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
-  - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
-    precision of the computed variance was very poor when the real variance is
-    exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
+  precision of the computed variance was very poor when the real variance is
+  exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------

@@ -1346,7 +1346,7 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     X : {ndarray, list, sparse matrix}
         Input data.
 
-    dtype: dtype, default=None
+    dtype : dtype, default=None
        dtype of the validated `sample_weight`.
        If None, and the input `sample_weight` is an array, the dtype of the
        input is preserved; otherwise an array with the default numpy dtype
@@ -1383,6 +1383,7 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
         if sample_weight.shape != (n_samples,):
             raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
+
     return sample_weight
 
 
