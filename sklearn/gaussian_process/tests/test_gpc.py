@@ -17,7 +17,7 @@ from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils._testing \
-    import assert_almost_equal, assert_array_equal, assert_warns_message
+    import assert_almost_equal, assert_array_equal
 
 
 def f(x):
@@ -189,14 +189,14 @@ def test_multi_class_n_jobs(kernel):
 def test_warning_bounds():
     kernel = RBF(length_scale_bounds=[1e-5, 1e-3])
     gpc = GaussianProcessClassifier(kernel=kernel)
-    assert_warns_message(ConvergenceWarning, "The optimal value found for "
-                                             "dimension 0 of parameter "
-                                             "length_scale is close to "
-                                             "the specified upper bound "
-                                             "0.001. Increasing the bound "
-                                             "and calling fit again may "
-                                             "find a better value.",
-                         gpc.fit, X, y)
+    warning_message = (
+        "The optimal value found for dimension 0 of parameter "
+        "length_scale is close to the specified upper bound "
+        "0.001. Increasing the bound and calling fit again may "
+        "find a better value."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        gpc.fit(X, y)
 
     kernel_sum = (WhiteKernel(noise_level_bounds=[1e-5, 1e-3]) +
                   RBF(length_scale_bounds=[1e3, 1e5]))
