@@ -13,14 +13,6 @@ _global_config = {
 _threadlocal = threading.local()
 
 
-def _get_threadlocal():
-    """Get the configuration that is local to the thread. If the configuration
-    does not exist, copy the default global configuration."""
-    if not hasattr(_threadlocal, 'global_config'):
-        _threadlocal.global_config = _global_config.copy()
-    return _threadlocal.global_config
-
-
 def get_config():
     """Retrieve current values for configuration set by :func:`set_config`
 
@@ -34,7 +26,11 @@ def get_config():
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
     """
-    return _get_threadlocal()
+    # Get the configuration that is local to the thread. If the configuration
+    # does not exist, copy the default global configuration.
+    if not hasattr(_threadlocal, 'global_config'):
+        _threadlocal.global_config = _global_config.copy()
+    return _threadlocal.global_config
 
 
 def set_config(assume_finite=None, working_memory=None,
@@ -82,7 +78,7 @@ def set_config(assume_finite=None, working_memory=None,
     config_context : Context manager for global scikit-learn configuration.
     get_config : Retrieve current values of the global configuration.
     """
-    local_config = _get_threadlocal()
+    local_config = get_config()
 
     if assume_finite is not None:
         local_config['assume_finite'] = assume_finite
