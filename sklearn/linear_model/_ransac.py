@@ -91,7 +91,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         samples necessary to estimate the given `base_estimator`. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
-        depedent upon the model, so if a base_estimator other than
+        dependent upon the model, so if a `base_estimator` other than
         `LinearRegression` is used, the user must provide a value.
 
     residual_threshold : float, default=None

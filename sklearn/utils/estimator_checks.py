@@ -350,6 +350,10 @@ def _construct_instance(Estimator):
     if len(required_parameters):
         if required_parameters in (["estimator"], ["base_estimator"]):
             if issubclass(Estimator, RANSACRegressor):
+                # `RANSACRegressor` will raise an error with any model other
+                # than `LinearRegression` if we don't fix `min_samples` parameter.
+                # For common test, we can enforce using `LinearRegression` that
+                # is the default estimator in `RANSACRegressor` instead of `Ridge`.
                 estimator = Estimator(LinearRegression())
             elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
