@@ -637,7 +637,7 @@ def _set_checking_parameters(estimator):
         estimator.set_params(strategy='stratified')
 
     # Speed-up by reducing the number of CV or splits for CV estimators
-    loo_cv = ['RidgeCV']
+    loo_cv = ['RidgeCV', 'RidgeClassifierCV']
     if name not in loo_cv and hasattr(estimator, 'cv'):
         estimator.set_params(cv=3)
     if hasattr(estimator, 'n_splits'):
@@ -2088,10 +2088,11 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
 def check_classifiers_multilabel_representation_invariance(
     name, classifier_orig
 ):
-    X, y = make_multilabel_classification(n_samples=100, n_features=20,
+    X, y = make_multilabel_classification(n_samples=100, n_features=2,
                                           n_classes=5, n_labels=3,
                                           length=50, allow_unlabeled=True,
                                           random_state=0)
+    X = scale(X)
 
     X_train, y_train = X[:80], y[:80]
     X_test = X[80:]
