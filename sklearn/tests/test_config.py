@@ -1,5 +1,5 @@
+import pytest
 from sklearn import get_config, set_config, config_context
-from sklearn.utils._testing import assert_raises
 
 
 def test_config_context():
@@ -43,9 +43,12 @@ def test_config_context():
                             'display': 'text'}
 
     # No positional arguments
-    assert_raises(TypeError, config_context, True)
+    with pytest.raises(TypeError):
+        config_context(True)
+
     # No unknown arguments
-    assert_raises(TypeError, config_context(do_something_else=True).__enter__)
+    with pytest.raises(TypeError):
+        config_context(do_something_else=True).__enter__()
 
 
 def test_config_context_exception():
@@ -71,4 +74,5 @@ def test_set_config():
     assert get_config()['assume_finite'] is False
 
     # No unknown arguments
-    assert_raises(TypeError, set_config, do_something_else=True)
+    with pytest.raises(TypeError):
+        set_config(do_something_else=True)

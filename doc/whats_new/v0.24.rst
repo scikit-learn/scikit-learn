@@ -33,6 +33,13 @@ Changelog
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now correctly shows the score for
+  single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -40,6 +47,13 @@ Changelog
   :class:`preprocessing.OrdinalEncoder` to only allow for `'error'` and
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputRegressor` now works with estimators
+  that dynamically define `predict` during fitting, such as
+  :class:`ensemble.StackingRegressor`. :pr:`19308` by `Thomas Fan`_.
 
 :mod:`sklearn.semi_supervised`
 ..............................
