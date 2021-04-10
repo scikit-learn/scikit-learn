@@ -6,7 +6,6 @@ import joblib
 import pytest
 
 from sklearn import get_config, set_config, config_context
-from sklearn.utils._testing import assert_raises
 from sklearn.utils.fixes import delayed
 from sklearn.utils.fixes import parse_version
 
@@ -83,8 +82,8 @@ def test_set_config():
     assert get_config()['assume_finite'] is False
 
     # No unknown arguments
-<<<<<<< HEAD
-    assert_raises(TypeError, set_config, do_something_else=True)
+    with pytest.raises(TypeError):
+        set_config(do_something_else=True)
 
 
 def set_assume_finite(assume_finite, sleep_duration):
@@ -132,7 +131,3 @@ def test_config_threadsafe():
                  e.map(set_assume_finite, assume_finites, sleep_durations)]
 
     assert items == [False, True]
-=======
-    with pytest.raises(TypeError):
-        set_config(do_something_else=True)
->>>>>>> upstream/main
