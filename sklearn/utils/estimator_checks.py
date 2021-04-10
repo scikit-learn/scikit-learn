@@ -120,6 +120,7 @@ def _yield_checks(estimator):
 
     yield check_estimator_get_tags_default_keys
 
+
 def _yield_classifier_checks(classifier):
     tags = _safe_tags(classifier)
 
@@ -139,6 +140,7 @@ def _yield_classifier_checks(classifier):
     yield check_classifiers_regression_target
     if tags["multilabel"]:
         yield check_classifiers_multilabel_representation_invariance
+        yield check_classifiers_multilabel_format_output
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         if not tags['multioutput_only']:
@@ -2084,7 +2086,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
                 estimator.fit(X)
 
 
-@ignore_warnings(category=(FutureWarning))
+@ignore_warnings(category=FutureWarning)
 def check_classifiers_multilabel_representation_invariance(
     name, classifier_orig
 ):
@@ -2118,6 +2120,44 @@ def check_classifiers_multilabel_representation_invariance(
     assert y_pred.dtype == y_pred_list_of_lists.dtype
     assert type(y_pred) == type(y_pred_list_of_arrays)
     assert type(y_pred) == type(y_pred_list_of_lists)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_multilabel_format_output(name, classifier_orig):
+    classifier = clone(classifier_orig)
+    set_random_state(classifier)
+
+    n_outputs = 5
+    X, y = make_multilabel_classification(n_samples=100, n_features=2,
+                                          n_classes=n_outputs, n_labels=3,
+                                          length=50, allow_unlabeled=True,
+                                          random_state=0)
+    X = scale(X)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    classifier.fit(X_train, y_train)
+
+    response_method_name = ["predict", "predict_proba", "decision_function"]
+    for method_name in response_method_name:
+        response_method = getattr(classifier, method_name, None)
+        if response_method is not None:
+            y_pred = response_method(X_test)
+            if method_name == "predict":
+                assert y_pred.shape == y_test.shape, (
+                    f"{name}.{method_name} output an array of shape "
+                    f"{y_pred.shape} instead of {y_test.shape}"
+                )
+            else:
+                assert isinstance(y_pred, list), (
+                    f"{name}.{method_name} output a/an {type(y_pred)} instead "
+                    f"of a list of ndarray"
+                )
+                assert len(y_pred) == n_outputs
+                for pred in y_pred:
+                    # 25% of the original data with 0/1 labels so we expect
+                    # array of shape (25, 2)
+                    assert pred.shape == (25, 2)
+        else:
+            print(f"{name} does not support method {method_name}")
 
 
 @ignore_warnings(category=FutureWarning)
