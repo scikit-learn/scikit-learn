@@ -1123,6 +1123,11 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         else:
             return y_pred
 
+    def _more_tags(self):
+        return {
+            "multilabel": True,
+        }
+
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron regressor.

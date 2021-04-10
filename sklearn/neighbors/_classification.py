@@ -273,6 +273,11 @@ class KNeighborsClassifier(KNeighborsMixin,
 
         return probabilities
 
+    def _more_tags(self):
+        return {
+            "multilabel": True,
+        }
+
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin,
                                 ClassifierMixin,
@@ -613,3 +618,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
             probabilities = probabilities[0]
 
         return probabilities
+
+    def _more_tags(self):
+        return {
+            "multilabel": True,
+        }

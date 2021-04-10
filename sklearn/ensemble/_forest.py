@@ -824,6 +824,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
             return proba
 
+    def _more_tags(self):
+        return {
+            "multilabel": True,
+        }
+
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     """

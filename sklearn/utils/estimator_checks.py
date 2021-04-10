@@ -2088,7 +2088,6 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
 def check_classifiers_multilabel_representation_invariance(
     name, classifier_orig
 ):
-
     X, y = make_multilabel_classification(n_samples=100, n_features=20,
                                           n_classes=5, n_labels=3,
                                           length=50, allow_unlabeled=True,

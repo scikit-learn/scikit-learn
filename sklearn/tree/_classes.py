@@ -993,6 +993,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             return proba
 
+    def _more_tags(self):
+        return {
+            "multilabel": True,
+        }
+
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     """A decision tree regressor.
