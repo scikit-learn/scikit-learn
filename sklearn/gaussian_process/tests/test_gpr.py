@@ -360,7 +360,7 @@ def test_y_multioutput():
     # Standard deviation and covariance do not depend on output
     assert_almost_equal(y_std_1d, y_std_2d[:, 0])
     assert_almost_equal(y_std_1d, y_std_2d[:, 1])
-    
+
     assert_almost_equal(y_cov_1d, y_cov_2d[:, :, 0])
     assert_almost_equal(y_cov_1d, y_cov_2d[:, :, 1])
 
