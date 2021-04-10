@@ -1436,8 +1436,19 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.parametrize("ridge_alpha", [1e-1, 1., 1e6])
 @pytest.mark.parametrize("normalize", [True, False])
-def test_enet_ridge_consistency(normalize):
+def test_enet_ridge_consistency(normalize, ridge_alpha):
+    # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
+    # provided that the value of alpha is adapted.
+    #
+    # XXX: this test does not pass for weaker regularization (lower values of
+    # ridge_alpha): it could be either a problem of ElasticNet or Ridge (less
+    # likely) and depends on the dataset statistics: lower values for
+    # effective_rank are more problematic in particular.
+
     rng = np.random.RandomState(42)
     X, y = make_regression(
         n_samples=100,
