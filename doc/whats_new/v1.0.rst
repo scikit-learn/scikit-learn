@@ -134,6 +134,10 @@ Changelog
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
 
+- |Enhancement| Updated :func:`fit` in :class:`BaseForest` to provide official
+  support of the Poisson criterion for RandomForestRegressor. A corresponding
+  test case was also included. :pr:`19836` by :user:`Brian Sun <bsun94>`
+
 :mod:`sklearn.ensemble`
 .......................
 

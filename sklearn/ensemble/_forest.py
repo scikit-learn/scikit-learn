@@ -326,11 +326,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         if self.criterion == "poisson":
             if np.any(y < 0):
-                raise ValueError("""Some value(s) of y are negative which is \
-                                    not allowed for Poisson regression.""")
+                raise ValueError("Some value(s) of y are negative which is "
+                                "not allowed for Poisson regression.")
             if np.sum(y) <= 0:
-                raise ValueError("""Sum of y is not positive which is strictly \
-                                    necessary for Poisson regression.""")
+                raise ValueError("Sum of y is not strictly positive which is "
+                                "necessary for Poisson regression.")
 
         self.n_outputs_ = y.shape[1]
 
