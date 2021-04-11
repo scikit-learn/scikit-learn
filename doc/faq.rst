@@ -416,8 +416,8 @@ each other. Let us have a look at
 
 They all do in principle the same and are different only by the penalty they
 impose. This, however, has a large impact on the way the optimization problem
-is solved, which, in the end, uses different methods from linear algebra. A
-further side effect of this is that the different estimators favor different
-data layouts (`X` c-contiguous or f-contiguous, sparse csr or csc).
+is solved, which, in the end, uses different methods and tricks from linear
+algebra. A further side effect of this is that the different estimators favor
+different data layouts (`X` c-contiguous or f-contiguous, sparse csr or csc).
 This complexity of the seemingly simple linear models is the reason for having
 different estimator classes for different penalties.
