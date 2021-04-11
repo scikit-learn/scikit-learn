@@ -1334,9 +1334,9 @@ class RandomForestRegressor(ForestRegressor):
 
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, "poisson" which uses
-        reduction in Poisson deviance to find splits, and "mae" for the
-        mean absolute error.
+        variance reduction as feature selection criterion, "poisson" which
+        uses reduction in Poisson deviance to find splits, and "mae" for
+        the mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
