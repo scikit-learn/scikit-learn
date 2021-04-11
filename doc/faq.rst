@@ -414,10 +414,20 @@ each other. Let us have a look at
 - :class:`~linear_model.Lasso`, L1 penalty
 - :class:`~linear_model.ElasticNet`, L1 + L2 penalty
 
+**Maintainer perspective:**
 They all do in principle the same and are different only by the penalty they
-impose. This, however, has a large impact on the way the optimization problem
-is solved, which, in the end, uses different methods and tricks from linear
-algebra. A further side effect of this is that the different estimators favor
-different data layouts (`X` c-contiguous or f-contiguous, sparse csr or csc).
-This complexity of the seemingly simple linear models is the reason for having
-different estimator classes for different penalties.
+impose. This, however, has a large impact on the way the underlying
+optimization problem is solved. In the end, this amounts to usage of different
+methods and tricks from linear algebra. A further side effect of this is that
+the different estimators favor different data layouts (`X` c-contiguous or
+f-contiguous, sparse csr or csc). This complexity of the seemingly simple
+linear models is the reason for having different estimator classes for
+different penalties.
+
+**User perspective:**
+If all the 4 above mentioned linear models were unified into a single class,
+there would be parameters with a lot of options like the ``solver`` parameter.
+On top of that, there would be a lot of exclusive interactions between
+different parameters. For example, the possible options of the parameters
+``solver``, ``precompute`` and ``selection`` would depend on the chosen values
+of the penalty parameters ``alpha`` and ``l1_ration``.
