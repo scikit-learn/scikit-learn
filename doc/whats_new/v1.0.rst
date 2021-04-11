@@ -163,8 +163,8 @@ Changelog
   :pr:`19564` by `Thomas Fan`_.
 
 - |Enhancement| Documented and tested support of the Poisson criterion for
-:class:`ensemble.RandomForestRegressor`. :pr:`19836` by
-:user:`Brian Sun <bsun94>`.
+  :class:`ensemble.RandomForestRegressor`. :pr:`19836` by
+  :user:`Brian Sun <bsun94>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
