@@ -290,7 +290,8 @@ def test_kernel_pca_inverse_transform_reconstruct_mean():
     X, *_ = make_blobs(n_samples=100, n_features=3, centers=[[1, 1, 1]],
                        random_state=0)
 
-    # When alpha = 0, the inverse transform is exactly equal to the original.
+    # When the linear kernel is used and alpha = 0,
+    # the inverse transformation exactly equals to the original.
     kpca = KernelPCA(
         n_components=3, kernel='linear', fit_inverse_transform=True, alpha=1e-3
     )
@@ -298,6 +299,7 @@ def test_kernel_pca_inverse_transform_reconstruct_mean():
     X_inv = kpca.inverse_transform(X_trans)
     assert_allclose(X, X_inv, atol=1e-3)
 
+    # The polynomical kernel is equivalent to the linear kernel in this case.
     kpca = KernelPCA(
         n_components=3, kernel='poly', degree=1, coef0=0,
         fit_inverse_transform=True, alpha=1e-3
