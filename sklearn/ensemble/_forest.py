@@ -329,8 +329,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 raise ValueError("Some value(s) of y are negative which is "
                                  "not allowed for Poisson regression.")
             if np.sum(y) <= 0:
-                raise ValueError("Sum of y is not strictly positive which is "
-                                 "necessary for Poisson regression.")
+                raise ValueError("Sum of y is not strictly positive which "
+                                 "is necessary for Poisson regression.")
 
         self.n_outputs_ = y.shape[1]
 
@@ -1329,7 +1329,9 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "mae", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "mse", "mae", "poisson"}, \
+            default="squared_error"
+
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion, "poisson" which uses
