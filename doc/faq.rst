@@ -396,3 +396,28 @@ and not at test time, for resampling and similar uses,
 like at `imbalanced-learn`.
 In general, these use cases can be solved
 with a custom meta estimator rather than a Pipeline
+
+Why are there so many different estimators for linear models?
+-------------------------------------------------------------
+Usually, there is one classifier and one regressor per algorithms, e.g.
+:class:`~ensemble.GradientBoostingClassifier` and
+:class:`~ensemble.GradientBoostingRegressor`. Both have similar options and
+both have the parameter `loss`, which is especially useful in the regression
+case as it enables the estimation of conditional mean as well as conditional
+quantiles.
+
+For linear models, there are many estimator classes which are very close to
+each other. Let us have a look at
+
+- :class:`~linear_model.LinearRegression`, no penalty
+- :class:`~linear_model.Ridge`, L2 penalty
+- :class:`~linear_model.LASSO`, L1 penalty
+- :class:`~linear_model.ElasticNet`, L1 + L2 penalty
+
+They all do in principle the same and are different only by the penalty they
+impose. This, however, has a large impact on the way the optimization problem
+is solved, which, in the end, uses different methods from linear algebra. A
+further side effect of this is that the different estimators favor different
+data layouts (`X` c-contiguous or f-contiguous, sparse csr or csc).
+This complexity of the seemingly simple linear models is the reason for having
+different estimator classes for different penalties.
