@@ -2124,16 +2124,20 @@ def check_classifiers_multilabel_representation_invariance(
 
 @ignore_warnings(category=FutureWarning)
 def check_classifiers_multilabel_format_output(name, classifier_orig):
+    """Check the output of the response methods for classifiers supporting
+    multilabel-indicator targets."""
     classifier = clone(classifier_orig)
     set_random_state(classifier)
 
-    n_outputs = 5
-    X, y = make_multilabel_classification(n_samples=100, n_features=2,
+    n_samples, test_size, n_outputs = 100, 25, 5
+    X, y = make_multilabel_classification(n_samples=n_samples, n_features=2,
                                           n_classes=n_outputs, n_labels=3,
                                           length=50, allow_unlabeled=True,
                                           random_state=0)
     X = scale(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    X_train, X_test = X[:-test_size], X[-test_size:]
+    y_train, y_test = y[:-test_size], y[-test_size:]
     classifier.fit(X_train, y_train)
 
     response_method_name = ["predict", "predict_proba", "decision_function"]
@@ -2141,21 +2145,17 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
         response_method = getattr(classifier, method_name, None)
         if response_method is not None:
             y_pred = response_method(X_test)
+
             if method_name == "predict":
+                # y_pred.shape -> y_test.shape with the same dtype
                 assert y_pred.shape == y_test.shape, (
                     f"{name}.{method_name} output an array of shape "
                     f"{y_pred.shape} instead of {y_test.shape}"
                 )
-            else:
-                assert isinstance(y_pred, list), (
-                    f"{name}.{method_name} output a/an {type(y_pred)} instead "
-                    f"of a list of ndarray"
-                )
-                assert len(y_pred) == n_outputs
-                for pred in y_pred:
-                    # 25% of the original data with 0/1 labels so we expect
-                    # array of shape (25, 2)
-                    assert pred.shape == (25, 2)
+                assert y_pred.dtype == y_test.dtype
+            elif method_name == "decision_function":
+                # y_pred.shape -> y_test.shape with floating dtype
+                pass
         else:
             print(f"{name} does not support method {method_name}")
 

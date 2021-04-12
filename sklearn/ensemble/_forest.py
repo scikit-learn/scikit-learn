@@ -51,7 +51,12 @@ from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
 from ..base import is_classifier
-from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
+from ..base import (
+    ClassifierMixin,
+    MultiLabelMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+)
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -572,7 +577,9 @@ def _accumulate_prediction(predict, X, out, lock):
                 out[i] += prediction[i]
 
 
-class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
+class ForestClassifier(
+    ClassifierMixin, MultiLabelMixin, BaseForest, metaclass=ABCMeta,
+):
     """
     Base class for forest of trees-based classifiers.
 
@@ -823,11 +830,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                 proba[k] = np.log(proba[k])
 
             return proba
-
-    def _more_tags(self):
-        return {
-            "multilabel": True,
-        }
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):

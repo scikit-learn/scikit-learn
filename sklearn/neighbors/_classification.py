@@ -16,12 +16,13 @@ from ..utils.validation import _is_arraylike, _num_samples
 import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
-from ..base import ClassifierMixin
+from ..base import ClassifierMixin, MultiLabelMixin
 from ..utils.validation import _deprecate_positional_args
 
 
 class KNeighborsClassifier(KNeighborsMixin,
                            ClassifierMixin,
+                           MultiLabelMixin,
                            NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
 
@@ -273,14 +274,10 @@ class KNeighborsClassifier(KNeighborsMixin,
 
         return probabilities
 
-    def _more_tags(self):
-        return {
-            "multilabel": True,
-        }
-
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin,
                                 ClassifierMixin,
+                                MultiLabelMixin,
                                 NeighborsBase):
     """Classifier implementing a vote among neighbors within a given radius
 
@@ -618,8 +615,3 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
             probabilities = probabilities[0]
 
         return probabilities
-
-    def _more_tags(self):
-        return {
-            "multilabel": True,
-        }
