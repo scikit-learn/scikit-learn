@@ -232,7 +232,7 @@ Changelog
 - |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
   `predict` was performing an `argmax` on the scores obtain from
   `decision_function` instead of returning the multilabel indicator matrix.
-  :pr:`xxxxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.manifold`
 .......................
