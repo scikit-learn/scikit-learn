@@ -2204,7 +2204,7 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
                 f"of the positive class and should therefore contain values "
                 f"below 1."
             )
-            assert_array_less(y_pred, 1,err_msg=err_msg)
+            assert_array_less(y_pred, 1, err_msg=err_msg)
         else:
             raise ValueError(
                 f"Unknown returned type {type(y_pred)} by {name}."
@@ -2215,7 +2215,7 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
     if decision_function_method is not None:
         y_pred = decision_function_method(X_test)
 
-         # y_pred.shape -> y_test.shape with floating dtype
+        # y_pred.shape -> y_test.shape with floating dtype
         assert isinstance(y_pred, np.ndarray), (
             f"{name}.decision_function is expected to output a NumPy array."
             f" Got {type(y_pred)} instead."
