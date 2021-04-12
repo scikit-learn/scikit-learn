@@ -2141,99 +2141,94 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
     y_train, y_test = y[:-test_size], y[-test_size:]
     classifier.fit(X_train, y_train)
 
-    response_method_name = ["predict", "predict_proba", "decision_function"]
-    for method_name in response_method_name:
-        response_method = getattr(classifier, method_name, None)
-        if response_method is not None:
-            y_pred = response_method(X_test)
+    predict_method = getattr(classifier, "predict", None)
+    if predict_method is not None:
+        y_pred = predict_method(X_test)
 
-            if method_name == "predict":
-                # y_pred.shape -> y_test.shape with the same dtype
-                assert isinstance(y_pred, np.ndarray), (
-                    f"{name}.{method_name} is expected to output a NumPy "
-                    f"array. Got {type(y_pred)} instead."
+        # y_pred.shape -> y_test.shape with the same dtype
+        assert isinstance(y_pred, np.ndarray), (
+            f"{name}.predict is expected to output a NumPy array. Got "
+            f"{type(y_pred)} instead."
+        )
+        assert y_pred.shape == y_test.shape, (
+            f"{name}.predict output a NumPy array of shape {y_pred.shape} "
+            f"instead of {y_test.shape}."
+        )
+        assert y_pred.dtype == y_test.dtype, (
+            f"{name}.predict does not output the same dtype than the targets. "
+            f"Got {y_pred.dtype} instead of {y_test.dtype}."
+        )
+
+    predict_proba_method = getattr(classifier, "predict_proba", None)
+    if predict_proba_method is not None:
+        y_pred = predict_proba_method(X_test)
+
+        # y_pred.shape -> 2 possibilities:
+        # - list of length n_outputs of shape (n_samples, 2);
+        # - ndarray of shape (n_samples, n_outputs).
+        # dtype should be floating
+        if isinstance(y_pred, list):
+            assert len(y_pred) == n_outputs, (
+                f"{name}.predict_proba is expected to output a list of length "
+                f"n_outputs of Numpy array. Got length of {len(y_pred)} "
+                f"instead of {n_outputs}."
+            )
+            for pred in y_pred:
+                assert pred.shape == (test_size, 2), (
+                    f"{name}.predict_proba is expected to output a list of "
+                    f"NumPy array of shape (n_samples, 2). Got {pred.shape} "
+                    f"instead of {(test_size, 2)}."
                 )
-                assert y_pred.shape == y_test.shape, (
-                    f"{name}.{method_name} output a NumPy array of shape "
-                    f"{y_pred.shape} instead of {y_test.shape}."
+                assert pred.dtype.kind == "f", (
+                    f"{name}.predict_proba is expected to output a list of "
+                    f"NumPy array of floating dtype. Got {pred.dtype} instead."
                 )
-                assert y_pred.dtype == y_test.dtype, (
-                    f"{name}.{method_name} does not output the same dtype than"
-                    f" the targets. Got {y_pred.dtype} instead of "
-                    f"{y_test.dtype}."
+                # check that we have the correct probabilities
+                err_msg = (
+                    f"{name}.predict_proba is expected to provide "
+                    f"probabilities such that each array rows should sum to 1."
                 )
-            elif method_name == "predict_proba":
-                # y_pred.shape -> 2 possibilities:
-                # - list of length n_outputs of shape (n_samples, 2);
-                # - ndarray of shape (n_samples, n_outputs).
-                # dtype should be floating
-                if isinstance(y_pred, list):
-                    assert len(y_pred) == n_outputs, (
-                        f"{name}.{method_name} is expected to output a list "
-                        f"of length n_outputs of Numpy array. Got length of "
-                        f"{len(y_pred)} instead of {n_outputs}."
-                    )
-                    for pred in y_pred:
-                        assert pred.shape == (test_size, 2), (
-                            f"{name}.{method_name} is expected to output a "
-                            f"list of NumPy array of shape (n_samples, 2). Got"
-                            f" {pred.shape} instead of {(test_size, 2)}."
-                        )
-                        assert pred.dtype.kind == "f", (
-                            f"{name}.{method_name} is expected to output a "
-                            f"list of NumPy array of floating dtype. Got "
-                            f"{pred.dtype} instead."
-                        )
-                        # check that we have the correct probabilities
-                        assert_allclose(
-                            pred.sum(axis=1),
-                            1,
-                            err_msg=(
-                                f"{name}.{method_name} is expected to provide "
-                                f"probabilities such that each array rows "
-                                f"should sum to 1."
-                            ),
-                        )
-                elif isinstance(y_pred, np.ndarray):
-                    assert y_pred.shape == (test_size, n_outputs), (
-                        f"{name}.{method_name} is expected to output a NumPy "
-                        f"array of shape (n_samples, n_outputs). Got "
-                        f"{y_pred.shape} instead of {(test_size, n_outputs)}."
-                    )
-                    assert y_pred.dtype.kind == "f", (
-                        f"{name}.{method_name} is expected to output a NumPy "
-                        f"array of floating dtype. Got {y_pred.dtype} instead."
-                    )
-                    assert_array_less(
-                        y_pred,
-                        1,
-                        err_msg=(
-                            f"{name}.{method_name} is expected to provide "
-                            f"probabilities of the positive class and should "
-                            f"therefore contain values below 1."
-                        ),
-                    )
-                else:
-                    raise ValueError(
-                        f"Unknown returned type {type(y_pred)} by "
-                        f"{name}.{method_name}. A list or a Numpy array are "
-                        f"expected."
-                    )
-            else:  # "decision_function"
-                # y_pred.shape -> y_test.shape with floating dtype
-                assert isinstance(y_pred, np.ndarray), (
-                    f"{name}.{method_name} is expected to output a NumPy "
-                    f"array. Got {type(y_pred)} instead."
-                )
-                assert y_pred.shape == (test_size, n_outputs), (
-                    f"{name}.{method_name} is expected to provide a NumPy "
-                    f"array of shape (n_samples, n_outputs). Got "
-                    f"{y_pred.shape} instead of {(test_size, n_outputs)}."
-                )
-                assert y_pred.dtype.kind == "f", (
-                    f"{name}.{method_name} is expected to output a floating "
-                    f"dtype. Got {y_pred.dtype} instead."
-                )
+                assert_allclose(pred.sum(axis=1), 1, err_msg=err_msg)
+        elif isinstance(y_pred, np.ndarray):
+            assert y_pred.shape == (test_size, n_outputs), (
+                f"{name}.predict_proba is expected to output a NumPy array of "
+                f"shape (n_samples, n_outputs). Got {y_pred.shape} instead of "
+                f"{(test_size, n_outputs)}."
+            )
+            assert y_pred.dtype.kind == "f", (
+                f"{name}.predict_proba is expected to output a NumPy array of "
+                f"floating dtype. Got {y_pred.dtype} instead."
+            )
+            err_msg = (
+                f"{name}.predict_proba is expected to provide probabilities "
+                f"of the positive class and should therefore contain values "
+                f"below 1."
+            )
+            assert_array_less(y_pred, 1,err_msg=err_msg)
+        else:
+            raise ValueError(
+                f"Unknown returned type {type(y_pred)} by {name}."
+                f"predict_proba. A list or a Numpy array are expected."
+            )
+
+    decision_function_method = getattr(classifier, "decision_function", None)
+    if decision_function_method is not None:
+        y_pred = decision_function_method(X_test)
+
+         # y_pred.shape -> y_test.shape with floating dtype
+        assert isinstance(y_pred, np.ndarray), (
+            f"{name}.decision_function is expected to output a NumPy array."
+            f" Got {type(y_pred)} instead."
+        )
+        assert y_pred.shape == (test_size, n_outputs), (
+            f"{name}.decision_function is expected to provide a NumPy array "
+            f"of shape (n_samples, n_outputs). Got {y_pred.shape} instead of "
+            f"{(test_size, n_outputs)}."
+        )
+        assert y_pred.dtype.kind == "f", (
+            f"{name}.decision_function is expected to output a floating dtype."
+            f" Got {y_pred.dtype} instead."
+        )
 
 
 @ignore_warnings(category=FutureWarning)
