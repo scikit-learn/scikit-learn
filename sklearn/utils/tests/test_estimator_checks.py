@@ -737,7 +737,7 @@ def test_check_classifiers_multilabel_output_format():
     )
     err_msg = (
         r"MultiLabelClassifierPredict.predict does not output the same "
-        r"dtype than the targets. Got float64 instead of int64."
+        r"dtype than the targets."
     )
     assert_raises_regex(
         AssertionError,
@@ -802,7 +802,7 @@ def test_check_classifiers_multilabel_output_format():
     clf = MultiLabelClassifierPredictProba(response_output=response_output)
     err_msg = (
         r"MultiLabelClassifierPredictProba.predict_proba is expected to output"
-        r" a list of NumPy array of floating dtype. Got int64 instead."
+        r" a list of NumPy array of floating dtype."
     )
     assert_raises_regex(
         AssertionError,
@@ -848,7 +848,7 @@ def test_check_classifiers_multilabel_output_format():
     clf = MultiLabelClassifierPredictProba(response_output=response_output)
     err_msg = (
         r"MultiLabelClassifierPredictProba.predict_proba is expected to "
-        r"output a NumPy array of floating dtype. Got int64 instead."
+        r"output a NumPy array of floating dtype."
     )
     assert_raises_regex(
         AssertionError,
@@ -904,7 +904,7 @@ def test_check_classifiers_multilabel_output_format():
     clf = MultiLabelClassifierDecisionFunction(response_output=y_test)
     err_msg = (
         r"MultiLabelClassifierDecisionFunction.decision_function is expected "
-        r"to output a floating dtype. Got int64 instead."
+        r"to output a floating dtype."
     )
     assert_raises_regex(
         AssertionError,
