@@ -887,17 +887,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
-    .. note::
-
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-        >>> # now you can import normally from ensemble
-        >>> from sklearn.ensemble import HistGradientBoostingRegressor
-
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
     .. versionadded:: 0.21
@@ -1040,8 +1029,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Examples
     --------
-    >>> # To use this experimental feature, we need to explicitly ask for it:
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_diabetes
     >>> X, y = load_diabetes(return_X_y=True)
@@ -1155,17 +1142,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
-
-    .. note::
-
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-        >>> # now you can import normally from ensemble
-        >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
@@ -1304,8 +1280,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
 
     Examples
     --------
-    >>> # To use this experimental feature, we need to explicitly ask for it:
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingClassifier
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)

@@ -1234,14 +1234,14 @@ def test_n_iter(solver):
     n_classes = 1 if solver == 'liblinear' else np.unique(y).shape[0]
     clf = LogisticRegression(tol=1e-2, multi_class='ovr',
                              solver=solver, C=1.,
-                             random_state=42, max_iter=100)
+                             random_state=42)
     clf.fit(X, y)
     assert clf.n_iter_.shape == (n_classes,)
 
     n_classes = np.unique(y).shape[0]
     clf = LogisticRegressionCV(tol=1e-2, multi_class='ovr',
                                solver=solver, Cs=n_Cs, cv=n_cv_fold,
-                               random_state=42, max_iter=100)
+                               random_state=42)
     clf.fit(X, y)
     assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
     clf.fit(X, y_bin)
@@ -1254,13 +1254,13 @@ def test_n_iter(solver):
 
     clf = LogisticRegression(tol=1e-2, multi_class='multinomial',
                              solver=solver, C=1.,
-                             random_state=42, max_iter=100)
+                             random_state=42)
     clf.fit(X, y)
     assert clf.n_iter_.shape == (n_classes,)
 
     clf = LogisticRegressionCV(tol=1e-2, multi_class='multinomial',
                                solver=solver, Cs=n_Cs, cv=n_cv_fold,
-                               random_state=42, max_iter=100)
+                               random_state=42)
     clf.fit(X, y)
     assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
     clf.fit(X, y_bin)
@@ -1280,7 +1280,7 @@ def test_warm_start(solver, warm_start, fit_intercept, multi_class):
     clf = LogisticRegression(tol=1e-4, multi_class=multi_class,
                              warm_start=warm_start,
                              solver=solver,
-                             random_state=42, max_iter=100,
+                             random_state=42,
                              fit_intercept=fit_intercept)
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)

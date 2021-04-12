@@ -8,6 +8,7 @@ from itertools import combinations_with_replacement as combinations_w_r
 import numpy as np
 from scipy import sparse
 from scipy.interpolate import BSpline
+from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
@@ -113,6 +114,29 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         return chain.from_iterable(comb(range(n_features), i)
                                    for i in range(start, degree + 1))
 
+    @staticmethod
+    def _num_combinations(n_features, degree, interaction_only, include_bias):
+        """Calculate number of terms in polynomial expansion
+
+        This should be equivalent to counting the number of terms returned by
+        _combinations(...) but much faster.
+        """
+
+        if interaction_only:
+            combinations = sum(
+                [
+                    comb(n_features, i, exact=True)
+                    for i in range(1, min(degree + 1, n_features + 1))
+                ]
+            )
+        else:
+            combinations = comb(n_features + degree, degree, exact=True) - 1
+
+        if include_bias:
+            combinations += 1
+
+        return combinations
+
     @property
     def powers_(self):
         check_is_fitted(self)
@@ -170,13 +194,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        n_samples, n_features = self._validate_data(
-            X, accept_sparse=True).shape
-        combinations = self._combinations(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
+        _, n_features = self._validate_data(X, accept_sparse=True).shape
         self.n_input_features_ = n_features
-        self.n_output_features_ = sum(1 for _ in combinations)
+        self.n_output_features_ = self._num_combinations(
+            n_features, self.degree, self.interaction_only, self.include_bias
+        )
+
         return self
 
     def transform(self, X):
