@@ -246,14 +246,15 @@ def r_regression(X, y, *, center=True):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}  shape = (n_samples, n_features)
-        The set of regressors that will be tested sequentially.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The data matrix.
 
-    y : array of shape(n_samples).
-        The data matrix
+    y : array-like of shape (n_samples,)
+        The target vector.
 
     center : bool, default=True
-        If true, X and y will be centered.
+        Whether or not to center the data matrix `X` and the target vector `y`.
+        By default, `X` and `y` will be centered.
 
     Returns
     -------
@@ -322,14 +323,15 @@ def f_regression(X, y, *, center=True):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}  shape = (n_samples, n_features)
-        The set of regressors that will be tested sequentially.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The data matrix.
 
-    y : array of shape(n_samples).
-        The data matrix
+    y : array-like of shape (n_samples,)
+        The target vector.
 
-    center : True, bool,
-        If true, X and y will be centered.
+    center : bool, default=True
+        Whether or not to center the data matrix `X` and the target vector `y`.
+        By default, `X` and `y` will be centered.
 
     Returns
     -------
