@@ -232,7 +232,7 @@ def chi2(X, y):
 @_deprecate_positional_args
 def r_regression(X, y, *, center=True):
     """Compute Pearson R correlation coefficients between the features and
-    the target
+    the target.
 
     .. versionadded:: 1.0
 
