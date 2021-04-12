@@ -411,8 +411,8 @@ each other. Let us have a look at
 
 - :class:`~linear_model.LinearRegression`, no penalty
 - :class:`~linear_model.Ridge`, L2 penalty
-- :class:`~linear_model.Lasso`, L1 penalty
-- :class:`~linear_model.ElasticNet`, L1 + L2 penalty
+- :class:`~linear_model.Lasso`, L1 penalty (sparse models)
+- :class:`~linear_model.ElasticNet`, L1 + L2 penalty (less sparse models)
 
 **Maintainer perspective:**
 They all do in principle the same and are different only by the penalty they
