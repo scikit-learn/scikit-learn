@@ -399,7 +399,7 @@ with a custom meta estimator rather than a Pipeline
 
 Why are there so many different estimators for linear models?
 -------------------------------------------------------------
-Usually, there is one classifier and one regressor per algorithms, e.g.
+Usually, there is one classifier and one regressor per model type, e.g.
 :class:`~ensemble.GradientBoostingClassifier` and
 :class:`~ensemble.GradientBoostingRegressor`. Both have similar options and
 both have the parameter `loss`, which is especially useful in the regression
