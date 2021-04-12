@@ -19,10 +19,21 @@ from sklearn.utils import safe_mask
 
 from sklearn.datasets import make_classification, make_regression
 from sklearn.feature_selection import (
-    chi2, f_classif, f_oneway, f_regression, abs_r_regression, r_regression,
-    mutual_info_classif, mutual_info_regression, SelectPercentile,
-    SelectKBest, SelectFpr, SelectFdr, SelectFwe,
-    GenericUnivariateSelect)
+    abs_r_regression,
+    chi2,
+    f_classif,
+    f_oneway,
+    f_regression,
+    GenericUnivariateSelect,
+    mutual_info_classif,
+    mutual_info_regression,
+    r_regression,
+    SelectPercentile,
+    SelectKBest,
+    SelectFpr,
+    SelectFdr,
+    SelectFwe,
+)
 
 
 ##############################################################################
