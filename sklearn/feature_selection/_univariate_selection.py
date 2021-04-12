@@ -275,8 +275,8 @@ def r_regression(X, y, *, center=True):
                      dtype=np.float64)
     n_samples = X.shape[0]
 
-    # compute centered values
-    # note that E[(x - mean(x))*(y - mean(y))] = E[x*(y - mean(y))], so we
+    # Compute centered values
+    # Note that E[(x - mean(x))*(y - mean(y))] = E[x*(y - mean(y))], so we
     # need not center X
     if center:
         y = y - np.mean(y)
@@ -284,13 +284,12 @@ def r_regression(X, y, *, center=True):
             X_means = X.mean(axis=0).getA1()
         else:
             X_means = X.mean(axis=0)
-        # compute the scaled standard deviations via moments
+        # Compute the scaled standard deviations via moments
         X_norms = np.sqrt(row_norms(X.T, squared=True) -
                           n_samples * X_means ** 2)
     else:
         X_norms = row_norms(X.T)
 
-    # compute the correlation
     correlation_coefficient = safe_sparse_dot(y, X)
     correlation_coefficient /= X_norms
     correlation_coefficient /= np.linalg.norm(y)
@@ -355,11 +354,9 @@ def f_regression(X, y, *, center=True):
     SelectPercentile: Select features based on percentile of the highest
         scores.
     """
-
-    # compute the correlation
     corr = r_regression(X, y, center=center)
     degrees_of_freedom = y.size - (2 if center else 1)
-    # convert to p-value
+    # Compute the test's statistics and its p-values
     F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
     pv = stats.f.sf(F, 1, degrees_of_freedom)
     return F, pv
@@ -379,7 +376,6 @@ def abs_r_regression(X, y, center=True):
     r_regression: Univariate linear regression tests returning Pearson R.
     SelectKBest: Select features based on the k highest scores.
     """
-    # compute the correlation
     corr = r_regression(X, y, center=center)
     return abs(corr)
 
