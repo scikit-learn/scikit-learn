@@ -229,7 +229,6 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-@_deprecate_positional_args
 def r_regression(X, y, *, center=True):
     """Compute Pearson's R correlation coefficients between the features and
     the target.
