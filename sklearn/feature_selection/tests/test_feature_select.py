@@ -11,7 +11,6 @@ import pytest
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns_message
@@ -60,8 +59,8 @@ def test_f_oneway_ints():
 
     # test that is gives the same result as with float
     f, p = f_oneway(X.astype(float), y)
-    assert_array_almost_equal(f, fint, decimal=4)
-    assert_array_almost_equal(p, pint, decimal=4)
+    assert_allclose(f, fint)
+    assert_allclose(p, pint)
 
 
 def test_f_classif():
@@ -80,8 +79,8 @@ def test_f_classif():
     assert (pv < 1).all()
     assert (pv[:5] < 0.05).all()
     assert (pv[5:] > 1.e-4).all()
-    assert_array_almost_equal(F_sparse, F)
-    assert_array_almost_equal(pv_sparse, pv)
+    assert_allclose(F_sparse, F)
+    assert_allclose(pv_sparse, pv)
 
 
 @pytest.mark.parametrize("coeff", [abs_r_regression, r_regression])
@@ -97,12 +96,12 @@ def test_r_regression(coeff):
     # with centering, compare with sparse
     correlation_coeffs = coeff(X, y, center=True)
     correlation_coeffs_sparse = coeff(sparse.csr_matrix(X), y, center=True)
-    assert_array_almost_equal(correlation_coeffs_sparse, correlation_coeffs)
+    assert_allclose(correlation_coeffs_sparse, correlation_coeffs)
 
     # again without centering, compare with sparse
     correlation_coeffs = coeff(X, y, center=False)
     correlation_coeffs_sparse = coeff(sparse.csr_matrix(X), y, center=False)
-    assert_array_almost_equal(correlation_coeffs_sparse, correlation_coeffs)
+    assert_allclose(correlation_coeffs_sparse, correlation_coeffs)
 
 
 def test_f_regression():
@@ -121,14 +120,14 @@ def test_f_regression():
     # with centering, compare with sparse
     F, pv = f_regression(X, y, center=True)
     F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=True)
-    assert_array_almost_equal(F_sparse, F)
-    assert_array_almost_equal(pv_sparse, pv)
+    assert_allclose(F_sparse, F)
+    assert_allclose(pv_sparse, pv)
 
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
     F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
-    assert_array_almost_equal(F_sparse, F)
-    assert_array_almost_equal(pv_sparse, pv)
+    assert_allclose(F_sparse, F)
+    assert_allclose(pv_sparse, pv)
 
 
 def test_f_regression_r_regression_consistency():
@@ -153,8 +152,8 @@ def test_f_regression_input_dtype():
 
     F1, pv1 = f_regression(X, y)
     F2, pv2 = f_regression(X, y.astype(float))
-    assert_array_almost_equal(F1, F2, 5)
-    assert_array_almost_equal(pv1, pv2, 5)
+    assert_allclose(F1, F2, 5)
+    assert_allclose(pv1, pv2, 5)
 
 
 def test_f_regression_center():
@@ -170,7 +169,7 @@ def test_f_regression_center():
 
     F1, _ = f_regression(X, Y, center=True)
     F2, _ = f_regression(X, Y, center=False)
-    assert_array_almost_equal(F1 * (n_samples - 1.) / (n_samples - 2.), F2)
+    assert_allclose(F1 * (n_samples - 1.) / (n_samples - 2.), F2)
     assert_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
 
 
@@ -309,7 +308,7 @@ def test_select_heuristics_classif():
             f_classif, mode=mode, param=0.01).fit(X, y).transform(X)
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
-        assert_array_almost_equal(support, gtruth)
+        assert_allclose(support, gtruth)
 
 
 ##############################################################################
@@ -319,7 +318,7 @@ def test_select_heuristics_classif():
 def assert_best_scores_kept(score_filter):
     scores = score_filter.scores_
     support = score_filter.get_support()
-    assert_array_almost_equal(np.sort(scores[support]),
+    assert_allclose(np.sort(scores[support]),
                               np.sort(scores)[-support.sum():])
 
 
@@ -442,8 +441,8 @@ def test_boundary_case_ch2():
     X = np.array([[10, 20], [20, 20], [20, 30]])
     y = np.array([[1], [0], [0]])
     scores, pvalues = chi2(X, y)
-    assert_array_almost_equal(scores, np.array([4., 0.71428571]))
-    assert_array_almost_equal(pvalues, np.array([0.04550026, 0.39802472]))
+    assert_allclose(scores, np.array([4., 0.71428571]))
+    assert_allclose(pvalues, np.array([0.04550026, 0.39802472]))
 
     filter_fdr = SelectFdr(chi2, alpha=0.1)
     filter_fdr.fit(X, y)
