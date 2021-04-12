@@ -9,7 +9,7 @@ from scipy import stats, sparse
 
 import pytest
 
-from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_almost_equal, _convert_container
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
@@ -84,25 +84,35 @@ def test_f_classif():
     assert_array_almost_equal(pv_sparse, pv)
 
 
-@pytest.mark.parametrize("coeff", [abs_r_regression, r_regression])
-def test_r_regression(coeff):
+@pytest.mark.parametrize("center", [True, False])
+def test_r_regression(center):
+    X, y = make_regression(n_samples=2000, n_features=20, n_informative=5,
+                           shuffle=False, random_state=0)
+
+    corr_coeffs = r_regression(X, y, center=center)
+    assert ((-1 < corr_coeffs).all())
+    assert ((corr_coeffs < 1).all())
+
+    sparse_X = _convert_container(X, "sparse")
+
+    sparse_corr_coeffs = r_regression(sparse_X, y, center=center)
+    assert_allclose(sparse_corr_coeffs, corr_coeffs)
+
+    # Testing against numpy for reference
+    Z = np.hstack((X, y[:, np.newaxis]))
+    correlation_matrix = np.corrcoef(Z, rowvar=False)
+    np_corr_coeffs = correlation_matrix[:-1, -1]
+    assert_array_almost_equal(np_corr_coeffs, corr_coeffs, decimal=3)
+
+
+@pytest.mark.parametrize("array_like", ["array", "sparse_csr", "sparse_csc"])
+def test_abs_r_regression(array_like):
     X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
                            shuffle=False, random_state=0)
 
-    correlation_coeffs = coeff(X, y)
-    if coeff == r_regression:
-        assert ((correlation_coeffs > -1).all())
-    assert ((correlation_coeffs < 1).all())
+    X = _convert_container(X, array_like)
 
-    # with centering, compare with sparse
-    correlation_coeffs = coeff(X, y, center=True)
-    correlation_coeffs_sparse = coeff(sparse.csr_matrix(X), y, center=True)
-    assert_allclose(correlation_coeffs_sparse, correlation_coeffs)
-
-    # again without centering, compare with sparse
-    correlation_coeffs = coeff(X, y, center=False)
-    correlation_coeffs_sparse = coeff(sparse.csr_matrix(X), y, center=False)
-    assert_allclose(correlation_coeffs_sparse, correlation_coeffs)
+    assert_allclose(abs_r_regression(X, y), np.abs(r_regression(X, y)))
 
 
 def test_f_regression():
