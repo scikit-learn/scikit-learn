@@ -334,11 +334,11 @@ def f_regression(X, y, *, center=True):
 
     Returns
     -------
-    F : array, shape=(n_features,)
-        F values of features.
+    f_statistic : ndarray of shape (n_features,)
+        F-statistic for each feature.
 
-    pval : array, shape=(n_features,)
-        p-values of F-scores.
+    p_values : ndarray of shape (n_features,)
+        P-values associated with the F-statistic.
 
     See Also
     --------
@@ -354,12 +354,13 @@ def f_regression(X, y, *, center=True):
     SelectPercentile: Select features based on percentile of the highest
         scores.
     """
-    corr = r_regression(X, y, center=center)
-    degrees_of_freedom = y.size - (2 if center else 1)
-    # Compute the test's statistics and its p-values
-    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
-    pv = stats.f.sf(F, 1, degrees_of_freedom)
-    return F, pv
+    correlation_coefficient = r_regression(X, y, center=center)
+    deg_of_freedom = y.size - (2 if center else 1)
+
+    corr_coef_squared = correlation_coefficient ** 2
+    f_statistic = corr_coef_squared / (1 - corr_coef_squared) * deg_of_freedom
+    p_values = stats.f.sf(f_statistic, 1, deg_of_freedom)
+    return f_statistic, p_values
 
 
 def abs_r_regression(X, y, center=True):
