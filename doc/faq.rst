@@ -413,19 +413,21 @@ each other. Let us have a look at
 - :class:`~linear_model.Ridge`, L2 penalty
 - :class:`~linear_model.Lasso`, L1 penalty (sparse models)
 - :class:`~linear_model.ElasticNet`, L1 + L2 penalty (less sparse models)
+- :class:`~linear_model.SGDRegressor` with `loss='squared_loss'`
 
 **Maintainer perspective:**
 They all do in principle the same and are different only by the penalty they
 impose. This, however, has a large impact on the way the underlying
 optimization problem is solved. In the end, this amounts to usage of different
-methods and tricks from linear algebra. A further side effect of this is that
-the different estimators favor different data layouts (`X` c-contiguous or
-f-contiguous, sparse csr or csc). This complexity of the seemingly simple
-linear models is the reason for having different estimator classes for
-different penalties.
+methods and tricks from linear algebra. A special case is `SGDRegressor` which
+comprises all 4 previous models and is different by the optimization procedure.
+A further side effect is that the different estimators favor different data
+layouts (`X` c-contiguous or f-contiguous, sparse csr or csc). This complexity
+of the seemingly simple linear models is the reason for having different
+estimator classes for different penalties.
 
 **User perspective:**
-If all the 4 above mentioned linear models were unified into a single class,
+If all the 5 above mentioned linear models were unified into a single class,
 there would be parameters with a lot of options like the ``solver`` parameter.
 On top of that, there would be a lot of exclusive interactions between
 different parameters. For example, the possible options of the parameters
