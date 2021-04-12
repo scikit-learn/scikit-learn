@@ -13,8 +13,6 @@ from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.compose import make_column_transformer
 
-# To use this experimental feature, we need to explicitly ask for it:
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES

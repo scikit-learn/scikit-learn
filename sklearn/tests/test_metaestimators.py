@@ -1,19 +1,26 @@
 """Common tests for metaestimators"""
 import functools
+from inspect import signature
 
 import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator
+from sklearn.base import is_regressor
 from sklearn.datasets import make_classification
-
+from sklearn.utils import all_estimators
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.validation import check_is_fitted
-from sklearn.pipeline import Pipeline
+from sklearn.utils._testing import set_random_state
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
+from sklearn.linear_model import Ridge, LogisticRegression
 
 
 class DelegatorData:
@@ -151,3 +158,111 @@ def test_metaestimator_delegation():
             assert not hasattr(delegator, method), (
                     "%s has method %r when its delegate does not"
                     % (delegator_data.name, method))
+
+
+def _generate_meta_estimator_instances_with_pipeline():
+    """Generate instances of meta-estimators fed with a pipeline
+
+    Are considered meta-estimators all estimators accepting one of "estimator",
+    "base_estimator" or "estimators".
+    """
+    for _, Estimator in sorted(all_estimators()):
+        sig = set(signature(Estimator).parameters)
+
+        if "estimator" in sig or "base_estimator" in sig:
+            if is_regressor(Estimator):
+                estimator = make_pipeline(TfidfVectorizer(), Ridge())
+                param_grid = {"ridge__alpha": [0.1, 1.0]}
+            else:
+                estimator = make_pipeline(TfidfVectorizer(),
+                                          LogisticRegression())
+                param_grid = {"logisticregression__C": [0.1, 1.0]}
+
+            if "param_grid" in sig or "param_distributions" in sig:
+                # SearchCV estimators
+                extra_params = {"n_iter": 2} if "n_iter" in sig else {}
+                yield Estimator(estimator, param_grid, **extra_params)
+            else:
+                yield Estimator(estimator)
+
+        elif "estimators" in sig:
+            # stacking, voting
+            if is_regressor(Estimator):
+                estimator = [
+                    ("est1", make_pipeline(TfidfVectorizer(),
+                                           Ridge(alpha=0.1))),
+                    ("est2", make_pipeline(TfidfVectorizer(),
+                                           Ridge(alpha=1))),
+                ]
+            else:
+                estimator = [
+                    ("est1", make_pipeline(TfidfVectorizer(),
+                                           LogisticRegression(C=0.1))),
+                    ("est2", make_pipeline(TfidfVectorizer(),
+                                           LogisticRegression(C=1))),
+                ]
+            yield Estimator(estimator)
+
+        else:
+            continue
+
+
+# TODO: remove data validation for the following estimators
+# They should be able to work on any data and delegate data validation to
+# their inner estimator(s).
+DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
+        "AdaBoostClassifier",
+        "AdaBoostRegressor",
+        "BaggingClassifier",
+        "BaggingRegressor",
+        "ClassifierChain",
+        "IterativeImputer",
+        "MultiOutputClassifier",
+        "MultiOutputRegressor",
+        "OneVsOneClassifier",
+        "OutputCodeClassifier",
+        "RANSACRegressor",
+        "RFE",
+        "RFECV",
+        "RegressorChain",
+        "SelfTrainingClassifier",
+        "SequentialFeatureSelector"  # not applicable (2D data mandatory)
+]
+
+DATA_VALIDATION_META_ESTIMATORS = [
+    est for est in _generate_meta_estimator_instances_with_pipeline() if
+    est.__class__.__name__ not in DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE
+]
+
+
+def _get_meta_estimator_id(estimator):
+    return estimator.__class__.__name__
+
+
+@pytest.mark.parametrize(
+    "estimator", DATA_VALIDATION_META_ESTIMATORS, ids=_get_meta_estimator_id
+)
+def test_meta_estimators_delegate_data_validation(estimator):
+    # Check that meta-estimators delegate data validation to the inner
+    # estimator(s).
+    rng = np.random.RandomState(0)
+    set_random_state(estimator)
+
+    n_samples = 30
+    X = rng.choice(np.array(["aa", "bb", "cc"], dtype=object), size=n_samples)
+
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(3, size=n_samples)
+
+    X = _enforce_estimator_tags_x(estimator, X)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    # Calling fit should not raise any data validation exception since X is a
+    # valid input datastructure for the first step of the pipeline passed as
+    # base estimator to the meta estimator.
+    estimator.fit(X, y)
+
+    # n_features_in_ should not be defined since data is not tabular data.
+    assert not hasattr(estimator, "n_features_in_")

@@ -19,8 +19,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import skip_if_32bit
@@ -291,28 +289,37 @@ def test_standard_scaler_numerical_stability():
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
-    x_scaled = assert_no_warnings(scale, x)
+    with pytest.warns(None) as record:
+        scale(x)
+    assert len(record) == 0
     assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
     x = np.full(10, np.log(1e-5), dtype=np.float64)
-    w = "standard deviation of the data is probably very close to 0"
-    x_scaled = assert_warns_message(UserWarning, w, scale, x)
+    warning_message = (
+        "standard deviation of the data is probably very close to 0"
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        x_scaled = scale(x)
     assert_array_almost_equal(x_scaled, np.zeros(10))
 
     x = np.full(10, 1e-100, dtype=np.float64)
-    x_small_scaled = assert_no_warnings(scale, x)
+    with pytest.warns(None) as record:
+        x_small_scaled = scale(x)
+    assert len(record) == 0
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
     x_big = np.full(10, 1e100, dtype=np.float64)
-    w = "Dataset may contain too large values"
-    x_big_scaled = assert_warns_message(UserWarning, w, scale, x_big)
+    warning_message = (
+        "Dataset may contain too large values"
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        x_big_scaled = scale(x_big)
     assert_array_almost_equal(x_big_scaled, np.zeros(10))
     assert_array_almost_equal(x_big_scaled, x_small_scaled)
-
-    x_big_centered = assert_warns_message(UserWarning, w, scale, x_big,
-                                          with_std=False)
+    with pytest.warns(UserWarning, match=warning_message):
+        x_big_centered = scale(x_big, with_std=False)
     assert_array_almost_equal(x_big_centered, np.zeros(10))
     assert_array_almost_equal(x_big_centered, x_small_scaled)
 
@@ -604,6 +611,26 @@ def test_standard_scaler_trasform_with_partial_fit(sample_weight):
                 np.sum(sample_weight[:i + 1]) ==
                 pytest.approx(scaler_incr.n_samples_seen_)
             )
+
+
+def test_standard_check_array_of_inverse_transform():
+    # Check if StandardScaler inverse_transform is
+    # converting the integer array to float
+    x = np.array([
+        [1, 1, 1, 0, 1, 0],
+        [1, 1, 1, 0, 1, 0],
+        [0, 8, 0, 1, 0, 0],
+        [1, 4, 1, 1, 0, 0],
+        [0, 1, 0, 0, 1, 0],
+        [0, 4, 0, 1, 0, 1]], dtype=np.int32)
+
+    scaler = StandardScaler()
+    scaler.fit(x)
+
+    # The of inverse_transform should be converted
+    # to a float array.
+    # If not X *= self.scale_ will fail.
+    scaler.inverse_transform(x)
 
 
 def test_min_max_scaler_iris():
@@ -1239,9 +1266,11 @@ def test_quantile_transform_sparse_ignore_zeros():
                                       n_quantiles=5)
 
     # dense case -> warning raise
-    assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
-                         " only with sparse matrix. This parameter has no"
-                         " effect.", transformer.fit, X)
+    warning_message = ("'ignore_implicit_zeros' takes effect"
+                       " only with sparse matrix. This parameter has no"
+                       " effect.")
+    with pytest.warns(UserWarning, match=warning_message):
+        transformer.fit(X)
 
     X_expected = np.array([[0, 0],
                            [0, 0],
