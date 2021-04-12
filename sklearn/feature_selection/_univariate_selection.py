@@ -310,12 +310,12 @@ def f_regression(X, y, *, center=True):
        std(y)) using r_regression function.
     2. It is converted to an F score and then to a p-value.
 
-    If p-values are not needed, r_regression can be used to rank features as
-    a slightly cheaper alternative to f_regression. Note however that
-    contrary to f_regression, r_regression values lie in [-1, 1] and can thus
-    be negative.
+    If p-values are not needed, :func:`r_regression` can be used to rank
+    features as a slightly cheaper alternative to :func:`f_regression`.
+    Note however that contrary to :func:`f_regression`, :func:`r_regression`
+    values lie in [-1, 1] and can thus be negative.
 
-    Alternatively, `abs_r_regression` can be used to rank features by
+    Alternatively, :func:`abs_r_regression` can be used to rank features by
     correlation magnitude instead.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
