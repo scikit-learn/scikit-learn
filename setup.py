@@ -266,14 +266,9 @@ def setup_package():
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
-    if len(sys.argv) == 1 or (
-            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-                                    sys.argv[1] in ('--help-commands',
-                                                    'egg_info',
-                                                    'dist_info',
-                                                    '--version',
-                                                    'clean',
-                                                    'check'))):
+    commands = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
+    if all(command in ('egg_info', 'dist_info', 'clean', 'check')
+           for command in commands):
         # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.

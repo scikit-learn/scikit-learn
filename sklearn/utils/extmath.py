@@ -245,7 +245,7 @@ def randomized_range_finder(A, *, size, n_iter,
 @_deprecate_positional_args
 def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state=0):
+                   flip_sign=True, random_state='warn'):
     """Computes a truncated randomized SVD.
 
     Parameters
@@ -296,11 +296,17 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default=0
-        The seed of the pseudo random number generator to use when shuffling
-        the data, i.e. getting the random vectors to initialize the algorithm.
-        Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, default='warn'
+        The seed of the pseudo random number generator to use when
+        shuffling the data, i.e. getting the random vectors to initialize
+        the algorithm. Pass an int for reproducible results across multiple
+        function calls. See :term:`Glossary <random_state>`.
+
+        .. versionchanged:: 1.2
+            The previous behavior (`random_state=0`) is deprecated, and
+            from v1.2 the default value will be `random_state=None`. Set
+            the value of `random_state` explicitly to suppress the deprecation
+            warning.
 
     Notes
     -----
@@ -326,9 +332,21 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn("Calculating SVD of a {} is expensive. "
-                      "csr_matrix is more efficient.".format(
-                          type(M).__name__),
+                      "csr_matrix is more efficient.".format(type(M).__name__),
                       sparse.SparseEfficiencyWarning)
+
+    if random_state == 'warn':
+        warnings.warn(
+            "If 'random_state' is not supplied, the current default "
+            "is to use 0 as a fixed seed. This will change to  "
+            "None in version 1.2 leading to non-deterministic results "
+            "that better reflect nature of the randomized_svd solver. "
+            "If you want to silence this warning, set 'random_state' "
+            "to an integer seed or to None explicitly depending "
+            "if you want your code to be deterministic or not.",
+            FutureWarning
+        )
+        random_state = 0
 
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples

@@ -20,7 +20,6 @@ from sklearn.base import clone
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
                                     assert_array_almost_equal,
                                     assert_allclose,
-                                    assert_raise_message,
                                     fails_if_pypy)
 
 
@@ -361,7 +360,10 @@ def test_repr_kernels(kernel):
 
 def test_rational_quadratic_kernel():
     kernel = RationalQuadratic(length_scale=[1., 1.])
-    assert_raise_message(AttributeError,
-                         "RationalQuadratic kernel only supports isotropic "
-                         "version, please use a single "
-                         "scalar for length_scale", kernel, X)
+    message = (
+        "RationalQuadratic kernel only supports isotropic "
+        "version, please use a single "
+        "scalar for length_scale"
+    )
+    with pytest.raises(AttributeError, match=message):
+        kernel(X)

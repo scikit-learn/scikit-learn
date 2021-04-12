@@ -159,6 +159,8 @@ from ._typedefs import DTYPE, ITYPE
 from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                              euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
+from ._partition_nodes cimport partition_node_indices
+
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
 
@@ -774,73 +776,6 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
             max_spread = spread
             j_max = j
     return j_max
-
-
-cdef int partition_node_indices(DTYPE_t* data,
-                                ITYPE_t* node_indices,
-                                ITYPE_t split_dim,
-                                ITYPE_t split_index,
-                                ITYPE_t n_features,
-                                ITYPE_t n_points) except -1:
-    """Partition points in the node into two equal-sized groups.
-
-    Upon return, the values in node_indices will be rearranged such that
-    (assuming numpy-style indexing):
-
-        data[node_indices[0:split_index], split_dim]
-          <= data[node_indices[split_index], split_dim]
-
-    and
-
-        data[node_indices[split_index], split_dim]
-          <= data[node_indices[split_index:n_points], split_dim]
-
-    The algorithm is essentially a partial in-place quicksort around a
-    set pivot.
-
-    Parameters
-    ----------
-    data : double pointer
-        Pointer to a 2D array of the training data, of shape [N, n_features].
-        N must be greater than any of the values in node_indices.
-    node_indices : int pointer
-        Pointer to a 1D array of length n_points.  This lists the indices of
-        each of the points within the current node.  This will be modified
-        in-place.
-    split_dim : int
-        the dimension on which to split.  This will usually be computed via
-        the routine ``find_node_split_dim``
-    split_index : int
-        the index within node_indices around which to split the points.
-
-    Returns
-    -------
-    status : int
-        integer exit status.  On return, the contents of node_indices are
-        modified as noted above.
-    """
-    cdef ITYPE_t left, right, midindex, i
-    cdef DTYPE_t d1, d2
-    left = 0
-    right = n_points - 1
-
-    while True:
-        midindex = left
-        for i in range(left, right):
-            d1 = data[node_indices[i] * n_features + split_dim]
-            d2 = data[node_indices[right] * n_features + split_dim]
-            if d1 < d2:
-                swap(node_indices, i, midindex)
-                midindex += 1
-        swap(node_indices, midindex, right)
-        if midindex == split_index:
-            break
-        elif midindex < split_index:
-            left = midindex + 1
-        else:
-            right = midindex - 1
-
-    return 0
 
 
 ######################################################################
