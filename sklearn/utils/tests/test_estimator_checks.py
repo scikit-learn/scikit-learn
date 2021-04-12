@@ -683,7 +683,7 @@ def test_check_classifiers_multilabel_output_format():
                                           n_classes=n_outputs, n_labels=3,
                                           length=50, allow_unlabeled=True,
                                           random_state=0)
-    y_train, y_test = y[:-test_size], y[-test_size:]
+    y_test = y[-test_size:]
 
     class BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
         def __init__(self, response_output):
