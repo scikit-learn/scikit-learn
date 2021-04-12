@@ -427,9 +427,11 @@ of the seemingly simple linear models is the reason for having different
 estimator classes for different penalties.
 
 **User perspective:**
-If all the 5 above mentioned linear models were unified into a single class,
-there would be parameters with a lot of options like the ``solver`` parameter.
-On top of that, there would be a lot of exclusive interactions between
-different parameters. For example, the possible options of the parameters
-``solver``, ``precompute`` and ``selection`` would depend on the chosen values
-of the penalty parameters ``alpha`` and ``l1_ratio``.
+First, the current design makes it easy to find the models by their well known
+names like *ridge regression*.
+Secondly, if all the 5 above mentioned linear models were unified into a single
+class, there would be parameters with a lot of options like the ``solver``
+parameter. On top of that, there would be a lot of exclusive interactions
+between different parameters. For example, the possible options of the
+parameters ``solver``, ``precompute`` and ``selection`` would depend on the
+chosen values of the penalty parameters ``alpha`` and ``l1_ratio``.
