@@ -257,7 +257,7 @@ def r_regression(X, y, *, center=True):
 
     Returns
     -------
-    corr : array, shape=(n_features,)
+    correlation_coefficient : ndarray of shape (n_features,)
         Pearson R correlation coefficients of features.
 
     See Also
@@ -290,10 +290,10 @@ def r_regression(X, y, *, center=True):
         X_norms = row_norms(X.T)
 
     # compute the correlation
-    corr = safe_sparse_dot(y, X)
-    corr /= X_norms
-    corr /= np.linalg.norm(y)
-    return corr
+    correlation_coefficient = safe_sparse_dot(y, X)
+    correlation_coefficient /= X_norms
+    correlation_coefficient /= np.linalg.norm(y)
+    return correlation_coefficient
 
 
 @_deprecate_positional_args
