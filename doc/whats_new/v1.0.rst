@@ -170,8 +170,8 @@ Changelog
 
 :mod:`sklearn._iterative.py`
 .................................
-- |Fix| Fix ValueError triggered when setting the estimator as PLSRegression() in 
-  :class: `sklearn._iterative.py: func: _impute_one_feature`
+- |Fix| :class:`cross_decomposition.PLSRegression` can now be used as an estimator for 
+  :class:`impute.IterativeImputer`.
   :pr:`19409` by :user:`Isaack Mungui <isaack-mungui>`.
 
 Code and Documentation Contributors
