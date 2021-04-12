@@ -141,7 +141,6 @@ def test_f_regression_r_regression_consistency():
 
     assert_array_equal(Fs.argsort(), abs_r_regression(X, y).argsort())
 
-    # Test consistency of definition
     assert_allclose(abs_r_regression(X, y), np.abs(r_regression(X, y)))
 
 
