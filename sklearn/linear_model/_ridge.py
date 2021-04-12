@@ -1993,6 +1993,30 @@ class RidgeClassifierCV(LinearClassifierMixin, MultiLabelMixin, _BaseRidgeCV):
     def classes_(self):
         return self._label_binarizer.classes_
 
+    def predict(self, X):
+        """Predict class labels for samples in `X`.
+
+        Parameters
+        ----------
+        X : {array-like, spare matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to predict the targets.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Vector or matrix containing the predictions. In binary and
+            multiclass problems, this is a vector containing `n_samples`. In
+            a multilabel problem, it returns a matrix of shape
+            `(n_samples, n_outputs)`.
+        """
+        if self._label_binarizer.y_type_.startswith("multilabel"):
+            # Threshold such that the negative label is -1 and positive label
+            # is 1 to use the inverse transform of the label binarizer fitted
+            # during fit.
+            scores = 2 * (self.decision_function(X) > 0) - 1
+            return self._label_binarizer.inverse_transform(scores)
+        return super().predict(X)
+
     def _more_tags(self):
         return {
             '_xfail_checks': {
@@ -2001,8 +2025,8 @@ class RidgeClassifierCV(LinearClassifierMixin, MultiLabelMixin, _BaseRidgeCV):
                 # FIXME: see
                 # https://github.com/scikit-learn/scikit-learn/issues/19858
                 # to track progress to resolve this issue
-                'check_classifiers_multilabel_format_output':
-                'RidgeClassifierCV.predict output an array of shape (25,) '
-                'instead of (25, 5)',
+                # 'check_classifiers_multilabel_format_output':
+                # 'RidgeClassifierCV.predict output an array of shape (25,) '
+                # 'instead of (25, 5)',
             },
         }

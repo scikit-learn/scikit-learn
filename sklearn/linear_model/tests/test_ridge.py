@@ -1412,3 +1412,10 @@ def test_ridge_sag_with_X_fortran():
     X = X[::2, :]
     y = y[::2]
     Ridge(solver='sag').fit(X, y)
+
+
+def test_ridge_xxx():
+    # X, y = datasets.load_iris(return_X_y=True)
+    X, y = datasets.make_multilabel_classification()
+    clf = RidgeClassifierCV().fit(X, y)
+    print(clf.predict(X))

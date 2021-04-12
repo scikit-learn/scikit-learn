@@ -229,6 +229,11 @@ Changelog
   is now faster. This is especially noticeable on large sparse input.
   :pr:`19734` by :user:`Fred Robinson <frrad>`.
 
+- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
+  `predict` was performing an `argmax` on the scores obtain from
+  `decision_function` instead of returning the multilabel indicator matrix.
+  :pr:`xxxxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -276,7 +281,7 @@ Changelog
   :pr:`18649` by `Leandro Hermida <hermidalc>` and
   `Rodion Martynov <marrodion>`.
 
-- |Fix| The `fit` method of the successive halving parameter search 
+- |Fix| The `fit` method of the successive halving parameter search
   (:class:`model_selection.HalvingGridSearchCV`, and
   :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
   `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
