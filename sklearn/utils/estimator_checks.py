@@ -2152,11 +2152,22 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
                     f"{name}.{method_name} output an array of shape "
                     f"{y_pred.shape} instead of {y_test.shape}"
                 )
-                assert y_pred.dtype == y_test.dtype
+                assert y_pred.dtype == y_test.dtype, (
+                    f"{name}.{method_name} does not output the same dtype than"
+                    f" the targets. Got {y_pred.dtype} instead of "
+                    f"{y_test.dtype}"
+                )
             elif method_name == "decision_function":
                 # y_pred.shape -> y_test.shape with floating dtype
-                assert y_pred.shape == (test_size, 2)
-                assert y_pred.dtype.kind == "f"
+                assert y_pred.shape == (test_size, 2), (
+                    f"{name}.{method_name} is expected to provide a NumPy "
+                    f"array of shape (n_samples, n_outputs). Got "
+                    f"{y_pred.shape} instead of {(test_size, 2)}"
+                )
+                assert y_pred.dtype.kind == "f", (
+                    f"{name}.{method_name} is expected to output a floating "
+                    f"dtype. Got {y_pred.dtype} instead."
+                )
             else:  # predict_proba
                 # y_pred.shape -> 2 possibilities:
                 # - list of length n_outputs of shape (n_samples, 2);
@@ -2165,13 +2176,28 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
                 if isinstance(y_pred, list):
                     assert len(y_pred) == n_outputs
                     for pred in y_pred:
-                        assert pred.shape == (test_size, 2)
-                        assert pred.dtype.kind == "f"
+                        assert pred.shape == (test_size, 2), (
+                            f"{name}.{method_name} is expected to output a"
+                            f"list of NumPy array of shape (n_samples, 2). Got"
+                            f" {y_pred.shape} instead of {(test_size, 2)}"
+                        )
+                        assert pred.dtype.kind == "f", (
+                            f"{name}.{method_name} is expected to output a "
+                            f"list of NumPy array of floating dtype. Got"
+                            f"{y_pred.dtype} instead."
+                        )
                         # check that we have the correct probabilities
                         assert_allclose(pred.sum(axis=1), 1)
                 elif isinstance(y_pred, np.ndarray):
-                    assert y_pred.shape == (test_size, n_outputs)
-                    assert y_pred.dtype.kind == "f"
+                    assert y_pred.shape == (test_size, n_outputs), (
+                        f"{name}.{method_name} is expected to output a NumPy "
+                        f"array of shape (n_samples, n_outputs). Got "
+                        f"{y_pred.shape} instead of {(test_size, n_outputs)}"
+                    )
+                    assert y_pred.dtype.kind == "f", (
+                        f"{name}.{method_name} is expected to output a NumPy "
+                        f"array of floating dtype. Got {y_pred.dtype} instead."
+                    )
                 else:
                     raise ValueError(
                         f"Unknown return type {type(y_pred)} in "
