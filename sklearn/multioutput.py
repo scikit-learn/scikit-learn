@@ -470,7 +470,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
-        check_array(X, accept_sparse=True)
         self.order_ = self.order
         if isinstance(self.order_, tuple):
             self.order_ = np.array(self.order_)
