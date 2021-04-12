@@ -32,6 +32,7 @@ from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
+from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
 from ..preprocessing import LabelBinarizer
@@ -2009,6 +2010,7 @@ class RidgeClassifierCV(LinearClassifierMixin, MultiLabelMixin, _BaseRidgeCV):
             a multilabel problem, it returns a matrix of shape
             `(n_samples, n_outputs)`.
         """
+        check_is_fitted(self, attributes=["_label_binarizer"])
         if self._label_binarizer.y_type_.startswith("multilabel"):
             # Threshold such that the negative label is -1 and positive label
             # is 1 to use the inverse transform of the label binarizer fitted
