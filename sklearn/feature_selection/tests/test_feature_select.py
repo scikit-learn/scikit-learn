@@ -11,6 +11,7 @@ import pytest
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns_message
@@ -59,8 +60,8 @@ def test_f_oneway_ints():
 
     # test that is gives the same result as with float
     f, p = f_oneway(X.astype(float), y)
-    assert_allclose(f, fint)
-    assert_allclose(p, pint)
+    assert_array_almost_equal(f, fint, decimal=4)
+    assert_array_almost_equal(p, pint, decimal=4)
 
 
 def test_f_classif():
@@ -79,8 +80,8 @@ def test_f_classif():
     assert (pv < 1).all()
     assert (pv[:5] < 0.05).all()
     assert (pv[5:] > 1.e-4).all()
-    assert_allclose(F_sparse, F)
-    assert_allclose(pv_sparse, pv)
+    assert_array_almost_equal(F_sparse, F)
+    assert_array_almost_equal(pv_sparse, pv)
 
 
 @pytest.mark.parametrize("coeff", [abs_r_regression, r_regression])
@@ -441,8 +442,8 @@ def test_boundary_case_ch2():
     X = np.array([[10, 20], [20, 20], [20, 30]])
     y = np.array([[1], [0], [0]])
     scores, pvalues = chi2(X, y)
-    assert_allclose(scores, np.array([4., 0.71428571]))
-    assert_allclose(pvalues, np.array([0.04550026, 0.39802472]))
+    assert_array_almost_equal(scores, np.array([4., 0.71428571]))
+    assert_array_almost_equal(pvalues, np.array([0.04550026, 0.39802472]))
 
     filter_fdr = SelectFdr(chi2, alpha=0.1)
     filter_fdr.fit(X, y)
