@@ -2155,9 +2155,28 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
                 assert y_pred.dtype == y_test.dtype
             elif method_name == "decision_function":
                 # y_pred.shape -> y_test.shape with floating dtype
-                pass
-        else:
-            print(f"{name} does not support method {method_name}")
+                assert y_pred.shape == (test_size, 2)
+                assert y_pred.dtype.kind == "f"
+            else:  # predict_proba
+                # y_pred.shape -> 2 possibilities:
+                # - list of length n_outputs of shape (n_samples, 2);
+                # - ndarray of shape (n_samples, n_outputs).
+                # dtype should be floating
+                if isinstance(y_pred, list):
+                    assert len(y_pred) == n_outputs
+                    for pred in y_pred:
+                        assert pred.shape == (test_size, 2)
+                        assert pred.dtype.kind == "f"
+                        # check that we have the correct probabilities
+                        assert_allclose(pred.sum(axis=1), 1)
+                elif isinstance(y_pred, np.ndarray):
+                    assert y_pred.shape == (test_size, n_outputs)
+                    assert y_pred.dtype.kind == "f"
+                else:
+                    raise ValueError(
+                        f"Unknown return type {type(y_pred)} in "
+                        f"{name}.{method_name}"
+                    )
 
 
 @ignore_warnings(category=FutureWarning)
