@@ -19,6 +19,7 @@ from ._testing import assert_array_equal
 from ._testing import assert_array_almost_equal
 from ._testing import assert_allclose
 from ._testing import assert_allclose_dense_sparse
+from ._testing import assert_array_less
 from ._testing import set_random_state
 from ._testing import SkipTest
 from ._testing import ignore_warnings
@@ -120,6 +121,7 @@ def _yield_checks(estimator):
 
     yield check_estimator_get_tags_default_keys
 
+
 def _yield_classifier_checks(classifier):
     tags = _safe_tags(classifier)
 
@@ -139,6 +141,7 @@ def _yield_classifier_checks(classifier):
     yield check_classifiers_regression_target
     if tags["multilabel"]:
         yield check_classifiers_multilabel_representation_invariance
+        yield check_classifiers_multilabel_format_output
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         if not tags['multioutput_only']:
@@ -637,7 +640,7 @@ def _set_checking_parameters(estimator):
         estimator.set_params(strategy='stratified')
 
     # Speed-up by reducing the number of CV or splits for CV estimators
-    loo_cv = ['RidgeCV']
+    loo_cv = ['RidgeCV', 'RidgeClassifierCV']
     if name not in loo_cv and hasattr(estimator, 'cv'):
         estimator.set_params(cv=3)
     if hasattr(estimator, 'n_splits'):
@@ -2084,15 +2087,15 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
                 estimator.fit(X)
 
 
-@ignore_warnings(category=(FutureWarning))
+@ignore_warnings(category=FutureWarning)
 def check_classifiers_multilabel_representation_invariance(
     name, classifier_orig
 ):
-
-    X, y = make_multilabel_classification(n_samples=100, n_features=20,
+    X, y = make_multilabel_classification(n_samples=100, n_features=2,
                                           n_classes=5, n_labels=3,
                                           length=50, allow_unlabeled=True,
                                           random_state=0)
+    X = scale(X)
 
     X_train, y_train = X[:80], y[:80]
     X_test = X[80:]
@@ -2118,6 +2121,119 @@ def check_classifiers_multilabel_representation_invariance(
     assert y_pred.dtype == y_pred_list_of_lists.dtype
     assert type(y_pred) == type(y_pred_list_of_arrays)
     assert type(y_pred) == type(y_pred_list_of_lists)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_multilabel_format_output(name, classifier_orig):
+    """Check the output of the response methods for classifiers supporting
+    multilabel-indicator targets."""
+    classifier = clone(classifier_orig)
+    set_random_state(classifier)
+
+    n_samples, test_size, n_outputs = 100, 25, 5
+    X, y = make_multilabel_classification(n_samples=n_samples, n_features=2,
+                                          n_classes=n_outputs, n_labels=3,
+                                          length=50, allow_unlabeled=True,
+                                          random_state=0)
+    X = scale(X)
+
+    X_train, X_test = X[:-test_size], X[-test_size:]
+    y_train, y_test = y[:-test_size], y[-test_size:]
+    classifier.fit(X_train, y_train)
+
+    response_method_name = ["predict", "predict_proba", "decision_function"]
+    for method_name in response_method_name:
+        response_method = getattr(classifier, method_name, None)
+        if response_method is not None:
+            y_pred = response_method(X_test)
+
+            if method_name == "predict":
+                # y_pred.shape -> y_test.shape with the same dtype
+                assert isinstance(y_pred, np.ndarray), (
+                    f"{name}.{method_name} is expected to output a NumPy "
+                    f"array. Got {type(y_pred)} instead."
+                )
+                assert y_pred.shape == y_test.shape, (
+                    f"{name}.{method_name} output a NumPy array of shape "
+                    f"{y_pred.shape} instead of {y_test.shape}."
+                )
+                assert y_pred.dtype == y_test.dtype, (
+                    f"{name}.{method_name} does not output the same dtype than"
+                    f" the targets. Got {y_pred.dtype} instead of "
+                    f"{y_test.dtype}."
+                )
+            elif method_name == "predict_proba":
+                # y_pred.shape -> 2 possibilities:
+                # - list of length n_outputs of shape (n_samples, 2);
+                # - ndarray of shape (n_samples, n_outputs).
+                # dtype should be floating
+                if isinstance(y_pred, list):
+                    assert len(y_pred) == n_outputs, (
+                        f"{name}.{method_name} is expected to output a list "
+                        f"of length n_outputs of Numpy array. Got length of "
+                        f"{len(y_pred)} instead of {n_outputs}."
+                    )
+                    for pred in y_pred:
+                        assert pred.shape == (test_size, 2), (
+                            f"{name}.{method_name} is expected to output a "
+                            f"list of NumPy array of shape (n_samples, 2). Got"
+                            f" {pred.shape} instead of {(test_size, 2)}."
+                        )
+                        assert pred.dtype.kind == "f", (
+                            f"{name}.{method_name} is expected to output a "
+                            f"list of NumPy array of floating dtype. Got "
+                            f"{pred.dtype} instead."
+                        )
+                        # check that we have the correct probabilities
+                        assert_allclose(
+                            pred.sum(axis=1),
+                            1,
+                            err_msg=(
+                                f"{name}.{method_name} is expected to provide "
+                                f"probabilities such that each array rows "
+                                f"should sum to 1."
+                            ),
+                        )
+                elif isinstance(y_pred, np.ndarray):
+                    assert y_pred.shape == (test_size, n_outputs), (
+                        f"{name}.{method_name} is expected to output a NumPy "
+                        f"array of shape (n_samples, n_outputs). Got "
+                        f"{y_pred.shape} instead of {(test_size, n_outputs)}."
+                    )
+                    assert y_pred.dtype.kind == "f", (
+                        f"{name}.{method_name} is expected to output a NumPy "
+                        f"array of floating dtype. Got {y_pred.dtype} instead."
+                    )
+                    assert_array_less(
+                        y_pred,
+                        1,
+                        err_msg=(
+                            f"{name}.{method_name} is expected to provide "
+                            f"probabilities of the positive class and should "
+                            f"therefore contain values below 1."
+                        ),
+                    )
+                else:
+                    raise ValueError(
+                        f"Unknown returned type {type(y_pred)} by "
+                        f"{name}.{method_name}. A list or a Numpy array are "
+                        f"expected."
+                    )
+            else:  # "decision_function"
+                # y_pred.shape -> y_test.shape with floating dtype
+                assert isinstance(y_pred, np.ndarray), (
+                    f"{name}.{method_name} is expected to output a NumPy "
+                    f"array. Got {type(y_pred)} instead."
+                )
+                assert y_pred.shape == (test_size, n_outputs), (
+                    f"{name}.{method_name} is expected to provide a NumPy "
+                    f"array of shape (n_samples, n_outputs). Got "
+                    f"{y_pred.shape} instead of {(test_size, n_outputs)}."
+                )
+                assert y_pred.dtype.kind == "f", (
+                    f"{name}.{method_name} is expected to output a floating "
+                    f"dtype. Got {y_pred.dtype} instead."
+                )
 
 
 @ignore_warnings(category=FutureWarning)

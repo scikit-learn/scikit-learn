@@ -29,6 +29,7 @@ from ..base import ClassifierMixin
 from ..base import clone
 from ..base import RegressorMixin
 from ..base import is_classifier
+from ..base import MultiLabelMixin
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
@@ -619,7 +620,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 # Public estimators
 # =============================================================================
 
-class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
+class DecisionTreeClassifier(
+    ClassifierMixin, MultiLabelMixin, BaseDecisionTree
+):
     """A decision tree classifier.
 
     Read more in the :ref:`User Guide <tree>`.
