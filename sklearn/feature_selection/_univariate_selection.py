@@ -263,8 +263,8 @@ def r_regression(X, y, *, center=True):
 
     See Also
     --------
-    abs_r_regression: Absolute value of Pearson R between label and features
-        for regression tasks.
+    abs_r_regression: Absolute value of Pearson's R correlation coefficients
+        between label and features for regression tasks.
     f_regression: Univariate linear regression tests returning f-statistic
         and p-values
     mutual_info_regression: Mutual information for a continuous target.
@@ -342,8 +342,8 @@ def f_regression(X, y, *, center=True):
 
     See Also
     --------
-    abs_r_regression: Absolute value of Pearson R between label and features
-        for regression tasks.
+    abs_r_regression: Absolute value of Pearson's R correlation coefficients
+        between label and features for regression tasks.
     r_regression: Pearson R between label/feature for regression tasks.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
@@ -364,21 +364,20 @@ def f_regression(X, y, *, center=True):
 
 
 def abs_r_regression(X, y, center=True):
-    """Absolute value of Pearson R from univariate linear regressions.
+    """Absolute value of Pearson's R from univariate linear regressions.
 
     .. versionadded:: 1.0
 
-    This convenience wrapper is to be used with SelectKBest and other models
-    that require a statistic which is increased with significance of
-    association.
+    This convenience wrapper is to be used with
+    :class:`~sklearn.feature_selection.SelectKBest`.
 
     See Also
     --------
-    r_regression: Univariate linear regression tests returning Pearson R.
+    r_regression: Univariate linear regression tests returning Pearson's R
+        correlation coefficient.
     SelectKBest: Select features based on the k highest scores.
     """
-    corr = r_regression(X, y, center=center)
-    return abs(corr)
+    return np.abs(r_regression(X, y, center=center))
 
 ######################################################################
 # Base classes
@@ -577,7 +576,7 @@ class SelectKBest(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    abs_r_regression: Absolute value of Pearson R between label and features
+    abs_r_regression: Absolute value of Pearson's R between label and features
         for regression tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
