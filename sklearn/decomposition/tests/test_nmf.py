@@ -163,45 +163,44 @@ def test_nmf_fit_close(Estimator, solver, regularization):
 def test_nmf_true_reconstruction(regularization):
     # Test that the fit is not too far away from an exact solution
     # (by construction)
-    n_samples = 6
+    n_samples = 15
     n_components = 5
-    n_features = 5
+    n_features = 10
     beta_loss = 1
     init = 'nndsvda'  # FIXME : should be removed in 1.1
-    batch_size = 2
-    max_iter = 600
+    batch_size = 3
+    max_iter = 1000
 
     rng = np.random.mtrand.RandomState(42)
-    W_true = np.abs(rng.randn(n_samples, n_components))
-    H_true = np.abs(rng.randn(n_components, n_features))
+    W_true = np.zeros([n_samples, n_components])
+    W_array = np.abs(rng.randn(n_samples))
+    for j in range(n_components):
+        W_true[j % n_samples, j] = W_array[j % n_samples]
+    H_true = np.zeros([n_components, n_features])
+    H_array = np.abs(rng.randn(n_components))
+    for j in range(n_features):
+        H_true[j % n_components, j] = H_array[j % n_components]
     X = np.dot(W_true, H_true)
 
     model = NMF(n_components=n_components, solver='mu',
-                init=init, beta_loss=1, max_iter=max_iter,
+                init=init, beta_loss=beta_loss, max_iter=max_iter,
                 regularization=regularization, random_state=0)
     transf = model.fit_transform(X)
     X_calc = np.dot(transf, model.components_)
 
     assert model.reconstruction_err_ < 0.1
-
-    #print(np.sqrt(sum(sum((W_true - transf)*(W_true - transf))))/(n_samples*n_components))
-    #print(np.sqrt(sum(sum((H_true - model.components_)*(H_true - model.components_))))/(n_components*n_features))
-    #print(np.sqrt(sum(sum((X - X_calc)*(X - X_calc))))/(n_samples*n_features))
-    #print(f"reconstruction error = {model.reconstruction_err_/(n_samples*n_features)}")
+    assert_array_almost_equal(X, X_calc)
 
     mbmodel = MiniBatchNMF(n_components=n_components, solver='mu',
-                           init=init, beta_loss=1, batch_size=batch_size,
+                           init=init, beta_loss=beta_loss,
+                           batch_size=batch_size, forget_factor=0.3,
                            regularization=regularization, random_state=0,
                            max_iter=max_iter)
     transf = mbmodel.fit_transform(X)
     X_calc = np.dot(transf, mbmodel.components_)
 
-    #print(np.sqrt(sum(sum((W_true - transf)*(W_true - transf))))/(n_samples*n_components))
-    #print(np.sqrt(sum(sum((H_true - mbmodel.components_)*(H_true - mbmodel.components_))))/(n_components*n_features))
-    #print(np.sqrt(sum(sum((X - X_calc)*(X - X_calc))))/(n_samples*n_features))
-    #print(f"reconstruction error = {mbmodel.reconstruction_err_/(n_samples*n_features)}")
-
     assert mbmodel.reconstruction_err_ < 0.1
+    assert_array_almost_equal(X, X_calc, decimal=1)
 
 
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
@@ -274,7 +273,6 @@ def test_nmf_sparse_input(solver, regularization):
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
-
     est1 = NMF(solver=solver, n_components=5, init='random',
                regularization=regularization, random_state=0,
                tol=1e-2)
@@ -299,7 +297,6 @@ def test_mbnmf_sparse_input(regularization):
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
-
 
     est1 = MiniBatchNMF(solver='mu', n_components=5, init='random',
                         regularization=regularization, random_state=0,
