@@ -13,7 +13,12 @@ import warnings
 
 import scipy.optimize
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MultiLabelMixin,
+    RegressorMixin,
+)
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
@@ -698,7 +703,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return self._fit(X, y, incremental=True)
 
 
-class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
+class MLPClassifier(
+    ClassifierMixin, MultiLabelMixin, BaseMultilayerPerceptron
+):
     """Multi-layer Perceptron classifier.
 
     This model optimizes the log-loss function using LBFGS or stochastic
@@ -1122,11 +1129,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             return np.vstack([1 - y_pred, y_pred]).T
         else:
             return y_pred
-
-    def _more_tags(self):
-        return {
-            "multilabel": True,
-        }
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):

@@ -10,6 +10,7 @@ import scipy.sparse as sp
 import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
     assert_raises,
@@ -21,18 +22,6 @@ from sklearn.utils._testing import (
     MinimalTransformer,
     SkipTest,
 )
-from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
-from sklearn.utils.estimator_checks \
-    import check_class_weight_balanced_linear_classifier
-from sklearn.utils.estimator_checks import set_random_state
-from sklearn.utils.estimator_checks import _set_checking_parameters
-from sklearn.utils.estimator_checks import check_estimators_unfitted
-from sklearn.utils.estimator_checks import check_fit_score_takes_y
-from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
-from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
-from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
-from sklearn.utils.estimator_checks import \
-    check_estimator_get_tags_default_keys
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import np_version, parse_version
@@ -47,6 +36,21 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
+
+from sklearn.utils.estimator_checks import (
+    _NotAnArray,
+    _set_checking_parameters,
+    check_class_weight_balanced_linear_classifier,
+    check_classifier_data_not_an_array,
+    check_classifiers_multilabel_format_output,
+    check_estimator,
+    check_estimator_get_tags_default_keys,
+    check_estimators_unfitted,
+    check_fit_score_takes_y,
+    check_no_attributes_set_in_init,
+    check_regressor_data_not_an_array,
+    set_random_state,
+)
 
 
 class CorrectNotFittedError(ValueError):
@@ -670,6 +674,244 @@ def test_check_estimator_get_tags_default_keys():
     estimator = MinimalTransformer()
     check_estimator_get_tags_default_keys(
         estimator.__class__.__name__, estimator
+    )
+
+
+def test_check_classifiers_multilabel_output_format():
+    n_samples, test_size, n_outputs = 100, 25, 5
+    _, y = make_multilabel_classification(n_samples=n_samples, n_features=2,
+                                          n_classes=n_outputs, n_labels=3,
+                                          length=50, allow_unlabeled=True,
+                                          random_state=0)
+    y_train, y_test = y[:-test_size], y[-test_size:]
+
+    class BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
+        def __init__(self, response_output):
+            self.response_output = response_output
+
+        def fit(self, X, y):
+            return self
+
+    class MultiLabelClassifierPredict(BaseMultiLabelClassifierMock):
+        def predict(self, X):
+            return self.response_output
+
+    class MultiLabelClassifierPredictProba(BaseMultiLabelClassifierMock):
+        def predict_proba(self, X):
+            return self.response_output
+
+    class MultiLabelClassifierDecisionFunction(BaseMultiLabelClassifierMock):
+        def decision_function(self, X):
+            return self.response_output
+
+    # 1.method predict
+    # 1.1 inconsistent array type
+    clf = MultiLabelClassifierPredict(response_output=y_test.tolist())
+    err_msg = (
+        r"MultiLabelClassifierPredict.predict is expected to output a "
+        r"NumPy array. Got <class 'list'> instead."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 1.2. inconsistent shape
+    clf = MultiLabelClassifierPredict(response_output=y_test[:, :-1])
+    err_msg = (
+        r"MultiLabelClassifierPredict.predict output a NumPy array of "
+        r"shape \(25, 4\) instead of \(25, 5\)."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 1.3 inconsistent dtype
+    clf = MultiLabelClassifierPredict(
+        response_output=y_test.astype(np.float64)
+    )
+    err_msg = (
+        r"MultiLabelClassifierPredict.predict does not output the same "
+        r"dtype than the targets. Got float64 instead of int64."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+
+    # 2. method predict_proba
+    # 2.1 unknown output type
+    clf = MultiLabelClassifierPredictProba(
+        response_output=sp.csr_matrix(y_test)
+    )
+    err_msg = (
+        r"Unknown returned type <class 'scipy.sparse.csr.csr_matrix'> by "
+        r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
+        r"array are expected."
+    )
+    assert_raises_regex(
+        ValueError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 2.2 for list output
+    # 2.2.1 iconsistent length
+    clf = MultiLabelClassifierPredictProba(response_output=y_test.tolist())
+    err_msg = (
+        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
+        r"output a list of length n_outputs of Numpy array. Got length of 25 "
+        r"instead of 5."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 2.2.2 array of inconsistent shape
+    response_output = [np.ones_like(y_test) for _ in range(n_outputs)]
+    clf = MultiLabelClassifierPredictProba(response_output=response_output)
+    err_msg = (
+        r"MultiLabelClassifierPredictProba.predict_proba is expected to output"
+        r" a list of NumPy array of shape \(n_samples, 2\). Got \(25, 5\) "
+        r"instead of \(25, 2\)."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 2.2.3 array of inconsistent dtype
+    response_output = [
+        np.ones(shape=(y_test.shape[0], 2), dtype=np.int64)
+        for _ in range(n_outputs)
+    ]
+    clf = MultiLabelClassifierPredictProba(response_output=response_output)
+    err_msg = (
+        r"MultiLabelClassifierPredictProba.predict_proba is expected to output"
+        r" a list of NumPy array of floating dtype. Got int64 instead."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 2.2.4 array does not contain probability (each row should sum to 1)
+    response_output = [
+        np.ones(shape=(y_test.shape[0], 2), dtype=np.float64)
+        for _ in range(n_outputs)
+    ]
+    clf = MultiLabelClassifierPredictProba(response_output=response_output)
+    err_msg = (
+        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
+        r"provide probabilities such that each array rows should sum to 1."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 2.3 for array output
+    # 2.3.1 array of inconsistent shape
+    clf = MultiLabelClassifierPredictProba(response_output=y_test[:, :-1])
+    err_msg = (
+        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
+        r"output a NumPy array of shape \(n_samples, n_outputs\). Got "
+        r"\(25, 4\) instead of \(25, 5\)."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 2.3.2 array of inconsistent dtype
+    response_output = np.zeros_like(y_test, dtype=np.int64)
+    clf = MultiLabelClassifierPredictProba(response_output=response_output)
+    err_msg = (
+        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
+        r"output a NumPy array of floating dtype. Got int64 instead."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 2.2.4 array does not contain probabilities
+    clf = MultiLabelClassifierPredictProba(response_output=y_test * 2.0)
+    err_msg = (
+        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
+        r"provide probabilities of the positive class and should therefore "
+        r"contain values below 1."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+
+    # 3. decision_function
+    # 3.1 inconsistent array type
+    clf = MultiLabelClassifierDecisionFunction(response_output=y_test.tolist())
+    err_msg = (
+        r"MultiLabelClassifierDecisionFunction.decision_function is expected "
+        r"to output a NumPy array. Got <class 'list'> instead."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 3.2. inconsistent shape
+    clf = MultiLabelClassifierDecisionFunction(response_output=y_test[:, :-1])
+    err_msg = (
+        r"MultiLabelClassifierDecisionFunction.decision_function is expected "
+        r"to provide a NumPy array of shape \(n_samples, n_outputs\). Got "
+        r"\(25, 4\) instead of \(25, 5\)"
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
+    )
+    # 3.3 inconsistent dtype
+    clf = MultiLabelClassifierDecisionFunction(response_output=y_test)
+    err_msg = (
+        r"MultiLabelClassifierDecisionFunction.decision_function is expected "
+        r"to output a floating dtype. Got int64 instead."
+    )
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_classifiers_multilabel_format_output,
+        clf.__class__.__name__,
+        clf,
     )
 
 
