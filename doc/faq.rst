@@ -430,4 +430,4 @@ there would be parameters with a lot of options like the ``solver`` parameter.
 On top of that, there would be a lot of exclusive interactions between
 different parameters. For example, the possible options of the parameters
 ``solver``, ``precompute`` and ``selection`` would depend on the chosen values
-of the penalty parameters ``alpha`` and ``l1_ration``.
+of the penalty parameters ``alpha`` and ``l1_ratio``.
