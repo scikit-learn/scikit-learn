@@ -261,6 +261,13 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
+    # detect pandas nullable dtypes
+    if (hasattr(y, "dtype") and
+            y.dtype.name.startswith(("Int", "UInt", "boolean", "Float"))):
+        if y.isna().any():
+            raise ValueError("Input contains NaN")
+        y = y.to_numpy(dtype=y.dtype.numpy_dtype, na_value=0)
+
     # DeprecationWarning will be replaced by ValueError, see NEP 34
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
     with warnings.catch_warnings():
@@ -285,13 +292,9 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2:
-        return 'unknown'  # [[[1, 2]]]
-
-    if (y.dtype == object and len(y) and
-            not isinstance(y.flat[0], (str, int, float))):
-        # [obj_1] and (not ["label_1"] or not [1] or not [1.0])
-        return 'unknown'
+    if y.ndim > 2 or (y.dtype == object and len(y) and
+                      not isinstance(y.flat[0], str)):
+        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'  # [[]]

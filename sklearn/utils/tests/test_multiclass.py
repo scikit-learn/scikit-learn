@@ -54,7 +54,6 @@ EXAMPLES = {
     'multiclass': [
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
         np.array([1, 0, 2]),
-        np.array([1, 0, 2], dtype=object),
         np.array([1, 0, 2], dtype=np.int8),
         np.array([1, 0, 2], dtype=np.uint8),
         np.array([1, 0, 2], dtype=float),
@@ -319,14 +318,28 @@ def test_type_of_target_pandas_sparse():
         type_of_target(y)
 
 
-@pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
-def test_type_of_target_pandas_nullable_dtypes(dtype):
+@pytest.mark.parametrize("dtype, y_values", [
+    ("Int32", [1, 0, 1, 0]),
+    ("Int64", [1, 0, 1, 0]),
+    ("UInt32", [1, 0, 1, 3]),
+    ("UInt64", [1, 0, 1, 3]),
+    ("boolean", [1, 0, 1, 0]),
+    ("Float32", [1.0, 2.0, 3.0, 4.0]),
+    ("Float64", [1.0, 2.0, 3.0, 4.0]),
+])
+def test_type_of_target_pandas_nullable_dtypes(dtype, y_values):
     """Check that type_of_target returns correct value for pandas series with
     nullable dtypes. Non-regression for #19889."""
     pd = pytest.importorskip("pandas", minversion="1.0")
 
-    y = pd.Series([1, 0, 1, 0], dtype=dtype)
-    assert type_of_target(y) == "binary"
+    expected_type = type_of_target(y_values)
+
+    y = pd.Series(y_values, dtype=dtype)
+    assert type_of_target(y) == expected_type
+
+    y_null = pd.Series(y_values + [pd.NA], dtype=dtype)
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        type_of_target(y_null)
 
 
 def test_class_distribution():
