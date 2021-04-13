@@ -183,7 +183,7 @@ cdef class DistanceMetric:
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
-    "russellrao"       RussellRaoDistance       NNZ / N
+    "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
     "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
     =================  =======================  ===============================

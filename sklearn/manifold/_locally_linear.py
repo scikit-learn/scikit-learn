@@ -563,15 +563,15 @@ class LocallyLinearEmbedding(TransformerMixin,
         Not used if eigen_solver=='dense'.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
-        standard : use the standard locally linear embedding algorithm.  see
-                   reference [1]
-        hessian  : use the Hessian eigenmap method. This method requires
-                   ``n_neighbors > n_components * (1 + (n_components + 1) / 2``
-                   see reference [2]
-        modified : use the modified locally linear embedding algorithm.
-                   see reference [3]
-        ltsa     : use local tangent space alignment algorithm
-                   see reference [4]
+        - `standard`: use the standard locally linear embedding algorithm. see
+          reference [1]_
+        - `hessian`: use the Hessian eigenmap method. This method requires
+          ``n_neighbors > n_components * (1 + (n_components + 1) / 2``. see
+          reference [2]_
+        - `modified`: use the modified locally linear embedding algorithm.
+          see reference [3]_
+        - `ltsa`: use local tangent space alignment algorithm. see
+          reference [4]_
 
     hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.

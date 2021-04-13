@@ -9,5 +9,5 @@ set -e
 if [[ $BUILD_WHEEL == true ]]; then
     source build_tools/travis/install_wheels.sh
 else
-    source build_tools/travis/install_master.sh
+    source build_tools/travis/install_main.sh
 fi

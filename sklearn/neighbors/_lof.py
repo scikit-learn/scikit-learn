@@ -104,7 +104,7 @@ class LocalOutlierFactor(KNeighborsMixin,
 
         - if 'auto', the threshold is determined as in the
           original paper,
-        - if a float, the contamination should be in the range [0, 0.5].
+        - if a float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -114,7 +114,7 @@ class LocalOutlierFactor(KNeighborsMixin,
         By default, LocalOutlierFactor is only meant to be used for outlier
         detection (novelty=False). Set novelty to True if you want to use
         LocalOutlierFactor for novelty detection. In this case be aware that
-        that you should only use predict, decision_function and score_samples
+        you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
 
         .. versionadded:: 0.20

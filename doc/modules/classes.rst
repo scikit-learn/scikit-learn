@@ -762,6 +762,7 @@ Linear classifiers
    linear_model.RidgeClassifier
    linear_model.RidgeClassifierCV
    linear_model.SGDClassifier
+   linear_model.SGDOneClassSVM
 
 Classical linear regressors
 ---------------------------
@@ -991,6 +992,7 @@ details.
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
+   metrics.mean_pinball_loss
 
 Multilabel ranking metrics
 --------------------------
@@ -1175,6 +1177,7 @@ Splitter Classes
    model_selection.ShuffleSplit
    model_selection.StratifiedKFold
    model_selection.StratifiedShuffleSplit
+   model_selection.StratifiedGroupKFold
    model_selection.TimeSeriesSplit
 
 Splitter Functions
@@ -1414,6 +1417,7 @@ details.
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
+   preprocessing.SplineTransformer
    preprocessing.StandardScaler
 
 .. autosummary::
@@ -1593,6 +1597,7 @@ Plotting
    utils.extmath.fast_logdet
    utils.extmath.density
    utils.extmath.weighted_mode
+   utils.gen_batches
    utils.gen_even_slices
    utils.graph.single_source_shortest_path_length
    utils.graph_shortest_path.graph_shortest_path
