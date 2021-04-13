@@ -234,6 +234,10 @@ Changelog
   `decision_function` instead of returning the multilabel indicator matrix.
   :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
+  multilabel classification.
+  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.manifold`
 .......................
 

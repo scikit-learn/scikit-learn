@@ -1306,12 +1306,6 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
         assert_allclose(out, true_coefs, rtol=0, atol=atol)
 
 
-def test_ridge_classifier_no_support_multilabel():
-    X, y = make_multilabel_classification(n_samples=10, random_state=0)
-    with pytest.raises(ValueError):
-        RidgeClassifier().fit(X, y)
-
-
 @pytest.mark.parametrize(
     "solver", ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga"])
 def test_dtype_match(solver):
@@ -1414,8 +1408,13 @@ def test_ridge_sag_with_X_fortran():
     Ridge(solver='sag').fit(X, y)
 
 
-def test_ridge_xxx():
-    # X, y = datasets.load_iris(return_X_y=True)
-    X, y = datasets.make_multilabel_classification()
-    clf = RidgeClassifierCV().fit(X, y)
-    print(clf.predict(X))
+@pytest.mark.parametrize("Classifier", [RidgeClassifier, RidgeClassifierCV])
+def test_ridgeclassifier_multilabel(Classifier):
+    X, y = make_multilabel_classification(n_classes=1, random_state=0)
+    y = y.reshape(-1, 1)
+    Y = np.concatenate([y, y], axis=1)
+    clf = Classifier().fit(X, Y)
+    Y_pred = clf.predict(X)
+
+    assert Y_pred.shape == Y.shape
+    assert_array_equal(Y_pred[:, 0], Y_pred[:, 1])

@@ -777,7 +777,39 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         return super().fit(X, y, sample_weight=sample_weight)
 
 
-class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
+class _BaseRidgeClassifier(LinearClassifierMixin, MultiLabelMixin):
+
+    def predict(self, X):
+        """Predict class labels for samples in `X`.
+
+        Parameters
+        ----------
+        X : {array-like, spare matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to predict the targets.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Vector or matrix containing the predictions. In binary and
+            multiclass problems, this is a vector containing `n_samples`. In
+            a multilabel problem, it returns a matrix of shape
+            `(n_samples, n_outputs)`.
+        """
+        check_is_fitted(self, attributes=["_label_binarizer"])
+        if self._label_binarizer.y_type_.startswith("multilabel"):
+            # Threshold such that the negative label is -1 and positive label
+            # is 1 to use the inverse transform of the label binarizer fitted
+            # during fit.
+            scores = 2 * (self.decision_function(X) > 0) - 1
+            return self._label_binarizer.inverse_transform(scores)
+        return super().predict(X)
+
+    @property
+    def classes_(self):
+        return self._label_binarizer.classes_
+
+
+class RidgeClassifier(_BaseRidgeClassifier, _BaseRidge):
     """Classifier using Ridge regression.
 
     This classifier first converts the target values into ``{-1, 1}`` and
@@ -951,11 +983,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
-        else:
-            # we don't (yet) support multi-label classification in Ridge
-            raise ValueError(
-                "%s doesn't support multi-label classification" % (
-                    self.__class__.__name__))
 
         if self.class_weight:
             # modify the sample weights with the corresponding class weight
@@ -964,10 +991,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         super().fit(X, Y, sample_weight=sample_weight)
         return self
-
-    @property
-    def classes_(self):
-        return self._label_binarizer.classes_
 
 
 def _check_gcv_mode(X, gcv_mode):
@@ -1823,7 +1846,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """
 
 
-class RidgeClassifierCV(LinearClassifierMixin, MultiLabelMixin, _BaseRidgeCV):
+class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1993,31 +2016,6 @@ class RidgeClassifierCV(LinearClassifierMixin, MultiLabelMixin, _BaseRidgeCV):
     @property
     def classes_(self):
         return self._label_binarizer.classes_
-
-    def predict(self, X):
-        """Predict class labels for samples in `X`.
-
-        Parameters
-        ----------
-        X : {array-like, spare matrix} of shape (n_samples, n_features)
-            The data matrix for which we want to predict the targets.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-            Vector or matrix containing the predictions. In binary and
-            multiclass problems, this is a vector containing `n_samples`. In
-            a multilabel problem, it returns a matrix of shape
-            `(n_samples, n_outputs)`.
-        """
-        check_is_fitted(self, attributes=["_label_binarizer"])
-        if self._label_binarizer.y_type_.startswith("multilabel"):
-            # Threshold such that the negative label is -1 and positive label
-            # is 1 to use the inverse transform of the label binarizer fitted
-            # during fit.
-            scores = 2 * (self.decision_function(X) > 0) - 1
-            return self._label_binarizer.inverse_transform(scores)
-        return super().predict(X)
 
     def _more_tags(self):
         return {
