@@ -54,6 +54,7 @@ EXAMPLES = {
     'multiclass': [
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
         np.array([1, 0, 2]),
+        np.array([1, 0, 2], dtype=object),
         np.array([1, 0, 2], dtype=np.int8),
         np.array([1, 0, 2], dtype=np.uint8),
         np.array([1, 0, 2], dtype=float),
@@ -316,6 +317,16 @@ def test_type_of_target_pandas_sparse():
     msg = "y cannot be class 'SparseSeries' or 'SparseArray'"
     with pytest.raises(ValueError, match=msg):
         type_of_target(y)
+
+
+@pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
+def test_type_of_target_pandas_nullable_dtypes(dtype):
+    """Check that type_of_target returns correct value for pandas series with
+    nullable dtypes. Non-regression for #19889."""
+    pd = pytest.importorskip("pandas", minversion="1.0")
+
+    y = pd.Series([1, 0, 1, 0], dtype=dtype)
+    assert type_of_target(y) == "binary"
 
 
 def test_class_distribution():

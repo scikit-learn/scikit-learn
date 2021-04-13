@@ -285,9 +285,13 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], str)):
-        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
+    if y.ndim > 2:
+        return 'unknown'  # [[[1, 2]]]
+
+    if (y.dtype == object and len(y) and
+            not isinstance(y.flat[0], (str, int, float))):
+        # [obj_1] and (not ["label_1"] or not [1] or not [1.0])
+        return 'unknown'
 
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'  # [[]]
