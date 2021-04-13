@@ -2022,11 +2022,5 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
             '_xfail_checks': {
                 'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
-                # FIXME: see
-                # https://github.com/scikit-learn/scikit-learn/issues/19858
-                # to track progress to resolve this issue
-                # 'check_classifiers_multilabel_format_output':
-                # 'RidgeClassifierCV.predict output an array of shape (25,) '
-                # 'instead of (25, 5)',
             },
         }
