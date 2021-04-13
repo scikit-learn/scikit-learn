@@ -191,13 +191,13 @@ def plot_predict_quality(X_train, y_train, X_test, y_test,
         return y_pred, string_score
     
     _, string_score = get_y_pred_string_score(
-        X_train, y_train, metric_dimension, 
+        X_train, y_train, metric_dimension,
         string_score='', dataset='training')
     string_score += '\n'
     y_pred, string_score = get_y_pred_string_score(
-        X_test, y_test, metric_dimension, 
+        X_test, y_test, metric_dimension,
         string_score, dataset='testing')
-                  
+          
     fig, ax = plt.subplots(figsize=figsize)
     ax.scatter(y_test, y_pred)
     ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
@@ -208,15 +208,16 @@ def plot_predict_quality(X_train, y_train, X_test, y_test,
     ax.add_artist(AnchoredText(string_score, loc=loc))
     ax.set_title(title)
     plt.show()
-    
+
     pass
+
 
 plot_predict_quality(
     X_train, y_train, X_test, y_test, model,
     xy_lim=(0, 27),
     figsize=(5, 5),
     title='Ridge model, small regularization',
-    loc="upper left", 
+    loc="upper left",
     metric_dimension='$/hour'
 )
 
@@ -358,7 +359,7 @@ coefs = pd.DataFrame(
 def plot_coefficient_importance_variability(coefs, figsize):
     import seaborn as sns
     import matplotlib.pyplot as plt
-    
+ 
     fig, ax = plt.subplots(figsize=figsize)
 
     sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5, ax=ax)
@@ -370,6 +371,7 @@ def plot_coefficient_importance_variability(coefs, figsize):
     plt.show()
 
     pass
+
 
 plot_coefficient_importance_variability(coefs, figsize=(9, 7))
 
@@ -466,7 +468,7 @@ plot_predict_quality(
     xy_lim=(0, 27),
     figsize=(6, 6),
     title='Lasso model, small regularization, normalized variables',
-    loc="upper left", 
+    loc="upper left",
     metric_dimension='$/hour'
 )
 
@@ -538,7 +540,7 @@ plot_predict_quality(
     xy_lim=(0, 27),
     figsize=(6, 6),
     title='Ridge model, regularization, normalized variables',
-    loc="upper left", 
+    loc="upper left",
     metric_dimension='$/hour'
 )
 
@@ -629,7 +631,7 @@ plot_predict_quality(
     xy_lim=(0, 27),
     figsize=(6, 6),
     title='Lasso model, regularization, normalized variables',
-    loc="upper left", 
+    loc="upper left",
     metric_dimension='$/hour'
 )
 
