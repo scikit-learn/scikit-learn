@@ -350,8 +350,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
          - 'precomputed': interpret ``X`` as a precomputed affinity matrix,
            where larger values indicate greater similarity between instances.
          - 'precomputed_nearest_neighbors': interpret ``X`` as a sparse graph
-           of precomputed distances, and constructs a binary affinity matrix
-           by selecting the ``n_neighbors`` nearest neighbors for each instance.
+           of precomputed distances, and construct a binary affinity matrix
+           from the ``n_neighbors`` nearest neighbors of each instance.
          - one of the kernels supported by
            :func:`~sklearn.metrics.pairwise_kernels`.
 
@@ -369,10 +369,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     assign_labels : {'kmeans', 'discretize'}, default='kmeans'
         The strategy for assigning labels in the embedding space. There are two
-        ways to assign labels after the Laplacian embedding. k-means can be
-        applied and is a popular choice. But it can also be sensitive to
-        initialization. Discretization is another approach which is less
-        sensitive to random initialization.
+        ways to assign labels after the Laplacian embedding. k-means is a
+        popular choice, but it can be sensitive to initialization.
+        Discretization is another approach which is less sensitive to random
+        initialization.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
