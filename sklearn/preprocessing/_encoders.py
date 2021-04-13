@@ -406,7 +406,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to determine the categories of each feature.
 
         y : None
@@ -431,7 +431,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         y : None
@@ -440,8 +440,10 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array
-            Transformed input.
+        X_out : {ndarray, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
+            Transformed input. If `sparse=True`, a sparse matrix will be
+            returned.
         """
         self._validate_keywords()
         return super().fit_transform(X, y)
@@ -452,13 +454,15 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array
-            Transformed input.
+        X_out : {ndarray, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
+            Transformed input. If `sparse=True`, a sparse matrix will be
+            returned.
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
@@ -522,12 +526,13 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
+        X : {array-like, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
             The transformed data.
 
         Returns
         -------
-        X_tr : array-like, shape [n_samples, n_features]
+        X_tr : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
@@ -745,7 +750,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to determine the categories of each feature.
 
         y : None
@@ -814,12 +819,12 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         Returns
         -------
-        X_out : sparse matrix or a 2-d array
+        X_out : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
@@ -841,12 +846,12 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The transformed data.
 
         Returns
         -------
-        X_tr : array-like, shape [n_samples, n_features]
+        X_tr : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
