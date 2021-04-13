@@ -179,7 +179,6 @@ def plot_predict_quality(X_train, y_train, X_test, y_test,
     import matplotlib.pyplot as plt
     from matplotlib.offsetbox import AnchoredText
 
-
     def get_y_pred_string_score(X, y_true, metric_dimension,
                                 string_score, dataset):
         from sklearn.metrics import median_absolute_error
@@ -191,7 +190,6 @@ def plot_predict_quality(X_train, y_train, X_test, y_test,
             string_score += ' ' + metric_dimension
 
         return y_pred, string_score
-
 
     _, string_score = get_y_pred_string_score(
         X_train, y_train, metric_dimension,
