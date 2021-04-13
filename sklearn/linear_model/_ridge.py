@@ -779,6 +779,57 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
 class _BaseRidgeClassifier(LinearClassifierMixin, MultiLabelMixin):
 
+    def _prepare_data(self, X, y, sample_weight, solver):
+        """Validate `X` and `y` and binarize `y`.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Training data.
+
+        y : ndarray of shape (n_samples,)
+            Target values.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
+        solver : str
+            The solver used in `Ridge` to know which sparse format to support.
+
+        Returns
+        -------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Validated training data.
+
+        y : ndarray of shape (n_samples,)
+            Validated target values.
+
+        sample_weight : ndarray of shape (n_samples,)
+            Validated sample weights.
+
+        Y : ndarray of shape (n_samples, n_classes)
+            The binarized version of `y`.
+        """
+        accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        X, y = self._validate_data(
+            X, y, accept_sparse=accept_sparse, multi_output=True,
+            y_numeric=False,
+        )
+
+        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
+        Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.y_type_.startswith("multilabel"):
+            y = column_or_1d(y, warn=True)
+
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        if self.class_weight:
+            # modify the sample weights with the corresponding class weight
+            sample_weight = (
+                sample_weight * compute_sample_weight(self.class_weight, y)
+            )
+        return X, y, sample_weight, Y
+
     def predict(self, X):
         """Predict class labels for samples in `X`.
 
@@ -966,28 +1017,16 @@ class RidgeClassifier(_BaseRidgeClassifier, _BaseRidge):
             will have the same weight.
 
             .. versionadded:: 0.17
-               *sample_weight* support to Classifier.
+               *sample_weight* support to RidgeClassifier.
 
         Returns
         -------
         self : object
             Instance of the estimator.
         """
-        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
-                                                  self.solver)
-        X, y = self._validate_data(X, y, accept_sparse=_accept_sparse,
-                                   multi_output=True, y_numeric=False)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        Y = self._label_binarizer.fit_transform(y)
-        if not self._label_binarizer.y_type_.startswith('multilabel'):
-            y = column_or_1d(y, warn=True)
-
-        if self.class_weight:
-            # modify the sample weights with the corresponding class weight
-            sample_weight = (sample_weight *
-                             compute_sample_weight(self.class_weight, y))
+        X, y, sample_weight, Y = self._prepare_data(
+            X, y, sample_weight, self.solver
+        )
 
         super().fit(X, Y, sample_weight=sample_weight)
         return self
@@ -1995,27 +2034,17 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
         -------
         self : object
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                                   multi_output=True, y_numeric=False)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        # by using solver="eigen" we force to accept all sparse format
+        X, y, sample_weight, Y = self._prepare_data(
+            X, y, sample_weight, solver="eigen"
+        )
 
-        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        Y = self._label_binarizer.fit_transform(y)
-        if not self._label_binarizer.y_type_.startswith('multilabel'):
-            y = column_or_1d(y, warn=True)
-
-        if self.class_weight:
-            # modify the sample weights with the corresponding class weight
-            sample_weight = (sample_weight *
-                             compute_sample_weight(self.class_weight, y))
-
+        # If cv is None, gcv mode will be used and we will directly used the
+        # binarized Y. If cv is not None, a GridSearchCV will be used and `y`
+        # will be binarized again and thus we pass y instead of Y.
         target = Y if self.cv is None else y
         _BaseRidgeCV.fit(self, X, target, sample_weight=sample_weight)
         return self
-
-    @property
-    def classes_(self):
-        return self._label_binarizer.classes_
 
     def _more_tags(self):
         return {

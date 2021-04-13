@@ -1408,12 +1408,21 @@ def test_ridge_sag_with_X_fortran():
     Ridge(solver='sag').fit(X, y)
 
 
-@pytest.mark.parametrize("Classifier", [RidgeClassifier, RidgeClassifierCV])
-def test_ridgeclassifier_multilabel(Classifier):
+@pytest.mark.parametrize(
+    "Classifier, params",
+    [
+        (RidgeClassifier, {}),
+        (RidgeClassifierCV, {"cv": None}),
+        (RidgeClassifierCV, {"cv": 3})
+    ]
+)
+def test_ridgeclassifier_multilabel(Classifier, params):
+    """Check that multilabel classification is supported and give meaningful
+    results."""
     X, y = make_multilabel_classification(n_classes=1, random_state=0)
     y = y.reshape(-1, 1)
     Y = np.concatenate([y, y], axis=1)
-    clf = Classifier().fit(X, Y)
+    clf = Classifier(**params).fit(X, Y)
     Y_pred = clf.predict(X)
 
     assert Y_pred.shape == Y.shape
