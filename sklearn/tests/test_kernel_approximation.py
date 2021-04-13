@@ -332,3 +332,24 @@ def test_nystroem_precomputed_kernel():
                       **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
+
+
+def test_landmarks_using():
+    # Basic tests to check the work of the landmarks selection.
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 4))
+    # test that as a result of the fit we really get the components that we
+    # originally chose
+    landmarks = rnd.permutation(X.shape[0])
+    for i in range(1, len(landmarks)):
+        nystroem = Nystroem(n_components=i, kernel=_linear_kernel,
+                            random_state=rnd)
+        nystroem.fit(X, landmarks=landmarks[:i])
+        assert_array_almost_equal(X[landmarks[:i]], nystroem.components_)
+    # test correctly returned error in case the landmarks are out of range
+    msg = 'landmarks indices out of X range'
+    landmarks = [X.shape[0]]
+    nystroem = Nystroem(n_components=1, kernel=_linear_kernel,
+                        random_state=rnd)
+    with pytest.raises(IndexError, match=msg):
+        nystroem.fit(X, landmarks=landmarks)

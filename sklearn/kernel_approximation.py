@@ -22,7 +22,7 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, column_or_1d
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative, _deprecate_positional_args
 
@@ -742,7 +742,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.n_jobs = n_jobs
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, landmarks=None):
         """Fit estimator to data.
 
         Samples a subset of training points, computes kernel
@@ -752,6 +752,9 @@ class Nystroem(TransformerMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data.
+
+        landmarks: array-like of shape (n_components,) or list
+             indices of the samples that will be included in the landmark set.
         """
         X = self._validate_data(X, accept_sparse='csr')
         rnd = check_random_state(self.random_state)
@@ -768,9 +771,17 @@ class Nystroem(TransformerMixin, BaseEstimator):
         else:
             n_components = self.n_components
         n_components = min(n_samples, n_components)
-        inds = rnd.permutation(n_samples)
-        basis_inds = inds[:n_components]
-        basis = X[basis_inds]
+
+        if landmarks is None:
+            inds = rnd.permutation(n_samples)
+            basis_inds = inds[:n_components]
+        else:
+            basis_inds = column_or_1d(landmarks)
+
+        try:
+            basis = X[basis_inds]
+        except IndexError:
+            raise IndexError('landmarks indices out of X range')
 
         basis_kernel = pairwise_kernels(basis, metric=self.kernel,
                                         filter_params=True,
@@ -782,7 +793,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
-        self.component_indices_ = inds
+        self.component_indices_ = basis_inds
         return self
 
     def transform(self, X):

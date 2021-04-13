@@ -41,7 +41,9 @@ the data on which the kernel is evaluated.
 By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
 kernel function or a precomputed kernel matrix.
 The number of samples used - which is also the dimensionality of the features computed -
-is given by the parameter ``n_components``.
+is given by the parameter ``n_components``. In addition, it is possible to
+pre-select the best samples to approximate the matrix. They can be given as
+``landmarks`` parameter.
 
 .. _rbf_kernel_approx:
 
@@ -71,10 +73,12 @@ the ``transform`` method performs the mapping of the data.  Because of the
 inherent randomness of the process, results may vary between different calls to
 the ``fit`` function.
 
-The ``fit`` function takes two arguments:
+The ``fit`` function takes three arguments:
 ``n_components``, which is the target dimensionality of the feature transform,
-and ``gamma``, the parameter of the RBF-kernel.  A higher ``n_components`` will
-result in a better approximation of the kernel and will yield results more
+``gamma``, the parameter of the RBF-kernel, and ``landmarks`` - list of
+pre-selected samples, which will be used for the approximation.
+A higher ``n_components`` (or bigger ``landmarks``) will result in a better
+approximation of the kernel and will yield results more
 similar to those produced by a kernel SVM. Note that "fitting" the feature
 function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
@@ -94,6 +98,12 @@ use of larger feature spaces more efficient.
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
+
+Samples for fit can be selected, using the methods implemented in sklearn.
+
+.. seealso::
+
+   :ref:`feature_selection` for a selection methods.
 
 .. _additive_chi_kernel_approx:
 
