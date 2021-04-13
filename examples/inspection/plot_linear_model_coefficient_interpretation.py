@@ -171,25 +171,28 @@ _ = model.fit(X_train, y_train)
 # on the test set and computing,
 # for example, the median absolute error of the model.
 
-def plot_predict_quality(X_train, y_train, X_test, y_test, 
-                         model, 
+
+def plot_predict_quality(X_train, y_train, X_test, y_test,
+                         model,
                          xy_lim, figsize,
                          title, loc, metric_dimension=None):
     import matplotlib.pyplot as plt
     from matplotlib.offsetbox import AnchoredText
-    
-    def get_y_pred_string_score(X, y_true, metric_dimension, 
+
+
+    def get_y_pred_string_score(X, y_true, metric_dimension,
                                 string_score, dataset):
         from sklearn.metrics import median_absolute_error
-        
+
         y_pred = model.predict(X)
         mae = median_absolute_error(y_true, y_pred)
         string_score += f'MAE on {dataset} set: {mae:.2f}'
         if metric_dimension:
             string_score += ' ' + metric_dimension
-        
+
         return y_pred, string_score
-    
+
+
     _, string_score = get_y_pred_string_score(
         X_train, y_train, metric_dimension,
         string_score='', dataset='training')
@@ -197,7 +200,7 @@ def plot_predict_quality(X_train, y_train, X_test, y_test,
     y_pred, string_score = get_y_pred_string_score(
         X_test, y_test, metric_dimension,
         string_score, dataset='testing')
-          
+
     fig, ax = plt.subplots(figsize=figsize)
     ax.scatter(y_test, y_pred)
     ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
@@ -356,10 +359,11 @@ coefs = pd.DataFrame(
     columns=feature_names
 )
 
+
 def plot_coefficient_importance_variability(coefs, figsize):
     import seaborn as sns
     import matplotlib.pyplot as plt
- 
+
     fig, ax = plt.subplots(figsize=figsize)
 
     sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5, ax=ax)
