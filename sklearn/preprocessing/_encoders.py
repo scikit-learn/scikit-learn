@@ -841,7 +841,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
+        X : array-like of shape (n_samples, n_encoded_features)
             The transformed data.
 
         Returns
@@ -850,7 +850,7 @@ class OrdinalEncoder(_BaseEncoder):
             Inverse transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr', force_all_finite='allow-nan')
+        X = check_array(X, force_all_finite='allow-nan')
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)

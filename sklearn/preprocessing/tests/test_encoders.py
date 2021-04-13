@@ -1110,3 +1110,25 @@ def test_ordinal_encoder_handle_missing_and_unknown(
     assert_allclose(X_trans, expected_X_trans)
 
     assert_allclose(oe.transform(X_test), [[-1.0]])
+
+
+def test_ordinal_encoder_sparse():
+    """Check that we raise proper error with sparse input in OrdinalEncoder.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19878
+    """
+    X = np.array([[3, 2, 1], [0, 1, 1]])
+    X_sparse = sparse.csr_matrix(X)
+
+    encoder = OrdinalEncoder()
+
+    err_msg = "A sparse matrix was passed, but dense data is required"
+    with pytest.raises(TypeError, match=err_msg):
+        encoder.fit(X_sparse)
+    with pytest.raises(TypeError, match=err_msg):
+        encoder.fit_transform(X_sparse)
+
+    X_trans = encoder.fit_transform(X)
+    X_trans_sparse = sparse.csr_matrix(X_trans)
+    with pytest.raises(TypeError, match=err_msg):
+        encoder.inverse_transform(X_trans_sparse)
