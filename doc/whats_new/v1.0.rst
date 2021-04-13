@@ -345,7 +345,7 @@ Changelog
 
 - |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
   supporting sparse matrix and raise the appropriate error message.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.tree`
 ...................
