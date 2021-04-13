@@ -43,7 +43,7 @@ DOWNLOAD_URL = 'https://pypi.org/project/scikit-learn/#files'
 LICENSE = 'new BSD'
 PROJECT_URLS = {
     'Bug Tracker': 'https://github.com/scikit-learn/scikit-learn/issues',
-    'Documentation': 'https://scikit-learn.org/stable/documentation.html',
+    'Documentation': 'https://scikit-learn.org/stable/user_guide.html',
     'Source Code': 'https://github.com/scikit-learn/scikit-learn'
 }
 
