@@ -208,19 +208,15 @@ def accuracy_score(
     >>> accuracy_score(y_true, y_pred, normalize=False)
     2
 
-    In the multilabel case with binary label indicators, with exact sets
-    matching:
+    In multilabel, the parameter `multilabel` can enforce an exact match or
+    not for labels associated with a sample:
 
-    >>> y_true = [[0, 1], [1, 1]]
-    >>> y_pred = [[1, 1], [1, 1]]
-    >>> accuracy_score(y_true, y_pred)
-    0.5
-
-    If we want to be less strict and to average across all labels, we can
-    change the parameter `multilabel`:
-
+    >>> y_true = [[0, 1]]
+    >>> y_pred = [[1, 1]]
+    >>> accuracy_score(y_true, y_pred, multilabel="exact-match")
+    0.0
     >>> accuracy_score(y_true, y_pred, multilabel="average")
-    0.75
+    0.5
     """
 
     # Compute accuracy for each possible representation
