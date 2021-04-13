@@ -60,7 +60,9 @@ def test_cdist(metric, X1, X2):
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        if metric == "wminkowski":
+        if metric == "mahalanobis":
+            pytest.skip("cdist with 'mahalanobis' fails on memmap data")
+        elif metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
 
@@ -103,7 +105,10 @@ def test_pdist(metric, X1, X2):
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        if metric == "wminkowski":
+        if metric == "mahalanobis":
+            pytest.skip("pdist with 'mahalanobis' fails on memmap data")
+
+        elif metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
 
