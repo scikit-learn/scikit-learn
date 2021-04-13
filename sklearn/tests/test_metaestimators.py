@@ -7,7 +7,10 @@ import pytest
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import is_regressor
-from sklearn.datasets import make_classification
+from sklearn.datasets import (
+    make_classification,
+    make_multilabel_classification,
+)
 from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
@@ -21,6 +24,7 @@ from sklearn.ensemble import BaggingClassifier, StackingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.multioutput import ClassifierChain
 
 
 class DelegatorData:
@@ -55,14 +59,24 @@ DELEGATING_METAESTIMATORS = [
                   skip_methods=['transform', 'inverse_transform',
                                 'predict_proba']),
     DelegatorData(
-        'NestedMetaEstimator',
+        'Pipeline_with_NestedMetaEstimator',
         lambda est: Pipeline([
             ('stacking',
              StackingClassifier([('clf', LogisticRegression())],
                                 final_estimator=est))
         ]),
-        skip_methods=['transform', 'inverse_transform', 'predict_log_proba',
-                      'score']
+        skip_methods=["transform", "inverse_transform", "predict_log_proba",
+                      "score"],
+    ),
+    DelegatorData(
+        'ClassifierChain_with_NestedMetaEstimator',
+        lambda est:
+        ClassifierChain(base_estimator=StackingClassifier(
+            [('clf', LogisticRegression())], final_estimator=est
+        )),
+        skip_methods=["transform", "inverse_transform", "predict",
+                      "predict_log_proba", "score"],
+        fit_args=make_multilabel_classification(),
     ),
 ]
 
@@ -109,7 +123,7 @@ def test_metaestimator_delegation(delegator_data):
         @hides
         def predict_proba(self, X, *args, **kwargs):
             self._check_fit()
-            return np.ones(X.shape[0])
+            return np.ones((X.shape[0], 2))
 
         @hides
         def predict_log_proba(self, X, *args, **kwargs):

@@ -673,7 +673,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
                          in enumerate(self.estimators_)]
         return self
 
-    @if_delegate_has_method('base_estimator')
+    @if_delegate_has_method('estimators_')
     def predict_proba(self, X):
         """Predict probability estimates.
 
@@ -702,7 +702,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         return Y_prob
 
-    @if_delegate_has_method('base_estimator')
+    @if_delegate_has_method('estimators_')
     def decision_function(self, X):
         """Evaluate the decision_function of the models in the chain.
 
