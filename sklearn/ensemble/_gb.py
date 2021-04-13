@@ -238,6 +238,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 or self.loss not in _gb_losses.LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
+        if self.loss == "ls":
+            warnings.warn("The loss 'ls' was deprecated in v1.0 and "
+                          "will be removed in version 1.2. Use 'squared_error'"
+                          " which is equivalent.",
+                          FutureWarning)
+
         if self.loss == 'deviance':
             loss_class = (_gb_losses.MultinomialDeviance
                           if len(self.classes_) > 2
@@ -400,6 +406,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.criterion == 'mae':
             # TODO: This should raise an error from 1.1
             self._warn_mae_for_criterion()
+
+        if self.criterion == 'mse':
+            # TODO: Remove in v1.2. By then it should raise an error.
+            warnings.warn(
+                "Criterion 'mse' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use `criterion='squared_error'` "
+                "which is equivalent.",
+                FutureWarning
+            )
 
         # if not warmstart - clear the estimator state
         if not self.warm_start:
@@ -808,20 +823,26 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : {'friedman_mse', 'mse', 'mae'}, default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error', 'mse', 'mae'}, \
+            default='friedman_mse'
         The function to measure the quality of a split. Supported criteria
         are 'friedman_mse' for the mean squared error with improvement
-        score by Friedman, 'mse' for mean squared error, and 'mae' for
-        the mean absolute error. The default value of 'friedman_mse' is
-        generally the best as it can provide a better approximation in
-        some cases.
+        score by Friedman, 'squared_error' for mean squared error, and 'mae'
+        for the mean absolute error. The default value of 'friedman_mse' is
+        generally the best as it can provide a better approximation in some
+        cases.
 
         .. versionadded:: 0.18
+
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
-            1.1 (renaming of 0.26). Use `criterion='friedman_mse'` or `'mse'`
-            instead, as trees should use a least-square criterion in
-            Gradient Boosting.
+            1.1 (renaming of 0.26). Use `criterion='friedman_mse'` or
+            `'squared_error'` instead, as trees should use a squared error
+            criterion in Gradient Boosting.
+
+        .. deprecated:: 1.0
+            Criterion 'mse' was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1128,9 +1149,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         # TODO: This should raise an error from 1.1
         warnings.warn("criterion='mae' was deprecated in version 0.24 and "
                       "will be removed in version 1.1 (renaming of 0.26). Use "
-                      "criterion='friedman_mse' or 'mse' instead, as trees "
-                      "should use a least-square criterion in Gradient "
-                      "Boosting.", FutureWarning)
+                      "criterion='friedman_mse' or 'squared_error' instead, as"
+                      " trees should use a squared error criterion in Gradient"
+                      " Boosting.", FutureWarning)
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
@@ -1319,12 +1340,18 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'ls', 'lad', 'huber', 'quantile'}, default='ls'
-        Loss function to be optimized. 'ls' refers to least squares
-        regression. 'lad' (least absolute deviation) is a highly robust
+    loss : {'squared_error', 'ls', 'lad', 'huber', 'quantile'}, \
+            default='squared_error'
+        Loss function to be optimized. 'squared_error' refers to the squared
+        error for regression.
+        'lad' (least absolute deviation) is a highly robust
         loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
+
+        .. deprecated:: 1.0
+            The loss 'ls' was deprecated in v1.0 and will be removed in
+            version 1.2. Use `loss='squared_error'` which is equivalent.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -1342,19 +1369,25 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : {'friedman_mse', 'mse', 'mae'}, default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error', 'mse', 'mae'}, \
+            default='friedman_mse'
         The function to measure the quality of a split. Supported criteria
         are "friedman_mse" for the mean squared error with improvement
-        score by Friedman, "mse" for mean squared error, and "mae" for
-        the mean absolute error. The default value of "friedman_mse" is
-        generally the best as it can provide a better approximation in
-        some cases.
+        score by Friedman, "squared_error" for mean squared error, and "mae"
+        for the mean absolute error. The default value of "friedman_mse" is
+        generally the best as it can provide a better approximation in some
+        cases.
 
         .. versionadded:: 0.18
+
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
             1.1 (renaming of 0.26). The correct way of minimizing the absolute
             error is to use `loss='lad'` instead.
+
+        .. deprecated:: 1.0
+            Criterion 'mse' was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1427,7 +1460,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         ``init`` has to provide :term:`fit` and :term:`predict`. If 'zero', the
         initial raw predictions are set to zero. By default a
         ``DummyEstimator`` is used, predicting either the average target value
-        (for loss='ls'), or a quantile for the other losses.
+        (for loss='squared_error'), or a quantile for the other losses.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given to each Tree estimator at each
@@ -1610,10 +1643,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
+    # TODO: remove "ls" in verion 1.2
+    _SUPPORTED_LOSS = ("squared_error", 'ls', 'lad', 'huber', 'quantile')
 
     @_deprecate_positional_args
-    def __init__(self, *, loss='ls', learning_rate=0.1, n_estimators=100,
+    def __init__(self, *, loss="squared_error", learning_rate=0.1,
+                 n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,

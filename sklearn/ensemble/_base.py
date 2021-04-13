@@ -15,6 +15,7 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
+from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
 from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
@@ -150,6 +151,15 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         estimator = clone(self.base_estimator_)
         estimator.set_params(**{p: getattr(self, p)
                                 for p in self.estimator_params})
+
+        # TODO: Remove in v1.2
+        # criterion "mse" would cause warnings in every call to
+        # DecisionTreeRegressor.fit(..)
+        if (
+            isinstance(estimator, (DecisionTreeRegressor, ExtraTreeRegressor))
+            and getattr(estimator, "criterion", None) == "mse"
+        ):
+            estimator.set_params(criterion="squared_error")
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
