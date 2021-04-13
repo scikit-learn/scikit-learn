@@ -276,7 +276,7 @@ Changelog
   :pr:`18649` by `Leandro Hermida <hermidalc>` and
   `Rodion Martynov <marrodion>`.
 
-- |Fix| The `fit` method of the successive halving parameter search 
+- |Fix| The `fit` method of the successive halving parameter search
   (:class:`model_selection.HalvingGridSearchCV`, and
   :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
   `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
@@ -362,6 +362,11 @@ Changelog
   the default value of `random_state` will be set to `None`.
   :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
+
+- |Enhancement| :func:`utils.utils.multiclass.type_of_target` can
+  now correctly infer the target type of Pandas Series with Nullable dtypes.
+  This enhancement adds support for Pandas Series with nullable dtypes as a
+  target for scikit-learn estimators. :pr:`19891` by `Thomas Fan`_.
 
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
