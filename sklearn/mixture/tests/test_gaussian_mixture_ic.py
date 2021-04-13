@@ -16,32 +16,30 @@ def _test_inputs(X, error_type, **kws):
 
 
 def test_n_components():
-    # Generate random data
     X = np.random.normal(0, 1, size=(100, 3))
 
-    # min_components < 1
+    # min_components must be less than 1
     _test_inputs(X, ValueError, min_components=0)
 
-    # min_components integer
+    # min_components must be an integer
     _test_inputs(X, TypeError, min_components="1")
 
-    # max_components < min_components
+    # max_components must be at least min_components
     _test_inputs(X, ValueError, max_components=0)
 
-    # max_components integer
+    # max_components must be an integer
     _test_inputs(X, TypeError, max_components="1")
 
-    # max_components > n_samples
+    # max_components must be at most n_samples
     _test_inputs(X, ValueError, max_components=101)
 
-    # min_components > n_samples
+    # min_components must be at most n_samples
     _test_inputs(
         X, ValueError, **{"min_components": 101, "max_components": 102}
     )
 
 
 def test_input_param():
-    # Generate random data
     X = np.random.normal(0, 1, size=(100, 3))
 
     # affinity is not an array, string or list
@@ -70,7 +68,6 @@ def test_input_param():
 
 
 def test_labels_init():
-    # Generate random data
     X = np.random.normal(0, 1, size=(100, 3))
 
     # label_init is not a 1-D array
@@ -95,7 +92,6 @@ def test_labels_init():
 
 
 def test_predict_without_fit():
-    # Generate random data
     X = np.random.normal(0, 1, size=(100, 3))
 
     with pytest.raises(NotFittedError):
@@ -203,55 +199,51 @@ def test_five_class():
     assert_equal(gmIC.n_components_ <= 10, True)
 
 
-# Generate random data for each of the four covariance types
-n = 100
-mu1 = [-10, 0]
-mu2 = [10, 0]
-
+# Generate covariance matrices for the random data
+# corresponding to each of the four covariance types
 # Spherical
-np.random.seed(1)
 cov1 = 2 * np.eye(2)
 cov2 = 2 * np.eye(2)
-X1 = np.random.multivariate_normal(mu1, cov1, n)
-X2 = np.random.multivariate_normal(mu2, cov2, n)
-X_spherical = np.concatenate((X1, X2))
+covs_spherical = [cov1, cov2]
 
 # Diagonal
-np.random.seed(10)
+# np.random.seed(10)
 cov1 = np.diag([1, 1])
 cov2 = np.diag([2, 1])
-X1 = np.random.multivariate_normal(mu1, cov1, n)
-X2 = np.random.multivariate_normal(mu2, cov2, n)
-X_diag = np.concatenate((X1, X2))
+covs_diag = [cov1, cov2]
 
 # Tied
 cov1 = np.array([[2, 1], [1, 2]])
 cov2 = np.array([[2, 1], [1, 2]])
-X1 = np.random.multivariate_normal(mu1, cov1, n)
-X2 = np.random.multivariate_normal(mu2, cov2, n)
-X_tied = np.concatenate((X1, X2))
+covs_tied = [cov1, cov2]
 
 # Full
 cov1 = np.array([[2, -1], [-1, 2]])
 cov2 = np.array([[2, 1], [1, 2]])
-X1 = np.random.multivariate_normal(mu1, cov1, n)
-X2 = np.random.multivariate_normal(mu2, cov2, n)
-X_full = np.concatenate((X1, X2))
+covs_full = [cov1, cov2]
 
 
 @pytest.mark.parametrize(
-    "test_data,expected_cov_type",
+    "covs,expected_cov_type",
     [
-        (X_spherical, "spherical"),
-        (X_diag, "diag"),
-        (X_tied, "tied"),
-        (X_full, "full"),
+        (covs_spherical, "spherical"),
+        (covs_diag, "diag"),
+        (covs_tied, "tied"),
+        (covs_full, "full"),
     ],
 )
-def test_covariances(test_data, expected_cov_type):
+def test_covariances(covs, expected_cov_type):
     """
     Easily separable two gaussian problem.
     """
+    np.random.seed(1)
+    n = 100
+    mu1 = [-10, 0]
+    mu2 = [10, 0]
+    X1 = np.random.multivariate_normal(mu1, covs[0], n)
+    X2 = np.random.multivariate_normal(mu2, covs[1], n)
+    X = np.concatenate((X1, X2))
+
     gmIC = GaussianMixtureIC(min_components=2, covariance_type="all")
-    gmIC.fit(test_data)
+    gmIC.fit(X)
     assert_equal(gmIC.covariance_type_, expected_cov_type)

@@ -1,7 +1,7 @@
 """GaussianMixtureIC"""
 
 # Author: Thomas Athey <tathey1@jhmi.edu>
-# Modified by Benjamin Pedigo <bpedigo@jhu,edu>, Tingshan Liu <tliu68@jhmi.edu>
+# Modified by Benjamin Pedigo <bpedigo@jhu.edu>, Tingshan Liu <tliu68@jhmi.edu>
 
 
 import numpy as np
@@ -28,9 +28,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     Automatic Gaussian Mixture Model (GMM) selection via BIC/AIC.
 
     Clustering algorithm using a hierarchical agglomerative clustering
-    then Gaussian mixtured model (GMM) fitting. Different combinations
+    prior to a Gaussian mixture model (GMM) fitting. Different combinations
     of agglomeration, GMM, and cluster numbers are used and the clustering
-    with the best selection criterion (bic/aic) is chosen.
+    with the best selection criterion (BIC or AIC) is chosen.
 
     Parameters
     ----------
@@ -113,7 +113,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         There is randomness in k-means initialization of
         :class:`sklearn.mixture.GaussianMixture`. This parameter is passed to
         :class:`~sklearn.mixture.GaussianMixture` to control the random state.
-        If int, ``random_state`` is used as the random number generator seed;
+        If int, ``random_state`` is used as the random number generator seed.
         If RandomState instance, ``random_state`` is the random number
         generator; If None, the random number generator is the
         RandomState instance used by ``np.random``.
@@ -145,7 +145,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     n_jobs : int or None, optional (default = None)
         The number of jobs to use for the computation. This works by computing
         each of the initialization runs in parallel. None means 1 unless in a
-        ``joblib.parallel_backend context``. -1 means using all processors.
+        ``joblib.parallel_backend`` context. -1 means using all processors.
         See https://scikit-learn.org/stable/glossary.html#term-n-jobs
         for more details.
 
@@ -264,18 +264,15 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             input = list(np.unique(input))
         elif isinstance(input, str):
             if input not in default:
-                msg = (
-                    name
-                    + " must be one of "
-                    + str(default)
-                    + " not {}".format(input)
-                )
+                msg = f"{name} is {input} but must be one of {default}."
                 raise ValueError(msg)
             if input != "all":
                 input = [input]
         else:
-            msg = name + "must be a numpy array, a list, or "
-            msg += "string, not {}".format(type(input))
+            msg = (
+                f"{name} is a {type(input)} but must be a numpy array, "
+                "a list, or a string."
+            )
             raise TypeError(msg)
         return input
 
@@ -302,8 +299,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         if ("ward" in self.linkage) and not ("euclidean" in self.affinity):
             msg = (
-                'if "ward" is a linkage option, '
-                + '"euclidean" must be an affinity option'
+                'If "ward" is a linkage option, '
+                '"euclidean" must be an affinity option.'
             )
             raise ValueError(msg)
 
@@ -328,8 +325,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 msg = "label_init must be a one dimension array."
                 raise TypeError(msg)
         elif self.label_init is not None:
-            msg = "label_init must be a 1-D numpy array, a list, or None,"
-            msg += "not {}".format(type(self.label_init))
+            msg = (
+                f"label_init is a {type(self.label_init)} but must be a "
+                "1-D number array, a list, or None."
+            )
             raise TypeError(msg)
 
         # Adjust elements in label_init to range(n_components of label_init)
@@ -347,8 +346,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self.label_init = labels_init
 
         if self.criterion not in ["aic", "bic"]:
-            msg = "criterion must be one of " + '["aic, "bic"]'
-            msg += " not {}".format(self.criterion)
+            msg = f'criterion is {self.criterion} but must be "aic" or "bic".'
             raise ValueError(msg)
 
         check_scalar(
@@ -554,6 +552,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self.n_iter_ = results[best_idx].model.n_iter_
         self.labels_ = results[best_idx].model.predict(X)
         self.results_ = results
+        self.n_features_in_ = X.shape[1]
 
         return self
 
