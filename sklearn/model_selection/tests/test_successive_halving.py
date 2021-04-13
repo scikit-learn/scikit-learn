@@ -449,6 +449,7 @@ def test_cv_results(Est):
     # non-regression check for
     # https://github.com/scikit-learn/scikit-learn/issues/19203
     assert isinstance(sh.cv_results_['iter'], np.ndarray)
+    assert isinstance(sh.cv_results_['n_resources'], np.ndarray)
 
     cv_results_df = pd.DataFrame(sh.cv_results_)
 
