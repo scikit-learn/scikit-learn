@@ -332,3 +332,38 @@ def test_nystroem_precomputed_kernel():
                       **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
+
+
+def test_supplied_landmarks():
+    # Basic tests to check that the user can provide a set of landmark points.
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 4))
+
+    # test that the fitted matrix has used the supplied landmarks
+    landmarks = rnd.permutation(X.shape[0])
+    for i in range(1, len(landmarks)):
+        nystroem = Nystroem(n_components=i, kernel=_linear_kernel,
+                            random_state=rnd)
+        nystroem.fit(X, landmarks=landmarks[:i])
+        assert_array_almost_equal(X[landmarks[:i]], nystroem.components_)
+
+    # test: n_components (originally 5) reduced to the size of landmarks (3)
+    landmarks = rnd.permutation(X.shape[0] // 3)
+    msg = "n_components > landmarks.size\n" + \
+          f"only the {landmarks.size} provided landmarks will be selected"
+    n_components = 5
+    nystroem = Nystroem(n_components=n_components, kernel=_linear_kernel,
+                        random_state=rnd)
+
+    with pytest.warns(UserWarning, match=msg):
+        nystroem.fit(X, landmarks=landmarks)
+        assert_array_equal(landmarks, nystroem.component_indices_)
+
+    # test raised error in case the landmarks are out of range
+    landmarks = ', '.join(np.array([X.shape[0]], dtype=str))
+    msg = f"The following landmarks are outside of the range of X: {landmarks}"
+    nystroem = Nystroem(n_components=1, kernel=_linear_kernel,
+                        random_state=rnd)
+    landmarks = np.array([X.shape[0]])
+    with pytest.raises(IndexError, match=msg):
+        nystroem.fit(X, landmarks=landmarks)

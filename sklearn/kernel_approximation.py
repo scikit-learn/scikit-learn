@@ -22,7 +22,7 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, column_or_1d
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
 
@@ -738,7 +738,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.n_jobs = n_jobs
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, landmarks=None):
         """Fit estimator to data.
 
         Samples a subset of training points, computes kernel
@@ -748,6 +748,9 @@ class Nystroem(TransformerMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data.
+
+        landmarks : array-like of shape (n_components,) or list, optional
+             indices of the samples that will be included in the landmark set.
         """
         X = self._validate_data(X, accept_sparse='csr')
         rnd = check_random_state(self.random_state)
@@ -764,8 +767,25 @@ class Nystroem(TransformerMixin, BaseEstimator):
         else:
             n_components = self.n_components
         n_components = min(n_samples, n_components)
-        inds = rnd.permutation(n_samples)
-        basis_inds = inds[:n_components]
+
+        if landmarks is None:
+            inds = rnd.permutation(n_samples)
+            basis_inds = inds[:n_components]
+        else:
+            inds = column_or_1d(landmarks)
+            if n_components > inds.shape[0]:
+                n_components = inds.shape[0]
+                warnings.warn("n_components > landmarks.size\n"
+                              f"only the {landmarks.size} provided landmarks"
+                              " will be selected")
+            basis_inds = column_or_1d(landmarks[:n_components])
+
+        if max(basis_inds) >= X.shape[0]:
+            error_indices = ', '.join(np.array(basis_inds[basis_inds >=
+                                               X.shape[0]], dtype=str))
+
+            raise IndexError("The following landmarks are outside of "
+                             f"the range of X: {error_indices}")
         basis = X[basis_inds]
 
         basis_kernel = pairwise_kernels(basis, metric=self.kernel,

@@ -302,6 +302,13 @@ Changelog
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Enhancement| Enable and validate user ability to provide specific
+  landmark points for the Nystroem kernel approximation.
+  :pr:`20233` by :user:`Sergei Kliavinek <hurricane642>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
