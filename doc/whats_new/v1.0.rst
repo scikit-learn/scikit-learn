@@ -343,6 +343,10 @@ Changelog
   `handle_unknown='ignore'` and dropping categories. :pr:`19041` by
   `Thomas Fan`_.
 
+- |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
+  supporting sparse matrix and raise the appropriate error message.
+  :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.tree`
 ...................
 
