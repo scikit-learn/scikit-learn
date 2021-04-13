@@ -171,24 +171,54 @@ _ = model.fit(X_train, y_train)
 # on the test set and computing,
 # for example, the median absolute error of the model.
 
-from sklearn.metrics import median_absolute_error
+def plot_predict_quality(X_train, y_train, X_test, y_test, 
+                         model, 
+                         xy_lim, figsize,
+                         title, loc, metric_dimension=None):
+    import matplotlib.pyplot as plt
+    from matplotlib.offsetbox import AnchoredText
+    
+    def get_y_pred_string_score(X, y_true, metric_dimension, 
+                                string_score, dataset):
+        from sklearn.metrics import median_absolute_error
+        
+        y_pred = model.predict(X)
+        mae = median_absolute_error(y_true, y_pred)
+        string_score += f'MAE on {dataset} set: {mae:.2f}'
+        if metric_dimension:
+            string_score += ' ' + metric_dimension
+        
+        return y_pred, string_score
+    
+    _, string_score = get_y_pred_string_score(
+        X_train, y_train, metric_dimension, 
+        string_score='', dataset='training')
+    string_score += '\n'
+    y_pred, string_score = get_y_pred_string_score(
+        X_test, y_test, metric_dimension, 
+        string_score, dataset='testing')
+                  
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.scatter(y_test, y_pred)
+    ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
+    ax.set_xlim(xy_lim)
+    ax.set_ylim(xy_lim)
+    ax.set_xlabel('Truths')
+    ax.set_ylabel('Model predictions')
+    ax.add_artist(AnchoredText(string_score, loc=loc))
+    ax.set_title(title)
+    plt.show()
+    
+    pass
 
-y_pred = model.predict(X_train)
-
-mae = median_absolute_error(y_train, y_pred)
-string_score = f'MAE on training set: {mae:.2f} $/hour'
-y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f'\nMAE on testing set: {mae:.2f} $/hour'
-fig, ax = plt.subplots(figsize=(5, 5))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-plt.text(3, 20, string_score)
-plt.title('Ridge model, small regularization')
-plt.ylabel('Model predictions')
-plt.xlabel('Truths')
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+plot_predict_quality(
+    X_train, y_train, X_test, y_test, model,
+    xy_lim=(0, 27),
+    figsize=(5, 5),
+    title='Ridge model, small regularization',
+    loc="upper left", 
+    metric_dimension='$/hour'
+)
 
 # %%
 # The model learnt is far from being a good model making accurate predictions:
@@ -324,13 +354,24 @@ coefs = pd.DataFrame(
      for est in cv_model['estimator']],
     columns=feature_names
 )
-plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
-plt.axvline(x=0, color='.5')
-plt.xlabel('Coefficient importance')
-plt.title('Coefficient importance and its variability')
-plt.subplots_adjust(left=.3)
+
+def plot_coefficient_importance_variability(coefs, figsize):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    
+    fig, ax = plt.subplots(figsize=figsize)
+
+    sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5, ax=ax)
+    sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5, ax=ax)
+    ax.axvline(x=0, color='.5')
+    ax.set_xlabel('Coefficient importance')
+    ax.set_title('Coefficient importance and its variability')
+    plt.subplots_adjust(left=.3)
+    plt.show()
+
+    pass
+
+plot_coefficient_importance_variability(coefs, figsize=(9, 7))
 
 # %%
 # The problem of correlated variables
@@ -375,13 +416,7 @@ coefs = pd.DataFrame(
      for est in cv_model['estimator']],
     columns=feature_names[:-1]
 )
-plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
-plt.axvline(x=0, color='.5')
-plt.title('Coefficient importance and its variability')
-plt.xlabel('Coefficient importance')
-plt.subplots_adjust(left=.3)
+plot_coefficient_importance_variability(coefs, figsize=(9, 7))
 
 # %%
 # The estimation of the EXPERIENCE coefficient is now less variable and
@@ -426,23 +461,14 @@ _ = model.fit(X_train, y_train)
 # model using, for example, the median absolute error of the model and the R
 # squared coefficient.
 
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f'MAE on training set: {mae:.2f} $/hour'
-y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f'\nMAE on testing set: {mae:.2f} $/hour'
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title('Ridge model, small regularization, normalized variables')
-plt.ylabel('Model predictions')
-plt.xlabel('Truths')
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+plot_predict_quality(
+    X_train, y_train, X_test, y_test, model,
+    xy_lim=(0, 27),
+    figsize=(6, 6),
+    title='Lasso model, small regularization, normalized variables',
+    loc="upper left", 
+    metric_dimension='$/hour'
+)
 
 # %%
 # For the coefficient analysis, scaling is not needed this time.
@@ -468,12 +494,8 @@ coefs = pd.DataFrame(
      for est in cv_model['estimator']],
     columns=feature_names
 )
-plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
-plt.axvline(x=0, color='.5')
-plt.title('Coefficient variability')
-plt.subplots_adjust(left=.3)
+
+plot_coefficient_importance_variability(coefs, figsize=(9, 7))
 
 # %%
 # The result is quite similar to the non-normalized case.
@@ -511,24 +533,14 @@ model[-1].regressor_.alpha_
 # %%
 # Then we check the quality of the predictions.
 
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f'MAE on training set: {mae:.2f} $/hour'
-y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f'\nMAE on testing set: {mae:.2f} $/hour'
-
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title('Ridge model, regularization, normalized variables')
-plt.ylabel('Model predictions')
-plt.xlabel('Truths')
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+plot_predict_quality(
+    X_train, y_train, X_test, y_test, model,
+    xy_lim=(0, 27),
+    figsize=(6, 6),
+    title='Ridge model, regularization, normalized variables',
+    loc="upper left", 
+    metric_dimension='$/hour'
+)
 
 # %%
 # The ability to reproduce the data of the regularized model is similar to
@@ -612,24 +624,14 @@ model[-1].regressor_.alpha_
 # %%
 # Then we check the quality of the predictions.
 
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f'MAE on training set: {mae:.2f} $/hour'
-y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f'\nMAE on testing set: {mae:.2f} $/hour'
-
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title('Lasso model, regularization, normalized variables')
-plt.ylabel('Model predictions')
-plt.xlabel('Truths')
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+plot_predict_quality(
+    X_train, y_train, X_test, y_test, model,
+    xy_lim=(0, 27),
+    figsize=(6, 6),
+    title='Lasso model, regularization, normalized variables',
+    loc="upper left", 
+    metric_dimension='$/hour'
+)
 
 # %%
 # For our dataset, again the model is not very predictive.
