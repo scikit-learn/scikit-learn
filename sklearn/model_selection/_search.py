@@ -900,7 +900,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         for key, val in results.items():
             # each value is a list (as per evaluate_candidate's convention)
             # we convert it to an array for consistency with the other keys
-            results[key] = np.array(val)
+            results[key] = np.asarray(val)
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
