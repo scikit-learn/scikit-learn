@@ -16,6 +16,7 @@ This module contains:
 from abc import abstractmethod
 
 import numpy as np
+from typing import Mapping
 
 from joblib import Parallel
 
@@ -261,14 +262,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         for clf in clfs:
             if clf == 'drop':
                 continue
-            is_clone = False
+            already_clone = False
+
             for k, v in clf.get_params(deep=True).items():
-                if k.endswith('class_weight') and v is not None:
-                    if not is_clone:
-                        clf, is_clone = clone(clf), True
-                    updated_class_weight = {label_mapping[i]: w
-                                            for i, w in v.items()}
-                    clf.set_params(**{k: updated_class_weight})
+                if not k.endswith('class_weight') or \
+                        not isinstance(v, Mapping):
+                    continue
+
+                if not already_clone:
+                    clf, already_clone = clone(clf), True
+                updated_class_weight = {label_mapping[i]: w
+                                        for i, w in v.items()}
+                clf.set_params(**{k: updated_class_weight})
             updated_clfs += (clf, )
         return names, updated_clfs
 
