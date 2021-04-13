@@ -1331,7 +1331,6 @@ class RandomForestRegressor(ForestRegressor):
 
     criterion : {"squared_error", "mse", "mae", "poisson"}, \
             default="squared_error"
-
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion, "poisson" which
