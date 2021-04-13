@@ -824,7 +824,6 @@ class _BaseRidgeClassifier(LinearClassifierMixin, MultiLabelMixin):
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
-            # modify the sample weights with the corresponding class weight
             sample_weight = (
                 sample_weight * compute_sample_weight(self.class_weight, y)
             )
@@ -946,7 +945,7 @@ class RidgeClassifier(_BaseRidgeClassifier, _BaseRidge):
           .. versionadded:: 0.17
              Stochastic Average Gradient descent solver.
           .. versionadded:: 0.19
-           SAGA solver.
+             SAGA solver.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -2039,9 +2038,11 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
             X, y, sample_weight, solver="eigen"
         )
 
-        # If cv is None, gcv mode will be used and we will directly used the
-        # binarized Y. If cv is not None, a GridSearchCV will be used and `y`
-        # will be binarized again and thus we pass y instead of Y.
+        # If cv is None, gcv mode will be used and we used the binarized Y
+        # since y will not be binarized in _RidgeGCV estimator.
+        # If cv is not None, a GridSearchCV with some RidgeClassifier
+        # estimators are used where y will be binarized. Thus, we pass y
+        # instead of the binarized Y.
         target = Y if self.cv is None else y
         _BaseRidgeCV.fit(self, X, target, sample_weight=sample_weight)
         return self
