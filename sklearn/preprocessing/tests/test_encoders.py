@@ -1132,3 +1132,23 @@ def test_ordinal_encoder_sparse():
     X_trans_sparse = sparse.csr_matrix(X_trans)
     with pytest.raises(TypeError, match=err_msg):
         encoder.inverse_transform(X_trans_sparse)
+
+
+@pytest.mark.parametrize("X_train", [
+    [['AA', 'B']],
+    np.array([['AA', 'B']], dtype='O'),
+    np.array([['AA', 'B']], dtype='U'),
+])
+@pytest.mark.parametrize("X_test", [
+    [['A', 'B']],
+    np.array([['A', 'B']], dtype='O'),
+    np.array([['A', 'B']], dtype='U'),
+])
+def test_ordinal_encoder_handle_unknown_string_dtypes(X_train, X_test):
+    """Checks that ordinal encoder transforms string dtypes. Non-regression
+    test for #19872."""
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-9)
+    enc.fit(X_train)
+
+    X_trans = enc.transform(X_test)
+    assert_allclose(X_trans, [[-9, 0]])

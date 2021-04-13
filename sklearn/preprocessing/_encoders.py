@@ -150,6 +150,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     if (self.categories_[i].dtype.kind in ('U', 'S')
                             and self.categories_[i].itemsize > Xi.itemsize):
                         Xi = Xi.astype(self.categories_[i].dtype)
+                    elif (self.categories_[i].dtype.kind == 'O' and
+                            Xi.dtype.kind == 'U'):
+                        # categories are objects and Xi are numpy strings
+                        Xi = Xi.astype('O')
                     else:
                         Xi = Xi.copy()
 
