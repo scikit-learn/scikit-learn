@@ -1644,3 +1644,5 @@ cdef _build_pruned_tree(
             tree.max_depth = max_depth_seen
     if rc == -1:
         raise MemoryError("pruning tree")
+
+# FIXME: undo this test comment for #19850.
