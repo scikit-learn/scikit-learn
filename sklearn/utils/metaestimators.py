@@ -13,6 +13,7 @@ import numpy as np
 from ..utils import _safe_indexing
 from ..base import BaseEstimator
 from ..base import _is_pairwise
+from ..exceptions import NotFittedError
 
 __all__ = ['if_delegate_has_method']
 
@@ -121,7 +122,15 @@ class _IffHasAttrDescriptor:
                         getattr(delegate, self.attribute_name)
                     break
             else:
-                attrgetter(self.delegate_names[-1])(obj)
+                last_delegate_name = self.delegate_names[-1]
+                if last_delegate_name.endswith("_"):
+                    raise NotFittedError(
+                        f"This {obj.__class__.__name__} instance is not "
+                        f"fitted. Call 'fit' with appropriate arguments before"
+                        f" using this estimator."
+                    )
+                else:
+                    attrgetter(last_delegate_name)(obj)
 
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)

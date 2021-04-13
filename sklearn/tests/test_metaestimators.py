@@ -5,7 +5,7 @@ from inspect import signature
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import is_regressor
 from sklearn.datasets import make_classification
 from sklearn.utils import all_estimators
@@ -17,7 +17,7 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import RFE, RFECV
-from sklearn.ensemble import BaggingClassifier
+from sklearn.ensemble import BaggingClassifier, StackingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.linear_model import Ridge, LogisticRegression
@@ -54,10 +54,21 @@ DELEGATING_METAESTIMATORS = [
                   lambda est: SelfTrainingClassifier(est),
                   skip_methods=['transform', 'inverse_transform',
                                 'predict_proba']),
+    DelegatorData(
+        'NestedMetaEstimator',
+        lambda est: Pipeline([
+            ('stacking',
+             StackingClassifier([('clf', LogisticRegression())],
+                                final_estimator=est))
+        ]),
+        skip_methods=['transform', 'inverse_transform', 'predict_log_proba',
+                      'score']
+    ),
 ]
 
 
-def test_metaestimator_delegation():
+@pytest.mark.parametrize("delegator_data", DELEGATING_METAESTIMATORS)
+def test_metaestimator_delegation(delegator_data):
     # Ensures specified metaestimators have methods iff subestimator does
     def hides(method):
         @property
@@ -67,7 +78,7 @@ def test_metaestimator_delegation():
             return functools.partial(method, obj)
         return wrapper
 
-    class SubEstimator(BaseEstimator):
+    class SubEstimator(ClassifierMixin, BaseEstimator):
         def __init__(self, param=1, hidden_method=None):
             self.param = param
             self.hidden_method = hidden_method
@@ -93,7 +104,7 @@ def test_metaestimator_delegation():
         @hides
         def predict(self, X, *args, **kwargs):
             self._check_fit()
-            return np.ones(X.shape[0])
+            return np.ones(X.shape[0], dtype=np.int64)
 
         @hides
         def predict_proba(self, X, *args, **kwargs):
@@ -119,45 +130,47 @@ def test_metaestimator_delegation():
                if not k.startswith('_') and not k.startswith('fit')]
     methods.sort()
 
-    for delegator_data in DELEGATING_METAESTIMATORS:
-        delegate = SubEstimator()
-        delegator = delegator_data.construct(delegate)
-        for method in methods:
-            if method in delegator_data.skip_methods:
-                continue
-            assert hasattr(delegate, method)
-            assert hasattr(delegator, method), (
-                    "%s does not have method %r when its delegate does"
-                    % (delegator_data.name, method))
-            # delegation before fit raises a NotFittedError
-            if method == 'score':
-                with pytest.raises(NotFittedError):
-                    getattr(delegator, method)(delegator_data.fit_args[0],
-                                               delegator_data.fit_args[1])
-            else:
-                with pytest.raises(NotFittedError):
-                    getattr(delegator, method)(delegator_data.fit_args[0])
-
-        delegator.fit(*delegator_data.fit_args)
-        for method in methods:
-            if method in delegator_data.skip_methods:
-                continue
-            # smoke test delegation
-            if method == 'score':
+    delegate = SubEstimator()
+    delegator = delegator_data.construct(delegate)
+    for method in methods:
+        if method in delegator_data.skip_methods:
+            continue
+        # delegation before fit raises a NotFittedError
+        if method == 'score':
+            with pytest.raises(NotFittedError):
                 getattr(delegator, method)(delegator_data.fit_args[0],
                                            delegator_data.fit_args[1])
-            else:
+        else:
+            with pytest.raises(NotFittedError):
                 getattr(delegator, method)(delegator_data.fit_args[0])
 
-        for method in methods:
-            if method in delegator_data.skip_methods:
-                continue
-            delegate = SubEstimator(hidden_method=method)
-            delegator = delegator_data.construct(delegate)
-            assert not hasattr(delegate, method)
-            assert not hasattr(delegator, method), (
-                    "%s has method %r when its delegate does not"
-                    % (delegator_data.name, method))
+    delegator.fit(*delegator_data.fit_args)
+    for method in methods:
+        if method in delegator_data.skip_methods:
+            continue
+        # check that we can delegate
+        assert hasattr(delegate, method)
+        assert hasattr(delegator, method), (
+            f"{delegator_data.name} does not have method {method} when its "
+            "delegate does"
+        )
+        # smoke test delegation
+        if method == 'score':
+            getattr(delegator, method)(delegator_data.fit_args[0],
+                                       delegator_data.fit_args[1])
+        else:
+            getattr(delegator, method)(delegator_data.fit_args[0])
+
+    for method in methods:
+        if method in delegator_data.skip_methods:
+            continue
+        delegate = SubEstimator(hidden_method=method)
+        delegator = delegator_data.construct(delegate)
+        assert not hasattr(delegate, method)
+        assert not hasattr(delegator, method), (
+            f"{delegator_data.name} has method {method} when its delegate "
+            "does not."
+        )
 
 
 def _generate_meta_estimator_instances_with_pipeline():
