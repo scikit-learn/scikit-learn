@@ -43,8 +43,7 @@ Changelog
 - |Fix| Some values in the `cv_results_` attribute of
   :class:`model_selection.HalvingRandomSearchCV` and
   :class:`model_selection.HalvingGridSearchCV` were not properly converted to
-  numpy arrays.
-  :pr:`19211` by `Nicolas Hug`_.
+  numpy arrays. :pr:`19211` by `Nicolas Hug`_.
 
 :mod:`sklearn.preprocessing`
 ............................
