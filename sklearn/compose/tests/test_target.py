@@ -163,13 +163,16 @@ def test_transform_target_regressor_2d_transformer(X, y):
     lr = LinearRegression()
     transformer2 = clone(transformer)
     if y.ndim == 1:  # create a 2D array and squeeze results
-        lr.fit(X, transformer2.fit_transform(y.reshape(-1, 1)))
+        lr.fit(X, transformer2.fit_transform(y.reshape(-1, 1)).squeeze())
+        y_lr_pred = lr.predict(X).reshape(-1, 1)
+        y_pred2 = transformer2.inverse_transform(y_lr_pred).squeeze()
     else:
         lr.fit(X, transformer2.fit_transform(y))
-    y_lr_pred = lr.predict(X)
-    assert_allclose(y_pred,
-                    transformer2.inverse_transform(y_lr_pred).squeeze())
-    assert_allclose(regr.regressor_.coef_, lr.coef_.squeeze())
+        y_lr_pred = lr.predict(X)
+        y_pred2 = transformer2.inverse_transform(y_lr_pred)
+
+    assert_allclose(y_pred, y_pred2)
+    assert_allclose(regr.regressor_.coef_, lr.coef_)
 
 
 def test_transform_target_regressor_2d_transformer_multioutput():
