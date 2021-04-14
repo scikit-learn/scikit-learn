@@ -275,7 +275,7 @@ def test_agglomerative_clustering():
 
 def test_agglomerative_clustering_memory_mapped():
     """AgglomerativeClustering must work on mem-mapped dataset.
-    
+
     Non-regression test for issue #19875.
     """
     rng = np.random.RandomState(0)
