@@ -398,7 +398,8 @@ def test_vector_scikit_single_vs_scipy_single(seed):
 def test_mst_linkage_core_memory_mapped(metric):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
 
-    Non-regression test for issue #19875."""
+    Non-regression test for issue #19875.
+    """
     rng = np.random.RandomState(seed=1)
     X = rng.normal(size=(20, 4))
     Xmm = create_memmap_backed_data(X)
