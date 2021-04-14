@@ -328,18 +328,13 @@ def test_type_of_target_pandas_sparse():
     ("Float64", [1.0, 2.0, 3.0, 4.0]),
 ])
 def test_type_of_target_pandas_nullable_dtypes(dtype, y_values):
-    """Check that type_of_target returns correct value for pandas series with
-    nullable dtypes. Non-regression for #19889."""
+    """Check that type_of_target errors for pandas series with nullable dtypes.
+    Related to #19889."""
     pd = pytest.importorskip("pandas", minversion="1.0")
-
-    expected_type = type_of_target(y_values)
-
     y = pd.Series(y_values, dtype=dtype)
-    assert type_of_target(y) == expected_type
-
-    y_null = pd.Series(y_values + [pd.NA], dtype=dtype)
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        type_of_target(y_null)
+    msg = "Nullable pandas dtypes are not currently supported"
+    with pytest.raises(ValueError, match=msg):
+        type_of_target(y)
 
 
 def test_class_distribution():

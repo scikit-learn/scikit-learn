@@ -264,11 +264,9 @@ def type_of_target(y):
     # detect pandas nullable dtypes
     if (hasattr(y, "dtype") and
             y.dtype.name.startswith(("Int", "UInt", "boolean", "Float"))):
-        if y.isna().any():
-            raise ValueError("Input contains NaN")
-        # `na_value` is needed by `to_numpy` but there would be no
-        # nan values in `y` at this point.
-        y = y.to_numpy(dtype=y.dtype.numpy_dtype, na_value=0)
+        raise ValueError("Nullable pandas dtypes are not currently supported. "
+                         "Please convert y into a non-nullable dtype or "
+                         "a numpy array")
 
     # DeprecationWarning will be replaced by ValueError, see NEP 34
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
