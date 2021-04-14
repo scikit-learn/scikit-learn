@@ -7,7 +7,6 @@ import pytest
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
@@ -145,16 +144,20 @@ def test_clone_buggy():
     # Check that clone raises an error on buggy estimators.
     buggy = Buggy()
     buggy.a = 2
-    assert_raises(RuntimeError, clone, buggy)
+    with pytest.raises(RuntimeError):
+        clone(buggy)
 
     no_estimator = NoEstimator()
-    assert_raises(TypeError, clone, no_estimator)
+    with pytest.raises(TypeError):
+        clone(no_estimator)
 
     varg_est = VargEstimator()
-    assert_raises(RuntimeError, clone, varg_est)
+    with pytest.raises(RuntimeError):
+        clone(varg_est)
 
     est = ModifyInitParams()
-    assert_raises(RuntimeError, clone, est)
+    with pytest.raises(RuntimeError):
+        clone(est)
 
 
 def test_clone_empty_array():
@@ -233,7 +236,9 @@ def test_get_params():
 
     test.set_params(a__d=2)
     assert test.a.d == 2
-    assert_raises(ValueError, test.set_params, a__a=2)
+
+    with pytest.raises(ValueError):
+        test.set_params(a__a=2)
 
 
 def test_is_classifier():
@@ -248,10 +253,15 @@ def test_is_classifier():
 def test_set_params():
     # test nested estimator parameter setting
     clf = Pipeline([("svc", SVC())])
+
     # non-existing parameter in svc
-    assert_raises(ValueError, clf.set_params, svc__stupid_param=True)
+    with pytest.raises(ValueError):
+        clf.set_params(svc__stupid_param=True)
+
     # non-existing parameter of pipeline
-    assert_raises(ValueError, clf.set_params, svm__stupid_param=True)
+    with pytest.raises(ValueError):
+        clf.set_params(svm__stupid_param=True)
+
     # we don't currently catch if the things in pipeline are estimators
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
     # assert_raises(AttributeError, bad_pipeline.set_params,
@@ -571,3 +581,29 @@ def test_is_pairwise():
     with pytest.warns(None) as record:
         assert not _is_pairwise(est)
     assert not record
+
+
+def test_n_features_in_validation():
+    """Check that `_check_n_features` validates data when reset=False"""
+    est = MyEstimator()
+    X_train = [[1, 2, 3], [4, 5, 6]]
+    est._check_n_features(X_train, reset=True)
+
+    assert est.n_features_in_ == 3
+
+    msg = ("X does not contain any features, but MyEstimator is expecting "
+           "3 features")
+    with pytest.raises(ValueError, match=msg):
+        est._check_n_features("invalid X", reset=False)
+
+
+def test_n_features_in_no_validation():
+    """Check that `_check_n_features` does not validate data when
+    n_features_in_ is not defined."""
+    est = MyEstimator()
+    est._check_n_features("invalid X", reset=True)
+
+    assert not hasattr(est, "n_features_in_")
+
+    # does not raise
+    est._check_n_features("invalid X", reset=False)

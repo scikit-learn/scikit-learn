@@ -116,6 +116,18 @@ def test_binary_search():
     assert_almost_equal(mean_perplexity, desired_perplexity, decimal=3)
 
 
+def test_binary_search_underflow():
+    # Test if the binary search finds Gaussians with desired perplexity.
+    # A more challenging case than the one above, producing numeric
+    # underflow in float precision (see issue #19471 and PR #19472).
+    random_state = check_random_state(42)
+    data = random_state.randn(1, 90).astype(np.float32) + 100
+    desired_perplexity = 30.0
+    P = _binary_search_perplexity(data, desired_perplexity, verbose=0)
+    perplexity = 2 ** -np.nansum(P[0, 1:] * np.log2(P[0, 1:]))
+    assert_almost_equal(perplexity, desired_perplexity, decimal=3)
+
+
 def test_binary_search_neighbors():
     # Binary perplexity search approximation.
     # Should be approximately equal to the slow method when we use

@@ -310,7 +310,7 @@ produces a low-rank approximation :math:`X`:
 .. math::
     X \approx X_k = U_k \Sigma_k V_k^\top
 
-After this operation, :math:`U_k \Sigma_k^\top`
+After this operation, :math:`U_k \Sigma_k`
 is the transformed training set with :math:`k` features
 (called ``n_components`` in the API).
 
@@ -872,34 +872,34 @@ The graphical model of LDA is a three-level generative model:
 .. image:: ../images/lda_model_graph.png
    :align: center
 
-Note on notations presented in the graphical model above, which can be found in 
+Note on notations presented in the graphical model above, which can be found in
 Hoffman et al. (2013):
 
   * The corpus is a collection of :math:`D` documents.
   * A document is a sequence of :math:`N` words.
-  * There are :math:`K` topics in the corpus. 
-  * The boxes represent repeated sampling. 
+  * There are :math:`K` topics in the corpus.
+  * The boxes represent repeated sampling.
 
-In the graphical model, each node is a random variable and has a role in the 
-generative process. A shaded node indicates an observed variable and an unshaded 
-node indicates a hidden (latent) variable. In this case, words in the corpus are 
-the only data that we observe. The latent variables determine the random mixture 
-of topics in the corpus and the distribution of words in the documents. 
-The goal of LDA is to use the observed words to infer the hidden topic 
-structure. 
+In the graphical model, each node is a random variable and has a role in the
+generative process. A shaded node indicates an observed variable and an unshaded
+node indicates a hidden (latent) variable. In this case, words in the corpus are
+the only data that we observe. The latent variables determine the random mixture
+of topics in the corpus and the distribution of words in the documents.
+The goal of LDA is to use the observed words to infer the hidden topic
+structure.
 
-When modeling text corpora, the model assumes the following generative process 
-for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K` 
+When modeling text corpora, the model assumes the following generative process
+for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
 corresponding to :attr:`n_components` in the API:
 
-  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim 
-     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words, 
-     i.e. the probability of a word appearing in topic :math:`k`. 
-     :math:`\eta` corresponds to :attr:`topic_word_prior`. 
+  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
+     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
+     i.e. the probability of a word appearing in topic :math:`k`.
+     :math:`\eta` corresponds to :attr:`topic_word_prior`.
 
-  2. For each document :math:`d \in D`, draw the topic proportions 
-     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha` 
-     corresponds to :attr:`doc_topic_prior`. 
+  2. For each document :math:`d \in D`, draw the topic proportions
+     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
+     corresponds to :attr:`doc_topic_prior`.
 
   3. For each word :math:`i` in document :math:`d`:
 
@@ -916,8 +916,8 @@ For parameter estimation, the posterior distribution is:
 
 Since the posterior is intractable, variational Bayesian method
 uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
-to approximate it, and those variational parameters :math:`\lambda`, 
-:math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence 
+to approximate it, and those variational parameters :math:`\lambda`,
+:math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence
 Lower Bound (ELBO):
 
 .. math::
@@ -928,10 +928,10 @@ Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
-:class:`LatentDirichletAllocation` implements the online variational Bayes 
+:class:`LatentDirichletAllocation` implements the online variational Bayes
 algorithm and supports both online and batch update methods.
-While the batch method updates variational variables after each full pass through 
-the data, the online method updates variational variables from mini-batch data 
+While the batch method updates variational variables after each full pass through
+the data, the online method updates variational variables from mini-batch data
 points.
 
 .. note::

@@ -65,20 +65,23 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    scoring : str, callable, list/tuple, or dict, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+    scoring : str, callable, list, tuple, or dict, default=None
+        Strategy to evaluate the performance of the cross-validated model on
+        the test set.
 
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
+        If `scoring` represents a single score, one can use:
 
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
+        - a single string (see :ref:`scoring_parameter`);
+        - a callable (see :ref:`scoring`) that returns a single value.
+
+        If `scoring` represents multiple scores, one can use:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where the keys are the metric
+          names and the values are the metric scores;
+        - a dictionary with metric names as keys and callables a values.
 
         See :ref:`multimetric_grid_search` for an example.
-
-        If None, the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -91,7 +94,8 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`.Fold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -361,7 +365,8 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -628,13 +633,21 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         end_msg = f"[CV{progress_msg}] END "
         result_msg = params_msg + (";" if params_msg else "")
-        if verbose > 2 and isinstance(test_scores, dict):
-            for scorer_name in sorted(test_scores):
-                result_msg += f" {scorer_name}: ("
+        if verbose > 2:
+            if isinstance(test_scores, dict):
+                for scorer_name in sorted(test_scores):
+                    result_msg += f" {scorer_name}: ("
+                    if return_train_score:
+                        scorer_scores = train_scores[scorer_name]
+                        result_msg += f"train={scorer_scores:.3f}, "
+                    result_msg += f"test={test_scores[scorer_name]:.3f})"
+            else:
+                result_msg += ", score="
                 if return_train_score:
-                    scorer_scores = train_scores[scorer_name]
-                    result_msg += f"train={scorer_scores:.3f}, "
-                result_msg += f"test={test_scores[scorer_name]:.3f})"
+                    result_msg += (f"(train={train_scores:.3f}, "
+                                   f"test={test_scores:.3f})")
+                else:
+                    result_msg += f"{test_scores:.3f}"
         result_msg += f" total time={logger.short_format_time(total_time)}"
 
         # Right align the result_msg
@@ -755,7 +768,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -773,7 +787,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, defualt=None
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
     pre_dispatch : int or str, default='2*n_jobs'
@@ -1104,7 +1118,8 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1268,7 +1283,8 @@ def learning_curve(estimator, X, y, *, groups=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1470,7 +1486,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     if n_ticks > train_sizes_abs.shape[0]:
         warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
                       "of ticks will be less than the size of "
-                      "'train_sizes' %d instead of %d)."
+                      "'train_sizes': %d instead of %d."
                       % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
 
     return train_sizes_abs
@@ -1568,7 +1584,8 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

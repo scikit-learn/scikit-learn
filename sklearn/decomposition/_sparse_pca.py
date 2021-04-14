@@ -54,10 +54,12 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         for more details.
 
     U_init : ndarray of shape (n_samples, n_components), default=None
-        Initial values for the loadings for warm restart scenarios.
+        Initial values for the loadings for warm restart scenarios. Only used
+        if `U_init` and `V_init` are not None.
 
     V_init : ndarray of shape (n_components, n_features), default=None
-        Initial values for the components for warm restart scenarios.
+        Initial values for the components for warm restart scenarios. Only used
+        if `U_init` and `V_init` are not None.
 
     verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.

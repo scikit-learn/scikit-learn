@@ -210,7 +210,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         self._n_samples_orig = _num_samples(X)
 
-        super().fit(X, y=y, groups=None, **fit_params)
+        super().fit(X, y=y, groups=groups, **fit_params)
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = (
@@ -425,7 +425,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -712,7 +713,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
