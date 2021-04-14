@@ -358,7 +358,7 @@ cdef inline double cgradient_binary_crossentropy(
     #         return ((1 - y_true) - y_true * exp_tmp) / (1 + exp_tmp)
     # Note that optimal speed would be achieved, at the cost of precision, by
     #     return expit(raw_prediction) - y_true
-    # i.e. no if else, and an own inline implemention of expit instead of
+    # i.e. no "if else" and an own inline implemention of expit instead of
     #     from scipy.special.cython_special cimport expit
     # The case distinction raw_prediction < 0 in the stable implementation
     # does not provide significant better precision. Therefore we go without
@@ -465,7 +465,7 @@ cdef class cLossFunction:
 
         Returns
         -------
-        grad_hess_pair
+        double2
             Gradient and hessian of the loss function w.r.t. `raw_prediction`.
         """
         pass
@@ -495,7 +495,7 @@ cdef class cLossFunction:
         loss : array of shape (n_samples,)
             A location into which the result is stored.
         n_threads : int
-            Might use openmp thread parallelism.
+            Number of threads used by OpenMP (if any).
 
         Returns
         -------
@@ -525,7 +525,7 @@ cdef class cLossFunction:
         gradient : array of shape (n_samples,)
             A location into which the result is stored.
         n_threads : int
-            Might use openmp thread parallelism.
+            Number of threads used by OpenMP (if any).
 
         Returns
         -------
@@ -558,7 +558,7 @@ cdef class cLossFunction:
         gradient : array of shape (n_samples,)
             A location into which the gradient is stored.
         n_threads : int
-            Might use openmp thread parallelism.
+            Number of threads used by OpenMP (if any).
 
         Returns
         -------
@@ -598,7 +598,7 @@ cdef class cLossFunction:
         hessian : array of shape (n_samples,)
             A location into which the hessian is stored.
         n_threads : int
-            Might use openmp thread parallelism.
+            Number of threads used by OpenMP (if any).
 
         Returns
         -------
