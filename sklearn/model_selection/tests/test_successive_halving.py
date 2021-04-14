@@ -445,6 +445,12 @@ def test_cv_results(Est):
         sh.set_params(n_candidates=2 * 30, min_resources='exhaust')
 
     sh.fit(X, y)
+
+    # non-regression check for
+    # https://github.com/scikit-learn/scikit-learn/issues/19203
+    assert isinstance(sh.cv_results_['iter'], np.ndarray)
+    assert isinstance(sh.cv_results_['n_resources'], np.ndarray)
+
     cv_results_df = pd.DataFrame(sh.cv_results_)
 
     # just make sure we don't have ties
