@@ -87,13 +87,11 @@ def random_y_true_raw_prediction(
 
 
 def numerical_derivative(func, x, eps):
-    """Helper function for numerical (first) derivatives.
-
+    """Helper function for numerical (first) derivatives."""
     # For numerical derivatives, see
     # https://en.wikipedia.org/wiki/Numerical_differentiation
     # https://en.wikipedia.org/wiki/Finite_difference_coefficient
     # We use central finite differences of accuracy 4.
-    """
     h = np.full_like(x, fill_value=eps)
     f_minus_2h = func(x - 2 * h)
     f_minus_1h = func(x - h)
@@ -348,7 +346,7 @@ def test_loss_same_as_C_functions(loss, sample_weight):
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 def test_loss_gradients_are_the_same(loss, sample_weight):
-    # Test that loss and gradient are the same accross different functions
+    # Test that loss and gradient are the same across different functions.
     # Also test that output arguments contain correct result.
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss,

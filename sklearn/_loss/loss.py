@@ -466,9 +466,6 @@ class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
         gradient=None,
         n_threads=1,
     ):
-        # easier in numpy
-        # gradient = raw_prediction - y_true is easier in numpy
-
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
@@ -479,6 +476,7 @@ class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
         ):
             gradient = gradient.squeeze(1)
 
+        # gradient = raw_prediction - y_true is easier in numpy
         gradient = np.subtract(raw_prediction, y_true, out=gradient)
         if sample_weight is None:
             return gradient

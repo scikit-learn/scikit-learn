@@ -54,7 +54,7 @@ def test_is_in_range(interval):
 
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
 def test_link_inverse_identity(link):
-    # Test that link of inverse gives idendity.
+    # Test that link of inverse gives identity.
     rng = np.random.RandomState(42)
     link = link()
     n_samples, n_classes = 100, None
@@ -67,7 +67,7 @@ def test_link_inverse_identity(link):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
     else:
         # So far, the valid interval of raw_prediction is (-inf, inf) and
-        # we do not need to distinguish
+        # we do not need to distinguish.
         raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples))
 
     assert_allclose(link.link(link.inverse(raw_prediction)), raw_prediction)
@@ -90,7 +90,7 @@ def test_link_out_argument(link):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
     else:
         # So far, the valid interval of raw_prediction is (-inf, inf) and
-        # we do not need to distinguish
+        # we do not need to distinguish.
         raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples))
 
     y_pred = link.inverse(raw_prediction, out=None)
