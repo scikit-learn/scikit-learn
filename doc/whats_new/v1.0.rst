@@ -347,9 +347,6 @@ Changelog
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :meth:`preprocessing.OrdinalEncoder.transfrom` now correctly handles
-  unknown values for string dtypes. :pr:`19888` by `Thomas Fan`_.
-
 :mod:`sklearn.tree`
 ...................
 
