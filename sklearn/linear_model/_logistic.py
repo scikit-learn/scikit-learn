@@ -1042,12 +1042,17 @@ class LogisticRegression(LinearClassifierMixin,
     Parameters
     ----------
     penalty : {'l1', 'l2', 'elasticnet', 'none'}, default='l2'
-        Used to specify the norm used in the penalization.
-        If 'none' (not supported by the liblinear solver),
-        no regularization is applied.
+        Specify the norm of the penalty:
 
-        Note: Some of penalties may not work with specific solver.
-        See parameter 'solver' below.
+        - `'none'`: no penalty is added;
+        - `'l2'`: add a L2 penalty term and it is the default choice;
+        - `'l1'`: add a L1 penalty term;
+        - `'elasticnet'`: both L1 and L2 penalty terms are added.
+
+        .. note::
+           Some penalties may not work with specific solver. See parameter
+           `solver` below, to know the compatibility between the penalty and
+           solver.
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
