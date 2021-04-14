@@ -98,6 +98,9 @@ Changelog
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
+- |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -109,6 +112,10 @@ Changelog
   non-string feature names returned by any of its transformers.
   :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
+- |Fix| :class:`compose.TransformedTargetRegressor` now takes nD targets with
+  an adequate transformer.
+  :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -272,6 +279,11 @@ Changelog
   :pr:`18649` by `Leandro Hermida <hermidalc>` and
   `Rodion Martynov <marrodion>`.
 
+- |Fix| The `fit` method of the successive halving parameter search 
+  (:class:`model_selection.HalvingGridSearchCV`, and
+  :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
+  `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
@@ -296,6 +308,9 @@ Changelog
   complexity from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n)`.
   :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
   :user:`Julien Jerphanion <jjerphan>`.
+
+- |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -325,7 +340,8 @@ Changelog
   very large values. This problem happens in particular when using a scaler on
   sparse data with a constant column with sample weights, in which case
   centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
-  <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
+  <ogrisel>` and :user:`Maria Telenczuk <maikia>` and :pr:`19788` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| :meth:`preprocessing.StandardScaler.inverse_transform` now
   correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
@@ -333,6 +349,10 @@ Changelog
 - |Feature| :class:`preprocessing.OneHotEncoder` now supports
   `handle_unknown='ignore'` and dropping categories. :pr:`19041` by
   `Thomas Fan`_.
+
+- |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
+  supporting sparse matrix and raise the appropriate error message.
+  :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.tree`
 ...................
