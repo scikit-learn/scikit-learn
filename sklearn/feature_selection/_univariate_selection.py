@@ -259,7 +259,7 @@ def r_regression(X, y, *, center=True):
     Returns
     -------
     correlation_coefficient : ndarray of shape (n_features,)
-        Pearson R correlation coefficients of features.
+        Pearson's R correlation coefficients of features.
 
     See Also
     --------
@@ -344,7 +344,7 @@ def f_regression(X, y, *, center=True):
     --------
     abs_r_regression: Absolute value of Pearson's R correlation coefficients
         between label and features for regression tasks.
-    r_regression: Pearson R between label/feature for regression tasks.
+    r_regression: Pearson's R between label/feature for regression tasks.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     SelectKBest: Select features based on the k highest scores.
