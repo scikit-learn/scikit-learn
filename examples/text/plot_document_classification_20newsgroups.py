@@ -93,7 +93,7 @@ op.print_help()
 print()
 
 
-##############################################################################
+# %%
 # Load data from the training set
 # ------------------------------------
 # Let's load data from the newsgroups dataset which comprises around 18000
@@ -199,7 +199,7 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-##############################################################################
+# %%
 # Benchmark classifiers
 # ------------------------------------
 # We train and test the datasets with 15 different classification models
@@ -297,7 +297,7 @@ results.append(benchmark(Pipeline([
   ('classification', LinearSVC(penalty="l2"))])))
 
 
-##############################################################################
+# %%
 # Add plots
 # ------------------------------------
 # The bar plot indicates the accuracy, training time (normalized) and test time

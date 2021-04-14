@@ -22,6 +22,7 @@ from libc.stdlib cimport free
 from libc.math cimport fabs
 from libc.string cimport memcpy
 from libc.string cimport memset
+from libc.stdint cimport SIZE_MAX
 
 import numpy as np
 cimport numpy as np
@@ -43,6 +44,7 @@ cdef extern from "numpy/arrayobject.h":
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
 
 # =============================================================================
 # Types and constants
@@ -66,22 +68,12 @@ cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
-# Repeat struct definition for numpy
-NODE_DTYPE = np.dtype({
-    'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_node_samples', 'weighted_n_node_samples'],
-    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
-                np.float64],
-    'offsets': [
-        <Py_ssize_t> &(<Node*> NULL).left_child,
-        <Py_ssize_t> &(<Node*> NULL).right_child,
-        <Py_ssize_t> &(<Node*> NULL).feature,
-        <Py_ssize_t> &(<Node*> NULL).threshold,
-        <Py_ssize_t> &(<Node*> NULL).impurity,
-        <Py_ssize_t> &(<Node*> NULL).n_node_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
-    ]
-})
+# Build the corresponding numpy dtype for Node.
+# This works by casting `dummy` to an array of Node of length 1, which numpy
+# can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
+# for a more detailed explanation.
+cdef Node dummy;
+NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
 # =============================================================================
 # TreeBuilder
@@ -91,8 +83,7 @@ cdef class TreeBuilder:
     """Interface for different tree building strategies."""
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         pass
 
@@ -143,8 +134,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -174,7 +164,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -244,7 +234,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                          split.threshold, impurity, n_node_samples,
                                          weighted_n_node_samples)
 
-                if node_id == <SIZE_t>(-1):
+                if node_id == SIZE_MAX:
                     rc = -1
                     break
 
@@ -313,8 +303,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -332,7 +321,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr)
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
@@ -468,7 +457,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  is_left, is_leaf,
                                  split.feature, split.threshold, impurity, n_node_samples,
                                  weighted_n_node_samples)
-        if node_id == <SIZE_t>(-1):
+        if node_id == SIZE_MAX:
             return -1
 
         # compute values also for split nodes (might become leafs later).
@@ -663,8 +652,15 @@ cdef class Tree:
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
+
+        if (node_ndarray.dtype != NODE_DTYPE):
+            # possible mismatch of big/little endian due to serialization
+            # on a different architecture. Try swapping the byte order.  
+            node_ndarray = node_ndarray.byteswap().newbyteorder()
+            if (node_ndarray.dtype != NODE_DTYPE):
+                raise ValueError('Did not recognise loaded array dytpe')
+
         if (node_ndarray.ndim != 1 or
-                node_ndarray.dtype != NODE_DTYPE or
                 not node_ndarray.flags.c_contiguous or
                 value_ndarray.shape != value_shape or
                 not value_ndarray.flags.c_contiguous or
@@ -691,9 +687,7 @@ cdef class Tree:
             with gil:
                 raise MemoryError()
 
-    # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
-    # (i.e., older MSVC).
-    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -702,7 +696,7 @@ cdef class Tree:
         if capacity == self.capacity and self.nodes != NULL:
             return 0
 
-        if capacity == <SIZE_t>(-1):
+        if capacity == SIZE_MAX:
             if self.capacity == 0:
                 capacity = 3  # default initial value
             else:
@@ -738,7 +732,7 @@ cdef class Tree:
 
         if node_id >= self.capacity:
             if self._resize_c() != 0:
-                return <SIZE_t>(-1)
+                return SIZE_MAX
 
         cdef Node* node = &self.nodes[node_id]
         node.impurity = impurity
@@ -793,7 +787,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef DTYPE_t[:, :] X_ndarray = X
+        cdef const DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -913,7 +907,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef DTYPE_t[:, :] X_ndarray = X
+        cdef const DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -1101,7 +1095,8 @@ cdef class Tree:
         cdef np.ndarray arr
         arr = np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array.")
         return arr
 
     cdef np.ndarray _get_node_ndarray(self):
@@ -1122,7 +1117,8 @@ cdef class Tree:
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array.")
         return arr
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
@@ -1619,7 +1615,7 @@ cdef _build_pruned_tree(
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples)
 
-            if new_node_id == <SIZE_t>(-1):
+            if new_node_id == SIZE_MAX:
                 rc = -1
                 break
 

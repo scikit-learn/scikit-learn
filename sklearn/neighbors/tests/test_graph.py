@@ -2,7 +2,7 @@ import numpy as np
 
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import KNeighborsTransformer, RadiusNeighborsTransformer
-from sklearn.neighbors.base import _is_sorted_by_data
+from sklearn.neighbors._base import _is_sorted_by_data
 
 
 def test_transformer_result():

@@ -8,39 +8,33 @@ pipeline. It also shows how to wrap the packages `annoy` and `nmslib` to
 replace KNeighborsTransformer and perform approximate nearest neighbors.
 These packages can be installed with `pip install annoy nmslib`.
 
-Note: Currently `TSNE(metric='precomputed')` does not modify the precomputed
-distances, and thus assumes that precomputed euclidean distances are squared.
-In future versions, a parameter in TSNE will control the optional squaring of
-precomputed distances (see #12401).
-
 Note: In KNeighborsTransformer we use the definition which includes each
 training point as its own neighbor in the count of `n_neighbors`, and for
 compatibility reasons, one extra neighbor is computed when
 `mode == 'distance'`. Please note that we do the same in the proposed wrappers.
 
-Sample output:
+Sample output::
 
-```
-Benchmarking on MNIST_2000:
----------------------------
-AnnoyTransformer:                    0.583 sec
-NMSlibTransformer:                   0.321 sec
-KNeighborsTransformer:               1.225 sec
-TSNE with AnnoyTransformer:          4.903 sec
-TSNE with NMSlibTransformer:         5.009 sec
-TSNE with KNeighborsTransformer:     6.210 sec
-TSNE with internal NearestNeighbors: 6.365 sec
+    Benchmarking on MNIST_2000:
+    ---------------------------
+    AnnoyTransformer:                    0.583 sec
+    NMSlibTransformer:                   0.321 sec
+    KNeighborsTransformer:               1.225 sec
+    TSNE with AnnoyTransformer:          4.903 sec
+    TSNE with NMSlibTransformer:         5.009 sec
+    TSNE with KNeighborsTransformer:     6.210 sec
+    TSNE with internal NearestNeighbors: 6.365 sec
 
-Benchmarking on MNIST_10000:
-----------------------------
-AnnoyTransformer:                    4.457 sec
-NMSlibTransformer:                   2.080 sec
-KNeighborsTransformer:               30.680 sec
-TSNE with AnnoyTransformer:          30.225 sec
-TSNE with NMSlibTransformer:         43.295 sec
-TSNE with KNeighborsTransformer:     64.845 sec
-TSNE with internal NearestNeighbors: 64.984 sec
-```
+    Benchmarking on MNIST_10000:
+    ----------------------------
+    AnnoyTransformer:                    4.457 sec
+    NMSlibTransformer:                   2.080 sec
+    KNeighborsTransformer:               30.680 sec
+    TSNE with AnnoyTransformer:          30.225 sec
+    TSNE with NMSlibTransformer:         43.295 sec
+    TSNE with KNeighborsTransformer:     64.845 sec
+    TSNE with internal NearestNeighbors: 64.984 sec
+
 """
 # Author: Tom Dupre la Tour
 #
@@ -67,7 +61,7 @@ from scipy.sparse import csr_matrix
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.neighbors import KNeighborsTransformer
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.datasets import fetch_openml
 from sklearn.pipeline import make_pipeline
 from sklearn.manifold import TSNE
@@ -92,7 +86,6 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         # see more metric in the manual
         # https://github.com/nmslib/nmslib/tree/master/manual
         space = {
-            'sqeuclidean': 'l2',
             'euclidean': 'l2',
             'cosine': 'cosinesimil',
             'l1': 'l1',
@@ -116,9 +109,6 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         indices, distances = zip(*results)
         indices, distances = np.vstack(indices), np.vstack(distances)
 
-        if self.metric == 'sqeuclidean':
-            distances **= 2
-
         indptr = np.arange(0, n_samples_transform * n_neighbors + 1,
                            n_neighbors)
         kneighbors_graph = csr_matrix((distances.ravel(), indices.ravel(),
@@ -140,8 +130,7 @@ class AnnoyTransformer(TransformerMixin, BaseEstimator):
 
     def fit(self, X):
         self.n_samples_fit_ = X.shape[0]
-        metric = self.metric if self.metric != 'sqeuclidean' else 'euclidean'
-        self.annoy_ = annoy.AnnoyIndex(X.shape[1], metric=metric)
+        self.annoy_ = annoy.AnnoyIndex(X.shape[1], metric=self.metric)
         for i, x in enumerate(X):
             self.annoy_.add_item(i, x.tolist())
         self.annoy_.build(self.n_trees)
@@ -163,7 +152,7 @@ class AnnoyTransformer(TransformerMixin, BaseEstimator):
         n_neighbors = self.n_neighbors + 1
 
         indices = np.empty((n_samples_transform, n_neighbors),
-                           dtype=np.int)
+                           dtype=int)
         distances = np.empty((n_samples_transform, n_neighbors))
 
         if X is None:
@@ -177,9 +166,6 @@ class AnnoyTransformer(TransformerMixin, BaseEstimator):
                 indices[i], distances[i] = self.annoy_.get_nns_by_vector(
                     x.tolist(), n_neighbors, self.search_k,
                     include_distances=True)
-
-        if self.metric == 'sqeuclidean':
-            distances **= 2
 
         indptr = np.arange(0, n_samples_transform * n_neighbors + 1,
                            n_neighbors)
@@ -210,9 +196,9 @@ def test_transformers():
 
 def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
-    mnist = fetch_openml(data_id=41063)
-    X, y = shuffle(mnist.data, mnist.target, random_state=42)
-    return X[:n_samples], y[:n_samples]
+    mnist = fetch_openml("mnist_784", as_frame=False)
+    X, y = shuffle(mnist.data, mnist.target, random_state=2)
+    return X[:n_samples] / 255, y[:n_samples]
 
 
 def run_benchmark():
@@ -223,34 +209,39 @@ def run_benchmark():
 
     n_iter = 500
     perplexity = 30
+    metric = "euclidean"
     # TSNE requires a certain number of neighbors which depends on the
     # perplexity parameter.
     # Add one since we include each sample as its own neighbor.
     n_neighbors = int(3. * perplexity + 1) + 1
 
+    tsne_params = dict(perplexity=perplexity, method="barnes_hut",
+                       random_state=42, n_iter=n_iter,
+                       square_distances=True)
+
     transformers = [
-        ('AnnoyTransformer', AnnoyTransformer(n_neighbors=n_neighbors,
-                                              metric='sqeuclidean')),
-        ('NMSlibTransformer', NMSlibTransformer(n_neighbors=n_neighbors,
-                                                metric='sqeuclidean')),
-        ('KNeighborsTransformer', KNeighborsTransformer(
-            n_neighbors=n_neighbors, mode='distance', metric='sqeuclidean')),
-        ('TSNE with AnnoyTransformer', make_pipeline(
-            AnnoyTransformer(n_neighbors=n_neighbors, metric='sqeuclidean'),
-            TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter), )),
-        ('TSNE with NMSlibTransformer', make_pipeline(
-            NMSlibTransformer(n_neighbors=n_neighbors, metric='sqeuclidean'),
-            TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter), )),
-        ('TSNE with KNeighborsTransformer', make_pipeline(
-            KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
-                                  metric='sqeuclidean'),
-            TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter), )),
+        ('AnnoyTransformer',
+         AnnoyTransformer(n_neighbors=n_neighbors, metric=metric)),
+        ('NMSlibTransformer',
+         NMSlibTransformer(n_neighbors=n_neighbors, metric=metric)),
+        ('KNeighborsTransformer',
+         KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
+                               metric=metric)),
+        ('TSNE with AnnoyTransformer',
+         make_pipeline(
+             AnnoyTransformer(n_neighbors=n_neighbors, metric=metric),
+             TSNE(metric='precomputed', **tsne_params))),
+        ('TSNE with NMSlibTransformer',
+         make_pipeline(
+             NMSlibTransformer(n_neighbors=n_neighbors, metric=metric),
+             TSNE(metric='precomputed', **tsne_params))),
+        ('TSNE with KNeighborsTransformer',
+         make_pipeline(
+             KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
+                                   metric=metric),
+             TSNE(metric='precomputed', **tsne_params))),
         ('TSNE with internal NearestNeighbors',
-         TSNE(metric='sqeuclidean', perplexity=perplexity, method="barnes_hut",
-              random_state=42, n_iter=n_iter)),
+         TSNE(metric=metric, **tsne_params)),
     ]
 
     # init the plot
@@ -279,8 +270,8 @@ def run_benchmark():
             # plot TSNE embedding which should be very similar across methods
             if 'TSNE' in transformer_name:
                 axes[i_ax].set_title(transformer_name + '\non ' + dataset_name)
-                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y, alpha=0.2,
-                                   cmap=plt.cm.viridis)
+                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y.astype(np.int32),
+                                   alpha=0.2, cmap=plt.cm.viridis)
                 axes[i_ax].xaxis.set_major_formatter(NullFormatter())
                 axes[i_ax].yaxis.set_major_formatter(NullFormatter())
                 axes[i_ax].axis('tight')

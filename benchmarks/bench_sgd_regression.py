@@ -10,7 +10,7 @@ from time import time
 
 from sklearn.linear_model import Ridge, SGDRegressor, ElasticNet
 from sklearn.metrics import mean_squared_error
-from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import make_regression
 
 """
 Benchmark for SGD regression
@@ -22,7 +22,7 @@ on synthetic data.
 print(__doc__)
 
 if __name__ == "__main__":
-    list_n_samples = np.linspace(100, 10000, 5).astype(np.int)
+    list_n_samples = np.linspace(100, 10000, 5).astype(int)
     list_n_features = [10, 100, 1000]
     n_test = 1000
     max_iter = 1000

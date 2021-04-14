@@ -2,15 +2,19 @@
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD3
 
+from itertools import combinations
+
 import numpy as np
 import pytest
 
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
+from sklearn.decomposition._factor_analysis import _ortho_rotation
 
 
 # Ignore warnings from switching to more power iterations in randomized_svd
@@ -83,3 +87,33 @@ def test_factor_analysis():
         precision = fa.get_precision()
         assert_array_almost_equal(np.dot(cov, precision),
                                   np.eye(X.shape[1]), 12)
+
+    # test rotation
+    n_components = 2
+
+    results, projections = {}, {}
+    for method in (None, "varimax", 'quartimax'):
+        fa_var = FactorAnalysis(n_components=n_components,
+                                rotation=method)
+        results[method] = fa_var.fit_transform(X)
+        projections[method] = fa_var.get_covariance()
+    for rot1, rot2 in combinations([None, 'varimax', 'quartimax'], 2):
+        assert not np.allclose(results[rot1], results[rot2])
+        assert np.allclose(projections[rot1], projections[rot2], atol=3)
+
+    assert_raises(ValueError,
+                  FactorAnalysis(rotation='not_implemented').fit_transform, X)
+
+    # test against R's psych::principal with rotate="varimax"
+    # (i.e., the values below stem from rotating the components in R)
+    # R's factor analysis returns quite different values; therefore, we only
+    # test the rotation itself
+    factors = np.array(
+        [[0.89421016, -0.35854928, -0.27770122, 0.03773647],
+         [-0.45081822, -0.89132754, 0.0932195, -0.01787973],
+         [0.99500666, -0.02031465, 0.05426497, -0.11539407],
+         [0.96822861, -0.06299656, 0.24411001, 0.07540887]])
+    r_solution = np.array([[0.962, 0.052], [-0.141, 0.989],
+                           [0.949, -0.300], [0.937, -0.251]])
+    rotated = _ortho_rotation(factors[:, :n_components], method='varimax').T
+    assert_array_almost_equal(np.abs(rotated), np.abs(r_solution), decimal=3)

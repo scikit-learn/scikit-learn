@@ -2,6 +2,7 @@
 .. include:: tune_toc.rst
 
 .. Places global toc into the sidebar
+
 :globalsidebartoc: True
 
 =================

@@ -4,8 +4,6 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
-# To use this experimental feature, we need to explicitly ask for it:
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.datasets import make_classification
@@ -32,6 +30,9 @@ parser.add_argument('--n-classes', type=int, default=2)
 parser.add_argument('--n-samples-max', type=int, default=int(1e6))
 parser.add_argument('--n-features', type=int, default=20)
 parser.add_argument('--max-bins', type=int, default=255)
+parser.add_argument('--random-sample-weights', action="store_true",
+                    default=False,
+                    help="generate and use random sample weights")
 args = parser.parse_args()
 
 n_leaf_nodes = args.n_leaf_nodes
@@ -46,6 +47,7 @@ def get_estimator_and_data():
                                    n_features=args.n_features,
                                    n_classes=args.n_classes,
                                    n_clusters_per_class=1,
+                                   n_informative=args.n_classes,
                                    random_state=0)
         return X, y, HistGradientBoostingClassifier
     elif args.problem == 'regression':
@@ -57,11 +59,22 @@ def get_estimator_and_data():
 X, y, Estimator = get_estimator_and_data()
 if args.missing_fraction:
     mask = np.random.binomial(1, args.missing_fraction, size=X.shape).astype(
-        np.bool)
+        bool)
     X[mask] = np.nan
 
-X_train_, X_test_, y_train_, y_test_ = train_test_split(
-    X, y, test_size=0.5, random_state=0)
+if args.random_sample_weights:
+    sample_weight = np.random.rand(len(X)) * 10
+else:
+    sample_weight = None
+
+if sample_weight is not None:
+    (X_train_, X_test_, y_train_, y_test_,
+     sample_weight_train_, _) = train_test_split(
+        X, y, sample_weight, test_size=0.5, random_state=0)
+else:
+    X_train_, X_test_, y_train_, y_test_ = train_test_split(
+        X, y, test_size=0.5, random_state=0)
+    sample_weight_train_ = None
 
 
 def one_run(n_samples):
@@ -69,6 +82,10 @@ def one_run(n_samples):
     X_test = X_test_[:n_samples]
     y_train = y_train_[:n_samples]
     y_test = y_test_[:n_samples]
+    if sample_weight is not None:
+        sample_weight_train = sample_weight_train_[:n_samples]
+    else:
+        sample_weight_train = None
     assert X_train.shape[0] == n_samples
     assert X_test.shape[0] == n_samples
     print("Data size: %d samples train, %d samples test."
@@ -79,7 +96,7 @@ def one_run(n_samples):
                     max_iter=n_trees,
                     max_bins=max_bins,
                     max_leaf_nodes=n_leaf_nodes,
-                    n_iter_no_change=None,
+                    early_stopping=False,
                     random_state=0,
                     verbose=0)
     loss = args.loss
@@ -91,9 +108,9 @@ def one_run(n_samples):
     else:
         # regression
         if loss == 'default':
-            loss = 'least_squares'
+            loss = 'squared_error'
     est.set_params(loss=loss)
-    est.fit(X_train, y_train)
+    est.fit(X_train, y_train, sample_weight=sample_weight_train)
     sklearn_fit_duration = time() - tic
     tic = time()
     sklearn_score = est.score(X_test, y_test)
@@ -110,7 +127,7 @@ def one_run(n_samples):
         lightgbm_est = get_equivalent_estimator(est, lib='lightgbm')
 
         tic = time()
-        lightgbm_est.fit(X_train, y_train)
+        lightgbm_est.fit(X_train, y_train, sample_weight=sample_weight_train)
         lightgbm_fit_duration = time() - tic
         tic = time()
         lightgbm_score = lightgbm_est.score(X_test, y_test)
@@ -127,7 +144,7 @@ def one_run(n_samples):
         xgb_est = get_equivalent_estimator(est, lib='xgboost')
 
         tic = time()
-        xgb_est.fit(X_train, y_train)
+        xgb_est.fit(X_train, y_train, sample_weight=sample_weight_train)
         xgb_fit_duration = time() - tic
         tic = time()
         xgb_score = xgb_est.score(X_test, y_test)
@@ -144,7 +161,7 @@ def one_run(n_samples):
         cat_est = get_equivalent_estimator(est, lib='catboost')
 
         tic = time()
-        cat_est.fit(X_train, y_train)
+        cat_est.fit(X_train, y_train, sample_weight=sample_weight_train)
         cat_fit_duration = time() - tic
         tic = time()
         cat_score = cat_est.score(X_test, y_test)

@@ -1,6 +1,3 @@
-<script src="{{ pathto('_static/js/vendor/jquery.min.js', 1) }}"></script>
-<script src="{{ pathto('_static/js/vendor/bootstrap.min.js', 1) }}"></script>
-
 {% if theme_google_analytics|tobool %}
 <script>
     window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
@@ -117,7 +114,7 @@ $(document).ready(function() {
         prevScrollpos = lastScrollTop;
     };
 
-    /*** high preformance scroll event listener***/
+    /*** high performance scroll event listener***/
     var raf = window.requestAnimationFrame ||
         window.webkitRequestAnimationFrame ||
         window.mozRequestAnimationFrame ||
@@ -144,14 +141,6 @@ $(document).ready(function() {
 {%- endif %}
 });
 
-</script>
-<script>
-    (function() {
-        var cx = '016639176250731907682:tjtqbvtvij0';
-        var gcse = document.createElement('script'); gcse.type = 'text/javascript'; gcse.async = true;
-        gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(gcse, s);
-    })();
 </script>
 {%- if pagename != 'index' and pagename != 'documentation' %}
     {% if theme_mathjax_path %}

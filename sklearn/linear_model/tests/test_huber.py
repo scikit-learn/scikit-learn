@@ -3,16 +3,15 @@
 
 import numpy as np
 from scipy import optimize, sparse
-import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import (
     HuberRegressor, LinearRegression, SGDRegressor, Ridge)
-from sklearn.linear_model.huber import _huber_loss_and_gradient
+from sklearn.linear_model._huber import _huber_loss_and_gradient
 
 
 def make_regression_with_outliers(n_samples=50, n_features=20):
@@ -129,7 +128,7 @@ def test_huber_sparse():
 def test_huber_scaling_invariant():
     # Test that outliers filtering is scaling independent.
     X, y = make_regression_with_outliers()
-    huber = HuberRegressor(fit_intercept=False, alpha=0.0, max_iter=100)
+    huber = HuberRegressor(fit_intercept=False, alpha=0.0)
     huber.fit(X, y)
     n_outliers_mask_1 = huber.outliers_
     assert not np.all(n_outliers_mask_1)
@@ -143,8 +142,6 @@ def test_huber_scaling_invariant():
     assert_array_equal(n_outliers_mask_3, n_outliers_mask_1)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_huber_and_sgd_same_results():
     # Test they should converge to same coefficients for same parameters
 
@@ -152,8 +149,7 @@ def test_huber_and_sgd_same_results():
 
     # Fit once to find out the scale parameter. Scale down X and y by scale
     # so that the scale parameter is optimized to 1.0
-    huber = HuberRegressor(fit_intercept=False, alpha=0.0, max_iter=100,
-                           epsilon=1.35)
+    huber = HuberRegressor(fit_intercept=False, alpha=0.0, epsilon=1.35)
     huber.fit(X, y)
     X_scale = X / huber.scale_
     y_scale = y / huber.scale_

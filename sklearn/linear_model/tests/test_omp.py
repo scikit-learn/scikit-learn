@@ -2,12 +2,11 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import ignore_warnings
 
 
 from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
@@ -18,8 +17,11 @@ from sklearn.utils import check_random_state
 from sklearn.datasets import make_sparse_coded_signal
 
 n_samples, n_features, n_nonzero_coefs, n_targets = 25, 35, 5, 3
-y, X, gamma = make_sparse_coded_signal(n_targets, n_features, n_samples,
-                                       n_nonzero_coefs, random_state=0)
+y, X, gamma = make_sparse_coded_signal(n_samples=n_targets,
+                                       n_components=n_features,
+                                       n_features=n_samples,
+                                       n_nonzero_coefs=n_nonzero_coefs,
+                                       random_state=0)
 # Make X not of norm 1 for testing
 X *= 10
 y *= 10
@@ -30,16 +32,16 @@ G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 
 def test_correct_shapes():
     assert (orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5).shape ==
-                 (n_features,))
+            (n_features,))
     assert (orthogonal_mp(X, y, n_nonzero_coefs=5).shape ==
-                 (n_features, 3))
+            (n_features, 3))
 
 
 def test_correct_shapes_gram():
     assert (orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape ==
-                 (n_features,))
+            (n_features,))
     assert (orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape ==
-                 (n_features, 3))
+            (n_features, 3))
 
 
 def test_n_nonzero_coefs():
@@ -73,29 +75,32 @@ def test_unreachable_accuracy():
     assert_array_almost_equal(
         orthogonal_mp(X, y, tol=0),
         orthogonal_mp(X, y, n_nonzero_coefs=n_features))
+    warning_message = (
+        "Orthogonal matching pursuit ended prematurely "
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        assert_array_almost_equal(
+            orthogonal_mp(X, y, tol=0, precompute=True),
+            orthogonal_mp(X, y, precompute=True,
+                          n_nonzero_coefs=n_features))
 
-    assert_array_almost_equal(
-        assert_warns(RuntimeWarning, orthogonal_mp, X, y, tol=0,
-                     precompute=True),
-        orthogonal_mp(X, y, precompute=True,
-                      n_nonzero_coefs=n_features))
 
-
-def test_bad_input():
-    assert_raises(ValueError, orthogonal_mp, X, y, tol=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y, n_nonzero_coefs=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y,
-                  n_nonzero_coefs=n_features + 1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, tol=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_nonzero_coefs=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy,
-                  n_nonzero_coefs=n_features + 1)
+@pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
+@pytest.mark.parametrize(
+    "keyword_params",
+    [{"tol": -1}, {"n_nonzero_coefs": -1}, {"n_nonzero_coefs": n_features + 1}]
+)
+def test_bad_input(positional_params, keyword_params):
+    with pytest.raises(ValueError):
+        orthogonal_mp(*positional_params, **keyword_params)
 
 
 def test_perfect_signal_recovery():
     idx, = gamma[:, 0].nonzero()
-    gamma_rec = orthogonal_mp(X, y[:, 0], 5)
-    gamma_gram = orthogonal_mp_gram(G, Xy[:, 0], 5)
+    gamma_rec = orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5)
+    gamma_gram = orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5)
     assert_array_equal(idx, np.flatnonzero(gamma_rec))
     assert_array_equal(idx, np.flatnonzero(gamma_gram))
     assert_array_almost_equal(gamma[:, 0], gamma_rec, decimal=2)
@@ -110,7 +115,8 @@ def test_orthogonal_mp_gram_readonly():
     G_readonly.setflags(write=False)
     Xy_readonly = Xy.copy()
     Xy_readonly.setflags(write=False)
-    gamma_gram = orthogonal_mp_gram(G_readonly, Xy_readonly[:, 0], 5,
+    gamma_gram = orthogonal_mp_gram(G_readonly, Xy_readonly[:, 0],
+                                    n_nonzero_coefs=5,
                                     copy_Gram=False, copy_Xy=False)
     assert_array_equal(idx, np.flatnonzero(gamma_gram))
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
@@ -151,7 +157,13 @@ def test_identical_regressors():
     gamma = np.zeros(n_features)
     gamma[0] = gamma[1] = 1.
     newy = np.dot(newX, gamma)
-    assert_warns(RuntimeWarning, orthogonal_mp, newX, newy, 2)
+    warning_message = (
+        "Orthogonal matching pursuit ended prematurely "
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        orthogonal_mp(newX, newy, 2)
 
 
 def test_swapped_regressors():
@@ -163,8 +175,8 @@ def test_swapped_regressors():
     gamma[0] = 0.5
     new_y = np.dot(X, gamma)
     new_Xy = np.dot(X.T, new_y)
-    gamma_hat = orthogonal_mp(X, new_y, 2)
-    gamma_hat_gram = orthogonal_mp_gram(G, new_Xy, 2)
+    gamma_hat = orthogonal_mp(X, new_y, n_nonzero_coefs=2)
+    gamma_hat_gram = orthogonal_mp_gram(G, new_Xy, n_nonzero_coefs=2)
     assert_array_equal(np.flatnonzero(gamma_hat), [0, 21])
     assert_array_equal(np.flatnonzero(gamma_hat_gram), [0, 21])
 
@@ -172,8 +184,10 @@ def test_swapped_regressors():
 def test_no_atoms():
     y_empty = np.zeros_like(y)
     Xy_empty = np.dot(X.T, y_empty)
-    gamma_empty = ignore_warnings(orthogonal_mp)(X, y_empty, 1)
-    gamma_empty_gram = ignore_warnings(orthogonal_mp)(G, Xy_empty, 1)
+    gamma_empty = ignore_warnings(orthogonal_mp)(X, y_empty,
+                                                 n_nonzero_coefs=1)
+    gamma_empty_gram = ignore_warnings(orthogonal_mp)(G, Xy_empty,
+                                                      n_nonzero_coefs=1)
     assert np.all(gamma_empty == 0)
     assert np.all(gamma_empty_gram == 0)
 

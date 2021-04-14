@@ -5,7 +5,7 @@ from scipy import sparse as sp
 from numpy.testing import assert_array_equal
 
 from sklearn.base import BaseEstimator
-from sklearn.feature_selection.base import SelectorMixin
+from sklearn.feature_selection._base import SelectorMixin
 from sklearn.utils import check_array
 
 
@@ -15,7 +15,7 @@ class StepSelector(SelectorMixin, BaseEstimator):
         self.step = step
 
     def fit(self, X, y=None):
-        X = check_array(X, 'csc')
+        X = check_array(X, accept_sparse='csc')
         self.n_input_feats = X.shape[1]
         return self
 
