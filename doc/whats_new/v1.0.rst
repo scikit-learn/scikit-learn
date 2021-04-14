@@ -334,7 +334,8 @@ Changelog
   very large values. This problem happens in particular when using a scaler on
   sparse data with a constant column with sample weights, in which case
   centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
-  <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
+  <ogrisel>` and :user:`Maria Telenczuk <maikia>` and :pr:`19788` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| :meth:`preprocessing.StandardScaler.inverse_transform` now
   correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
