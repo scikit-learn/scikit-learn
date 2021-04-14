@@ -40,6 +40,11 @@ Changelog
   :class:`model_selection.GridSearchCV` now correctly shows the score for
   single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
 
+- |Fix| Some values in the `cv_results_` attribute of
+  :class:`model_selection.HalvingRandomSearchCV` and
+  :class:`model_selection.HalvingGridSearchCV` were not properly converted to
+  numpy arrays. :pr:`19211` by `Nicolas Hug`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
