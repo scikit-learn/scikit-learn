@@ -98,6 +98,9 @@ Changelog
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
+- |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -305,6 +308,9 @@ Changelog
   complexity from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n)`.
   :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
   :user:`Julien Jerphanion <jjerphan>`.
+
+- |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.pipeline`
 .......................
