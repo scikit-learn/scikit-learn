@@ -1601,7 +1601,6 @@ cdef class cCategoricalCrossEntropy(cLossFunction):
 
                 for i in prange(n_samples, schedule='static'):
                     sum_exp_minus_max(i, raw_prediction, p)
-                    max_value = raw_prediction[i, 0]
                     max_value = p[n_classes]     # p[-2]
                     sum_exps = p[n_classes + 1]  # p[-1]
                     loss[i] = log(sum_exps) + max_value
