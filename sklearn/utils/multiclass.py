@@ -266,6 +266,8 @@ def type_of_target(y):
             y.dtype.name.startswith(("Int", "UInt", "boolean", "Float"))):
         if y.isna().any():
             raise ValueError("Input contains NaN")
+        # `na_value` is needed by `to_numpy` but there would be no
+        # nan values in `y` at this point.
         y = y.to_numpy(dtype=y.dtype.numpy_dtype, na_value=0)
 
     # DeprecationWarning will be replaced by ValueError, see NEP 34
