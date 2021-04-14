@@ -397,6 +397,7 @@ def test_vector_scikit_single_vs_scipy_single(seed):
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
 def test_mst_linkage_core_mem_mapped(metric):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
+
     Non-regression test for issue #19875."""
     rng = np.random.RandomState(seed=1)
     X = rng.normal(size=(20, 4))
