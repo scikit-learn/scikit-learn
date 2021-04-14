@@ -580,6 +580,7 @@ def test_sparse_coder_n_features_in():
 
 def test_update_dict():
     # Check the dict update in batch mode vs online mode
+    # Non-regression test for #4866
     rng = np.random.RandomState(0)
 
     code = np.array([[0.5, -0.5],
@@ -589,14 +590,13 @@ def test_update_dict():
 
     X = np.dot(code, dictionary) + rng.randn(2, 2)
 
-    # batch update
+    # full batch update
     newd_batch = dictionary.copy()
     _update_dict(newd_batch, X, code)
 
     # online update
     A = np.dot(code.T, code)
     B = np.dot(X.T, code)
-
     newd_online = dictionary.copy()
     _update_dict(newd_online, X, code, A, B)
 
