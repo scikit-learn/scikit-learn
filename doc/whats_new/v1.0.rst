@@ -99,7 +99,7 @@ Changelog
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
 - |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
-  mem-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -310,7 +310,7 @@ Changelog
   :user:`Julien Jerphanion <jjerphan>`.
 
 - |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
-  mem-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.pipeline`
 .......................

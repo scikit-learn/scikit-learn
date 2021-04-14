@@ -273,7 +273,7 @@ def test_agglomerative_clustering():
     assert_array_equal(clustering.labels_, clustering2.labels_)
 
 
-def test_agglomerative_clustering_mem_mapped():
+def test_agglomerative_clustering_memory_mapped():
     """AgglomerativeClustering must work on mem-mapped dataset.
     
     Non-regression test for issue #19875.
@@ -395,7 +395,7 @@ def test_vector_scikit_single_vs_scipy_single(seed):
 
 
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
-def test_mst_linkage_core_mem_mapped(metric):
+def test_mst_linkage_core_memory_mapped(metric):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
 
     Non-regression test for issue #19875."""
