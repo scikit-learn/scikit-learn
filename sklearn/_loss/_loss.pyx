@@ -27,7 +27,8 @@
 #      input checking like None -> np.empty().
 #
 # Note: We require 1-dim ndarrays to be contiguous.
-# TODO: Use const memoryviews with Cython 3.0 where appropriate (# IN)
+# TODO: Use const memoryviews with fused types with Cython 3.0 where
+#       appropriate (arguments marked by "# IN")
 
 cimport cython
 from cython.parallel import parallel, prange
@@ -57,8 +58,9 @@ cdef inline double log1pexp(double x) nogil:
 
 
 cdef inline void sum_exp_minus_max(
-    const int i, Y_DTYPE_C[:, :] raw_prediction,  # IN
-    Y_DTYPE_C *p                                  # OUT
+    const int i,
+    Y_DTYPE_C[:, :] raw_prediction,  # IN
+    Y_DTYPE_C *p                     # OUT
 ) nogil:
     # Store p[k] = exp(raw_prediction_i_k - max_value) for k = 0 to n_classes-1
     #       p[-2] = max(raw_prediction_i_k, k = 0 to n_classes-1)
@@ -70,7 +72,8 @@ cdef inline void sum_exp_minus_max(
     # - i needs to be passed (and stays constant) because otherwise Cython does
     #   not generate optimal code, see
     #   https://github.com/scikit-learn/scikit-learn/issues/17299
-    # - We do not calculate p[k] = p[k] / sum_exps to save one loop over k.
+    # - We do not normalize p by calculating p[k] = p[k] / sum_exps.
+    #   This helps to save one loop over k.
     cdef:
         int k
         int n_classes = raw_prediction.shape[1]
@@ -93,18 +96,23 @@ cdef inline void sum_exp_minus_max(
 # Single point inline C functions
 # -------------------------------------
 # Half Squared Error
-cdef inline double closs_half_squared_error(double y_true, double raw_prediction) nogil:
+cdef inline double closs_half_squared_error(
+    double y_true,
+    double raw_prediction
+) nogil:
     return 0.5 * (raw_prediction - y_true) * (raw_prediction - y_true)
 
 
 cdef inline double cgradient_half_squared_error(
-    double y_true, double raw_prediction
+    double y_true,
+    double raw_prediction
 ) nogil:
     return raw_prediction - y_true
 
 
 cdef inline double2 cgrad_hess_half_squared_error(
-    double y_true, double raw_prediction
+    double y_true,
+    double raw_prediction
 ) nogil:
     cdef double2 gh
     gh.val1 = raw_prediction - y_true  # gradient
@@ -113,16 +121,23 @@ cdef inline double2 cgrad_hess_half_squared_error(
 
 
 # Absolute Error
-cdef inline double closs_absolute_error(double y_true, double raw_prediction) nogil:
+cdef inline double closs_absolute_error(
+    double y_true,
+    double raw_prediction
+) nogil:
     return fabs(raw_prediction - y_true)
 
 
-cdef inline double cgradient_absolute_error(double y_true, double raw_prediction) nogil:
+cdef inline double cgradient_absolute_error(
+    double y_true,
+    double raw_prediction
+) nogil:
     return 1. if raw_prediction > y_true else -1.
 
 
 cdef inline double2 cgrad_hess_absolute_error(
-    double y_true, double raw_prediction
+    double y_true,
+    double raw_prediction
 ) nogil:
     cdef double2 gh
     # Note that exact hessian = 0 almost everywhere. Optimization routines like
@@ -134,20 +149,26 @@ cdef inline double2 cgrad_hess_absolute_error(
 
 # Quantile Loss / Pinball Loss
 cdef inline double closs_pinball_loss(
-    double y_true, double raw_prediction, double quantile
+    double y_true,
+    double raw_prediction,
+    double quantile
 ) nogil:
     return (quantile * (y_true - raw_prediction) if y_true >= raw_prediction
             else (1. - quantile) * (raw_prediction - y_true))
 
 
 cdef inline double cgradient_pinball_loss(
-    double y_true, double raw_prediction, double quantile
+    double y_true,
+    double raw_prediction,
+    double quantile
 ) nogil:
     return -quantile if y_true >=raw_prediction else 1. - quantile
 
 
 cdef inline double2 cgrad_hess_pinball_loss(
-    double y_true, double raw_prediction, double quantile
+    double y_true,
+    double raw_prediction,
+    double quantile
 ) nogil:
     cdef double2 gh
     # Note that exact hessian = 0 almost everywhere. Optimization routines like
@@ -158,24 +179,36 @@ cdef inline double2 cgrad_hess_pinball_loss(
 
 
 # Half Poisson Deviance with Log-Link, dropping constant terms
-cdef inline double closs_half_poisson(double y_true, double raw_prediction) nogil:
+cdef inline double closs_half_poisson(
+    double y_true,
+    double raw_prediction
+) nogil:
     return exp(raw_prediction) - y_true * raw_prediction
 
 
-cdef inline double cgradient_half_poisson(double y_true, double raw_prediction) nogil:
+cdef inline double cgradient_half_poisson(
+    double y_true,
+    double raw_prediction
+) nogil:
     # y_pred - y_true
     return exp(raw_prediction) - y_true
 
 
-cdef inline double2 closs_grad_half_poisson(double y_true, double raw_prediction) nogil:
+cdef inline double2 closs_grad_half_poisson(
+    double y_true,
+    double raw_prediction
+) nogil:
     cdef double2 lg
-    lg.val2 = exp(raw_prediction)
+    lg.val2 = exp(raw_prediction)                # used as temporary
     lg.val1 = lg.val2 - y_true * raw_prediction  # loss
     lg.val2 -= y_true                            # gradient
     return lg
 
 
-cdef inline double2 cgrad_hess_half_poisson(double y_true, double raw_prediction) nogil:
+cdef inline double2 cgrad_hess_half_poisson(
+    double y_true,
+    double raw_prediction
+) nogil:
     cdef double2 gh
     gh.val2 = exp(raw_prediction)  # hessian
     gh.val1 = gh.val2 - y_true     # gradient
@@ -183,25 +216,37 @@ cdef inline double2 cgrad_hess_half_poisson(double y_true, double raw_prediction
 
 
 # Half Gamma Deviance with Log-Link, dropping constant terms
-cdef inline double closs_half_gamma(double y_true, double raw_prediction) nogil:
+cdef inline double closs_half_gamma(
+    double y_true,
+    double raw_prediction
+) nogil:
     return raw_prediction + y_true * exp(-raw_prediction)
 
 
-cdef inline double cgradient_half_gamma(double y_true, double raw_prediction) nogil:
+cdef inline double cgradient_half_gamma(
+    double y_true,
+    double raw_prediction
+) nogil:
     return 1. - y_true * exp(-raw_prediction)
 
 
-cdef inline double2 closs_grad_half_gamma(double y_true, double raw_prediction) nogil:
+cdef inline double2 closs_grad_half_gamma(
+    double y_true,
+    double raw_prediction
+) nogil:
     cdef double2 lg
-    lg.val2 = exp(-raw_prediction)
+    lg.val2 = exp(-raw_prediction)               # used as temporary
     lg.val1 = raw_prediction + y_true * lg.val2  # loss
     lg.val2 = 1. - y_true * lg.val2              # gradient
     return lg
 
 
-cdef inline double2 cgrad_hess_half_gamma(double y_true, double raw_prediction) nogil:
+cdef inline double2 cgrad_hess_half_gamma(
+    double y_true,
+    double raw_prediction
+) nogil:
     cdef double2 gh
-    gh.val2 = exp(-raw_prediction)
+    gh.val2 = exp(-raw_prediction)   # used as temporary
     gh.val1 = 1. - y_true * gh.val2  # gradient
     gh.val2 *= y_true                # hessian
     return gh
@@ -210,7 +255,9 @@ cdef inline double2 cgrad_hess_half_gamma(double y_true, double raw_prediction) 
 # Half Tweedie Deviance with Log-Link, dropping constant terms
 # Note that by dropping constants this is no longer smooth in parameter power.
 cdef inline double closs_half_tweedie(
-    double y_true, double raw_prediction, double power
+    double y_true,
+    double raw_prediction,
+    double power
 ) nogil:
     if power == 0.:
         return closs_half_squared_error(y_true, exp(raw_prediction))
@@ -224,7 +271,9 @@ cdef inline double closs_half_tweedie(
 
 
 cdef inline double cgradient_half_tweedie(
-    double y_true, double raw_prediction, double power
+    double y_true,
+    double raw_prediction,
+    double power
 ) nogil:
     cdef double exp1
     if power == 0.:
@@ -240,7 +289,9 @@ cdef inline double cgradient_half_tweedie(
 
 
 cdef inline double2 closs_grad_half_tweedie(
-    double y_true, double raw_prediction, double power
+    double y_true,
+    double raw_prediction,
+    double power
 ) nogil:
     cdef double2 lg
     cdef double exp1, exp2
@@ -261,7 +312,9 @@ cdef inline double2 closs_grad_half_tweedie(
 
 
 cdef inline double2 cgrad_hess_half_tweedie(
-    double y_true, double raw_prediction, double power
+    double y_true,
+    double raw_prediction,
+    double power
 ) nogil:
     cdef double2 gh
     cdef double exp1, exp2
@@ -283,14 +336,16 @@ cdef inline double2 cgrad_hess_half_tweedie(
 
 # Binary cross entropy aka log-loss
 cdef inline double closs_binary_crossentropy(
-    double y_true, double raw_prediction
+    double y_true,
+    double raw_prediction
 ) nogil:
     # log1p(exp(raw_prediction)) - y_true * raw_prediction
     return log1pexp(raw_prediction) - y_true * raw_prediction
 
 
 cdef inline double cgradient_binary_crossentropy(
-    double y_true, double raw_prediction
+    double y_true,
+    double raw_prediction
 ) nogil:
     # y_pred - y_true = expit(raw_prediction) - y_true
     # Numerically more stable, see
@@ -314,18 +369,19 @@ cdef inline double cgradient_binary_crossentropy(
 
 
 cdef inline double2 closs_grad_binary_crossentropy(
-    double y_true, double raw_prediction
+    double y_true,
+    double raw_prediction
 ) nogil:
     cdef double2 lg
     if raw_prediction <= 0:
-        lg.val2 = exp(raw_prediction)
+        lg.val2 = exp(raw_prediction)  # used as temporary
         if raw_prediction <= -37:
             lg.val1 = lg.val2 - y_true * raw_prediction              # loss
         else:
             lg.val1 = log1p(lg.val2) - y_true * raw_prediction       # loss
         lg.val2 = ((1 - y_true) * lg.val2 - y_true) / (1 + lg.val2)  # gradient
     else:
-        lg.val2 = exp(-raw_prediction)
+        lg.val2 = exp(-raw_prediction)  # used as temporary
         if raw_prediction <= 18:
             # log1p(exp(x)) = log(1 + exp(x)) = x + log1p(exp(-x))
             lg.val1 = log1p(lg.val2) + (1 - y_true) * raw_prediction  # loss
@@ -336,13 +392,14 @@ cdef inline double2 closs_grad_binary_crossentropy(
 
 
 cdef inline double2 cgrad_hess_binary_crossentropy(
-    double y_true, double raw_prediction
+    double y_true,
+    double raw_prediction
 ) nogil:
     # with y_pred = expit(raw)
     # hessian = y_pred * (1 - y_pred) = exp(raw) / (1 + exp(raw))**2
     #                                 = exp(-raw) / (1 + exp(-raw))**2
     cdef double2 gh
-    gh.val2 = exp(-raw_prediction)
+    gh.val2 = exp(-raw_prediction)  # used as temporary
     gh.val1 = ((1 - y_true) - y_true * gh.val2) / (1 + gh.val2)  # gradient
     gh.val2 = gh.val2 / (1 + gh.val2)**2                         # hessian
     return gh
