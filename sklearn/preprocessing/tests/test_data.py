@@ -19,8 +19,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import skip_if_32bit
@@ -226,13 +224,6 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
 @pytest.mark.parametrize("constant", [0, 1., 100.])
 def test_standard_scaler_constant_features(
         scaler, add_sample_weight, sparse_constructor, dtype, constant):
-    if (isinstance(scaler, StandardScaler)
-            and constant > 1
-            and sparse_constructor is not np.asarray
-            and add_sample_weight):
-        # https://github.com/scikit-learn/scikit-learn/issues/19546
-        pytest.xfail("Computation of weighted variance is numerically unstable"
-                     " for sparse data. See: #19546.")
 
     if isinstance(scaler, RobustScaler) and add_sample_weight:
         pytest.skip(f"{scaler.__class__.__name__} does not yet support"
@@ -271,6 +262,62 @@ def test_standard_scaler_constant_features(
             assert_allclose(X_scaled_2, X_scaled_2)
 
 
+@pytest.mark.parametrize("n_samples", [10, 100, 10_000])
+@pytest.mark.parametrize("average", [1e-10, 1, 1e10])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("array_constructor",
+                         [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
+def test_standard_scaler_near_constant_features(n_samples, array_constructor,
+                                                average, dtype):
+    # Check that when the variance is too small (var << mean**2) the feature
+    # is considered constant and not scaled.
+
+    scale_min, scale_max = -30, 19
+    scales = np.array([10**i for i in range(scale_min, scale_max + 1)],
+                      dtype=dtype)
+
+    n_features = scales.shape[0]
+    X = np.empty((n_samples, n_features), dtype=dtype)
+    # Make a dataset of known var = scales**2 and mean = average
+    X[:n_samples//2, :] = average + scales
+    X[n_samples//2:, :] = average - scales
+    X_array = array_constructor(X)
+
+    scaler = StandardScaler(with_mean=False).fit(X_array)
+
+    # StandardScaler uses float64 accumulators even if the data has a float32
+    # dtype.
+    eps = np.finfo(np.float64).eps
+
+    # if var < bound = N.eps.var + N².eps².mean², the feature is considered
+    # constant and the scale_ attribute is set to 1.
+    bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2 * average**2
+    within_bounds = scales**2 <= bounds
+
+    # Check that scale_min is small enough to have some scales below the
+    # bound and therefore detected as constant:
+    assert np.any(within_bounds)
+
+    # Check that such features are actually treated as constant by the scaler:
+    assert all(scaler.var_[within_bounds] <= bounds[within_bounds])
+    assert_allclose(scaler.scale_[within_bounds], 1.)
+
+    # Depending the on the dtype of X, some features might not actually be
+    # representable as non constant for small scales (even if above the
+    # precision bound of the float64 variance estimate). Such feature should
+    # be correctly detected as constants with 0 variance by StandardScaler.
+    representable_diff = X[0, :] - X[-1, :] != 0
+    assert_allclose(scaler.var_[np.logical_not(representable_diff)], 0)
+    assert_allclose(scaler.scale_[np.logical_not(representable_diff)], 1)
+
+    # The other features are scaled and scale_ is equal to sqrt(var_) assuming
+    # that scales are large enough for average + scale and average - scale to
+    # be distinct in X (depending on X's dtype).
+    common_mask = np.logical_and(scales**2 > bounds, representable_diff)
+    assert_allclose(scaler.scale_[common_mask],
+                    np.sqrt(scaler.var_)[common_mask])
+
+
 def test_scale_1d():
     # 1-d inputs
     X_list = [1., 3., 5., 0.]
@@ -291,28 +338,37 @@ def test_standard_scaler_numerical_stability():
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
-    x_scaled = assert_no_warnings(scale, x)
+    with pytest.warns(None) as record:
+        scale(x)
+    assert len(record) == 0
     assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
     x = np.full(10, np.log(1e-5), dtype=np.float64)
-    w = "standard deviation of the data is probably very close to 0"
-    x_scaled = assert_warns_message(UserWarning, w, scale, x)
+    warning_message = (
+        "standard deviation of the data is probably very close to 0"
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        x_scaled = scale(x)
     assert_array_almost_equal(x_scaled, np.zeros(10))
 
     x = np.full(10, 1e-100, dtype=np.float64)
-    x_small_scaled = assert_no_warnings(scale, x)
+    with pytest.warns(None) as record:
+        x_small_scaled = scale(x)
+    assert len(record) == 0
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
     x_big = np.full(10, 1e100, dtype=np.float64)
-    w = "Dataset may contain too large values"
-    x_big_scaled = assert_warns_message(UserWarning, w, scale, x_big)
+    warning_message = (
+        "Dataset may contain too large values"
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        x_big_scaled = scale(x_big)
     assert_array_almost_equal(x_big_scaled, np.zeros(10))
     assert_array_almost_equal(x_big_scaled, x_small_scaled)
-
-    x_big_centered = assert_warns_message(UserWarning, w, scale, x_big,
-                                          with_std=False)
+    with pytest.warns(UserWarning, match=warning_message):
+        x_big_centered = scale(x_big, with_std=False)
     assert_array_almost_equal(x_big_centered, np.zeros(10))
     assert_array_almost_equal(x_big_centered, x_small_scaled)
 
@@ -604,6 +660,26 @@ def test_standard_scaler_trasform_with_partial_fit(sample_weight):
                 np.sum(sample_weight[:i + 1]) ==
                 pytest.approx(scaler_incr.n_samples_seen_)
             )
+
+
+def test_standard_check_array_of_inverse_transform():
+    # Check if StandardScaler inverse_transform is
+    # converting the integer array to float
+    x = np.array([
+        [1, 1, 1, 0, 1, 0],
+        [1, 1, 1, 0, 1, 0],
+        [0, 8, 0, 1, 0, 0],
+        [1, 4, 1, 1, 0, 0],
+        [0, 1, 0, 0, 1, 0],
+        [0, 4, 0, 1, 0, 1]], dtype=np.int32)
+
+    scaler = StandardScaler()
+    scaler.fit(x)
+
+    # The of inverse_transform should be converted
+    # to a float array.
+    # If not X *= self.scale_ will fail.
+    scaler.inverse_transform(x)
 
 
 def test_min_max_scaler_iris():
@@ -1239,9 +1315,11 @@ def test_quantile_transform_sparse_ignore_zeros():
                                       n_quantiles=5)
 
     # dense case -> warning raise
-    assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
-                         " only with sparse matrix. This parameter has no"
-                         " effect.", transformer.fit, X)
+    warning_message = ("'ignore_implicit_zeros' takes effect"
+                       " only with sparse matrix. This parameter has no"
+                       " effect.")
+    with pytest.warns(UserWarning, match=warning_message):
+        transformer.fit(X)
 
     X_expected = np.array([[0, 0],
                            [0, 0],
