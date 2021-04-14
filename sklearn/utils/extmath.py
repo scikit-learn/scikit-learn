@@ -809,8 +809,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
         else:
             new_unnormalized_variance = _safe_accumulator_op(
                 np.nansum, (X - T)**2, axis=0)
-            correction = _safe_accumulator_op(
-                np.nansum, X - T, axis=0)
+            correction = _safe_accumulator_op(np.nansum, X - T, axis=0)
 
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis

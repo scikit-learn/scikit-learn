@@ -58,12 +58,12 @@ __all__ = [
 
 
 def _is_constant_feature(var, mean, n_samples):
-    """Detect if a feature is undistinguishable from a constant feature
+    """Detect if a feature is indistinguishable from a constant feature.
 
     The detection is based on its computed variance and on the theoretical
     error bounds of the '2 pass algorithm' for variance computation.
 
-    see "Algorithms for computing the sample variance: analysis and
+    See "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
     """
     # In scikit-learn, variance is always computed using float64 accumulators.

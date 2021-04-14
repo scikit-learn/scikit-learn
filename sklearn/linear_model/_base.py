@@ -250,7 +250,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             X_var = X_var.astype(X.dtype, copy=False)
             # Detect constant features on the computed variance, before taking
             # the np.sqrt. Otherwise constant features cannot be detected with
-            # sample_weights.
+            # sample weights.
             constant_mask = _is_constant_feature(X_var, X_offset, X.shape[0])
             X_var *= X.shape[0]
             X_scale = np.sqrt(X_var, out=X_var)
