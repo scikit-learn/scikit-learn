@@ -2048,7 +2048,8 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         K -= self.K_fit_rows_
         K -= K_pred_cols
         K += self.K_fit_all_
-        print("random change to trigger code change")
+        # FIXME:
+        1 + 1
 
         return K
 
