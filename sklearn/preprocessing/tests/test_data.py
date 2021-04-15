@@ -2170,9 +2170,22 @@ def test_center_kernel():
     # check the results coherence with the method proposed in:
     # B. Schölkopf, A. Smola, and K.R. Müller,
     # "Nonlinear component analysis as a kernel eigenvalue problem"
-    # * K_centered = K - 1_M K - K 1_M + 1_M K 1_M
-    # * K_test_centered = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
-    pass
+
+    # K_centered = K - 1_M K - K 1_M + 1_M K 1_M
+    ones_M = np.ones_like(K_fit) / K_fit.shape[0]
+    K_fit_centered3 = (
+        K_fit - ones_M @ K_fit - K_fit @ ones_M + ones_M @ K_fit @ ones_M
+    )
+    assert_allclose(K_fit_centered, K_fit_centered3)
+
+    # K_test_centered = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
+    ones_prime_M = np.ones_like(K_pred) / K_fit.shape[0]
+    K_pred_centered3 = (
+        K_pred - ones_prime_M @ K_fit - K_pred @ ones_M +
+        ones_prime_M @ K_fit @ ones_M
+    )
+    assert_allclose(K_pred_centered, K_pred_centered3)
+
 
 def test_cv_pipeline_precomputed():
     # Cross-validate a regression on four coplanar points with the same
