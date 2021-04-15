@@ -288,8 +288,7 @@ def test_kernel_conditioning():
 
 def test_kernel_pca_inverse_transform_reconstruction():
     # Test if the reconstruction is a good approximation.
-    X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
-                       random_state=0)
+    X, *_ = make_blobs(n_samples=100, n_features=4, random_state=0)
 
     kpca = KernelPCA(
         n_components=20, kernel='rbf', fit_inverse_transform=True, alpha=1e-3
