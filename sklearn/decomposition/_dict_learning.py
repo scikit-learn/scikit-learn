@@ -1633,7 +1633,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         performed before.
 
         .. deprecated:: 1.0
-           ``iter_offset_`` has been renamed ``n_batches_seen_`` and will be
+           ``iter_offset_`` has been renamed ``n_steps_`` and will be
            removed in 1.2.
 
     random_state_ : RandomState instance
