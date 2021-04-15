@@ -1951,7 +1951,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
 
 class KernelCenterer(TransformerMixin, BaseEstimator):
-    """Center a kernel matrix.
+    r"""Center a kernel matrix.
 
     Let define a kernel :math:`K` such that:
 
