@@ -14,7 +14,7 @@ from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
-from ..metrics.pairwise import euclidean_distances
+
 
 def asymptotic_decay(learning_rate, t, n_iter):
     """Decay function of the learning process
@@ -67,15 +67,17 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
     decay_function : func, default=asymptotic_decay()
         The learning rate decay of each interaction.
 
-    neighborhood_function : {"gaussian", "mexican_hat", "bubble", "triangle"}, default="gaussian"
+    neighborhood_function : {'gaussian', 'mexican_hat', 'bubble', \
+                                'triangle'}, default='gaussian'
         Function which determines the rate of change of the neighborhood
         around the BMUs (winner neuron).
 
-    topology : {"hexagonal", "rectangular"}, default="rectangular"
+    topology : {'hexagonal', 'rectangular'}, default='rectangular'
         SOM weights matrix topology. It can be rectangular and hexagonal.
         Other topologies are not implemented.
 
-    activation_distance : {"euclidean", "cosine", "manhattan", "chebyshev"}, default="euclidean"
+    activation_distance : {'euclidean', 'cosine', 'manhattan', 'chebyshev'}, \
+                              default='euclidean'
         Function that calculates the distance activation of a winner neuron.
 
     verbose : int, default=0
@@ -157,15 +159,17 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
 
         if self.neighborhood_function not in self.__neighborhood_function:
             msg = '%s not supported only as neighborhood function'
-            raise ValueError(msg % neighborhood_function)
+            raise ValueError(msg % self.neighborhood_function)
 
-        self._neighborhood_function = getattr(self, "_" + self.neighborhood_function)
+        self._neighborhood_function = getattr(self, "_%s" %
+                                              self.neighborhood_function)
 
         if self.activation_distance not in self.__activation_distance:
             msg = '%s not supported only as activation distance method'
-            raise ValueError(msg % activation_distance)
+            raise ValueError(msg % self.activation_distance)
 
-        self._activation_distance = getattr(self, "_" + self.activation_distance)
+        self._activation_distance = getattr(self, "_%s" %
+                                            self.activation_distance)
 
         if self.topology not in self.__topology:
             msg = '%s not supported only hexagonal and rectangular available'
@@ -184,7 +188,7 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
         """
         self._activation_map = np.zeros((self.width, self.height))
 
-        self._weigths = np.zeros((self.width, self.height))
+        self._weights = np.zeros((self.width, self.height))
 
         self._n_x = np.arange(self.width)
         self._n_y = np.arange(self.height)
@@ -267,7 +271,6 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
 
         return self._euclidean(X, q).mean()
 
-
     def _topological_error(self, X):
         """Returns the topographic error computed by finding
         the best-matching and second-best-matching neuron in the map
@@ -292,7 +295,8 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
         X = self._check_test_data(X)
 
         if np.prod(self._activation_map.shape) == 1:
-            warn('The topographic error is not defined for a 1-by-1 map.')
+            warnings.warn('The topographic error is not defined for a '
+                          '1-by-1 map.')
             return np.nan
 
         b2mu_idxs = np.argsort(self._distance_weights(X), axis=1)[:, :2]
@@ -300,7 +304,9 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
         if self.topology == 'hexagonal':
             new_b2my_xy = list()
             for array in np.array(b2my_xy):
-                new_b2my_xy.append(np.apply_along_axis(self._transform_weights_to_hex, 1, array))
+                new_b2my_xy.append(np.apply_along_axis(
+                                       self._transform_weights_to_hex, 1,
+                                       array))
             b2my_xy = tuple(new_b2my_xy)
         b2mu_x, b2mu_y = b2my_xy[0], b2my_xy[1]
         dxdy = np.hstack([np.diff(b2mu_x), np.diff(b2mu_y)])
@@ -368,7 +374,7 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
         Parameters
         ----------
         X : np.array
-            Data sample to calculate the quantization error and 
+            Data sample to calculate the quantization error and
             topology error
 
         Returns
@@ -461,9 +467,11 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
 
     def _mexican_hat(self, c, sigma):
         """Mexican hat centered in c."""
-        p = np.power(self._xx-self._xx.T[c], 2) + np.power(self._yy-self._yy.T[c], 2)
-        d = 2*sigma*sigma
-        return (np.exp(-p/d)*(1-2/d*p)).T
+        x = np.power(self._xx-self._xx.T[c], 2)
+        y = np.power(self._yy-self._yy.T[c], 2)
+        p = x + y
+        d = 2 * sigma * sigma
+        return (np.exp(-p / d) * (1 - 2 / d * p)).T
 
     def _bubble(self, c, sigma):
         """Constant function centered in c with spread sigma.
@@ -483,10 +491,11 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
         triangle_y[triangle_y < 0] = 0.
         return np.outer(triangle_x, triangle_y)
 
-    def _build_iteration_indexes(self, input_len, num_iterations, random=False):
+    def _build_iteration_indexes(self, input_len, num_iterations,
+                                 random=False):
         """Returns an iterable with the indexes of the samples
         to pick at each iteration of the training.
-        If random_generator is not None, it must be an instalce
+        If random_state is not None, it must be an instance
         of numpy.random.RandomState and it will be used
         to randomize the order of the samples."""
         iterations = np.arange(num_iterations) % input_len
@@ -584,7 +593,6 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
 
         self.n_iter_ = len(X) * self.max_iter
 
-        random_generator = None
         iterations = self._build_iteration_indexes(len(X), self.n_iter_,
                                                    random_order)
 
@@ -598,9 +606,9 @@ class SOM(TransformerMixin, ClusterMixin, BaseEstimator):
             if verbose:
                 end = time.time()
                 qe, te = self.quality(X)
-                print("[%s] Epoch %d Iteration %d, mean quantization error = %.2f,"
+                print("[%s] Iteration %d, mean quantization error = %.2f,"
                       " topographic error = %.2f, time = %.2fs"
-                      % (type(self).__name__, epoch, t, qe, te,
+                      % (type(self).__name__, t, qe, te,
                           end - begin))
                 total += end - begin
                 begin = end

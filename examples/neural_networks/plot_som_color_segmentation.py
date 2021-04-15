@@ -1,9 +1,9 @@
 """
-========================================================
+===================================================
 Example of color quantization of an image using SOM
-========================================================
+===================================================
 
-In this example, we use a rectangular SOM with 6 x 6 to 
+In this example, we use a rectangular SOM with 6 x 6 to
 learn all mojority colors of an image. The example try to
 classify each pixel of the image into each neuron mapped
 into this SOM network. The result is a segmented image with
@@ -21,7 +21,7 @@ from skimage import io
 
 from sklearn.neural_network import SOM
 
-image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Bachalpsee_reflection.jpg/250px-Bachalpsee_reflection.jpg"
+image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Bachalpsee_reflection.jpg/250px-Bachalpsee_reflection.jpg"  # noqa
 
 image_np = io.imread(image_url)
 x, y, input_len = image_np.shape

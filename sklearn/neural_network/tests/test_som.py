@@ -1,11 +1,9 @@
 """Testing for K-means"""
 
 import numpy as np
-from scipy import sparse as sp
 
 import pytest
 
-from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.neural_network import SOM
@@ -14,10 +12,11 @@ from sklearn.neural_network import SOM
 @pytest.mark.parametrize("topology", ["rectangular", "hexagonal"])
 def test_som_setup(topology):
     som = SOM(8, 8, topology=topology)
-    som._randomize_weights(2) # 2 features
+    som._randomize_weights(2)  # 2 features
     for i in range(8):
         for j in range(8):
             assert (som._weights[i, j] < 1.0).all()
+
 
 @pytest.mark.parametrize("topology", ["rectangular", "hexagonal"])
 def test_euclidean_distance(topology):
@@ -28,6 +27,7 @@ def test_euclidean_distance(topology):
     assert_array_almost_equal(d, [[1.41421356, 1.41421356],
                                   [1.41421356, 1.41421356]])
 
+
 @pytest.mark.parametrize("topology", ["rectangular", "hexagonal"])
 def test_cosine_distance(topology):
     som = SOM(8, 8, topology=topology)
@@ -36,6 +36,7 @@ def test_cosine_distance(topology):
     d = som._cosine(x, w)
     assert_array_almost_equal(d, [[1., 1.],
                                   [1., 1.]])
+
 
 @pytest.mark.parametrize("topology", ["rectangular", "hexagonal"])
 def test_manhattan_distance(topology):
@@ -46,6 +47,7 @@ def test_manhattan_distance(topology):
     assert_array_almost_equal(d, [[2., 2.],
                                   [2., 2.]])
 
+
 @pytest.mark.parametrize("topology", ["rectangular", "hexagonal"])
 def test_chebyshev_distance(topology):
     som = SOM(8, 8, topology=topology)
@@ -54,6 +56,7 @@ def test_chebyshev_distance(topology):
     d = som._chebyshev(x, w)
     assert_array_almost_equal(d, [[2., 2.],
                                   [2., 2.]])
+
 
 @pytest.mark.parametrize("topology", ["rectangular", "hexagonal"])
 def test_som_predict(topology):
@@ -82,11 +85,15 @@ def test_som_predict(topology):
     # fourth group
     assert_array_equal(q4, [7.75, 7.75])
 
+
 @pytest.mark.parametrize("topology", ["rectangular", "hexagonal"])
-@pytest.mark.parametrize("neighborhood_function", ["gaussian", "mexican_hat", "bubble", "triangle"])
-@pytest.mark.parametrize("activation_distance", ["euclidean", "cosine", "manhattan", "chebyshev"])
+@pytest.mark.parametrize("neighborhood_function", ["gaussian", "mexican_hat",
+                                                   "bubble", "triangle"])
+@pytest.mark.parametrize("activation_distance", ["euclidean", "cosine",
+                                                 "manhattan", "chebyshev"])
 @pytest.mark.parametrize("state", [1, 10, 1048, 1000000])
-def test_som_random_seed(topology, neighborhood_function, activation_distance, state):
+def test_som_random_seed(topology, neighborhood_function, activation_distance,
+                         state):
     som1 = SOM(4, 4, sigma=1.0, learning_rate=0.5, max_iter=100,
                topology=topology, neighborhood_function=neighborhood_function,
                activation_distance=activation_distance, random_state=state)
@@ -94,8 +101,8 @@ def test_som_random_seed(topology, neighborhood_function, activation_distance, s
                topology=topology, neighborhood_function=neighborhood_function,
                activation_distance=activation_distance, random_state=state)
 
-    som1._randomize_weights(2) # 2 features
-    som2._randomize_weights(2) # 2 features
+    som1._randomize_weights(2)  # 2 features
+    som2._randomize_weights(2)  # 2 features
 
     # same initialization
     assert_array_almost_equal(som1._weights, som2._weights)
