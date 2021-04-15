@@ -1697,8 +1697,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                  transform_algorithm='omp', transform_n_nonzero_coefs=None,
                  transform_alpha=None, verbose=False, split_sign=False,
                  random_state=None, positive_code=False, positive_dict=False,
-                 transform_max_iter=1000, callback=None,
-                 max_no_improvement=10, tol=1e-3):
+                 transform_max_iter=1000, callback=None,  tol=1e-3,
+                 max_no_improvement=10):
 
         super().__init__(
             transform_algorithm, transform_n_nonzero_coefs, transform_alpha,
