@@ -368,9 +368,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                  "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
-        X_reconstructed = np.dot(K, self.dual_coef_)
-
-        return X_reconstructed
+        return np.dot(K, self.dual_coef_)
 
     def _more_tags(self):
         return {'preserves_dtype': [np.float64, np.float32],
