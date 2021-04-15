@@ -275,6 +275,23 @@ can implicitly center as shown in Appendix B in [Scholkopf1998]:
 where :math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)`
 where all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`.
 
+During `transform`, the kernel becomes :math:`K_{test}(X, Y)` that is defined
+as:
+
+.. math::
+  K_{test}(X, Y) = \phi(Y) . \phi(X)^{T} \ ,
+
+where :math:`Y` is the test dataset of shape `(n_samples_test, n_features)` and
+thus :math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
+centering :math:`K_{test}` is done as:
+
+.. math::
+  \tile{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}} \ ,
+
+where :math:`1_{\text{n}_{samples}}` is a matrix of
+`(n_samples_test, n_samples)` where all entries are equal to
+:math:`\frac{1}{\text{n}_{samples}}`.
+
 .. topic:: References
 
   .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
