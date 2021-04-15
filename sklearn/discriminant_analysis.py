@@ -476,8 +476,12 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
         # (n_classes) centers
         _, S, Vt = linalg.svd(X, full_matrices=0)
 
-        self.explained_variance_ratio_ = (S**2 / np.sum(
-            S**2))[:self._max_components]
+        if self._max_components == 0:
+            self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
+        else:
+            self.explained_variance_ratio_ = (S**2 / np.sum(
+                S**2))[:self._max_components]
+
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)

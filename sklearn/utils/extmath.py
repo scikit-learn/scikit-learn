@@ -18,6 +18,7 @@ from scipy import linalg, sparse
 
 from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
+from .fixes import np_version, parse_version
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from .validation import _deprecate_positional_args
@@ -245,7 +246,7 @@ def randomized_range_finder(A, *, size, n_iter,
 @_deprecate_positional_args
 def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state=0):
+                   flip_sign=True, random_state='warn'):
     """Computes a truncated randomized SVD.
 
     Parameters
@@ -296,11 +297,17 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default=0
-        The seed of the pseudo random number generator to use when shuffling
-        the data, i.e. getting the random vectors to initialize the algorithm.
-        Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, default='warn'
+        The seed of the pseudo random number generator to use when
+        shuffling the data, i.e. getting the random vectors to initialize
+        the algorithm. Pass an int for reproducible results across multiple
+        function calls. See :term:`Glossary <random_state>`.
+
+        .. versionchanged:: 1.2
+            The previous behavior (`random_state=0`) is deprecated, and
+            from v1.2 the default value will be `random_state=None`. Set
+            the value of `random_state` explicitly to suppress the deprecation
+            warning.
 
     Notes
     -----
@@ -326,9 +333,21 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn("Calculating SVD of a {} is expensive. "
-                      "csr_matrix is more efficient.".format(
-                          type(M).__name__),
+                      "csr_matrix is more efficient.".format(type(M).__name__),
                       sparse.SparseEfficiencyWarning)
+
+    if random_state == 'warn':
+        warnings.warn(
+            "If 'random_state' is not supplied, the current default "
+            "is to use 0 as a fixed seed. This will change to  "
+            "None in version 1.2 leading to non-deterministic results "
+            "that better reflect nature of the randomized_svd solver. "
+            "If you want to silence this warning, set 'random_state' "
+            "to an integer seed or to None explicitly depending "
+            "if you want your code to be deterministic or not.",
+            FutureWarning
+        )
+        random_state = 0
 
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
@@ -749,10 +768,17 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
     if sample_weight is not None:
-        new_sum = _safe_accumulator_op(np.nansum, X * sample_weight[:, None],
-                                       axis=0)
-        new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X)),
-                                  axis=0)
+        if np_version >= parse_version("1.16.6"):
+            # equivalent to np.nansum(X * sample_weight, axis=0)
+            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+            # dtype arg of np.matmul only exists since version 1.16
+            new_sum = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(np.isnan(X), 0, X))
+        else:
+            new_sum = _safe_accumulator_op(
+                np.nansum, X * sample_weight[:, None], axis=0)
+        new_sample_count = _safe_accumulator_op(
+            np.sum, sample_weight[:, None] * (~np.isnan(X)), axis=0)
     else:
         new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
         new_sample_count = np.sum(~np.isnan(X), axis=0)
@@ -766,10 +792,30 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     else:
         T = new_sum / new_sample_count
         if sample_weight is not None:
-            new_unnormalized_variance = np.nansum(sample_weight[:, None] *
-                                                  (X - T)**2, axis=0)
+            if np_version >= parse_version("1.16.6"):
+                # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
+                # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+                # dtype arg of np.matmul only exists since version 1.16
+                new_unnormalized_variance = _safe_accumulator_op(
+                    np.matmul, sample_weight,
+                    np.where(np.isnan(X), 0, (X - T)**2))
+                correction = _safe_accumulator_op(
+                    np.matmul, sample_weight, np.where(np.isnan(X), 0, X - T))
+            else:
+                new_unnormalized_variance = _safe_accumulator_op(
+                    np.nansum, (X - T)**2 * sample_weight[:, None], axis=0)
+                correction = _safe_accumulator_op(
+                    np.nansum, (X - T) * sample_weight[:, None], axis=0)
         else:
-            new_unnormalized_variance = np.nansum((X - T)**2, axis=0)
+            new_unnormalized_variance = _safe_accumulator_op(
+                np.nansum, (X - T)**2, axis=0)
+            correction = _safe_accumulator_op(np.nansum, X - T, axis=0)
+
+        # correction term of the corrected 2 pass algorithm.
+        # See "Algorithms for computing the sample variance: analysis
+        # and recommendations", by Chan, Golub, and LeVeque.
+        new_unnormalized_variance -= correction**2 / new_sample_count
+
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):

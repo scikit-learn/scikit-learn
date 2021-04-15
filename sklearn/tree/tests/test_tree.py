@@ -51,7 +51,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("mse", "mae", "friedman_mse", "poisson")
+REG_CRITERIONS = ("squared_error", "mae", "friedman_mse", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -293,7 +293,7 @@ def test_diabetes_overfit(name, Tree, criterion):
 @pytest.mark.parametrize("name, Tree", REG_TREES.items())
 @pytest.mark.parametrize(
     "criterion, max_depth, metric, max_loss",
-    [("mse", 15, mean_squared_error, 60),
+    [("squared_error", 15, mean_squared_error, 60),
      ("mae", 20, mean_squared_error, 60),
      ("friedman_mse", 15, mean_squared_error, 60),
      ("poisson", 15, mean_poisson_deviance, 30)]
@@ -420,8 +420,8 @@ def test_importances_raises():
         getattr(clf, 'feature_importances_')
 
 
-def test_importances_gini_equal_mse():
-    # Check that gini is equivalent to mse for binary output variable
+def test_importances_gini_equal_squared_error():
+    # Check that gini is equivalent to squared_error for binary output variable
 
     X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
@@ -436,7 +436,7 @@ def test_importances_gini_equal_mse():
     # high tree depth, we restrict this maximal depth.
     clf = DecisionTreeClassifier(criterion="gini", max_depth=5,
                                  random_state=0).fit(X, y)
-    reg = DecisionTreeRegressor(criterion="mse", max_depth=5,
+    reg = DecisionTreeRegressor(criterion="squared_error", max_depth=5,
                                 random_state=0).fit(X, y)
 
     assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
@@ -1973,7 +1973,9 @@ def test_apply_path_readonly_all_trees(name):
     check_apply_path_readonly(name)
 
 
-@pytest.mark.parametrize("criterion", ["mse", "friedman_mse", "poisson"])
+@pytest.mark.parametrize(
+    "criterion", ["squared_error", "friedman_mse", "poisson"]
+)
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 def test_balance_property(criterion, Tree):
     # Test that sum(y_pred)=sum(y_true) on training set.
@@ -1995,7 +1997,7 @@ def test_poisson_zero_nodes(seed):
     y = [0, 0, 0, 0, 1, 2, 3, 4]
     # Note that X[:, 0] == 0 is a 100% indicator for y == 0. The tree can
     # easily learn that:
-    reg = DecisionTreeRegressor(criterion="mse", random_state=seed)
+    reg = DecisionTreeRegressor(criterion="squared_error", random_state=seed)
     reg.fit(X, y)
     assert np.amin(reg.predict(X)) == 0
     # whereas Poisson must predict strictly positive numbers
@@ -2023,7 +2025,7 @@ def test_poisson_zero_nodes(seed):
 
 def test_poisson_vs_mse():
     # For a Poisson distributed target, Poisson loss should give better results
-    # than least squares measured in Poisson deviance as metric.
+    # than squared error measured in Poisson deviance as metric.
     # We have a similar test, test_poisson(), in
     # sklearn/ensemble/_hist_gradient_boosting/tests/test_gradient_boosting.py
     # Note: Some fine tuning was needed to have metric_poi < metric_dummy on
@@ -2042,7 +2044,7 @@ def test_poisson_vs_mse():
     tree_poi = DecisionTreeRegressor(criterion="poisson",
                                      min_samples_split=10,
                                      random_state=rng)
-    tree_mse = DecisionTreeRegressor(criterion="mse",
+    tree_mse = DecisionTreeRegressor(criterion="squared_error",
                                      min_samples_split=10,
                                      random_state=rng)
 
@@ -2052,12 +2054,13 @@ def test_poisson_vs_mse():
 
     for X, y, val in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
         metric_poi = mean_poisson_deviance(y, tree_poi.predict(X))
-        # mse might produce non-positive predictions => clip
+        # squared_error might produce non-positive predictions => clip
         metric_mse = mean_poisson_deviance(y, np.clip(tree_mse.predict(X),
                                                       1e-15, None))
         metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
-        # As MSE might correctly predict 0 in train set, its train score can
-        # be better than Poisson. This is no longer the case for the test set.
+        # As squared_error might correctly predict 0 in train set, its train
+        # score can be better than Poisson. This is no longer the case for the
+        # test set.
         if val == "test":
             assert metric_poi < metric_mse
         assert metric_poi < metric_dummy
@@ -2114,3 +2117,16 @@ def test_X_idx_sorted_deprecated(TreeEstimator):
     with pytest.warns(FutureWarning,
                       match="The parameter 'X_idx_sorted' is deprecated"):
         tree.fit(X, y, X_idx_sorted=X_idx_sorted)
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+def test_mse_deprecated(Tree):
+    tree = Tree(criterion="mse")
+
+    with pytest.warns(FutureWarning,
+                      match="Criterion 'mse' was deprecated"):
+        tree.fit(X, y)
+
+    tree_sqer = Tree(criterion="squared_error").fit(X, y)
+    assert_allclose(tree.predict(X), tree_sqer.predict(X))

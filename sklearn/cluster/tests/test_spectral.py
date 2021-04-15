@@ -10,7 +10,6 @@ import pickle
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster._spectral import discretize
@@ -132,7 +131,8 @@ def test_affinities():
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
-    assert_warns_message(UserWarning, 'not fully connected', sp.fit, X)
+    with pytest.warns(UserWarning, match='not fully connected'):
+        sp.fit(X)
     assert adjusted_rand_score(y, sp.labels_) == 1
 
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)

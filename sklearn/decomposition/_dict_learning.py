@@ -371,10 +371,12 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
         Sparse coding of the data against which to optimize the dictionary.
 
     A : ndarray of shape (n_components, n_components), default=None
-        With `B`, sufficient stats of the online model.
+        Together with `B`, sufficient stats of the online model to update the
+        dictionary.
 
     B : ndarray of shape (n_features, n_components), default=None
-        With `A`, sufficient stats of the online model.
+        Together with `A`, sufficient stats of the online model to update the
+        dictionary.
 
     verbose: bool, default=False
         Degree of output the procedure will print.
@@ -418,7 +420,7 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
         if positive:
             np.clip(dictionary[k], 0, None, out=dictionary[k])
 
-        # Projection on the constraint ||V_k|| == 1
+        # Projection on the constraint set ||V_k|| == 1
         dictionary[k] /= linalg.norm(dictionary[k])
 
     if verbose and n_unused > 0:
@@ -570,7 +572,7 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
 
     # Fortran-order dict better suited for the sparse coding which is the
     # bottleneck of this algorithm.
-    dictionary = np.array(dictionary, order='F')
+    dictionary = np.asfortranarray(dictionary)
 
     errors = []
     current_cost = np.nan
@@ -895,6 +897,8 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter="deprecated",
     else:
         X_train = X
 
+    # Fortran-order dict better suited for the sparse coding which is the
+    # bottleneck of this algorithm.
     dictionary = check_array(dictionary, order='F', dtype=np.float64,
                              copy=False)
     dictionary = np.require(dictionary, requirements='W')
