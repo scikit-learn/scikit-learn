@@ -286,27 +286,17 @@ def test_kernel_conditioning():
     assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
 
 
-def test_kernel_pca_inverse_transform_reconstruct_mean():
+def test_kernel_pca_inverse_transform_reconstruction():
+    # Test if the reconstruction is a good approximation.
     X, *_ = make_blobs(n_samples=100, n_features=3, centers=[[1, 1, 1]],
                        random_state=0)
 
-    # When the linear kernel is used and alpha = 0,
-    # the inverse transformation exactly equals to the original.
     kpca = KernelPCA(
-        n_components=3, kernel='linear', fit_inverse_transform=True, alpha=1e-3
+        n_components=20, kernel='rbf', fit_inverse_transform=True, alpha=1e-3
     )
     X_trans = kpca.fit_transform(X)
-    X_inv = kpca.inverse_transform(X_trans)
-    assert_allclose(X, X_inv, atol=1e-3)
-
-    # The polynomical kernel is equivalent to the linear kernel in this case.
-    kpca = KernelPCA(
-        n_components=3, kernel='poly', degree=1, coef0=0,
-        fit_inverse_transform=True, alpha=1e-3
-    )
-    X_trans = kpca.fit_transform(X)
-    X_inv = kpca.inverse_transform(X_trans)
-    assert_allclose(X, X_inv, atol=1e-3)
+    X_reconst = kpca.inverse_transform(X_trans)
+    assert np.linalg.norm(X - X_reconst) / np.linalg.norm(X) < 1e-1
 
 
 def test_32_64_decomposition_shape():
