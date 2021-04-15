@@ -126,14 +126,14 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     max_iter : int, optional (default = 100).
         The maximum number of EM iterations to perform.
 
-    criterion : str {"bic" or "aic"}, optional, (default="bic")
-        Select the best model based on Bayesian Information Criterion (bic) or
-        Aikake Information Criterion (aic)
-
     verbose : int, optional (default = 0)
         Enable verbose output. If 1 then it prints the current initialization
         and each iteration step. If greater than 1 then it prints also
         the log probability and the time needed for each step.
+
+    criterion : str {"bic" or "aic"}, optional, (default="bic")
+        Select the best model based on Bayesian Information Criterion (bic) or
+        Aikake Information Criterion (aic)
 
     max_agglom_size : int or None, optional (default = 2000)
         The maximum number of datapoints on which to do agglomerative
@@ -198,6 +198,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             covariance type used in GMM
         reg_covar : float
             regularization used in GMM
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------
