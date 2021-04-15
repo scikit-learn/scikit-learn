@@ -240,9 +240,9 @@ Centering kernel matrices
 -------------------------
 
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
-in a feature space defined by a function :math:`\phi(.)`, a
+in a feature space defined by a function :math:`\phi(\dot)`, a
 :class:`KernelCenterer` can transform the kernel matrix so that it contains
-inner products in the feature space defined by :math:`\phi(.)` followed by
+inner products in the feature space defined by :math:`\phi(\dot)` followed by
 removal of the mean in that space.
 
 We can have a look at the mathematical formulation now that we have the
@@ -253,19 +253,18 @@ defined by
 .. math::
   K(X, X) = \phi(X) . \phi(X)^{T} \ ,
 
-where :math:`\phi(X)` is a function mapping :math:`X` to a Hilbert space.
-
-A centered kernel :math:`\tilde{K}` is defined as:
+where :math:`\phi(X)` is a function mapping :math:`X` to a Hilbert space. A
+centered kernel :math:`\tilde{K}` is defined as:
 
 .. math::
-  \tilde{K(X, X)} = \tilde{\phi}(X) . \tilde{\phi}(X)^{T} \ ,
+  \tilde{K}(X, X) = \tilde{\phi}(X) . \tilde{\phi}(X)^{T} \ ,
 
 where :math:`\tilde{\phi}(X)` are the mapped centered data in the Hilbert
 space.
 
 Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
-function :math:`\phi(.)` and center the data in this new space. However,
-kernels are usually used because they allows some algebra computations that
+function :math:`\phi(\dot)` and center the data in this new space. However,
+kernels are usually used because they allows some algebra calculations that
 avoid computing explicitly this mapping using :math:`\phi(.)`. Indeed, one
 can implicitly center as shown in Appendix B in [Scholkopf1998]_:
 
@@ -273,10 +272,8 @@ can implicitly center as shown in Appendix B in [Scholkopf1998]_:
   \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}} \ ,
 
 where :math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)`
-where all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`.
-
-During `transform`, the kernel becomes :math:`K_{test}(X, Y)` that is defined
-as:
+where all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. At
+`transform`, the kernel becomes :math:`K_{test}(X, Y)` defined as:
 
 .. math::
   K_{test}(X, Y) = \phi(Y) . \phi(X)^{T} \ ,
@@ -286,7 +283,7 @@ thus :math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
 centering :math:`K_{test}` is done as:
 
 .. math::
-  \tile{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}} \ ,
+  \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}} \ ,
 
 where :math:`1_{\text{n}_{samples}}` is a matrix of
 `(n_samples_test, n_samples)` where all entries are equal to
