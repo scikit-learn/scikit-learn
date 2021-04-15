@@ -159,10 +159,24 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
+:mod:`sklearn.decomposition`
+............................
+
 - |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
   ensure determinism of the output. Achieved by flipping signs of the SVD
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
+
+- |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning`,
+  :class:`MiniBatchSparsePCA` and :func:`dict_learning_online` where the
+  update of the dictionary was incorrect. :pr:`19198` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`DictionaryLearning`, :class:`SparsePCA`,
+  :class:`MiniBatchDictionaryLearning`, :class:`MiniBatchSparsePCA`,
+  :func:`dict_learning` and :func:`dict_learning_online` where the restart of
+  unused atoms during the dictionary update was not working as expected.
+  :pr:`19198` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.ensemble`
 .......................
