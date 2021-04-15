@@ -1970,14 +1970,14 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
     space.
 
     `KernelCenterer` centers the data without explicitly computing the mapping
-    :math:`\phi(\dot)`. Working with centered kernels is sometime expected
+    :math:`\phi(\cdot)`. Working with centered kernels is sometime expected
     when dealing with algebra computation such as eigendecomposition.
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
     Attributes
     ----------
-    K_fit_rows_ : array of shape (n_samples,)
+    K_fit_rows_ : ndarray of shape (n_samples,)
         Average of each column of kernel matrix.
 
     K_fit_all_ : float

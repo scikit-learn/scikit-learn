@@ -240,9 +240,9 @@ Centering kernel matrices
 -------------------------
 
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
-in a feature space defined by a function :math:`\phi(\dot)`, a
+in a feature space defined by a function :math:`\phi(\cdot)`, a
 :class:`KernelCenterer` can transform the kernel matrix so that it contains
-inner products in the feature space defined by :math:`\phi(\dot)` followed by
+inner products in the feature space defined by :math:`\phi(\cdot)` followed by
 removal of the mean in that space.
 
 **Mathematical formulation**
@@ -265,9 +265,9 @@ where :math:`\tilde{\phi}(X)` are the mapped centered data in the Hilbert
 space.
 
 Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
-function :math:`\phi(\dot)` and center the data in this new space. However,
+function :math:`\phi(\cdot)` and center the data in this new space. However,
 kernels are usually used because they allows some algebra calculations that
-avoid computing explicitly this mapping using :math:`\phi(.)`. Indeed, one
+avoid computing explicitly this mapping using :math:`\phi(\cdot)`. Indeed, one
 can implicitly center as shown in Appendix B in [Scholkopf1998]_:
 
 .. math::
