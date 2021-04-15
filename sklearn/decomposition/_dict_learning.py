@@ -6,6 +6,7 @@
 import time
 import sys
 import itertools
+import warnings
 
 from math import ceil
 
@@ -17,7 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import deprecated
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
-from ..utils.extmath import randomized_svd, row_norms
+from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -355,7 +356,7 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
 
 
 def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
-                 return_r2=False, random_state=None, positive=False):
+                 random_state=None, positive=False):
     """Update the dense dictionary factor in place.
 
     Parameters
@@ -370,10 +371,12 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
         Sparse coding of the data against which to optimize the dictionary.
 
     A : ndarray of shape (n_components, n_components), default=None
-        With B, sufficient stats of the online model.
+        Together with `B`, sufficient stats of the online model to update the
+        dictionary.
 
     B : ndarray of shape (n_features, n_components), default=None
-        With A, sufficient stats of the online model.
+        Together with `A`, sufficient stats of the online model to update the
+        dictionary.
 
     verbose: bool, default=False
         Degree of output the procedure will print.
@@ -392,21 +395,18 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
     random_state = check_random_state(random_state)
 
     if A is None:
-        A = np.dot(code.T, code)
+        A = code.T @ code
     if B is None:
-        B = np.dot(Y.T, code)
+        B = Y.T @ code
+
+    n_unused = 0
 
     for k in range(n_components):
         if A[k, k] > 1e-6:
-            dictionary[k] += (B[:, k] - A[k].dot(dictionary)) / A[k, k]
+            # 1e-6 is arbitrary but consistent with the spams implementation
+            dictionary[k] += (B[:, k] - A[k] @ dictionary) / A[k, k]
         else:
             # kth atom is almost never used -> sample a new one from the data
-            if verbose == 1:
-                sys.stdout.write("+")
-                sys.stdout.flush()
-            elif verbose:
-                print("Adding new random atom")
-
             newd = Y[random_state.choice(n_samples)]
 
             # add small noise to avoid making the sparse coding ill conditioned
@@ -415,12 +415,16 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
 
             dictionary[k] = newd + noise
             code[:, k] = 0
+            n_unused += 1
 
         if positive:
             np.clip(dictionary[k], 0, None, out=dictionary[k])
 
-        # Projection on the constraint ||V_k|| <= 1
-        dictionary[k] /= max(linalg.norm(dictionary[k]), 1)
+        # Projection on the constraint set ||V_k|| == 1
+        dictionary[k] /= linalg.norm(dictionary[k])
+
+    if verbose and n_unused > 0:
+        print(f"{n_unused} unused atoms resampled.")
 
 
 @_deprecate_positional_args
@@ -475,10 +479,12 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         for more details.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial value for the dictionary for warm restart scenarios.
+        Initial value for the dictionary for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
 
     code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the sparse code for warm restart scenarios.
+        Initial value for the sparse code for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
 
     callback : callable, default=None
         Callable that gets invoked every five iterations
@@ -552,6 +558,8 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         dictionary = dict_init
     else:
         code, S, dictionary = linalg.svd(X, full_matrices=False)
+        # flip the initial code's sign to enforce deterministic output
+        code, dictionary = svd_flip(code, dictionary)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
     if n_components <= r:  # True even if n_components=None
@@ -564,7 +572,7 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
 
     # Fortran-order dict better suited for the sparse coding which is the
     # bottleneck of this algorithm.
-    dictionary = np.array(dictionary, order='F')
+    dictionary = np.asfortranarray(dictionary)
 
     errors = []
     current_cost = np.nan
@@ -788,6 +796,8 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
     else:
         X_train = X
 
+    # Fortran-order dict better suited for the sparse coding which is the
+    # bottleneck of this algorithm.
     dictionary = check_array(dictionary, order='F', dtype=np.float64,
                              copy=False)
     dictionary = np.require(dictionary, requirements='W')
@@ -893,10 +903,21 @@ class _BaseSparseCoding(TransformerMixin):
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
+        # transform_alpha has to be changed in _transform
+        # this is done for consistency with the value of alpha
+        if (hasattr(self, "alpha") and self.alpha != 1. and
+                self.transform_alpha is None):
+            warnings.warn("By default transform_alpha will be equal to"
+                          "alpha instead of 1.0 starting from version 1.2",
+                          FutureWarning)
+            transform_alpha = 1.  # TODO change to self.alpha in 1.2
+        else:
+            transform_alpha = self.transform_alpha
+
         code = sparse_encode(
             X, dictionary, algorithm=self.transform_algorithm,
             n_nonzero_coefs=self.transform_n_nonzero_coefs,
-            alpha=self.transform_alpha, max_iter=self.transform_max_iter,
+            alpha=transform_alpha, max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs, positive=self.positive_code)
 
         if self.split_sign:
@@ -1091,6 +1112,8 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
+        y : Ignored
+
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
@@ -1168,8 +1191,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case. If `None`, then
+        solution. This is only used by `algorithm='lars'` and
+        `algorithm='omp'`. If `None`, then
         `transform_n_nonzero_coefs=int(n_features / 10)`.
 
     transform_alpha : float, default=None
@@ -1177,10 +1200,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
-        If `None`, default to 1.0
+        If `None`, defaults to `alpha`.
 
     n_jobs : int or None, default=None
         Number of parallel jobs to run.
@@ -1189,10 +1209,12 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         for more details.
 
     code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the code, for warm restart.
+        Initial value for the code, for warm restart. Only used if `code_init`
+        and `dict_init` are not None.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial values for the dictionary, for warm restart.
+        Initial values for the dictionary, for warm restart. Only used if
+        `code_init` and `dict_init` are not None.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
@@ -1408,8 +1430,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case. If `None`, then
+        solution. This is only used by `algorithm='lars'` and
+        `algorithm='omp'`. If `None`, then
         `transform_n_nonzero_coefs=int(n_features / 10)`.
 
     transform_alpha : float, default=None
@@ -1417,10 +1439,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
-        If `None`, default to 1.
+        If `None`, defaults to `alpha`.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.

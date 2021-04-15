@@ -58,3 +58,19 @@ def test_fetch_kddcup99_shuffle(fetch_kddcup99_fxt):
 
 def test_pandas_dependency_message(fetch_kddcup99_fxt, hide_available_pandas):
     check_pandas_dependency_message(fetch_kddcup99_fxt)
+
+
+def test_corrupted_file_error_message(fetch_kddcup99_fxt, tmp_path):
+    """Check that a nice error message is raised when cache is corrupted."""
+    kddcup99_dir = tmp_path / "kddcup99_10-py3"
+    kddcup99_dir.mkdir()
+    samples_path = kddcup99_dir / "samples"
+
+    with samples_path.open("wb") as f:
+        f.write(b"THIS IS CORRUPTED")
+
+    msg = (f"The cache for fetch_kddcup99 is invalid, please "
+           f"delete {str(kddcup99_dir)} and run the fetch_kddcup99 again")
+
+    with pytest.raises(IOError, match=msg):
+        fetch_kddcup99_fxt(data_home=str(tmp_path))
