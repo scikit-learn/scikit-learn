@@ -270,7 +270,7 @@ avoid computing explicitly this mapping using :math:`\phi(.)`. Indeed, one
 can implicitly center as shown in Appendix B in [Scholkopf1998]:
 
 .. math::
-  \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{n_{samples}\text{n}_{samples}} K 1_{\text{n}_{samples}} \ ,
+  \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}} \ ,
 
 where :math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)`
 where all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`.

@@ -2167,6 +2167,12 @@ def test_center_kernel():
     K_pred_centered2 = centerer.transform(K_pred)
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
 
+    # check the results coherence with the method proposed in:
+    # B. Schölkopf, A. Smola, and K.R. Müller,
+    # "Nonlinear component analysis as a kernel eigenvalue problem"
+    # * K_centered = K - 1_M K - K 1_M + 1_M K 1_M
+    # * K_test_centered = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
+    pass
 
 def test_cv_pipeline_precomputed():
     # Cross-validate a regression on four coplanar points with the same
