@@ -1983,6 +1983,13 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
     K_fit_all_ : float
         Average of kernel matrix.
 
+    References
+    ----------
+    .. [1] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       "Nonlinear component analysis as a kernel eigenvalue problem."
+       Neural computation 10.5 (1998): 1299-1319.
+       https://www.mlpack.org/papers/kpca.pdf
+
     Examples
     --------
     >>> from sklearn.preprocessing import KernelCenterer
