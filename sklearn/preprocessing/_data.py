@@ -1953,11 +1953,25 @@ class Binarizer(TransformerMixin, BaseEstimator):
 class KernelCenterer(TransformerMixin, BaseEstimator):
     """Center a kernel matrix.
 
-    Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
-    function mapping x to a Hilbert space. KernelCenterer centers (i.e.,
-    normalize to have zero mean) the data without explicitly computing phi(x).
-    It is equivalent to centering phi(x) with
-    sklearn.preprocessing.StandardScaler(with_std=False).
+    Let define a kernel :math:`K` such that:
+
+    .. math::
+        K(X, Y) = \phi(X) . \phi(Y)^{T} \ ,
+
+    where :math:`\phi(X)` is a function mapping :math:`X` to a Hilbert space
+    and :math:`K` is of shape `(n_samples, n_samples)`.
+
+    This class allows to compute :math:`\tilde{K}(X, Y)` such that:
+
+    .. math::
+        \tilde{K(X, Y)} = \tilde{\phi}(X) . \tilde{\phi}(Y)^{T} \ ,
+
+    where :math:`\tilde{\phi}(X)` are the mapped centered data in the Hilbert
+    space.
+
+    `KernelCenterer` centers the data without explicitely computing the mapping
+    :math:`\phi(.)`. Working with sometimes necessary when dealing with
+    eigendecomposition for instance.
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
