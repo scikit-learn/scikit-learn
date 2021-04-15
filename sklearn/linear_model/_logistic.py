@@ -1133,10 +1133,11 @@ class LogisticRegression(LinearClassifierMixin,
             features with approximately the same scale. You can
             preprocess the data with a scaler from sklearn.preprocessing.
 
-        .. seealso:: More information about Linear_Regression_
-            and Table summaring penalties supported by each solver :
+        .. seealso:: More information about Logistic_Regression_
+            and Table summaring penalties supported by each solver
+            at this link_ in '1.1.11. Logistic-reggresion' Section
 
-        .. _Linear_Regression: scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+        .. _link: scikit-learn.org/stable/modules/linear_model.html
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
