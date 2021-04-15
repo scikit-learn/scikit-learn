@@ -1133,7 +1133,7 @@ class LogisticRegression(LinearClassifierMixin,
             features with approximately the same scale. You can
             preprocess the data with a scaler from sklearn.preprocessing.
 
-        .. seealso:: More information about Logistic_Regression_
+        .. seealso:: More information about Logistic Regression
             and Table summaring penalties supported by each solver
             at this link_ in '1.1.11. Logistic-reggresion' Section
 
