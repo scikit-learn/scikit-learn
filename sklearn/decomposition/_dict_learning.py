@@ -420,8 +420,8 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
         if positive:
             np.clip(dictionary[k], 0, None, out=dictionary[k])
 
-        # Projection on the constraint set ||V_k|| == 1
-        dictionary[k] /= linalg.norm(dictionary[k])
+        # Projection on the constraint set ||V_k|| <= 1
+        dictionary[k] /= max(linalg.norm(dictionary[k]), 1)
 
     if verbose and n_unused > 0:
         print(f"{n_unused} unused atoms resampled.")
