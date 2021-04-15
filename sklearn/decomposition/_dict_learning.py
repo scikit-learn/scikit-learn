@@ -1946,7 +1946,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             n_steps = self.max_iter * n_steps_per_epoch
 
             # allow max_iter = 0
-            i = 0
+            i = -1
 
             for i, batch in zip(range(n_steps), batches):
 
