@@ -267,7 +267,7 @@ Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
 function :math:`\phi(.)` and center the data in this new space. However,
 kernels are usually used because they allows some algebra computations that
 avoid computing explicitly this mapping using :math:`\phi(.)`. Indeed, one
-can implicitly center as shown in Appendix B in [Scholkopf1998]:
+can implicitly center as shown in Appendix B in [Scholkopf1998]_:
 
 .. math::
   \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}} \ ,
