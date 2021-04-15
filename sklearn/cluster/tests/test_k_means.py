@@ -9,9 +9,7 @@ from threadpoolctl import threadpool_limits
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils.fixes import _astype_copy_false
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -24,12 +22,12 @@ from sklearn.cluster import KMeans, k_means, kmeans_plusplus
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._kmeans import _labels_inertia
 from sklearn.cluster._kmeans import _mini_batch_step
-from sklearn.cluster._k_means_fast import _relocate_empty_clusters_dense
-from sklearn.cluster._k_means_fast import _relocate_empty_clusters_sparse
-from sklearn.cluster._k_means_fast import _euclidean_dense_dense_wrapper
-from sklearn.cluster._k_means_fast import _euclidean_sparse_dense_wrapper
-from sklearn.cluster._k_means_fast import _inertia_dense
-from sklearn.cluster._k_means_fast import _inertia_sparse
+from sklearn.cluster._k_means_common import _relocate_empty_clusters_dense
+from sklearn.cluster._k_means_common import _relocate_empty_clusters_sparse
+from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
+from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
+from sklearn.cluster._k_means_common import _inertia_dense
+from sklearn.cluster._k_means_common import _inertia_sparse
 from sklearn.datasets import make_blobs
 from io import StringIO
 
@@ -176,68 +174,58 @@ def test_kmeans_convergence(algorithm):
 def test_minibatch_update_consistency():
     # Check that dense and sparse minibatch update give the same results
     rng = np.random.RandomState(42)
-    old_centers = centers + rng.normal(size=centers.shape)
 
-    new_centers = old_centers.copy()
-    new_centers_csr = old_centers.copy()
+    centers_old = centers + rng.normal(size=centers.shape)
+    centers_old_csr = centers_old.copy()
 
-    weight_sums = np.zeros(new_centers.shape[0], dtype=np.double)
-    weight_sums_csr = np.zeros(new_centers.shape[0], dtype=np.double)
+    centers_new = np.zeros_like(centers_old)
+    centers_new_csr = np.zeros_like(centers_old_csr)
+
+    weight_sums = np.zeros(centers_old.shape[0], dtype=X.dtype)
+    weight_sums_csr = np.zeros(centers_old.shape[0], dtype=X.dtype)
 
     x_squared_norms = (X ** 2).sum(axis=1)
     x_squared_norms_csr = row_norms(X_csr, squared=True)
 
-    buffer = np.zeros(centers.shape[1], dtype=np.double)
-    buffer_csr = np.zeros(centers.shape[1], dtype=np.double)
+    sample_weight = np.ones(X.shape[0], dtype=X.dtype)
 
     # extract a small minibatch
     X_mb = X[:10]
     X_mb_csr = X_csr[:10]
     x_mb_squared_norms = x_squared_norms[:10]
     x_mb_squared_norms_csr = x_squared_norms_csr[:10]
-
-    sample_weight_mb = np.ones(X_mb.shape[0], dtype=np.double)
+    sample_weight_mb = sample_weight[:10]
 
     # step 1: compute the dense minibatch update
-    old_inertia, incremental_diff = _mini_batch_step(
-        X_mb, sample_weight_mb, x_mb_squared_norms, new_centers, weight_sums,
-        buffer, 1, None, random_reassign=False)
+    old_inertia = _mini_batch_step(
+        X_mb, x_mb_squared_norms, sample_weight_mb, centers_old, centers_new,
+        weight_sums, np.random.RandomState(0), random_reassign=False)
     assert old_inertia > 0.0
 
     # compute the new inertia on the same batch to check that it decreased
     labels, new_inertia = _labels_inertia(
-        X_mb, sample_weight_mb, x_mb_squared_norms, new_centers)
+        X_mb, sample_weight_mb, x_mb_squared_norms, centers_new)
     assert new_inertia > 0.0
     assert new_inertia < old_inertia
 
-    # check that the incremental difference computation is matching the
-    # final observed value
-    effective_diff = np.sum((new_centers - old_centers) ** 2)
-    assert_almost_equal(incremental_diff, effective_diff)
-
     # step 2: compute the sparse minibatch update
-    old_inertia_csr, incremental_diff_csr = _mini_batch_step(
-        X_mb_csr, sample_weight_mb, x_mb_squared_norms_csr, new_centers_csr,
-        weight_sums_csr, buffer_csr, 1, None, random_reassign=False)
+    old_inertia_csr = _mini_batch_step(
+        X_mb_csr, x_mb_squared_norms_csr, sample_weight_mb, centers_old_csr,
+        centers_new_csr, weight_sums_csr, np.random.RandomState(0),
+        random_reassign=False)
     assert old_inertia_csr > 0.0
 
     # compute the new inertia on the same batch to check that it decreased
     labels_csr, new_inertia_csr = _labels_inertia(
-        X_mb_csr, sample_weight_mb, x_mb_squared_norms_csr, new_centers_csr)
+        X_mb_csr, sample_weight_mb, x_mb_squared_norms_csr, centers_new_csr)
     assert new_inertia_csr > 0.0
     assert new_inertia_csr < old_inertia_csr
 
-    # check that the incremental difference computation is matching the
-    # final observed value
-    effective_diff = np.sum((new_centers_csr - old_centers) ** 2)
-    assert_almost_equal(incremental_diff_csr, effective_diff)
-
     # step 3: check that sparse and dense updates lead to the same results
     assert_array_equal(labels, labels_csr)
-    assert_array_almost_equal(new_centers, new_centers_csr)
-    assert_almost_equal(incremental_diff, incremental_diff_csr)
-    assert_almost_equal(old_inertia, old_inertia_csr)
-    assert_almost_equal(new_inertia, new_inertia_csr)
+    assert_allclose(centers_new, centers_new_csr)
+    assert_allclose(old_inertia, old_inertia_csr)
+    assert_allclose(new_inertia, new_inertia_csr)
 
 
 def _check_fitted_model(km):
@@ -250,7 +238,7 @@ def _check_fitted_model(km):
     assert np.unique(labels).shape[0] == n_clusters
 
     # check that the labels assignment are perfect (up to a permutation)
-    assert v_measure_score(true_labels, labels) == 1.0
+    assert_allclose(v_measure_score(true_labels, labels), 1.0)
     assert km.inertia_ > 0.0
 
 
@@ -412,66 +400,54 @@ def test_minibatch_sensible_reassign():
     assert km.cluster_centers_.any(axis=1).sum() > 10
 
 
-def test_minibatch_reassign():
-    # Give a perfect initialization, but a large reassignment_ratio,
-    # as a result all the centers should be reassigned and the model
-    # should no longer be good
-    sample_weight = np.ones(X.shape[0], dtype=X.dtype)
-    for this_X in (X, X_csr):
-        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
-                                     random_state=42)
-        mb_k_means.fit(this_X)
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+def test_minibatch_reassign(data):
+    # Check the reassignment part of the minibatch step with very high or very
+    # low reassignment ratio.
+    perfect_centers = np.empty((n_clusters, n_features))
+    for i in range(n_clusters):
+        perfect_centers[i] = X[true_labels == i].mean(axis=0)
 
-        score_before = mb_k_means.score(this_X)
-        try:
-            old_stdout = sys.stdout
-            sys.stdout = StringIO()
-            # Turn on verbosity to smoke test the display code
-            _mini_batch_step(this_X, sample_weight, (X ** 2).sum(axis=1),
-                             mb_k_means.cluster_centers_,
-                             mb_k_means._counts,
-                             np.zeros(X.shape[1], np.double),
-                             False, distances=np.zeros(X.shape[0]),
-                             random_reassign=True, random_state=42,
-                             reassignment_ratio=1, verbose=True)
-        finally:
-            sys.stdout = old_stdout
-        assert score_before > mb_k_means.score(this_X)
+    x_squared_norms = row_norms(data, squared=True)
+    sample_weight = np.ones(n_samples)
+    centers_new = np.empty_like(perfect_centers)
+
+    # Give a perfect initialization, but a large reassignment_ratio, as a
+    # result many centers should be reassigned and the model should no longer
+    # be good
+    score_before = - _labels_inertia(data, sample_weight, x_squared_norms,
+                                     perfect_centers, 1)[1]
+
+    _mini_batch_step(data, x_squared_norms, sample_weight, perfect_centers,
+                     centers_new, np.zeros(n_clusters),
+                     np.random.RandomState(0), random_reassign=True,
+                     reassignment_ratio=1)
+
+    score_after = - _labels_inertia(data, sample_weight, x_squared_norms,
+                                    centers_new, 1)[1]
+
+    assert score_before > score_after
 
     # Give a perfect initialization, with a small reassignment_ratio,
-    # no center should be reassigned
-    for this_X in (X, X_csr):
-        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
-                                     init=centers.copy(),
-                                     random_state=42, n_init=1)
-        mb_k_means.fit(this_X)
-        clusters_before = mb_k_means.cluster_centers_
-        # Turn on verbosity to smoke test the display code
-        _mini_batch_step(this_X, sample_weight, (X ** 2).sum(axis=1),
-                         mb_k_means.cluster_centers_,
-                         mb_k_means._counts,
-                         np.zeros(X.shape[1], np.double),
-                         False, distances=np.zeros(X.shape[0]),
-                         random_reassign=True, random_state=42,
-                         reassignment_ratio=1e-15)
-        assert_array_almost_equal(clusters_before, mb_k_means.cluster_centers_)
+    # no center should be reassigned.
+    _mini_batch_step(data, x_squared_norms, sample_weight, perfect_centers,
+                     centers_new, np.zeros(n_clusters),
+                     np.random.RandomState(0), random_reassign=True,
+                     reassignment_ratio=1e-15)
+
+    assert_allclose(centers_new, perfect_centers)
 
 
 def test_minibatch_with_many_reassignments():
     # Test for the case that the number of clusters to reassign is bigger
-    # than the batch_size
-    n_samples = 550
-    rnd = np.random.RandomState(42)
-    X = rnd.uniform(size=(n_samples, 10))
-    # Check that the fit works if n_clusters is bigger than the batch_size.
-    # Run the test with 550 clusters and 550 samples, because it turned out
-    # that this values ensure that the number of clusters to reassign
-    # is always bigger than the batch_size
-    n_clusters = 550
-    MiniBatchKMeans(n_clusters=n_clusters,
-                    batch_size=100,
+    # than the batch_size. Run the test with 100 clusters and a batch_size of
+    # 10 because it turned out that these values ensure that the number of
+    # clusters to reassign is always bigger than the batch_size.
+    MiniBatchKMeans(n_clusters=100,
+                    batch_size=10,
                     init_size=n_samples,
-                    random_state=42).fit(X)
+                    random_state=42,
+                    verbose=True).fit(X)
 
 
 def test_minibatch_kmeans_init_size():
@@ -489,6 +465,46 @@ def test_minibatch_kmeans_init_size():
     km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1,
                          init_size=n_samples + 1).fit(X)
     assert km._init_size == n_samples
+
+
+@pytest.mark.parametrize("tol, max_no_improvement", [(1e-4, None), (0, 10)])
+def test_minibatch_declared_convergence(capsys, tol, max_no_improvement):
+    # Check convergence detection based on ewa batch inertia or on
+    # small center change.
+    X, _, centers = make_blobs(centers=3, random_state=0, return_centers=True)
+
+    km = MiniBatchKMeans(n_clusters=3, init=centers, batch_size=20, tol=tol,
+                         random_state=0, max_iter=10, n_init=1, verbose=1,
+                         max_no_improvement=max_no_improvement)
+
+    km.fit(X)
+    assert 1 < km.n_iter_ < 10
+
+    captured = capsys.readouterr()
+    if max_no_improvement is None:
+        assert "Converged (small centers change)" in captured.out
+    if tol == 0:
+        assert "Converged (lack of improvement in inertia)" in captured.out
+
+
+def test_minibatch_iter_steps():
+    # Check consistency of n_iter_ and n_steps_ attributes.
+    batch_size = 30
+    n_samples = X.shape[0]
+    km = MiniBatchKMeans(n_clusters=3, batch_size=batch_size,
+                         random_state=0).fit(X)
+
+    # n_iter_ is the number of started epochs
+    assert km.n_iter_ == np.ceil((km.n_steps_ * batch_size) / n_samples)
+    assert isinstance(km.n_iter_, int)
+
+    # without stopping condition, max_iter should be reached
+    km = MiniBatchKMeans(n_clusters=3, batch_size=batch_size, random_state=0,
+                         tol=0, max_no_improvement=None, max_iter=10).fit(X)
+
+    assert km.n_iter_ == 10
+    assert km.n_steps_ == (10 * n_samples) // batch_size
+    assert isinstance(km.n_steps_, int)
 
 
 def test_kmeans_copyx():
@@ -582,6 +598,19 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
     # predict centroid labels
     pred = km.predict(km.cluster_centers_)
     assert_allclose(v_measure_score(pred, np.arange(10)), 1)
+
+
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_dense_sparse(Estimator):
+    # Check that the results are the same for dense and sparse input.
+    sample_weight = np.random.RandomState(0).random_sample((n_samples,))
+    km_dense = Estimator(n_clusters=n_clusters, random_state=0, n_init=1)
+    km_dense.fit(X, sample_weight=sample_weight)
+    km_sparse = Estimator(n_clusters=n_clusters, random_state=0, n_init=1)
+    km_sparse.fit(X_csr, sample_weight=sample_weight)
+
+    assert_array_equal(km_dense.labels_, km_sparse.labels_)
+    assert_allclose(km_dense.cluster_centers_, km_sparse.cluster_centers_)
 
 
 @pytest.mark.parametrize("init", ["random", "k-means++", centers],
@@ -801,17 +830,19 @@ def test_unit_weights_vs_no_weights(Estimator, data):
     assert_allclose(km_none.cluster_centers_, km_ones.cluster_centers_)
 
 
-def test_scaled_weights():
-    # scaling all sample weights by a common factor
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_scaled_weights(Estimator, data):
+    # Check that scaling all sample weights by a common factor
     # shouldn't change the result
-    sample_weight = np.ones(n_samples)
-    for estimator in [KMeans(n_clusters=n_clusters, random_state=42),
-                      MiniBatchKMeans(n_clusters=n_clusters, random_state=42)]:
-        est_1 = clone(estimator).fit(X)
-        est_2 = clone(estimator).fit(X, sample_weight=0.5*sample_weight)
-        assert_almost_equal(v_measure_score(est_1.labels_, est_2.labels_), 1.0)
-        assert_almost_equal(_sort_centers(est_1.cluster_centers_),
-                            _sort_centers(est_2.cluster_centers_))
+    sample_weight = np.random.RandomState(0).uniform(n_samples)
+
+    km = Estimator(n_clusters=n_clusters, random_state=42, n_init=1)
+    km_orig = clone(km).fit(data, sample_weight=sample_weight)
+    km_scaled = clone(km).fit(data, sample_weight=0.5 * sample_weight)
+
+    assert_array_equal(km_orig.labels_, km_scaled.labels_)
+    assert_allclose(km_orig.cluster_centers_, km_scaled.cluster_centers_)
 
 
 def test_kmeans_elkan_iter_attribute():
@@ -837,18 +868,19 @@ def test_kmeans_empty_cluster_relocated(array_constr):
     assert_allclose(km.cluster_centers_, [[-1], [1]])
 
 
-def test_result_of_kmeans_equal_in_diff_n_threads():
-    # Check that KMeans gives the same results in parallel mode than in
-    # sequential mode.
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_result_equal_in_diff_n_threads(Estimator):
+    # Check that KMeans/MiniBatchKMeans give the same results in parallel mode
+    # than in sequential mode.
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(50, 10))
 
     with threadpool_limits(limits=1, user_api="openmp"):
-        result_1 = KMeans(
-            n_clusters=3, random_state=0).fit(X).labels_
+        result_1 = Estimator(
+            n_clusters=n_clusters, random_state=0).fit(X).labels_
     with threadpool_limits(limits=2, user_api="openmp"):
-        result_2 = KMeans(
-            n_clusters=3, random_state=0).fit(X).labels_
+        result_2 = Estimator(
+            n_clusters=n_clusters, random_state=0).fit(X).labels_
     assert_array_equal(result_1, result_2)
 
 
@@ -954,6 +986,7 @@ def test_euclidean_distance(dtype, squared):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_inertia(dtype):
+    # Check that the _inertia_(dense/sparse) helpers produce correct results.
     rng = np.random.RandomState(0)
     X_sparse = sp.random(100, 10, density=0.5, format="csr", random_state=rng,
                          dtype=dtype)
@@ -965,8 +998,10 @@ def test_inertia(dtype):
     distances = ((X_dense - centers[labels])**2).sum(axis=1)
     expected = np.sum(distances * sample_weight)
 
-    inertia_dense = _inertia_dense(X_dense, sample_weight, centers, labels)
-    inertia_sparse = _inertia_sparse(X_sparse, sample_weight, centers, labels)
+    inertia_dense = _inertia_dense(
+        X_dense, sample_weight, centers, labels, n_threads=1)
+    inertia_sparse = _inertia_sparse(
+        X_sparse, sample_weight, centers, labels, n_threads=1)
 
     assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
     assert_allclose(inertia_dense, expected, rtol=1e-6)

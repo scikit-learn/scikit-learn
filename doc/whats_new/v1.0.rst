@@ -95,11 +95,29 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
+- |Efficiency| :class:`cluster.MiniBatchKMeans` is now faster in multicore
+  settings. :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.MiniBatchKMeans` where the sample
+  weights were partially ignored when the input is sparse. :pr:`17622` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Improved convergence detection based on center change in
+  :class:`cluster.MiniBatchKMeans` which was almost never achievable.
+  :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  
+- |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
-- |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
-  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+- |API| the default value for the `batch_size` parameter of
+  :class:`MiniBatchKMeans` was changed from 100 to 1024 due to efficiency
+  reasons. The `n_iter_` attribute of :class:`MiniBatchKMeans` now reports the
+  number of started epochs and the `n_steps_` attribute reports the number of
+  mini batches processed. :pr:`17622`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.compose`
 ......................
