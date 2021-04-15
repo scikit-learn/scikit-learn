@@ -245,6 +245,8 @@ in a feature space defined by a function :math:`\phi(\dot)`, a
 inner products in the feature space defined by :math:`\phi(\dot)` followed by
 removal of the mean in that space.
 
+**Mathematical formulation**
+
 We can have a look at the mathematical formulation now that we have the
 intuition. Let :math:`K` our kernel of shape `(n_samples, n_samples)` computed
 from :math:`X`, a data matrix of shape `(n_samples, n_features)`. :math:`K` is
