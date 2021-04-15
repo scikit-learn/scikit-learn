@@ -1951,7 +1951,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
 
 class KernelCenterer(TransformerMixin, BaseEstimator):
-    r"""Center a kernel matrix.
+    r"""Center an arbitrary kernel matrix :math:`K`.
 
     Let define a kernel :math:`K` such that:
 
@@ -1969,9 +1969,9 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
     where :math:`\tilde{\phi}(X)` are the mapped centered data in the Hilbert
     space.
 
-    `KernelCenterer` centers the data without explicitely computing the mapping
-    :math:`\phi(.)`. Working with sometimes necessary when dealing with
-    eigendecomposition for instance.
+    `KernelCenterer` centers the data without explicitly computing the mapping
+    :math:`\phi(\dot)`. Working with centered kernels is sometime expected
+    when dealing with algebra computation such as eigendecomposition.
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
