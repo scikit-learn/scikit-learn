@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+env
 
 # called when COVERAGE=="true" and DISTRIB=="conda"
 export PATH=$HOME/miniconda3/bin:$PATH
