@@ -1114,8 +1114,8 @@ class LogisticRegression(LinearClassifierMixin,
         Algorithm to use in the optimization problem.
 
         .. note:: Tips
-            - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-              'saga' are faster for large ones.
+            - For small datasets, 'liblinear' is a good choice,
+                whereas 'sag' and 'saga' are faster for large ones.
             - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
               handle multinomial loss; 'liblinear' is limited to one-versus-rest
               schemes.
@@ -1134,7 +1134,7 @@ class LogisticRegression(LinearClassifierMixin,
 
         .. seealso:: More information about Linear Regression and Table summaring
             penalties supported by each solver :
-            https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+            scikit-learn.org/stable/modules/linear_model.html#logistic-regression
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -1606,17 +1606,19 @@ class LogisticRegressionCV(LogisticRegression,
             - 'saga'        -   ['elasticnet', 'l1', 'l2']
 
         .. note::
-            - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-              'saga' are faster for large ones.
-            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-              handle multinomial loss; 'liblinear' is limited to one-versus-rest
-              schemes.
-            - 'liblinear' might be slower in LogisticRegressionCV because it does
-              not handle warm-starting.
+            - For small datasets, 'liblinear' is a good choice,
+                whereas 'sag' and 'saga' are faster for large ones.
+            - For multiclass problems,
+                only 'newton-cg', 'sag', 'saga' and 'lbfgs' handle
+                multinomial loss;
+                'liblinear' is limited to one-versus-rest schemes.
+            - 'liblinear' might be slower in LogisticRegressionCV
+                because it does not handle warm-starting.
 
         .. note:: 'sag' and 'saga' fast convergence is only guaranteed on
-        features with approximately the same scale. You can preprocess the data
-        with a scaler from sklearn.preprocessing.
+            features with approximately the same scale.
+            You can preprocess the data with a scaler
+             from sklearn.preprocessing.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
