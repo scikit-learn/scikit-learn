@@ -1956,22 +1956,23 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
     Let define a kernel :math:`K` such that:
 
     .. math::
-        K(X, Y) = \phi(X) . \phi(Y)^{T} \ ,
+        K(X, Y) = \phi(X) . \phi(Y)^{T}
 
-    where :math:`\phi(X)` is a function mapping :math:`X` to a Hilbert space
-    and :math:`K` is of shape `(n_samples, n_samples)`.
+    :math:`\phi(X)` is a function mapping of rows of :math:`X` to a
+    Hilbert space and :math:`K` is of shape `(n_samples, n_samples)`.
 
     This class allows to compute :math:`\tilde{K}(X, Y)` such that:
 
     .. math::
-        \tilde{K(X, Y)} = \tilde{\phi}(X) . \tilde{\phi}(Y)^{T} \ ,
+        \tilde{K(X, Y)} = \tilde{\phi}(X) . \tilde{\phi}(Y)^{T}
 
-    where :math:`\tilde{\phi}(X)` are the mapped centered data in the Hilbert
+    :math:`\tilde{\phi}(X)` are the mapped centered data in the Hilbert
     space.
 
-    `KernelCenterer` centers the data without explicitly computing the mapping
-    :math:`\phi(\cdot)`. Working with centered kernels is sometime expected
-    when dealing with algebra computation such as eigendecomposition.
+    `KernelCenterer` centers the features without explicitly computing the
+    mapping :math:`\phi(\cdot)`. Working with centered kernels is sometime
+    expected when dealing with algebra computation such as eigendecomposition
+    for :class:`~sklearn.decomposition.KernelPCA` for instance.
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
