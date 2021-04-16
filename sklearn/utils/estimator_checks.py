@@ -2,7 +2,6 @@ import types
 import warnings
 import pickle
 import re
-import pytest
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
@@ -3117,8 +3116,8 @@ def check_requires_y_none(name, estimator_orig):
             warnings.warn(warning_msg, FutureWarning)
 
 
-# TODO: Remove filterwarning in 1.2
-@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
+# TODO: Remove ignore_warnings in 1.2
+@ignore_warnings(category=FutureWarning)
 def check_n_features_in_after_fitting(name, estimator_orig):
     # Make sure that n_features_in are checked after fitting
     tags = _safe_tags(estimator_orig)
