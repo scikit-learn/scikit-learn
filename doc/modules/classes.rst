@@ -557,7 +557,6 @@ From text
    :toctree: generated/
    :template: function.rst
 
-   feature_selection.abs_r_regression
    feature_selection.chi2
    feature_selection.f_classif
    feature_selection.f_regression

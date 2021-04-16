@@ -106,11 +106,8 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
-- |Feature| :func:`feature_selection.abs_r_regression` is a new criterion
-  which can be used with :class:`feature_selection.SelectKBest` to select
-  variables. It is the absolution values of
-  :func:`feature_selection.r_regression` which computes Pearson's R correlation
-  coefficients between the features and the target.
+- |Feature| :func:`feature_selection.r_regression` computes Pearson's R
+  correlation coefficients between the features and the target.
   :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
   and `Julien Jerphanion <jjerphan>`.
 

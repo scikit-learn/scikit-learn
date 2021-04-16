@@ -19,7 +19,6 @@ from sklearn.utils import safe_mask
 
 from sklearn.datasets import make_classification, make_regression
 from sklearn.feature_selection import (
-    abs_r_regression,
     chi2,
     f_classif,
     f_oneway,
@@ -105,16 +104,6 @@ def test_r_regression(center):
     assert_array_almost_equal(np_corr_coeffs, corr_coeffs, decimal=3)
 
 
-@pytest.mark.parametrize("array_like", ["array", "sparse_csr", "sparse_csc"])
-def test_abs_r_regression(array_like):
-    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
-                           shuffle=False, random_state=0)
-
-    X = _convert_container(X, array_like)
-
-    assert_allclose(abs_r_regression(X, y), np.abs(r_regression(X, y)))
-
-
 def test_f_regression():
     # Test whether the F test yields meaningful results
     # on a simple simulated regression problem
@@ -139,19 +128,6 @@ def test_f_regression():
     F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
     assert_allclose(F_sparse, F)
     assert_allclose(pv_sparse, pv)
-
-
-def test_f_regression_r_regression_consistency():
-    # Test the equivalence of f_regression and abs_r_regression for variable
-    # selection using the returned values ordering
-    X, y = make_regression(n_samples=200, n_features=1000,
-                           shuffle=False, random_state=0)
-
-    Fs, _ = f_regression(X, y)
-
-    assert_array_equal(Fs.argsort(), abs_r_regression(X, y).argsort())
-
-    assert_allclose(abs_r_regression(X, y), np.abs(r_regression(X, y)))
 
 
 def test_f_regression_input_dtype():
@@ -397,25 +373,6 @@ def test_select_kbest_regression():
                            shuffle=False, random_state=0, noise=10)
 
     univariate_filter = SelectKBest(f_regression, k=5)
-    X_r = univariate_filter.fit(X, y).transform(X)
-    assert_best_scores_kept(univariate_filter)
-    X_r2 = GenericUnivariateSelect(
-        f_regression, mode='k_best', param=5).fit(X, y).transform(X)
-    assert_array_equal(X_r, X_r2)
-    support = univariate_filter.get_support()
-    gtruth = np.zeros(20)
-    gtruth[:5] = 1
-    assert_array_equal(support, gtruth)
-
-
-def test_select_kbest_abs_r_regression():
-    # Test whether the relative univariate feature selection
-    # gets the correct items in a simple regression problem
-    # with the k best heuristic
-    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
-                           shuffle=False, random_state=0, noise=10)
-
-    univariate_filter = SelectKBest(abs_r_regression, k=5)
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_best_scores_kept(univariate_filter)
     X_r2 = GenericUnivariateSelect(

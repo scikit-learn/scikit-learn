@@ -9,7 +9,6 @@ from ._univariate_selection import f_classif
 from ._univariate_selection import f_oneway
 from ._univariate_selection import f_regression
 from ._univariate_selection import r_regression
-from ._univariate_selection import abs_r_regression
 from ._univariate_selection import SelectPercentile
 from ._univariate_selection import SelectKBest
 from ._univariate_selection import SelectFpr
@@ -42,7 +41,6 @@ __all__ = ['GenericUnivariateSelect',
            'SelectFromModel',
            'SelectPercentile',
            'VarianceThreshold',
-           'abs_r_regression',
            'chi2',
            'f_classif',
            'f_oneway',
