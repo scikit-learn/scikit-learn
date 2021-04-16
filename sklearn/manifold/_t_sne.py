@@ -527,9 +527,8 @@ class TSNE(BaseEstimator):
         Note that many other t-SNE implementations (bhtsne, FIt-SNE, openTSNE,
         etc.) use a definition of learning_rate that is 4 times smaller than
         ours. So our learning_rate=200 corresponds to learning_rate=800 in
-        those other implementations.
-        The 'auto' option sets the learning_rate to
-        `max(N / early_exaggeration / 4, 50)` where N is the sample size, 
+        those other implementations. The 'auto' option sets the learning_rate
+        to `max(N / early_exaggeration / 4, 50)` where N is the sample size,
         following [4] and [5]. This will become default in 1.2.
 
     n_iter : int, default=1000
