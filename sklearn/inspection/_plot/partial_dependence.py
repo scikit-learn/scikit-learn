@@ -208,16 +208,23 @@ def plot_partial_dependence(
         in the dataset or one line per sample or both.
 
         - ``kind='average'`` results in the traditional PD plot;
-        - ``kind='individual'`` results in the ICE plot.
+        - ``kind='individual'`` results in the ICE plot;
+        - ``kind='both'`` results in plotting both the ICE and PD on the same
+          plot.
 
-        A list of such strings can be provided. The length of the list should
-        be the same as the number of interaction requested in `features`.
-        This option allows to silent warning when ICE plots are requested for
-        both 1- and 2-way PD.
+        A list of such strings can be provided to specify `kind` on a per-plot
+        basis. The length of the list should be the same as the number of
+        interaction requested in `features`.
 
-       Note that the fast ``method='recursion'`` option is only available for
-       ``kind='average'``. Plotting individual dependencies requires using the
-       slower ``method='brute'`` option.
+        .. note::
+           ICE ('individual' or 'both') is impossible to render for 2-ways
+           interactions plot. As a result, a warning will be raised and a
+           regular 'average' plot will be made instead.
+
+        .. note::
+           The fast ``method='recursion'`` option is only available for
+           ``kind='average'``. Plotting individual dependencies requires using
+           the slower ``method='brute'`` option.
 
         .. versionadded:: 0.24
         .. versionadded:: 1.0
@@ -327,33 +334,24 @@ def plot_partial_dependence(
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
         # store the information if 2-way PD was requested with ICE to later
-        # warn or raise an error depending of the original value of `kind`
+        # raise a warning
         ice_for_two_way_pd.append(kind_plot != 'average' and np.size(fxs) > 1)
 
         tmp_features.append(fxs)
 
-    if (isinstance(kind, str) and any(ice_for_two_way_pd) and
-            not all(ice_for_two_way_pd)):
-        # only warn when 1- and 2-way PD were requested and `kind` was a string
+    if any(ice_for_two_way_pd):
+        # only warn when 1- and 2-way PD were requested
         warnings.warn(
-            "You requested to plot individual response even with a 2-way "
-            "partial dependence. If you set kind='both' or kind='individual' "
-            "for both 1- and 2-way partial dependence, you can pass a list of "
-            "such string and specified 'average' for the index corresponding "
-            "to the 2-way partial dependence plot. It will silence this "
-            "warning. Only average response will be plotted for the 2-way "
-            "partial dependence.", UserWarning
+            "You requested an ICE plot with 2-way feature interactions. "
+            "This is impossible to render. We will instead make a regular PD "
+            "plot ('average'). If you want finer control on how to specify "
+            "the kind of plot to render (ICE vs PD), you may pass a list of "
+            "strings to the kind parameter.", UserWarning
         )
         kind_ = [
             "average" if forcing_average else kind_plot
             for forcing_average, kind_plot in zip(ice_for_two_way_pd, kind_)
         ]
-    elif any(ice_for_two_way_pd):
-        raise ValueError(
-            f"It is not possible to display individual effects for more "
-            f"than one feature at a time. Got: features={features}."
-        )
-
     features = tmp_features
 
     # Early exit if the axes does not have the correct number of axes
@@ -499,16 +497,23 @@ class PartialDependenceDisplay:
         in the dataset or one line per sample or both.
 
         - ``kind='average'`` results in the traditional PD plot;
-        - ``kind='individual'`` results in the ICE plot.
+        - ``kind='individual'`` results in the ICE plot;
+        - ``kind='both'`` results in plotting both the ICE and PD on the same
+          plot.
 
-        A list of such strings can be provided. The length of the list should
-        be the same as the number of interaction requested in `features`.
-        This option allows to silent warning when ICE plots are requested for
-        both 1- and 2-way PD.
+        A list of such strings can be provided to specify `kind` on a per-plot
+        basis. The length of the list should be the same as the number of
+        interaction requested in `features`.
 
-       Note that the fast ``method='recursion'`` option is only available for
-       ``kind='average'``. Plotting individual dependencies requires using the
-       slower ``method='brute'`` option.
+        .. note::
+           ICE ('individual' or 'both') is impossible to render for 2-ways
+           interactions plot. As a result, a warning will be raised and a
+           regular 'average' plot will be made instead.
+
+        .. note::
+           The fast ``method='recursion'`` option is only available for
+           ``kind='average'``. Plotting individual dependencies requires using
+           the slower ``method='brute'`` option.
 
         .. versionadded:: 0.24
         .. versionadded:: 1.0
