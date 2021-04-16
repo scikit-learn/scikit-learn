@@ -264,7 +264,7 @@ def test_preserve_trustworthiness_approximately(method, init):
 
 
 # TODO: Remove ignore_warnings in 1.2 when default init changes to 'pca'
-@ignore_warnings(category=FutureWarning)
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_optimization_minimizes_kl_divergence():
     """t-SNE should give a lower KL divergence with more iterations."""
     random_state = check_random_state(0)
