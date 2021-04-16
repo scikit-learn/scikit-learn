@@ -60,7 +60,7 @@ def f_oneway(*args):
     f_statistic : float
         The computed F-value of the test.
     p_value : float
-        The associated p-value from the F-distribution.
+        The associated P-value from the F-distribution.
 
     Notes
     -----
@@ -135,7 +135,7 @@ def f_classif(X, y):
 
     Returns
     -------
-    f_statistic : ndarray of shape of (n_features,)
+    f_statistic : ndarray of shape (n_features,)
         F-statistic for each feature.
 
     p_values : ndarray of shape (n_features,)
@@ -196,10 +196,10 @@ def chi2(X, y):
     Returns
     -------
     chi2 : ndarray of shape (n_features,)
-        Chi2 statistics of each feature.
+        Chi2 statistics for each feature.
 
     p_values : ndarray of shape (n_features,)
-        P-values of each feature.
+        P-values for each feature.
 
     Notes
     -----
