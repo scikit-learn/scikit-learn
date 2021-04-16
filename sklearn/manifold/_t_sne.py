@@ -529,11 +529,8 @@ class TSNE(BaseEstimator):
         ours. So our learning_rate=200 corresponds to learning_rate=800 in
         those other implementations.
         The 'auto' option sets the learning_rate to
-        `max(N / early_exaggeration / 4, 50)`. This will become default
-        in 1.2.
-        where N is the sample size, following Belkina et al. 2019 and
-        Kobak et al. 2019, Nature Communications (or to 50.0, if
-        N / early_exaggeration / 4 < 50). This will become default in 1.2.
+        `max(N / early_exaggeration / 4, 50)` where N is the sample size, 
+        following [4] and [5]. This will become default in 1.2.
 
     n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
@@ -659,6 +656,14 @@ class TSNE(BaseEstimator):
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
         https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
+
+    [4] Belkina, A. C., Ciccolella, C. O., Anno, R., Halpert, R., Spidlen, J.,
+        & Snyder-Cappione, J. E. (2019). Automated optimized parameters for
+        T-distributed stochastic neighbor embedding improve visualization
+        and analysis of large datasets. Nature Communications, 10(1), 1-12.
+
+    [5] Kobak, D., & Berens, P. (2019). The art of using t-SNE for single-cell
+        transcriptomics. Nature Communications, 10(1), 1-14.
     """
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
