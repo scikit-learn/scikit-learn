@@ -279,7 +279,8 @@ def test_optimization_minimizes_kl_divergence():
     assert kl_divergences[2] <= kl_divergences[1]
 
 
-# TODO: Remove ignore_warnings in 1.2 when default init changes to 'pca'
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 @ignore_warnings(category=FutureWarning)
 def test_fit_csr_matrix(method):
