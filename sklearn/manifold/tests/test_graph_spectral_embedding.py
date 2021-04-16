@@ -23,7 +23,7 @@ def _er_nm(n, m, directed=False):
     return A
 def _test_output_dim_directed(self, method):
     n_components = 4
-    embed = method(n_components=n_components, concat=True)
+    embed = GraphSpectralEmbedding(n_components=n_components, concat=True, algorithm=method)
     n = 10
     M = 20
     A = _er_nm(n, M, directed=True) + 5
@@ -34,7 +34,7 @@ def _test_output_dim_directed(self, method):
 
 def _test_output_dim(self, method, sparse=False, *args, **kwargs):
     n_components = 4
-    embed = method(n_components=n_components)
+    embed = GraphSpectralEmbedding(n_components=n_components,algorithm=method)
     n = 10
     M = 20
     A = _er_nm(n, M) + 5
@@ -63,7 +63,15 @@ class TestAdjacencySpectralEmbed(unittest.TestCase):
     #     self.ase = AdjacencySpectralEmbed(n_components=2)
 
     def test_output_dim(self):
-        _test_output_dim(self, GraphSpectralEmbedding)
+        _test_output_dim(self, 'ASE')
 
     def test_output_dim_directed(self):
-        _test_output_dim_directed(self, GraphSpectralEmbedding)
+        _test_output_dim_directed(self, 'ASE')
+
+
+class TestLaplacianSpectralEmbed(unittest.TestCase):
+    def test_output_dim(self):
+        _test_output_dim(self, 'LSE')
+
+    def test_output_dim_directed(self):
+        _test_output_dim_directed(self, 'LSE')

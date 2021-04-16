@@ -1,76 +1,19 @@
+"""Graph Spectral Embedding."""
+
+# Author: Ali Saad-Eldin <ali.saadeldin11@gmail.com>
+
+# License: BSD 3 clause
+
 import warnings
 
 import numpy as np
 from scipy import sparse
 from scipy.sparse import diags, isspmatrix_csr
-from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator
+from ..utils import check_symmetric
 from ..utils.extmath import randomized_svd
-
-def _graph_connected_component(graph, node_id):
-    """Find the largest graph connected components that contains one
-    given node.
-
-    Parameters
-    ----------
-    graph : array-like of shape (n_samples, n_samples)
-        Adjacency matrix of the graph, non-zero weight means an edge
-        between the nodes.
-
-    node_id : int
-        The index of the query node of the graph.
-
-    Returns
-    -------
-    connected_components_matrix : array-like of shape (n_samples,)
-        An array of bool value indicating the indexes of the nodes
-        belonging to the largest connected components of the given query
-        node.
-    """
-    n_node = graph.shape[0]
-    if sparse.issparse(graph):
-        # speed up row-wise access to boolean connection mask
-        graph = graph.tocsr()
-    connected_nodes = np.zeros(n_node, dtype=bool)
-    nodes_to_explore = np.zeros(n_node, dtype=bool)
-    nodes_to_explore[node_id] = True
-    for _ in range(n_node):
-        last_num_component = connected_nodes.sum()
-        np.logical_or(connected_nodes, nodes_to_explore, out=connected_nodes)
-        if last_num_component >= connected_nodes.sum():
-            break
-        indices = np.where(nodes_to_explore)[0]
-        nodes_to_explore.fill(False)
-        for i in indices:
-            if sparse.issparse(graph):
-                neighbors = graph[i].toarray().ravel()
-            else:
-                neighbors = graph[i]
-            np.logical_or(nodes_to_explore, neighbors, out=nodes_to_explore)
-    return connected_nodes
-
-def _graph_is_connected(graph):
-    """ Return whether the graph is connected (True) or Not (False).
-
-    Parameters
-    ----------
-    graph : {array-like, sparse matrix} of shape (n_samples, n_samples)
-        Adjacency matrix of the graph, non-zero weight means an edge
-        between the nodes.
-
-    Returns
-    -------
-    is_connected : bool
-        True means the graph is fully connected and False means not.
-    """
-    if sparse.isspmatrix(graph):
-        # sparse graph, find all the connected components
-        n_connected_components, _ = connected_components(graph)
-        return n_connected_components == 1
-    else:
-        # dense graph, find all connected components start from node 0
-        return _graph_connected_component(graph, 0).sum() == graph.shape[0]
+from ..utils.graph import graph_is_connected
 
 def _augment_diagonal(graph, weight=1):
     r"""
@@ -106,14 +49,14 @@ def _augment_diagonal(graph, weight=1):
 
     return graph
 
-def _selectSVD(X, n_components=None, n_elbows=2, algorithm="randomized", n_iter=5):
+def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized", n_iter=5):
     r"""
     Dimensionality reduction using SVD.
     Performs linear dimensionality reduction by using either full singular
     value decomposition (SVD) or truncated SVD. Full SVD is performed using
     SciPy's wrapper for ARPACK, while truncated SVD is performed using either
     SciPy's wrapper for LAPACK or Sklearn's implementation of randomized SVD.
-    It also performs optimal dimensionality selection using Zhu & Godsie algorithm
+    It also performs optimal dimensionality selection using Zhu & Godsie svd_solver
     if number of target dimension is not specified.
     Parameters
     ----------
@@ -127,7 +70,7 @@ def _selectSVD(X, n_components=None, n_elbows=2, algorithm="randomized", n_iter=
     n_elbows : int, optional, default: 2
         If ``n_components`` is None, then compute the optimal embedding dimension using
         :func:`~graspologic.embed.select_dimension`. Otherwise, ignored.
-    algorithm : {'randomized' (default), 'full', 'truncated'}, optional
+    svd_solver : {'randomized' (default), 'full', 'truncated'}, optional
         SVD solver to use:
         - 'randomized'
             Computes randomized svd using
@@ -161,12 +104,12 @@ def _selectSVD(X, n_components=None, n_elbows=2, algorithm="randomized", n_iter=
         msg = "Input data has only one sample (node)"
         raise ValueError(msg)
 
-    # Deal with algorithms
-    if algorithm not in ["full", "truncated", "randomized"]:
-        msg = "algorithm must be one of {full, truncated, randomized}."
+    # Deal with svd_solvers
+    if svd_solver not in ["full", "truncated", "randomized"]:
+        msg = "svd_solver must be one of {full, truncated, randomized}."
         raise ValueError(msg)
 
-    if algorithm == "full" and isspmatrix_csr(X):
+    if svd_solver == "full" and isspmatrix_csr(X):
         msg = "'full' agorithm does not support scipy.sparse.csr_matrix inputs."
         raise TypeError(msg)
 
@@ -175,25 +118,25 @@ def _selectSVD(X, n_components=None, n_elbows=2, algorithm="randomized", n_iter=
         n_components = elbows[-1]
 
     # Check
-    if (algorithm == "full") & (n_components > min(X.shape)):
+    if (svd_solver == "full") & (n_components > min(X.shape)):
         msg = "n_components must be <= min(X.shape)."
         raise ValueError(msg)
-    elif algorithm == "full":
+    elif svd_solver == "full":
         U, D, V = scipy.linalg.svd(X)
         U = U[:, :n_components]
         D = D[:n_components]
         V = V[:n_components, :]
 
-    if (algorithm in ["truncated", "randomized"]) & (n_components >= min(X.shape)):
+    if (svd_solver in ["truncated", "randomized"]) & (n_components >= min(X.shape)):
         msg = "n_components must be strictly < min(X.shape)."
         raise ValueError(msg)
-    elif algorithm == "truncated":
+    elif svd_solver == "truncated":
         U, D, V = sparse.linalg.svds(X, k=n_components)
         idx = np.argsort(D)[::-1]  # sort in decreasing order
         D = D[idx]
         U = U[:, idx]
         V = V[idx, :]
-    elif algorithm == "randomized":
+    elif svd_solver == "randomized":
         U, D, V = randomized_svd(X, n_components, n_iter=n_iter)
 
     return U, D, V
@@ -315,6 +258,98 @@ def _select_dimension(
     else:
         return elbows, values
 
+def _to_laplacian(A, form="DAD", regularizer=None):
+    r"""
+    A function to convert graph adjacency matrix to graph Laplacian.
+    Currently supports I-DAD, DAD, and R-DAD Laplacians, where D is the diagonal
+    matrix of degrees of each node raised to the -1/2 power, I is the
+    identity matrix, and A is the adjacency matrix.
+    R-DAD is regularized Laplacian: where :math:`D_t = D + regularizer \times I`.
+    Parameters
+    ----------
+    graph: object
+        Either array-like, (n_vertices, n_vertices) numpy array,
+        scipy.sparse.csr_matrix, or an object of type networkx.Graph.
+    form: {'I-DAD' (default), 'DAD', 'R-DAD'}, string, optional
+        - 'I-DAD'
+            Computes :math:`L = I - D_i A D_i`
+        - 'DAD'
+            Computes :math:`L = D_o A D_i`
+        - 'R-DAD'
+            Computes :math:`L = D_o^r A D_i^r`
+            where :math:`D_o^r = D_o + regularizer \times I` and likewise for :math:`D_i`
+    regularizer: int, float or None, optional (default=None)
+        Constant to add to the degree vector(s). If None, average node degree is added.
+        If int or float, must be >= 0. Only used when ``form`` is 'R-DAD'.
+    Returns
+    -------
+    L : numpy.ndarray
+        2D (n_vertices, n_vertices) array representing graph
+        Laplacian of specified form
+    References
+    ----------
+    .. [1] Qin, Tai, and Karl Rohe. "Regularized spectral clustering
+           under the degree-corrected stochastic blockmodel." In Advances
+           in Neural Information Processing Systems, pp. 3120-3128. 2013
+    .. [2] Rohe, Karl, Tai Qin, and Bin Yu. "Co-clustering directed graphs to discover
+           asymmetries and directional communities." Proceedings of the National Academy
+           of Sciences 113.45 (2016): 12679-12684.
+    Examples
+    --------
+    >>> a = np.array([
+    ...    [0, 1, 1],
+    ...    [1, 0, 0],
+    ...    [1, 0, 0]])
+    >>> to_laplacian(a, "DAD")
+    array([[0.        , 0.70710678, 0.70710678],
+           [0.70710678, 0.        , 0.        ],
+           [0.70710678, 0.        , 0.        ]])
+    """
+
+    valid_inputs = ["I-DAD", "DAD", "R-DAD"]
+    if form not in valid_inputs:
+        raise TypeError("Unsuported Laplacian normalization")
+
+    in_degree = np.reshape(np.asarray(A.sum(axis=0)), (-1,))
+    out_degree = np.reshape(np.asarray(A.sum(axis=1)), (-1,))
+
+    # regularize laplacian with parameter
+    # set to average degree
+    if form == "R-DAD":
+        if regularizer is None:
+            regularizer = np.mean(out_degree)
+        elif not isinstance(regularizer, (int, float)):
+            raise TypeError(
+                "Regularizer must be a int or float, not {}".format(type(regularizer))
+            )
+        elif regularizer < 0:
+            raise ValueError("Regularizer must be greater than or equal to 0")
+
+        in_degree += regularizer
+        out_degree += regularizer
+
+    with np.errstate(divide="ignore"):
+        in_root = 1 / np.sqrt(in_degree)  # this is 10x faster than ** -0.5
+        out_root = 1 / np.sqrt(out_degree)
+
+    diag = diags if isspmatrix_csr(A) else np.diag
+
+    in_root[np.isinf(in_root)] = 0
+    out_root[np.isinf(out_root)] = 0
+
+    in_root = diag(in_root)  # just change to sparse diag for sparse support
+    out_root = diag(out_root)
+
+    if form == "I-DAD":
+        L = diag(in_degree) - A
+        L = in_root @ L @ in_root
+    elif form == "DAD" or form == "R-DAD":
+        L = out_root @ A @ in_root
+    if _is_symmetric(A):
+        return check_symmetric(L)
+        # sometimes machine prec. makes this necessary
+    return L
+
 def _is_symmetric(array, tol=1e-15):
     """Check if matrix is symmetric.
     Parameters
@@ -343,9 +378,8 @@ class GraphSpectralEmbedding(BaseEstimator):
     The adjacency spectral embedding (ASE) is a k-dimensional Euclidean representation
     of the graph based on its adjacency matrix. It relies on an SVD to reduce
     the dimensionality to the specified k, or if k is unspecified, can find a number of
-    dimensions automatically (see :class:`~graspologic.embed.selectSVD`).
-    Read more in the `Adjacency Spectral Embedding Tutorial
-    <https://microsoft.github.io/graspologic/tutorials/embedding/AdjacencySpectralEmbed.html>`_
+    dimensions automatically.
+
     Parameters
     ----------
     n_components : int or None, default = None
@@ -355,8 +389,13 @@ class GraphSpectralEmbedding(BaseEstimator):
         :func:`~graspologic.embed.select_dimension` using ``n_elbows`` argument.
     n_elbows : int, optional, default: 2
         If ``n_components`` is None, then compute the optimal embedding dimension using
-        :func:`~graspologic.embed.select_dimension`. Otherwise, ignored.
-    algorithm : {'randomized' (default), 'full', 'truncated'}, optional
+        Zhu and Ghodsi method. Otherwise, ignored.
+    aglorithm : {'ASE' , 'LSE'}, default = 'ASE'
+        - 'ASE'
+            Adjacency Spectral Embedding
+        - 'LSE'
+            Laplacian Spectral Embedding
+    svd_solver : {'randomized' (default), 'full', 'truncated'}, optional
         SVD solver to use:
         - 'randomized'
             Computes randomized svd using
@@ -366,6 +405,8 @@ class GraphSpectralEmbedding(BaseEstimator):
             Does not support ``graph`` input of type scipy.sparse.csr_matrix
         - 'truncated'
             Computes truncated svd using :func:`scipy.sparse.linalg.svds`
+    form : {'DAD' (default), 'I-DAD', 'R-DAD'}, optional
+        Specifies the type of Laplacian normalization to use when ``algorithm='LSE'``.
     n_iter : int, optional (default = 5)
         Number of iterations for randomized SVD solver. Not used by 'full' or
         'truncated'. The default is larger than the default in randomized_svd
@@ -380,6 +421,10 @@ class GraphSpectralEmbedding(BaseEstimator):
         corresponding to the degree (or sum of edge weights for a weighted network)
         before embedding. Empirically, this produces latent position estimates closer
         to the ground truth.
+    regularizer: int, float or None, optional (default=None)
+        Constant to be added to the diagonal of degree matrix. If None, average
+        node degree is added. If int or float, must be >= 0. Only used when
+        ``form`` is 'R-DAD'.
     concat : bool, optional (default False)
         If graph is directed, whether to concatenate left and right (out and in) latent positions along axis 1.
     Attributes
@@ -393,10 +438,7 @@ class GraphSpectralEmbedding(BaseEstimator):
         Estimated right latent positions of the graph. Otherwise, None.
     singular_values_ : array, shape (n_components)
         Singular values associated with the latent position matrices.
-    See Also
-    --------
-    graspologic.embed.selectSVD
-    graspologic.embed.select_dimension
+
     Notes
     -----
     The singular value decomposition:
@@ -420,18 +462,24 @@ class GraphSpectralEmbedding(BaseEstimator):
         self,
         n_components=None,
         n_elbows=2,
-        algorithm="randomized",
+        algorithm='ASE',
+        svd_solver="randomized",
+        form="DAD",
         n_iter=5,
         check_lcc=True,
         diag_aug=True,
+        regularizer=None,
         concat=False,
     ):
 
         self.n_components=n_components
         self.n_elbows=n_elbows
         self.algorithm=algorithm
+        self.svd_solver=svd_solver
+        self.form=form
         self.n_iter=n_iter
         self.check_lcc=check_lcc
+        self.regularizer=regularizer
         self.concat=concat
 
 
@@ -457,7 +505,7 @@ class GraphSpectralEmbedding(BaseEstimator):
                                 estimator=self)
 
         if self.check_lcc:
-            if not _graph_is_connected(A):
+            if not graph_is_connected(A):
                 msg = (
                     "Input graph is not fully connected. Results may not"
                     + "be optimal. You can compute the largest connected component by"
@@ -465,16 +513,23 @@ class GraphSpectralEmbedding(BaseEstimator):
                 )
                 warnings.warn(msg, UserWarning)
 
-        if self.diag_aug:
-            A = _augment_diagonal(A)
-
         self.n_features_in_ = A.shape[0]
+
+        if isinstance(self.algorithm, str):
+            if self.algorithm.lower() not in {"ase", "lse"}:
+                raise ValueError(("%s is not a valid embedding method. Expected "
+                                  "'ASE' or 'LSE'") % self.affinity)
         # reduces the dimensionality of an adjacency matrix using the desired embedding method.
+        if self.algorithm == 'ASE' and self.diag_aug:
+            A = _augment_diagonal(A)
+        elif self.algorithm == 'LSE':
+            A = _to_laplacian(A, form=self.form, regularizer=self.regularizer)
+
         U, D, V = _selectSVD(
             A,
             n_components=self.n_components,
             n_elbows=self.n_elbows,
-            algorithm=self.algorithm,
+            svd_solver=self.svd_solver,
             n_iter=self.n_iter,
             )
 
