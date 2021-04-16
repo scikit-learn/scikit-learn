@@ -2170,6 +2170,7 @@ def test_center_kernel():
     # check the results coherence with the method proposed in:
     # B. Schölkopf, A. Smola, and K.R. Müller,
     # "Nonlinear component analysis as a kernel eigenvalue problem"
+    # equation (B.3)
 
     # K_centered = (I - 1_M) K (I - 1_M)
     #            =  K - 1_M K - K 1_M + 1_M K 1_M
@@ -2179,7 +2180,8 @@ def test_center_kernel():
     )
     assert_allclose(K_fit_centered, K_fit_centered3)
 
-    # K_test_centered = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
+    # K_test_centered = (K_test - 1'_M K)(I - 1_M)
+    #                 = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
     ones_prime_M = np.ones_like(K_pred) / K_fit.shape[0]
     K_pred_centered3 = (
         K_pred - ones_prime_M @ K_fit - K_pred @ ones_M +
@@ -2223,13 +2225,16 @@ def test_kernelcenterer_non_linear_kernel():
     # check the results coherence with the method proposed in:
     # B. Schölkopf, A. Smola, and K.R. Müller,
     # "Nonlinear component analysis as a kernel eigenvalue problem"
+    # equation (B.3)
 
-    # K_centered = K - 1_M K - K 1_M + 1_M K 1_M
+    # K_centered = (I - 1_M) K (I - 1_M)
+    #            =  K - 1_M K - K 1_M + 1_M K 1_M
     ones_M = np.ones_like(K) / K.shape[0]
     K_center = K - ones_M @ K - K @ ones_M + ones_M @ K @ ones_M
     assert_allclose(kernel_centerer.transform(K), K_center)
 
-    # K_test_centered = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
+    # K_test_centered = (K_test - 1'_M K)(I - 1_M)
+    #                 = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
     ones_prime_M = np.ones_like(K_test) / K.shape[0]
     K_test_center = (
         K_test - ones_prime_M @ K - K_test @ ones_M + ones_prime_M @ K @ ones_M
