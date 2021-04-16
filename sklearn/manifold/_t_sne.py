@@ -862,7 +862,7 @@ class TSNE(BaseEstimator):
             pca = PCA(n_components=self.n_components, svd_solver='randomized',
                       random_state=random_state)
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
-			# TODO: Update in 1.2
+            # TODO: Update in 1.2
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
             # the default value for random initialization. See issue #18018.
             warnings.warn("The PCA initialization in TSNE will change to "
