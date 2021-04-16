@@ -60,7 +60,7 @@ def f_oneway(*args):
     f_statistic : float
         The computed F-value of the test.
     p_value : float
-        The associated P-value from the F-distribution.
+        The associated p-value from the F-distribution.
 
     Notes
     -----
