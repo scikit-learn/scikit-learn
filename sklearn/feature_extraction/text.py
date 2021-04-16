@@ -1107,6 +1107,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         j_indices = []
         indptr = []
 
+        if self.lowercase:
+            for vocab in vocabulary:
+                if any(map(str.isupper, vocab)):
+                    warnings.warn("Upper case characters found in"
+                                  " vocabulary while 'lowercase'"
+                                  " is True. These entries will not"
+                                  " be matched with any documents")
+                    break
+
         values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:

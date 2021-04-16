@@ -59,10 +59,10 @@ Security & maintainability limitations
 pickle (and joblib by extension), has some issues regarding maintainability
 and security. Because of this,
 
-* Never unpickle untrusted data as it could lead to malicious code being 
+* Never unpickle untrusted data as it could lead to malicious code being
   executed upon loading.
-* While models saved using one version of scikit-learn might load in 
-  other versions, this is entirely unsupported and inadvisable. It should 
+* While models saved using one version of scikit-learn might load in
+  other versions, this is entirely unsupported and inadvisable. It should
   also be kept in mind that operations performed on such data could give
   different and unexpected results.
 
@@ -77,12 +77,11 @@ additional metadata should be saved along the pickled model:
 This should make it possible to check that the cross-validation score is in the
 same range as before.
 
-Since a model internal representation may be different on two different
-architectures, dumping a model on one architecture and loading it on
-another architecture is not a supported behaviour, even if it might work
-on some cases.
-To overcome the issue of portability, pickle models are often deployed in
-production using containers, like docker.
+Aside for a few exceptions, pickled models should be portable across
+architectures assuming the same versions of dependencies and Python are used.
+If you encounter an estimator that is not portable please open an issue on
+GitHub. Pickled models are often deployed in production using containers, like
+Docker, in order to freeze the environment and dependencies.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
@@ -108,7 +107,7 @@ models between different machine learning frameworks, and to improve their
 portability on different computing architectures. More details are available
 from the `ONNX tutorial <https://onnx.ai/get-started.html>`_.
 To convert scikit-learn model to ONNX a specific tool `sklearn-onnx
-<http://onnx.ai/sklearn-onnx/>`_ has been developed. 
+<http://onnx.ai/sklearn-onnx/>`_ has been developed.
 
 PMML is an implementation of the `XML
 <https://en.wikipedia.org/wiki/XML>`_ document standard

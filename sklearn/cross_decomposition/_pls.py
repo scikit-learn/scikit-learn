@@ -537,7 +537,11 @@ class PLSRegression(_PLS):
         `Y = X @ coef_`.
 
     n_iter_ : list of shape (n_components,)
-        Number of iterations of the power method for each component.
+        Number of iterations of the power method, for each
+        component.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------
@@ -647,6 +651,9 @@ class PLSCanonical(_PLS):
         Number of iterations of the power method, for each
         component. Empty if `algorithm='svd'`.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import PLSCanonical
@@ -753,6 +760,9 @@ class CCA(_PLS):
         Number of iterations of the power method, for each
         component.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import CCA
@@ -829,6 +839,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
            `y_scores_` is deprecated in 0.24 and will be removed in 1.1
            (renaming of 0.26). You can just call `transform` on the training
            data instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------

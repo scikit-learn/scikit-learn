@@ -9,10 +9,9 @@ from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression, _make_unique)
 
 from sklearn.utils.validation import check_array
-from sklearn.utils._testing import (assert_raises, assert_allclose,
+from sklearn.utils._testing import (assert_allclose,
                                     assert_array_equal,
-                                    assert_array_almost_equal,
-                                    assert_warns_message, assert_no_warnings)
+                                    assert_array_almost_equal)
 from sklearn.utils import shuffle
 
 from scipy.special import expit
@@ -37,7 +36,10 @@ def test_check_increasing_small_number_of_samples():
     x = [0, 1, 2]
     y = [1, 1.1, 1.05]
 
-    is_increasing = assert_no_warnings(check_increasing, x, y)
+    with pytest.warns(None) as record:
+        is_increasing = check_increasing(x, y)
+    assert len(record) == 0
+
     assert is_increasing
 
 
@@ -46,7 +48,10 @@ def test_check_increasing_up():
     y = [0, 1.5, 2.77, 8.99, 8.99, 50]
 
     # Check that we got increasing=True and no warnings
-    is_increasing = assert_no_warnings(check_increasing, x, y)
+    with pytest.warns(None) as record:
+        is_increasing = check_increasing(x, y)
+    assert len(record) == 0
+
     assert is_increasing
 
 
@@ -55,7 +60,10 @@ def test_check_increasing_up_extreme():
     y = [0, 1, 2, 3, 4, 5]
 
     # Check that we got increasing=True and no warnings
-    is_increasing = assert_no_warnings(check_increasing, x, y)
+    with pytest.warns(None) as record:
+        is_increasing = check_increasing(x, y)
+    assert len(record) == 0
+
     assert is_increasing
 
 
@@ -64,7 +72,10 @@ def test_check_increasing_down():
     y = [0, -1.5, -2.77, -8.99, -8.99, -50]
 
     # Check that we got increasing=False and no warnings
-    is_increasing = assert_no_warnings(check_increasing, x, y)
+    with pytest.warns(None) as record:
+        is_increasing = check_increasing(x, y)
+    assert len(record) == 0
+
     assert not is_increasing
 
 
@@ -73,7 +84,10 @@ def test_check_increasing_down_extreme():
     y = [0, -1, -2, -3, -4, -5]
 
     # Check that we got increasing=False and no warnings
-    is_increasing = assert_no_warnings(check_increasing, x, y)
+    with pytest.warns(None) as record:
+        is_increasing = check_increasing(x, y)
+    assert len(record) == 0
+
     assert not is_increasing
 
 
@@ -82,9 +96,9 @@ def test_check_ci_warn():
     y = [0, -1, 2, -3, 4, -5]
 
     # Check that we got increasing=False and CI interval warning
-    is_increasing = assert_warns_message(UserWarning, "interval",
-                                         check_increasing,
-                                         x, y)
+    msg = "interval"
+    with pytest.warns(UserWarning, match=msg):
+        is_increasing = check_increasing(x, y)
 
     assert not is_increasing
 
@@ -244,10 +258,21 @@ def test_isotonic_regression_auto_increasing():
 def test_assert_raises_exceptions():
     ir = IsotonicRegression()
     rng = np.random.RandomState(42)
-    assert_raises(ValueError, ir.fit, [0, 1, 2], [5, 7, 3], [0.1, 0.6])
-    assert_raises(ValueError, ir.fit, [0, 1, 2], [5, 7])
-    assert_raises(ValueError, ir.fit, rng.randn(3, 10), [0, 1, 2])
-    assert_raises(ValueError, ir.transform, rng.randn(3, 10))
+
+    msg = "Found input variables with inconsistent numbers of samples"
+    with pytest.raises(ValueError, match=msg):
+        ir.fit([0, 1, 2], [5, 7, 3], [0.1, 0.6])
+
+    with pytest.raises(ValueError, match=msg):
+        ir.fit([0, 1, 2], [5, 7])
+
+    msg = 'X should be a 1d array'
+    with pytest.raises(ValueError, match=msg):
+        ir.fit(rng.randn(3, 10), [0, 1, 2])
+
+    msg = 'Isotonic regression input X should be a 1d array'
+    with pytest.raises(ValueError, match=msg):
+        ir.transform(rng.randn(3, 10))
 
 
 def test_isotonic_sample_weight_parameter_default_value():
@@ -298,7 +323,9 @@ def test_isotonic_regression_oob_raise():
     ir.fit(x, y)
 
     # Check that an exception is thrown
-    assert_raises(ValueError, ir.predict, [min(x) - 10, max(x) + 10])
+    msg = 'A value in x_new is below the interpolation range'
+    with pytest.raises(ValueError, match=msg):
+        ir.predict([min(x) - 10, max(x) + 10])
 
 
 def test_isotonic_regression_oob_clip():
@@ -340,7 +367,10 @@ def test_isotonic_regression_oob_bad():
     ir = IsotonicRegression(increasing='auto', out_of_bounds="xyz")
 
     # Make sure that we throw an error for bad out_of_bounds value
-    assert_raises(ValueError, ir.fit, x, y)
+    msg = ("The argument ``out_of_bounds`` must be in 'nan', "
+           "'clip', 'raise'; got xyz")
+    with pytest.raises(ValueError, match=msg):
+        ir.fit(x, y)
 
 
 def test_isotonic_regression_oob_bad_after():
@@ -354,7 +384,10 @@ def test_isotonic_regression_oob_bad_after():
     # Make sure that we throw an error for bad out_of_bounds value in transform
     ir.fit(x, y)
     ir.out_of_bounds = "xyz"
-    assert_raises(ValueError, ir.transform, x)
+    msg = ("The argument ``out_of_bounds`` must be in 'nan', "
+           "'clip', 'raise'; got xyz")
+    with pytest.raises(ValueError, match=msg):
+        ir.transform(x)
 
 
 def test_isotonic_regression_pickle():

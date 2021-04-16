@@ -30,7 +30,6 @@ from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
-from sklearn.utils.extmath import _incremental_weighted_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
@@ -250,7 +249,8 @@ def test_randomized_svd_infinite_rank():
         # compute the singular values of X using the fast approximate method
         # without the iterated power method
         _, sa, _ = randomized_svd(X, k, n_iter=0,
-                                  power_iteration_normalizer=normalizer)
+                                  power_iteration_normalizer=normalizer,
+                                  random_state=0)
 
         # the approximation does not tolerate the noise:
         assert np.abs(s[:k] - sa).max() > 0.1
@@ -258,7 +258,8 @@ def test_randomized_svd_infinite_rank():
         # compute the singular values of X using the fast approximate method
         # with iterated power method
         _, sap, _ = randomized_svd(X, k, n_iter=5,
-                                   power_iteration_normalizer=normalizer)
+                                   power_iteration_normalizer=normalizer,
+                                   random_state=0)
 
         # the iterated power method is still managing to get most of the
         # structure at the requested rank
@@ -308,11 +309,13 @@ def test_randomized_svd_power_iteration_normalizer():
 
     # Check that it diverges with many (non-normalized) power iterations
     U, s, Vt = randomized_svd(X, n_components, n_iter=2,
-                              power_iteration_normalizer='none')
+                              power_iteration_normalizer='none',
+                              random_state=0)
     A = X - U.dot(np.diag(s).dot(Vt))
     error_2 = linalg.norm(A, ord='fro')
     U, s, Vt = randomized_svd(X, n_components, n_iter=20,
-                              power_iteration_normalizer='none')
+                              power_iteration_normalizer='none',
+                              random_state=0)
     A = X - U.dot(np.diag(s).dot(Vt))
     error_20 = linalg.norm(A, ord='fro')
     assert np.abs(error_2 - error_20) > 100
@@ -402,14 +405,15 @@ def test_randomized_svd_sign_flip_with_transpose():
     mat = np.arange(10 * 8).reshape(10, -1)
 
     # Without transpose
-    u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True)
+    u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True,
+                                             random_state=0)
     u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
     assert u_based
     assert not v_based
 
     # With transpose
     u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_svd(
-        mat, 3, flip_sign=True, transpose=True)
+        mat, 3, flip_sign=True, transpose=True, random_state=0)
     u_based, v_based = max_loading_is_positive(
         u_flipped_with_transpose, v_flipped_with_transpose)
     assert u_based
@@ -464,8 +468,8 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mult = 10
     X = rng.rand(1000, 20).astype(dtype)*mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_weighted_mean_and_var(X, sample_weight,
-                                                      0, 0, 0)
+    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0,
+                                             sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = np.average(X**2, weights=sample_weight, axis=0) - \
@@ -488,11 +492,9 @@ def test_incremental_weighted_mean_and_variance(mean, var, weight_loc,
             last_mean, last_weight_sum, last_var = 0, 0, 0
             for batch in gen_batches(n, chunk_size):
                 last_mean, last_var, last_weight_sum = \
-                    _incremental_weighted_mean_and_var(X[batch],
-                                                       sample_weight[batch],
-                                                       last_mean,
-                                                       last_var,
-                                                       last_weight_sum)
+                    _incremental_mean_and_var(
+                        X[batch], last_mean, last_var, last_weight_sum,
+                        sample_weight=sample_weight[batch])
             assert_allclose(last_mean, expected_mean)
             assert_allclose(last_var, expected_var, atol=1e-6)
 
@@ -532,17 +534,17 @@ def test_incremental_weighted_mean_and_variance_ignore_nan(dtype):
                       [300, 300, 300, np.nan]]).astype(dtype)
 
     X_means, X_variances, X_count = \
-        _incremental_weighted_mean_and_var(X,
-                                           sample_weights_X,
-                                           old_means,
-                                           old_variances,
-                                           old_weight_sum)
+        _incremental_mean_and_var(X,
+                                  old_means,
+                                  old_variances,
+                                  old_weight_sum,
+                                  sample_weight=sample_weights_X)
     X_nan_means, X_nan_variances, X_nan_count = \
-        _incremental_weighted_mean_and_var(X_nan,
-                                           sample_weights_X_nan,
-                                           old_means,
-                                           old_variances,
-                                           old_weight_sum)
+        _incremental_mean_and_var(X_nan,
+                                  old_means,
+                                  old_variances,
+                                  old_weight_sum,
+                                  sample_weight=sample_weights_X_nan)
 
     assert_allclose(X_nan_means, X_means)
     assert_allclose(X_nan_variances, X_variances)

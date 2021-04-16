@@ -223,7 +223,7 @@ the document up to date as we work on these issues.
    (to be discussed);
 
    * Extend documentation to mention how to deploy models in Python-free
-     environments for instance  `ONNX <https://github.com/onnx/onnxmltools>`_.
+     environments for instance `ONNX <https://github.com/onnx/sklearn-onnx>`_.
      and use the above best practices to assess predictive consistency between
      scikit-learn and ONNX prediction functions on validation set.
    * Document good practices to detect temporal distribution drift for deployed

@@ -104,6 +104,9 @@ jobs:
   pypy3:
     docker:
       - image: condaforge/miniforge3
+    environment:
+      # Avoid the interactive dialog when installing tzdata
+      - DEBIAN_FRONTEND: noninteractive
     steps:
       - restore_cache:
           keys:
