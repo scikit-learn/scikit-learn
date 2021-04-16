@@ -757,7 +757,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
 
 @_deprecate_positional_args
 def load_diabetes(*, return_X_y=False, as_frame=False):
-    """Load and return the diabetes dataset (regression).
+    """Load and return the diabetes dataset (regression). The meaning of each
+    feature is unclear as the documentation of the source dataset is not
+    explicit.
 
     ==============   ==================
     Samples total    442
