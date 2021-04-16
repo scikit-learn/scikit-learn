@@ -1966,7 +1966,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
     .. math::
         \tilde{K(X, Y)} = \tilde{\phi}(X) . \tilde{\phi}(Y)^{T}
 
-    :math:`\tilde{\phi}(X)` are the mapped centered data in the Hilbert
+    :math:`\tilde{\phi}(X)` is the centered mapped data in the Hilbert
     space.
 
     `KernelCenterer` centers the features without explicitly computing the
@@ -1986,10 +1986,10 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+    .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
        "Nonlinear component analysis as a kernel eigenvalue problem."
        Neural computation 10.5 (1998): 1299-1319.
-       https://www.mlpack.org/papers/kpca.pdf
+       <https://www.mlpack.org/papers/kpca.pdf>`_
 
     Examples
     --------

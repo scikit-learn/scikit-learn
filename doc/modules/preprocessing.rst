@@ -265,7 +265,7 @@ kernel :math:`\tilde{K}` is defined as:
 
 Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
 function :math:`\phi(\cdot)` and center the data in this new space. However,
-kernels are usually used because they allows some algebra calculations that
+kernels are often used because they allows some algebra calculations that
 avoid computing explicitly this mapping using :math:`\phi(\cdot)`. Indeed, one
 can implicitly center as shown in Appendix B in [Scholkopf1998]_:
 

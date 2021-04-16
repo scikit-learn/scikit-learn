@@ -2171,7 +2171,8 @@ def test_center_kernel():
     # B. Schölkopf, A. Smola, and K.R. Müller,
     # "Nonlinear component analysis as a kernel eigenvalue problem"
 
-    # K_centered = K - 1_M K - K 1_M + 1_M K 1_M
+    # K_centered = (I - 1_M) K (I - 1_M)
+    #            =  K - 1_M K - K 1_M + 1_M K 1_M
     ones_M = np.ones_like(K_fit) / K_fit.shape[0]
     K_fit_centered3 = (
         K_fit - ones_M @ K_fit - K_fit @ ones_M + ones_M @ K_fit @ ones_M
