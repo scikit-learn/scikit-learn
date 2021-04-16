@@ -2,6 +2,7 @@ import types
 import warnings
 import pickle
 import re
+import pytest
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
