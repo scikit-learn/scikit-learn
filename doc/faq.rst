@@ -427,8 +427,10 @@ of the seemingly simple linear models is the reason for having different
 estimator classes for different penalties.
 
 **User perspective:**
-First, the current design makes it easy to find the models by their well known
-names like *ridge regression*.
+First, the current design is inspired by the scientific literature where linear
+regression models with different regularization/penalty were given different
+names, e.g. *ridge regression*. Having different model classes with according
+names makes it easier for users to find those regression models.
 Secondly, if all the 5 above mentioned linear models were unified into a single
 class, there would be parameters with a lot of options like the ``solver``
 parameter. On top of that, there would be a lot of exclusive interactions
