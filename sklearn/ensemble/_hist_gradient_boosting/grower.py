@@ -183,7 +183,7 @@ class TreeGrower:
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
                  is_categorical=None, monotonic_cst=None,
                  l2_regularization=0., min_hessian_to_split=1e-3,
-                 shrinkage=1.):
+                 shrinkage=1., feature_idx=None):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -258,6 +258,7 @@ class TreeGrower:
         self.X_binned = X_binned
         self.min_gain_to_split = min_gain_to_split
         self.shrinkage = shrinkage
+        self.feature_idx = feature_idx
         self.splittable_nodes = []
         self.finalized_leaves = []
         self.total_find_split_time = 0.  # time spent finding the best splits
@@ -360,10 +361,16 @@ class TreeGrower:
         (min_hessians_to_split, min_gain_to_split, min_samples_leaf)
         """
 
-        node.split_info = self.splitter.find_node_split(
-            node.n_samples, node.histograms, node.sum_gradients,
-            node.sum_hessians, node.value, node.children_lower_bound,
-            node.children_upper_bound)
+        if self.feature_idx is None:
+            node.split_info = self.splitter.find_node_split(
+                node.n_samples, node.histograms, node.sum_gradients,
+                node.sum_hessians, node.value, node.children_lower_bound,
+                node.children_upper_bound)
+        else:
+            node.split_info = self.splitter.find_node_split_for_feature(
+                node.n_samples, self.feature_idx, node.histograms,
+                node.sum_gradients, node.sum_hessians, node.value,
+                node.children_lower_bound, node.children_upper_bound)
 
         if node.split_info.gain <= 0:  # no valid split
             self._finalize_leaf(node)

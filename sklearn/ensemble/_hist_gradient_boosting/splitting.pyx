@@ -534,6 +534,58 @@ cdef class Splitter:
         free(split_infos)
         return out
 
+    def find_node_split_for_feature(
+        Splitter self,
+        unsigned int n_samples,
+        int feature_idx,
+        hist_struct [:, ::1] histograms,  # IN
+        const Y_DTYPE_C sum_gradients,
+        const Y_DTYPE_C sum_hessians,
+        const Y_DTYPE_C value,
+        const Y_DTYPE_C lower_bound=-INFINITY,
+        const Y_DTYPE_C upper_bound=INFINITY):
+        """Sample as find_node_split but splitting on one feature."""
+
+        cdef:
+            int n_features = self.n_features
+            split_info_struct split_info
+            # const unsigned char [::1] has_missing_values = self.has_missing_values
+            # const unsigned char [::1] is_categorical = self.is_categorical
+            const signed char [::1] monotonic_cst = self.monotonic_cst
+
+        split_info.feature_idx = feature_idx
+        split_info.gain = -1
+        split_info.is_categorical = False
+
+        # TODO: categorical
+        # TODO: missing values
+
+        self._find_best_bin_to_split_left_to_right(
+            feature_idx, False, histograms, n_samples,
+            sum_gradients, sum_hessians, value,
+            monotonic_cst[feature_idx], lower_bound,
+            upper_bound, &split_info
+        )
+
+        out = SplitInfo(
+            split_info.gain,
+            split_info.feature_idx,
+            split_info.bin_idx,
+            split_info.missing_go_to_left,
+            split_info.sum_gradient_left,
+            split_info.sum_hessian_left,
+            split_info.sum_gradient_right,
+            split_info.sum_hessian_right,
+            split_info.n_samples_left,
+            split_info.n_samples_right,
+            split_info.value_left,
+            split_info.value_right,
+            split_info.is_categorical,
+            # categorical not supported for now
+            None,
+        )
+        return out
+
     cdef unsigned int _find_best_feature_to_split_helper(
             self,
             split_info_struct * split_infos) nogil:  # IN
@@ -839,7 +891,7 @@ cdef class Splitter:
         # other category. The low-support categories will always be mapped to
         # the right child. We scan the sorted categories array from left to
         # right and from right to left, and we stop at the middle.
-        
+
         # Considering ordered categories A B C D, with E being a low-support
         # category: A B C D
         #              ^
