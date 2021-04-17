@@ -386,6 +386,10 @@ Changelog
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| The `fit` method of :class:`preprocessing.OrdinalEncoder` will not
+  raise error when `handle_unknown='ignore'`.
+  :pr:`19906` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.tree`
 ...................
 
