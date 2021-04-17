@@ -1341,7 +1341,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
            Poisson criterion.
 
         .. deprecated:: 1.0
