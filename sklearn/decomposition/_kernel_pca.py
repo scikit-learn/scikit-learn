@@ -346,6 +346,19 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     def inverse_transform(self, X):
         """Transform X back to original space.
 
+        ``inverse_transform`` approximates the inverse transformation using
+        a learned pre-image. The pre-image is learned by kernel ridge
+        regression of the original data on their low-dimensional representation
+        vectors.
+
+        .. note::
+            When users want to compute inverse transformation for 'linear'
+            kernel, it is recommended that they use
+            :class:`~sklearn.decomposition.PCA` instead. Unlike
+            :class:`~sklearn.decomposition.PCA`,
+            :class:`~sklearn.decomposition.KernelPCA`'s ``inverse_transform``
+            does not reconstruct the mean of data when 'linear' kernel is used.
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_components)
