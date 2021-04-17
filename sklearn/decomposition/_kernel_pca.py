@@ -53,9 +53,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     alpha : float, default=1.0
         Hyperparameter of the ridge regression that learns the
-        inverse transform (when fit_inverse_transform=True).
+        inverse transform (when enable_inverse_transform=True).
 
-    fit_inverse_transform : bool, default=False
+    enable_inverse_transform : bool, default=False
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
 
@@ -114,11 +114,11 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     dual_coef_ : ndarray of shape (n_samples, n_features)
         Inverse transform matrix. Only available when
-        ``fit_inverse_transform`` is True.
+        ``enable_inverse_transform`` is True.
 
     X_transformed_fit_ : ndarray of shape (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.
-        Only available when ``fit_inverse_transform`` is True.
+        Only available when ``enable_inverse_transform`` is True.
 
     X_fit_ : ndarray of shape (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
@@ -145,12 +145,12 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
-                 alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
+                 alpha=1.0, enable_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
                  random_state=None, copy_X=True, n_jobs=None):
-        if fit_inverse_transform and kernel == 'precomputed':
+        if enable_inverse_transform and kernel == 'precomputed':
             raise ValueError(
-                "Cannot fit_inverse_transform with a precomputed kernel.")
+                "Cannot enable_inverse_transform with a precomputed kernel.")
         self.n_components = n_components
         self.kernel = kernel
         self.kernel_params = kernel_params
@@ -158,7 +158,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self.degree = degree
         self.coef0 = coef0
         self.alpha = alpha
-        self.fit_inverse_transform = fit_inverse_transform
+        self.enable_inverse_transform = enable_inverse_transform
         self.eigen_solver = eigen_solver
         self.remove_zero_eig = remove_zero_eig
         self.tol = tol
@@ -285,7 +285,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         K = self._get_kernel(X)
         self._fit_transform(K)
 
-        if self.fit_inverse_transform:
+        if self.enable_inverse_transform:
             # no need to use the kernel to transform X, use shortcut expression
             X_transformed = self.eigenvectors_ * np.sqrt(self.eigenvalues_)
 
@@ -312,7 +312,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # no need to use the kernel to transform X, use shortcut expression
         X_transformed = self.eigenvectors_ * np.sqrt(self.eigenvalues_)
 
-        if self.fit_inverse_transform:
+        if self.enable_inverse_transform:
             self._fit_inverse_transform(X_transformed, X)
 
         return X_transformed
@@ -358,8 +358,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         ----------
         "Learning to Find Pre-Images", G BakIr et al, 2004.
         """
-        if not self.fit_inverse_transform:
-            raise NotFittedError("The fit_inverse_transform parameter was not"
+        if not self.enable_inverse_transform:
+            raise NotFittedError("The enable_inverse_transform parameter was not"
                                  " set to True when instantiating and hence "
                                  "the inverse transform is not available.")
 
