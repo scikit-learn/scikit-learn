@@ -283,7 +283,7 @@ def test_kernel_conditioning():
 
     # check that the small non-zero eigenvalue was correctly set to zero
     assert kpca.eigenvalues_.min() == 0
-    assert np.all(kpca.eigenvalues_ ==\
+    assert np.all(kpca.eigenvalues_ ==
                   _check_psd_eigenvalues(kpca.eigenvalues_))
 
 
