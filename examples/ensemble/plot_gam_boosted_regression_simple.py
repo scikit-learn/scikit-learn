@@ -44,6 +44,8 @@ gam_reg.fit(X, y)
 # %%
 # Compare the GAM predicts to actual shape functions
 # --------------------------------------------------
+# Notice that the GAM is able to reproduce the shape functions up to a
+# constant
 import matplotlib.pyplot as plt
 
 fig, axes = plt.subplots(2, 2, figsize=(12, 8))

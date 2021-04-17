@@ -93,6 +93,11 @@ class GAMBoostingRegressor(BaseEstimator):
             sample_weight=None
         )
 
+        # Because the grower is shrinking n_features_in_ number of times
+        # we use an effective learning rate
+        effective_learning_rate = (np.power(self.learning_rate,
+                                            1 / self.n_features_in_))
+
         indices_rng = check_random_state(self._random_seed)
         for iteration in range(self.max_iter):
             # sample weight for bagging
@@ -120,7 +125,7 @@ class GAMBoostingRegressor(BaseEstimator):
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=0,
-                    shrinkage=self.learning_rate,
+                    shrinkage=effective_learning_rate,
                     feature_idx=feature_idx,
                 )
                 grower.grow()
