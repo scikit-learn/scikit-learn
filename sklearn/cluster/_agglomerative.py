@@ -696,9 +696,13 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     affinity : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed".
-        If linkage is "ward", only "euclidean" is accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
+        If linkage is "ward", only Euclidean distances ("euclidean", "l2", or
+        "precomputed") are accepted.
+        Note: When using a precomputed matrix together with "ward" linkage,
+        make sure that the precomputed matrix consists of Euclidean distances.
+
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -848,7 +852,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             raise ValueError("compute_full_tree must be True if "
                              "distance_threshold is set.")
 
-        if self.linkage == "ward" and self.affinity != "euclidean":
+        if self.linkage == "ward" and self.affinity not in ["euclidean",
+                "l2", "precomputed"]:
             raise ValueError("%s was provided as affinity. Ward can only "
                              "work with euclidean distances." %
                              (self.affinity, ))
