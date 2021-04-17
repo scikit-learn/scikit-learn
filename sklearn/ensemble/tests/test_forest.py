@@ -200,7 +200,7 @@ def test_poisson_vs_mse():
                                        n_estimators=10,
                                        bootstrap=False,
                                        random_state=rng)
-    forest_mse = RandomForestRegressor(criterion="mse",
+    forest_mse = RandomForestRegressor(criterion="squared_error",
                                        n_estimators=10,
                                        bootstrap=False,
                                        random_state=rng)
