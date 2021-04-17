@@ -664,8 +664,7 @@ def test_iterative_imputer_clip():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
-    X = _sparse_random_matrix(n, d, density=0.10,
-                             random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
 
     imputer = IterativeImputer(missing_values=0,
                                max_iter=1,
@@ -768,8 +767,7 @@ def test_iterative_imputer_transform_stochasticity():
     rng2 = np.random.RandomState(1)
     n = 100
     d = 10
-    X = _sparse_random_matrix(n, d, density=0.10,
-                             random_state=rng1).toarray()
+    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng1).toarray()
 
     # when sample_posterior=True, two transforms shouldn't be equal
     imputer = IterativeImputer(missing_values=0,
@@ -1500,3 +1498,44 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     assert expected == _most_frequent(
         np.array(array, dtype=dtype), extra_value, n_repeat
     )
+
+
+def test_impute_one_feature():
+    import numpy as np
+
+    from sklearn.datasets import fetch_california_housing
+    from sklearn.cross_decomposition import PLSRegression
+    from sklearn.experimental import enable_iterative_imputer  # noqa
+    from sklearn.impute import IterativeImputer
+
+    rng = np.random.RandomState(42)
+
+    X_california, y_california = fetch_california_housing(return_X_y=True)
+    X_california = X_california[:400]
+    y_california = y_california[:400]
+
+    def add_missing_values(X_full, y_full):
+        n_samples, n_features = X_full.shape
+
+        # Add missing values in 75% of the lines
+        missing_rate = 0.75
+        n_missing_samples = int(n_samples * missing_rate)
+
+        missing_samples = np.zeros(n_samples, dtype=bool)
+        missing_samples[: n_missing_samples] = True
+
+        rng.shuffle(missing_samples)
+        missing_features = rng.randint(0, n_features, n_missing_samples)
+        X_missing = X_full.copy()
+        X_missing[missing_samples, missing_features] = np.nan
+        y_missing = y_full.copy()
+
+        return X_missing, y_missing
+
+    X_miss_california, y_miss_california = add_missing_values(
+        X_california, y_california)
+
+    imputer = IterativeImputer(estimator=PLSRegression(n_components=2))
+
+    X_imputed = imputer.fit_transform(X_miss_california)
+    print(X_imputed)
