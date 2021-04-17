@@ -282,8 +282,8 @@ def test_kernel_conditioning():
     kpca.fit(X)
 
     # check that the small non-zero eigenvalue was correctly set to zero
-    assert kpca.lambdas_.min() == 0
-    assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
+    assert kpca.eigenvalues_.min() == 0
+    assert np.all(kpca.eigenvalues_ == _check_psd_eigenvalues(kpca.eigenvalues_))
 
 
 @pytest.mark.parametrize("kernel",
