@@ -1132,3 +1132,20 @@ def test_ordinal_encoder_sparse():
     X_trans_sparse = sparse.csr_matrix(X_trans)
     with pytest.raises(TypeError, match=err_msg):
         encoder.inverse_transform(X_trans_sparse)
+
+
+def test_ordinal_encoder_fit_with_unseen_category():
+    """ Check OrdinalEncoder.fit works with unseen category
+    when handle_unknown="use_encoded_value".
+    https://github.com/scikit-learn/scikit-learn/issues/19872
+    """
+    X = np.array([0, 0, 1, 0, 2, 5])[:, np.newaxis]
+    oe = OrdinalEncoder(categories=[[-1, 0, 1]],
+                        handle_unknown="use_encoded_value",
+                        unknown_value=-999)
+    oe.fit(X)
+
+    oe = OrdinalEncoder(categories=[[-1, 0, 1]],
+                        handle_unknown="error")
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        oe.fit(X)
