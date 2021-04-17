@@ -55,7 +55,10 @@ class GAMBoostingRegressor(BaseEstimator):
 
         # TODO: do not support missing values for now
         X, y = self._validate_data(X, y, dtype=X_DTYPE)
-        # bin data
+
+        # TODO: Regression for now
+        self.n_trees_per_iteration_ = 1
+        y = y.astype(Y_DTYPE, copy=False)
 
         rng = check_random_state(self.random_state)
         self._random_seed = rng.randint(np.iinfo(np.uint32).max,
@@ -74,12 +77,10 @@ class GAMBoostingRegressor(BaseEstimator):
             random_state=self._random_seed)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
 
-        n_samples, self.n_features_in_ = X_binned_train.shape
+        n_samples = X_binned_train.shape[0]
 
         sample_weight = np.ones(n_samples)
         self._loss = _LOSSES["squared_error"](sample_weight=sample_weight)
-
-        self.n_trees_per_iteration_ = 1
 
         raw_predictions = np.zeros(
             shape=(self.n_trees_per_iteration_, n_samples),
