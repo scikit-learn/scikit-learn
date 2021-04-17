@@ -283,7 +283,8 @@ def test_kernel_conditioning():
 
     # check that the small non-zero eigenvalue was correctly set to zero
     assert kpca.eigenvalues_.min() == 0
-    assert np.all(kpca.eigenvalues_ == _check_psd_eigenvalues(kpca.eigenvalues_))
+    assert np.all(kpca.eigenvalues_ ==\
+            _check_psd_eigenvalues(kpca.eigenvalues_))
 
 
 @pytest.mark.parametrize("kernel",
@@ -292,7 +293,8 @@ def test_kernel_pca_inverse_transform(kernel):
     X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
                        random_state=0)
 
-    kp = KernelPCA(n_components=2, kernel=kernel, enable_inverse_transform=True)
+    kp = KernelPCA(n_components=2, kernel=kernel,
+                   enable_inverse_transform=True)
     X_trans = kp.fit_transform(X)
     X_inv = kp.inverse_transform(X_trans)
     assert_allclose(X, X_inv)
