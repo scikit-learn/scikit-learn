@@ -1536,4 +1536,4 @@ def test_pls_regression_iterative_imputer():
 
     imputer = IterativeImputer(estimator=PLSRegression(n_components=2))
 
-    X_imputed = imputer.fit_transform(X_miss_california)
+    imputer.fit_transform(X_miss_california)
