@@ -118,9 +118,10 @@ class BaseGAMBoosting(ABC, BaseEstimator):
             tree_feature_iter = product(
                 range(self.n_trees_per_iteration_), range(self.n_features_in_)
             )
-            for k, feature_idx in tree_feature_iter:
+            for tree_idx, feature_idx in tree_feature_iter:
                 grower = TreeGrower(
-                    X_binned_train, gradients[0, :], hessians[0, :],
+                    X_binned_train, gradients[tree_idx, :],
+                    hessians[tree_idx, :],
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=False,
@@ -134,7 +135,7 @@ class BaseGAMBoosting(ABC, BaseEstimator):
                     feature_idx=feature_idx,
                 )
                 grower.grow()
-                _update_raw_predictions(raw_predictions[0, :], grower)
+                _update_raw_predictions(raw_predictions[tree_idx, :], grower)
 
                 # Update for the next feature
                 self._loss.update_gradients_and_hessians(
@@ -182,8 +183,8 @@ class BaseGAMBoosting(ABC, BaseEstimator):
                 predictor_iter = [predictors_for_iter[feature_idx]]
 
             for predictors_for_feature in predictor_iter:
-                for k, predictor in enumerate(predictors_for_feature):
-                    raw_predictions[k, :] += predictor.predict(
+                for tree_idx, predictor in enumerate(predictors_for_feature):
+                    raw_predictions[tree_idx, :] += predictor.predict(
                         X,
                         known_cat_bitsets=known_cat_bitsets,
                         f_idx_map=f_idx_map)
