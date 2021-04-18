@@ -930,3 +930,23 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
     assert len(ohe.categories_) == 1
     assert_array_equal(ohe.categories_[0][:-1], ['a', 'b', 'c'])
     assert np.isnan(ohe.categories_[0][-1])
+
+
+@pytest.mark.parametrize("X_train", [
+    [['AA', 'B']],
+    np.array([['AA', 'B']], dtype='O'),
+    np.array([['AA', 'B']], dtype='U'),
+])
+@pytest.mark.parametrize("X_test", [
+    [['A', 'B']],
+    np.array([['A', 'B']], dtype='O'),
+    np.array([['A', 'B']], dtype='U'),
+])
+def test_ordinal_encoder_handle_unknown_string_dtypes(X_train, X_test):
+    """Checks that ordinal encoder transforms string dtypes. Non-regression
+    test for #19872."""
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-9)
+    enc.fit(X_train)
+
+    X_trans = enc.transform(X_test)
+    assert_allclose(X_trans, [[-9, 0]])

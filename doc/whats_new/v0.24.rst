@@ -53,6 +53,9 @@ Changelog
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :meth:`preprocessing.OrdinalEncoder.transfrom` correctly handles
+  unknown values for string dtypes. :pr:`19888` by `Thomas Fan`_.
+
 :mod:`sklearn.multioutput`
 ..........................
 
