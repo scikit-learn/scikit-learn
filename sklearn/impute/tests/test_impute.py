@@ -1533,4 +1533,3 @@ def test_impute_one_feature():
     imputer = IterativeImputer(estimator=PLSRegression(n_components=2))
 
     X_imputed = imputer.fit_transform(X_miss_california)
-    print(X_imputed)
