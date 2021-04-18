@@ -82,10 +82,15 @@ class GAMBoostingRegressor(BaseEstimator):
         sample_weight = np.ones(n_samples)
         self._loss = _LOSSES["squared_error"](sample_weight=sample_weight)
 
+        self._baseline_prediction = self._loss.get_baseline_prediction(
+            y_train, None, self.n_trees_per_iteration_
+        )
         raw_predictions = np.zeros(
             shape=(self.n_trees_per_iteration_, n_samples),
             dtype=Y_DTYPE,
         )
+        raw_predictions += self._baseline_prediction
+
         self._predictors = predictors = []
 
         gradients, hessians = self._loss.init_gradients_and_hessians(
@@ -99,11 +104,13 @@ class GAMBoostingRegressor(BaseEstimator):
         effective_learning_rate = (np.power(self.learning_rate,
                                             1 / self.n_features_in_))
 
-        indices_rng = check_random_state(self._random_seed)
+        if not hasattr(self, "_indices_rng"):
+            self._indices_rng = check_random_state(self._random_seed)
+
         for iteration in range(self.max_iter):
             # sample weight for bagging
-            sample_indices = indices_rng.randint(0, high=n_samples,
-                                                 size=n_samples)
+            sample_indices = self._indices_rng.randint(0, high=n_samples,
+                                                       size=n_samples)
             sample_weight_train = (np.bincount(sample_indices,
                                                minlength=n_samples)
                                    .astype(Y_DTYPE))
@@ -152,6 +159,7 @@ class GAMBoostingRegressor(BaseEstimator):
             shape=(self.n_trees_per_iteration_, n_samples),
             dtype=Y_DTYPE,
         )
+        raw_predictions += self._baseline_prediction
         self._predict_iterations(X, self._predictors, raw_predictions)
         return raw_predictions.ravel()
 
@@ -164,6 +172,9 @@ class GAMBoostingRegressor(BaseEstimator):
             shape=(self.n_trees_per_iteration_, n_samples),
             dtype=Y_DTYPE
         )
+        # TODO: Does not actually change the shape, but this could be nicer?
+        # Have the prediction contribute an equal amount to each feature
+        raw_predictions += self._baseline_prediction / self.n_features_in_
         self._predict_iterations(X, self._predictors, raw_predictions,
                                  feature_idx)
         return raw_predictions.ravel()

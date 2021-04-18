@@ -50,10 +50,10 @@ import matplotlib.pyplot as plt
 
 fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 for feature_idx, ax in enumerate(axes.ravel()):
-    out = gam_reg.apply(X, feature_idx=feature_idx)
+    predicted = gam_reg.apply(X, feature_idx=feature_idx)
     X_sort_idx = X[:, feature_idx].argsort()
     X_sorted = X[:, feature_idx][X_sort_idx]
-    ax.plot(X_sorted, out[X_sort_idx], label="predicted", alpha=0.5)
+    ax.plot(X_sorted, predicted[X_sort_idx], label="predicted", alpha=0.5)
     ax.plot(X_sorted, functions[feature_idx](X_sorted), label="actual",
             alpha=0.5)
     ax.set_title(f"X{feature_idx}")
