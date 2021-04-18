@@ -163,3 +163,18 @@ def test_function_transformer_frame():
     transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, 'loc')
+
+
+def test_function_transformer_with_object_input():
+    data = np.array(['uni', 'dos', 'quattro']).reshape(-1, 1)
+    for dtype in ('S', 'U', 'O'):
+        data = data.astype(dtype)
+        trans = FunctionTransformer(
+            func=lambda X: None,
+            inverse_func=lambda X: data,
+            validate=False,
+            check_inverse=True)
+
+        with pytest.warns(None) as record:
+            trans.fit(data)
+        assert len(record) == 0

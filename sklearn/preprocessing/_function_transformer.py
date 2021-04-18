@@ -1,4 +1,5 @@
 import warnings
+import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import _allclose_dense_sparse
@@ -105,7 +106,17 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         """Check that func and inverse_func are the inverse."""
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
         X_round_trip = self.inverse_transform(self.transform(X[idx_selected]))
-        if not _allclose_dense_sparse(X[idx_selected], X_round_trip):
+
+        if not hasattr(X, 'dtype'):
+            X = np.asarray(X)
+        is_object_type = X.dtype.kind in ('U', 'S', 'O')
+        if is_object_type:
+            # need to coerce to Object type before elementwise comparison
+            # because when dtype.kind = 'S', np.nan == np.nan returns True
+            valid = np.alltrue(X.astype('O') == X_round_trip.astype('O'))
+        else:
+            valid = _allclose_dense_sparse(X[idx_selected], X_round_trip)
+        if not valid:
             warnings.warn("The provided functions are not strictly"
                           " inverse of each other. If you are sure you"
                           " want to proceed regardless, set"
