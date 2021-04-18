@@ -455,7 +455,7 @@ def single_linkage_label(L):
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 def mst_linkage_core(
-        DTYPE_t [:, ::1] raw_data,
+        const DTYPE_t [:, ::1] raw_data,
         DistanceMetric dist_metric):
     """
     Compute the necessary elements of a minimum spanning
