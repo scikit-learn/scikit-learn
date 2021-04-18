@@ -314,8 +314,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     learning_rate : float, default=1.
         Learning rate shrinks the contribution of each classifier by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
+        ``learning_rate`` whereas a higher learning rate increases the
+        contribution of each classifier. There is a trade-off between
+        ``learning_rate`` and ``n_estimators``.
 
     algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
