@@ -1502,7 +1502,11 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     )
 
 
-def test_impute_one_feature():
+def test_pls_regression_iterative_imputer():
+    """IterativeImputer should support PLSRegression as an estimator.
+
+    Non-regression test for issue #19352.
+    """
     rng = np.random.RandomState(42)
 
     X_california, y_california = fetch_california_housing(return_X_y=True)
