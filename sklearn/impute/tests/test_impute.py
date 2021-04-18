@@ -16,7 +16,9 @@ from sklearn.utils._testing import assert_array_almost_equal
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
+from sklearn.cross_decomposition import PLSRegression
 from sklearn.datasets import load_diabetes
+from sklearn.datasets import fetch_california_housing
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -1501,13 +1503,6 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 
 
 def test_impute_one_feature():
-    import numpy as np
-
-    from sklearn.datasets import fetch_california_housing
-    from sklearn.cross_decomposition import PLSRegression
-    from sklearn.experimental import enable_iterative_imputer  # noqa
-    from sklearn.impute import IterativeImputer
-
     rng = np.random.RandomState(42)
 
     X_california, y_california = fetch_california_housing(return_X_y=True)
