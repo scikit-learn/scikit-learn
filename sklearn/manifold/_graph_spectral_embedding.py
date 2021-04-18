@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 from scipy.sparse import diags, isspmatrix_csr
+from scipy.stats import norm
 
 from ..base import BaseEstimator
 from ..utils import check_symmetric
@@ -116,6 +117,9 @@ def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized", n_iter
     if n_components is None:
         elbows, _ = _select_dimension(X, n_elbows=n_elbows, threshold=None)
         n_components = elbows[-1]
+    elif not isinstance(n_components, int):
+        msg = "n_components must be an integer, not {}.".format(type(n_components))
+        raise ValueError(msg)
 
     # Check
     if (svd_solver == "full") & (n_components > min(X.shape)):
@@ -137,6 +141,8 @@ def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized", n_iter
         U = U[:, idx]
         V = V[idx, :]
     elif svd_solver == "randomized":
+        if not isinstance(n_iter, int):
+            raise TypeError("n_iter must be integer valued")
         U, D, V = randomized_svd(X, n_components, n_iter=n_iter)
 
     return U, D, V
@@ -257,6 +263,45 @@ def _select_dimension(
         return elbows, values, likelihoods
     else:
         return elbows, values
+def _compute_likelihood(arr):
+    """
+    Computes the log likelihoods based on normal distribution given
+    a 1d-array of sorted values. If the input has no variance,
+    the likelihood will be nan.
+    """
+    n_elements = len(arr)
+    likelihoods = np.zeros(n_elements)
+
+    for idx in range(1, n_elements + 1):
+        # split into two samples
+        s1 = arr[:idx]
+        s2 = arr[idx:]
+
+        # deal with when input only has 2 elements
+        if (s1.size == 1) & (s2.size == 1):
+            likelihoods[idx - 1] = -np.inf
+            continue
+
+        # compute means
+        mu1 = np.mean(s1)
+        if s2.size != 0:
+            mu2 = np.mean(s2)
+        else:
+            # Prevent numpy warning for taking mean of empty array
+            mu2 = -np.inf
+
+        # compute pooled variance
+        variance = ((np.sum((s1 - mu1) ** 2) + np.sum((s2 - mu2) ** 2))) / (
+            n_elements - 1 - (idx < n_elements)
+        )
+        std = np.sqrt(variance)
+
+        # compute log likelihoods
+        likelihoods[idx - 1] = np.sum(norm.logpdf(s1, loc=mu1, scale=std)) + np.sum(
+            norm.logpdf(s2, loc=mu2, scale=std)
+        )
+
+    return likelihoods
 
 def _to_laplacian(A, form="DAD", regularizer=None):
     r"""
@@ -376,17 +421,19 @@ class GraphSpectralEmbedding(BaseEstimator):
 
     Computes the adjacency or laplacian spectral embedding of a graph.
     The adjacency spectral embedding (ASE) is a k-dimensional Euclidean representation
-    of the graph based on its adjacency matrix. It relies on an SVD to reduce
-    the dimensionality to the specified k, or if k is unspecified, can find a number of
+    of the graph based on its adjacency matrix, while the laplacian spectral embedding
+    (LSE) is based on its Laplacian matrix. It relies on an SVD to reduce the
+    dimensionality to the specified k, or if k is unspecified, can find a number of
     dimensions automatically.
+
 
     Parameters
     ----------
     n_components : int or None, default = None
         Desired dimensionality of output data. If "full",
         ``n_components`` must be ``<= min(X.shape)``. Otherwise, ``n_components`` must be
-        ``< min(X.shape)``. If None, then optimal dimensions will be chosen by
-        :func:`~graspologic.embed.select_dimension` using ``n_elbows`` argument.
+        ``< min(X.shape)``. If None, then optimal dimensions will be chosen by Zhu and
+        Ghodsi method using ``n_elbows`` argument.
     n_elbows : int, optional, default: 2
         If ``n_components`` is None, then compute the optimal embedding dimension using
         Zhu and Ghodsi method. Otherwise, ignored.
@@ -430,7 +477,7 @@ class GraphSpectralEmbedding(BaseEstimator):
     Attributes
     ----------
     n_features_in_: int
-        Number of features passed to the :func:`~graspologic.embed.AdjacencySpectralEmbed.fit` method.
+        Number of features passed to the method.
     latent_left_ : array, shape (n_samples, n_components)
         Estimated left latent positions of the graph.
     latent_right_ : array, shape (n_samples, n_components), or None
@@ -453,7 +500,11 @@ class GraphSpectralEmbedding(BaseEstimator):
     .. [1] Sussman, D.L., Tang, M., Fishkind, D.E., Priebe, C.E.  "A
        Consistent Adjacency Spectral Embedding for Stochastic Blockmodel Graphs,"
        Journal of the American Statistical Association, Vol. 107(499), 2012
-    .. [2] Levin, K., Roosta-Khorasani, F., Mahoney, M. W., & Priebe, C. E. (2018).
+    .. [2] Zhu, M. and Ghodsi, A. (2006).
+        Automatic dimensionality selection from the scree plot via the use of
+        profile likelihood. Computational Statistics & Data Analysis, 51(2),
+        pp.918-930.
+    .. [3] Levin, K., Roosta-Khorasani, F., Mahoney, M. W., & Priebe, C. E. (2018).
         Out-of-sample extension of graph adjacency spectral embedding. PMLR: Proceedings
         of Machine Learning Research, 80, 2975-2984.
     """
@@ -518,11 +569,14 @@ class GraphSpectralEmbedding(BaseEstimator):
         if isinstance(self.algorithm, str):
             if self.algorithm.lower() not in {"ase", "lse"}:
                 raise ValueError(("%s is not a valid embedding method. Expected "
-                                  "'ASE' or 'LSE'") % self.affinity)
+                                  "'ASE' or 'LSE'") % self.algorithm)
+        else:
+            raise TypeError('"algorithm" must be of type string')
+
         # reduces the dimensionality of an adjacency matrix using the desired embedding method.
-        if self.algorithm == 'ASE' and self.diag_aug:
+        if self.algorithm.lower() == 'ase' and self.diag_aug:
             A = _augment_diagonal(A)
-        elif self.algorithm == 'LSE':
+        elif self.algorithm.lower() == 'lse':
             A = _to_laplacian(A, form=self.form, regularizer=self.regularizer)
 
         U, D, V = _selectSVD(

@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import numpy as np
 
 from sklearn.manifold import GraphSpectralEmbedding
@@ -21,6 +22,12 @@ def _er_nm(n, m, directed=False):
         A = np.triu(A)
         A = A + A.T - np.diag(np.diag(A))
     return A
+
+def _test_inputs(X, error_type, **kws):
+    with pytest.raises(error_type):
+        gse = GraphSpectralEmbedding(**kws)
+        gse.fit(X)
+
 def _test_output_dim_directed(self, method):
     n_components = 4
     embed = GraphSpectralEmbedding(n_components=n_components, concat=True, algorithm=method)
@@ -43,6 +50,34 @@ def _test_output_dim(self, method, sparse=False, *args, **kwargs):
     embed.fit(A)
     self.assertEqual(embed.latent_left_.shape, (n, 4))
     self.assertTrue(embed.latent_right_ is None)
+
+def test_input_params():
+    X = _er_nm(10, 20)
+
+    # value error, check n_components type int
+    _test_inputs(X, ValueError, n_components='not_int')
+
+    # n_components must be <= min(X.shape)
+    _test_inputs(X, ValueError, n_components=15)
+
+    # value error, check n_elbow type int
+    _test_inputs(X, ValueError, n_elbows='not_int')
+
+    # value error, check n_elbow > 1
+    _test_inputs(X, ValueError, n_elbows=0)
+
+    # check algorithm string
+    _test_inputs(X, ValueError, algorithm='wrong')
+    _test_inputs(X, TypeError, algorithm=1)
+
+    # svd_solver string
+    _test_inputs(X, ValueError, svd_solver='wrong')
+
+    # form string
+    _test_inputs(X, TypeError, algorithm='lse', form='wrong')
+
+    # n_iter type
+    _test_inputs(X, TypeError, n_iter='not_int')
 
 class TestAdjacencySpectralEmbed(unittest.TestCase):
     # def setUp(self):
@@ -67,6 +102,11 @@ class TestAdjacencySpectralEmbed(unittest.TestCase):
 
     def test_output_dim_directed(self):
         _test_output_dim_directed(self, 'ASE')
+    def test_unconnected_warning(self):
+        A = _er_nm(100, 10)
+        with self.assertWarns(UserWarning):
+            ase = GraphSpectralEmbedding(algorithm='ASE')
+            ase.fit(A)
 
 
 class TestLaplacianSpectralEmbed(unittest.TestCase):
