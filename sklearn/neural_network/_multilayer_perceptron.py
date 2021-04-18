@@ -874,6 +874,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     t_ : int
         The number of training samples seen by the solver during fitting.
+        Mathematically equals `n_iters * X.shape[0]`, it means
+        `time_step` and it is used by optimizer's learning rate scheduler.
 
     coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
@@ -1294,11 +1296,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     loss_curve_ : list of shape (`n_iter_`,)
         Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
-
-    t_ : int
-        The number of training samples seen by the solver during fitting.
-        Mathematically equals `n_iters * X.shape[0]`, it means
-        `time_step` and it is used by optimizer's learning rate scheduler.
 
     coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
