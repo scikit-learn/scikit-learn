@@ -35,7 +35,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept.
 
     solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
-            'revised simplex', 'simplex'}, default='interior-point'
+            'revised simplex'}, default='interior-point'
         Method used by scipy.optimize.linprog to solve the linear programming
         formulation. Note that the 'highs' methods are only available with
         scipy>=1.6.0, but recommended for usage.
@@ -120,7 +120,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if self.solver not in (
             "highs-ds", "highs-ipm", "highs", "interior-point",
-            "revised simplex", "simplex"
+            "revised simplex",
         ):
             raise ValueError(f"Invalid value for argument solver, "
                              f"got {self.solver}")
