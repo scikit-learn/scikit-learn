@@ -852,8 +852,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             raise ValueError("compute_full_tree must be True if "
                              "distance_threshold is set.")
 
-        if self.linkage == "ward" and self.affinity not in ["euclidean",
-                "l2", "precomputed"]:
+        if (self.linkage == "ward"
+                and self.affinity not in ["euclidean", "l2", "precomputed"]):
             raise ValueError("%s was provided as affinity. Ward can only "
                              "work with euclidean distances." %
                              (self.affinity, ))
