@@ -787,7 +787,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
-        _params = build_method_metadata_params(
+        params = build_method_metadata_params(
             children={'scorers': scorers,
                       'estimator': estimator,
                       'splitter': cv_orig},
@@ -798,9 +798,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             ],
             metadata=fit_params
         )
-        _fit_params = _params.fit
-        _score_params = _params.score
-        _cv_params = _params.split
+        _fit_params = params.fit
+        _score_params = params.score
+        _cv_params = params.split
 
         _cv_param_values = _cv_params.values()
         _cv_param_names = _cv_params.keys()
@@ -809,7 +809,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         _cv_param_values = indexables[2:] if len(indexables) > 2 else []
         _cv_params = {name: value for name, value
                       in zip(_cv_param_names, _cv_param_values)}
-        _validate_required_props(self.get_metadata_request().fit, fit_params)
+        _validate_required_props(
+            self.get_metadata_request().fit,
+            fit_params,
+            validate="both"
+        )
         _fit_params = _check_fit_params(X, _fit_params)
 
         n_splits = cv_orig.get_n_splits(X, y, **_cv_params)

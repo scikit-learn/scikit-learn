@@ -284,7 +284,7 @@ class Pipeline(_BaseComposition):
             return fit_params_steps
 
         required_props = self.get_metadata_request().fit
-        _validate_required_props(required_props, fit_params)
+        _validate_required_props(required_props, fit_params, validate="both")
         for _, name, transformer in self._iter(filter_passthrough=True):
             fit_params_steps[name] = build_method_metadata_params(
                 children={'step': transformer},

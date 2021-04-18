@@ -81,7 +81,10 @@ class MyEst(ClassifierMixin, BaseEstimator):
         self.C = C
 
     def fit(self, X, y, **fit_params):
-        _validate_required_props(self.get_metadata_request().fit, fit_params)
+        _validate_required_props(
+            self.get_metadata_request().fit,
+            fit_params,
+            validate="both")
         assert set(fit_params.keys()) <= set(
             [list(x)[0] for x in self.get_metadata_request().fit.values()]
         )

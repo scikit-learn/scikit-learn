@@ -1208,7 +1208,7 @@ def _standardize_method_request(method_request):
         if isinstance(dest, str):
             dest = {dest}
             method_request[param] = dest
-        if not isinstance(dest, set):
+        if dest is not None and not isinstance(dest, set):
             raise ValueError(f"Cannot standardize {method_request}")
     return method_request
 
@@ -1225,7 +1225,8 @@ def _standardize_metadata_request(request):
     return res
 
 
-def _validate_required_props(required_props, given_props):
+def _validate_required_props(
+        required_props, given_props, validate):
     """Checks if all the given props are requested.
 
     Parameters
@@ -1236,19 +1237,34 @@ def _validate_required_props(required_props, given_props):
     given_props: dict of {str: data}
         A ``dict`` with keys as given properties.
 
+    validate : False, "requested-provided", "provided-requested", or "both" \
+            default=False
+        "requested-provided" checks if all requested metadata are provided;
+        "provided-requested" checks if all provided metadata are requested;
+        "both" does both the above checks;
+        ``False`` doesn't do any of the above checks.
+
     Returns
     -------
     None
     """
     required_props = _standardize_method_request(required_props)
     given_props = {} if given_props is None else given_props
-    if set(given_props.keys()) - set(required_props.keys()):
-        raise ValueError("Requested properties are: {}, but {} "
-                         "provided".format(list(required_props),
-                                           list(given_props)))
+    if not validate:
+        return
+    if validate in {"provided-requested", "both"}:
+        if set(given_props.keys()) - set(required_props.keys()):
+            raise ValueError("Requested properties are: {}, but {} "
+                             "provided".format(list(required_props),
+                                               list(given_props)))
+    if validate in {"requested-provided", "both"}:
+        if set(required_props.keys()) - set(given_props.keys()):
+            raise ValueError("Requested properties are: {}, but {} "
+                             "provided".format(list(required_props),
+                                               list(given_props)))
 
 
-def _check_method_props(required_props, props, validate=True):
+def _check_method_props(required_props, props, validate="provided-requested"):
     """Maps the given props to what ``obj``'s ``method`` needs.
 
     Parameters
@@ -1262,8 +1278,12 @@ def _check_method_props(required_props, props, validate=True):
         This can be the ``kwargs`` passed to ``fit`` as ``**kwargs`` for
         example.
 
-    validate: bool, default=True
-        If ``True``, it'll make sure all provided props are requested.
+    validate : False, "requested-provided", "provided-requested", or "both" \
+            default="provided-requested"
+        "requested-provided" checks if all requested metadata are provided;
+        "provided-requested" checks if all provided metadata are requested;
+        "both" does both the above checks;
+        ``False`` doesn't do any of the above checks.
 
     Returns
     -------
@@ -1275,8 +1295,7 @@ def _check_method_props(required_props, props, validate=True):
     required_props = {} if required_props is None else required_props
     required_props = _standardize_method_request(required_props)
     props = {key: value for key, value in props.items() if value is not None}
-    if validate:
-        _validate_required_props(required_props, props)
+    _validate_required_props(required_props, props, validate)
     # print("props:", props)
     # print("required_props: ", required_props)
     res = {value: props[key] for key, values
@@ -1369,7 +1388,8 @@ def build_router_metadata_request(children, routing):
     return out
 
 
-def build_method_metadata_params(children, routing, metadata):
+def build_method_metadata_params(
+        children, routing, metadata, validate=False):
     """Build parameters required to be passed to different methods of children.
 
     For instance, GridSearchCV may call:
@@ -1398,7 +1418,12 @@ def build_method_metadata_params(children, routing, metadata):
     metadata : dict
         The parameters given passed to the method. This can be fit_params
         passed to a `GridSearchCV().fit(...)` for instance.
-
+    validate : False, "requested-provided", "provided-requested", or "both" \
+            default=False
+        "requested-provided" checks if all requested metadata are provided;
+        "provided-requested" checks if all provided metadata are requested;
+        "both" does both the above checks;
+        ``False`` doesn't do any of the above checks.
     Returns
     -------
     metadata_params : dict
@@ -1481,8 +1506,13 @@ def _get_props_from_objs(objs, mask_values):
             for method, m_props in obj_props.items():
                 if m_props:
                     if mask_values:
-                        metadata_request[method].update(
-                            {x: x for x in m_props})
+                        update = dict()
+                        for x, v in m_props.items():
+                            if v is None:
+                                update[x] = v
+                            else:
+                                update[x] = x
+                        metadata_request[method].update(update)
                     else:
                         metadata_request[method].update(
                             {x: v for x, v in m_props.items()})

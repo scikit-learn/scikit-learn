@@ -1082,7 +1082,11 @@ def test_non_uniform_weights_toy_edge_case_clf():
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     for loss in ('deviance', 'exponential'):
-        gb = GradientBoostingClassifier(n_estimators=5, loss=loss)
+        gb = GradientBoostingClassifier(
+            n_estimators=5,
+            loss=loss,
+            init=DummyClassifier().request_sample_weight(fit=True)
+        )
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
 
@@ -1249,8 +1253,9 @@ def test_gradient_boosting_with_init_pipeline():
 
     X, y = make_regression(random_state=0)
     init = make_pipeline(LinearRegression())
-    gb = GradientBoostingRegressor(init=init).request_sample_weight(fit=True)
+    gb = GradientBoostingRegressor(init=init)
     gb.fit(X, y)  # pipeline without sample_weight works fine
+    gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
     with pytest.raises(
             ValueError,
@@ -1267,9 +1272,8 @@ def test_gradient_boosting_with_init_pipeline():
             ValueError,
             match='nu <= 0 or nu > 1'):
         # Note that NuSVR properly supports sample_weight
-        init = NuSVR(gamma='auto', nu=1.5)
-        gb = GradientBoostingRegressor(init=init).request_sample_weight(
-            fit=True)
+        init = NuSVR(gamma='auto', nu=1.5).request_sample_weight(fit=True)
+        gb = GradientBoostingRegressor(init=init)
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 

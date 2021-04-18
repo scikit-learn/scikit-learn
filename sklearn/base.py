@@ -166,7 +166,7 @@ class _MetadataRequest:
         for method, values in defaults.items():
             for key, value in values.items():
                 if (key != metadata_name or
-                        (value is None and value != {metadata_name})):
+                        (value is not None and value != {metadata_name})):
                     raise ValueError(
                         "The default values can only be None, or "
                         "a string with the same value as the name of the "
@@ -259,6 +259,10 @@ class MetadataConsumer:
 
 
 class SampleWeightConsumer(MetadataConsumer):
+    _metadata_request__sample_weight = {
+        'fit': {'sample_weight': None}
+    }
+
     def request_sample_weight(self, *, fit=None, score=None):
         """Define how to receive sample_weight from a parent meta-estimator
 

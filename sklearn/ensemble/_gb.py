@@ -55,6 +55,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 from ..utils.validation import _deprecate_positional_args
+from ..utils import build_method_metadata_params
 
 
 class VerboseReporter:
@@ -362,7 +363,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _warn_mae_for_criterion(self):
         pass
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
+    def fit(self, X, y, sample_weight=None, monitor=None, **fit_params):
         """Fit the gradient boosting model.
 
         Parameters
@@ -393,6 +394,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             computing held-out estimates, early stopping, model introspect, and
             snapshoting.
 
+        **fit_params : dict
+            Other parameters required by ``init.fit(...)``. If ``init`` is an
+            estimator and requests certain metadata, they should be included
+            in ``fit_params``.
+
         Returns
         -------
         self : object
@@ -411,8 +417,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    dtype=DTYPE, multi_output=True)
-
-        sample_weight_is_none = sample_weight is None
 
         sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -455,24 +459,19 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                            dtype=np.float64)
             else:
-                # XXX clean this once we have a support_sample_weight tag
-                if sample_weight_is_none:
-                    self.init_.fit(X, y)
-                else:
-                    msg = ("The initial estimator {} does not support sample "
-                           "weights.".format(self.init_.__class__.__name__))
-                    try:
-                        self.init_.fit(X, y, sample_weight=sample_weight)
-                    except TypeError as e:
-                        # regular estimator without SW support
-                        raise ValueError(msg) from e
-                    except ValueError as e:
-                        if "pass parameters to specific steps of "\
-                           "your pipeline using the "\
-                           "stepname__parameter" in str(e):  # pipeline
-                            raise ValueError(msg) from e
-                        else:  # regular estimator whose input checking failed
-                            raise
+                if sample_weight is not None:
+                    fit_params["sample_weight"] = sample_weight
+                params = build_method_metadata_params(
+                    children={
+                        'init': self.init_
+                    },
+                    routing=[
+                        ('init', 'fit', 'fit'),
+                    ],
+                    metadata=fit_params,
+                    validate="requested-provided"
+                )
+                self.init_.fit(X, y, **params.fit)
 
                 raw_predictions = \
                     self.loss_.get_init_raw_predictions(X, self.init_)
