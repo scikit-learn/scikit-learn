@@ -311,7 +311,7 @@ Changelog
   :pr:`18649` by `Leandro Hermida <hermidalc>` and
   `Rodion Martynov <marrodion>`.
 
-- |Fix| The `fit` method of the successive halving parameter search 
+- |Fix| The `fit` method of the successive halving parameter search
   (:class:`model_selection.HalvingGridSearchCV`, and
   :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
   `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
