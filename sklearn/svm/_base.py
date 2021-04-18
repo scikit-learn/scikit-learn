@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
 from . import _libsvm as libsvm  # type: ignore
-from .import _liblinear as liblinear  # type: ignore
+from . import _liblinear as liblinear  # type: ignore
 from . import _libsvm_sparse as libsvm_sparse  # type: ignore
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
