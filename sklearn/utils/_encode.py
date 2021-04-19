@@ -20,7 +20,7 @@ def _unique(values, *, return_inverse=False, return_counts=False):
     return_inverse : bool, default=False
         If True, also return the indices of the unique values.
 
-    return_count : bool, default=False
+    return_counts : bool, default=False
         If True, also return the number of times each unique item appears in
         values.
 

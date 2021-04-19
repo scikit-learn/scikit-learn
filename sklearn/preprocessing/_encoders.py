@@ -236,9 +236,7 @@ class OneHotEncoder(_BaseEncoder):
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression. Drop is not
-        support when `min_frequency` or `max_categories` is set to combine
-        infrequent categories.
+        into a neural network or an unregularized regression.
 
         However, dropping one category breaks the symmetry of the original
         representation and can therefore induce a bias in downstream models,
@@ -282,14 +280,14 @@ class OneHotEncoder(_BaseEncoder):
         - 'infrequent_if_exist' : When an unknown category is encountered
           during transform, the resulting one-hot encoded columns for this
           feature will map to the infrequent category if it exists. In the
-          inverse transform, an unknown category will be denoted as
-          'infrequent' if the category if it exists.
-          Read more in the
-          :ref:`User Guide <one_hot_encoder_infrequent_categories>`
-          If a infrequent category does not exist, then :meth:`transform`
-          and :meth:`inverse_transform` will handle as 'ignore'.
+          inverse transform, an unknown category will be mapped to the category
+          denoted `'infrequent'` if it exists. If the `'infrequent'` category
+          does not exist, then :meth:`transform` and :meth:`inverse_transform`
+          will handle an unknown category with `handle_unknown='ignore'`. Read
+          more in the
+          :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
             `'infrequent_if_exist'` was added to automatically handle unknown
             categories and infrequent categories.
 
