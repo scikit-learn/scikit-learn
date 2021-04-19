@@ -159,7 +159,6 @@ def test_error_on_wrong_normalize():
     error_msg = "Leave 'normalize' to its default"
     with pytest.raises(ValueError, match=error_msg):
         _deprecate_normalize(normalize, default, 'estimator')
-    ValueError
 
 
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
@@ -220,33 +219,6 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
 
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
-
-
-@pytest.mark.parametrize(
-    'normalize, n_warnings, warning',
-    [(True, 1, FutureWarning),
-     (False, 1, FutureWarning),
-     ("deprecated", 0, None)]
-)
-# FIXME remove test in 1.4
-def test_linear_regression_normalize_deprecation(
-     normalize, n_warnings, warning
-):
-    # check that we issue a FutureWarning when normalize was set in
-    # LinearRegression
-    rng = check_random_state(0)
-    n_samples = 200
-    n_features = 2
-    X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.0
-    y = rng.rand(n_samples)
-
-    model = LinearRegression(normalize=normalize)
-    with pytest.warns(warning) as record:
-        model.fit(X, y)
-    assert len(record) == n_warnings
-    if n_warnings:
-        assert "'normalize' was deprecated" in str(record[0].message)
 
 
 # FIXME: 'normalize' to be removed in 1.2 in LinearRegression
