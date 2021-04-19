@@ -40,6 +40,11 @@ Changelog
   :class:`model_selection.GridSearchCV` now correctly shows the score for
   single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
 
+- |Fix| Some values in the `cv_results_` attribute of
+  :class:`model_selection.HalvingRandomSearchCV` and
+  :class:`model_selection.HalvingGridSearchCV` were not properly converted to
+  numpy arrays. :pr:`19211` by `Nicolas Hug`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -47,6 +52,9 @@ Changelog
   :class:`preprocessing.OrdinalEncoder` to only allow for `'error'` and
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :meth:`preprocessing.OrdinalEncoder.transfrom` correctly handles
+  unknown values for string dtypes. :pr:`19888` by `Thomas Fan`_.
 
 :mod:`sklearn.multioutput`
 ..........................

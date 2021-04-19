@@ -5,6 +5,7 @@ Several basic tests for hierarchical clustering procedures
 # Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
 #          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
+import itertools
 from tempfile import mkdtemp
 import shutil
 import pytest
@@ -15,7 +16,11 @@ from scipy import sparse
 from scipy.cluster import hierarchy
 
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.utils._testing import assert_almost_equal
+from sklearn.neighbors.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    create_memmap_backed_data
+)
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
 
@@ -28,8 +33,12 @@ from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors import kneighbors_graph
-from sklearn.cluster._hierarchical_fast import average_merge, max_merge
+from sklearn.neighbors import kneighbors_graph, DistanceMetric
+from sklearn.cluster._hierarchical_fast import (
+    average_merge,
+    max_merge,
+    mst_linkage_core
+)
 from sklearn.utils._fast_dict import IntFloatDict
 from sklearn.utils._testing import assert_array_equal
 from sklearn.datasets import make_moons, make_circles
@@ -264,6 +273,16 @@ def test_agglomerative_clustering():
     assert_array_equal(clustering.labels_, clustering2.labels_)
 
 
+def test_agglomerative_clustering_memory_mapped():
+    """AgglomerativeClustering must work on mem-mapped dataset.
+
+    Non-regression test for issue #19875.
+    """
+    rng = np.random.RandomState(0)
+    Xmm = create_memmap_backed_data(rng.randn(50, 100))
+    AgglomerativeClustering(affinity="euclidean", linkage="single").fit(Xmm)
+
+
 def test_ward_agglomeration():
     # Check that we obtain the correct solution in a simplistic case
     rng = np.random.RandomState(0)
@@ -373,6 +392,25 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     cut = _hc_cut(n_clusters, children, n_leaves)
     cut_scipy = _hc_cut(n_clusters, children_scipy, n_leaves)
     assess_same_labelling(cut, cut_scipy)
+
+
+@pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
+def test_mst_linkage_core_memory_mapped(metric):
+    """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
+
+    Non-regression test for issue #19875.
+    """
+    rng = np.random.RandomState(seed=1)
+    X = rng.normal(size=(20, 4))
+    Xmm = create_memmap_backed_data(X)
+    argdict = METRICS_DEFAULT_PARAMS[metric]
+    keys = argdict.keys()
+    for vals in itertools.product(*argdict.values()):
+        kwargs = dict(zip(keys, vals))
+        distance_metric = DistanceMetric.get_metric(metric, **kwargs)
+        mst = mst_linkage_core(X, distance_metric)
+        mst_mm = mst_linkage_core(Xmm, distance_metric)
+        np.testing.assert_equal(mst, mst_mm)
 
 
 def test_identical_points():
