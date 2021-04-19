@@ -565,3 +565,5 @@ def test_pls_constant_y():
     msg = "Y residual constant at iteration"
     with pytest.warns(UserWarning, match=msg):
         pls.fit(x, y)
+
+    assert_allclose(pls.x_rotations_, 0)
