@@ -531,26 +531,26 @@ class OneHotEncoder(_BaseEncoder):
             missing_drops = []
             drop_indices = []
 
-            for col_idx, (val, cat_list) in enumerate(zip(self.drop,
-                                                          self.categories_)):
-                if not is_scalar_nan(val):
-                    drop_idx = np.where(cat_list == val)[0]
+            drop_cat_itr = enumerate(zip(self.drop, self.categories_))
+            for col_idx, (drop_val, cat_list) in drop_cat_itr:
+                if not is_scalar_nan(drop_val):
+                    drop_idx = np.where(cat_list == drop_val)[0]
                     if drop_idx.size:  # found drop idx
                         drop_indices.append(
                             self._convert_to_infrequent_idx(col_idx,
                                                             drop_idx[0]))
                     else:
-                        missing_drops.append((col_idx, val))
+                        missing_drops.append((col_idx, drop_val))
                     continue
 
-                # val is nan, find nan in categories manually
+                # drop_val is nan, find nan in categories manually
                 for cat_idx, cat in enumerate(cat_list):
                     if is_scalar_nan(cat):
                         drop_indices.append(
                             self._convert_to_infrequent_idx(col_idx, cat_idx))
                         break
                 else:  # no break
-                    missing_drops.append((col_idx, val))
+                    missing_drops.append((col_idx, drop_val))
 
             if any(missing_drops):
                 msg = ("The following categories were supposed to be "

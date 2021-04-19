@@ -1087,6 +1087,30 @@ def test_ohe_infrequent_three_levels_user_cats():
     assert_array_equal(expected_inv, X_inv)
 
 
+def test_ohe_infrequent_mixed():
+    """Test infrequent categories where feature 0 has infrequent categories,
+    and feature 1 does not."""
+
+    # X[:, 0] 1 and 2 are infrequent
+    # X[:, 1] nothing is infrequent
+    X = np.c_[[0, 1, 3, 3, 3, 3, 2, 0, 3],
+              [0, 0, 0, 0, 1, 1, 1, 1, 1]]
+
+    ohe = OneHotEncoder(max_categories=3, drop='if_binary', sparse=False)
+    ohe.fit(X)
+
+    X_test = [[3, 0], [1, 1]]
+    X_trans = ohe.transform(X_test)
+
+    # feature 1 is binary so it drops a category 0
+    assert_allclose(X_trans, [[0, 1, 0, 0], [0, 0, 1, 1]])
+
+    # dropping a infrequent category in feature 0
+    ohe.set_params(drop=[1, 1]).fit(X)
+    X_trans = ohe.transform(X_test)
+    assert_allclose(X_trans, [[0, 1, 1], [0, 0, 0]])
+
+
 def test_ohe_infrequent_multiple_categories():
     """Test infrequent categories with feature matrix with 3 features."""
 
@@ -1096,7 +1120,7 @@ def test_ohe_infrequent_multiple_categories():
 
     ohe = OneHotEncoder(categories='auto', max_categories=3,
                         handle_unknown='infrequent_if_exist')
-    # X[:, 0] 1 and 2 is infrequent
+    # X[:, 0] 1 and 2 are infrequent
     # X[:, 1] 1 and 10 are infrequent
     # X[:, 2] nothing is infrequent
 
