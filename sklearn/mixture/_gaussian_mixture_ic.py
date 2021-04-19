@@ -2,6 +2,7 @@
 
 # Author: Thomas Athey <tathey1@jhmi.edu>
 # Modified by Benjamin Pedigo <bpedigo@jhu.edu>, Tingshan Liu <tliu68@jhmi.edu>
+# and Giorgio Di Salvo <gdisalv1@jhu.edu>
 
 
 import numpy as np
@@ -46,7 +47,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         If ``label_init`` is given, ``min_components`` must match number of
         unique labels in ``label_init``.
 
-    affinity : {'euclidean','manhattan','cosine','none', 'all' (default)},
+    affinity : {'euclidean', 'manhattan', 'cosine', 'none', 'all' (default)},
         optional
         String or list/array describing the type of affinities to use
         in agglomeration. If a string, it must be one of:
@@ -70,7 +71,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         the zero vector. If the input matrix has a zero row, cosine similarity
         will be skipped and a warning will be thrown.
 
-    linkage : {'ward','complete','average','single', 'all' (default)}, optional
+    linkage : {'ward', 'complete', 'average', 'single', 'all' (default)},
+        optional
         String or list/array describing the type of linkages to use
         in agglomeration. If a string, it must be one of:
 
@@ -123,7 +125,13 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         If provided, ``min_components`` and ``max_components`` must match
         the number of unique labels given here.
 
-    max_iter : int, optional (default = 100).
+    n_init : int, optional (default = 1)
+        If ``n_init`` is larger than 1 and ``label_init`` is None, additional
+        ``n_init``-1 runs of :class:`sklearn.mixture.GaussianMixture`
+        initialized with k-means will be performed
+        for all covariance parameters in ``covariance_type``.
+
+    max_iter : int, optional (default = 100)
         The maximum number of EM iterations to perform.
 
     verbose : int, optional (default = 0)
@@ -133,7 +141,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     criterion : str {"bic" or "aic"}, optional, (default="bic")
         Select the best model based on Bayesian Information Criterion (bic) or
-        Aikake Information Criterion (aic)
+        Aikake Information Criterion (aic).
 
     max_agglom_size : int or None, optional (default = 2000)
         The maximum number of datapoints on which to do agglomerative
@@ -242,6 +250,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         covariance_type="all",
         random_state=None,
         label_init=None,
+        n_init=1,
         max_iter=100,
         verbose=0,
         criterion="bic",
@@ -255,8 +264,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self.linkage = linkage
         self.covariance_type = covariance_type
         self.random_state = random_state
-        self.max_iter = max_iter
         self.label_init = label_init
+        self.n_init = n_init
+        self.max_iter = max_iter
         self.verbose = verbose
         self.criterion = criterion
         self.max_agglom_size = max_agglom_size
@@ -348,6 +358,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             labels_init = None
         self.label_init = labels_init
 
+        check_scalar(
+            self.n_init, name="n_init", target_type=int, min_val=1
+        )
+
         if self.criterion not in ["aic", "bic"]:
             msg = f'criterion is {self.criterion} but must be "aic" or "bic".'
             raise ValueError(msg)
@@ -373,7 +387,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         return gm_params
 
     def _fit_cluster(
-        self, X, X_subset, y, ag_params, gm_params, agg_clustering
+        self, X, X_subset, y, ag_params, gm_params, agg_clustering, seed
     ):
         label_init = self.label_init
         if label_init is not None:
@@ -386,6 +400,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             gm_params["init_params"] = "kmeans"
         gm_params["reg_covar"] = 0
         gm_params["max_iter"] = self.max_iter
+        gm_params["random_state"] = seed
 
         # if none of the iterations converge, bic/aic is set to inf
         criter = np.inf
@@ -447,6 +462,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         X = check_array(
             X, dtype=[np.float64, np.float32], ensure_min_samples=1
         )
+
         random_state = check_random_state(self.random_state)
 
         # check n_components against sample size
@@ -503,7 +519,15 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         )
 
         param_grid = list(ParameterGrid(param_grid))
-        param_grid_ag, param_grid = _process_paramgrid(param_grid)
+        param_grid_ag, param_grid = _process_paramgrid(
+            param_grid, self.n_init, self.label_init
+        )
+
+        if isinstance(random_state, int):
+            np.random.seed(random_state)
+            seeds = np.random.randint(1e8, size=len(param_grid))
+        else:
+            seeds = [random_state] * len(param_grid)
 
         n = X.shape[0]
         if self.max_agglom_size is None or n <= self.max_agglom_size:
@@ -527,7 +551,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                     )
                     ag_labels.append(hierarchical_labels)
 
-        def _fit_for_data(ag_params, gm_params):
+        def _fit_for_data(ag_params, gm_params, seed):
             n_clusters = gm_params["n_components"]
             if (ag_params["affinity"] != "none") and (self.label_init is None):
                 index = param_grid_ag.index(ag_params)
@@ -537,12 +561,12 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             else:
                 agg_clustering = []
             return self._fit_cluster(
-                X, X_subset, y, ag_params, gm_params, agg_clustering
+                X, X_subset, y, ag_params, gm_params, agg_clustering, seed
             )
 
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_fit_for_data)(ag_params, gm_params)
-            for (ag_params, gm_params) in param_grid
+            delayed(_fit_for_data)(ag_params, gm_params, seed)
+            for (ag_params, gm_params), seed in zip(param_grid, seeds)
         )
         best_idx = np.argmin([result.criterion for result in results])
 
@@ -659,7 +683,7 @@ def _onehot_to_initial_params(X, onehot, cov_type):
     return weights, means, precisions
 
 
-def _process_paramgrid(paramgrid):
+def _process_paramgrid(paramgrid, n_init, label_init):
     """
     Remove combinations of affinity and linkage that are not possible.
 
@@ -698,10 +722,22 @@ def _process_paramgrid(paramgrid):
         else:
             gm_params = {key: params[key] for key in gm_keys}
             ag_params = {key: params[key] for key in ag_keys}
+            paramgrid_processed.append([ag_params, gm_params])
+
             if ag_params not in ag_params_processed:
                 ag_params_processed.append(ag_params)
 
-            paramgrid_processed.append([ag_params, gm_params])
+            if (
+                ag_params["affinity"] == "none"
+                and n_init > 1
+                and label_init is None
+            ):
+                more_kmeans_init = gm_params.copy()
+                more_kmeans_init.update({"n_init": 1})
+                paramgrid_processed += [
+                    [{"affinity": "none", "linkage": "none"}, more_kmeans_init]
+                ] * (n_init - 1)
+
     return ag_params_processed, paramgrid_processed
 
 
