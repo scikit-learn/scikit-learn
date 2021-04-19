@@ -670,7 +670,7 @@ def explained_variance_score(y_true, y_pred, *,
 @_deprecate_positional_args
 def r2_score(y_true, y_pred, *, sample_weight=None,
              multioutput="uniform_average"):
-    """R^2 (coefficient of determination) regression score function.
+    """:math:`R^2` (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
     model can be arbitrarily worse). A constant model that always
