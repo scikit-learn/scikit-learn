@@ -15,7 +15,7 @@ from ._typedefs import DTYPE, ITYPE
 #
 #  We use these for the default (euclidean) case so that they can be
 #  inlined.  This leads to faster computation for the most common case
-cdef inline DTYPE_t euclidean_dist(DTYPE_t* x1, DTYPE_t* x2,
+cdef inline DTYPE_t euclidean_dist(const DTYPE_t* x1, const DTYPE_t* x2,
                                    ITYPE_t size) nogil except -1:
     cdef DTYPE_t tmp, d=0
     cdef np.intp_t j
@@ -25,7 +25,7 @@ cdef inline DTYPE_t euclidean_dist(DTYPE_t* x1, DTYPE_t* x2,
     return sqrt(d)
 
 
-cdef inline DTYPE_t euclidean_rdist(DTYPE_t* x1, DTYPE_t* x2,
+cdef inline DTYPE_t euclidean_rdist(const DTYPE_t* x1, const DTYPE_t* x2,
                                     ITYPE_t size) nogil except -1:
     cdef DTYPE_t tmp, d=0
     cdef np.intp_t j
@@ -35,11 +35,11 @@ cdef inline DTYPE_t euclidean_rdist(DTYPE_t* x1, DTYPE_t* x2,
     return d
 
 
-cdef inline DTYPE_t euclidean_dist_to_rdist(DTYPE_t dist) nogil except -1:
+cdef inline DTYPE_t euclidean_dist_to_rdist(const DTYPE_t dist) nogil except -1:
     return dist * dist
 
 
-cdef inline DTYPE_t euclidean_rdist_to_dist(DTYPE_t dist) nogil except -1:
+cdef inline DTYPE_t euclidean_rdist_to_dist(const DTYPE_t dist) nogil except -1:
     return sqrt(dist)
 
 
@@ -61,7 +61,7 @@ cdef class DistanceMetric:
     cdef object func
     cdef object kwargs
 
-    cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
+    cdef DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                       ITYPE_t size) nogil except -1
 
     cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
