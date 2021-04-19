@@ -460,6 +460,23 @@ class OneHotEncoder(_BaseEncoder):
              self.min_frequency < 1.0)
         )
 
+    def _convert_to_infrequent_idx(self, feature_idx, original_idx):
+        """Convert `original_idx` for `feature_idx` into the
+        index for infrequent categories.
+
+        If there are no infrequent categories, then `original_idx` is
+        returned."""
+
+        if not self._infrequent_enabled:
+            return original_idx
+
+        default_to_infrequent = (
+            self._default_to_infrequent_mappings[feature_idx]
+        )
+        if default_to_infrequent is None:
+            return original_idx
+        return default_to_infrequent[original_idx]
+
     def _compute_drop_idx(self):
         """Compute the drop indices associated with `self.categories_`.
 
@@ -514,24 +531,14 @@ class OneHotEncoder(_BaseEncoder):
             missing_drops = []
             drop_indices = []
 
-            def _convert_to_infrequent_idx(idx, col_idx):
-                if not self._infrequent_enabled:
-                    return idx
-
-                default_to_infrequent = (
-                    self._default_to_infrequent_mappings[col_idx]
-                )
-                if default_to_infrequent is None:
-                    return idx
-                return default_to_infrequent[idx]
-
             for col_idx, (val, cat_list) in enumerate(zip(self.drop,
                                                           self.categories_)):
                 if not is_scalar_nan(val):
                     drop_idx = np.where(cat_list == val)[0]
                     if drop_idx.size:  # found drop idx
                         drop_indices.append(
-                            _convert_to_infrequent_idx(drop_idx[0], col_idx))
+                            self._convert_to_infrequent_idx(col_idx,
+                                                            drop_idx[0]))
                     else:
                         missing_drops.append((col_idx, val))
                     continue
@@ -540,9 +547,9 @@ class OneHotEncoder(_BaseEncoder):
                 for cat_idx, cat in enumerate(cat_list):
                     if is_scalar_nan(cat):
                         drop_indices.append(
-                            _convert_to_infrequent_idx(cat_idx, col_idx))
+                            self._convert_to_infrequent_idx(col_idx, cat_idx))
                         break
-                else:  # loop did not break thus drop is missing
+                else:  # no break
                     missing_drops.append((col_idx, val))
 
             if any(missing_drops):
