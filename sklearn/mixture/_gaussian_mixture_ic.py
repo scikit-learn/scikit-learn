@@ -294,8 +294,6 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             target_type=int,
         )
 
-        self.random_state = check_random_state(self.random_state)
-
         self.affinity = self._check_multi_comp_inputs(
             self.affinity,
             "affinity",
@@ -449,6 +447,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         X = check_array(
             X, dtype=[np.float64, np.float32], ensure_min_samples=1
         )
+        random_state = check_random_state(self.random_state)
 
         # check n_components against sample size
         n_comps = [self.max_components, self.min_components]
@@ -485,7 +484,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         param_grid = dict(
             n_components=range(self.min_components, self.max_components + 1),
-            random_state=[self.random_state],
+            random_state=[random_state],
         )
         param_grid["affinity"] = (
             self.affinity
@@ -510,7 +509,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         if self.max_agglom_size is None or n <= self.max_agglom_size:
             X_subset = X
         else:  # if dataset is huge, agglomerate a subset
-            subset_idxs = self.random_state.choice(
+            subset_idxs = random_state.choice(
                 np.arange(0, n), self.max_agglom_size
             )
             X_subset = X[subset_idxs, :]
