@@ -461,6 +461,18 @@ class OneHotEncoder(_BaseEncoder):
         )
 
     def _compute_drop_idx(self):
+        """Compute the drop indices associated with `self.categories_`.
+
+        If `self.drop` is:
+        - `None`, returns `None`.
+        - `'first'`, returns all zeros to drop the first category.
+        - `'if_binary'`, returns zero if the category is binary and `None`
+          otherwise.
+        - array-like, returns the indices of the categories that match the
+          categories in `self.drop`. If the dropped category is an infrequent
+          category, then the index for the infrequent category is used. This
+          means that the entire infrequent category is dropped.
+        """
         if self.drop is None:
             return None
         elif isinstance(self.drop, str):
