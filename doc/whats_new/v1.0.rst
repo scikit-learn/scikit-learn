@@ -105,7 +105,7 @@ Changelog
 - |Fix| Improved convergence detection based on center change in
   :class:`cluster.MiniBatchKMeans` which was almost never achievable.
   :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-  
+
 - |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
@@ -385,6 +385,9 @@ Changelog
 - |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :meth:`preprocessing.OneHotEncoder.fit` no longer alters the `drop`
+  parameter. :pr:`19924` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
