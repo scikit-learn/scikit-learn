@@ -19,6 +19,13 @@ Changelog
   :term:`get_feature_names` on transformers with an empty column selection.
   :pr:`19579` by `Thomas Fan`_.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` raises warning for
+  constant y residuals instead of a `StopIteration` error. :pr:`19922`
+  by `Thomas Fan`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
