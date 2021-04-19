@@ -226,8 +226,8 @@ def _num_features(X):
 
     first_sample = X[0]
 
-    # Do not consider an array-like of strings to be a 2D array
-    if isinstance(first_sample, (str, bytes)):
+    # Do not consider an array-like of strings or dicts to be a 2D array
+    if isinstance(first_sample, (str, bytes, dict)):
         message += (f" where the samples are of type "
                     f"{type(first_sample).__qualname__}")
         raise TypeError(message)
@@ -1346,7 +1346,7 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     X : {ndarray, list, sparse matrix}
         Input data.
 
-    dtype: dtype, default=None
+    dtype : dtype, default=None
        dtype of the validated `sample_weight`.
        If None, and the input `sample_weight` is an array, the dtype of the
        input is preserved; otherwise an array with the default numpy dtype
@@ -1383,6 +1383,7 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
         if sample_weight.shape != (n_samples,):
             raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
+
     return sample_weight
 
 
