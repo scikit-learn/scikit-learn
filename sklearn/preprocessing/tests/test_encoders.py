@@ -748,6 +748,8 @@ def test_one_hot_encoder_drop_manual(missing_value):
            [0, 1, 0, 1, 1],
            [0, 0, 0, 0, 0]]
     assert_array_equal(trans, exp)
+    assert enc.drop is cats_to_drop
+
     dropped_cats = [cat[feature]
                     for cat, feature in zip(enc.categories_,
                                             enc.drop_idx_)]
