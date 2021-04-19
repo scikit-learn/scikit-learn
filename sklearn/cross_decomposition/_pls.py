@@ -232,6 +232,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         # paper.
         Y_eps = np.finfo(Yk.dtype).eps
         for k in range(n_components):
+            if np.all(np.dot(Yk.T, Yk) < Y_eps):
+                # Yk constant
+                warnings.warn('Y residual constant at iteration %s' % k)
+                break
+
             # Find first left and right singular vectors of the X.T.dot(Y)
             # cross-covariance matrix.
             if self.algorithm == "nipals":

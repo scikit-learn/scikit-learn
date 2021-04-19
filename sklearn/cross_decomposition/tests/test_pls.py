@@ -552,3 +552,16 @@ def test_svd_flip_1d():
 
     assert_allclose(v, v_expected.ravel())
     assert_allclose(v, [-1, -2, -3])
+
+
+def test_pls_constant_y():
+    """Checks warning when y is constant. Non-regression test for #19831"""
+    rng = np.random.RandomState(42)
+    x = rng.rand(100, 3)
+    y = np.zeros(100)
+
+    pls = PLSRegression()
+
+    msg = "Y residual constant at iteration"
+    with pytest.warns(UserWarning, match=msg):
+        pls.fit(x, y)
