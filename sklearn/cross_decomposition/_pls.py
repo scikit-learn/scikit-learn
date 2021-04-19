@@ -247,7 +247,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 except StopIteration:
                     # _get_first_singular_vectors_power_method raise
                     # StopIteration when Yk is constant
-                    warnings.warn(f"Y residual constant at iteration {k}")
+                    warnings.warn(f"Y residual is constant at iteration {k}")
                     break
 
                 self.n_iter_.append(n_iter_)

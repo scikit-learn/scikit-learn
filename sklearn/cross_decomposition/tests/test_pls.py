@@ -562,7 +562,7 @@ def test_pls_constant_y():
 
     pls = PLSRegression()
 
-    msg = "Y residual constant at iteration"
+    msg = "Y residual is constant at iteration"
     with pytest.warns(UserWarning, match=msg):
         pls.fit(x, y)
 
