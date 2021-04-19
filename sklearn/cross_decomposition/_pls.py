@@ -232,11 +232,6 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         # paper.
         Y_eps = np.finfo(Yk.dtype).eps
         for k in range(n_components):
-            if np.all(np.dot(Yk.T, Yk) < Y_eps):
-                # Yk constant
-                warnings.warn('Y residual constant at iteration %s' % k)
-                break
-
             # Find first left and right singular vectors of the X.T.dot(Y)
             # cross-covariance matrix.
             if self.algorithm == "nipals":
@@ -244,10 +239,17 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
                 Yk[:, Yk_mask] = 0.0
 
-                x_weights, y_weights, n_iter_ = \
-                    _get_first_singular_vectors_power_method(
-                        Xk, Yk, mode=self.mode, max_iter=self.max_iter,
-                        tol=self.tol, norm_y_weights=norm_y_weights)
+                try:
+                    x_weights, y_weights, n_iter_ = \
+                        _get_first_singular_vectors_power_method(
+                            Xk, Yk, mode=self.mode, max_iter=self.max_iter,
+                            tol=self.tol, norm_y_weights=norm_y_weights)
+                except StopIteration:
+                    # _get_first_singular_vectors_power_method raise
+                    # StopIteration when Yk is constant
+                    warnings.warn(f"Y residual constant at iteration {k}")
+                    break
+
                 self.n_iter_.append(n_iter_)
 
             elif self.algorithm == "svd":
