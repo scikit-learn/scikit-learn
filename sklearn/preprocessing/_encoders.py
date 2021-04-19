@@ -332,12 +332,22 @@ class OneHotEncoder(_BaseEncoder):
         .. versionchanged:: 0.23
            Added the possibility to contain `None` values.
 
-    infrequent_indices_ : list of arrays
-        Defined only when `min_frequency` or `max_categories` is set to a
-        non-default value. `infrequent_indices_[i]` is an array of indices
-        such that `categories_[i][infrequent_indices_[i]]` are all the
-        infrequent category labels. If the ith feature has no infrequent
-        categories `infrequent_indices_[i]` is None.
+    infrequent_categories_ : list of ndarray
+        Defined if infrequent categories are enabled by setting `min_frequency`
+        or `max_categories` to a non-default value. `infrequent_indices_[i]`
+        are the infrequent categories for feature `i`. If the feature `i` has
+        no infrequent categories `infrequent_categories_[i]` is None.
+
+        .. versionadded:: 1.0
+
+    infrequent_indices_ : list of ndarray
+        Defined if infrequent categories are enabled by setting `min_frequency`
+        or `max_categories` to a non-default value. `infrequent_indices_[i]` is
+        an array of indices such that `categories_[i][infrequent_indices_[i]]`
+        are all the infrequent category labels. If the feature `i` has
+        no infrequent categories `infrequent_indices_[i]` is None.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -406,6 +416,16 @@ class OneHotEncoder(_BaseEncoder):
         self.drop = drop
         self.min_frequency = min_frequency
         self.max_categories = max_categories
+
+    @property
+    def infrequent_categories_(self):
+        """Infrequent categories for each feature."""
+        # raises an AttributeError if `infrequent_indices_` is not defined
+        infrequent_indices = self.infrequent_indices_
+        return [
+            None if indices is None else category[indices]
+            for category, indices in zip(self.categories_, infrequent_indices)
+        ]
 
     def _validate_keywords(self):
 

@@ -876,6 +876,7 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
                         handle_unknown='infrequent_if_exist', sparse=False,
                         **kwargs).fit(X_train)
     assert_array_equal(ohe.infrequent_indices_, [[0, 2, 3]])
+    assert_array_equal(ohe.infrequent_categories_, [['a', 'c', 'd']])
 
     X_test = [['b'], ['a'], ['c'], ['d'], ['e']]
     expected = np.array([
@@ -926,6 +927,7 @@ def test_ohe_infrequent_three_levels(kwargs):
     ohe = OneHotEncoder(handle_unknown='infrequent_if_exist', sparse=False,
                         **kwargs).fit(X_train)
     assert_array_equal(ohe.infrequent_indices_, [[0, 3]])
+    assert_array_equal(ohe.infrequent_categories_, [['a', 'd']])
 
     X_test = [['b'], ['a'], ['c'], ['d'], ['e']]
     expected = np.array([
@@ -1064,6 +1066,7 @@ def test_ohe_infrequent_three_levels_user_cats():
                         max_categories=3).fit(X_train)
 
     assert_array_equal(ohe.infrequent_indices_, [[1, 3]])
+    assert_array_equal(ohe.infrequent_categories_, [['d', 'a']])
 
     X_test = [['b'], ['a'], ['c'], ['d'], ['e']]
     expected = np.array([
@@ -1129,8 +1132,8 @@ def test_ohe_infrequent_multiple_categories():
 
     # X[:, 2] does not have an infrequent category, thus it is encoded as all
     # zeros
-    expected = [[0, 1, 0,  0, 0, 1,  0, 0],
-                [0, 0, 1,  1, 0, 0,  0, 0]]
+    expected = [[0, 1, 0, 0, 0, 1, 0, 0],
+                [0, 0, 1, 1, 0, 0, 0, 0]]
     assert_allclose(expected, X_test_trans.toarray())
 
     X_inv = ohe.inverse_transform(X_test_trans)
@@ -1145,7 +1148,7 @@ def test_ohe_infrequent_multiple_categories():
         ohe.transform(X_test)
 
     # only infrequent or known categories
-    X_test = [[1, 1, 1],
+    X_test = [[1,  1, 1],
               [3, 10, 0]]
     X_test_trans = ohe.transform(X_test)
 
