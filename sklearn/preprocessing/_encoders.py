@@ -279,12 +279,13 @@ class OneHotEncoder(_BaseEncoder):
           will be denoted as None.
         - 'infrequent_if_exist' : When an unknown category is encountered
           during transform, the resulting one-hot encoded columns for this
-          feature will map to the infrequent category if it exists. In the
-          inverse transform, an unknown category will be mapped to the category
-          denoted `'infrequent'` if it exists. If the `'infrequent'` category
-          does not exist, then :meth:`transform` and :meth:`inverse_transform`
-          will handle an unknown category with `handle_unknown='ignore'`. Read
-          more in the
+          feature will map to the infrequent category if it exists. The
+          infrequent category will be mapped to the last position in the
+          encoding. During inverse transform, an unknown category will be
+          mapped to the category denoted `'infrequent'` if it exists. If the
+          `'infrequent'` category does not exist, then :meth:`transform` and
+          :meth:`inverse_transform` will handle an unknown category with
+          `handle_unknown='ignore'`. Read more in the
           :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
         .. versionadded:: 1.0
