@@ -99,8 +99,8 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
     # Count how many nonzero elements the expanded matrix will contain.
     for row_i in range(indptr.shape[0]-1):
+        # nnz is the number of nonzero elements in this row.
         nnz = indptr[row_i + 1] - indptr[row_i]
-        # TODO: check that the casting is indeed done
         if degree == 2:
             total_nnz += (nnz ** 2 + nnz) / 2 - interaction_only * nnz
         else:
