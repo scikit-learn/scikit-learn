@@ -874,6 +874,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     t_ : int
         The number of training samples seen by the solver during fitting.
+        Same as `n_iter_ * n_samples`.
 
     coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
