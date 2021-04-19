@@ -1045,7 +1045,8 @@ def test_ohe_infrequent_two_levels_user_cats():
     X_trans = ohe.transform(X_test)
     assert_allclose(expected, X_trans)
 
-    # The most frequent infrequent category is used for the inverse transform
+    # 'infrequent' is used to denote the infrequent categories for
+    # `inverse_transform`
     expected_inv = [[col] for col in ['b'] + ['infrequent'] * 4]
     X_inv = ohe.inverse_transform(X_trans)
     assert_array_equal(expected_inv, X_inv)
@@ -1075,7 +1076,8 @@ def test_ohe_infrequent_three_levels_user_cats():
     X_trans = ohe.transform(X_test)
     assert_allclose(expected, X_trans)
 
-    # The most frequent infrequent category is used for the inverse transform
+    # 'infrequent' is used to denote the infrequent categories for
+    # `inverse_transform`
     expected_inv = [['b'], ['infrequent'], ['c'], ['infrequent'],
                     ['infrequent']]
     X_inv = ohe.inverse_transform(X_trans)
@@ -1100,7 +1102,7 @@ def test_ohe_infrequent_multiple_categories():
     assert_array_equal(ohe.infrequent_indices_[1], [1, 3])
     assert_array_equal(ohe.infrequent_indices_[2], None)
 
-    # The most frequent infrequent category becomes the feature name
+    # 'infrequent' is used to denote the infrequent categories
     # For the first column, 1 and 2 have the same frequency. In this case,
     # 1 will be chosen to be the feature name because is smaller lexiconically
     feature_names = ohe.get_feature_names()
@@ -1108,15 +1110,15 @@ def test_ohe_infrequent_multiple_categories():
                         'x1_0', 'x1_5', 'x1_infrequent',
                         'x2_0', 'x2_1'], feature_names)
 
-    expected = [[1, 0, 0,  1, 0, 0,  0, 1],
-                [0, 0, 1,  1, 0, 0,  1, 0],
-                [0, 1, 0,  0, 1, 0,  0, 1],
-                [0, 1, 0,  0, 0, 1,  1, 0],
-                [0, 1, 0,  0, 0, 1,  0, 1],
-                [0, 1, 0,  0, 0, 1,  1, 0],
-                [0, 0, 1,  0, 1, 0,  0, 1],
-                [1, 0, 0,  0, 1, 0,  1, 0],
-                [0, 1, 0,  1, 0, 0,  0, 1]]
+    expected = [[1, 0, 0, 1, 0, 0, 0, 1],
+                [0, 0, 1, 1, 0, 0, 1, 0],
+                [0, 1, 0, 0, 1, 0, 0, 1],
+                [0, 1, 0, 0, 0, 1, 1, 0],
+                [0, 1, 0, 0, 0, 1, 0, 1],
+                [0, 1, 0, 0, 0, 1, 1, 0],
+                [0, 0, 1, 0, 1, 0, 0, 1],
+                [1, 0, 0, 0, 1, 0, 1, 0],
+                [0, 1, 0, 1, 0, 0, 0, 1]]
 
     assert_allclose(expected, X_trans)
 
@@ -1147,8 +1149,8 @@ def test_ohe_infrequent_multiple_categories():
               [3, 10, 0]]
     X_test_trans = ohe.transform(X_test)
 
-    expected = [[0, 0, 1,  0, 0, 1,  0, 1],
-                [0, 1, 0,  0, 0, 1,  1, 0]]
+    expected = [[0, 0, 1, 0, 0, 1, 0, 1],
+                [0, 1, 0, 0, 0, 1, 1, 0]]
     assert_allclose(expected, X_test_trans.toarray())
 
     X_inv = ohe.inverse_transform(X_test_trans)
@@ -1180,15 +1182,15 @@ def test_ohe_infrequent_multiple_categories_dtypes():
     assert_allclose(ohe.infrequent_indices_[0], [0, 1])
     assert_allclose(ohe.infrequent_indices_[1], [0, 1, 4])
 
-    expected = [[0, 0, 1,  1, 0, 0],
-                [0, 1, 0,  0, 0, 1],
-                [1, 0, 0,  0, 0, 1],
-                [0, 1, 0,  0, 1, 0],
-                [0, 1, 0,  0, 1, 0],
-                [0, 0, 1,  0, 0, 1],
-                [1, 0, 0,  0, 0, 1],
-                [0, 0, 1,  0, 0, 1],
-                [0, 0, 1,  1, 0, 0]]
+    expected = [[0, 0, 1, 1, 0, 0],
+                [0, 1, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 1],
+                [0, 1, 0, 0, 1, 0],
+                [0, 1, 0, 0, 1, 0],
+                [0, 0, 1, 0, 0, 1],
+                [1, 0, 0, 0, 0, 1],
+                [0, 0, 1, 0, 0, 1],
+                [0, 0, 1, 1, 0, 0]]
 
     assert_allclose(expected, X_trans)
 
@@ -1197,8 +1199,8 @@ def test_ohe_infrequent_multiple_categories_dtypes():
          'int': [14, 12]},
         columns=['str', 'int'])
 
-    expected = [[0, 0, 1,  0, 0, 1],
-                [0, 1, 0,  0, 0, 1]]
+    expected = [[0, 0, 1, 0, 0, 1],
+                [0, 1, 0, 0, 0, 1]]
     X_test_trans = ohe.transform(X_test)
     assert_allclose(expected, X_test_trans.toarray())
 
@@ -1213,8 +1215,8 @@ def test_ohe_infrequent_multiple_categories_dtypes():
          'int': [12, 5]},
         columns=['str', 'int'])
     X_test_trans = ohe.transform(X_test).toarray()
-    expected = [[1, 0, 0,  0, 0, 1],
-                [0, 0, 1,  1, 0, 0]]
+    expected = [[1, 0, 0, 0, 0, 1],
+                [0, 0, 1, 1, 0, 0]]
     assert_allclose(expected, X_test_trans)
 
     X_inv = ohe.inverse_transform(X_test_trans)

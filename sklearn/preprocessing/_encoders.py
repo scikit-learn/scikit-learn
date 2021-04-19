@@ -251,8 +251,8 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
-        If there are infrequent categories and drop selects any of the
-        infrequent categories, than the whole category is dropped.
+        If there are infrequent categories and `drop` selects any of the
+        infrequent categories, then all these categories are dropped.
 
         .. versionadded:: 0.21
            The parameter `drop` was added in 0.21.
@@ -523,7 +523,7 @@ class OneHotEncoder(_BaseEncoder):
             return np.array(drop_indices, dtype=object)
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
-        """Compute the infrequent indices
+        """Compute the infrequent indices.
 
         Parameters
         ----------
