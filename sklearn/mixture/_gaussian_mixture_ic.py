@@ -17,7 +17,7 @@ from ._gaussian_mixture import (
 from ..cluster import AgglomerativeClustering
 from ..model_selection import ParameterGrid
 from ..utils import check_scalar, check_array
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_random_state
 from ..preprocessing import OneHotEncoder
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
@@ -294,6 +294,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             target_type=int,
         )
 
+        self.random_state = check_random_state(self.random_state)
+
         self.affinity = self._check_multi_comp_inputs(
             self.affinity,
             "affinity",
@@ -508,7 +510,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         if self.max_agglom_size is None or n <= self.max_agglom_size:
             X_subset = X
         else:  # if dataset is huge, agglomerate a subset
-            subset_idxs = np.random.choice(
+            subset_idxs = self.random_state.choice(
                 np.arange(0, n), self.max_agglom_size
             )
             X_subset = X[subset_idxs, :]
