@@ -8,8 +8,6 @@ from scipy.sparse import csr_matrix
 from numpy cimport ndarray
 import numpy as np
 cimport numpy as np
-cdef int MAX_INT32 = 2147483647
-# TODO: use finfo instead
 
 np.import_array()
 ctypedef fused INDEX_T:
@@ -56,7 +54,9 @@ cdef inline INDEX_T _deg3_column(INDEX_T d, INDEX_T i, INDEX_T j, INDEX_T k,
 def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
                               ndarray[INDEX_T, ndim=1] indices,
                               ndarray[INDEX_T, ndim=1] indptr,
-                              INDEX_T d, INDEX_T interaction_only,
+                              INDEX_T d,
+                              INDEX_T expanded_dimensionality,
+                              INDEX_T interaction_only,
                               INDEX_T degree):
     """
     Perform a second-degree polynomial or interaction expansion on a scipy
@@ -91,13 +91,6 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     Matrices Using K-Simplex Numbers" by Andrew Nystrom and John Hughes.
     """
 
-    assert degree in (2, 3)
-
-    if degree == 2:
-        expanded_dimensionality = int((d**2 + d) / 2 - interaction_only*d)
-    else:
-        expanded_dimensionality = int((d**3 + 3*d**2 + 2*d) / 6
-                                      - interaction_only*d**2)
     if expanded_dimensionality == 0:
         return None
     assert expanded_dimensionality > 0
@@ -106,12 +99,7 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
     # Count how many nonzero elements the expanded matrix will contain.
     for row_i in range(indptr.shape[0]-1):
-        # nnz is the number of nonzero elements in this row.
-        # The number of nonzero elements can explode
-        # in the expanded space, so we cast to int64
-        # before the expansion computation to
-        # avoid overflow:
-        nnz = np.int64(indptr[row_i + 1] - indptr[row_i])
+        nnz = indptr[row_i + 1] - indptr[row_i]
         # TODO: check that the casting is indeed done
         if degree == 2:
             total_nnz += (nnz ** 2 + nnz) / 2 - interaction_only * nnz
@@ -127,16 +115,6 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     cdef INDEX_T num_rows = indptr.shape[0] - 1
     cdef ndarray[INDEX_T, ndim=1] expanded_indptr = ndarray(
         shape=num_rows + 1, dtype=indptr.dtype)
-
-    # if the expanded_dimensionality is too big, we need to cast
-    # indices to int64. If total_nnz is too big, we need to cast
-    # expanded_indptr to int64 too.
-    # TODO: check that the casting is indeed done
-    if expanded_dimensionality > MAX_INT32:
-        indices = np.array(indices, dtype=np.int64)
-        expanded_indices = np.array(expanded_indices, dtype=np.int64)
-    if total_nnz > MAX_INT32:
-        expanded_indptr = np.array(expanded_indptr, dtype=np.int64)
 
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
                  i_ptr, j_ptr, k_ptr, num_cols_in_row, col

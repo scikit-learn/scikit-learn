@@ -23,6 +23,32 @@ __all__ = [
 ]
 
 
+def _cast_to_int64_if_needed(X, degree, interaction_only):
+    """Computes the expanded dimensionality and casts X to int64 if the
+    expanded dim is too big"""
+    d = int(X.shape[1])
+    assert degree in (2, 3)
+    if degree == 2:
+        expanded_dimensionality = (d ** 2 + d) / 2 - interaction_only * d
+    else:
+        expanded_dimensionality = ((d ** 3 + 3 * d ** 2 + 2 * d) / 6 -
+                                   interaction_only * d ** 2)
+    if expanded_dimensionality > np.iinfo(np.int64).max:
+        raise ValueError("The expanded dimensionality will be too big to "
+                         "be contained in an int64.")
+    if expanded_dimensionality > np.iinfo(np.int32).max:
+        # if the expansion needs int64 ints, we cast every index value in X
+        # to int64
+        X = X.copy()
+        X.data = X.data.astype(np.int64)
+        X.indices = X.indices.astype(np.int64)
+        X.indptr = X.indptr.astype(np.int64)
+        return X, np.int64(d), np.int64(expanded_dimensionality)
+    else:
+        # otherwise we keep X as is
+        return X, np.int32(d), np.int32(expanded_dimensionality)
+
+
 class PolynomialFeatures(TransformerMixin, BaseEstimator):
     """Generate polynomial and interaction features.
 
@@ -249,12 +275,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
             to_stack.append(X)
             for deg in range(2, self.degree+1):
-                # Dimensionality of the expanded space can become very
-                # large so we cast X.shape[1] to int64 to avoid overflow
-                # when computing expanded_dimensionality
+                (X, d, expanded_dim
+                 ) = _cast_to_int64_if_needed(X, deg,
+                                              self.interaction_only)
                 Xp_next = _csr_polynomial_expansion(X.data, X.indices,
                                                     X.indptr,
-                                                    np.int64(X.shape[1]),
+                                                    d,
+                                                    expanded_dim,
                                                     self.interaction_only,
                                                     deg)
                 if Xp_next is None:
