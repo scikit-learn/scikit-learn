@@ -671,8 +671,8 @@ infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3]).T
-   >>> enc = preprocessing.OneHotEncoder(min_frequency=6).fit(X)
-   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']]).toarray()
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse=False).fit(X)
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
    array([[0., 0., 1.],
           [1., 0., 0.],
           [0., 1., 0.],
@@ -681,9 +681,10 @@ infrequent::
 By setting handle_unknown to `'infrequent_if_exist'`, unknown categories will
 be considered infrequent::
 
-   >>> enc = preprocessing.OneHotEncoder(handle_unknown='infrequent_if_exist',
-   ...                                   min_frequency=6).fit(X)
-   >>> enc.transform([['dragon']]).toarray()
+   >>> enc = preprocessing.OneHotEncoder(
+   ...    handle_unknown='infrequent_if_exist', sparse=False, min_frequency=6)
+   >>> enc = enc.fit(X)
+   >>> enc.transform(np.array([['dragon']]))
    array([[0., 0., 1.]])
 
 :meth:`OneHotEncoder.get_feature_names` uses 'infrequent' as the infrequent
@@ -711,8 +712,9 @@ the output. This will result in all but the `'cat'` category to be considered
 infrequent, leading to two features, one for `'cat'` and one for infrequent
 categories - which are all the others::
 
-   >>> enc = preprocessing.OneHotEncoder(max_categories=2).fit(X)
-   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']]).toarray()
+   >>> enc = preprocessing.OneHotEncoder(max_categories=2, sparse=False)
+   >>> env = enc.fit(X)
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
    array([[0., 1.],
           [1., 0.],
           [0., 1.],
