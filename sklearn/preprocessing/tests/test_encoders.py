@@ -1102,8 +1102,11 @@ def test_ohe_infrequent_multiple_categories():
 
     X_trans = ohe.fit_transform(X).toarray()
     assert_array_equal(ohe.infrequent_indices_[0], [1, 2])
+    assert_array_equal(ohe.infrequent_categories_[0], [1, 2])
     assert_array_equal(ohe.infrequent_indices_[1], [1, 3])
+    assert_array_equal(ohe.infrequent_categories_[1], [1, 10])
     assert_array_equal(ohe.infrequent_indices_[2], None)
+    assert_array_equal(ohe.infrequent_categories_[2], None)
 
     # 'infrequent' is used to denote the infrequent categories
     # For the first column, 1 and 2 have the same frequency. In this case,
