@@ -288,6 +288,9 @@ def test_kernel_conditioning():
 
 def test_kernel_pca_inverse_transform_reconstruction():
     # Test if the reconstruction is a good approximation.
+    # Note that in general it is not possible to get an arbitrarily good
+    # reconstruction because of kernel centering that does not
+    # preserve all the information of the original data.
     X, *_ = make_blobs(n_samples=100, n_features=4, random_state=0)
 
     kpca = KernelPCA(
