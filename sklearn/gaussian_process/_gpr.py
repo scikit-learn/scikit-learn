@@ -342,7 +342,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
@@ -355,18 +354,21 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
                 return y_mean, y_cov
             elif return_std:
-                # cache result of K_inv computation
+                # cache result of K_inv computation,
+                # this is done for compatibility, K_inv should be avoided
                 if self._K_inv is None:
                     # compute inverse K_inv of K based on its Cholesky
                     # decomposition L and its inverse L_inv
                     L_inv = solve_triangular(self.L_.T,
                                              np.eye(self.L_.shape[0]))
                     self._K_inv = L_inv.dot(L_inv.T)
+                v = cho_solve((self.L_, True), K_trans.T)  # Line 5
 
                 # Compute variance of predictive distribution
+                # Use einsum to avoid large matrix
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ij->i",
-                                   np.dot(K_trans, self._K_inv), K_trans)
+                y_var -= np.einsum("ij,ji->i",
+                                   K_trans, v)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
