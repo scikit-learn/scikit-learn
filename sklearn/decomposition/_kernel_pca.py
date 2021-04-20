@@ -352,10 +352,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         vectors.
 
         .. note:
-            :meth:`~sklearn.decomposition.fit` will internally used a centered
-            kernel. As centered kernel no longer contains the information of the
-            mean of kernel features, such information is not taken into account
-            in reconstruction.
+            :meth:`~sklearn.decomposition.fit` internally uses a centered
+            kernel. As the centered kernel no longer contains the information
+            of the mean of kernel features, such information is not taken into
+            account in reconstruction.
 
         .. note::
             When users want to compute inverse transformation for 'linear'
