@@ -95,8 +95,9 @@ class BaseGAMBoosting(ABC, BaseEstimator):
 
         # Because the grower is shrinking n_features_in_ number of times
         # we use an effective learning rate
+        grow_calls_per_iter = self.n_trees_per_iteration_ * self.n_features_in_
         effective_learning_rate = (np.power(self.learning_rate,
-                                            1 / self.n_features_in_))
+                                            1 / grow_calls_per_iter))
 
         if not hasattr(self, "_indices_rng"):
             self._indices_rng = check_random_state(self._random_seed)

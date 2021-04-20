@@ -367,7 +367,7 @@ class TreeGrower:
                 node.sum_hessians, node.value, node.children_lower_bound,
                 node.children_upper_bound)
         else:
-            node.split_info = self.splitter.find_node_split_for_feature(
+            node.split_info = self.splitter.find_node_split_for_single_feature(
                 node.n_samples, self.feature_idx, node.histograms,
                 node.sum_gradients, node.sum_hessians, node.value,
                 node.children_lower_bound, node.children_upper_bound)

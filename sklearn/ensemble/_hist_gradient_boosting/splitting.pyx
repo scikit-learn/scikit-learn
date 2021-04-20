@@ -463,54 +463,116 @@ cdef class Splitter:
                 self.n_features * sizeof(split_info_struct))
 
             for feature_idx in prange(n_features, schedule='static'):
-                split_infos[feature_idx].feature_idx = feature_idx
-
-                # For each feature, find best bin to split on
-                # Start with a gain of -1 (if no better split is found, that
-                # means one of the constraints isn't respected
-                # (min_samples_leaf, etc) and the grower will later turn the
-                # node into a leaf.
-                split_infos[feature_idx].gain = -1
-                split_infos[feature_idx].is_categorical = is_categorical[feature_idx]
-
-                if is_categorical[feature_idx]:
-                    self._find_best_bin_to_split_category(
-                        feature_idx, has_missing_values[feature_idx],
-                        histograms, n_samples, sum_gradients, sum_hessians,
-                        value, monotonic_cst[feature_idx], lower_bound,
-                        upper_bound, &split_infos[feature_idx])
-                else:
-                    # We will scan bins from left to right (in all cases), and
-                    # if there are any missing values, we will also scan bins
-                    # from right to left. This way, we can consider whichever
-                    # case yields the best gain: either missing values go to
-                    # the right (left to right scan) or to the left (right to
-                    # left case). See algo 3 from the XGBoost paper
-                    # https://arxiv.org/abs/1603.02754
-                    # Note: for the categorical features above, this isn't
-                    # needed since missing values are considered a native
-                    # category.
-                    self._find_best_bin_to_split_left_to_right(
-                        feature_idx, has_missing_values[feature_idx],
-                        histograms, n_samples, sum_gradients, sum_hessians,
-                        value, monotonic_cst[feature_idx],
-                        lower_bound, upper_bound, &split_infos[feature_idx])
-
-                    if has_missing_values[feature_idx]:
-                        # We need to explore both directions to check whether
-                        # sending the nans to the left child would lead to a higher
-                        # gain
-                        self._find_best_bin_to_split_right_to_left(
-                            feature_idx, histograms, n_samples,
-                            sum_gradients, sum_hessians,
-                            value, monotonic_cst[feature_idx],
-                            lower_bound, upper_bound, &split_infos[feature_idx])
+                self._find_node_split_for_single_feature_inner(
+                    &split_infos[feature_idx], n_samples,
+                    feature_idx, is_categorical[feature_idx],
+                    has_missing_values[feature_idx],
+                    monotonic_cst[feature_idx],
+                    histograms, sum_gradients,
+                    sum_hessians, value, lower_bound, upper_bound)
 
             # then compute best possible split among all features
             best_feature_idx = self._find_best_feature_to_split_helper(
                 split_infos)
             split_info = split_infos[best_feature_idx]
 
+        out = self.create_split_info_python(&split_info)
+        free(split_infos)
+        return out
+
+    cdef void _find_node_split_for_single_feature_inner(
+        Splitter self,
+        split_info_struct * split_info,  # OUT
+        unsigned int n_samples,
+        int feature_idx,
+        const unsigned char is_categorical,
+        const unsigned char has_missing_value,
+        const unsigned char monotonic_cst,
+        hist_struct [:, ::1] histograms,
+        const Y_DTYPE_C sum_gradients,
+        const Y_DTYPE_C sum_hessians,
+        const Y_DTYPE_C value,
+        const Y_DTYPE_C lower_bound,
+        const Y_DTYPE_C upper_bound
+    ) nogil:
+
+        split_info.feature_idx = feature_idx
+
+        # For each feature, find best bin to split on
+        # Start with a gain of -1 (if no better split is found, that
+        # means one of the constraints isn't respected
+        # (min_samples_leaf, etc) and the grower will later turn the
+        # node into a leaf.
+        split_info.gain = -1
+        split_info.is_categorical = is_categorical
+
+        if is_categorical:
+            self._find_best_bin_to_split_category(
+                feature_idx, has_missing_value,
+                histograms, n_samples, sum_gradients, sum_hessians,
+                value, monotonic_cst, lower_bound,
+                upper_bound, split_info)
+        else:
+            # We will scan bins from left to right (in all cases), and
+            # if there are any missing values, we will also scan bins
+            # from right to left. This way, we can consider whichever
+            # case yields the best gain: either missing values go to
+            # the right (left to right scan) or to the left (right to
+            # left case). See algo 3 from the XGBoost paper
+            # https://arxiv.org/abs/1603.02754
+            # Note: for the categorical features above, this isn't
+            # needed since missing values are considered a native
+            # category.
+            self._find_best_bin_to_split_left_to_right(
+                feature_idx, has_missing_value,
+                histograms, n_samples, sum_gradients, sum_hessians,
+                value, monotonic_cst,
+                lower_bound, upper_bound, split_info)
+
+            if has_missing_value:
+                # We need to explore both directions to check whether
+                # sending the nans to the left child would lead to a higher
+                # gain
+                self._find_best_bin_to_split_right_to_left(
+                    feature_idx, histograms, n_samples,
+                    sum_gradients, sum_hessians,
+                    value, monotonic_cst,
+                    lower_bound, upper_bound, split_info)
+
+    def find_node_split_for_single_feature(
+        Splitter self,
+        unsigned int n_samples,
+        int feature_idx,
+        hist_struct [:, ::1] histograms,  # IN
+        const Y_DTYPE_C sum_gradients,
+        const Y_DTYPE_C sum_hessians,
+        const Y_DTYPE_C value,
+        const Y_DTYPE_C lower_bound=-INFINITY,
+        const Y_DTYPE_C upper_bound=INFINITY):
+        """Sample as find_node_split but splitting on one feature."""
+
+        cdef:
+            int n_features = self.n_features
+            split_info_struct split_info
+            const unsigned char [::1] has_missing_values = self.has_missing_values
+            const unsigned char [::1] is_categorical = self.is_categorical
+            const signed char [::1] monotonic_cst = self.monotonic_cst
+
+        with nogil:
+            self._find_node_split_for_single_feature_inner(
+                &split_info, n_samples,
+                feature_idx, is_categorical[feature_idx],
+                has_missing_values[feature_idx],
+                monotonic_cst[feature_idx],
+                histograms, sum_gradients,
+                sum_hessians, value, lower_bound, upper_bound)
+
+        return self.create_split_info_python(&split_info)
+
+    cdef create_split_info_python(
+        Splitter self,
+        split_info_struct * split_info,
+    ):
         out = SplitInfo(
             split_info.gain,
             split_info.feature_idx,
@@ -530,61 +592,8 @@ cdef class Splitter:
         # Only set bitset if the split is categorical
         if split_info.is_categorical:
             out.left_cat_bitset = np.asarray(split_info.left_cat_bitset, dtype=np.uint32)
-
-        free(split_infos)
         return out
 
-    def find_node_split_for_feature(
-        Splitter self,
-        unsigned int n_samples,
-        int feature_idx,
-        hist_struct [:, ::1] histograms,  # IN
-        const Y_DTYPE_C sum_gradients,
-        const Y_DTYPE_C sum_hessians,
-        const Y_DTYPE_C value,
-        const Y_DTYPE_C lower_bound=-INFINITY,
-        const Y_DTYPE_C upper_bound=INFINITY):
-        """Sample as find_node_split but splitting on one feature."""
-
-        cdef:
-            int n_features = self.n_features
-            split_info_struct split_info
-            # const unsigned char [::1] has_missing_values = self.has_missing_values
-            # const unsigned char [::1] is_categorical = self.is_categorical
-            const signed char [::1] monotonic_cst = self.monotonic_cst
-
-        split_info.feature_idx = feature_idx
-        split_info.gain = -1
-        split_info.is_categorical = False
-
-        # TODO: categorical
-        # TODO: missing values
-
-        self._find_best_bin_to_split_left_to_right(
-            feature_idx, False, histograms, n_samples,
-            sum_gradients, sum_hessians, value,
-            monotonic_cst[feature_idx], lower_bound,
-            upper_bound, &split_info
-        )
-
-        out = SplitInfo(
-            split_info.gain,
-            split_info.feature_idx,
-            split_info.bin_idx,
-            split_info.missing_go_to_left,
-            split_info.sum_gradient_left,
-            split_info.sum_hessian_left,
-            split_info.sum_gradient_right,
-            split_info.sum_hessian_right,
-            split_info.n_samples_left,
-            split_info.n_samples_right,
-            split_info.value_left,
-            split_info.value_right,
-            split_info.is_categorical,
-            # categorical not supported for now
-            None,
-        )
-        return out
 
     cdef unsigned int _find_best_feature_to_split_helper(
             self,
