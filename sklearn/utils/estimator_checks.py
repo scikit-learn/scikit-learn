@@ -2169,40 +2169,44 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
         # dtype should be floating
         if isinstance(y_pred, list):
             assert len(y_pred) == n_outputs, (
-                f"{name}.predict_proba is expected to output a list of length "
-                f"n_outputs of Numpy array. Got length of {len(y_pred)} "
-                f"instead of {n_outputs}."
+                f"When {name}.predict_proba returns a list, the list should "
+                f" be of length n_outputs and contain NumPy array. Got length "
+                f"of {len(y_pred)} instead of {n_outputs}."
             )
             for pred in y_pred:
                 assert pred.shape == (test_size, 2), (
-                    f"{name}.predict_proba is expected to output a list of "
-                    f"NumPy array of shape (n_samples, 2). Got {pred.shape} "
-                    f"instead of {(test_size, 2)}."
+                    f"When {name}.predict_proba returns a list, this list "
+                    f"should contain NumPy array of shape (n_samples, 2). Got "
+                    f"a NumPy array of shape {pred.shape} instead of "
+                    f"{(test_size, 2)}."
                 )
                 assert pred.dtype.kind == "f", (
-                    f"{name}.predict_proba is expected to output a list of "
-                    f"NumPy array of floating dtype. Got {pred.dtype} instead."
+                    f"When {name}.predict_proba returns a list, it should "
+                    f"contain NumPy arrays with floating dtype. Got "
+                    f"{pred.dtype} instead."
                 )
                 # check that we have the correct probabilities
                 err_msg = (
-                    f"{name}.predict_proba is expected to provide "
-                    f"probabilities such that each array rows should sum to 1."
+                    f"When {name}.predict_proba returns a list, each NumPy "
+                    f"array should contain probabilities for each class and "
+                    f"thus each row should sum to 1 (or close to 1 due to "
+                    f"numerical errors)."
                 )
                 assert_allclose(pred.sum(axis=1), 1, err_msg=err_msg)
         elif isinstance(y_pred, np.ndarray):
             assert y_pred.shape == (test_size, n_outputs), (
-                f"{name}.predict_proba is expected to output a NumPy array of "
-                f"shape (n_samples, n_outputs). Got {y_pred.shape} instead of "
-                f"{(test_size, n_outputs)}."
+                f"When {name}.predict_proba returns a NumPy array, the "
+                f"expected shape is (n_samples, n_outputs). Got {y_pred.shape}"
+                f" instead of {(test_size, n_outputs)}."
             )
             assert y_pred.dtype.kind == "f", (
-                f"{name}.predict_proba is expected to output a NumPy array of "
-                f"floating dtype. Got {y_pred.dtype} instead."
+                f"When {name}.predict_proba returns a NumPy array, the "
+                f"expected data type is floating. Got {y_pred.dtype} instead."
             )
             err_msg = (
-                f"{name}.predict_proba is expected to provide probabilities "
-                f"of the positive class and should therefore contain values "
-                f"below 1."
+                f"When {name}.predict_proba returns a NumPy array, this array "
+                f"is expected to provide probabilities of the positive class "
+                f"and should therefore contain values below 1."
             )
             assert_array_less(y_pred, 1, err_msg=err_msg)
         else:

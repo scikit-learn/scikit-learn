@@ -768,9 +768,9 @@ def test_check_classifiers_multilabel_output_format():
     # 2.2.1 iconsistent length
     clf = MultiLabelClassifierPredictProba(response_output=y_test.tolist())
     err_msg = (
-        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
-        r"output a list of length n_outputs of Numpy array. Got length of 25 "
-        r"instead of 5."
+        "When MultiLabelClassifierPredictProba.predict_proba returns a list, "
+        "the list should  be of length n_outputs and contain NumPy array. Got "
+        "length of 25 instead of 5."
     )
     assert_raises_regex(
         AssertionError,
@@ -783,9 +783,9 @@ def test_check_classifiers_multilabel_output_format():
     response_output = [np.ones_like(y_test) for _ in range(n_outputs)]
     clf = MultiLabelClassifierPredictProba(response_output=response_output)
     err_msg = (
-        r"MultiLabelClassifierPredictProba.predict_proba is expected to output"
-        r" a list of NumPy array of shape \(n_samples, 2\). Got \(25, 5\) "
-        r"instead of \(25, 2\)."
+        r"When MultiLabelClassifierPredictProba.predict_proba returns a list, "
+        r"this list should contain NumPy array of shape \(n_samples, 2\). Got "
+        r"a NumPy array of shape \(25, 5\) instead of \(25, 2\)."
     )
     assert_raises_regex(
         AssertionError,
@@ -801,8 +801,8 @@ def test_check_classifiers_multilabel_output_format():
     ]
     clf = MultiLabelClassifierPredictProba(response_output=response_output)
     err_msg = (
-        r"MultiLabelClassifierPredictProba.predict_proba is expected to output"
-        r" a list of NumPy array of floating dtype."
+        "When MultiLabelClassifierPredictProba.predict_proba returns a list, "
+        "it should contain NumPy arrays with floating dtype."
     )
     assert_raises_regex(
         AssertionError,
@@ -818,8 +818,9 @@ def test_check_classifiers_multilabel_output_format():
     ]
     clf = MultiLabelClassifierPredictProba(response_output=response_output)
     err_msg = (
-        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
-        r"provide probabilities such that each array rows should sum to 1."
+        r"When MultiLabelClassifierPredictProba.predict_proba returns a list, "
+        r"each NumPy array should contain probabilities for each class and "
+        r"thus each row should sum to 1"
     )
     assert_raises_regex(
         AssertionError,
@@ -832,9 +833,9 @@ def test_check_classifiers_multilabel_output_format():
     # 2.3.1 array of inconsistent shape
     clf = MultiLabelClassifierPredictProba(response_output=y_test[:, :-1])
     err_msg = (
-        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
-        r"output a NumPy array of shape \(n_samples, n_outputs\). Got "
-        r"\(25, 4\) instead of \(25, 5\)."
+        r"When MultiLabelClassifierPredictProba.predict_proba returns a NumPy "
+        r"array, the expected shape is \(n_samples, n_outputs\). Got \(25, 4\)"
+        r" instead of \(25, 5\)."
     )
     assert_raises_regex(
         AssertionError,
@@ -847,8 +848,8 @@ def test_check_classifiers_multilabel_output_format():
     response_output = np.zeros_like(y_test, dtype=np.int64)
     clf = MultiLabelClassifierPredictProba(response_output=response_output)
     err_msg = (
-        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
-        r"output a NumPy array of floating dtype."
+        r"When MultiLabelClassifierPredictProba.predict_proba returns a NumPy "
+        r"array, the expected data type is floating."
     )
     assert_raises_regex(
         AssertionError,
@@ -860,9 +861,9 @@ def test_check_classifiers_multilabel_output_format():
     # 2.2.4 array does not contain probabilities
     clf = MultiLabelClassifierPredictProba(response_output=y_test * 2.0)
     err_msg = (
-        r"MultiLabelClassifierPredictProba.predict_proba is expected to "
-        r"provide probabilities of the positive class and should therefore "
-        r"contain values below 1."
+        r"When MultiLabelClassifierPredictProba.predict_proba returns a NumPy "
+        r"array, this array is expected to provide probabilities of the "
+        r"positive class and should therefore contain values below 1."
     )
     assert_raises_regex(
         AssertionError,
