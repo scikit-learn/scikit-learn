@@ -16,6 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 from ..utils.validation import _deprecate_positional_args
+from ..utils import deprecated
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
@@ -123,6 +124,14 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     X_fit_ : ndarray of shape (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
         a reference. This attribute is used for the calls to transform.
+
+    .. deprecated:: 1.0
+        ``lambdas_`` was renamed to ``eigenvalues_`` in version 1.0 and will be
+        removed in 1.2.
+
+    .. deprecated:: 1.0
+        ``alphas_`` was renamed to ``eigenvectors_`` in version 1.0 and will be
+        removed in 1.2.
 
     Examples
     --------
@@ -373,3 +382,20 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'preserves_dtype': [np.float64, np.float32],
                 'pairwise': self.kernel == 'precomputed'}
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute 'lambdas_' was deprecated in "  # type: ignore
+                "version 1.0 and will be removed in 1.2. Use "
+                "'eigenvalues_' instead")
+    @property
+    def lambdas_(self):
+        return self.eigenvalues_
+
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute 'alphas_' was deprecated in "  # type: ignore
+                "version 1.0 and will be removed in 1.2. Use "
+                "'eigenvectors_' instead")
+    @property
+    def alphas_(self):
+        return self.eigenvectors_
