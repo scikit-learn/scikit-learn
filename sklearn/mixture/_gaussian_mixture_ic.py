@@ -523,11 +523,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             param_grid, self.n_init, self.label_init
         )
 
-        if isinstance(random_state, int):
-            np.random.seed(random_state)
-            seeds = np.random.randint(1e8, size=len(param_grid))
-        else:
-            seeds = [random_state] * len(param_grid)
+        seeds = random_state.randint(
+            np.iinfo(np.int32).max, size=len(param_grid)
+        )
 
         n = X.shape[0]
         if self.max_agglom_size is None or n <= self.max_agglom_size:
