@@ -34,7 +34,7 @@ def test_kernel_pca():
 
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
-                             enable_inverse_transform=inv)
+                             fit_inverse_transform=inv)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
@@ -57,7 +57,7 @@ def test_kernel_pca():
 
 def test_kernel_pca_invalid_parameters():
     with pytest.raises(ValueError):
-        KernelPCA(10, enable_inverse_transform=True, kernel='precomputed')
+        KernelPCA(10, fit_inverse_transform=True, kernel='precomputed')
 
 
 def test_kernel_pca_consistent_transform():
@@ -97,7 +97,7 @@ def test_kernel_pca_sparse():
         for kernel in ("linear", "rbf", "poly"):
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
-                             enable_inverse_transform=False)
+                             fit_inverse_transform=False)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
@@ -261,7 +261,7 @@ def test_nested_circles():
     # and the gamma value has to be updated, the Kernel PCA example will
     # have to be updated too.
     kpca = KernelPCA(kernel="rbf", n_components=2,
-                     enable_inverse_transform=True, gamma=2.)
+                     fit_inverse_transform=True, gamma=2.)
     X_kpca = kpca.fit_transform(X)
 
     # The data is perfectly linearly separable in that space
@@ -278,7 +278,7 @@ def test_kernel_conditioning():
          [5+1e-8, 1e-8],
          [5+1e-8, 0]]
     kpca = KernelPCA(kernel="linear", n_components=2,
-                     enable_inverse_transform=True)
+                     fit_inverse_transform=True)
     kpca.fit(X)
 
     # check that the small non-zero eigenvalue was correctly set to zero
@@ -294,7 +294,7 @@ def test_kernel_pca_inverse_transform(kernel):
                        random_state=0)
 
     kp = KernelPCA(n_components=2, kernel=kernel,
-                   enable_inverse_transform=True)
+                   fit_inverse_transform=True)
     X_trans = kp.fit_transform(X)
     X_inv = kp.inverse_transform(X_trans)
     assert_allclose(X, X_inv)
