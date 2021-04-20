@@ -25,13 +25,11 @@ from scipy.special import comb
 import pytest
 
 import joblib
+from numpy.testing import assert_allclose
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
@@ -178,7 +176,7 @@ def check_regression_criterion(name, criterion):
 
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
-@pytest.mark.parametrize('criterion', ("mse", "mae", "friedman_mse"))
+@pytest.mark.parametrize('criterion', ("squared_error", "mae", "friedman_mse"))
 def test_regression(name, criterion):
     check_regression_criterion(name, criterion)
 
@@ -263,7 +261,7 @@ def check_importances(name, criterion, dtype, tolerance):
         itertools.chain(product(FOREST_CLASSIFIERS,
                                 ["gini", "entropy"]),
                         product(FOREST_REGRESSORS,
-                                ["mse", "friedman_mse", "mae"])))
+                                ["squared_error", "friedman_mse", "mae"])))
 def test_importances(dtype, name, criterion):
     tolerance = 0.01
     if name in FOREST_REGRESSORS and criterion == "mae":
@@ -835,12 +833,12 @@ def check_min_samples_split(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     # test boundary value
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_split=-1).fit, X, y)
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_split=0).fit, X, y)
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_split=1.1).fit, X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_split=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_split=0).fit(X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_split=1.1).fit(X, y)
 
     est = ForestEstimator(min_samples_split=10, n_estimators=1, random_state=0)
     est.fit(X, y)
@@ -872,10 +870,10 @@ def check_min_samples_leaf(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     # test boundary value
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=-1).fit, X, y)
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=0).fit, X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_leaf=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(min_samples_leaf=0).fit(X, y)
 
     est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
     est.fit(X, y)
@@ -1028,14 +1026,15 @@ def test_memory_layout(name, dtype):
 @ignore_warnings
 def check_1d_input(name, X, X_2d, y):
     ForestEstimator = FOREST_ESTIMATORS[name]
-    assert_raises(ValueError, ForestEstimator(n_estimators=1,
-                                              random_state=0).fit, X, y)
+    with pytest.raises(ValueError):
+        ForestEstimator(n_estimators=1, random_state=0).fit(X, y)
 
     est = ForestEstimator(random_state=0)
     est.fit(X_2d, y)
 
     if name in FOREST_CLASSIFIERS or name in FOREST_REGRESSORS:
-        assert_raises(ValueError, est.predict, X)
+        with pytest.raises(ValueError):
+            est.predict(X)
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
@@ -1122,22 +1121,32 @@ def check_class_weight_errors(name):
 
     # Invalid preset string
     clf = ForestClassifier(class_weight='the larch', random_state=0)
-    assert_raises(ValueError, clf.fit, X, y)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
     # Warning warm_start with preset
     clf = ForestClassifier(class_weight='balanced', warm_start=True,
                            random_state=0)
-    assert_warns(UserWarning, clf.fit, X, y)
-    assert_warns(UserWarning, clf.fit, X, _y)
+    clf.fit(X, y)
+
+    warn_msg = (
+        "Warm-start fitting without increasing n_estimators does not fit new "
+        "trees."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        clf.fit(X, _y)
 
     # Not a list or preset for multi-output
     clf = ForestClassifier(class_weight=1, random_state=0)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
     # Incorrect length list for multi-output
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}], random_state=0)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
@@ -1206,7 +1215,8 @@ def check_warm_start_smaller_n_estimators(name):
     est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=True)
     est.fit(X, y)
     est.set_params(n_estimators=4)
-    assert_raises(ValueError, est.fit, X, y)
+    with pytest.raises(ValueError):
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
@@ -1229,7 +1239,12 @@ def check_warm_start_equal_n_estimators(name):
     # Now est_2 equals est.
 
     est_2.set_params(random_state=2)
-    assert_warns(UserWarning, est_2.fit, X, y)
+    warn_msg = (
+        "Warm-start fitting without increasing n_estimators does not fit "
+        "new trees."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        est_2.fit(X, y)
     # If we had fit the trees again we would have got a different forest as we
     # changed the random state.
     assert_array_equal(est.apply(X), est_2.apply(X))
@@ -1324,9 +1339,8 @@ def test_min_impurity_split():
 
     for Estimator in all_estimators:
         est = Estimator(min_impurity_split=0.1)
-        est = assert_warns_message(FutureWarning,
-                                   "min_impurity_decrease",
-                                   est.fit, X, y)
+        with pytest.warns(FutureWarning, match="min_impurity_decrease"):
+            est = est.fit(X, y)
         for tree in est.estimators_:
             assert tree.min_impurity_split == 0.1
 
@@ -1463,3 +1477,52 @@ def test_little_tree_with_small_max_samples(ForestClass):
 
     msg = "Tree without `max_samples` restriction should have more nodes"
     assert tree1.node_count > tree2.node_count, msg
+
+
+# FIXME: remove in 1.2
+@pytest.mark.parametrize(
+    "Estimator",
+    [ExtraTreesClassifier, ExtraTreesRegressor,
+     RandomForestClassifier, RandomForestRegressor,
+     RandomTreesEmbedding]
+)
+def test_n_features_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `n_features_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+        est.n_features_
+
+
+# TODO: Remove in v1.2
+def test_mse_deprecated():
+    est1 = RandomForestRegressor(criterion="mse", random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match="Criterion 'mse' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = RandomForestRegressor(criterion="squared_error", random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))
+
+
+@pytest.mark.parametrize('Forest', FOREST_REGRESSORS)
+def test_mse_criterion_object_segfault_smoke_test(Forest):
+    # This is a smoke test to ensure that passing a mutable criterion
+    # does not cause a segfault when fitting with concurrent threads.
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/12623
+    from sklearn.tree._criterion import MSE
+
+    y = y_reg.reshape(-1, 1)
+    n_samples, n_outputs = y.shape
+    mse_criterion = MSE(n_outputs, n_samples)
+    est = FOREST_REGRESSORS[Forest](
+        n_estimators=2, n_jobs=2, criterion=mse_criterion
+    )
+
+    est.fit(X_reg, y)
