@@ -105,7 +105,7 @@ Changelog
 - |Fix| Improved convergence detection based on center change in
   :class:`cluster.MiniBatchKMeans` which was almost never achievable.
   :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-  
+
 - |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
