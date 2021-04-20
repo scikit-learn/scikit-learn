@@ -230,8 +230,9 @@ def chi2(X, y):
 
 
 def r_regression(X, y, *, center=True):
-    """Compute Pearson's R correlation coefficients between the features and
-    the target.
+    """Compute Pearson's r for each features and the target.
+
+    Pearson's r is also known as the Pearson correlation coefficient.
 
     .. versionadded:: 1.0
 
