@@ -16,7 +16,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 from ..utils.validation import _deprecate_positional_args
-from ..utils import deprecated
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):

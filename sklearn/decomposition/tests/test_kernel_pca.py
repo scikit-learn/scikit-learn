@@ -300,12 +300,14 @@ def test_kernel_pca_inverse_transform(kernel):
     X_inv = kp.inverse_transform(X_trans)
     assert_allclose(X, X_inv)
 
+
 def test_kernel_pca_raise_not_fitted_error():
     X = np.random.randn(15).reshape(5, 3)
     kpca = KernelPCA()
     kpca.fit(X)
     with pytest.raises(NotFittedError):
         kpca.inverse_transform(X)
+
 
 def test_32_64_decomposition_shape():
     """ Test that the decomposition is similar for 32 and 64 bits data """
@@ -326,7 +328,7 @@ def test_32_64_decomposition_shape():
 
 
 # TODO: Remove in 1.1
-def test_kernel_pcc_pairwise_is_deprecated():
+def test_kernel_pca_pairwise_is_deprecated():
     kp = KernelPCA(kernel='precomputed')
     msg = r"Attribute _pairwise was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
@@ -334,13 +336,13 @@ def test_kernel_pcc_pairwise_is_deprecated():
 
 
 # TODO: Remove in 1.2
-def test_kernel_pca_alphas_deprecated():
+def test_kernel_pca_lambdas_deprecated():
     kp = KernelPCA()
     kp.eigenvalues_ = None
     msg = r"Attribute 'lambdas_' was deprecated in version 1\.0"
     with pytest.warns(FutureWarning, match=msg):
         kp.lambdas_
-    
+
 
 # TODO: Remove in 1.2
 def test_kernel_pca_alphas_deprecated():
