@@ -62,6 +62,9 @@ Changelog
 - |Fix| :meth:`preprocessing.OrdinalEncoder.transfrom` correctly handles
   unknown values for string dtypes. :pr:`19888` by `Thomas Fan`_.
 
+- |Fix| :meth:`preprocessing.OneHotEncoder.fit` no longer alters the `drop`
+  parameter. :pr:`19924` by `Thomas Fan`_.
+
 :mod:`sklearn.multioutput`
 ..........................
 
