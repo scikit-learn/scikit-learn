@@ -150,7 +150,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        X = self._validate_data(X, dtype='numeric')
+        X = self._validate_data(X, dtype='numeric', force_all_finite=False)
 
         supported_dtype = (np.float64, np.float32)
         if self.dtype in supported_dtype:
@@ -181,6 +181,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
             column = X[:, jj]
+            column = column[~np.isnan(column)]
             col_min, col_max = column.min(), column.max()
 
             if col_min == col_max:
@@ -227,7 +228,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if 'onehot' in self.encode:
             self._encoder = OneHotEncoder(
-                categories=[np.arange(i) for i in self.n_bins_],
+                categories=[list(np.arange(i))+[np.nan] for i in self.n_bins_],
                 sparse=self.encode == 'onehot',
                 dtype=output_dtype)
             # Fit the OneHotEncoder with toy datasets
@@ -289,7 +290,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = self._validate_data(X, copy=True, dtype=dtype, reset=False)
+        Xt = self._validate_data(X, copy=True, dtype=dtype,
+                                 reset=False, force_all_finite=False)
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
@@ -300,7 +302,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             rtol = 1.e-5
             atol = 1.e-8
             eps = atol + rtol * np.abs(Xt[:, jj])
+            is_nan = np.isnan(Xt[:, jj])
             Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
+            Xt[is_nan, jj] = np.nan
         np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
 
         if self.encode == 'ordinal':
@@ -339,7 +343,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if 'onehot' in self.encode:
             Xt = self._encoder.inverse_transform(Xt)
 
-        Xinv = check_array(Xt, copy=True, dtype=(np.float64, np.float32))
+        Xinv = check_array(Xt, copy=True, dtype=(np.float64, np.float32),
+                           force_all_finite=False)
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
@@ -348,6 +353,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         for jj in range(n_features):
             bin_edges = self.bin_edges_[jj]
             bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
-            Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
+            not_nan = ~np.isnan(Xinv[:, jj])
+            Xinv[not_nan, jj] = bin_centers[np.int_(Xinv[not_nan, jj])]
 
         return Xinv
