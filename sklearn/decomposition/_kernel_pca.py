@@ -153,10 +153,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
-                 alpha=1.0, fit_inverse_transform=False,
-                 eigen_solver='auto', tol=0, max_iter=None,
-                 remove_zero_eig=False, random_state=None,
-                 copy_X=True, n_jobs=None):
+                 alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
+                 tol=0, max_iter=None, remove_zero_eig=False,
+                 random_state=None, copy_X=True, n_jobs=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -368,10 +367,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         "Learning to Find Pre-Images", G BakIr et al, 2004.
         """
         if not self.fit_inverse_transform:
-            raise NotFittedError("The fit_inverse_transform parameter was"
-                                 " not set to True when instantiating and"
-                                 " hence the inverse transform is not"
-                                 " available.")
+            raise NotFittedError("The fit_inverse_transform parameter was not"
+                                 " set to True when instantiating and hence "
+                                 "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
         n_samples = self.X_transformed_fit_.shape[0]
