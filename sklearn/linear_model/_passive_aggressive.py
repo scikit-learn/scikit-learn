@@ -319,7 +319,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         squared_epsilon_insensitive: equivalent to PA-II in the reference
         paper.
 
-    epsilon : float, default=DEFAULT_EPSILON
+    epsilon : float, default=0.1
         If the difference between the current prediction and the correct label
         is below this threshold, the model is not updated.
 

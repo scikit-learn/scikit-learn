@@ -13,7 +13,6 @@ from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster import DBSCAN
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_allclose
 
 from sklearn.cluster.tests.common import generate_clustered_data
@@ -181,7 +180,8 @@ def test_minimum_number_of_sample_check():
     clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1)
 
     # Run the fit
-    assert_raise_message(ValueError, msg, clust.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        clust.fit(X)
 
 
 def test_bad_extract():
@@ -195,7 +195,8 @@ def test_bad_extract():
     clust = OPTICS(max_eps=5.0 * 0.03,
                    cluster_method='dbscan',
                    eps=0.3, min_samples=10)
-    assert_raise_message(ValueError, msg, clust.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        clust.fit(X)
 
 
 def test_bad_reachability():

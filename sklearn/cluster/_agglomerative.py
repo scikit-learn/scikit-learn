@@ -1000,7 +1000,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
           the two sets.
         - complete or maximum linkage uses the maximum distances between
           all features of the two sets.
-        - single uses the minimum of the distances between all observations
+        - single uses the minimum of the distances between all features
           of the two sets.
 
     pooling_func : callable, default=np.mean

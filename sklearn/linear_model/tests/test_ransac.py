@@ -1,13 +1,12 @@
 import numpy as np
+import pytest
 from scipy import sparse
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_raises_regexp
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression, RANSACRegressor
@@ -62,8 +61,8 @@ def test_ransac_is_data_valid():
                                        residual_threshold=5,
                                        is_data_valid=is_data_valid,
                                        random_state=0)
-
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_is_model_valid():
@@ -77,8 +76,8 @@ def test_ransac_is_model_valid():
                                        residual_threshold=5,
                                        is_model_valid=is_model_valid,
                                        random_state=0)
-
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_max_trials():
@@ -87,7 +86,8 @@ def test_ransac_max_trials():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=5, max_trials=0,
                                        random_state=0)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
     # there is a 1e-9 chance it will take these many trials. No good reason
     # 1e-2 isn't enough, can still happen
@@ -99,6 +99,7 @@ def test_ransac_max_trials():
         ransac_estimator.set_params(min_samples=2, random_state=i)
         ransac_estimator.fit(X, y)
         assert ransac_estimator.n_trials_ < max_trials + 1
+
 
 def test_ransac_stop_n_inliers():
     base_estimator = LinearRegression()
@@ -230,8 +231,14 @@ def test_ransac_warn_exceed_max_skips():
                                        is_data_valid=is_data_valid,
                                        max_skips=3,
                                        max_trials=5)
-
-    assert_warns(ConvergenceWarning, ransac_estimator.fit, X, y)
+    warning_message = (
+        "RANSAC found a valid consensus set but exited "
+        "early due to skipping more iterations than "
+        "`max_skips`. See estimator attributes for "
+        "diagnostics."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 4
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -330,9 +337,14 @@ def test_ransac_min_n_samples():
     assert_array_almost_equal(ransac_estimator1.predict(X),
                               ransac_estimator6.predict(X))
 
-    assert_raises(ValueError, ransac_estimator3.fit, X, y)
-    assert_raises(ValueError, ransac_estimator4.fit, X, y)
-    assert_raises(ValueError, ransac_estimator7.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator3.fit(X, y)
+
+    with pytest.raises(ValueError):
+        ransac_estimator4.fit(X, y)
+
+    with pytest.raises(ValueError):
+        ransac_estimator7.fit(X, y)
 
 
 def test_ransac_multi_dimensional_targets():
@@ -356,10 +368,15 @@ def test_ransac_multi_dimensional_targets():
 
 
 def test_ransac_residual_loss():
-    loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
-    loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+    def loss_multi1(y_true, y_pred):
+        return np.sum(np.abs(y_true - y_pred), axis=1)
 
-    loss_mono = lambda y_true, y_pred : np.abs(y_true - y_pred)
+    def loss_multi2(y_true, y_pred):
+        return np.sum((y_true - y_pred) ** 2, axis=1)
+
+    def loss_mono(y_true, y_pred):
+        return np.abs(y_true - y_pred)
+
     yyy = np.column_stack([y, y, y])
 
     base_estimator = LinearRegression()
@@ -389,7 +406,7 @@ def test_ransac_residual_loss():
                               ransac_estimator2.predict(X))
     ransac_estimator3 = RANSACRegressor(base_estimator, min_samples=2,
                                         residual_threshold=5, random_state=0,
-                                        loss="squared_loss")
+                                        loss="squared_error")
     ransac_estimator3.fit(X, y)
     assert_array_almost_equal(ransac_estimator0.predict(X),
                               ransac_estimator2.predict(X))
@@ -445,10 +462,14 @@ def test_ransac_dynamic_max_trials():
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=-0.1)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
+
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=1.1)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_fit_sample_weight():
@@ -494,7 +515,9 @@ def test_ransac_fit_sample_weight():
     # sample_weight, raises error
     base_estimator = OrthogonalMatchingPursuit()
     ransac_estimator = RANSACRegressor(base_estimator)
-    assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
+
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y, weights)
 
 
 def test_ransac_final_model_fit_sample_weight():
@@ -513,3 +536,16 @@ def test_ransac_final_model_fit_sample_weight():
     )
 
     assert_allclose(ransac.estimator_.coef_, final_model.coef_, atol=1e-12)
+
+
+# TODO: Remove in v1.2
+def test_loss_squared_loss_deprecated():
+    est1 = RANSACRegressor(loss="squared_loss", random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match="The loss 'squared_loss' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = RANSACRegressor(loss="squared_error", random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))
