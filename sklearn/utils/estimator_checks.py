@@ -152,6 +152,8 @@ def _yield_classifier_checks(classifier):
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
 
+    yield check_classifiers_byte_targets
+
 
 @ignore_warnings(category=FutureWarning)
 def check_supervised_y_no_nan(name, estimator_orig):
@@ -3190,3 +3192,18 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
         f"{name}._get_tags() is missing entries for the following default tags"
         f": {default_tags_keys - tags_keys.intersection(default_tags_keys)}"
     )
+
+
+def check_classifiers_byte_targets(name, classifier_orig):
+    classifier = clone(classifier_orig)
+    X, y = make_blobs(n_samples=10, centers=2, random_state=0)
+
+    classes_bytes = np.array([b'a', b'b'], dtype=object)
+    y = classes_bytes[y]
+    y_list = y.tolist()
+
+    classifier.fit(X, y_list)
+    y_pred = classifier.predict(X)
+
+    assert sorted(np.unique(y_pred).tolist()) == sorted(classes_bytes.tolist())
+    assert y_pred.shape == y.shape
