@@ -386,6 +386,10 @@ Changelog
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in 
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``. 
+  :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
+
 :mod:`sklearn.tree`
 ...................
 
