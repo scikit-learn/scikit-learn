@@ -147,8 +147,8 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 
 # %%
 # The resulting score is not exactly the same as the one from the previous
-# pipeline becase the dtype-based selector treats the ``pclass`` columns as
-# a numeric features instead of a categorical feature as previously:
+# pipeline because the dtype-based selector treats the ``pclass`` column as
+# a numeric feature instead of a categorical feature as previously:
 
 selector(dtype_exclude="category")(X_train)
 
@@ -201,7 +201,7 @@ cv_results[["mean_test_score", "std_test_score",
 # %%
 # The best hyper-parameters have be used to re-fit a final model on the full
 # training set. We can evaluate that final model on held out test data that was
-# not used for hyparameter tuning.
+# not used for hyperparameter tuning.
 #
 print(("best logistic regression from grid search: %.3f"
        % grid_search.score(X_test, y_test)))

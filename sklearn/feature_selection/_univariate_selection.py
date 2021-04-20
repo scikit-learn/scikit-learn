@@ -51,15 +51,15 @@ def f_oneway(*args):
 
     Parameters
     ----------
-    *args : array-like, sparse matrices
+    *args : {array-like, sparse matrix}
         sample1, sample2... The sample measurements should be given as
         arguments.
 
     Returns
     -------
-    F-value : float
+    f_statistic : float
         The computed F-value of the test.
-    p-value : float
+    p_value : float
         The associated p-value from the F-distribution.
 
     Notes
@@ -127,19 +127,19 @@ def f_classif(X, y):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix} shape = [n_samples, n_features]
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The set of regressors that will be tested sequentially.
 
-    y : array of shape(n_samples)
-        The data matrix.
+    y : ndarray of shape (n_samples,)
+        The target vector.
 
     Returns
     -------
-    F : array, shape = [n_features,]
-        The set of F values.
+    f_statistic : ndarray of shape (n_features,)
+        F-statistic for each feature.
 
-    pval : array, shape = [n_features,]
-        The set of p-values.
+    p_values : ndarray of shape (n_features,)
+        P-values associated with the F-statistic.
 
     See Also
     --------
@@ -195,10 +195,11 @@ def chi2(X, y):
 
     Returns
     -------
-    chi2 : array, shape = (n_features,)
-        chi2 statistics of each feature.
-    pval : array, shape = (n_features,)
-        p-values of each feature.
+    chi2 : ndarray of shape (n_features,)
+        Chi2 statistics for each feature.
+
+    p_values : ndarray of shape (n_features,)
+        P-values for each feature.
 
     Notes
     -----
