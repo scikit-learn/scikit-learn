@@ -152,7 +152,8 @@ def _yield_classifier_checks(classifier):
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
 
-    yield check_classifiers_byte_targets
+    yield check_classifiers_list_bytes_targets
+    yield check_classifeirs_array_bytes_targets
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3194,7 +3195,7 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
     )
 
 
-def check_classifiers_byte_targets(name, classifier_orig):
+def check_classifiers_list_bytes_targets(name, classifier_orig):
     classifier = clone(classifier_orig)
     X, y = make_blobs(n_samples=50, centers=2, random_state=0)
     X = StandardScaler().fit_transform(X)
@@ -3210,6 +3211,27 @@ def check_classifiers_byte_targets(name, classifier_orig):
     y_list = y.tolist()
 
     classifier.fit(X, y_list)
+    y_pred = classifier.predict(X)
+
+    assert sorted(np.unique(y_pred).tolist()) == sorted(classes_bytes.tolist())
+    assert y_pred.shape == y.shape
+
+
+def check_classifiers_array_bytes_targets(name, classifier_orig):
+    classifier = clone(classifier_orig)
+    X, y = make_blobs(n_samples=50, centers=2, random_state=0)
+    X = StandardScaler().fit_transform(X)
+
+    if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB',
+                'CategoricalNB']:
+        X -= X.min()
+
+    X = _pairwise_estimator_convert_X(X, classifier)
+
+    classes_bytes = np.array([b'a', b'b'], dtype=object)
+    y = classes_bytes[y]
+
+    classifier.fit(X, y)
     y_pred = classifier.predict(X)
 
     assert sorted(np.unique(y_pred).tolist()) == sorted(classes_bytes.tolist())
