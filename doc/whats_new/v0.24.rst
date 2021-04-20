@@ -26,6 +26,12 @@ Changelog
   with `sample_weight` parameter and `least_absolute_deviation` loss function.
   :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s
+  ``inverse_transform``.  :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
