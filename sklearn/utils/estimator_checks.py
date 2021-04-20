@@ -3196,7 +3196,14 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
 def check_classifiers_byte_targets(name, classifier_orig):
     classifier = clone(classifier_orig)
-    X, y = make_blobs(n_samples=10, centers=2, random_state=0)
+    X, y = make_blobs(n_samples=50, centers=2, random_state=0)
+    X = StandardScaler().fit_transform(X)
+
+    if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB',
+                'CategoricalNB']:
+        X -= X.min()
+
+    X = _pairwise_estimator_convert_X(X, classifier)
 
     classes_bytes = np.array([b'a', b'b'], dtype=object)
     y = classes_bytes[y]
