@@ -351,13 +351,20 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         regression of the original data on their low-dimensional representation
         vectors.
 
+        .. note:
+            :meth:`~sklearn.decomposition.fit` will internally used a centered
+            kernel. As centered kernel no longer contains the information of the
+            mean of kernel features, such information is not taken into account
+            in reconstruction.
+
         .. note::
             When users want to compute inverse transformation for 'linear'
             kernel, it is recommended that they use
             :class:`~sklearn.decomposition.PCA` instead. Unlike
             :class:`~sklearn.decomposition.PCA`,
             :class:`~sklearn.decomposition.KernelPCA`'s ``inverse_transform``
-            does not reconstruct the mean of data when 'linear' kernel is used.
+            does not reconstruct the mean of data when 'linear' kernel is used
+            due to the use of centered kernel.
 
         Parameters
         ----------
