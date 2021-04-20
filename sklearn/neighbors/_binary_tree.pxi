@@ -197,47 +197,6 @@ NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 
 
 ######################################################################
-# Numpy 1.3-1.4 compatibility utilities
-cdef DTYPE_t[::1] get_memview_DTYPE_1D(
-                               np.ndarray[DTYPE_t, ndim=1, mode='c'] X):
-    return <DTYPE_t[:X.shape[0]:1]> (<DTYPE_t*> X.data)
-
-
-cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
-                               np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
-    return <DTYPE_t[:X.shape[0], :X.shape[1]:1]> (<DTYPE_t*> X.data)
-
-
-cdef DTYPE_t[:, :, ::1] get_memview_DTYPE_3D(
-                               np.ndarray[DTYPE_t, ndim=3, mode='c'] X):
-    return <DTYPE_t[:X.shape[0], :X.shape[1], :X.shape[2]:1]>\
-                                                       (<DTYPE_t*> X.data)
-
-
-cdef ITYPE_t[::1] get_memview_ITYPE_1D(
-                               np.ndarray[ITYPE_t, ndim=1, mode='c'] X):
-    return <ITYPE_t[:X.shape[0]:1]> (<ITYPE_t*> X.data)
-
-
-cdef ITYPE_t[:, ::1] get_memview_ITYPE_2D(
-                               np.ndarray[ITYPE_t, ndim=2, mode='c'] X):
-    return <ITYPE_t[:X.shape[0], :X.shape[1]:1]> (<ITYPE_t*> X.data)
-
-
-cdef NodeHeapData_t[::1] get_memview_NodeHeapData_1D(
-                    np.ndarray[NodeHeapData_t, ndim=1, mode='c'] X):
-    return <NodeHeapData_t[:X.shape[0]:1]> (<NodeHeapData_t*> X.data)
-
-
-cdef NodeData_t[::1] get_memview_NodeData_1D(
-                    np.ndarray[NodeData_t, ndim=1, mode='c'] X):
-    return <NodeData_t[:X.shape[0]:1]> (<NodeData_t*> X.data)
-
-######################################################################
-
-
-
-######################################################################
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
 CLASS_DOC = \
@@ -574,15 +533,15 @@ cdef class NeighborsHeap:
     def __cinit__(self):
         self.distances_arr = np.zeros((1, 1), dtype=DTYPE, order='C')
         self.indices_arr = np.zeros((1, 1), dtype=ITYPE, order='C')
-        self.distances = get_memview_DTYPE_2D(self.distances_arr)
-        self.indices = get_memview_ITYPE_2D(self.indices_arr)
+        self.distances = self.distances_arr
+        self.indices = self.indices_arr
 
     def __init__(self, n_pts, n_nbrs):
         self.distances_arr = np.full((n_pts, n_nbrs), np.inf, dtype=DTYPE,
                                      order='C')
         self.indices_arr = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
-        self.distances = get_memview_DTYPE_2D(self.distances_arr)
-        self.indices = get_memview_ITYPE_2D(self.indices_arr)
+        self.distances = self.distances_arr
+        self.indices = self.indices_arr
 
     def get_arrays(self, sort=True):
         """Get the arrays of distances and indices within the heap.
@@ -806,12 +765,12 @@ cdef class NodeHeap:
 
     def __cinit__(self):
         self.data_arr = np.zeros(1, dtype=NodeHeapData, order='C')
-        self.data = get_memview_NodeHeapData_1D(self.data_arr)
+        self.data = self.data_arr
 
     def __init__(self, size_guess=100):
         size_guess = max(size_guess, 1)  # need space for at least one item
         self.data_arr = np.zeros(size_guess, dtype=NodeHeapData, order='C')
-        self.data = get_memview_NodeHeapData_1D(self.data_arr)
+        self.data = self.data_arr
         self.n = size_guess
         self.clear()
 
@@ -823,8 +782,7 @@ cdef class NodeHeap:
         cdef ITYPE_t size = self.data.shape[0]
         cdef np.ndarray new_data_arr = np.zeros(new_size,
                                                 dtype=NodeHeapData)
-        cdef NodeHeapData_t[::1] new_data =\
-                                    get_memview_NodeHeapData_1D(new_data_arr)
+        cdef NodeHeapData_t[::1] new_data = new_data_arr
 
         if size > 0 and new_size > 0:
             data_ptr = &self.data[0]
@@ -933,8 +891,8 @@ cdef class BinaryTree:
     cdef np.ndarray node_data_arr
     cdef np.ndarray node_bounds_arr
 
-    cdef readonly DTYPE_t[:, ::1] data
-    cdef readonly DTYPE_t[::1] sample_weight
+    cdef readonly const DTYPE_t[:, ::1] data
+    cdef readonly const DTYPE_t[::1] sample_weight
     cdef public DTYPE_t sum_weight
     cdef public ITYPE_t[::1] idx_array
     cdef public NodeData_t[::1] node_data
@@ -964,11 +922,11 @@ cdef class BinaryTree:
         self.node_data_arr = np.empty(1, dtype=NodeData, order='C')
         self.node_bounds_arr = np.empty((1, 1, 1), dtype=DTYPE)
 
-        self.data = get_memview_DTYPE_2D(self.data_arr)
-        self.sample_weight = get_memview_DTYPE_1D(self.sample_weight_arr)
-        self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
-        self.node_data = get_memview_NodeData_1D(self.node_data_arr)
-        self.node_bounds = get_memview_DTYPE_3D(self.node_bounds_arr)
+        self.data = self.data_arr
+        self.sample_weight = self.sample_weight_arr
+        self.idx_array = self.idx_array_arr
+        self.node_data = self.node_data_arr
+        self.node_bounds = self.node_bounds_arr
 
         self.leaf_size = 0
         self.n_levels = 0
@@ -1028,8 +986,7 @@ cdef class BinaryTree:
         if sample_weight is not None:
             self.sample_weight_arr = np.asarray(
                 sample_weight, dtype=DTYPE, order='C')
-            self.sample_weight = get_memview_DTYPE_1D(
-                self.sample_weight_arr)
+            self.sample_weight = self.sample_weight_arr
             self.sum_weight = np.sum(self.sample_weight)
         else:
             self.sample_weight = None
@@ -1037,10 +994,10 @@ cdef class BinaryTree:
             self.sum_weight = <DTYPE_t> n_samples
 
     def _update_memviews(self):
-        self.data = get_memview_DTYPE_2D(self.data_arr)
-        self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
-        self.node_data = get_memview_NodeData_1D(self.node_data_arr)
-        self.node_bounds = get_memview_DTYPE_3D(self.node_bounds_arr)
+        self.data = self.data_arr
+        self.idx_array = self.idx_array_arr
+        self.node_data = self.node_data_arr
+        self.node_bounds = self.node_bounds_arr
 
 
     def __reduce__(self):
@@ -1279,7 +1236,7 @@ cdef class BinaryTree:
 
         # flatten X, and save original shape information
         np_Xarr = X.reshape((-1, self.data.shape[1]))
-        cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
+        cdef const DTYPE_t[:, ::1] Xarr = np_Xarr
         cdef DTYPE_t reduced_dist_LB
         cdef ITYPE_t i
         cdef DTYPE_t* pt
@@ -1410,8 +1367,7 @@ cdef class BinaryTree:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
-        cdef DTYPE_t[:, ::1] Xarr =\
-                get_memview_DTYPE_2D(X.reshape((-1, self.data.shape[1])))
+        cdef const DTYPE_t[:, ::1] Xarr = X.reshape((-1, self.data.shape[1]))
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
@@ -1423,7 +1379,7 @@ cdef class BinaryTree:
                 raise ValueError("r must be broadcastable to X.shape")
 
         rarr_np = r.reshape(-1)  # store explicitly to keep in scope
-        cdef DTYPE_t[::1] rarr = get_memview_DTYPE_1D(rarr_np)
+        cdef DTYPE_t[::1] rarr = rarr_np
 
         if not count_only:
             indices = <ITYPE_t**>calloc(Xarr.shape[0], sizeof(ITYPE_t*))
@@ -1436,13 +1392,13 @@ cdef class BinaryTree:
                     raise MemoryError()
 
         np_idx_arr = np.zeros(self.data.shape[0], dtype=ITYPE)
-        idx_arr_i = get_memview_ITYPE_1D(np_idx_arr)
+        idx_arr_i = np_idx_arr
 
         np_dist_arr = np.zeros(self.data.shape[0], dtype=DTYPE)
-        dist_arr_i = get_memview_DTYPE_1D(np_dist_arr)
+        dist_arr_i = np_dist_arr
 
         counts_arr = np.zeros(Xarr.shape[0], dtype=ITYPE)
-        counts = get_memview_ITYPE_1D(counts_arr)
+        counts = counts_arr
 
         pt = &Xarr[0, 0]
         memory_error = False
@@ -1609,10 +1565,10 @@ cdef class BinaryTree:
             raise ValueError("query data dimension must "
                              "match training data dimension")
         Xarr_np = X.reshape((-1, n_features))
-        cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(Xarr_np)
+        cdef DTYPE_t[:, ::1] Xarr = Xarr_np
 
         log_density_arr = np.zeros(Xarr.shape[0], dtype=DTYPE)
-        cdef DTYPE_t[::1] log_density = get_memview_DTYPE_1D(log_density_arr)
+        cdef DTYPE_t[::1] log_density = log_density_arr
 
         cdef DTYPE_t* pt = &Xarr[0, 0]
 
@@ -1626,9 +1582,9 @@ cdef class BinaryTree:
         #       computed between node pairs.
         if breadth_first:
             node_log_min_bounds_arr = np.full(self.n_nodes, -np.inf)
-            node_log_min_bounds = get_memview_DTYPE_1D(node_log_min_bounds_arr)
+            node_log_min_bounds = node_log_min_bounds_arr
             node_bound_widths_arr = np.zeros(self.n_nodes)
-            node_bound_widths = get_memview_DTYPE_1D(node_bound_widths_arr)
+            node_bound_widths = node_bound_widths_arr
             for i in range(Xarr.shape[0]):
                 log_density[i] = self._kde_single_breadthfirst(
                                             pt, kernel_c, h_c,
@@ -1704,7 +1660,7 @@ cdef class BinaryTree:
                              "match training data dimension")
 
         np_Xarr = X.reshape((-1, self.data.shape[1]))
-        cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
+        cdef DTYPE_t[:, ::1] Xarr = np_Xarr
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
@@ -1713,11 +1669,11 @@ cdef class BinaryTree:
             raise ValueError("r must be a 1-dimensional array")
         i_rsort = np.argsort(r)
         rarr_np = r[i_rsort]  # needed to keep memory in scope
-        cdef DTYPE_t[::1] rarr = get_memview_DTYPE_1D(rarr_np)
+        cdef DTYPE_t[::1] rarr = rarr_np
 
         # create array to hold counts
         count = np.zeros(r.shape[0], dtype=ITYPE)
-        cdef ITYPE_t[::1] carr = get_memview_ITYPE_1D(count)
+        cdef ITYPE_t[::1] carr = count
 
         cdef DTYPE_t* pt = &Xarr[0, 0]
 
