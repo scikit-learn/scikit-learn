@@ -105,7 +105,7 @@ class LinearSVC(LinearClassifierMixin,
     coef_ : ndarray of shape (1, n_features) if n_classes == 2 \
             else (n_classes, n_features)
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of a linear kernel.
+        problem).
 
         ``coef_`` is a readonly property derived from ``raw_coef_`` that
         follows the internal memory layout of liblinear.
@@ -326,7 +326,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     coef_ : ndarray of shape (n_features) if n_classes == 2 \
             else (n_classes, n_features)
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of a linear kernel.
+        problem).
 
         `coef_` is a readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
