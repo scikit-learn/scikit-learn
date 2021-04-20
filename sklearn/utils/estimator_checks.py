@@ -153,7 +153,7 @@ def _yield_classifier_checks(classifier):
     yield check_decision_proba_consistency
 
     yield check_classifiers_list_bytes_targets
-    yield check_classifeirs_array_bytes_targets
+    yield check_classifiers_array_bytes_targets
 
 
 @ignore_warnings(category=FutureWarning)
