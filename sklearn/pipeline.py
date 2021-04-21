@@ -18,7 +18,7 @@ from joblib import Parallel
 
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
-from .utils.metaestimators import if_delegate_has_method
+from .utils.metaestimators import if_delegate_has_method, available_if
 from .utils import (
     Bunch,
     _print_elapsed_time,
@@ -541,8 +541,12 @@ class Pipeline(_BaseComposition):
             Xt, **predict_log_proba_params
         )
 
-    @property
-    def transform(self):
+    def _can_transform(self):
+        return (self._final_estimator != "passthrough" and
+                hasattr(self._final_estimator, "transform"))
+
+    @available_if(_can_transform)
+    def transform(self, X):
         """Apply transforms, and transform with the final estimator
 
         This also works where final estimator is ``None``: all prior
@@ -558,20 +562,16 @@ class Pipeline(_BaseComposition):
         -------
         Xt : array-like of shape  (n_samples, n_transformed_features)
         """
-        # _final_estimator is None or has transform, otherwise attribute error
-        # XXX: Handling the None case means we can't use if_delegate_has_method
-        if self._final_estimator != 'passthrough':
-            self._final_estimator.transform
-        return self._transform
-
-    def _transform(self, X):
         Xt = X
         for _, _, transform in self._iter():
             Xt = transform.transform(Xt)
         return Xt
 
-    @property
-    def inverse_transform(self):
+    def _can_inverse_transform(self):
+        return all(hasattr(t, 'inverse_transform') for _, _, t in self._iter())
+
+    @available_if(_can_inverse_transform)
+    def inverse_transform(self, X):
         """Apply inverse transformations in reverse order
 
         All estimators in the pipeline must support ``inverse_transform``.
@@ -588,13 +588,6 @@ class Pipeline(_BaseComposition):
         -------
         Xt : array-like of shape (n_samples, n_features)
         """
-        # raise AttributeError if necessary for hasattr behaviour
-        # XXX: Handling the None case means we can't use if_delegate_has_method
-        for _, _, transform in self._iter():
-            transform.inverse_transform
-        return self._inverse_transform
-
-    def _inverse_transform(self, X):
         Xt = X
         reverse_iter = reversed(list(self._iter()))
         for _, _, transform in reverse_iter:
