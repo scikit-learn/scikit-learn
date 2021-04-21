@@ -295,6 +295,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Data in the binned space. Will be a sparse matrix if
             `self.encode='onehot'` and ndarray otherwise.
         """
+        ATOL = 1e-5
+        RTOL = 1e-8
         check_is_fitted(self)
 
         # check input and attribute dtypes
@@ -307,9 +309,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # instability. Add eps to X so these values are binned correctly
             # with respect to their decimal truncation. See documentation of
             # numpy.isclose for an explanation of ``rtol`` and ``atol``.
-            rtol = 1.e-5
-            atol = 1.e-8
-            eps = atol + rtol * np.abs(Xt[:, jj])
+            eps = ATOL + RTOL * np.abs(Xt[:, jj])
             Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
         np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
 
