@@ -105,7 +105,7 @@ Changelog
 - |Fix| Improved convergence detection based on center change in
   :class:`cluster.MiniBatchKMeans` which was almost never achievable.
   :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-  
+
 - |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
@@ -203,6 +203,14 @@ Changelog
 - |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| :func:`feature_selection.r_regression` computes Pearson's R
+  correlation coefficients between the features and the target.
+  :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
+  and `Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -311,7 +319,7 @@ Changelog
   :pr:`18649` by `Leandro Hermida <hermidalc>` and
   `Rodion Martynov <marrodion>`.
 
-- |Fix| The `fit` method of the successive halving parameter search 
+- |Fix| The `fit` method of the successive halving parameter search
   (:class:`model_selection.HalvingGridSearchCV`, and
   :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
   `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
@@ -385,6 +393,10 @@ Changelog
 - |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in 
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``. 
+  :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
 :mod:`sklearn.tree`
 ...................
