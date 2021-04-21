@@ -260,6 +260,14 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             raise NotImplementedError("Inverse transform not implemented for "
                                       "sparse matrices!")
 
+        # from sklearn.kernel_ridge import KernelRidge
+        # self._inverse_transformer = KernelRidge(
+        #     alpha=self.alpha, kernel=self.kernel, gamma=self.gamma,
+        #     degree=self.degree, coef0=self.coef0,
+        #     kernel_params=self.kernel_params,
+        # )
+        # self._inverse_transformer.fit(X_transformed, X)
+
         n_samples = X_transformed.shape[0]
         K = self._get_kernel(X_transformed)
         K.flat[::n_samples + 1] += self.alpha
@@ -362,10 +370,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             raise NotFittedError("The fit_inverse_transform parameter was not"
                                  " set to True when instantiating and hence "
                                  "the inverse transform is not available.")
-
+        # return self._inverse_transformer.predict(X)
         K = self._get_kernel(X, self.X_transformed_fit_)
-        n_samples = self.X_transformed_fit_.shape[0]
-        K.flat[::n_samples + 1] += self.alpha
+        # n_samples = self.X_transformed_fit_.shape[0]
+        # K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)
 
     def _more_tags(self):
