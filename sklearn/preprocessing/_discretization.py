@@ -249,7 +249,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if isinstance(orig_bins, numbers.Number):
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError(
-                    f"{KBinsDiscretizer.__name__} received an invalid n_bins type. "
+                    f"{KBinsDiscretizer.__name__} "
+                    f"received an invalid n_bins type. "
                     f"Received {type(orig_bins).__name__}, expected int."
                 )
             if orig_bins < 2:
