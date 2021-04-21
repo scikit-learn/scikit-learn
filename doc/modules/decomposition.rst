@@ -178,10 +178,10 @@ Kernel PCA
 ----------
 
 :class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It
-has many applications including denoising, compression and structured
-prediction (kernel dependency estimation). :class:`KernelPCA` supports both
-``transform`` and ``inverse_transform``.
+dimensionality reduction through the use of kernels (see :ref:`metrics`)
+[Scholkopf1997]_. It has many applications including denoising, compression and
+structured prediction (kernel dependency estimation). :class:`KernelPCA`
+supports both ``transform`` and ``inverse_transform``.
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_002.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
@@ -191,13 +191,27 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 .. note::
     :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
     function to map samples from the PCA basis into the original feature
-    spaces. Thus, the reconstruction obtained with
+    spaces [Bakir2004]_. Thus, the reconstruction obtained with
     :meth:`KernelPCA.inverse_transform` is an approximation. See the example
     linked below to go more into details.
 
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
+
+.. topic:: References
+
+    .. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       `"Kernel principal component analysis."
+       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+       International conference on artificial neural networks.
+       Springer, Berlin, Heidelberg, 1997.
+
+    .. [Bakir2004] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+       `"Learning to find pre-images."
+       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
+       Advances in neural information processing systems 16 (2004): 449-456.
+
 
 .. _SparsePCA:
 

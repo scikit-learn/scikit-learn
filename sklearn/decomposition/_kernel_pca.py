@@ -56,8 +56,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         inverse transform (when fit_inverse_transform=True).
 
     fit_inverse_transform : bool, default=False
-        Learn the inverse transform for non-precomputed kernels.
-        (i.e. learn to find the pre-image of a point)
+        Learn the inverse transform for non-precomputed kernels (i.e. learn to
+        find the pre-image of a point). This method is based on [2]_.
 
     eigen_solver : {'auto', 'dense', 'arpack'}, default='auto'
         Select eigensolver to use. If n_components is much less than
@@ -136,11 +136,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     References
     ----------
-    Kernel PCA was introduced in:
-        Bernhard Schoelkopf, Alexander J. Smola,
-        and Klaus-Robert Mueller. 1999. Kernel principal
-        component analysis. In Advances in kernel methods,
-        MIT Press, Cambridge, MA, USA 327-352.
+    .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       "Kernel principal component analysis."
+       International conference on artificial neural networks.
+       Springer, Berlin, Heidelberg, 1997.
+       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+
+    .. [2] `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+       "Learning to find pre-images."
+       Advances in neural information processing systems 16 (2004): 449-456.
+       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
     """
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, kernel="linear",
@@ -376,12 +381,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         References
         ----------
-        "Learning to Find Pre-Images", G BakIr et al, 2004.
+        Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+        "Learning to find pre-images."
+        Advances in neural information processing systems 16 (2004): 449-456.
+        <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
         """
         if not self.fit_inverse_transform:
             raise NotFittedError("The fit_inverse_transform parameter was not"
                                  " set to True when instantiating and hence "
                                  "the inverse transform is not available.")
+
         K = self._get_kernel(X, self.X_transformed_fit_)
         return np.dot(K, self.dual_coef_)
 
