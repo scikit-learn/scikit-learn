@@ -242,8 +242,10 @@ Centering kernel matrices
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
 in a feature space (possibly implicitly) defined by a function
 :math:`\phi(\cdot)`, a :class:`KernelCenterer` can transform the kernel matrix
-so that it contains inner products in the feature space defined by
-:math:`\phi` followed by the removal of the mean in that space.
+so that it contains inner products in the feature space defined by :math:`\phi`
+followed by the removal of the mean in that space. In other words,
+:class:`KernelCenterer` computes the centered Gram matrix associated to a
+positive semidefinite kernel :math:`K`.
 
 **Mathematical formulation**
 
