@@ -243,25 +243,25 @@ If you have a kernel matrix of a kernel :math:`K` that computes a dot product
 in a feature space (possibly implicitly) defined by a function
 :math:`\phi(\cdot)`, a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space defined by
-:math:`\phi(\cdot)` followed by removal of the mean in that space.
+:math:`\phi` followed by the removal of the mean in that space.
 
 **Mathematical formulation**
 
 We can have a look at the mathematical formulation now that we have the
-intuition. Let :math:`K` our kernel of shape `(n_samples, n_samples)` computed
+intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)` computed
 from :math:`X`, a data matrix of shape `(n_samples, n_features)`. :math:`K` is
 defined by
 
 .. math::
   K(X, X) = \phi(X) . \phi(X)^{T}
 
-:math:`\phi(X)` is a function mapping :math:`X` to a Hilbert space. A centered
+:math:`\phi(X)` is a function mapping of :math:`X` to a Hilbert space. A centered
 kernel :math:`\tilde{K}` is defined as:
 
 .. math::
   \tilde{K}(X, X) = \tilde{\phi}(X) . \tilde{\phi}(X)^{T}
 
-:math:`\tilde{\phi}(X)` are the mapped centered data in the Hilbert space.
+where :math:`\tilde{\phi}(X)` results from centering :math:`\phi(X)` in the Hilbert space.
 
 Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
 function :math:`\phi(\cdot)` and center the data in this new space. However,
@@ -286,7 +286,7 @@ centering :math:`K_{test}` is done as:
 .. math::
   \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
 
-:math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples_test, n_samples)`
+:math:`1_{\text{n}_{samples}}` is a matrix of shape `(n_samples_test, n_samples)`
 where all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`.
 
 .. topic:: References
