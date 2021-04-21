@@ -260,14 +260,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             raise NotImplementedError("Inverse transform not implemented for "
                                       "sparse matrices!")
 
-        # from sklearn.kernel_ridge import KernelRidge
-        # self._inverse_transformer = KernelRidge(
-        #     alpha=self.alpha, kernel=self.kernel, gamma=self.gamma,
-        #     degree=self.degree, coef0=self.coef0,
-        #     kernel_params=self.kernel_params,
-        # )
-        # self._inverse_transformer.fit(X_transformed, X)
-
         n_samples = X_transformed.shape[0]
         K = self._get_kernel(X_transformed)
         K.flat[::n_samples + 1] += self.alpha
@@ -354,6 +346,26 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     def inverse_transform(self, X):
         """Transform X back to original space.
 
+        ``inverse_transform`` approximates the inverse transformation using
+        a learned pre-image. The pre-image is learned by kernel ridge
+        regression of the original data on their low-dimensional representation
+        vectors.
+
+        .. note:
+            :meth:`~sklearn.decomposition.fit` internally uses a centered
+            kernel. As the centered kernel no longer contains the information
+            of the mean of kernel features, such information is not taken into
+            account in reconstruction.
+
+        .. note::
+            When users want to compute inverse transformation for 'linear'
+            kernel, it is recommended that they use
+            :class:`~sklearn.decomposition.PCA` instead. Unlike
+            :class:`~sklearn.decomposition.PCA`,
+            :class:`~sklearn.decomposition.KernelPCA`'s ``inverse_transform``
+            does not reconstruct the mean of data when 'linear' kernel is used
+            due to the use of centered kernel.
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_components)
@@ -370,10 +382,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             raise NotFittedError("The fit_inverse_transform parameter was not"
                                  " set to True when instantiating and hence "
                                  "the inverse transform is not available.")
-        # return self._inverse_transformer.predict(X)
         K = self._get_kernel(X, self.X_transformed_fit_)
-        # n_samples = self.X_transformed_fit_.shape[0]
-        # K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)
 
     def _more_tags(self):
