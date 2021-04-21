@@ -528,12 +528,12 @@ def test_fetch_openml_as_frame_auto(monkeypatch):
 
     data_id = 61  # iris dataset version 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    data = fetch_openml(data_id=data_id, as_frame='auto')
+    data = fetch_openml(data_id=data_id, as_frame='auto', cache=False)
     assert isinstance(data.data, pd.DataFrame)
 
     data_id = 292  # Australian dataset version 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    data = fetch_openml(data_id=data_id, as_frame='auto')
+    data = fetch_openml(data_id=data_id, as_frame='auto', cache=False)
     assert isinstance(data.data, scipy.sparse.csr_matrix)
 
 
@@ -772,15 +772,12 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     data_name = 'iris'
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    assert_warns_message(
-        UserWarning,
-        "Multiple active versions of the dataset matching the name"
-        " iris exist. Versions may be fundamentally different, "
-        "returning version 1.",
-        fetch_openml,
-        name=data_name,
-        as_frame=False
-    )
+
+    msg = ("Multiple active versions of the dataset matching the name"
+           " iris exist. Versions may be fundamentally different, "
+           "returning version 1.")
+    with pytest.warns(UserWarning, match=msg):
+        fetch_openml(name=data_name, as_frame=False, cache=False)
 
 
 def test_decode_iris(monkeypatch):

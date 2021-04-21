@@ -10,7 +10,6 @@ from sklearn.ensemble._hist_gradient_boosting.splitting import (
     compute_node_value
 )
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 

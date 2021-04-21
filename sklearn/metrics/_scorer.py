@@ -215,7 +215,7 @@ class _PredictScorer(_BaseScorer):
             arguments, potentially caching results.
 
         estimator : object
-            Trained estimator to use for scoring. Must have a predict_proba
+            Trained estimator to use for scoring. Must have a `predict`
             method; the output of that is used to compute the score.
 
         X : {array-like, sparse matrix}
@@ -254,7 +254,7 @@ class _ProbaScorer(_BaseScorer):
             arguments, potentially caching results.
 
         clf : object
-            Trained classifier to use for scoring. Must have a predict_proba
+            Trained classifier to use for scoring. Must have a `predict_proba`
             method; the output of that is used to compute the score.
 
         X : {array-like, sparse matrix}

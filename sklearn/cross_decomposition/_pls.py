@@ -537,7 +537,8 @@ class PLSRegression(_PLS):
         `Y = X @ coef_`.
 
     n_iter_ : list of shape (n_components,)
-        Number of iterations of the power method for each component.
+        Number of iterations of the power method, for each
+        component.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.

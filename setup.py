@@ -14,7 +14,6 @@ import setuptools  # noqa
 from distutils.command.clean import clean as Clean
 from distutils.command.sdist import sdist
 
-from pkg_resources import parse_version
 import traceback
 import importlib
 try:
@@ -51,6 +50,7 @@ PROJECT_URLS = {
 # does not need the compiled code
 import sklearn
 import sklearn._min_dependencies as min_deps  # noqa
+from sklearn.externals._packaging.version import parse as parse_version  # noqa
 
 
 VERSION = sklearn.__version__
@@ -266,14 +266,9 @@ def setup_package():
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
-    if len(sys.argv) == 1 or (
-            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-                                    sys.argv[1] in ('--help-commands',
-                                                    'egg_info',
-                                                    'dist_info',
-                                                    '--version',
-                                                    'clean',
-                                                    'check'))):
+    commands = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
+    if all(command in ('egg_info', 'dist_info', 'clean', 'check')
+           for command in commands):
         # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.

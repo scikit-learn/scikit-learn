@@ -148,9 +148,12 @@ def test_sanity_check_pls_regression_constant_column_Y():
 
     x_loadings_sign_flip = np.sign(expected_x_loadings / pls.x_loadings_)
     x_weights_sign_flip = np.sign(expected_x_weights / pls.x_weights_)
-    y_loadings_sign_flip = np.sign(expected_y_loadings / pls.y_loadings_)
+    # we ignore the first full-zeros row for y
+    y_loadings_sign_flip = np.sign(expected_y_loadings[1:] /
+                                   pls.y_loadings_[1:])
+
     assert_array_equal(x_loadings_sign_flip, x_weights_sign_flip)
-    assert_array_equal(x_loadings_sign_flip[1:], y_loadings_sign_flip[1:])
+    assert_array_equal(x_loadings_sign_flip[1:], y_loadings_sign_flip)
 
 
 def test_sanity_check_pls_canonical():

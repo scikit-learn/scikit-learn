@@ -4,8 +4,6 @@ import numpy as np
 import pytest
 
 from scipy.sparse import issparse
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_no_warnings
 from sklearn.semi_supervised import _label_propagation as label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.model_selection import train_test_split
@@ -143,18 +141,25 @@ def test_convergence_warning():
     X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=1)
-    assert_warns(ConvergenceWarning, mdl.fit, X, y)
+    warn_msg = ('max_iter=1 was reached without convergence.')
+    with pytest.warns(ConvergenceWarning, match=warn_msg):
+        mdl.fit(X, y)
     assert mdl.n_iter_ == mdl.max_iter
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=1)
-    assert_warns(ConvergenceWarning, mdl.fit, X, y)
+    with pytest.warns(ConvergenceWarning, match=warn_msg):
+        mdl.fit(X, y)
     assert mdl.n_iter_ == mdl.max_iter
 
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=500)
-    assert_no_warnings(mdl.fit, X, y)
+    with pytest.warns(None) as record:
+        mdl.fit(X, y)
+    assert len(record) == 0
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
-    assert_no_warnings(mdl.fit, X, y)
+    with pytest.warns(None) as record:
+        mdl.fit(X, y)
+    assert len(record) == 0
 
 
 @pytest.mark.parametrize("LabelPropagationCls",
@@ -170,7 +175,9 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     mdl = LabelPropagationCls(kernel='knn',
                               max_iter=100,
                               n_neighbors=1)
-    assert_no_warnings(mdl.fit, X, y)
+    with pytest.warns(None) as record:
+        mdl.fit(X, y)
+    assert len(record) == 0
 
 
 def test_predict_sparse_callable_kernel():
