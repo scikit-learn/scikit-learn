@@ -8,6 +8,7 @@ from ._univariate_selection import chi2
 from ._univariate_selection import f_classif
 from ._univariate_selection import f_oneway
 from ._univariate_selection import f_regression
+from ._univariate_selection import r_regression
 from ._univariate_selection import SelectPercentile
 from ._univariate_selection import SelectKBest
 from ._univariate_selection import SelectFpr
@@ -44,6 +45,7 @@ __all__ = ['GenericUnivariateSelect',
            'f_classif',
            'f_oneway',
            'f_regression',
+           'r_regression',
            'mutual_info_classif',
            'mutual_info_regression',
            'SelectorMixin']

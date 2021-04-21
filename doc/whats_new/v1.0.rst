@@ -204,6 +204,14 @@ Changelog
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| :func:`feature_selection.r_regression` computes Pearson's R
+  correlation coefficients between the features and the target.
+  :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
+  and `Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.inspection`
 .........................
 
