@@ -224,7 +224,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     warnings.warn(
                         f"Bins whose width are too small (i.e., <= "
                         f"1e-8) in feature {jj} are removed. Consider "
-                        "decreasing the number of bins."
+                        f"decreasing the number of bins."
                     )
                     n_bins[jj] = len(bin_edges[jj]) - 1
 
