@@ -166,14 +166,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
-            raise ValueError("Valid options for 'encode' are {}. "
-                             "Got encode={!r} instead."
-                             .format(valid_encode, self.encode))
+            raise ValueError(
+                f"Valid options for 'encode' are {valid_encode}. "
+                f"Got encode={self.encode!r} instead."
+            )
         valid_strategy = ('uniform', 'quantile', 'kmeans')
         if self.strategy not in valid_strategy:
-            raise ValueError("Valid options for 'strategy' are {}. "
-                             "Got strategy={!r} instead."
-                             .format(valid_strategy, self.strategy))
+            raise ValueError(
+                f"Valid options for 'strategy' are {valid_strategy}. "
+                f"Got strategy={self.strategy!r} instead."
+            )
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
@@ -184,8 +186,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             col_min, col_max = column.min(), column.max()
 
             if col_min == col_max:
-                warnings.warn("Feature %d is constant and will be "
-                              "replaced with 0." % jj)
+                warnings.warn(
+                    f"Feature {jj} is constant and will be "
+                    f"replaced with 0."
+                )
                 n_bins[jj] = 1
                 bin_edges[jj] = np.array([-np.inf, np.inf])
                 continue
@@ -217,9 +221,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 mask = np.ediff1d(bin_edges[jj], to_begin=np.inf) > 1e-8
                 bin_edges[jj] = bin_edges[jj][mask]
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
-                    warnings.warn('Bins whose width are too small (i.e., <= '
-                                  '1e-8) in feature %d are removed. Consider '
-                                  'decreasing the number of bins.' % jj)
+                    warnings.warn(
+                        f"Bins whose width are too small (i.e., <= "
+                        f"1e-8) in feature {jj} are removed. Consider "
+                        "decreasing the number of bins."
+                    )
                     n_bins[jj] = len(bin_edges[jj]) - 1
 
         self.bin_edges_ = bin_edges
@@ -242,32 +248,36 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
             if not isinstance(orig_bins, numbers.Integral):
-                raise ValueError("{} received an invalid n_bins type. "
-                                 "Received {}, expected int."
-                                 .format(KBinsDiscretizer.__name__,
-                                         type(orig_bins).__name__))
+                raise ValueError(
+                    f"{KBinsDiscretizer.__name__} received an invalid n_bins type. "
+                    f"Received {type(orig_bins).__name__}, expected int."
+                )
             if orig_bins < 2:
-                raise ValueError("{} received an invalid number "
-                                 "of bins. Received {}, expected at least 2."
-                                 .format(KBinsDiscretizer.__name__, orig_bins))
+                raise ValueError(
+                    f"{KBinsDiscretizer.__name__} received an invalid number "
+                    f"of bins. Received {orig_bins}, expected at least 2."
+                )
             return np.full(n_features, orig_bins, dtype=int)
 
         n_bins = check_array(orig_bins, dtype=int, copy=True,
                              ensure_2d=False)
 
         if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
-            raise ValueError("n_bins must be a scalar or array "
-                             "of shape (n_features,).")
+            raise ValueError(
+                "n_bins must be a scalar or array "
+                "of shape (n_features,)."
+            )
 
         bad_nbins_value = (n_bins < 2) | (n_bins != orig_bins)
 
         violating_indices = np.where(bad_nbins_value)[0]
         if violating_indices.shape[0] > 0:
             indices = ", ".join(str(i) for i in violating_indices)
-            raise ValueError("{} received an invalid number "
-                             "of bins at indices {}. Number of bins "
-                             "must be at least 2, and must be an int."
-                             .format(KBinsDiscretizer.__name__, indices))
+            raise ValueError(
+                f"{KBinsDiscretizer.__name__} received an invalid number "
+                f"of bins at indices {indices}. Number of bins "
+                f"must be at least 2, and must be an int."
+            )
         return n_bins
 
     def transform(self, X):
@@ -342,8 +352,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         Xinv = check_array(Xt, copy=True, dtype=(np.float64, np.float32))
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, Xinv.shape[1]))
+            raise ValueError(
+                f"Incorrect number of features. Expecting {n_features}, "
+                f"received {Xinv.shape[1]}."
+            )
 
         for jj in range(n_features):
             bin_edges = self.bin_edges_[jj]
