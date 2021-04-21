@@ -548,40 +548,24 @@ def test_bound_check_fixed_hyperparameter():
     GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
 
+# FIXME: we should test for multitargets as well. However, GPR is broken:
+# see: https://github.com/scikit-learn/scikit-learn/pull/19706
 @pytest.mark.parametrize('kernel', kernels)
 def test_constant_target(kernel):
-    # Test for constant target(s), the private _y_train_std attribute has
-    # a standard deviation of 1 instead of 0
+    """Check that the std. dev. is affected to 1 when normalizing a constant
+    feature.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/18318
+    NaN where affected to the target when scaling due to null std. dev. with
+    constant target.
+    """
+    y_constant = np.ones(X.shape[0], dtype=np.float64)
+
     gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
-
-    # create a constant target of 1
-    y = np.ones(X.shape[0])
-    expected_std = np.ones(shape=X.shape[0])
-    gpr.fit(X, y)
-
-    assert_array_equal(gpr._y_train_std, expected_std)
+    gpr.fit(X, y_constant)
+    assert gpr._y_train_std == pytest.approx(1.0)
 
     y_pred, y_cov = gpr.predict(X, return_cov=True)
-
-    assert_almost_equal(y_pred, y)
-    assert_almost_equal(np.diag(y_cov), 0.)
-
-    # Test multi-target data
-    n_samples = X.shape[0]
-    rng = np.random.RandomState(0)
-    y = np.concatenate([
-        rng.normal(size=(n_samples, 1)),  # non-constant target
-        np.full(shape=(n_samples, 1), fill_value=2)  # constant target
-    ], axis=1)
-
-    # This is blocked by #19706
-    # # Ensure no tracebacks
-    # gpr.fit(X, y)
-    # y_pred, y_cov = gpr.predict(X, return_cov=True)
-    #
-    # assert_all_finite(y_pred)
-    # assert_all_finite(y_cov)
-    #
-    # # Assert correct shapes
-    # assert y_pred.shape == (X, Y)
-    # assert y_cov.shape == (X, Y)
+    assert_allclose(y_pred, y_constant)
+    # set atol because we compare to zero
+    assert_allclose(np.diag(y_cov), 0., atol=1e-9)
