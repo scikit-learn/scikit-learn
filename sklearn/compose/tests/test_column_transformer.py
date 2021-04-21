@@ -225,7 +225,7 @@ def test_column_transformer_dataframe():
     assert len(both.transformers_) == 1
     assert both.transformers_[-1][0] != 'remainder'
 
-    # ensure pandas object is passes through
+    # ensure pandas object is passed through
 
     class TransAssert(BaseEstimator):
 
@@ -308,6 +308,92 @@ def test_column_transformer_empty_columns(pandas, column_selection,
     assert_array_equal(ct.fit(X).transform(X), fixture)
     assert len(ct.transformers_) == 2  # including remainder
     assert isinstance(ct.transformers_[0][1], TransRaise)
+
+
+def test_column_transformer_output_indices():
+    # Checks for the output_indices_ attribute
+    X_array = np.arange(6).reshape(3, 2)
+
+    ct = ColumnTransformer([('trans1', Trans(), [0]),
+                            ('trans2', Trans(), [1])])
+    X_trans = ct.fit_transform(X_array)
+    assert ct.output_indices_ == {'trans1': slice(0, 1),
+                                  'trans2': slice(1, 2),
+                                  'remainder': slice(0, 0)}
+    assert_array_equal(X_trans[:, [0]],
+                       X_trans[:, ct.output_indices_['trans1']])
+    assert_array_equal(X_trans[:, [1]],
+                       X_trans[:, ct.output_indices_['trans2']])
+
+    # test with transformer_weights and multiple columns
+    ct = ColumnTransformer([('trans', Trans(), [0, 1])],
+                           transformer_weights={'trans': .1})
+    X_trans = ct.fit_transform(X_array)
+    assert ct.output_indices_ == {'trans': slice(0, 2),
+                                  'remainder': slice(0, 0)}
+    assert_array_equal(X_trans[:, [0, 1]],
+                       X_trans[:, ct.output_indices_['trans']])
+    assert_array_equal(X_trans[:, []],
+                       X_trans[:, ct.output_indices_['remainder']])
+
+    # test case that ensures that the attribute does also work when
+    # a given transformer doesn't have any columns to work on
+    ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
+                            ('trans2', TransRaise(), [])])
+    X_trans = ct.fit_transform(X_array)
+    assert ct.output_indices_ == {'trans1': slice(0, 2),
+                                  'trans2': slice(0, 0),
+                                  'remainder': slice(0, 0)}
+    assert_array_equal(X_trans[:, [0, 1]],
+                       X_trans[:, ct.output_indices_['trans1']])
+    assert_array_equal(X_trans[:, []],
+                       X_trans[:, ct.output_indices_['trans2']])
+    assert_array_equal(X_trans[:, []],
+                       X_trans[:, ct.output_indices_['remainder']])
+
+    ct = ColumnTransformer([('trans', TransRaise(), [])],
+                           remainder='passthrough')
+    X_trans = ct.fit_transform(X_array)
+    assert ct.output_indices_ == {'trans': slice(0, 0),
+                                  'remainder': slice(0, 2)}
+    assert_array_equal(X_trans[:, []],
+                       X_trans[:, ct.output_indices_['trans']])
+    assert_array_equal(X_trans[:, [0, 1]],
+                       X_trans[:, ct.output_indices_['remainder']])
+
+
+def test_column_transformer_output_indices_df():
+    # Checks for the output_indices_ attribute with data frames
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame(np.arange(6).reshape(3, 2),
+                        columns=['first', 'second'])
+
+    ct = ColumnTransformer([('trans1', Trans(), ['first']),
+                            ('trans2', Trans(), ['second'])])
+    X_trans = ct.fit_transform(X_df)
+    assert ct.output_indices_ == {'trans1': slice(0, 1),
+                                  'trans2': slice(1, 2),
+                                  'remainder': slice(0, 0)}
+    assert_array_equal(X_trans[:, [0]],
+                       X_trans[:, ct.output_indices_['trans1']])
+    assert_array_equal(X_trans[:, [1]],
+                       X_trans[:, ct.output_indices_['trans2']])
+    assert_array_equal(X_trans[:, []],
+                       X_trans[:, ct.output_indices_['remainder']])
+
+    ct = ColumnTransformer([('trans1', Trans(), [0]),
+                            ('trans2', Trans(), [1])])
+    X_trans = ct.fit_transform(X_df)
+    assert ct.output_indices_ == {'trans1': slice(0, 1),
+                                  'trans2': slice(1, 2),
+                                  'remainder': slice(0, 0)}
+    assert_array_equal(X_trans[:, [0]],
+                       X_trans[:, ct.output_indices_['trans1']])
+    assert_array_equal(X_trans[:, [1]],
+                       X_trans[:, ct.output_indices_['trans2']])
+    assert_array_equal(X_trans[:, []],
+                       X_trans[:, ct.output_indices_['remainder']])
 
 
 def test_column_transformer_sparse_array():
@@ -662,7 +748,7 @@ def test_column_transformer_cloning():
     assert hasattr(ct.transformers_[0][1], 'mean_')
 
 
-def test_column_transformer_get_feature_names():
+def test_column_transformer_get_feature_names_raises():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans', Trans(), [0, 1])])
     # raise correct error when not fitted
@@ -670,23 +756,30 @@ def test_column_transformer_get_feature_names():
         ct.get_feature_names()
     # raise correct error when no feature names are available
     ct.fit(X_array)
-    assert_raise_message(AttributeError,
-                         "Transformer trans (type Trans) does not provide "
-                         "get_feature_names", ct.get_feature_names)
+    msg = r"Transformer trans \(type Trans\) does not provide " \
+          r"get_feature_names"
+    with pytest.raises(AttributeError, match=msg):
+        ct.get_feature_names()
 
-    # working example
-    X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
-                  [{'c': 5}, {'c': 6}]], dtype=object).T
+
+@pytest.mark.parametrize("X, keys", [
+    (np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
+               [{'c': 5}, {'c': 6}]], dtype=object).T, ('a', 'b', 'c')),
+    (np.array([[{1: 1, 2: 2}, {1: 3, 2: 4}],
+               [{3: 5}, {3: 6}]], dtype=object).T, ('1', '2', '3')),
+])
+def test_column_transformer_get_feature_names(X, keys):
     ct = ColumnTransformer(
         [('col' + str(i), DictVectorizer(), i) for i in range(2)])
     ct.fit(X)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1__c']
+    assert ct.get_feature_names() == [f'col0__{key}' for key in keys[:2]] + \
+           [f'col1__{keys[2]}']
 
     # drop transformer
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b']
+    assert ct.get_feature_names() == [f'col0__{key}' for key in keys[:2]]
 
     # passthrough transformer
     ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
@@ -696,7 +789,8 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
                            remainder='passthrough')
     ct.fit(X)
-    assert ct.get_feature_names() == ['trans__a', 'trans__b', 'x1']
+    assert ct.get_feature_names() == [f'trans__{key}' for key in keys[:2]] + \
+           ['x1']
 
     ct = ColumnTransformer([('trans', 'passthrough', [1])],
                            remainder='passthrough')

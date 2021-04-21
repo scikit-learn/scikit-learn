@@ -11,9 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     KBinsDiscretizer, PolynomialFeatures, SplineTransformer
 )
-from sklearn.utils.fixes import linspace, sp_version
-
-from pkg_resources import parse_version
+from sklearn.utils.fixes import linspace, sp_version, parse_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -550,6 +548,27 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
+@pytest.mark.parametrize("n_features", [1, 4, 5])
+@pytest.mark.parametrize("degree", range(1, 5))
+@pytest.mark.parametrize("interaction_only", [True, False])
+@pytest.mark.parametrize("include_bias", [True, False])
+def test_num_combinations(n_features, degree, interaction_only, include_bias):
+    """
+    Test that n_output_features_ is calculated correctly.
+    """
+    x = sparse.csr_matrix(([1], ([0], [n_features - 1])))
+    est = PolynomialFeatures(
+        degree, interaction_only=interaction_only, include_bias=include_bias
+    )
+    est.fit(x)
+    num_combos = est.n_output_features_
+
+    combos = PolynomialFeatures._combinations(
+        n_features, degree, interaction_only, include_bias
+    )
+    assert num_combos == sum([1 for _ in combos])
 
 
 @pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
