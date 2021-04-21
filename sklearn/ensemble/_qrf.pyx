@@ -31,6 +31,8 @@ from cython.parallel cimport prange, parallel
 cimport openmp
 cimport numpy as np
 from numpy cimport ndarray
+
+from ..metrics import mean_pinball_loss
 from ..utils._weighted_quantile cimport _weighted_quantile_presorted_1D, _weighted_quantile_unchecked_1D, Interpolation
 
 import numpy as np
@@ -162,7 +164,7 @@ cdef void _weighted_random_sample(long[::1] leaves,
 
 def _accumulate_prediction(predict, X, i, out, lock):
     """
-    From sklearn.ensemble._forest
+    Adapted from sklearn.ensemble._forest
     """
     prediction = predict(X, check_input=False)
     with lock:
@@ -407,6 +409,18 @@ class _ForestQuantileRegressor(ForestRegressor, metaclass=ABCMeta):
             raise ValueError("Quantiles must be in the range [0, 1]")
 
         return q
+
+    def score(self, X, y):
+        q = self.validate_quantiles()
+        y_pred = self.predict(X)
+        losses = np.empty(q.size)
+        if q.size == 1:
+            return mean_pinball_loss(y, y_pred, alpha=q.item())
+        else:
+            for i in range(q.size):
+                losses[i] = mean_pinball_loss(y, y_pred[i], alpha=q[i])
+            return np.mean(losses)
+
 
     def repr(self, method):
         # not terribly pretty, but it works...
