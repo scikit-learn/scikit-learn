@@ -810,9 +810,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             rank = np.sum(S2 > self.tol)
             if rank < n_features:
-                raise linalg.LinAlgError('The covariance matrix is not full '
-                                         'rank. Increase regularization to '
-                                         'fit the model.')
+                warnings.warn(linalg.LinAlgWarning(
+                    f"The covariance matrix of class {ind} is not full rank. "
+                    "Increasing the value of parameter `reg_param` might help"
+                    " reducing the colinearity."
+                ))
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
