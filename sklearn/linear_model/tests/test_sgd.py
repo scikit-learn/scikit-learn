@@ -19,7 +19,6 @@ from sklearn.base import clone, is_classifier
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
 
@@ -362,41 +361,40 @@ def test_adaptive_longer_than_constant(klass):
     assert clf1.n_iter_ > clf2.n_iter_
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
-                                   SGDRegressor, SparseSGDRegressor])
-def test_validation_set_not_used_for_training(klass):
-    X, Y = iris.data, iris.target
-    validation_fraction = 0.4
-    seed = 42
-    shuffle = False
-    max_iter = 10
-    clf1 = klass(early_stopping=True,
-                 random_state=np.random.RandomState(seed),
-                 validation_fraction=validation_fraction,
-                 learning_rate='constant', eta0=0.01,
-                 tol=None, max_iter=max_iter, shuffle=shuffle)
-    clf1.fit(X, Y)
-    assert clf1.n_iter_ == max_iter
+@pytest.mark.parametrize(
+    "SGDEstimator, X, y",
+    [
+        (
+            SGDClassifier,
+            *datasets.make_classification(n_samples=1_000, class_sep=0.5),
+        ),
+        (
+            SparseSGDClassifier,
+            *datasets.make_classification(n_samples=1_000, class_sep=0.5),
+        ),
+        (SGDRegressor, *datasets.make_regression(n_samples=1_000, noise=50)),
+        (
+            SparseSGDRegressor,
+            *datasets.make_regression(n_samples=1_000, noise=50),
+        ),
+    ],
+)
+def test_validation_set_not_used_for_training(SGDEstimator, X, y):
+    sgd_early_stopped = SGDEstimator(
+        early_stopping=True,
+        tol=1e-4,
+        max_iter=1000,
+    )
+    sgd_early_stopped.fit(X, y)
+    sgd_not_early_stopped = SGDEstimator(
+        early_stopping=False,
+        tol=1e-6,
+        max_iter=1000,
+    )
+    sgd_not_early_stopped.fit(X, y)
 
-    clf2 = klass(early_stopping=False,
-                 random_state=np.random.RandomState(seed),
-                 learning_rate='constant', eta0=0.01,
-                 tol=None, max_iter=max_iter, shuffle=shuffle)
-
-    if is_classifier(clf2):
-        cv = StratifiedShuffleSplit(test_size=validation_fraction,
-                                    random_state=seed)
-    else:
-        rng = np.random.RandomState(seed)
-        rng.randint(1, np.iinfo(np.int32).max)
-        cv = ShuffleSplit(test_size=validation_fraction,
-                          random_state=rng)
-    idx_train, idx_val = next(cv.split(X, Y))
-    idx_train = np.sort(idx_train)  # remove shuffling
-    clf2.fit(X[idx_train], Y[idx_train])
-    assert clf2.n_iter_ == max_iter
-
-    assert_array_equal(clf1.coef_, clf2.coef_)
+    assert sgd_early_stopped.n_iter_ < sgd_not_early_stopped.n_iter_
+    assert sgd_early_stopped.score(X, y) < sgd_not_early_stopped.score(X, y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
