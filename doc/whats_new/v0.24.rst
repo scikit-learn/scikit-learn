@@ -46,9 +46,15 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegression`: the
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
+
+- |Fix| Add a random state to make internal shuffling deterministic in
+  :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.SparseSGDClassifier`, and
+  :class:`linear_model.SparseSGDRegressor`.
+  :pr:`19716` by :user:`Pierre Attard <PierreAttard>`.
 
 :mod:`sklearn.model_selection`
 ..............................
