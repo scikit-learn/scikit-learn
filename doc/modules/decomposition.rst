@@ -183,15 +183,21 @@ has many applications including denoising, compression and structured
 prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 ``transform`` and ``inverse_transform``.
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_002.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
     :align: center
     :scale: 75%
 
+.. note::
+    :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
+    function to map samples from the PCA basis into the original feature
+    spaces. Thus, the reconstruction obtained with
+    :meth:`KernelPCA.inverse_transform` is an approximation. See the example
+    linked below to go more into details.
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
-
 
 .. _SparsePCA:
 
