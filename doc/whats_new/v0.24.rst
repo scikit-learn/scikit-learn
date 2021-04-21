@@ -32,6 +32,17 @@ Changelog
 - |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s
   ``inverse_transform``.  :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Avoid division by zero when scaling constant target in
+  :class:`gaussian_process.GaussianProcessRegressor`. It was due to a std. dev.
+  equal to 0. Now, such case is detected and the std. dev. is affected to 1
+  avoiding a division by zero and thus the presence of NaN values in the
+  normalized target.
+  :pr:`19703` by :user:`sobkevich`, :user:`Boris Villazón-Terrazas <boricles>`
+  and :user:`Alexandr Fonari <afonari>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
