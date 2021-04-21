@@ -89,11 +89,11 @@ axs[0, 1].set_title("Testing data")
 axs[1, 0].scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=y_test)
 axs[1, 0].set_ylabel("Principal component #1")
 axs[1, 0].set_xlabel("Principal component #0")
-axs[1, 0].set_title("Projection using PCA")
+axs[1, 0].set_title("Projection of testing data\n using PCA")
 
 axs[1, 1].scatter(X_test_kernel_pca[:, 0], X_test_kernel_pca[:, 1], c=y_test)
 axs[1, 1].set_xlabel("Principal component #0")
-axs[1, 1].set_title("Projection using KernelPCA")
+axs[1, 1].set_title("Projection of testing data\n using KernelPCA")
 
 fig.subplots_adjust(hspace=0.4)
 
@@ -205,16 +205,16 @@ plot_digits(X_test_noisy,
             f"MSE: {np.mean((X_test - X_test_noisy) ** 2):.2f}")
 
 # %%
-# We created a training and testing sets with 100 digits in each set. Also,
-# we created a corrupted testing set that correspond to the original test set
-# with additional Gaussian noise.
+# We created a training and testing of 1,000 samples and a test set of 100
+# samples. Also, we created a corrupted testing set that correspond to the
+# original test set with additional Gaussian noise.
 #
 # The idea of this section, is to show that we can denoise the corrupted test
 # set by a learning a PCA basis on the uncorrupted train set. We will use
 # both a PCA and a kernel-based PCA.
 pca = PCA(n_components=32)
 kernel_pca = KernelPCA(n_components=200, kernel="rbf", gamma=1e-3,
-                       fit_inverse_transform=True, alpha=10)
+                       fit_inverse_transform=True, alpha=5e-3)
 
 pca.fit(X_train)
 _ = kernel_pca.fit(X_train)
@@ -241,3 +241,7 @@ plot_digits(X_reconstructed_kernel_pca,
             f"MSE: {np.mean((X_test - X_reconstructed_kernel_pca) ** 2):.2f}")
 
 # %%
+# Even if both PCA and kernel PCA have the same MSE, a qualitative analysis
+# will favor the output of the kernel PCA. However, it should be noted that
+# the results of the denoising with kernel PCA will depend of the parameters
+# `n_components`, `gamma`, and `alpha`.
