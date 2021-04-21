@@ -62,6 +62,13 @@ Changelog
   :class:`model_selection.HalvingGridSearchCV` were not properly converted to
   numpy arrays. :pr:`19211` by `Nicolas Hug`_.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputRegressor` now works with estimators
+  that dynamically define `predict` during fitting, such as
+  :class:`ensemble.StackingRegressor`. :pr:`19308` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -70,18 +77,16 @@ Changelog
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Fix encoder categories having dtype='S'
+  :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder`.
+  :pr:`19727` by :user:`Andrew Delong <andrewdelong>`.
+
 - |Fix| :meth:`preprocessing.OrdinalEncoder.transfrom` correctly handles
   unknown values for string dtypes. :pr:`19888` by `Thomas Fan`_.
 
 - |Fix| :meth:`preprocessing.OneHotEncoder.fit` no longer alters the `drop`
   parameter. :pr:`19924` by `Thomas Fan`_.
-
-:mod:`sklearn.multioutput`
-..........................
-
-- |Fix| :class:`multioutput.MultiOutputRegressor` now works with estimators
-  that dynamically define `predict` during fitting, such as
-  :class:`ensemble.StackingRegressor`. :pr:`19308` by `Thomas Fan`_.
 
 :mod:`sklearn.semi_supervised`
 ..............................
@@ -91,7 +96,7 @@ Changelog
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
 :mod:`sklearn.tree`
-.......................
+...................
 
 - |Fix| Fix a bug in `fit` of :class:`tree.BaseDecisionTree` that caused
   segmentation faults under certain conditions. `fit` now deep copies the
