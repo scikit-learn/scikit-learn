@@ -758,15 +758,39 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-def _convert_container(container, constructor_name, columns_name=None,
-                       dtype=None):
+def _convert_container(
+    container, constructor_name, columns_name=None, dtype=None
+):
+    """Convert a given container to a specific array-like with a dtype.
+
+    Parameters
+    ----------
+    container : array-like
+        The container to convert.
+    constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
+            "series", "index", "slice", "sparse_csr", "sparse_csc"}
+        The type of the returned container.
+    columns_name : index or array-like, default=None
+        For pandas container supporting `columns_names`, it will affect
+        specific names.
+    dtype : dtype, default=None
+        Force the dtype of the container. Does not apply to `"slice"`
+        container.
+
+    Returns
+    -------
+    converted_container
+    """
     if constructor_name == 'list':
         if dtype is None:
             return list(container)
         else:
             return np.asarray(container, dtype=dtype).tolist()
     elif constructor_name == 'tuple':
-        return tuple(container)
+        if dtype is None:
+            return tuple(container)
+        else:
+            return tuple(np.asarray(container, dtype=dtype).tolist())
     elif constructor_name == 'array':
         return np.asarray(container, dtype=dtype)
     elif constructor_name == 'sparse':
