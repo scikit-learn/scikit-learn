@@ -20,7 +20,7 @@ Changelog
   std. dev. With certain covariance matrices this inverse is unstable to
   compute explicitly. Calling Cholesky solver mitigates this issue in
   computation.
-  :pr:`19939` by :user:`Ian Halvic <iwhalvic>
+  :pr:`19939` by :user:`Ian Halvic <iwhalvic>`.
 
 :mod:`sklearn.compose`
 ......................
