@@ -26,6 +26,12 @@ def configuration(parent_package='', top_path=None):
                          language="c++",
                          libraries=libraries)
 
+    config.add_extension('_sorts',
+                         sources=['_sorts.pyx'],
+                         include_dirs=[numpy.get_include()],
+                         language="c++",
+                         libraries=libraries)
+
     config.add_extension('_dist_metrics',
                          sources=['_dist_metrics.pyx'],
                          include_dirs=[numpy.get_include(),

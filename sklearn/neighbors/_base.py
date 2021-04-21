@@ -17,6 +17,7 @@ from scipy.sparse import csr_matrix, issparse
 import joblib
 from joblib import Parallel, effective_n_jobs
 
+from ._sorts import argpartition
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
@@ -577,7 +578,7 @@ class KNeighborsMixin:
             The neighbors indices.
         """
         sample_range = np.arange(dist.shape[0])[:, None]
-        neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
+        neigh_ind = argpartition(dist, n_neighbors - 1)
         neigh_ind = neigh_ind[:, :n_neighbors]
         # argpartition doesn't guarantee sorted order, so we sort again
         neigh_ind = neigh_ind[
