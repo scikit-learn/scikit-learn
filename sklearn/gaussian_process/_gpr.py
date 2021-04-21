@@ -8,12 +8,13 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve_triangular
+from scipy.linalg import cholesky, cho_solve
 import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
+from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _deprecate_positional_args
@@ -197,7 +198,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
         # Normalize target value
         if self.normalize_y:
             self._y_train_mean = np.mean(y, axis=0)
-            self._y_train_std = np.std(y, axis=0)
+            self._y_train_std = _handle_zeros_in_scale(
+                np.std(y, axis=0), copy=False
+            )
 
             # Remove mean and make unit variance
             y = (y - self._y_train_mean) / self._y_train_std
@@ -267,8 +270,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
         K[np.diag_indices_from(K)] += self.alpha
         try:
             self.L_ = cholesky(K, lower=True)  # Line 2
-            # self.L_ changed, self._K_inv needs to be recomputed
-            self._K_inv = None
         except np.linalg.LinAlgError as exc:
             exc.args = ("The kernel, %s, is not returning a "
                         "positive definite matrix. Try gradually "
@@ -354,21 +355,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
                 return y_mean, y_cov
             elif return_std:
-                # cache result of K_inv computation,
-                # this is done for compatibility, K_inv should be avoided
-                if self._K_inv is None:
-                    # compute inverse K_inv of K based on its Cholesky
-                    # decomposition L and its inverse L_inv
-                    L_inv = solve_triangular(self.L_.T,
-                                             np.eye(self.L_.shape[0]))
-                    self._K_inv = L_inv.dot(L_inv.T)
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
 
                 # Compute variance of predictive distribution
                 # Use einsum to avoid large matrix
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ji->i",
-                                   K_trans, v)
+                y_var -= np.einsum("ij,ji->i", K_trans, v)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.

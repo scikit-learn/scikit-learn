@@ -12,6 +12,16 @@ Version 0.24.2
 Changelog
 ---------
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Avoid explicitly forming inverse covariance matrix in
+  :class:`gaussian_process.GaussianProcessRegressor` when set to output
+  std. dev. With certain covariance matrices this inverse is unstable to
+  compute explicitly. Calling Cholesky solver mitigates this issue in
+  computation.
+  :pr:`19939` by :user:`Ian Halvic <iwhalvic>
+
 :mod:`sklearn.compose`
 ......................
 
@@ -25,6 +35,23 @@ Changelog
 - |Fix| Fixed a bug in :class:`ensemble.HistGradientBoostingRegressor` `fit`
   with `sample_weight` parameter and `least_absolute_deviation` loss function.
   :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s
+  ``inverse_transform``.  :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Avoid division by zero when scaling constant target in
+  :class:`gaussian_process.GaussianProcessRegressor`. It was due to a std. dev.
+  equal to 0. Now, such case is detected and the std. dev. is affected to 1
+  avoiding a division by zero and thus the presence of NaN values in the
+  normalized target.
+  :pr:`19703` by :user:`sobkevich`, :user:`Boris Villazón-Terrazas <boricles>`
+  and :user:`Alexandr Fonari <afonari>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -55,6 +82,9 @@ Changelog
 
 - |Fix| :meth:`preprocessing.OrdinalEncoder.transfrom` correctly handles
   unknown values for string dtypes. :pr:`19888` by `Thomas Fan`_.
+
+- |Fix| :meth:`preprocessing.OneHotEncoder.fit` no longer alters the `drop`
+  parameter. :pr:`19924` by `Thomas Fan`_.
 
 :mod:`sklearn.multioutput`
 ..........................

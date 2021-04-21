@@ -363,22 +363,21 @@ class OneHotEncoder(_BaseEncoder):
 
         else:
             try:
-                self.drop = np.asarray(self.drop, dtype=object)
-                droplen = len(self.drop)
+                drop_array = np.asarray(self.drop, dtype=object)
+                droplen = len(drop_array)
             except (ValueError, TypeError):
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
                     "'first', 'if_binary', None or array of objects, got {}"
                     )
-                raise ValueError(msg.format(type(self.drop)))
+                raise ValueError(msg.format(type(drop_array)))
             if droplen != len(self.categories_):
                 msg = ("`drop` should have length equal to the number "
                        "of features ({}), got {}")
-                raise ValueError(msg.format(len(self.categories_),
-                                            len(self.drop)))
+                raise ValueError(msg.format(len(self.categories_), droplen))
             missing_drops = []
             drop_indices = []
-            for col_idx, (val, cat_list) in enumerate(zip(self.drop,
+            for col_idx, (val, cat_list) in enumerate(zip(drop_array,
                                                           self.categories_)):
                 if not is_scalar_nan(val):
                     drop_idx = np.where(cat_list == val)[0]
