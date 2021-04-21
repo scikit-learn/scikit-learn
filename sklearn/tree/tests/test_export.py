@@ -177,32 +177,34 @@ def test_graphviz_toy():
     # Test regression output with plot_options
     clf = DecisionTreeRegressor(max_depth=3,
                                 min_samples_split=2,
-                                criterion="mse",
+                                criterion="squared_error",
                                 random_state=2)
     clf.fit(X, y)
 
     contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
                                 out_file=None, rotate=True, rounded=True,
                                 fontname="sans")
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname="sans"] ;\n' \
-                'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname="sans"] ;\n' \
-                'rankdir=LR ;\n' \
-                '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
-                'value = 0.0", fillcolor="#f2c09c"] ;\n' \
-                '1 [label="mse = 0.0\\nsamples = 3\\nvalue = -1.0", ' \
-                'fillcolor="#ffffff"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="mse = 0.0\\nsamples = 3\\nvalue = 1.0", ' \
-                'fillcolor="#e58139"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="False"] ;\n' \
-                '{rank=same ; 0} ;\n' \
-                '{rank=same ; 1; 2} ;\n' \
-                '}'
+    contents2 = ('digraph Tree {\n'
+                 'node [shape=box, style="filled, rounded", color="black", '
+                 'fontname="sans"] ;\n'
+                 'graph [ranksep=equally, splines=polyline] ;\n'
+                 'edge [fontname="sans"] ;\n'
+                 'rankdir=LR ;\n'
+                 '0 [label="X[0] <= 0.0\\nsquared_error = 1.0\\nsamples = 6\\n'
+                 'value = 0.0", fillcolor="#f2c09c"] ;\n'
+                 '1 [label="squared_error = 0.0\\nsamples = 3\\'
+                 'nvalue = -1.0", '
+                 'fillcolor="#ffffff"] ;\n'
+                 '0 -> 1 [labeldistance=2.5, labelangle=-45, '
+                 'headlabel="True"] ;\n'
+                 '2 [label="squared_error = 0.0\\nsamples = 3\\nvalue = 1.0", '
+                 'fillcolor="#e58139"] ;\n'
+                 '0 -> 2 [labeldistance=2.5, labelangle=45, '
+                 'headlabel="False"] ;\n'
+                 '{rank=same ; 0} ;\n'
+                 '{rank=same ; 1; 2} ;\n'
+                 '}'
+                 )
 
     assert contents1 == contents2
 

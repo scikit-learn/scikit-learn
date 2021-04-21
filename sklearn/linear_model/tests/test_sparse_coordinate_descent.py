@@ -63,7 +63,7 @@ def test_enet_toy_list_input():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=1000)
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.3)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
@@ -102,7 +102,7 @@ def test_enet_toy_explicit_sparse_input():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=1000)
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.3)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)

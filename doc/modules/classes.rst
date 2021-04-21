@@ -560,6 +560,7 @@ From text
    feature_selection.chi2
    feature_selection.f_classif
    feature_selection.f_regression
+   feature_selection.r_regression
    feature_selection.mutual_info_classif
    feature_selection.mutual_info_regression
 
@@ -762,6 +763,7 @@ Linear classifiers
    linear_model.RidgeClassifier
    linear_model.RidgeClassifierCV
    linear_model.SGDClassifier
+   linear_model.SGDOneClassSVM
 
 Classical linear regressors
 ---------------------------
@@ -1176,6 +1178,7 @@ Splitter Classes
    model_selection.ShuffleSplit
    model_selection.StratifiedKFold
    model_selection.StratifiedShuffleSplit
+   model_selection.StratifiedGroupKFold
    model_selection.TimeSeriesSplit
 
 Splitter Functions
