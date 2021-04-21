@@ -296,8 +296,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Data in the binned space. Will be a sparse matrix if
             `self.encode='onehot'` and ndarray otherwise.
         """
-        ATOL = 1e-5
-        RTOL = 1e-8
+        ATOL, RTOL = 1e-5, 1e-8
         check_is_fitted(self)
 
         # check input and attribute dtypes
