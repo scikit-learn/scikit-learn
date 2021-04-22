@@ -553,26 +553,26 @@ def test_constant_target(kernel):
     assert_allclose(np.diag(y_cov), 0., atol=1e-9)
 
 
-def test_std_no_inv():
-    # Test for issue #19936
-    # Form a Kernel that is difficult to compute K_inv,
-    # necessitates cho_solve in std computation.
-    kernel = C(8.98576054e+05, (1e-12, 1e12)) * \
-        RBF([5.91326520e+02, 1.32584051e+03], (1e-12, 1e12)) + \
-        WhiteKernel(noise_level=1e-5)
-    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0, random_state=0)
-    # Setup Training Data
-    x_train = np.array([[0., 0.], [1.54919334, -0.77459667], [-1.54919334, 0.],
+def test_gpr_consistency_std_cov_non_invertible_kernel():
+    """Check the consistency between the returned std. dev. and the covariance.
+    Inconsistencies were observed when the kernel cannot be inverted (or
+    numerically stable).
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19936
+    """
+    kernel = (C(8.98576054e+05, (1e-12, 1e12)) *
+              RBF([5.91326520e+02, 1.32584051e+03], (1e-12, 1e12)) +
+              WhiteKernel(noise_level=1e-5))
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0, optimizer=None)
+    X_train = np.array([[0., 0.], [1.54919334, -0.77459667], [-1.54919334, 0.],
                         [0., -1.54919334], [0.77459667, 0.77459667],
                         [-0.77459667, 1.54919334]])
     y_train = np.array([[-2.14882017e-10], [-4.66975823e+00], [4.01823986e+00],
                         [-1.30303674e+00], [-1.35760156e+00],
                         [3.31215668e+00]])
-    gpr.fit(x_train, y_train)
-    # Testing data
-    x_test = np.array([[-1.93649167, -1.93649167], [1.93649167, -1.93649167],
+    gpr.fit(X_train, y_train)
+    X_test = np.array([[-1.93649167, -1.93649167], [1.93649167, -1.93649167],
                        [-1.93649167, 1.93649167], [1.93649167, 1.93649167]])
-    # Predict the std_dev in two ways and compare
-    pred1, std = gpr.predict(x_test, return_std=True)
-    pred2, cov = gpr.predict(x_test, return_cov=True)
-    assert_almost_equal(std, np.sqrt(np.diagonal(cov)))
+    pred1, std = gpr.predict(X_test, return_std=True)
+    pred2, cov = gpr.predict(X_test, return_cov=True)
+    assert_allclose(std, np.sqrt(np.diagonal(cov)), rtol=1e-5)
