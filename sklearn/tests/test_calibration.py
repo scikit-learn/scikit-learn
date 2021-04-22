@@ -512,19 +512,19 @@ def test_calibration_accepts_ndarray(X):
 
 
 @pytest.fixture
-def text_data():
-    text_data = [
+def dict_data():
+    dict_data = [
         {'state': 'NY', 'age': 'adult'},
         {'state': 'TX', 'age': 'adult'},
         {'state': 'VT', 'age': 'child'},
     ]
     text_labels = [1, 0, 1]
-    return text_data, text_labels
+    return dict_data, text_labels
 
 
 @pytest.fixture
-def text_data_pipeline(text_data):
-    X, y = text_data
+def dict_data_pipeline(dict_data):
+    X, y = dict_data
     pipeline_prefit = Pipeline([
         ('vectorizer', DictVectorizer()),
         ('clf', RandomForestClassifier())
@@ -532,7 +532,7 @@ def text_data_pipeline(text_data):
     return pipeline_prefit.fit(X, y)
 
 
-def test_calibration_pipeline(text_data, text_data_pipeline):
+def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
     """Test that calibration works in prefit pipeline with transformer
 
     `X` is not array-like, sparse matrix or dataframe at the start.
@@ -541,15 +541,17 @@ def test_calibration_pipeline(text_data, text_data_pipeline):
     Also test it can predict without running into validation errors.
     See https://github.com/scikit-learn/scikit-learn/issues/19637
     """
-    X, y = text_data
-    clf = text_data_pipeline
+    X, y = dict_data
+    clf = dict_data_pipeline
     calib_clf = CalibratedClassifierCV(clf, cv='prefit')
     calib_clf.fit(X, y)
     # Check attributes are obtained from fitted estimator
     assert_array_equal(calib_clf.classes_, clf.classes_)
-    msg = "'CalibratedClassifierCV' object has no attribute"
-    with pytest.raises(AttributeError, match=msg):
-        calib_clf.n_features_in_
+
+    # Neither the pipeline nor the calibration meta-estimator
+    # expose the n_features_in_ check on this kind of data.
+    assert not hasattr(clf, 'n_features_in_')
+    assert not hasattr(calib_clf, 'n_features_in_')
 
     # Ensure that no error is thrown with predict and predict_proba
     calib_clf.predict(X)
@@ -576,6 +578,19 @@ def test_calibration_attributes(clf, cv):
         classes = LabelEncoder().fit(y).classes_
         assert_array_equal(calib_clf.classes_, classes)
         assert calib_clf.n_features_in_ == X.shape[1]
+
+
+def test_calibration_inconsistent_prefit_n_features_in():
+    # Check that `n_features_in_` from prefit base estimator
+    # is consistent with training set
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=2, random_state=7)
+    clf = LinearSVC(C=1).fit(X, y)
+    calib_clf = CalibratedClassifierCV(clf, cv='prefit')
+
+    msg = "X has 3 features, but LinearSVC is expecting 5 features as input."
+    with pytest.raises(ValueError, match=msg):
+        calib_clf.fit(X[:, :3], y)
 
 
 # FIXME: remove in 1.1

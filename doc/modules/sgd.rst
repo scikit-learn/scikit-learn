@@ -232,6 +232,58 @@ For regression with a squared loss and a l2 penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average
 Gradient (SAG) algorithm, available as a solver in :class:`Ridge`.
 
+.. _sgd_online_one_class_svm:
+
+Online One-Class SVM
+====================
+
+The class :class:`sklearn.linear_model.SGDOneClassSVM` implements an online
+linear version of the One-Class SVM using a stochastic gradient descent.
+Combined with kernel approximation techniques,
+:class:`sklearn.linear_model.SGDOneClassSVM` can be used to approximate the
+solution of a kernelized One-Class SVM, implemented in
+:class:`sklearn.svm.OneClassSVM`, with a linear complexity in the number of
+samples. Note that the complexity of a kernelized One-Class SVM is at best
+quadratic in the number of samples.
+:class:`sklearn.linear_model.SGDOneClassSVM` is thus well suited for datasets
+with a large number of training samples (> 10,000) for which the SGD
+variant can be several orders of magnitude faster.
+
+Its implementation is based on the implementation of the stochastic
+gradient descent. Indeed, the original optimization problem of the One-Class
+SVM is given by
+
+.. math::
+
+  \begin{aligned}
+  \min_{w, \rho, \xi} & \quad \frac{1}{2}\Vert w \Vert^2 - \rho + \frac{1}{\nu n} \sum_{i=1}^n \xi_i \\
+  \text{s.t.} & \quad \langle w, x_i \rangle \geq \rho - \xi_i \quad 1 \leq i \leq n \\
+  & \quad \xi_i \geq 0 \quad 1 \leq i \leq n
+  \end{aligned}
+
+where :math:`\nu \in (0, 1]` is the user-specified parameter controlling the
+proportion of outliers and the proportion of support vectors. Getting rid of
+the slack variables :math:`\xi_i` this problem is equivalent to
+
+.. math::
+
+  \min_{w, \rho} \frac{1}{2}\Vert w \Vert^2 - \rho + \frac{1}{\nu n} \sum_{i=1}^n \max(0, \rho - \langle w, x_i \rangle) \, .
+
+Multiplying by the constant :math:`\nu` and introducing the intercept
+:math:`b = 1 - \rho` we obtain the following equivalent optimization problem
+
+.. math::
+
+  \min_{w, b} \frac{\nu}{2}\Vert w \Vert^2 + b\nu + \frac{1}{n} \sum_{i=1}^n \max(0, 1 - (\langle w, x_i \rangle + b)) \, .
+
+This is similar to the optimization problems studied in section
+:ref:`sgd_mathematical_formulation` with :math:`y_i = 1, 1 \leq i \leq n` and
+:math:`\alpha = \nu/2`, :math:`L` being the hinge loss function and :math:`R`
+being the L2 norm. We just need to add the term :math:`b\nu` in the
+optimization loop.
+
+As :class:`SGDClassifier` and :class:`SGDRegressor`, :class:`SGDOneClassSVM`
+supports averaged SGD. Averaging can be enabled by setting ``average=True``.
 
 Stochastic Gradient Descent for sparse data
 ===========================================

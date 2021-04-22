@@ -552,3 +552,19 @@ def test_svd_flip_1d():
 
     assert_allclose(v, v_expected.ravel())
     assert_allclose(v, [-1, -2, -3])
+
+
+def test_loadings_converges():
+    """Test that CCA converges. Non-regression test for #19549."""
+    X, y = make_regression(n_samples=200, n_features=20, n_targets=20,
+                           random_state=20)
+
+    cca = CCA(n_components=10, max_iter=500)
+
+    with pytest.warns(None) as record:
+        cca.fit(X, y)
+    # ConvergenceWarning is not raised
+    assert not record
+
+    # Loadings converges to reasonable values
+    assert np.all(np.abs(cca.x_loadings_) < 1)
