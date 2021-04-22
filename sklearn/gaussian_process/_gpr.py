@@ -141,8 +141,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
     ----------
     .. [1] `Rasmussen, Carl Edward.
        "Gaussian processes in machine learning."
-       Summer school on machine learning. Springer, Berlin, Heidelberg, 2003.
-       http://www.gaussianprocess.org/gpml/chapters/RW.pdf`_
+       Summer school on machine learning. Springer, Berlin, Heidelberg, 2003
+       <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
 
     Examples
     --------
