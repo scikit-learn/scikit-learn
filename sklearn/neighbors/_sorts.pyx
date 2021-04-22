@@ -94,7 +94,7 @@ cdef int intro_select(
     )
     return 0
 
-cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] (
+cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] argpartition(
         np.ndarray[DTYPE_t, ndim=2, mode='c'] data,
         ITYPE_t pivot):
     """
