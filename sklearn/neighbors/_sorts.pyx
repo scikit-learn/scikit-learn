@@ -90,10 +90,11 @@ cdef int intro_select(
         data,
         indices,
         pivot,
-        n_points)
+        n_points,
+    )
     return 0
 
-cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] argpartition(
+cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] (
         np.ndarray[DTYPE_t, ndim=2, mode='c'] data,
         ITYPE_t pivot):
     """
@@ -142,7 +143,8 @@ cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] argpartition(
             data_ptr + i_row * n_cols,
             indices_ptr + i_row * n_cols,
             pivot,
-            n_cols)
+            n_cols,
+        )
     return indices
 
 
