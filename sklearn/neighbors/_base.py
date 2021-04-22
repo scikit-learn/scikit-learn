@@ -578,6 +578,7 @@ class KNeighborsMixin:
             The neighbors indices.
         """
         sample_range = np.arange(dist.shape[0])[:, None]
+        dist = check_array(dist, order='C')
         neigh_ind = argpartition(dist, n_neighbors - 1)
         neigh_ind = neigh_ind[:, :n_neighbors]
         # argpartition doesn't guarantee sorted order, so we sort again
