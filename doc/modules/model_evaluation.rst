@@ -1212,6 +1212,33 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
+    
+.. topic:: References:
+
+  .. [WikipediaMCC2021] Wikipedia contributors. Detection error tradeoff.
+     Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
+     Available at: https://en.wikipedia.org/wiki/Matthews_correlation_coefficient.
+     Accessed April 21, 2021.
+     
+  .. [Matthews1975] B. W. Matthews,
+     `Comparison of the predicted and observed secondary structure of T4 phage lysozyme
+     <https://doi.org/10.1016/0005-2795(75)90109-9>`_,
+     Biochimica et Biophysica Acta (BBA) - Protein Structure, 1975.
+
+  .. [Jurman2012] G. Jurman, S. Riccadonna, C. Furlanello,
+     `A Comparison of MCC and CEN Error Measures in MultiClass Prediction
+     <https://doi.org/10.1371/journal.pone.0041882>`_,
+     PLoS One, 2012.
+
+  .. [Chicco2020] D. Chicco, G. Jurman,
+     `The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation
+     <https://doi.org/10.1186/s12864-019-6413-7>`_,
+     BMC Genomics, 2020.
+
+  .. [Chicco2021] D. Chicco, N. Toetsch G. Jurman,
+     `The Matthews correlation coefficient (MCC) is more reliable than balanced accuracy, bookmaker informedness, and markedness in two-class confusion matrix evaluation
+     <https://doi.org/10.1186/s13040-021-00244-z>`_,
+     BioData Mining, 2021.
 
 .. _multilabel_confusion_matrix:
 
