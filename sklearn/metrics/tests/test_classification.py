@@ -424,49 +424,64 @@ def test_tpr_fpr_tnr_fnr_scores_multiclass():
     assert_array_almost_equal(fnr, [0.21, 0.1, 0.9], 2)
 
 
-@ignore_warnings
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
 def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
+    
+    pytest.warns(Warning if zero_division == "warn" else None)
 
-    zero_division = 1.0 if zero_division == 1.0 else 0.0
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred,
-                                                average=None,
-                                                zero_division=zero_division)
-    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0, zero_division], 2)
+    zero_division_value = 1.0 if zero_division == 1.0 else 0.0
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+        y_true, y_pred,
+        average=None,
+        zero_division=zero_division
+    )
+    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0, zero_division_value], 2)
     assert_array_almost_equal(fpr, [0.0, 0.0, 0.0, 1 / 3.0], 2)
     assert_array_almost_equal(tnr, [1.0, 1.0, 1.0, 2 / 3.0], 2)
-    assert_array_almost_equal(fnr, [1.0, 0.5, 0.0, zero_division], 2)
+    assert_array_almost_equal(fnr, [1.0, 0.5, 0.0, zero_division_value], 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred,
-                                                average="macro",
-                                                zero_division=zero_division)
-    assert_almost_equal(tpr, 0.625 if zero_division else 0.375)
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+        y_true,
+        y_pred,
+        average="macro",
+        zero_division=zero_division
+    )
+    assert_almost_equal(tpr, 0.625 if zero_division_value else 0.375)
     assert_almost_equal(fpr, 1 / 3.0 / 4.0)
     assert_almost_equal(tnr, 0.91666, 5)
-    assert_almost_equal(fnr, 0.625 if zero_division else 0.375)
+    assert_almost_equal(fnr, 0.625 if zero_division_value else 0.375)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred,
-                                                average="micro",
-                                                zero_division=zero_division)
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+        y_true,
+        y_pred,
+        average="micro",
+        zero_division=zero_division
+    )
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.125)
     assert_almost_equal(tnr, 0.875)
     assert_almost_equal(fnr, 0.5)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred,
-                                                average="weighted",
-                                                zero_division=zero_division)
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+        y_true,
+        y_pred,
+        average="weighted",
+        zero_division=zero_division
+    )
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0)
     assert_almost_equal(tnr, 1.0)
     assert_almost_equal(fnr, 0.5)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred,
-                                                average="samples",
-                                                sample_weight=[1, 1, 2],
-                                                zero_division=zero_division)
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+        y_true,
+        y_pred,
+        average="samples",
+        sample_weight=[1, 1, 2],
+        zero_division=zero_division
+    )
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.08333, 5)
     assert_almost_equal(tnr, 0.91666, 5)
@@ -2111,27 +2126,16 @@ def test_specificity_warnings(zero_division):
                        np.array([[0, 0], [0, 0]]),
                        np.array([[1, 1], [1, 1]]),
                        average='micro', zero_division=zero_division)
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter('always')
-        specificity_score(np.array([[1, 1], [1, 1]]),
-                          np.array([[0, 0], [0, 0]]),
-                          average='micro', zero_division=zero_division)
-        if zero_division == "warn":
-            assert (str(record.pop().message) ==
-                    'Tnr is ill-defined and '
-                    'being set to 0.0 due to no negatives samples.'
-                    ' Use `zero_division` parameter to control'
-                    ' this behavior.')
-        else:
-            assert len(record) == 0
 
-        specificity_score([1, 1], [1, 1])
-        if zero_division == "warn":
-            assert (str(record.pop().message) ==
-                    'Tnr is ill-defined and '
-                    'being set to 0.0 due to no negatives samples.'
-                    ' Use `zero_division` parameter to control'
-                    ' this behavior.')
+    specificity_score(np.array([[1, 1], [1, 1]]),
+                      np.array([[0, 0], [0, 0]]),
+                      average='micro', zero_division=zero_division)
+    if zero_division == "warn":
+        pytest.warns(Warning if zero_division == "warn" else None)
+
+    specificity_score([1, 1], [1, 1])
+    if zero_division == "warn":
+        pytest.warns(Warning if zero_division == "warn" else None)
 
 
 def test_prf_average_binary_data_non_binary():
