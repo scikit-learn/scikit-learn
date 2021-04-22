@@ -139,19 +139,33 @@ def test_load_files_w_allowed_and_ignored_extensions(load_files_root):
         load_files(load_files_root, allowed_extensions=[".txt"],
                    ignored_extensions=[".txt"])
 
+        
+def test_load_files_w_ignore_list(tmp_path):
+    d = tmp_path / "sub"
+    d.mkdir()
+    p1 = d / "file1.txt"
+    p1.touch()
+    p2 = d / "file2.json"
+    p2.touch()
+    p3 = d / "file3.json"
+    p3.touch()
+    res = load_files(tmp_path, ignored_extensions=[".txt"])
+    assert len(res.filenames) == 2
+    assert all([re.search(".*\.txt$", f) for f in res.filenames]) == False
 
-def test_load_files_w_ignore_list(test_category_dir_1, test_category_dir_3,
-                                  load_files_root):
-    res = load_files(load_files_root, ignored_extensions=[".txt"])
+
+def test_load_files_w_allow_list(tmp_path):
+    d = tmp_path / "sub"
+    d.mkdir()
+    p1 = d / "file1.txt"
+    p1.touch()
+    p2 = d / "file2.json"
+    p2.touch()
+    p3 = d / "file3.json"
+    p3.touch()
+    res = load_files(tmp_path, allowed_extensions=[".txt"])
     assert len(res.filenames) == 1
-    assert not all([re.search(r".*\.txt$", f) for f in res.filenames])
-
-
-def test_load_files_w_allow_list(test_category_dir_1, test_category_dir_3,
-                                 load_files_root):
-    res = load_files(load_files_root, allowed_extensions=[".txt"])
-    assert len(res.filenames) == 1
-    assert all([re.search(r".*\.txt$", f) for f in res.filenames])
+    assert all([re.search(".*\.txt$", f) for f in res.filenames]) == True
 
 
 def test_load_sample_images():
