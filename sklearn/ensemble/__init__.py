@@ -23,6 +23,7 @@ from ._hist_gradient_boosting.gradient_boosting import (
     HistGradientBoostingRegressor, HistGradientBoostingClassifier
 )
 from ._gam_boosted import GAMBoostingRegressor
+from ._gam_boosted import GAMBoostingClassifier
 
 __all__ = ["BaseEnsemble",
            "RandomForestClassifier", "RandomForestRegressor",
@@ -33,5 +34,5 @@ __all__ = ["BaseEnsemble",
            "AdaBoostRegressor", "VotingClassifier", "VotingRegressor",
            "StackingClassifier", "StackingRegressor",
            'HistGradientBoostingClassifier', 'HistGradientBoostingRegressor',
-           "GAMBoostingRegressor",
+           "GAMBoostingRegressor", "GAMBoostingClassifier"
            ]

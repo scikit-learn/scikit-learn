@@ -20,25 +20,15 @@ from ..utils.multiclass import check_classification_targets
 
 class BaseGAMBoosting(ABC, BaseEstimator):
     @abstractmethod
-    def __init__(self, max_iter=100, max_leaf_nodes=3, max_depth=None,
-                 min_samples_leaf=20, learning_rate=0.1,
-                 random_state=None):
+    def __init__(self, *, learning_rate=0.1,
+                 max_iter=100, max_leaf_nodes=3, max_depth=2,
+                 min_samples_leaf=2, random_state=None):
         self.max_iter = max_iter
         self.max_leaf_nodes = max_leaf_nodes
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
         self.learning_rate = learning_rate
         self.random_state = random_state
-
-    def _bin_data(self, X, is_training_data):
-        if is_training_data:
-            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
-        else:
-            X_binned = self._bin_mapper.transform(X)  # F-aligned array
-            # We convert the array to C-contiguous since predicting is faster
-            # with this layout (training is faster on F-arrays though)
-            X_binned = np.ascontiguousarray(X_binned)
-        return X_binned
 
     @abstractmethod
     def _encode_y(self, y):
@@ -50,7 +40,7 @@ class BaseGAMBoosting(ABC, BaseEstimator):
 
     def fit(self, X, y):
 
-        # TODO: do not support missing values for now
+        # TODO: missing value support
         X, y = self._validate_data(X, y, dtype=X_DTYPE)
         y = self._encode_y(y)
 
@@ -58,11 +48,8 @@ class BaseGAMBoosting(ABC, BaseEstimator):
         self._random_seed = rng.randint(np.iinfo(np.uint32).max,
                                         dtype='u8')
 
-        # TODO: early stopping
         X_train, y_train = X, y
 
-        # TODO: n_bins
-        # TODO: Categorical support
         n_bins = 256
         self._bin_mapper = _BinMapper(
             n_bins=n_bins,
@@ -70,9 +57,10 @@ class BaseGAMBoosting(ABC, BaseEstimator):
             known_categories=None,
             random_state=self._random_seed)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
-
         n_samples = X_binned_train.shape[0]
 
+        # TODO: sample_weight support in fit. `sample_weight` is passed in
+        # because the training loop will use sample weights for bagging.
         sample_weight = np.ones(n_samples)
         self._loss = self._get_loss(sample_weight=sample_weight)
 
@@ -85,27 +73,24 @@ class BaseGAMBoosting(ABC, BaseEstimator):
         )
         raw_predictions += self._baseline_prediction
 
-        self._predictors = predictors = []
-
         gradients, hessians = self._loss.init_gradients_and_hessians(
             n_samples=n_samples,
             prediction_dim=self.n_trees_per_iteration_,
             sample_weight=sample_weight
         )
 
-        # Because the grower is shrinking n_features_in_ number of times
-        # we use an effective learning rate
-        grow_calls_per_iter = self.n_trees_per_iteration_ * self.n_features_in_
-        effective_learning_rate = (np.power(self.learning_rate,
-                                            1 / grow_calls_per_iter))
+        # predictors are structured as nested list with the structure:
+        # predictors[iteration][feature_idx][tree_idx]
+        self._predictors = predictors = []
 
-        if not hasattr(self, "_indices_rng"):
-            self._indices_rng = check_random_state(self._random_seed)
+        if not hasattr(self, "_bagging_indices"):
+            self._bagging_indices = check_random_state(self._random_seed)
 
-        for iteration in range(self.max_iter):
+        for _ in range(self.max_iter):
+            # TODO: Out of bag early stopping?
             # sample weight for bagging
-            sample_indices = self._indices_rng.randint(0, high=n_samples,
-                                                       size=n_samples)
+            sample_indices = self._bagging_indices.randint(0, high=n_samples,
+                                                           size=n_samples)
             sample_weight_train = (np.bincount(sample_indices,
                                                minlength=n_samples)
                                    .astype(Y_DTYPE))
@@ -132,7 +117,7 @@ class BaseGAMBoosting(ABC, BaseEstimator):
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=0,
-                    shrinkage=effective_learning_rate,
+                    shrinkage=self.learning_rate,
                     feature_idx=feature_idx,
                 )
                 grower.grow()
@@ -190,29 +175,61 @@ class BaseGAMBoosting(ABC, BaseEstimator):
                         known_cat_bitsets=known_cat_bitsets,
                         f_idx_map=f_idx_map)
 
+    def _bin_data(self, X, is_training_data):
+        if is_training_data:
+            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
+        else:
+            X_binned = self._bin_mapper.transform(X)  # F-aligned array
+            # We convert the array to C-contiguous since predicting is faster
+            # with this layout (training is faster on F-arrays though)
+            X_binned = np.ascontiguousarray(X_binned)
+        return X_binned
+
 
 class GAMBoostingRegressor(RegressorMixin, BaseGAMBoosting):
-    """Generalized Additive Models (GAMs) with Bagged Gradient boosted trees.
+    """Generalized Additive Models (GAMs) with Bagged Histogram-based Gradient
+    Boosting Regression Trees.
 
     Parameters
     ----------
-    max_iter : int, default=100
-
-    max_leaf_nodes : int, default=3
-
-    max_depth : int, default=None
-
-    min_samples_leaf : int, default=20
-
     learning_rate: float, default=0.1
-
+        The learning rate, also known as *shrinkage*. This is used as a
+        multiplicative factor for the leaves values. Use `1` for no
+        shrinkage.
+    max_iter : int, default=100
+        The maximum number of iterations of the boosting process, i.e. the
+        maximum number of trees.
+    max_leaf_nodes : int, default=3
+        The maximum number of leaves for each tree. Must be strictly greater
+        than 1. If None, there is no maximum limit.
+    max_depth : int, default=2
+        The maximum depth of each tree. The depth of a tree is the number of
+        edges to go from the root to the deepest leaf.
+    min_samples_leaf : int, default=2
+        The minimum number of samples per leaf. For small datasets with less
+        than a few hundred samples, it is recommended to lower this value
+        since only very shallow trees would be built.
     random_state : int, RandomState instance or None, default=None
+        Pseudo-random number generator to control the subsampling in the
+        binning process, and bagging for each iteration.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
+    Attributes
+    ----------
+    n_trees_per_iteration_ : int
+        The number of tree that are built at each iteration. For regressors,
+        this is always 1.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    See Also
+    --------
+    GAMBoostingClassifier
     """
-
-    def __init__(self, *, max_iter=100, max_leaf_nodes=3, max_depth=None,
-                 min_samples_leaf=20, learning_rate=0.1,
-                 random_state=None):
+    def __init__(self, *, learning_rate=0.1,
+                 max_iter=100, max_leaf_nodes=3, max_depth=2,
+                 min_samples_leaf=2, random_state=None):
         super().__init__(
             max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes,
@@ -239,28 +256,51 @@ class GAMBoostingRegressor(RegressorMixin, BaseGAMBoosting):
         return _LOSSES["squared_error"](sample_weight=sample_weight)
 
 
-class GAMBoostingClassifer(ClassifierMixin, BaseGAMBoosting):
-    """Generalized Additive Models (GAMs) with Bagged Gradient boosted trees.
+class GAMBoostingClassifier(ClassifierMixin, BaseGAMBoosting):
+    """Generalized Additive Models (GAMs) with Bagged Histogram-based Gradient
+    Boosting Regression Trees.
 
     Parameters
     ----------
-    max_iter : int, default=100
-
-    max_leaf_nodes : int, default=3
-
-    max_depth : int, default=None
-
-    min_samples_leaf : int, default=20
-
     learning_rate: float, default=0.1
-
+        The learning rate, also known as *shrinkage*. This is used as a
+        multiplicative factor for the leaves values. Use `1` for no
+        shrinkage.
+    max_iter : int, default=100
+        The maximum number of iterations of the boosting process, i.e. the
+        maximum number of trees.
+    max_leaf_nodes : int, default=3
+        The maximum number of leaves for each tree. Must be strictly greater
+        than 1. If None, there is no maximum limit.
+    max_depth : int, default=2
+        The maximum depth of each tree. The depth of a tree is the number of
+        edges to go from the root to the deepest leaf.
+    min_samples_leaf : int, default=2
+        The minimum number of samples per leaf. For small datasets with less
+        than a few hundred samples, it is recommended to lower this value
+        since only very shallow trees would be built.
     random_state : int, RandomState instance or None, default=None
+        Pseudo-random number generator to control the subsampling in the
+        binning process, and bagging for each iteration.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
+    Attributes
+    ----------
+    n_trees_per_iteration_ : int
+        The number of tree that are built at each iteration. For regressors,
+        this is always 1.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    See Also
+    --------
+    GAMBoostingRegressor
     """
 
-    def __init__(self, *, max_iter=100, max_leaf_nodes=3, max_depth=None,
-                 min_samples_leaf=20, learning_rate=0.1,
-                 random_state=None):
+    def __init__(self, *, learning_rate=0.1,
+                 max_iter=100, max_leaf_nodes=3, max_depth=2,
+                 min_samples_leaf=2, random_state=None):
         super().__init__(
             max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes,
