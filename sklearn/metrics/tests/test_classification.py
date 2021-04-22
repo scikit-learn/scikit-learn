@@ -428,7 +428,7 @@ def test_tpr_fpr_tnr_fnr_scores_multiclass():
 def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
-    
+
     pytest.warns(Warning if zero_division == "warn" else None)
 
     zero_division_value = 1.0 if zero_division == 1.0 else 0.0
