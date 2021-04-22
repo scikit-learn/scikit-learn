@@ -1719,13 +1719,13 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
-    tpr = _prf_divide(tp_sum, pos_sum, 'tpr', 'positives',
+    tpr = _prf_divide(tp_sum, pos_sum, 'TPR', 'positives',
                       average, warn_for, zero_division)
-    fpr = _prf_divide(fp_sum, neg_sum, 'fpr', 'negatives',
+    fpr = _prf_divide(fp_sum, neg_sum, 'FPR', 'negatives',
                       average, warn_for, zero_division)
-    tnr = _prf_divide(tn_sum, neg_sum, 'tnr', 'negatives',
+    tnr = _prf_divide(tn_sum, neg_sum, 'TNR', 'negatives',
                       average, warn_for, zero_division)
-    fnr = _prf_divide(fn_sum, pos_sum, 'fnr', 'positives',
+    fnr = _prf_divide(fn_sum, pos_sum, 'FNR', 'positives',
                       average, warn_for, zero_division)
     # Average the results
     if average == 'weighted':
