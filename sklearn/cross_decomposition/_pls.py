@@ -52,7 +52,11 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
     """
 
     eps = np.finfo(X.dtype).eps
-    y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
+    try:
+        y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
+    except StopIteration as e:
+        raise StopIteration("Y residual is constant") from e
+
     x_weights_old = 100  # init to big value for first convergence check
 
     if mode == 'B':
@@ -261,9 +265,9 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                         _get_first_singular_vectors_power_method(
                             Xk, Yk, mode=self.mode, max_iter=self.max_iter,
                             tol=self.tol, norm_y_weights=norm_y_weights)
-                except StopIteration:
-                    # _get_first_singular_vectors_power_method raise
-                    # StopIteration when Yk is constant
+                except StopIteration as e:
+                    if str(e) != "Y residual is constant":
+                        raise
                     warnings.warn(f"Y residual is constant at iteration {k}")
                     break
 
