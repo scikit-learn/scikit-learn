@@ -14,11 +14,6 @@ np.import_array()  # required in order to use C-API
 
 ######################################################################
 # Numpy 1.3-1.4 compatibility utilities
-cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
-                               np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
-    return <DTYPE_t[:X.shape[0],:X.shape[1]:1]> (<DTYPE_t*> X.data)
-
-
 cdef DTYPE_t* get_vec_ptr(np.ndarray[DTYPE_t, ndim=1, mode='c'] vec):
     return &vec[0]
 
@@ -398,16 +393,13 @@ cdef class DistanceMetric:
         if Y is None:
             Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
                          dtype=DTYPE, order='C')
-            self.pdist(get_memview_DTYPE_2D(Xarr),
-                       get_memview_DTYPE_2D(Darr))
+            self.pdist(Xarr, Darr)
         else:
             Yarr = np.asarray(Y, dtype=DTYPE, order='C')
             self._validate_data(Yarr)
             Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
                          dtype=DTYPE, order='C')
-            self.cdist(get_memview_DTYPE_2D(Xarr),
-                       get_memview_DTYPE_2D(Yarr),
-                       get_memview_DTYPE_2D(Darr))
+            self.cdist(Xarr, Yarr, Darr)
         return Darr
 
 

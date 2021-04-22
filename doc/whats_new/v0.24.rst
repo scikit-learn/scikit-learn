@@ -22,9 +22,18 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
+- |Fix| Fixed a regression in :class:`cross_decomposition.CCA`. :pr:`19646`
+  by `Thomas Fan`_.
+
 - |Fix| :class:`cross_decomposition.PLSRegression` raises warning for
   constant y residuals instead of a `StopIteration` error. :pr:`19922`
   by `Thomas Fan`_.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s
+  ``inverse_transform``.  :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -32,6 +41,17 @@ Changelog
 - |Fix| Fixed a bug in :class:`ensemble.HistGradientBoostingRegressor` `fit`
   with `sample_weight` parameter and `least_absolute_deviation` loss function.
   :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Avoid division by zero when scaling constant target in
+  :class:`gaussian_process.GaussianProcessRegressor`. It was due to a std. dev.
+  equal to 0. Now, such case is detected and the std. dev. is affected to 1
+  avoiding a division by zero and thus the presence of NaN values in the
+  normalized target.
+  :pr:`19703` by :user:`sobkevich`, :user:`Boris Villazón-Terrazas <boricles>`
+  and :user:`Alexandr Fonari <afonari>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -52,6 +72,13 @@ Changelog
   :class:`model_selection.HalvingGridSearchCV` were not properly converted to
   numpy arrays. :pr:`19211` by `Nicolas Hug`_.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputRegressor` now works with estimators
+  that dynamically define `predict` during fitting, such as
+  :class:`ensemble.StackingRegressor`. :pr:`19308` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -60,15 +87,16 @@ Changelog
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Fix encoder categories having dtype='S'
+  :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder`.
+  :pr:`19727` by :user:`Andrew Delong <andrewdelong>`.
+
 - |Fix| :meth:`preprocessing.OrdinalEncoder.transfrom` correctly handles
   unknown values for string dtypes. :pr:`19888` by `Thomas Fan`_.
 
-:mod:`sklearn.multioutput`
-..........................
-
-- |Fix| :class:`multioutput.MultiOutputRegressor` now works with estimators
-  that dynamically define `predict` during fitting, such as
-  :class:`ensemble.StackingRegressor`. :pr:`19308` by `Thomas Fan`_.
+- |Fix| :meth:`preprocessing.OneHotEncoder.fit` no longer alters the `drop`
+  parameter. :pr:`19924` by `Thomas Fan`_.
 
 :mod:`sklearn.semi_supervised`
 ..............................
@@ -78,7 +106,7 @@ Changelog
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
 :mod:`sklearn.tree`
-.......................
+...................
 
 - |Fix| Fix a bug in `fit` of :class:`tree.BaseDecisionTree` that caused
   segmentation faults under certain conditions. `fit` now deep copies the
