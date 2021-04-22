@@ -347,20 +347,23 @@ class GaussianProcessRegressor(MultiOutputMixin,
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
             if return_cov:
-                v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
+                # Solve K @ V = K_trans.T
+                V = cho_solve((self.L_, True), K_trans.T)  # Line 5
+                y_cov = self.kernel_(X) - K_trans.dot(V)  # Line 6
 
                 # undo normalisation
                 y_cov = y_cov * self._y_train_std**2
 
                 return y_mean, y_cov
             elif return_std:
-                v = cho_solve((self.L_, True), K_trans.T)  # Line 5
+                # Solve K @ V = K_trans.T
+                V = cho_solve((self.L_, True), K_trans.T)  # Line 5
 
                 # Compute variance of predictive distribution
-                # Use einsum to avoid large matrix
+                # Use einsum to avoid explicitly forming the large matrix
+                # K_trans @ v just to extract its diagonal afterward.
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ji->i", K_trans, v)
+                y_var -= np.einsum("ij,ji->i", K_trans, V)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.

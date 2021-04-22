@@ -20,10 +20,12 @@ from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
 
-from sklearn.utils._testing \
-    import (assert_array_less,
-            assert_almost_equal, assert_array_almost_equal,
-            assert_allclose)
+from sklearn.utils._testing import (
+    assert_array_less,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_allclose
+)
 
 
 def f(x):
@@ -555,10 +557,10 @@ def test_constant_target(kernel):
 
 def test_gpr_consistency_std_cov_non_invertible_kernel():
     """Check the consistency between the returned std. dev. and the covariance.
-    Inconsistencies were observed when the kernel cannot be inverted (or
-    numerically stable).
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/19936
+    Inconsistencies were observed when the kernel cannot be inverted (or
+    numerically stable).
     """
     kernel = (C(8.98576054e+05, (1e-12, 1e12)) *
               RBF([5.91326520e+02, 1.32584051e+03], (1e-12, 1e12)) +

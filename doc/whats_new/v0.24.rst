@@ -37,8 +37,8 @@ Changelog
 
 - |Fix| Avoid explicitly forming inverse covariance matrix in
   :class:`gaussian_process.GaussianProcessRegressor` when set to output
-  std. dev. With certain covariance matrices this inverse is unstable to
-  compute explicitly. Calling Cholesky solver mitigates this issue in
+  standard deviation. With certain covariance matrices this inverse is unstable
+  to compute explicitly. Calling Cholesky solver mitigates this issue in
   computation.
   :pr:`19939` by :user:`Ian Halvic <iwhalvic>`.
 
