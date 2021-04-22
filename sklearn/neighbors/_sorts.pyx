@@ -96,6 +96,34 @@ cdef int intro_select(
 cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] argpartition(
         np.ndarray[DTYPE_t, ndim=2, mode='c'] data,
         ITYPE_t pivot):
+    """
+    Return an array of indices such that selection of these indices on
+    the original data would return a row-wise partitioned version of
+    the array with respect to the value of the pivot.
+    
+    This is equivalent to using:
+        
+        np.argpartition(data, pivot, axis=1)
+    
+    Notes
+    -----
+    Like np.argpartition, this also makes use of intro_select
+    but via the implementation in std::algorithm (nth_element).
+    
+    Hence resulting indices might be different.
+    
+    Parameters
+    ----------
+    data : array of floating
+        A 2D array containing floating data.
+    pivot : int
+        The index around which to sort row indices.
+
+    Returns
+    -------
+    indices : array of integer
+         A 2D array of row indices partitioned with respect to the given pivot.
+    """
     cdef:
         ITYPE_t i_row
         ITYPE_t n_rows = data.shape[0]
