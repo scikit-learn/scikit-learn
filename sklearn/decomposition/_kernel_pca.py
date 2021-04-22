@@ -219,14 +219,14 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         elif eigen_solver == 'arpack':
             v0 = _init_arpack_v0(K.shape[0], self.random_state)
             self.eigenvalues_, self.eigenvectors_ = eigsh(K, n_components,
-                                                which="LA",
-                                                tol=self.tol,
-                                                maxiter=self.max_iter,
-                                                v0=v0)
+                                                          which="LA",
+                                                          tol=self.tol,
+                                                          maxiter=self.max_iter,
+                                                          v0=v0)
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.eigenvalues_ = _check_psd_eigenvalues(self.eigenvalues_,
-                                               enable_warnings=False)
+                                                   enable_warnings=False)
 
         # flip eigenvectors' sign to enforce deterministic output
         self.eigenvectors_, _ = svd_flip(self.eigenvectors_,
