@@ -13,7 +13,10 @@
 # - an Comparator to state how to sort
 #
 import numpy as np
+cimport numpy as np
 from cython.parallel import prange, parallel
+
+from ._typedefs import ITYPE
 
 cdef extern from *:
     """
@@ -54,10 +57,10 @@ cdef extern from *:
 
 
 cdef int intro_select(
-        floating *data,
-        int *indices,
-        int pivot,
-        int n_points) nogil except -1:
+        DTYPE_t *data,
+        ITYPE_t *indices,
+        ITYPE_t pivot,
+        ITYPE_t n_points) nogil except -1:
     """Partition indices based on their associated data.
 
     It is essentially a partial in-place quicksort around a
@@ -90,20 +93,20 @@ cdef int intro_select(
         n_points)
     return 0
 
-cpdef np.ndarray[int, ndim=2, mode='c'] argpartition(
-        np.ndarray[floating, ndim=2, mode='c'] data,
-        int pivot):
+cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] argpartition(
+        np.ndarray[DTYPE_t, ndim=2, mode='c'] data,
+        ITYPE_t pivot):
     cdef:
-        int i_row
-        int n_rows = data.shape[0]
-        int n_cols = data.shape[1]
-        floating *data_ptr = &data[0, 0]
+        ITYPE_t i_row
+        ITYPE_t n_rows = data.shape[0]
+        ITYPE_t n_cols = data.shape[1]
+        DTYPE_t *data_ptr = &data[0, 0]
 
     # TODO: I haven't found a nicer way to create indices yet.
-    cdef np.ndarray[int, ndim = 2, mode = 'c'] indices = (
-        np.ones((n_rows, 1), dtype=int) @ np.arange(n_cols, dtype=int)[None, :]
+    cdef np.ndarray[ITYPE_t, ndim = 2, mode = 'c'] indices = (
+    np.ones((n_rows, 1), dtype=ITYPE) @ np.arange(n_cols, dtype=ITYPE)[None, :]
     )
-    cdef int * indices_ptr = &indices[0, 0]
+    cdef ITYPE_t * indices_ptr = &indices[0, 0]
 
     # Sorting on rows in parallel, indices is modified inplace
     for i_row in prange(n_rows, schedule='static', nogil=True):
