@@ -24,11 +24,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
                                RegressorMixin, BaseEstimator):
     """Gaussian process regression (GPR).
 
-    The implementation is based on Algorithm 2.1 of Gaussian Processes
-    for Machine Learning (GPML) by Rasmussen and Williams.
+    The implementation is based on Algorithm 2.1 of [1]_.
 
     In addition to standard scikit-learn estimator API,
-    GaussianProcessRegressor:
+    `GaussianProcessRegressor`:
 
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method `sample_y(X)`, which evaluates samples
@@ -137,6 +136,13 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
+
+    References
+    ----------
+    .. [1] `Rasmussen, Carl Edward.
+       "Gaussian processes in machine learning."
+       Summer school on machine learning. Springer, Berlin, Heidelberg, 2003.
+       http://www.gaussianprocess.org/gpml/chapters/RW.pdf`_
 
     Examples
     --------
@@ -266,10 +272,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
+        # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
         K = self.kernel_(self.X_train_)
         K[np.diag_indices_from(K)] += self.alpha
         try:
-            self.L_ = cholesky(K, lower=True)  # Line 2
+            self._L_lower_flag = True
+            self.L_ = cholesky(K, lower=self._L_lower_flag)
             # self.L_ changed, self._K_inv needs to be recomputed
             self._K_inv = None
         except np.linalg.LinAlgError as exc:
@@ -279,7 +287,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
                         "GaussianProcessRegressor estimator."
                         % self.kernel_,) + exc.args
             raise
-        self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
+        # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
+        self.alpha_ = cho_solve((self.L_, self._L_lower_flag), self.y_train_)
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
@@ -343,15 +352,20 @@ class GaussianProcessRegressor(MultiOutputMixin,
             else:
                 return y_mean
         else:  # Predict based on GP posterior
+            # Alg 2.1, page 19, line 4 -> f*_bar = K(X_test, X_train) . alpha
             K_trans = self.kernel_(X, self.X_train_)
-            y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
+            y_mean = K_trans.dot(self.alpha_)
 
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
             if return_cov:
-                v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
+                # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
+                v = cho_solve(
+                    (self.L_, self._L_lower_flag), K_trans.T
+                )
+                # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v . v^T
+                y_cov = self.kernel_(X) - K_trans.dot(v)
 
                 # undo normalisation
                 y_cov = y_cov * self._y_train_std**2
@@ -470,21 +484,26 @@ class GaussianProcessRegressor(MultiOutputMixin,
         else:
             K = kernel(self.X_train_)
 
+        # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
         K[np.diag_indices_from(K)] += self.alpha
         try:
-            L = cholesky(K, lower=True)  # Line 2
+            lower = True
+            L = cholesky(K, lower=lower)
         except np.linalg.LinAlgError:
-            return (-np.inf, np.zeros_like(theta)) \
-                if eval_gradient else -np.inf
+            return (
+                (-np.inf, np.zeros_like(theta)) if eval_gradient else -np.inf
+            )
 
         # Support multi-dimensional output of self.y_train_
         y_train = self.y_train_
         if y_train.ndim == 1:
             y_train = y_train[:, np.newaxis]
 
-        alpha = cho_solve((L, True), y_train)  # Line 3
+        # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
+        alpha = cho_solve((L, lower), y_train)
 
-        # Compute log-likelihood (compare line 7)
+        # Alg 2.1, page 19, line 7
+        # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
         log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
@@ -492,7 +511,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         if eval_gradient:  # compare Equation 5.9 from GPML
             tmp = np.einsum("ik,jk->ijk", alpha, alpha)  # k: output-dimension
-            tmp -= cho_solve((L, True), np.eye(K.shape[0]))[:, :, np.newaxis]
+            tmp -= cho_solve((L, lower), np.eye(K.shape[0]))[:, :, np.newaxis]
             # Compute "0.5 * trace(tmp.dot(K_gradient))" without
             # constructing the full matrix tmp.dot(K_gradient) since only
             # its diagonal is required
