@@ -1203,6 +1203,7 @@ When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
 depending on the number and distribution of ground true labels. The maximum
 value is always +1.
+For additional information, see [WikipediaMCC2021]_ [Matthews1975]_ [Jurman2012]_ [Chicco2020]_ [Chicco2021]_
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
