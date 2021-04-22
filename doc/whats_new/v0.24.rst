@@ -19,6 +19,12 @@ Changelog
   :term:`get_feature_names` on transformers with an empty column selection.
   :pr:`19579` by `Thomas Fan`_.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| Fixed a regression in :class:`cross_decomposition.CCA`. :pr:`19646`
+  by `Thomas Fan`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
