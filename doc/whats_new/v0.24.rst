@@ -25,18 +25,18 @@ Changelog
 - |Fix| Fixed a regression in :class:`cross_decomposition.CCA`. :pr:`19646`
   by `Thomas Fan`_.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s
+  ``inverse_transform``.  :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
 - |Fix| Fixed a bug in :class:`ensemble.HistGradientBoostingRegressor` `fit`
   with `sample_weight` parameter and `least_absolute_deviation` loss function.
   :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
-
-:mod:`sklearn.decomposition`
-............................
-
-- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s
-  ``inverse_transform``.  :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
