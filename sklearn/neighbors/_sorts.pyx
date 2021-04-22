@@ -16,7 +16,7 @@ import numpy as np
 cimport numpy as np
 from cython.parallel import prange, parallel
 
-from ._typedefs import ITYPE
+from cython cimport floating, integral
 
 cdef extern from *:
     """
@@ -56,11 +56,11 @@ cdef extern from *:
                 I n_points) nogil except +
 
 
-cdef int intro_select(
-        DTYPE_t *data,
-        ITYPE_t *indices,
-        ITYPE_t pivot,
-        ITYPE_t n_points) nogil except -1:
+cdef integral intro_select(
+        floating *data,
+        integral *indices,
+        integral pivot,
+        integral n_points) nogil:
     """Partition indices based on their associated data.
 
     It is essentially a partial in-place quicksort around a
@@ -94,9 +94,9 @@ cdef int intro_select(
     )
     return 0
 
-cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] argpartition(
-        np.ndarray[DTYPE_t, ndim=2, mode='c'] data,
-        ITYPE_t pivot):
+cpdef np.ndarray[integral, ndim=2, mode='c'] argpartition(
+        np.ndarray[floating, ndim=2, mode='c'] data,
+        integral pivot):
     """
     Return an array of indices such that selection of these indices on
     the original data would return a row-wise partitioned version of
@@ -126,16 +126,16 @@ cpdef np.ndarray[ITYPE_t, ndim=2, mode='c'] argpartition(
          A 2D array of row indices partitioned with respect to the given pivot.
     """
     cdef:
-        ITYPE_t i_row
-        ITYPE_t n_rows = data.shape[0]
-        ITYPE_t n_cols = data.shape[1]
-        DTYPE_t *data_ptr = &data[0, 0]
+        integral i_row
+        integral n_rows = data.shape[0]
+        integral n_cols = data.shape[1]
+        floating *data_ptr = &data[0, 0]
 
     # TODO: I haven't found a nicer way to create indices yet.
-    cdef np.ndarray[ITYPE_t, ndim = 2, mode = 'c'] indices = (
-    np.ones((n_rows, 1), dtype=ITYPE) @ np.arange(n_cols, dtype=ITYPE)[None, :]
+    cdef np.ndarray[integral, ndim=2, mode='c'] indices = (
+    np.ones((n_rows, 1), dtype=int) @ np.arange(n_cols, dtype=int)[None, :]
     )
-    cdef ITYPE_t * indices_ptr = &indices[0, 0]
+    cdef integral * indices_ptr = &indices[0, 0]
 
     # Sorting on rows in parallel, indices is modified inplace
     for i_row in prange(n_rows, schedule='static', nogil=True):
