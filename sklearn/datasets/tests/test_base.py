@@ -139,7 +139,7 @@ def test_load_files_w_allowed_and_ignored_extensions(load_files_root):
         load_files(load_files_root, allowed_extensions=[".txt"],
                    ignored_extensions=[".txt"])
 
-        
+
 def test_load_files_w_ignore_list(tmp_path):
     d = tmp_path / "sub"
     d.mkdir()
@@ -151,7 +151,7 @@ def test_load_files_w_ignore_list(tmp_path):
     p3.touch()
     res = load_files(tmp_path, ignored_extensions=[".txt"])
     assert len(res.filenames) == 2
-    assert all([re.search(".*\.txt$", f) for f in res.filenames]) == False
+    assert all([re.search(r".*\.txt$", f) for f in res.filenames]) is False
 
 
 def test_load_files_w_allow_list(tmp_path):
@@ -165,7 +165,7 @@ def test_load_files_w_allow_list(tmp_path):
     p3.touch()
     res = load_files(tmp_path, allowed_extensions=[".txt"])
     assert len(res.filenames) == 1
-    assert all([re.search(".*\.txt$", f) for f in res.filenames]) == True
+    assert all([re.search(r".*\.txt$", f) for f in res.filenames]) is True
 
 
 def test_load_sample_images():
