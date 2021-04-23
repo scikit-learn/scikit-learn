@@ -25,6 +25,7 @@ from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
+from .._config import config_context
 
 
 @_deprecate_positional_args
@@ -462,5 +463,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-
-        return pairwise_distances_argmin(X, self.cluster_centers_)
+        X = self._validate_data(X, reset=False)
+        with config_context(assume_finite=True):
+            return pairwise_distances_argmin(X, self.cluster_centers_)

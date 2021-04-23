@@ -43,7 +43,6 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
-
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "check_random_state",
@@ -53,8 +52,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_html_repr"
-           ]
+           "DataConversionWarning", "estimator_html_repr"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -693,6 +691,10 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     ------
     slice of batch_size elements
 
+    See Also
+    --------
+    gen_even_slices: Generator to create n_packs slices going up to n.
+
     Examples
     --------
     >>> from sklearn.utils import gen_batches
@@ -741,6 +743,11 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     Yields
     ------
     slice
+
+    See Also
+    --------
+    gen_batches: Generator to create slices containing batch_size elements
+        from 0 to n.
 
     Examples
     --------
@@ -813,10 +820,7 @@ def _to_object_array(sequence):
     array([array([0]), array([1])], dtype=object)
     >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
-    >>> np.array([np.array([0]), np.array([1])])
-    array([[0],
-       [1]])
-    >>> np.array([np.array([0]), np.array([1, 2])])
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
     """
     out = np.empty(len(sequence), dtype=object)
@@ -1071,7 +1075,7 @@ def check_matplotlib_support(caller_name):
 
 
 def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandsa is not
+    """Raise ImportError with detailed error message if pandas is not
     installed.
 
     Plot utilities like :func:`fetch_openml` should lazily import

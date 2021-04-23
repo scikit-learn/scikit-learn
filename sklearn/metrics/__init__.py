@@ -15,6 +15,7 @@ from ._ranking import ndcg_score
 from ._ranking import precision_recall_curve
 from ._ranking import roc_auc_score
 from ._ranking import roc_curve
+from ._ranking import top_k_accuracy_score
 
 from ._classification import accuracy_score
 from ._classification import balanced_accuracy_score
@@ -38,6 +39,8 @@ from ._classification import multilabel_confusion_matrix
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
+from .cluster import rand_score
+from .cluster import pair_confusion_matrix
 from .cluster import completeness_score
 from .cluster import consensus_score
 from .cluster import homogeneity_completeness_v_measure
@@ -66,6 +69,7 @@ from ._regression import mean_squared_error
 from ._regression import mean_squared_log_error
 from ._regression import median_absolute_error
 from ._regression import mean_absolute_percentage_error
+from ._regression import mean_pinball_loss
 from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
@@ -130,6 +134,7 @@ __all__ = [
     'mean_absolute_error',
     'mean_squared_error',
     'mean_squared_log_error',
+    'mean_pinball_loss',
     'mean_poisson_deviance',
     'mean_gamma_deviance',
     'mean_tweedie_deviance',
@@ -139,6 +144,7 @@ __all__ = [
     'mutual_info_score',
     'ndcg_score',
     'normalized_mutual_info_score',
+    'pair_confusion_matrix',
     'pairwise_distances',
     'pairwise_distances_argmin',
     'pairwise_distances_argmin_min',
@@ -153,6 +159,7 @@ __all__ = [
     'precision_recall_fscore_support',
     'precision_score',
     'r2_score',
+    'rand_score',
     'recall_score',
     'RocCurveDisplay',
     'roc_auc_score',
@@ -160,6 +167,7 @@ __all__ = [
     'SCORERS',
     'silhouette_samples',
     'silhouette_score',
+    'top_k_accuracy_score',
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',

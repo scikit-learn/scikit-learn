@@ -119,6 +119,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
+    X_offset_ : float
+        If `normalize=True`, offset subtracted for centering data to a
+        zero mean.
+
+    X_scale_ : float
+        If `normalize=True`, parameter used to scale data to a unit
+        standard deviation.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -464,6 +472,14 @@ class ARDRegression(RegressorMixin, LinearModel):
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
+    X_offset_ : float
+        If `normalize=True`, offset subtracted for centering data to a
+        zero mean.
+
+    X_scale_ : float
+        If `normalize=True`, parameter used to scale data to a unit
+        standard deviation.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -535,6 +551,9 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
+
+        self.X_offset_ = X_offset_
+        self.X_scale_ = X_scale_
 
         # Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)

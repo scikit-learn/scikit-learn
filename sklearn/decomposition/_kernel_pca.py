@@ -7,7 +7,7 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
-from ..utils import check_random_state
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 from ..utils.deprecation import deprecated
@@ -167,10 +167,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.copy_X = copy_X
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
@@ -209,9 +209,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             self.lambdas_, self.alphas_ = linalg.eigh(
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
         elif eigen_solver == 'arpack':
-            random_state = check_random_state(self.random_state)
-            # initialize with [-1,1] as in ARPACK
-            v0 = random_state.uniform(-1, 1, K.shape[0])
+            v0 = _init_arpack_v0(K.shape[0], self.random_state)
             self.lambdas_, self.alphas_ = eigsh(K, n_components,
                                                 which="LA",
                                                 tol=self.tol,
@@ -348,6 +346,26 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     def inverse_transform(self, X):
         """Transform X back to original space.
 
+        ``inverse_transform`` approximates the inverse transformation using
+        a learned pre-image. The pre-image is learned by kernel ridge
+        regression of the original data on their low-dimensional representation
+        vectors.
+
+        .. note:
+            :meth:`~sklearn.decomposition.fit` internally uses a centered
+            kernel. As the centered kernel no longer contains the information
+            of the mean of kernel features, such information is not taken into
+            account in reconstruction.
+
+        .. note::
+            When users want to compute inverse transformation for 'linear'
+            kernel, it is recommended that they use
+            :class:`~sklearn.decomposition.PCA` instead. Unlike
+            :class:`~sklearn.decomposition.PCA`,
+            :class:`~sklearn.decomposition.KernelPCA`'s ``inverse_transform``
+            does not reconstruct the mean of data when 'linear' kernel is used
+            due to the use of centered kernel.
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_components)
@@ -366,8 +384,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                  "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
-        n_samples = self.X_transformed_fit_.shape[0]
-        K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)
 
     def _more_tags(self):

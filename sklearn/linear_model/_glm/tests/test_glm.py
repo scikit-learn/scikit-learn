@@ -294,6 +294,8 @@ def test_warm_start(fit_intercept):
     assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-4)
 
 
+# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (10, 100)])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('sample_weight', [None, True])
@@ -419,13 +421,13 @@ def test_tweedie_regression_family(regression_data):
 
 
 @pytest.mark.parametrize(
-        'estimator, value',
-        [
-            (PoissonRegressor(), True),
-            (GammaRegressor(), True),
-            (TweedieRegressor(power=1.5), True),
-            (TweedieRegressor(power=0), False)
-        ],
+    'estimator, value',
+    [
+        (PoissonRegressor(), True),
+        (GammaRegressor(), True),
+        (TweedieRegressor(power=1.5), True),
+        (TweedieRegressor(power=0), False),
+    ],
 )
 def test_tags(estimator, value):
     assert estimator._get_tags()['requires_positive_y'] is value

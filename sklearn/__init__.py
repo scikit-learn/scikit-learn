@@ -27,19 +27,19 @@ logger = logging.getLogger(__name__)
 # https://www.python.org/dev/peps/pep-0440/
 #
 # Generic release markers:
-#   X.Y
+#   X.Y.0   # For first release after an increment in Y
 #   X.Y.Z   # For bugfix releases
 #
 # Admissible pre-release markers:
-#   X.YaN   # Alpha release
-#   X.YbN   # Beta release
-#   X.YrcN  # Release Candidate
-#   X.Y     # Final release
+#   X.Y.ZaN   # Alpha release
+#   X.Y.ZbN   # Beta release
+#   X.Y.ZrcN  # Release Candidate
+#   X.Y.Z     # Final release
 #
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.24.dev0'
+__version__ = '1.0.dev0'
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded

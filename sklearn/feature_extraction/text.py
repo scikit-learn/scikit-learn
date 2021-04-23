@@ -340,6 +340,13 @@ class _VectorizerMixin:
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
+
+        if token_pattern.groups > 1:
+            raise ValueError(
+                "More than 1 capturing group in token pattern. Only a single "
+                "group should be captured."
+            )
+
         return token_pattern.findall
 
     def get_stop_words(self):
@@ -545,16 +552,16 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     Parameters
     ----------
 
-    input : string {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+    input : {'filename', 'file', 'content'}, default='content'
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -590,7 +597,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    stop_words : string {'english'}, list, default=None
+    stop_words : {'english'}, list, default=None
         If 'english', a built-in stop word list for English is used.
         There are several known issues with 'english' and you should
         consider an alternative (see :ref:`stop_words`).
@@ -604,6 +611,10 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        At most one capturing group is permitted.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
@@ -622,10 +633,9 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
-        first read from the file and then passed to the given callable
-        analyzer.
+            Since v0.21, if ``input`` is ``'filename'`` or ``'file'``, the data
+            is first read from the file and then passed to the given callable
+            analyzer.
 
     n_features : int, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
@@ -808,16 +818,16 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     Parameters
     ----------
-    input : string {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+    input : {'filename', 'file', 'content'}, default='content'
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -853,7 +863,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    stop_words : string {'english'}, list, default=None
+    stop_words : {'english'}, list, default=None
         If 'english', a built-in stop word list for English is used.
         There are several known issues with 'english' and you should
         consider an alternative (see :ref:`stop_words`).
@@ -871,6 +881,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        At most one capturing group is permitted.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
@@ -1093,6 +1107,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         j_indices = []
         indptr = []
 
+        if self.lowercase:
+            for vocab in vocabulary:
+                if any(map(str.isupper, vocab)):
+                    warnings.warn("Upper case characters found in"
+                                  " vocabulary while 'lowercase'"
+                                  " is True. These entries will not"
+                                  " be matched with any documents")
+                    break
+
         values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
@@ -1256,22 +1279,20 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             List of arrays of terms.
         """
         self._check_vocabulary()
-
-        if sp.issparse(X):
-            # We need CSR format for fast row manipulations.
-            X = X.tocsr()
-        else:
-            # We need to convert X to a matrix, so that the indexing
-            # returns 2D objects
-            X = np.asmatrix(X)
+        # We need CSR format for fast row manipulations.
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         terms = np.array(list(self.vocabulary_.keys()))
         indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
-                for i in range(n_samples)]
+        if sp.issparse(X):
+            return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
+                    for i in range(n_samples)]
+        else:
+            return [inverse_vocabulary[np.flatnonzero(X[i, :])].ravel()
+                    for i in range(n_samples)]
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
@@ -1517,15 +1538,15 @@ class TfidfVectorizer(CountVectorizer):
     Parameters
     ----------
     input : {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : str, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -1570,10 +1591,9 @@ class TfidfVectorizer(CountVectorizer):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
-        first read from the file and then passed to the given callable
-        analyzer.
+            Since v0.21, if ``input`` is ``'filename'`` or ``'file'``, the data
+            is first read from the file and then passed to the given callable
+            analyzer.
 
     stop_words : {'english'}, list, default=None
         If a string, it is passed to _check_stop_list and the appropriate stop
@@ -1595,6 +1615,10 @@ class TfidfVectorizer(CountVectorizer):
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        At most one capturing group is permitted.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different

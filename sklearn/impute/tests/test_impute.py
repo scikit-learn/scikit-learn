@@ -27,6 +27,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute._base import _most_frequent
 
 
 def _check_statistics(X, X_true,
@@ -1474,3 +1475,28 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
     with pytest.raises(ValueError,
                        match=f"Got 'add_indicator={imputer.add_indicator}'"):
         imputer.inverse_transform(X_1_trans)
+
+
+@pytest.mark.parametrize(
+    "expected,array,dtype,extra_value,n_repeat",
+    [
+        # array of object dtype
+        ("extra_value", ['a', 'b', 'c'], object, "extra_value", 2),
+        (
+            "most_frequent_value",
+            ['most_frequent_value', 'most_frequent_value', 'value'],
+            object, "extra_value", 1
+        ),
+        ("a", ['min_value', 'min_value' 'value'], object, "a", 2),
+        ("min_value", ['min_value', 'min_value', 'value'], object, "z", 2),
+        # array of numeric dtype
+        (10, [1, 2, 3], int, 10, 2),
+        (1, [1, 1, 2], int, 10, 1),
+        (10, [20, 20, 1], int, 10, 2),
+        (1, [1, 1, 20], int, 10, 2),
+    ]
+)
+def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
+    assert expected == _most_frequent(
+        np.array(array, dtype=dtype), extra_value, n_repeat
+    )

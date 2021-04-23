@@ -74,6 +74,7 @@ from time import time
 from collections import defaultdict
 import os.path
 
+from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils import gen_batches
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.extmath import randomized_svd
@@ -256,7 +257,7 @@ def svd_timing(X, n_comps, n_iter, n_oversamples,
     return U, mu, V, call_time
 
 
-def norm_diff(A, norm=2, msg=True):
+def norm_diff(A, norm=2, msg=True, random_state=None):
     """
     Compute the norm diff with the original matrix, when randomized
     SVD is called with *params.
@@ -268,7 +269,11 @@ def norm_diff(A, norm=2, msg=True):
         print("... computing %s norm ..." % norm)
     if norm == 2:
         # s = sp.linalg.norm(A, ord=2)  # slow
-        value = sp.sparse.linalg.svds(A, k=1, return_singular_vectors=False)
+        v0 = _init_arpack_v0(min(A.shape), random_state)
+        value = sp.sparse.linalg.svds(A,
+                                      k=1,
+                                      return_singular_vectors=False,
+                                      v0=v0)
     else:
         if sp.sparse.issparse(A):
             value = sp.sparse.linalg.norm(A, ord=norm)
@@ -298,7 +303,7 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
     all_time = defaultdict(list)
     if enable_spectral_norm:
         all_spectral = defaultdict(list)
-        X_spectral_norm = norm_diff(X, norm=2, msg=False)
+        X_spectral_norm = norm_diff(X, norm=2, msg=False, random_state=0)
     all_frobenius = defaultdict(list)
     X_fro_norm = norm_diff(X, norm='fro', msg=False)
 
@@ -312,8 +317,9 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
             all_time[label].append(time)
             if enable_spectral_norm:
                 A = U.dot(np.diag(s).dot(V))
-                all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                           X_spectral_norm)
+                all_spectral[label].append(
+                    norm_diff(X - A, norm=2, random_state=0) / X_spectral_norm
+                )
             f = scalable_frobenius_norm_discrepancy(X, U, s, V)
             all_frobenius[label].append(f / X_fro_norm)
 
@@ -327,8 +333,9 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
             all_time[label].append(time)
             if enable_spectral_norm:
                 A = U.dot(np.diag(s).dot(V))
-                all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                           X_spectral_norm)
+                all_spectral[label].append(
+                    norm_diff(X - A, norm=2, random_state=0) / X_spectral_norm
+                )
             f = scalable_frobenius_norm_discrepancy(X, U, s, V)
             all_frobenius[label].append(f / X_fro_norm)
 
@@ -353,7 +360,7 @@ def bench_b(power_list):
     for rank in ranks:
         X = make_low_rank_matrix(effective_rank=rank, **data_params)
         if enable_spectral_norm:
-            X_spectral_norm = norm_diff(X, norm=2, msg=False)
+            X_spectral_norm = norm_diff(X, norm=2, msg=False, random_state=0)
         X_fro_norm = norm_diff(X, norm='fro', msg=False)
 
         for n_comp in [int(rank/2), rank, rank*2]:
@@ -364,8 +371,10 @@ def bench_b(power_list):
                                         power_iteration_normalizer='LU')
                 if enable_spectral_norm:
                     A = U.dot(np.diag(s).dot(V))
-                    all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                               X_spectral_norm)
+                    all_spectral[label].append(
+                        norm_diff(X - A, norm=2, random_state=0) /
+                        X_spectral_norm
+                    )
                 f = scalable_frobenius_norm_discrepancy(X, U, s, V)
                 all_frobenius[label].append(f / X_fro_norm)
 
@@ -388,7 +397,7 @@ def bench_c(datasets, n_comps):
             continue
 
         if enable_spectral_norm:
-            X_spectral_norm = norm_diff(X, norm=2, msg=False)
+            X_spectral_norm = norm_diff(X, norm=2, msg=False, random_state=0)
         X_fro_norm = norm_diff(X, norm='fro', msg=False)
         n_comps = np.minimum(n_comps, np.min(X.shape))
 
@@ -401,8 +410,9 @@ def bench_c(datasets, n_comps):
         all_time[label].append(time)
         if enable_spectral_norm:
             A = U.dot(np.diag(s).dot(V))
-            all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                       X_spectral_norm)
+            all_spectral[label].append(
+                norm_diff(X - A, norm=2, random_state=0) / X_spectral_norm
+            )
         f = scalable_frobenius_norm_discrepancy(X, U, s, V)
         all_frobenius[label].append(f / X_fro_norm)
 
@@ -415,8 +425,9 @@ def bench_c(datasets, n_comps):
             all_time[label].append(time)
             if enable_spectral_norm:
                 A = U.dot(np.diag(s).dot(V))
-                all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                           X_spectral_norm)
+                all_spectral[label].append(
+                    norm_diff(X - A, norm=2, random_state=0) / X_spectral_norm
+                )
             f = scalable_frobenius_norm_discrepancy(X, U, s, V)
             all_frobenius[label].append(f / X_fro_norm)
 
