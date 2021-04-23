@@ -12,6 +12,12 @@
 # - C++ functions that wraps function of std::algorithm and (sometimes) use
 # - an Comparator to state how to sort
 #
+# We could directly call the C++ interfaces (*_inner) in cython.
+# This works but we prefer to have the cython interface declared in
+# headers files (*.pxd) and used in Cython code, especially to hide
+# C++ templating from Cython callers.
+#
+
 import numpy as np
 cimport numpy as np
 from cython.parallel import prange, parallel
