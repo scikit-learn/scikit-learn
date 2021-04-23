@@ -15,11 +15,6 @@ from sklearn.exceptions import FitFailedWarning
 from sklearn.model_selection.tests.test_search import FailingClassifier
 
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
@@ -127,7 +122,6 @@ class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     def partial_fit(self, X, y=None, **params):
         self.train_sizes += X.shape[0]
         self.x = X[0]
-
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(params)
             if missing:
@@ -283,7 +277,8 @@ def test_cross_val_score():
     clf = CheckingClassifier(check_y=list_check)
     scores = cross_val_score(clf, X, y2.tolist(), cv=3)
 
-    assert_raises(ValueError, cross_val_score, clf, X, y2, scoring="sklearn")
+    with pytest.raises(ValueError):
+        cross_val_score(clf, X, y2, scoring="sklearn")
 
     # test with 3d X and
     X_3d = X[:, :, np.newaxis]
@@ -291,8 +286,8 @@ def test_cross_val_score():
     scores = cross_val_score(clf, X_3d, y2)
 
     clf = MockClassifier(allow_nd=False)
-    assert_raises(ValueError, cross_val_score, clf, X_3d, y2,
-                  error_score='raise')
+    with pytest.raises(ValueError):
+        cross_val_score(clf, X_3d, y2, error_score='raise')
 
 
 def test_cross_validate_many_jobs():
@@ -314,38 +309,39 @@ def test_cross_validate_invalid_scoring_param():
 
     # List/tuple of callables should raise a message advising users to use
     # dict of names to callables mapping
-    assert_raises_regex(ValueError, error_message_regexp,
-                        cross_validate, estimator, X, y,
-                        scoring=(make_scorer(precision_score),
-                                 make_scorer(accuracy_score)))
-    assert_raises_regex(ValueError, error_message_regexp,
-                        cross_validate, estimator, X, y,
-                        scoring=(make_scorer(precision_score),))
+    with pytest.raises(ValueError, match=error_message_regexp):
+        cross_validate(estimator, X, y, scoring=(make_scorer(precision_score),
+                                                 make_scorer(accuracy_score)))
+    with pytest.raises(ValueError, match=error_message_regexp):
+        cross_validate(estimator, X, y,
+                       scoring=(make_scorer(precision_score),))
 
     # So should empty lists/tuples
-    assert_raises_regex(ValueError, error_message_regexp + "Empty list.*",
-                        cross_validate, estimator, X, y, scoring=())
+    with pytest.raises(
+        ValueError,
+        match=error_message_regexp + "Empty list.*"
+    ):
+        cross_validate(estimator, X, y, scoring=())
 
     # So should duplicated entries
-    assert_raises_regex(ValueError, error_message_regexp + "Duplicate.*",
-                        cross_validate, estimator, X, y,
-                        scoring=('f1_micro', 'f1_micro'))
+    with pytest.raises(ValueError, match=error_message_regexp + "Duplicate.*"):
+        cross_validate(estimator, X, y, scoring=('f1_micro', 'f1_micro'))
 
     # Nested Lists should raise a generic error message
-    assert_raises_regex(ValueError, error_message_regexp,
-                        cross_validate, estimator, X, y,
-                        scoring=[[make_scorer(precision_score)]])
+    with pytest.raises(ValueError, match=error_message_regexp):
+        cross_validate(estimator, X, y,
+                       scoring=[[make_scorer(precision_score)]])
 
     error_message_regexp = (".*scoring is invalid.*Refer to the scoring "
                             "glossary for details:.*")
 
     # Empty dict should raise invalid scoring error
-    assert_raises_regex(ValueError, "An empty dict",
-                        cross_validate, estimator, X, y, scoring=(dict()))
+    with pytest.raises(ValueError, match="An empty dict"):
+        cross_validate(estimator, X, y, scoring=(dict()))
 
     # And so should any other invalid entry
-    assert_raises_regex(ValueError, error_message_regexp,
-                        cross_validate, estimator, X, y, scoring=5)
+    with pytest.raises(ValueError, match=error_message_regexp):
+        cross_validate(estimator, X, y, scoring=5)
 
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
@@ -361,8 +357,11 @@ def test_cross_validate_invalid_scoring_param():
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
 
-    assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
-                        cross_validate, SVC(), X, y, scoring="mse")
+    with pytest.raises(
+        ValueError,
+        match="'mse' is not a valid scoring value."
+    ):
+        cross_validate(SVC(), X, y, scoring="mse")
 
 
 def test_cross_validate_nested_estimator():
@@ -534,13 +533,12 @@ def test_cross_val_score_predict_groups():
 
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2), GroupKFold(),
                  GroupShuffleSplit()]
+    error_message = "The 'groups' parameter should not be None."
     for cv in group_cvs:
-        assert_raise_message(ValueError,
-                             "The 'groups' parameter should not be None.",
-                             cross_val_score, estimator=clf, X=X, y=y, cv=cv)
-        assert_raise_message(ValueError,
-                             "The 'groups' parameter should not be None.",
-                             cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
+        with pytest.raises(ValueError, match=error_message):
+            cross_val_score(estimator=clf, X=X, y=y, cv=cv)
+        with pytest.raises(ValueError, match=error_message):
+            cross_val_predict(estimator=clf, X=X, y=y, cv=cv)
 
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
@@ -599,12 +597,13 @@ def test_cross_val_score_precomputed():
 
     # Error raised for non-square X
     svm = SVC(kernel="precomputed")
-    assert_raises(ValueError, cross_val_score, svm, X, y)
+    with pytest.raises(ValueError):
+        cross_val_score(svm, X, y)
 
     # test error is raised when the precomputed kernel is not array-like
     # or sparse
-    assert_raises(ValueError, cross_val_score, svm,
-                  linear_kernel.tolist(), y)
+    with pytest.raises(ValueError):
+        cross_val_score(svm, linear_kernel.tolist(), y)
 
 
 def test_cross_val_score_fit_params():
@@ -659,7 +658,8 @@ def test_cross_val_score_errors():
     class BrokenEstimator:
         pass
 
-    assert_raises(TypeError, cross_val_score, BrokenEstimator(), X)
+    with pytest.raises(TypeError):
+        cross_val_score(BrokenEstimator(), X)
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -853,17 +853,17 @@ def test_cross_val_predict():
             for i in range(4):
                 yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
-    assert_raises(ValueError, cross_val_predict, est, X, y, cv=BadCV())
+    with pytest.raises(ValueError):
+        cross_val_predict(est, X, y, cv=BadCV())
 
     X, y = load_iris(return_X_y=True)
 
-    warning_message = ('Number of classes in training fold (2) does '
-                       'not match total number of classes (3). '
+    warning_message = (r'Number of classes in training fold \(2\) does '
+                       r'not match total number of classes \(3\). '
                        'Results may not be appropriate for your use case.')
-    assert_warns_message(RuntimeWarning, warning_message,
-                         cross_val_predict,
-                         LogisticRegression(solver="liblinear"),
-                         X, y, method='predict_proba', cv=KFold(2))
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        cross_val_predict(LogisticRegression(solver="liblinear"),
+                          X, y, method='predict_proba', cv=KFold(2))
 
 
 def test_cross_val_predict_decision_function_shape():
@@ -885,15 +885,15 @@ def test_cross_val_predict_decision_function_shape():
     # class.
     X = X[:100]
     y = y[:100]
-    assert_raise_message(ValueError,
-                         'Only 1 class/es in training fold,'
-                         ' but 2 in overall dataset. This'
-                         ' is not supported for decision_function'
-                         ' with imbalanced folds. To fix '
-                         'this, use a cross-validation technique '
-                         'resulting in properly stratified folds',
-                         cross_val_predict, RidgeClassifier(), X, y,
-                         method='decision_function', cv=KFold(2))
+    error_message = 'Only 1 class/es in training fold,'\
+                    ' but 2 in overall dataset. This'\
+                    ' is not supported for decision_function'\
+                    ' with imbalanced folds. To fix '\
+                    'this, use a cross-validation technique '\
+                    'resulting in properly stratified folds'
+    with pytest.raises(ValueError, match=error_message):
+        cross_val_predict(RidgeClassifier(), X, y, method='decision_function',
+                          cv=KFold(2))
 
     X, y = load_digits(return_X_y=True)
     est = SVC(kernel='linear', decision_function_shape='ovo')
@@ -905,12 +905,13 @@ def test_cross_val_predict_decision_function_shape():
 
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
-    assert_raises_regex(ValueError,
-                        r'Output shape \(599L?, 21L?\) of decision_function '
-                        r'does not match number of classes \(7\) in fold. '
-                        'Irregular decision_function .*',
-                        cross_val_predict, est, X, y,
-                        cv=KFold(n_splits=3), method='decision_function')
+    error_message_regexp = r'Output shape \(599L?, 21L?\) of ' \
+                           'decision_function does not match number of ' \
+                           r'classes \(7\) in fold. Irregular ' \
+                           'decision_function .*'
+    with pytest.raises(ValueError, match=error_message_regexp):
+        cross_val_predict(est, X, y, cv=KFold(n_splits=3),
+                          method='decision_function')
 
 
 def test_cross_val_predict_predict_proba_shape():
@@ -1129,8 +1130,8 @@ def test_learning_curve_incremental_learning_not_possible():
                                n_clusters_per_class=1, random_state=0)
     # The mockup does not have partial_fit()
     estimator = MockImprovingEstimator(1)
-    assert_raises(ValueError, learning_curve, estimator, X, y,
-                  exploit_incremental_learning=True)
+    with pytest.raises(ValueError):
+        learning_curve(estimator, X, y, exploit_incremental_learning=True)
 
 
 def test_learning_curve_incremental_learning():
@@ -1193,16 +1194,16 @@ def test_learning_curve_n_sample_range_out_of_bounds():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  train_sizes=[0, 1])
-    assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  train_sizes=[0.0, 1.0])
-    assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  train_sizes=[0.1, 1.1])
-    assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  train_sizes=[0, 20])
-    assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  train_sizes=[1, 21])
+    with pytest.raises(ValueError):
+        learning_curve(estimator, X, y, cv=3, train_sizes=[0, 1])
+    with pytest.raises(ValueError):
+        learning_curve(estimator, X, y, cv=3, train_sizes=[0.0, 1.0])
+    with pytest.raises(ValueError):
+        learning_curve(estimator, X, y, cv=3, train_sizes=[0.1, 1.1])
+    with pytest.raises(ValueError):
+        learning_curve(estimator, X, y, cv=3, train_sizes=[0, 20])
+    with pytest.raises(ValueError):
+        learning_curve(estimator, X, y, cv=3, train_sizes=[1, 21])
 
 
 def test_learning_curve_remove_duplicate_sample_sizes():
@@ -1210,9 +1211,13 @@ def test_learning_curve_remove_duplicate_sample_sizes():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(2)
-    train_sizes, _, _ = assert_warns(
-        RuntimeWarning, learning_curve, estimator, X, y, cv=3,
-        train_sizes=np.linspace(0.33, 1.0, 3))
+    warning_message = (
+        "Removed duplicate entries from 'train_sizes'. Number of ticks "
+        "will be less than the size of 'train_sizes': 2 instead of 3."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        train_sizes, _, _ = learning_curve(
+            estimator, X, y, cv=3, train_sizes=np.linspace(0.33, 1.0, 3))
     assert_array_equal(train_sizes, [1, 2])
 
 
@@ -1252,9 +1257,10 @@ def test_learning_curve_with_shuffle():
                               np.array([0.75, 0.3, 0.36111111]))
     assert_array_almost_equal(test_scores_batch.mean(axis=1),
                               np.array([0.36111111, 0.25, 0.25]))
-    assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv, n_jobs=1,
-                  train_sizes=np.linspace(0.3, 1.0, 3), groups=groups,
-                  error_score='raise')
+    with pytest.raises(ValueError):
+        learning_curve(estimator, X, y, cv=cv, n_jobs=1,
+                       train_sizes=np.linspace(0.3, 1.0, 3), groups=groups,
+                       error_score='raise')
 
     train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
         estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
@@ -1708,8 +1714,8 @@ def test_score_memmap():
     score = np.memmap(tf.name, shape=(), mode='r', dtype=np.float64)
     try:
         cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
-        assert_raises(ValueError, cross_val_score, clf, X, y,
-                      scoring=lambda est, X, y: scores)
+        with pytest.raises(ValueError):
+            cross_val_score(clf, X, y, scoring=lambda est, X, y: scores)
     finally:
         # Best effort to release the mmap file handles before deleting the
         # backing file under Windows
@@ -1753,8 +1759,13 @@ def test_fit_and_score_failing():
     # passing error score to trigger the warning message
     fit_and_score_kwargs = {'error_score': 0}
     # check if the warning message type is as expected
-    assert_warns(FitFailedWarning, _fit_and_score, *fit_and_score_args,
-                 **fit_and_score_kwargs)
+    warning_message = (
+        "Estimator fit failed. The score on this train-test partition for "
+        "these parameters will be set to %f."
+        % (fit_and_score_kwargs['error_score'])
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     # since we're using FailingClassfier, our error will be the following
     error_message = "ValueError: Failing classifier failed as required"
     # the warning message we're expecting to see
@@ -1769,31 +1780,38 @@ def test_fit_and_score_failing():
         mtb = split[0] + '\n' + split[-1]
         return warning_message in mtb
     # check traceback is included
-    assert_warns_message(FitFailedWarning, test_warn_trace, _fit_and_score,
-                         *fit_and_score_args, **fit_and_score_kwargs)
+    warning_message = (
+        "Estimator fit failed. The score on this train-test partition for "
+        "these parameters will be set to %f."
+        % (fit_and_score_kwargs['error_score'])
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
 
     fit_and_score_kwargs = {'error_score': 'raise'}
     # check if exception was raised, with default error_score='raise'
-    assert_raise_message(ValueError, "Failing classifier failed as required",
-                         _fit_and_score, *fit_and_score_args,
-                         **fit_and_score_kwargs)
+    with pytest.raises(
+        ValueError,
+        match="Failing classifier failed as required"
+    ):
+        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
 
     # check that functions upstream pass error_score param to _fit_and_score
-    error_message = ("error_score must be the string 'raise' or a"
-                     " numeric value. (Hint: if using 'raise', please"
-                     " make sure that it has been spelled correctly.)")
+    error_message = re.escape(
+        "error_score must be the string 'raise' or a numeric value. (Hint: if "
+        "using 'raise', please make sure that it has been spelled correctly.)"
+    )
+    with pytest.raises(ValueError, match=error_message):
+        cross_validate(failing_clf, X, cv=3, error_score='unvalid-string')
 
-    assert_raise_message(ValueError, error_message, cross_validate,
-                         failing_clf, X, cv=3, error_score='unvalid-string')
+    with pytest.raises(ValueError, match=error_message):
+        cross_val_score(failing_clf, X, cv=3, error_score='unvalid-string')
 
-    assert_raise_message(ValueError, error_message, cross_val_score,
-                         failing_clf, X, cv=3, error_score='unvalid-string')
+    with pytest.raises(ValueError, match=error_message):
+        learning_curve(failing_clf, X, y, cv=3, error_score='unvalid-string')
 
-    assert_raise_message(ValueError, error_message, learning_curve,
-                         failing_clf, X, y, cv=3, error_score='unvalid-string')
-
-    assert_raise_message(ValueError, error_message, validation_curve,
-                         failing_clf, X, y, param_name='parameter',
+    with pytest.raises(ValueError, match=error_message):
+        validation_curve(failing_clf, X, y, param_name='parameter',
                          param_range=[FailingClassifier.FAILING_PARAMETER],
                          cv=3, error_score='unvalid-string')
 
@@ -1896,7 +1914,6 @@ def test_cross_validate_failing_scorer(
                     assert_allclose(results[key], error_score)
 
 
-
 def three_params_scorer(i, j, k):
     return 3.4213
 
@@ -1941,8 +1958,8 @@ def test_score():
     def two_params_scorer(estimator, X_test):
         return None
     fit_and_score_args = [None, None, None, two_params_scorer]
-    assert_raise_message(ValueError, error_message,
-                         _score, *fit_and_score_args, error_score=np.nan)
+    with pytest.raises(ValueError, match=error_message):
+        _score(*fit_and_score_args, error_score=np.nan)
 
 
 def test_callable_multimetric_confusion_matrix_cross_validate():

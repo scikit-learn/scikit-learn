@@ -9,7 +9,6 @@
 
 import warnings
 from inspect import signature
-from contextlib import suppress
 from functools import partial
 
 from math import log
@@ -24,17 +23,18 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .isotonic import IsotonicRegression
 from .model_selection import check_cv, cross_val_predict
-from .pipeline import Pipeline
 from .preprocessing import label_binarize, LabelEncoder
 from .svm import LinearSVC
-from .utils import (
-    _safe_indexing, check_array, deprecated, indexable, column_or_1d
-)
+from .utils import _safe_indexing, deprecated, indexable, column_or_1d
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
-from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import (
-    _check_sample_weight, _deprecate_positional_args, _check_fit_params
+    _check_fit_params,
+    _check_sample_weight,
+    _deprecate_positional_args,
+    _num_samples,
+    check_is_fitted,
+    check_consistent_length,
 )
 
 
@@ -138,6 +138,12 @@ class CalibratedClassifierCV(ClassifierMixin,
     ----------
     classes_ : ndarray of shape (n_classes,)
         The class labels.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying base_estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
             or `ensemble=False`)
@@ -256,14 +262,8 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
-            # `classes_` and `n_features_in_` should be consistent with that
-            # of base_estimator
-            if isinstance(self.base_estimator, Pipeline):
-                check_is_fitted(self.base_estimator[-1])
-            else:
-                check_is_fitted(self.base_estimator)
-            with suppress(AttributeError):
-                self.n_features_in_ = base_estimator.n_features_in_
+            # `classes_` should be consistent with that of base_estimator
+            check_is_fitted(self.base_estimator, attributes=["classes_"])
             self.classes_ = self.base_estimator.classes_
 
             pred_method = _get_prediction_method(base_estimator)
@@ -276,10 +276,6 @@ class CalibratedClassifierCV(ClassifierMixin,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
-            X, y = self._validate_data(
-                X, y, accept_sparse=['csc', 'csr', 'coo'],
-                force_all_finite=False, allow_nd=True
-            )
             # Set `classes_` using all `y`
             label_encoder_ = LabelEncoder().fit(y)
             self.classes_ = label_encoder_.classes_
@@ -345,7 +341,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                 predictions = _compute_predictions(pred_method, X, n_classes)
 
                 if sample_weight is not None and supports_sw:
-                    this_estimator.fit(X, y, sample_weight)
+                    this_estimator.fit(X, y, sample_weight=sample_weight)
                 else:
                     this_estimator.fit(X, y)
                 # Note: Here we don't pass on fit_params because the supported
@@ -356,6 +352,9 @@ class CalibratedClassifierCV(ClassifierMixin,
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
+        first_clf = self.calibrated_classifiers_[0].base_estimator
+        if hasattr(first_clf, "n_features_in_"):
+            self.n_features_in_ = first_clf.n_features_in_
         return self
 
     def predict_proba(self, X):
@@ -366,8 +365,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : The samples, as accepted by base_estimator.predict_proba
 
         Returns
         -------
@@ -375,11 +373,9 @@ class CalibratedClassifierCV(ClassifierMixin,
             The predicted probas.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
-                        force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        mean_proba = np.zeros((X.shape[0], len(self.classes_)))
+        mean_proba = np.zeros((_num_samples(X), len(self.classes_)))
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -395,8 +391,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : The samples, as accepted by base_estimator.predict
 
         Returns
         -------
@@ -675,7 +670,7 @@ class _CalibratedClassifier:
             self.base_estimator.classes_
         )
 
-        proba = np.zeros((X.shape[0], n_classes))
+        proba = np.zeros((_num_samples(X), n_classes))
         for class_idx, this_pred, calibrator in \
                 zip(pos_class_indices, predictions.T, self.calibrators):
             if n_classes == 2:
@@ -688,10 +683,13 @@ class _CalibratedClassifier:
         if n_classes == 2:
             proba[:, 0] = 1. - proba[:, 1]
         else:
-            proba /= np.sum(proba, axis=1)[:, np.newaxis]
-
-        # XXX : for some reason all probas can be 0
-        proba[np.isnan(proba)] = 1. / n_classes
+            denominator = np.sum(proba, axis=1)[:, np.newaxis]
+            # In the edge case where for each class calibrator returns a null
+            # probability for a given sample, use the uniform distribution
+            # instead.
+            uniform_proba = np.full_like(proba, 1 / n_classes)
+            proba = np.divide(proba, denominator, out=uniform_proba,
+                              where=denominator != 0)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0

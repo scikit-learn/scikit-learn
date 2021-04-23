@@ -263,7 +263,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         check_is_fitted(self)
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
 
         return np.dot(X, self.components_.T)
 

@@ -18,7 +18,7 @@ from ._glm import (PoissonRegressor,
                    GammaRegressor, TweedieRegressor)
 from ._huber import HuberRegressor
 from ._sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
-from ._stochastic_gradient import SGDClassifier, SGDRegressor
+from ._stochastic_gradient import SGDClassifier, SGDRegressor, SGDOneClassSVM
 from ._ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
                      ridge_regression)
 from ._logistic import LogisticRegression, LogisticRegressionCV
@@ -65,6 +65,7 @@ __all__ = ['ARDRegression',
            'RidgeClassifierCV',
            'SGDClassifier',
            'SGDRegressor',
+           'SGDOneClassSVM',
            'SquaredLoss',
            'TheilSenRegressor',
            'enet_path',

@@ -856,7 +856,9 @@ class ExponentialLoss(ClassificationLossFunction):
         return raw_predictions.reshape(-1, 1).astype(np.float64)
 
 
+# TODO: Remove entry 'ls' in version 1.2.
 LOSS_FUNCTIONS = {
+    "squared_error": LeastSquaresError,
     'ls': LeastSquaresError,
     'lad': LeastAbsoluteError,
     'huber': HuberLossFunction,

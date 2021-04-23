@@ -59,7 +59,10 @@ Installing the latest release
          <span class="sk-expandable" data-packager="pip" data-os="windows">Install the 64bit version of Python 3, for instance from <a href="https://www.python.org/">https://www.python.org</a>.</span
          ><span class="sk-expandable" data-packager="pip" data-os="mac">Install Python 3 using <a href="https://brew.sh/">homebrew</a> (<code>brew install python</code>) or by manually installing the package from <a href="https://www.python.org">https://www.python.org</a>.</span
          ><span class="sk-expandable" data-packager="pip" data-os="linux">Install python3 and python3-pip using the package manager of the Linux Distribution.</span
-         ><span class="sk-expandable" data-packager="conda"><a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/">Install conda</a> (no administrator permission required).</span>
+         ><span class="sk-expandable" data-packager="conda"
+            >Install conda using the <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/">Anaconda or miniconda</a>
+             installers or the <a href="https://https://github.com/conda-forge/miniforge#miniforge">miniforge</a> installers
+             (no administrator permission required for any of those).</span>
        </div>
 
 Then run:
@@ -106,17 +109,15 @@ In order to check your installation you can use
   </div>
 
 Note that in order to avoid potential conflicts with other packages it is
-strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
-(see `python3 virtualenv documentation
-<https://docs.python.org/3/tutorial/venv.html>`_) or `conda environments
+strongly recommended to use a `virtual environment (venv)
+<https://docs.python.org/3/tutorial/venv.html>`_ or a `conda environment
 <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_.
 
-Using an isolated environment makes possible to install a specific version of
-scikit-learn and its dependencies independently of any previously installed
-Python packages.
-In particular under Linux is it discouraged to install pip packages alongside
-the packages managed by the package manager of the distribution
-(apt, dnf, pacman...).
+Using such an isolated environment makes it possible to install a specific
+version of scikit-learn with pip or conda and its dependencies independently of
+any previously installed Python packages. In particular under Linux is it
+discouraged to install pip packages alongside the packages managed by the
+package manager of the distribution (apt, dnf, pacman...).
 
 Note that you should always remember to activate the environment of your choice
 prior to running any Python command whenever you start a new terminal session.
@@ -127,8 +128,6 @@ and NumPy and SciPy are not recompiled from source, which can happen when using
 particular configurations of operating system and hardware (such as Linux on
 a Raspberry Pi).
 
-If you must install scikit-learn and its dependencies with pip, you can install
-it as ``scikit-learn[alldeps]``.
 
 Scikit-learn plotting capabilities (i.e., functions start with "plot\_"
 and classes end with "Display") require Matplotlib. The examples require
@@ -150,6 +149,28 @@ purpose.
 
    For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
    are required.
+
+.. _install_on_apple_silicon_m1:
+
+Installing on Apple Silicon M1 hardware
+=======================================
+
+The recently introduced `macos/arm64` platform (sometimes also known as
+`macos/aarch64`) requires the open source community to upgrade the build
+configuation and automation to properly support it.
+
+At the time of writing (January 2021), the only way to get a working
+installation of scikit-learn on this hardware is to install scikit-learn and its
+dependencies from the conda-forge distribution, for instance using the miniforge
+installers:
+
+https://github.com/conda-forge/miniforge
+
+The following issue tracks progress on making it possible to install
+scikit-learn from PyPI with pip:
+
+https://github.com/scikit-learn/scikit-learn/issues/19137
+
 
 .. _install_by_distribution:
 

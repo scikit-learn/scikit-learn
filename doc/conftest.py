@@ -1,6 +1,7 @@
 import os
 from os.path import exists
 from os.path import join
+from os import environ
 import warnings
 
 from sklearn.utils import IS_PYPY
@@ -47,6 +48,12 @@ def setup_loading_other_datasets():
     except ImportError:
         raise SkipTest("Skipping loading_other_datasets.rst, "
                        "pandas not installed")
+
+    # checks SKLEARN_SKIP_NETWORK_TESTS to see if test should run
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", '1') == "0"
+    if not run_network_tests:
+        raise SkipTest("Skipping loading_other_datasets.rst, tests can be "
+                       "enabled by settting SKLEARN_SKIP_NETWORK_TESTS=0")
 
 
 def setup_compose():

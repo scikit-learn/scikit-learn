@@ -107,7 +107,7 @@ Artwork
 -------
 
 High quality PNG and SVG logos are available in the `doc/logos/
-<https://github.com/scikit-learn/scikit-learn/tree/master/doc/logos>`_
+<https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
 source directory.
 
 .. image:: images/scikit-learn-logo-notext.png
@@ -160,6 +160,10 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    :width: 70pt
    :target: https://www.dataiku.com/
 
+.. |aphp| image:: images/logo_APHP_text.png
+   :width: 150pt
+   :target: https://aphp.fr/
+
 .. |inria| image:: images/inria-logo.jpg
    :width: 100pt
    :target: https://www.inria.fr
@@ -184,6 +188,8 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    |                    |
    +---------+----------+
    |     |dataiku|      |
+   +---------+----------+
+   |       |aphp|       |
    +---------+----------+
    |                    |
    +---------+----------+

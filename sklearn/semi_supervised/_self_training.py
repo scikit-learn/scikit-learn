@@ -41,17 +41,17 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Invoking the ``fit`` method will fit a clone of the passed estimator,
         which will be stored in the ``base_estimator_`` attribute.
 
+    threshold : float, default=0.75
+        The decision threshold for use with `criterion='threshold'`.
+        Should be in [0, 1). When using the 'threshold' criterion, a
+        :ref:`well calibrated classifier <calibration>` should be used.
+
     criterion : {'threshold', 'k_best'}, default='threshold'
         The selection criterion used to select which labels to add to the
         training set. If 'threshold', pseudo-labels with prediction
         probabilities above `threshold` are added to the dataset. If 'k_best',
         the `k_best` pseudo-labels with highest prediction probabilities are
         added to the dataset. When using the 'threshold' criterion, a
-        :ref:`well calibrated classifier <calibration>` should be used.
-
-    threshold : float, default=0.75
-        The decision threshold for use with `criterion='threshold'`.
-        Should be in [0, 1). When using the 'threshold' criterion, a
         :ref:`well calibrated classifier <calibration>` should be used.
 
     k_best : int, default=10
@@ -64,7 +64,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         until no new pseudo-labels are added, or all unlabeled samples have
         been labeled.
 
-    verbose: bool, default=False
+    verbose : bool, default=False
         Enable verbose output.
 
     Attributes
@@ -205,10 +205,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 X[safe_mask(X, has_label)],
                 self.transduction_[has_label])
 
-            if self.n_iter_ == 1:
-                # Only validate in the first iteration so that n_iter=0 is
-                # equivalent to the base_estimator itself.
-                _validate_estimator(self.base_estimator)
+            # Validate the fitted estimator since `predict_proba` can be
+            # delegated to an underlying "final" fitted estimator as
+            # generally done in meta-estimator or pipeline.
+            _validate_estimator(self.base_estimator_)
 
             # Predict on the unlabeled samples
             prob = self.base_estimator_.predict_proba(
