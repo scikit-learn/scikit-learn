@@ -2,12 +2,15 @@
 ===================================
 Demo of OPTICS clustering algorithm
 ===================================
+
+.. currentmodule:: sklearn
+
 Finds core samples of high density and expands clusters from them.
 This example uses data that is generated so that the clusters have
 different densities.
-The :class:`sklearn.cluster.OPTICS` is first used with its Xi cluster detection
+The :class:`~cluster.OPTICS` is first used with its Xi cluster detection
 method, and then setting specific thresholds on the reachability, which
-corresponds to :class:`sklearn.cluster.DBSCAN`. We can see that the different
+corresponds to :class:`~cluster.DBSCAN`. We can see that the different
 clusters of OPTICS's Xi method can be recovered with different choices of
 thresholds in DBSCAN.
 """

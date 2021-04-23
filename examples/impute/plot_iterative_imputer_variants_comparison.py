@@ -3,38 +3,40 @@
 Imputing missing values with variants of IterativeImputer
 =========================================================
 
-The :class:`sklearn.impute.IterativeImputer` class is very flexible - it can be
+.. currentmodule:: sklearn
+
+The :class:`~impute.IterativeImputer` class is very flexible - it can be
 used with a variety of estimators to do round-robin regression, treating every
 variable as an output in turn.
 
 In this example we compare some estimators for the purpose of missing feature
-imputation with :class:`sklearn.impute.IterativeImputer`:
+imputation with :class:`~impute.IterativeImputer`:
 
-* :class:`~sklearn.linear_model.BayesianRidge`: regularized linear regression
-* :class:`~sklearn.tree.DecisionTreeRegressor`: non-linear regression
-* :class:`~sklearn.ensemble.ExtraTreesRegressor`: similar to missForest in R
-* :class:`~sklearn.neighbors.KNeighborsRegressor`: comparable to other KNN
+* :class:`~linear_model.BayesianRidge`: regularized linear regression
+* :class:`~tree.DecisionTreeRegressor`: non-linear regression
+* :class:`~ensemble.ExtraTreesRegressor`: similar to missForest in R
+* :class:`~neighbors.KNeighborsRegressor`: comparable to other KNN
   imputation approaches
 
 Of particular interest is the ability of
-:class:`sklearn.impute.IterativeImputer` to mimic the behavior of missForest, a
+:class:`~impute.IterativeImputer` to mimic the behavior of missForest, a
 popular imputation package for R. In this example, we have chosen to use
-:class:`sklearn.ensemble.ExtraTreesRegressor` instead of
-:class:`sklearn.ensemble.RandomForestRegressor` (as in missForest) due to its
+:class:`~ensemble.ExtraTreesRegressor` instead of
+:class:`~ensemble.RandomForestRegressor` (as in missForest) due to its
 increased speed.
 
-Note that :class:`sklearn.neighbors.KNeighborsRegressor` is different from KNN
+Note that :class:`~neighbors.KNeighborsRegressor` is different from KNN
 imputation, which learns from samples with missing values by using a distance
 metric that accounts for missing values, rather than imputing them.
 
 The goal is to compare different estimators to see which one is best for the
-:class:`sklearn.impute.IterativeImputer` when using a
-:class:`sklearn.linear_model.BayesianRidge` estimator on the California housing
+:class:`~impute.IterativeImputer` when using a
+:class:`~linear_model.BayesianRidge` estimator on the California housing
 dataset with a single value randomly removed from each row.
 
 For this particular pattern of missing values we see that
-:class:`sklearn.ensemble.ExtraTreesRegressor` and
-:class:`sklearn.linear_model.BayesianRidge` give the best results.
+:class:`~ensemble.ExtraTreesRegressor` and
+:class:`~linear_model.BayesianRidge` give the best results.
 """
 print(__doc__)
 
@@ -119,7 +121,7 @@ scores = pd.concat(
     keys=['Original', 'SimpleImputer', 'IterativeImputer'], axis=1
 )
 
-# plot boston results
+# plot california housing results
 fig, ax = plt.subplots(figsize=(13, 6))
 means = -scores.mean()
 errors = scores.std()
@@ -127,6 +129,6 @@ means.plot.barh(xerr=errors, ax=ax)
 ax.set_title('California Housing Regression with Different Imputation Methods')
 ax.set_xlabel('MSE (smaller is better)')
 ax.set_yticks(np.arange(means.shape[0]))
-ax.set_yticklabels([" w/ ".join(label) for label in means.index.get_values()])
+ax.set_yticklabels([" w/ ".join(label) for label in means.index.tolist()])
 plt.tight_layout(pad=1)
 plt.show()

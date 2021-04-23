@@ -3,8 +3,8 @@
 Plot randomly generated multilabel dataset
 ==============================================
 
-This illustrates the `datasets.make_multilabel_classification` dataset
-generator. Each sample consists of counts of two features (up to 50 in
+This illustrates the :func:`~sklearn.datasets.make_multilabel_classification`
+dataset generator. Each sample consists of counts of two features (up to 50 in
 total), which are differently distributed in each of two classes.
 
 Points are labeled as follows, where Y means the class is present:

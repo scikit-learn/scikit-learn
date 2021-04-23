@@ -71,7 +71,7 @@ for connectivity in (None, knn_graph):
             plt.axis('equal')
             plt.axis('off')
 
-            plt.subplots_adjust(bottom=0, top=.89, wspace=0,
+            plt.subplots_adjust(bottom=0, top=.83, wspace=0,
                                 left=0, right=1)
             plt.suptitle('n_cluster=%i, connectivity=%r' %
                          (n_clusters, connectivity is not None), size=17)

@@ -1,21 +1,19 @@
 # Authors: Shane Grigsby <refuge@rocktalus.com>
 #          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
-
 import numpy as np
 import pytest
 
-from sklearn.datasets.samples_generator import make_blobs
-from sklearn.cluster.optics_ import (OPTICS,
-                                     _extend_region,
-                                     _extract_xi_labels)
+from sklearn.datasets import make_blobs
+from sklearn.cluster import OPTICS
+from sklearn.cluster._optics import _extend_region, _extract_xi_labels
+from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.cluster.dbscan_ import DBSCAN
+from sklearn.cluster import DBSCAN
 from sklearn.utils import shuffle
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.cluster.tests.common import generate_clustered_data
 
@@ -101,6 +99,12 @@ def test_extract_xi():
                    xi=0.4).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
+    # check float min_samples and min_cluster_size
+    clust = OPTICS(min_samples=0.1, min_cluster_size=0.08,
+                   max_eps=20, cluster_method='xi',
+                   xi=0.4).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
     expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5,
                             -1, -1, [4] * 5]
@@ -176,7 +180,8 @@ def test_minimum_number_of_sample_check():
     clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1)
 
     # Run the fit
-    assert_raise_message(ValueError, msg, clust.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        clust.fit(X)
 
 
 def test_bad_extract():
@@ -190,7 +195,8 @@ def test_bad_extract():
     clust = OPTICS(max_eps=5.0 * 0.03,
                    cluster_method='dbscan',
                    eps=0.3, min_samples=10)
-    assert_raise_message(ValueError, msg, clust.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        clust.fit(X)
 
 
 def test_bad_reachability():
@@ -202,6 +208,49 @@ def test_bad_reachability():
     with pytest.warns(UserWarning, match=msg):
         clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
         clust.fit(X)
+
+
+def test_nowarn_if_metric_bool_data_bool():
+    # make sure no warning is raised if metric and data are both boolean
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/18996
+
+    pairwise_metric = 'rogerstanimoto'
+    X = np.random.randint(2, size=(5, 2), dtype=bool)
+
+    with pytest.warns(None) as warn_record:
+        OPTICS(metric=pairwise_metric).fit(X)
+        assert len(warn_record) == 0
+
+
+def test_warn_if_metric_bool_data_no_bool():
+    # make sure a *single* conversion warning is raised if metric is boolean
+    # but data isn't
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/18996
+
+    pairwise_metric = 'rogerstanimoto'
+    X = np.random.randint(2, size=(5, 2), dtype=np.int32)
+    msg = f"Data will be converted to boolean for metric {pairwise_metric}"
+
+    with pytest.warns(DataConversionWarning, match=msg) as warn_record:
+        OPTICS(metric=pairwise_metric).fit(X)
+        assert len(warn_record) == 1
+
+
+def test_nowarn_if_metric_no_bool():
+    # make sure no conversion warning is raised if
+    # metric isn't boolean, no matter what the data type is
+    pairwise_metric = 'minkowski'
+    X_bool = np.random.randint(2, size=(5, 2), dtype=bool)
+    X_num = np.random.randint(2, size=(5, 2), dtype=np.int32)
+
+    with pytest.warns(None) as warn_record:
+        # fit boolean data
+        OPTICS(metric=pairwise_metric).fit(X_bool)
+        # fit numeric data
+        OPTICS(metric=pairwise_metric).fit(X_num)
+        assert len(warn_record) == 0
 
 
 def test_close_extract():

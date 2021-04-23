@@ -9,6 +9,8 @@ from libcpp.vector cimport vector
 cimport numpy as np
 import numpy as np
 
+np.import_array()
+
 
 # Work around Cython bug: C++ exceptions are not caught unless thrown within
 # a cdef function with an "except +" declaration.

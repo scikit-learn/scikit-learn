@@ -12,10 +12,12 @@ from cython.parallel import prange
 import numpy as np
 cimport numpy as np
 
-from .types import HISTOGRAM_DTYPE
-from .types cimport hist_struct
-from .types cimport X_BINNED_DTYPE_C
-from .types cimport G_H_DTYPE_C
+from .common import HISTOGRAM_DTYPE
+from .common cimport hist_struct
+from .common cimport X_BINNED_DTYPE_C
+from .common cimport G_H_DTYPE_C
+
+np.import_array()
 
 # Notes:
 # - IN views are read-only, OUT views are write-only
@@ -62,9 +64,9 @@ cdef class HistogramBuilder:
     ----------
     X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    max_bins : int
-        The maximum number of bins. Used to define the shape of the
-        histograms.
+    n_bins : int
+        The total number of bins, including the bin for missing values. Used
+        to define the shape of the histograms.
     gradients : ndarray, shape (n_samples,)
         The gradients of each training sample. Those are the gradients of the
         loss w.r.t the predictions, evaluated at iteration i - 1.
@@ -77,7 +79,7 @@ cdef class HistogramBuilder:
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
-        unsigned int max_bins
+        unsigned int n_bins
         G_H_DTYPE_C [::1] gradients
         G_H_DTYPE_C [::1] hessians
         G_H_DTYPE_C [::1] ordered_gradients
@@ -85,15 +87,15 @@ cdef class HistogramBuilder:
         unsigned char hessians_are_constant
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
-                 unsigned int max_bins, G_H_DTYPE_C [::1] gradients,
+                 unsigned int n_bins, G_H_DTYPE_C [::1] gradients,
                  G_H_DTYPE_C [::1] hessians,
                  unsigned char hessians_are_constant):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
-        # Note: all histograms will have <max_bins> bins, but some of the
-        # last bins may be unused if actual_n_bins[f] < max_bins
-        self.max_bins = max_bins
+        # Note: all histograms will have <n_bins> bins, but some of the
+        # bins may be unused if a feature has a small number of unique values.
+        self.n_bins = n_bins
         self.gradients = gradients
         self.hessians = hessians
         # for root node, gradients and hessians are already ordered
@@ -115,7 +117,7 @@ cdef class HistogramBuilder:
 
         Returns
         -------
-        histograms : ndarray of HISTOGRAM_DTYPE, shape (n_features, max_bins)
+        histograms : ndarray of HISTOGRAM_DTYPE, shape (n_features, n_bins)
             The computed histograms of the current node.
         """
         cdef:
@@ -130,8 +132,9 @@ cdef class HistogramBuilder:
             G_H_DTYPE_C [::1] gradients = self.gradients
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             G_H_DTYPE_C [::1] hessians = self.hessians
-            hist_struct [:, ::1] histograms = np.zeros(
-                shape=(self.n_features, self.max_bins),
+            # Histograms will be initialized to zero later within a prange
+            hist_struct [:, ::1] histograms = np.empty(
+                shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
 
@@ -175,6 +178,12 @@ cdef class HistogramBuilder:
                 self.ordered_hessians[:n_samples]
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
+            unsigned int bin_idx = 0
+        
+        for bin_idx in range(self.n_bins):
+            histograms[feature_idx, bin_idx].sum_gradients = 0.
+            histograms[feature_idx, bin_idx].sum_hessians = 0.
+            histograms[feature_idx, bin_idx].count = 0
 
         if root_node:
             if hessians_are_constant:
@@ -210,30 +219,30 @@ cdef class HistogramBuilder:
         Parameters
         ----------
         parent_histograms : ndarray of HISTOGRAM_DTYPE, \
-                shape (n_features, max_bins)
+                shape (n_features, n_bins)
             The histograms of the parent.
         sibling_histograms : ndarray of HISTOGRAM_DTYPE, \
-                shape (n_features, max_bins)
+                shape (n_features, n_bins)
             The histograms of the sibling.
 
         Returns
         -------
-        histograms : ndarray of HISTOGRAM_DTYPE, shape(n_features, max_bins)
+        histograms : ndarray of HISTOGRAM_DTYPE, shape(n_features, n_bins)
             The computed histograms of the current node.
         """
 
         cdef:
             int feature_idx
             int n_features = self.n_features
-            hist_struct [:, ::1] histograms = np.zeros(
-                shape=(self.n_features, self.max_bins),
+            hist_struct [:, ::1] histograms = np.empty(
+                shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
 
         for feature_idx in prange(n_features, schedule='static', nogil=True):
             # Compute histogram of each feature
             _subtract_histograms(feature_idx,
-                                 self.max_bins,
+                                 self.n_bins,
                                  parent_histograms,
                                  sibling_histograms,
                                  histograms)

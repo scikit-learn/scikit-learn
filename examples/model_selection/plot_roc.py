@@ -82,7 +82,7 @@ fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
 
-##############################################################################
+# %%
 # Plot of a ROC curve for a specific class
 plt.figure()
 lw = 2
@@ -98,7 +98,7 @@ plt.legend(loc="lower right")
 plt.show()
 
 
-##############################################################################
+# %%
 # Plot ROC curves for the multilabel problem
 # ..........................................
 # Compute macro-average ROC curve and ROC area
@@ -146,12 +146,12 @@ plt.legend(loc="lower right")
 plt.show()
 
 
-##############################################################################
+# %%
 # Area under ROC for the multiclass problem
 # .........................................
 # The :func:`sklearn.metrics.roc_auc_score` function can be used for
-# multi-class classification. The mutliclass One-vs-One scheme compares every
-# unique pairwise combination of classes. In this section, we calcuate the AUC
+# multi-class classification. The multi-class One-vs-One scheme compares every
+# unique pairwise combination of classes. In this section, we calculate the AUC
 # using the OvR and OvO schemes. We report a macro average, and a
 # prevalence-weighted average.
 y_prob = classifier.predict_proba(X_test)

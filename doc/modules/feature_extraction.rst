@@ -56,6 +56,27 @@ is a traditional numerical feature::
   >>> vec.get_feature_names()
   ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
 
+:class:`DictVectorizer` accepts multiple string values for one
+feature, like, e.g., multiple categories for a movie.
+
+Assume a database classifies each movie using some categories (not mandatories)
+and its year of release.
+
+    >>> movie_entry = [{'category': ['thriller', 'drama'], 'year': 2003},
+    ...                {'category': ['animation', 'family'], 'year': 2011},
+    ...                {'year': 1974}]
+    >>> vec.fit_transform(movie_entry).toarray()
+    array([[0.000e+00, 1.000e+00, 0.000e+00, 1.000e+00, 2.003e+03],
+           [1.000e+00, 0.000e+00, 1.000e+00, 0.000e+00, 2.011e+03],
+           [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 1.974e+03]])
+    >>> vec.get_feature_names() == ['category=animation', 'category=drama',
+    ...                             'category=family', 'category=thriller',
+    ...                             'year']
+    True
+    >>> vec.transform({'category': ['thriller'],
+    ...                'unseen_feature': '3'}).toarray()
+    array([[0., 0., 0., 1., 0.]])
+
 :class:`DictVectorizer` is also a useful representation transformation
 for training sequence classifiers in Natural Language Processing models
 that typically work by extracting feature windows around a particular
@@ -81,7 +102,7 @@ such a window of features extracted around the word 'sat' in the sentence
 
 This description can be vectorized into a sparse two-dimensional matrix
 suitable for feeding into a classifier (maybe after being piped into a
-:class:`text.TfidfTransformer` for normalization)::
+:class:`~text.TfidfTransformer` for normalization)::
 
   >>> vec = DictVectorizer()
   >>> pos_vectorized = vec.fit_transform(pos_window)
@@ -129,8 +150,8 @@ and the expected mean of any output feature's value is zero. This mechanism
 is enabled by default with ``alternate_sign=True`` and is particularly useful
 for small hash table sizes (``n_features < 10000``). For large hash table
 sizes, it can be disabled, to allow the output to be passed to estimators like
-:class:`sklearn.naive_bayes.MultinomialNB` or
-:class:`sklearn.feature_selection.chi2`
+:class:`~sklearn.naive_bayes.MultinomialNB` or
+:class:`~sklearn.feature_selection.chi2`
 feature selectors that expect non-negative inputs.
 
 :class:`FeatureHasher` accepts either mappings
@@ -148,7 +169,7 @@ The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
 in the CSR format.
 
 Feature hashing can be employed in document classification,
-but unlike :class:`text.CountVectorizer`,
+but unlike :class:`~text.CountVectorizer`,
 :class:`FeatureHasher` does not do word
 splitting or any other preprocessing except Unicode-to-UTF-8 encoding;
 see :ref:`hashing_vectorizer`, below, for a combined tokenizer/hasher.
@@ -384,8 +405,9 @@ removed to avoid them being construed as signal for prediction.  Sometimes,
 however, similar words are useful for prediction, such as in classifying
 writing style or personality.
 
-There are several known issues in our provided 'english' stop word list. See
-[NQY18]_.
+There are several known issues in our provided 'english' stop word list. It
+does not aim to be a general, 'one-size-fits-all' solution as some tasks 
+may require a more custom solution. See [NQY18]_ for more details. 
 
 Please take care in choosing a stop word list.
 Popular stop word lists may include words that are highly informative to
@@ -799,7 +821,7 @@ datasets**:
 
 It is possible to overcome those limitations by combining the "hashing trick"
 (:ref:`Feature_hashing`) implemented by the
-:class:`sklearn.feature_extraction.FeatureHasher` class and the text
+:class:`~sklearn.feature_extraction.FeatureHasher` class and the text
 preprocessing and tokenization features of the :class:`CountVectorizer`.
 
 This combination is implementing in :class:`HashingVectorizer`,
@@ -924,7 +946,7 @@ Some tips and tricks:
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
         >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
-        >>> class LemmaTokenizer(object):
+        >>> class LemmaTokenizer:
         ...     def __init__(self):
         ...         self.wnl = WordNetLemmatizer()
         ...     def __call__(self, doc):
@@ -1018,7 +1040,7 @@ The :class:`PatchExtractor` class works in the same way as
 implemented as an estimator, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
-    >>> patches = image.PatchExtractor((2, 2)).transform(five_images)
+    >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
 

@@ -5,15 +5,13 @@ from re import finditer, search
 from textwrap import dedent
 
 from numpy.random import RandomState
+import pytest
 
 from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz, plot_tree, export_text
 from io import StringIO
-from sklearn.utils.testing import (assert_raises,
-                                   assert_raises_regex,
-                                   assert_raise_message)
 from sklearn.exceptions import NotFittedError
 
 # toy sample
@@ -35,7 +33,8 @@ def test_graphviz_toy():
     # Test export code
     contents1 = export_graphviz(clf, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
+                'node [shape=box, fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
                 'value = [3, 3]"] ;\n' \
                 '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n' \
@@ -52,7 +51,8 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, feature_names=["feature0", "feature1"],
                                 out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
+                'node [shape=box, fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
                 'value = [3, 3]"] ;\n' \
                 '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n' \
@@ -68,7 +68,8 @@ def test_graphviz_toy():
     # Test with class_names
     contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
+                'node [shape=box, fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
                 'value = [3, 3]\\nclass = yes"] ;\n' \
                 '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n' \
@@ -86,11 +87,11 @@ def test_graphviz_toy():
     # Test plot_options
     contents1 = export_graphviz(clf, filled=True, impurity=False,
                                 proportion=True, special_characters=True,
-                                rounded=True, out_file=None)
+                                rounded=True, out_file=None, fontname="sans")
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
+                'fontname="sans"] ;\n' \
+                'edge [fontname="sans"] ;\n' \
                 '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>' \
                 'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n' \
                 '1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, ' \
@@ -109,7 +110,8 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, max_depth=0,
                                 class_names=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
+                'node [shape=box, fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
                 'value = [3, 3]\\nclass = y[0]"] ;\n' \
                 '1 [label="(...)"] ;\n' \
@@ -124,7 +126,9 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, max_depth=0, filled=True,
                                 out_file=None, node_ids=True)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
+                'node [shape=box, style="filled", color="black", '\
+                'fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n' \
                 'samples = 6\\nvalue = [3, 3]", fillcolor="#ffffff"] ;\n' \
                 '1 [label="(...)", fillcolor="#C0C0C0"] ;\n' \
@@ -145,7 +149,9 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, filled=True,
                                 impurity=False, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
+                'node [shape=box, style="filled", color="black", ' \
+                'fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
                 'value = [[3.0, 1.5, 0.0]\\n' \
                 '[3.0, 1.0, 0.5]]", fillcolor="#ffffff"] ;\n' \
@@ -171,31 +177,34 @@ def test_graphviz_toy():
     # Test regression output with plot_options
     clf = DecisionTreeRegressor(max_depth=3,
                                 min_samples_split=2,
-                                criterion="mse",
+                                criterion="squared_error",
                                 random_state=2)
     clf.fit(X, y)
 
     contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
-                                out_file=None, rotate=True, rounded=True)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
-                'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
-                'rankdir=LR ;\n' \
-                '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
-                'value = 0.0", fillcolor="#f2c09c"] ;\n' \
-                '1 [label="mse = 0.0\\nsamples = 3\\nvalue = -1.0", ' \
-                'fillcolor="#ffffff"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="mse = 0.0\\nsamples = 3\\nvalue = 1.0", ' \
-                'fillcolor="#e58139"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="False"] ;\n' \
-                '{rank=same ; 0} ;\n' \
-                '{rank=same ; 1; 2} ;\n' \
-                '}'
+                                out_file=None, rotate=True, rounded=True,
+                                fontname="sans")
+    contents2 = ('digraph Tree {\n'
+                 'node [shape=box, style="filled, rounded", color="black", '
+                 'fontname="sans"] ;\n'
+                 'graph [ranksep=equally, splines=polyline] ;\n'
+                 'edge [fontname="sans"] ;\n'
+                 'rankdir=LR ;\n'
+                 '0 [label="X[0] <= 0.0\\nsquared_error = 1.0\\nsamples = 6\\n'
+                 'value = 0.0", fillcolor="#f2c09c"] ;\n'
+                 '1 [label="squared_error = 0.0\\nsamples = 3\\'
+                 'nvalue = -1.0", '
+                 'fillcolor="#ffffff"] ;\n'
+                 '0 -> 1 [labeldistance=2.5, labelangle=-45, '
+                 'headlabel="True"] ;\n'
+                 '2 [label="squared_error = 0.0\\nsamples = 3\\nvalue = 1.0", '
+                 'fillcolor="#e58139"] ;\n'
+                 '0 -> 2 [labeldistance=2.5, labelangle=45, '
+                 'headlabel="False"] ;\n'
+                 '{rank=same ; 0} ;\n'
+                 '{rank=same ; 1; 2} ;\n'
+                 '}'
+                 )
 
     assert contents1 == contents2
 
@@ -205,7 +214,9 @@ def test_graphviz_toy():
 
     contents1 = export_graphviz(clf, filled=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
+                'node [shape=box, style="filled", color="black", '\
+                'fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", ' \
                 'fillcolor="#ffffff"] ;\n' \
                 '}'
@@ -217,7 +228,8 @@ def test_graphviz_errors():
 
     # Check not-fitted decision tree error
     out = StringIO()
-    assert_raises(NotFittedError, export_graphviz, clf, out)
+    with pytest.raises(NotFittedError):
+        export_graphviz(clf, out)
 
     clf.fit(X, y)
 
@@ -225,29 +237,30 @@ def test_graphviz_errors():
     # mismatches with number of features
     message = ("Length of feature_names, "
                "1 does not match number of features, 2")
-    assert_raise_message(ValueError, message, export_graphviz, clf, None,
-                         feature_names=["a"])
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a"])
 
     message = ("Length of feature_names, "
                "3 does not match number of features, 2")
-    assert_raise_message(ValueError, message, export_graphviz, clf, None,
-                         feature_names=["a", "b", "c"])
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
     # Check error when argument is not an estimator
     message = "is not an estimator instance"
-    assert_raise_message(TypeError, message,
-                         export_graphviz, clf.fit(X, y).tree_)
+    with pytest.raises(TypeError, match=message):
+        export_graphviz(clf.fit(X, y).tree_)
 
     # Check class_names error
     out = StringIO()
-    assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+    with pytest.raises(IndexError):
+        export_graphviz(clf, out, class_names=[])
 
     # Check precision error
     out = StringIO()
-    assert_raises_regex(ValueError, "should be greater or equal",
-                        export_graphviz, clf, out, precision=-1)
-    assert_raises_regex(ValueError, "should be an integer",
-                        export_graphviz, clf, out, precision="1")
+    with pytest.raises(ValueError, match="should be greater or equal"):
+        export_graphviz(clf, out, precision=-1)
+    with pytest.raises(ValueError, match="should be an integer"):
+        export_graphviz(clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
@@ -303,29 +316,29 @@ def test_precision():
             # check impurity
             for finding in finditer(pattern, dot_data):
                 assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                        precision + 1)
             # check threshold
             for finding in finditer(r"<= \d+\.\d+", dot_data):
                 assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                        precision + 1)
 
 
 def test_export_text_errors():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
 
-    assert_raise_message(ValueError,
-                         "max_depth bust be >= 0, given -1",
-                         export_text, clf, max_depth=-1)
-    assert_raise_message(ValueError,
-                         "feature_names must contain 2 elements, got 1",
-                         export_text, clf, feature_names=['a'])
-    assert_raise_message(ValueError,
-                         "decimals must be >= 0, given -1",
-                         export_text, clf, decimals=-1)
-    assert_raise_message(ValueError,
-                         "spacing must be > 0, given 0",
-                         export_text, clf, spacing=0)
+    err_msg = "max_depth bust be >= 0, given -1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, max_depth=-1)
+    err_msg = "feature_names must contain 2 elements, got 1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, feature_names=['a'])
+    err_msg = "decimals must be >= 0, given -1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, decimals=-1)
+    err_msg = "spacing must be > 0, given 0"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, spacing=0)
 
 
 def test_export_text():
@@ -448,3 +461,22 @@ def test_plot_tree_gini(pyplot):
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+
+# FIXME: to be removed in 1.0
+def test_plot_tree_rotate_deprecation(pyplot):
+    tree = DecisionTreeClassifier()
+    tree.fit(X, y)
+    # test that a warning is raised when rotate is used.
+    match = (r"'rotate' has no effect and is deprecated in 0.23. "
+             r"It will be removed in 1.0 \(renaming of 0.25\).")
+    with pytest.warns(FutureWarning, match=match):
+        plot_tree(tree, rotate=True)
+
+
+def test_not_fitted_tree(pyplot):
+
+    # Testing if not fitted tree throws the correct error
+    clf = DecisionTreeRegressor()
+    with pytest.raises(NotFittedError):
+        plot_tree(clf)
