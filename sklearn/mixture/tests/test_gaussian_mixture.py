@@ -2,6 +2,7 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
+import re
 import sys
 import copy
 import warnings
@@ -105,55 +106,66 @@ def test_gaussian_mixture_attributes():
 
     n_components_bad = 0
     gmm = GaussianMixture(n_components=n_components_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'n_components': %d "
-                         "Estimation requires at least one component"
-                         % n_components_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'n_components': {n_components_bad} "
+        "Estimation requires at least one component"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     # covariance_type should be in [spherical, diag, tied, full]
     covariance_type_bad = 'bad_covariance_type'
     gmm = GaussianMixture(covariance_type=covariance_type_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'covariance_type': %s "
-                         "'covariance_type' should be in "
-                         "['spherical', 'tied', 'diag', 'full']"
-                         % covariance_type_bad,
-                         gmm.fit, X)
+    msg = (
+        f"Invalid value for 'covariance_type': {covariance_type_bad} "
+        "'covariance_type' should be in ['spherical', 'tied', 'diag', 'full']"
+    )
+    with pytest.raises(ValueError):
+        gmm.fit(X)
 
     tol_bad = -1
     gmm = GaussianMixture(tol=tol_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'tol': %.5f "
-                         "Tolerance used by the EM must be non-negative"
-                         % tol_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'tol': {tol_bad:.5f} "
+        "Tolerance used by the EM must be non-negative"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     reg_covar_bad = -1
     gmm = GaussianMixture(reg_covar=reg_covar_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'reg_covar': %.5f "
-                         "regularization on covariance must be "
-                         "non-negative" % reg_covar_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'reg_covar': {reg_covar_bad:.5f} "
+        "regularization on covariance must be non-negative"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     max_iter_bad = 0
     gmm = GaussianMixture(max_iter=max_iter_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'max_iter': %d "
-                         "Estimation requires at least one iteration"
-                         % max_iter_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'max_iter': {max_iter_bad} "
+        "Estimation requires at least one iteration"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     n_init_bad = 0
     gmm = GaussianMixture(n_init=n_init_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'n_init': %d "
-                         "Estimation requires at least one run"
-                         % n_init_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'n_init': {n_init_bad} "
+        "Estimation requires at least one run"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     init_params_bad = 'bad_method'
     gmm = GaussianMixture(init_params=init_params_bad)
-    assert_raise_message(ValueError,
-                         "Unimplemented initialization method '%s'"
-                         % init_params_bad,
-                         gmm.fit, X)
+    msg = (
+        f"Unimplemented initialization method '{init_params_bad}'"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     # test good parameters
     n_components, tol, n_init, max_iter, reg_covar = 2, 1e-4, 3, 30, 1e-1
@@ -184,26 +196,34 @@ def test_check_weights():
     # Check bad shape
     weights_bad_shape = rng.rand(n_components, 1)
     g.weights_init = weights_bad_shape
-    assert_raise_message(ValueError,
-                         "The parameter 'weights' should have the shape of "
-                         "(%d,), but got %s" %
-                         (n_components, str(weights_bad_shape.shape)),
-                         g.fit, X)
+    msg = re.escape(
+        "The parameter 'weights' should have the shape of "
+        f"({n_components},), but got {str(weights_bad_shape.shape)}"
+    )
+    with pytest.raises(ValueError, match=msg):
+        g.fit(X)
 
     # Check bad range
     weights_bad_range = rng.rand(n_components) + 1
     g.weights_init = weights_bad_range
-    assert_raise_message(ValueError,
-                         "The parameter 'weights' should be in the range "
-                         "[0, 1], but got max value %.5f, min value %.5f"
-                         % (np.min(weights_bad_range),
-                            np.max(weights_bad_range)),
-                         g.fit, X)
+    msg = re.escape(
+        "The parameter 'weights' should be in the range [0, 1], but got"
+        f" max value {np.min(weights_bad_range):.5f}, "
+        f"min value {np.max(weights_bad_range):.5f}"
+    )
+    with pytest.raises(ValueError, match=msg):
+        g.fit(X)
 
     # Check bad normalization
     weights_bad_norm = rng.rand(n_components)
     weights_bad_norm = weights_bad_norm / (weights_bad_norm.sum() + 1)
     g.weights_init = weights_bad_norm
+    msg = re.escape(
+        "The parameter 'weights' should be "
+        f" max value {np.min(weights_bad_range):.5f}, min value {np.max(weights_bad_range):.5f}"
+    )
+    with pytest.raises(ValueError, match=msg):
+        g.fit(X)
     assert_raise_message(ValueError,
                          "The parameter 'weights' should be normalized, "
                          "but got sum(weights) = %.5f"
