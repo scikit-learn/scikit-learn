@@ -25,6 +25,10 @@ Changelog
 - |Fix| Fixed a regression in :class:`cross_decomposition.CCA`. :pr:`19646`
   by `Thomas Fan`_.
 
+- |Fix| :class:`cross_decomposition.PLSRegression` raises warning for
+  constant y residuals instead of a `StopIteration` error. :pr:`19922`
+  by `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
