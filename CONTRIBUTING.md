@@ -1,4 +1,4 @@
-
+New contributor: Mehrez Kanzari 
 Contributing to scikit-learn
 ============================
 
