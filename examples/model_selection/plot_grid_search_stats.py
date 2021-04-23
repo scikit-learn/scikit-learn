@@ -192,7 +192,7 @@ def corrected_std(differences, n_train, n_test):
     """
     n = n_train + n_test
     corrected_var = (
-        np.var(differences, ddof=1) * ((1 / n) + (n_test / n_train))
+        np.var(differences, ddof=1) * ((1 / len(differences)) + (n_test / n_train))
     )
     corrected_std = np.sqrt(corrected_var)
     return corrected_std
