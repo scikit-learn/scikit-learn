@@ -199,40 +199,16 @@ def test_five_class():
     assert_equal(gmIC.n_components_ <= 10, True)
 
 
-# Generate covariance matrices for the random data
-# corresponding to each of the four covariance types
-# Spherical
-cov1 = 2 * np.eye(2)
-cov2 = 2 * np.eye(2)
-covs_spherical = [cov1, cov2]
-
-# Diagonal
-# np.random.seed(10)
-cov1 = np.diag([1, 1])
-cov2 = np.diag([2, 1])
-covs_diag = [cov1, cov2]
-
-# Tied
-cov1 = np.array([[2, 1], [1, 2]])
-cov2 = np.array([[2, 1], [1, 2]])
-covs_tied = [cov1, cov2]
-
-# Full
-cov1 = np.array([[2, -1], [-1, 2]])
-cov2 = np.array([[2, 1], [1, 2]])
-covs_full = [cov1, cov2]
-
-
 @pytest.mark.parametrize(
-    "covs,expected_cov_type",
+    "cov1, cov2, expected_cov_type",
     [
-        (covs_spherical, "spherical"),
-        (covs_diag, "diag"),
-        (covs_tied, "tied"),
-        (covs_full, "full"),
+        (2 * np.eye(2), 2 * np.eye(2), "spherical"),
+        (np.diag([1, 1]), np.diag([2, 1]), "diag"),
+        (np.array([[2, 1], [1, 2]]), np.array([[2, 1], [1, 2]]), "tied"),
+        (np.array([[2, -1], [-1, 2]]), np.array([[2, 1], [1, 2]]), "full"),
     ],
 )
-def test_covariances(covs, expected_cov_type):
+def test_covariances(cov1, cov2, expected_cov_type):
     """
     Easily separable two gaussian problem.
     """
@@ -240,8 +216,8 @@ def test_covariances(covs, expected_cov_type):
     n = 100
     mu1 = [-10, 0]
     mu2 = [10, 0]
-    X1 = np.random.multivariate_normal(mu1, covs[0], n)
-    X2 = np.random.multivariate_normal(mu2, covs[1], n)
+    X1 = np.random.multivariate_normal(mu1, cov1, n)
+    X2 = np.random.multivariate_normal(mu2, cov2, n)
     X = np.concatenate((X1, X2))
 
     gmIC = GaussianMixtureIC(min_components=2, covariance_type="all")
