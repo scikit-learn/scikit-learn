@@ -131,9 +131,8 @@ cpdef np.ndarray[integral, ndim=2, mode='c'] argpartition(
         integral n_cols = data.shape[1]
         floating *data_ptr = &data[0, 0]
 
-    # TODO: I haven't found a nicer way to create indices yet.
-    cdef np.ndarray[integral, ndim=2, mode='c'] indices = (
-    np.ones((n_rows, 1), dtype=int) @ np.arange(n_cols, dtype=int)[None, :]
+    cdef np.ndarray[integral, ndim=2, mode='c'] indices = np.tile(
+        np.arange(n_cols, dtype=int), reps=(n_rows, 1)
     )
     cdef integral * indices_ptr = &indices[0, 0]
 
