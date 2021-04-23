@@ -229,6 +229,13 @@ Changelog
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
+- |Feature| Add `sample_weight` parameter to
+  :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV`.
+  This is accompanied by the new parameter `cv_weighted` that allows
+  fine-control whether or not to use the sample weights for averaging
+  scores over cv-folds.
+  :pr:`16449` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
   has been optimised for dense matrices when using `solver='newton-cg'` and
   `multi_class!='multinomial'`.
@@ -389,8 +396,8 @@ Changelog
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in 
-  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``. 
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
 :mod:`sklearn.tree`
