@@ -346,8 +346,8 @@ def test_nystroem_inverse_transform_reconstruction():
     Y = rng.randn(n * d).reshape(n, d)
 
     nystroem = Nystroem(
-        n_components=10, kernel='rbf', fit_inverse_transform=True,
-        alpha=2e-3, gamma=6e-2, random_state=0
+        n_components=40, kernel='rbf', fit_inverse_transform=True,
+        alpha=3e-3, gamma=4e-1, random_state=0
     )
     nystroem.fit(X)
     Y_trans = nystroem.fit_transform(Y)
