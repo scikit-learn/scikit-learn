@@ -243,7 +243,7 @@ def test_check_means():
     means_bad_shape = rng.rand(n_components + 1, n_features)
     g.means_init = means_bad_shape
     msg = "The parameter 'means' should have the shape of "
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         g.fit(X)
 
     # Check good means matrix
@@ -553,7 +553,7 @@ def test_gaussian_mixture_predict_predict_proba():
             "This GaussianMixture instance is not fitted yet. Call 'fit' "
             "with appropriate arguments before using this estimator."
         )
-        with pytest.raises(NotFittedError):
+        with pytest.raises(NotFittedError, match=msg):
             g.predict(X)
 
         g.fit(X)
