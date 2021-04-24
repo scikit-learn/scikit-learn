@@ -177,9 +177,71 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 Kernel PCA
 ----------
 
-:class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It
-has many applications including denoising, compression and structured
+:class:`KernelPCA` is an extension of PCA which achieves non-linear dimensionality
+reduction by first projecting the data :math:`X` ``(n_samples,n_features)`` into a higher
+dimensional space using :math:`\phi(X)`  ``(n_samples,m_features)`` before finding the projection axes.
+
+Although this might sound computationally expensive (especially when ``m_features >> n_features``), 
+it is possible to make this technique feasible by using kernel functions (see :ref:`metrics`) and the so-called kernel
+trick which allow us to model those higher dimensional space without having to compute the coordinates 
+of each points.
+
+It is interesting to use :class:`KernelPCA` when dealing with non-linear datasets.
+In fact linear subspaces might not adequately represent the underlying manifold if the dataset has some 
+non linear structure. 
+
+Here in this example, we have in the upper-left a 2-d surface embedded in a 3-d space.
+
+
+.. image:: images/pca_vs_manifold.png
+    :align: center
+    :scale: 75%
+
+Applying linear dimensionality reduction (i.e projecting all data points onto a hyperplane) induces a high
+loss of information (top right figure). 
+In contrast, non-linear approaches are capable of modeling and unfolding the manifold to represent the data adequately.
+
+Kernel approaches rely on the intuition that many datasets which are not linearly separable in their original 
+attributes can be made so by projecting them into a higher dimensional space.
+It is famously used with Support Vector Machines.
+
+Recall that in PCA, we define the projection matrix as the eigenvectors of the centered covariance
+matrix associated with  the highest eigenvalues. Equivalently,  SVD (see :class:`TruncatedSVD`) can be used 
+where the projection matrix becomes the left singular vectors of :math:`U` associated with the highest 
+singular values of :math:`\Sigma`. The latter approach proves to be more efficient when dealing with large datasets.  
+
+Here, instead of using :math:`X` ``(n_features,n_samples)``, we use :math:`\phi(X)` which is an embedding 
+of the data into a higher dimensional space (``(m_features,n_samples)`` where ``m_features >> n_features)``). We want to avoid computing 
+the latter as it becomes infeasible for large values of ``m`` : This is where the kernel trick is used. 
+We define and use a kernel function :math:`k(.,.)` (see :ref:`metrics`) which enables us  to operate in 
+higher-dimensional  space without ever computing the coordinates :math:`\phi(X)` of the data. 
+Instead, we simply compute the inner products :math:`\phi(X)^T \phi(X)` between all pairs of data points projected in the feature space.
+This means that we can implicitly model any non linear transformation :math:`\phi(X)` as long as we can 
+calculate the dot product between the data points.
+
+Therefore, instead of computing the covariance matrix :math:`\phi(X)\phi(X)^T` ``(m_features,m_features``, we use the kernel matrix 
+:math:`K` ``(n_samples,n_samples)`` associated with the kernel function :math:`k(.,.)` which contains all pairwise evaluations 
+of the dot product. Just like for PCA, the matrix :math:`K` has to be centered before solving the eigenproblem :
+
+.. math::
+
+    K \alpha_{i} = \lambda_{i} \alpha_{i}
+
+whose eigenvectors :math:`\alpha_{i}` ``(n_samples,)`` give us 
+our new projection axes. All that's left is to pick a number of components ``n_components`` just like in PCA.
+Each data point :math:`x` can then be projected by computing its coordinates for each new dimension :math:`j` :
+
+.. math::
+
+    y_{j} = \sum\limits_{i=1}^{n_{samples}} \alpha_{ij} k(x_{i},x) \qquad  \text{for }j = 1 , \dots,  n_{components}
+
+.. note::
+
+    Because we’re using the kernel matrix :math:`K` ``(n_samples,n_samples)`` instead of the covariance matrix :math:`C` ``(n_features,n_features)``,
+    KPCA scales with the number of data points ``n_samples`` whereas 
+    PCA does so with the number of input features ``n_features``.
+
+It has many applications including denoising, compression and structured
 prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 ``transform`` and ``inverse_transform``.
 
@@ -187,6 +249,8 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
     :align: center
     :scale: 75%
+
+
 
 .. topic:: Examples:
 
