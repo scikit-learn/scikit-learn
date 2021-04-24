@@ -779,6 +779,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                **self._get_kernel_params())
         
         # By Woodbury matrix identity, following formula(typed in latex) holds:
+        #
         # \tilde{K}_{new, T} (\tilde{K}_{T, T} + \alpha I)^{-1} y
         # = K_{new, I} K_{I, I}^{-1}K_{I, T}
         # \left( \frac{1}{\alpha} I -  \frac{1}{\alpha}K_{T, I}(\alpha K_{I, I}
@@ -786,14 +787,17 @@ class Nystroem(TransformerMixin, BaseEstimator):
         # = K_{new, I} \left( \alpha \cdot K_{I, I}\right)^{-1}
         # \left\{K_{I, T}y - K_{I, T} K_{T, I}(\alpha K_{I, I}
         # + K_{I, T}K_{T, I})^{-1}K_{I, T}y \right\}
+        #
+        # where \tilde{K} implies the kernel matrix approximated by Nystrom approximation
 
-        A = np.dot(Kit, X)
-        B = np.dot(Kit, Kit.T)
+        A = Kit @ X
+        B = Kit @ Kit.T
         # TODO(kstoneriv3): The following line often results in warning like
-        # "Ill-conditioned matrix (rcond=1.80677e-18)".
-        C = linalg.solve(self.alpha * Kii + B, A, sym_pos=True)
-        D = A - np.dot(B, C)
-        self.dual_coef_ = linalg.solve(self.alpha * Kii, D, sym_pos=True, overwrite_a=True)
+        # "Ill-conditioned matrix (rcond=1.80677e-18)". So we use pinv instead.
+        # C = linalg.solve(self.alpha * Kii + B, A, sym_pos=True)
+        C = linalg.pinvh(self.alpha * Kii + B) @ A
+        D = A - B @ C
+        self.dual_coef_ = linalg.pinvh(self.alpha * Kii) @ D
         self.X_transformed_fit_ = X_transformed[self.basis_indices_]
 
     def fit(self, X, y=None):

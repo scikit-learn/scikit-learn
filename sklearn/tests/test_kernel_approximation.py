@@ -7,12 +7,13 @@ import pytest
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 
-from sklearn.metrics.pairwise import kernel_metrics
+from sklearn.datasets import make_blobs
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
 from sklearn.kernel_approximation import PolynomialCountSketch
+from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
@@ -332,3 +333,23 @@ def test_nystroem_precomputed_kernel():
                       **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
+
+def test_nystroem_inverse_transform_reconstruction():
+    # Test if the reconstruction is a good approximation.
+    # Note that in general it is not possible to get an arbitrarily good
+    # reconstruction because of kernel centering that does not
+    # preserve all the information of the original data.
+    n = 100
+    d = 2
+    rng = np.random.RandomState(0)
+    X = rng.randn(n * d).reshape(n, d)
+    Y = rng.randn(n * d).reshape(n, d)
+
+    nystroem = Nystroem(
+        n_components=10, kernel='rbf', fit_inverse_transform=True,
+        alpha=2e-3, gamma=6e-2, random_state=0
+    )
+    nystroem.fit(X)
+    Y_trans = nystroem.fit_transform(Y)
+    Y_reconst = nystroem.inverse_transform(Y_trans)
+    assert np.linalg.norm(Y - Y_reconst) / np.linalg.norm(Y) < 1e-1
