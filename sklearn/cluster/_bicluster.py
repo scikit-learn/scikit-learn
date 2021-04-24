@@ -33,7 +33,9 @@ def _scale_normalize(X):
 
     """
     X = make_nonnegative(X)
-    row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1))).squeeze()
+    row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1)))
+    if row_diag.ndim != 1:
+        row_diag =  np.asarray(row_diag).squeeze()
     col_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=0))).squeeze()
     row_diag = np.where(np.isnan(row_diag), 0, row_diag)
     col_diag = np.where(np.isnan(col_diag), 0, col_diag)
@@ -43,7 +45,7 @@ def _scale_normalize(X):
         c = dia_matrix((col_diag, [0]), shape=(n_cols, n_cols))
         an = r * X * c
     else:
-        an = row_diag[:, np.newaxis] * X * col_diag
+        an = row_diag[:, np.newaxis]* X  * col_diag
     return an, row_diag, col_diag
 
 
@@ -130,6 +132,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         vectors u and v, discarding the first `n_discard`.
 
         """
+        n_discard = 0
         if self.svd_method == 'randomized':
             kwargs = {}
             if self.n_svd_vecs is not None:
