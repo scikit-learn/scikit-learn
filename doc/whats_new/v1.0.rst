@@ -220,7 +220,7 @@ Changelog
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
 :mod:`sklearn.kernel_approximation`
-.........................
+...................................
 
 - |Enhancement| Add
   :meth:`~sklearn.kernel_approximation.Nystroem.inverse_transform`.

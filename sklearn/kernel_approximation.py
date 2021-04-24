@@ -869,7 +869,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
     def inverse_transform(self, X):
         """Transform X back to original space.
 
-        ``inverse_transform`` approximates the inverse transformation using
+        This method approximates the inverse transformation using
         a learned pre-image. The pre-image is learned by kernel ridge
         regression of the original data on their low-dimensional representation
         vectors. For the efficiency of kernel ridge regression, the kernel for
