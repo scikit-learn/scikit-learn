@@ -36,7 +36,9 @@ def _scale_normalize(X):
     row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1)))
     if row_diag.ndim != 1:
         row_diag =  np.asarray(row_diag).squeeze()
-    col_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=0))).squeeze()
+    col_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=0)))
+    if col_diag.ndim != 1:
+        col_diag = np.asarray(col_diag).squeeze()
     row_diag = np.where(np.isnan(row_diag), 0, row_diag)
     col_diag = np.where(np.isnan(col_diag), 0, col_diag)
     if issparse(X):
