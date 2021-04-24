@@ -753,7 +753,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         if hasattr(X, "tocsr"):
             raise NotImplementedError("Inverse transform not implemented for "
                                       "sparse matrices!")
-        
+
         # Let I and T be the indices of inducing points and training points.
         Kii = pairwise_kernels(X_transformed[self.basis_indices_],  # K_{I, I}
                                metric=self.kernel,
@@ -766,7 +766,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                filter_params=True,
                                n_jobs=self.n_jobs,
                                **self._get_kernel_params())
-        
+
         # By Woodbury matrix identity, following formula(typed in latex) holds:
         #
         # \tilde{K}_{new, T} (\tilde{K}_{T, T} + \alpha I)^{-1} y
@@ -777,7 +777,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
         # \left\{K_{I, T}y - K_{I, T} K_{T, I}(\alpha K_{I, I}
         # + K_{I, T}K_{T, I})^{-1}K_{I, T}y \right\}
         #
-        # where \tilde{K} implies the kernel matrix approximated by Nystrom approximation
+        # where \tilde{K} implies the kernel matrix approximated by
+        # Nystrom approximation.
 
         A = Kit @ X
         B = Kit @ Kit.T
@@ -825,7 +826,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                         **self._get_kernel_params())
 
         # sqrt of kernel matrix on basis vectors
-        U, S, V = svd(basis_kernel)  # TODO(kstoneriv3): Why not np.linalg.eigh() ?
+        U, S, V = svd(basis_kernel)  # TODO(kstoneriv3): Why not linalg.eigh()?
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
@@ -871,7 +872,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         ``inverse_transform`` approximates the inverse transformation using
         a learned pre-image. The pre-image is learned by kernel ridge
         regression of the original data on their low-dimensional representation
-        vectors. For the efficiency of kernel ridge regression, the kernel for 
+        vectors. For the efficiency of kernel ridge regression, the kernel for
         regression is a Nystrom approximation of the original kernel.
 
         Parameters

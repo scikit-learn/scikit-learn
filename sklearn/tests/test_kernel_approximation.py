@@ -7,7 +7,6 @@ import pytest
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 
-from sklearn.datasets import make_blobs
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
@@ -333,6 +332,7 @@ def test_nystroem_precomputed_kernel():
                       **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
+
 
 def test_nystroem_inverse_transform_reconstruction():
     # Test if the reconstruction is a good approximation.
