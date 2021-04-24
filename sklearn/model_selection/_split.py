@@ -2405,24 +2405,24 @@ class GroupTimeSeriesSplit(_BaseKFold):
         if n_groups - gap - (group_test_size * n_splits) <= 0:
             raise ValueError(
                 (f"Too many splits={n_splits} for number of groups"
-                 f"={n_groups} with test_size={group_test_size} and gap={gap}."))
-        
+                f"={n_groups} with test_size={group_test_size} and gap={gap}."))
+
         for group_test_start in range(n_groups - n_splits * group_test_size,
                                       n_groups, group_test_size):
             train_array = []
             test_array = []
             train_group_idxs = unique_groups[:group_test_start]
             train_end = train_group_idxs.size
-            # handle gap: remove gap amount of groups from the end of 
+            # handle gap: remove gap amount of groups from the end of
             # train_group_idxs
             if gap:
                 train_group_idxs = train_group_idxs[:train_end - gap]
                 train_end -= gap
-            # handle max_train_size: remove max_train_size amount of group 
+            # handle max_train_size: remove max_train_size amount of group
             # from the beginning of train_group_idxs
             if max_train_size and max_train_size < train_end:
-                train_group_idxs = train_group_idxs[train_end -
-                                          max_train_size:train_end]
+                train_group_idxs = train_group_idxs[
+                    train_end - max_train_size:train_end]
             for train_group_idx in train_group_idxs:
                 train_array_tmp = group_dict[train_group_idx]
                 train_array = np.sort(np.unique(

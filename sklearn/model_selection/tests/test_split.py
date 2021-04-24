@@ -1691,7 +1691,8 @@ def test_group_time_series_more_folds_than_group():
         next(GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
 
 
-def _check_group_time_series_max_train_size(splits, check_splits, groups, max_train_size):
+def _check_group_time_series_max_train_size(splits, check_splits, groups, 
+                                            max_train_size):
     for (train, test), (check_train, check_test) in zip(splits, check_splits):
         train_groups = _get_unique_groups(train, groups)
         check_train_groups = _get_unique_groups(check_train, groups)
@@ -1712,7 +1713,8 @@ def _get_unique_groups(index_set, groups):
 
 
 def test_group_time_series_max_train_size():
-    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4', '5', '5', '6', '7', '7'])
+    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4', 
+                       '5', '5', '6', '7', '7'])
     # X = np.zeros((6, 1))
     X = y = np.ones(len(groups))
     splits = GroupTimeSeriesSplit(n_splits=3).split(X, y, groups)
@@ -1772,7 +1774,8 @@ def test_group_time_series_non_continuous():
 
 
 def test_group_time_series_cv():
-    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4', '5', '5', '6', '7', '7'])
+    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4',
+                       '5', '5', '6', '7', '7'])
     X = y = np.ones(len(groups))
 
     tscv = GroupTimeSeriesSplit(2)
@@ -1807,44 +1810,50 @@ def test_group_time_series_cv():
 
 
 def test_group_time_series_test_size():
-    groups = np.array(['1','1','1','2','2','2','3','3','4','4','4','5','5','6','7','7','8','9','10','10'])
+    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4',
+                       '5', '5', '6', '7', '7', '8', '9', '10', '10'])
     X = y = np.ones(len(groups))
 
     # Test alone
     splits = GroupTimeSeriesSplit(n_splits=3, test_size=3).split(X, y, groups)
 
     train, test = next(splits)
-    assert_array_equal(train, [0, 1, 2])  # group: [0]
-    assert_array_equal(test, [3, 4, 5, 6, 7, 8, 9, 10])  # group: [1, 2, 3]
+    assert_array_equal(train, [0, 1, 2])  #  group: [0]
+    assert_array_equal(test, [3, 4, 5, 6, 7, 8, 9, 10])  #  group: [1, 2, 3]
 
     train, test = next(splits)
-    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # group: [0, 1, 2, 3]
-    assert_array_equal(test, [11, 12, 13, 14, 15])  # group: [4, 5, 6]
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                               10])  #  group: [0, 1, 2, 3]
+    assert_array_equal(test, [11, 12, 13, 14, 15])  #  group: [4, 5, 6]
 
     train, test = next(splits)
-    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])  # group: [0, 1, 2, 3, 4, 5, 6]
-    assert_array_equal(test, [16, 17, 18, 19])  # group: [7, 8, 9]
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+                               14, 15])  #  group: [0, 1, 2, 3, 4, 5, 6]
+    assert_array_equal(test, [16, 17, 18, 19])  #  group: [7, 8, 9]
 
     # Test with max_train_size
     splits = GroupTimeSeriesSplit(n_splits=2, test_size=2,
                              max_train_size=4).split(X, y, groups)
 
     train, test = next(splits)
-    assert_array_equal(train, [6, 7, 8, 9, 10, 11, 12, 13]) # group: [2, 3, 4, 5]
+    assert_array_equal(train, [6, 7, 8, 9, 10, 11, 12,
+                               13]) #  group: [2, 3, 4, 5]
     assert_array_equal(test, [14, 15, 16]) # group: [6, 7]
 
     train, test = next(splits)
-    assert_array_equal(train, [11, 12, 13, 14, 15, 16]) # group: [4, 5, 6, 7]
-    assert_array_equal(test, [17, 18, 19]) # group: [8, 9]
+    assert_array_equal(train, [11, 12, 13, 14, 15, 16]) #  group: [4, 5, 6, 7]
+    assert_array_equal(test, [17, 18, 19]) #  group: [8, 9]
 
     # Should fail with not enough data points for configuration
     with pytest.raises(ValueError, match="Too many splits.*with test_size"):
-        splits = GroupTimeSeriesSplit(n_splits=5, test_size=2).split(X, y, groups)
+        splits = GroupTimeSeriesSplit(n_splits=5, test_size=2).split(X, y,
+                                                                     groups)
         next(splits)
 
 
 def test_group_time_series_gap():
-    groups = np.array(['1','1','1','2','2','2','3','3','4','4','4','5','5','6','7','7','8','9','10','10'])
+    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4',
+                       '5', '5', '6', '7', '7', '8', '9', '10', '10'])
     X = y = np.ones(len(groups))
 
     # Test alone
@@ -1855,11 +1864,13 @@ def test_group_time_series_gap():
     assert_array_equal(test, [11, 12, 13, 14, 15]) # group: [4, 5, 6]
 
     train, test = next(splits)
-    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) # group: [0, 1, 2, 3, 4]
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                               12]) # group: [0, 1, 2, 3, 4]
     assert_array_equal(test, [16, 17, 18, 19]) # group: [7, 8, 9]
 
     # Test with max_train_size
-    splits = GroupTimeSeriesSplit(n_splits=3, gap=2, max_train_size=2).split(X, y, groups)
+    splits = GroupTimeSeriesSplit(n_splits=3, gap=2,
+                                  max_train_size=2).split(X, y, groups)
 
     train, test = next(splits)
     assert_array_equal(train, [0, 1, 2, 3, 4, 5]) # group: [0, 1]
@@ -1878,22 +1889,26 @@ def test_group_time_series_gap():
                              max_train_size=4, test_size=2).split(X, y, groups)
 
     train, test = next(splits)
-    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) # group: [0, 1, 2, 3]
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                               10]) # group: [0, 1, 2, 3]
     assert_array_equal(test, [14, 15, 16]) # group: [6, 7]
 
     train, test = next(splits)
-    assert_array_equal(train, [6, 7, 8, 9, 10, 11, 12, 13]) # group: [2, 3, 4, 5]
+    assert_array_equal(train, [6, 7, 8, 9, 10, 11, 12,
+                               13]) # group: [2, 3, 4, 5]
     assert_array_equal(test, [17, 18, 19]) # group: [8, 9]
 
     # Test with additional test_size
-    splits = GroupTimeSeriesSplit(n_splits=2, gap=2, test_size=3).split(X, y, groups)
+    splits = GroupTimeSeriesSplit(n_splits=2, gap=2,
+                                    test_size=3).split(X, y, groups)
 
     train, test = next(splits)
     assert_array_equal(train, [0, 1, 2, 3, 4, 5]) # group: [0, 1]
     assert_array_equal(test, [11, 12, 13, 14, 15]) # group: [4, 5, 6]
 
     train, test = next(splits)
-    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) # group: [0, 1, 2, 3, 4]
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                12]) # group: [0, 1, 2, 3, 4]
     assert_array_equal(test, [16, 17, 18, 19]) # group: [7, 8, 9]
 
     # Verify proper error is thrown
