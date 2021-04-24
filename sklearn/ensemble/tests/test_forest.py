@@ -29,7 +29,6 @@ from numpy.testing import assert_allclose
 
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
-
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -197,11 +196,13 @@ def test_poisson_vs_mse():
 
     forest_poi = RandomForestRegressor(criterion="poisson",
                                        n_estimators=10,
-                                       bootstrap=False,
+                                       bootstrap=True,
+                                       max_samples=10,
                                        random_state=rng)
     forest_mse = RandomForestRegressor(criterion="squared_error",
                                        n_estimators=10,
-                                       bootstrap=False,
+                                       bootstrap=True,
+                                       max_samples=10,
                                        random_state=rng)
 
     forest_poi.fit(X_train, y_train)
