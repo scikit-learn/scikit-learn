@@ -12,6 +12,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from scipy import linalg
 from scipy.linalg import svd
 try:
     from scipy.fft import fft, ifft
@@ -20,6 +21,7 @@ except ImportError:   # scipy < 1.4
 
 from .base import BaseEstimator
 from .base import TransformerMixin
+from .exceptions import NotFittedError
 from .utils import check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
@@ -730,8 +732,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, kernel="rbf", *, gamma=None, coef0=None, degree=None,
-                 kernel_params=None, n_components=100, random_state=None,
-                 n_jobs=None):
+                 kernel_params=None, n_components=100, alpha=1.0,
+                 fit_inverse_transform=False, random_state=None, n_jobs=None):
 
         self.kernel = kernel
         self.gamma = gamma
@@ -739,8 +741,60 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self.degree = degree
         self.kernel_params = kernel_params
         self.n_components = n_components
+        self.alpha = alpha
+        self.fit_inverse_transform = fit_inverse_transform
         self.random_state = random_state
         self.n_jobs = n_jobs
+
+    def _fit_inverse_transform(self, X_transformed, X):
+        if hasattr(X, "tocsr"):
+            raise NotImplementedError("Inverse transform not implemented for "
+                                      "sparse matrices!")
+
+        # from sklearn.decomposition import PCA
+        # self.pca = PCA(n_components=20)
+        # X_transformed = self.pca.fit_transform(X_transformed)
+
+        # n_samples = X_transformed.shape[0]
+        # Taken from KernelPCA. Tempolarily left for debug
+        # K = pairwise_kernels(X_transformed,
+        #                      metric=self.kernel,
+        #                      filter_params=True,
+        #                      n_jobs=self.n_jobs,
+        #                      **self._get_kernel_params())
+        # K.flat[::n_samples + 1] += self.alpha
+        #self.dual_coef_ = linalg.solve(K, X, sym_pos=True, overwrite_a=True)
+
+        # Let I and T be the indices of inducing points and training points.
+        Kii = pairwise_kernels(X_transformed[self.basis_indices_],  # K_{I, I}
+                               metric=self.kernel,
+                               filter_params=True,
+                               n_jobs=self.n_jobs,
+                               **self._get_kernel_params())
+        Kit = pairwise_kernels(X_transformed[self.basis_indices_],  # K_{I, T}
+                               X_transformed,
+                               metric=self.kernel,
+                               filter_params=True,
+                               n_jobs=self.n_jobs,
+                               **self._get_kernel_params())
+        
+        # By Woodbury matrix identity, following formula(typed in latex) holds:
+        # \tilde{K}_{new, T} (\tilde{K}_{T, T} + \alpha I)^{-1} y
+        # = K_{new, I} K_{I, I}^{-1}K_{I, T}
+        # \left( \frac{1}{\alpha} I -  \frac{1}{\alpha}K_{T, I}(\alpha K_{I, I}
+        # + K_{I, T}K_{T, I})^{-1}K_{I, T} \right )y
+        # = K_{new, I} \left( \alpha \cdot K_{I, I}\right)^{-1}
+        # \left\{K_{I, T}y - K_{I, T} K_{T, I}(\alpha K_{I, I}
+        # + K_{I, T}K_{T, I})^{-1}K_{I, T}y \right\}
+
+        A = np.dot(Kit, X)
+        B = np.dot(Kit, Kit.T)
+        # TODO(kstoneriv3): The following line often results in warning like
+        # "Ill-conditioned matrix (rcond=1.80677e-18)".
+        C = linalg.solve(self.alpha * Kii + B, A, sym_pos=True)
+        D = A - np.dot(B, C)
+        self.dual_coef_ = linalg.solve(self.alpha * Kii, D, sym_pos=True, overwrite_a=True)
+        self.X_transformed_fit_ = X_transformed[self.basis_indices_]
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -778,11 +832,17 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                         **self._get_kernel_params())
 
         # sqrt of kernel matrix on basis vectors
-        U, S, V = svd(basis_kernel)
+        U, S, V = svd(basis_kernel)  # TODO(kstoneriv3): Why not np.linalg.eigh() ?
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
-        self.component_indices_ = inds
+        self.components_indices_ = basis_inds
+        self.basis_indices_ = basis_inds
+
+        if self.fit_inverse_transform:
+            X_transformed = self.transform(X)
+            self._fit_inverse_transform(X_transformed, X)
+
         return self
 
     def transform(self, X):
@@ -811,6 +871,53 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                     n_jobs=self.n_jobs,
                                     **kernel_params)
         return np.dot(embedded, self.normalization_.T)
+
+    def inverse_transform(self, X):
+        """Transform X back to original space.
+
+        ``inverse_transform`` approximates the inverse transformation using
+        a learned pre-image. The pre-image is learned by kernel ridge
+        regression of the original data on their low-dimensional representation
+        vectors.
+
+        .. note:
+            :meth:`~sklearn.decomposition.fit` internally uses a centered
+            kernel. As the centered kernel no longer contains the information
+            of the mean of kernel features, such information is not taken into
+            account in reconstruction.
+
+        .. note::
+            When users want to compute inverse transformation for 'linear'
+            kernel, it is recommended that they use
+            :class:`~sklearn.decomposition.PCA` instead. Unlike
+            :class:`~sklearn.decomposition.PCA`,
+            :class:`~sklearn.decomposition.KernelPCA`'s ``inverse_transform``
+            does not reconstruct the mean of data when 'linear' kernel is used
+            due to the use of centered kernel.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_components)
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_features)
+
+        References
+        ----------
+        "Learning to Find Pre-Images", G BakIr et al, 2004.
+        """
+        if not self.fit_inverse_transform:
+            raise NotFittedError("The fit_inverse_transform parameter was not"
+                                 " set to True when instantiating and hence "
+                                 "the inverse transform is not available.")
+        # X = self.pca.transform(X)
+        K = pairwise_kernels(X, self.X_transformed_fit_,
+                             metric=self.kernel,
+                             filter_params=True,
+                             n_jobs=self.n_jobs,
+                             **self._get_kernel_params())
+        return np.dot(K, self.dual_coef_)
 
     def _get_kernel_params(self):
         params = self.kernel_params
