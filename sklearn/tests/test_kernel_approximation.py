@@ -336,9 +336,6 @@ def test_nystroem_precomputed_kernel():
 
 def test_nystroem_inverse_transform_reconstruction():
     # Test if the reconstruction is a good approximation.
-    # Note that in general it is not possible to get an arbitrarily good
-    # reconstruction because of kernel centering that does not
-    # preserve all the information of the original data.
     n = 100
     d = 2
     rng = np.random.RandomState(0)
