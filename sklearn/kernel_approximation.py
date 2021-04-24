@@ -685,6 +685,9 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
+    basis_indices_: ndarray of shape (n_basis)
+        Indices of ``basis`` in the training set.
+
     components_ : ndarray of shape (n_components, n_features)
         Subset of training points used to construct the feature map.
 
@@ -750,21 +753,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         if hasattr(X, "tocsr"):
             raise NotImplementedError("Inverse transform not implemented for "
                                       "sparse matrices!")
-
-        # from sklearn.decomposition import PCA
-        # self.pca = PCA(n_components=20)
-        # X_transformed = self.pca.fit_transform(X_transformed)
-
-        # n_samples = X_transformed.shape[0]
-        # Taken from KernelPCA. Tempolarily left for debug
-        # K = pairwise_kernels(X_transformed,
-        #                      metric=self.kernel,
-        #                      filter_params=True,
-        #                      n_jobs=self.n_jobs,
-        #                      **self._get_kernel_params())
-        # K.flat[::n_samples + 1] += self.alpha
-        #self.dual_coef_ = linalg.solve(K, X, sym_pos=True, overwrite_a=True)
-
+        
         # Let I and T be the indices of inducing points and training points.
         Kii = pairwise_kernels(X_transformed[self.basis_indices_],  # K_{I, I}
                                metric=self.kernel,
@@ -882,22 +871,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
         ``inverse_transform`` approximates the inverse transformation using
         a learned pre-image. The pre-image is learned by kernel ridge
         regression of the original data on their low-dimensional representation
-        vectors.
-
-        .. note:
-            :meth:`~sklearn.decomposition.fit` internally uses a centered
-            kernel. As the centered kernel no longer contains the information
-            of the mean of kernel features, such information is not taken into
-            account in reconstruction.
-
-        .. note::
-            When users want to compute inverse transformation for 'linear'
-            kernel, it is recommended that they use
-            :class:`~sklearn.decomposition.PCA` instead. Unlike
-            :class:`~sklearn.decomposition.PCA`,
-            :class:`~sklearn.decomposition.KernelPCA`'s ``inverse_transform``
-            does not reconstruct the mean of data when 'linear' kernel is used
-            due to the use of centered kernel.
+        vectors. For the efficiency of kernel ridge regression, the kernel for 
+        regression is a Nystrom approximation of the original kernel.
 
         Parameters
         ----------
@@ -915,7 +890,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
             raise NotFittedError("The fit_inverse_transform parameter was not"
                                  " set to True when instantiating and hence "
                                  "the inverse transform is not available.")
-        # X = self.pca.transform(X)
         K = pairwise_kernels(X, self.X_transformed_fit_,
                              metric=self.kernel,
                              filter_params=True,
