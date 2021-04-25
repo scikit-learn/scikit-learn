@@ -360,16 +360,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
             elif return_std:
                 # cache result of K_inv computation
                 if self._K_inv is None:
-                    # compute inverse K_inv of K based on its Cholesky
-                    # decomposition L and its inverse L_inv
-                    L_inv = solve_triangular(self.L_.T,
-                                             np.eye(self.L_.shape[0]))
-                    self._K_inv = L_inv.dot(L_inv.T)
+                    v = cho_solve((self.L_, True), K_trans.T)
 
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
                 y_var -= np.einsum("ij,ij->i",
-                                   np.dot(K_trans, self._K_inv), K_trans)
+                                   K_trans, v)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
