@@ -62,7 +62,8 @@ Changelog
     use `"squared_error"` instead which is now the default.
 
   - For :class:`ensemble.HistGradientBoostingRegressor`, `loss="least_squares"`
-    is deprecated, use `"squared_error"` instead which is now the default.
+    was renamed to `"squared_error"`. Note that in this case, there is no
+    deprecation cycle.
 
   - For :class:`linear_model.RANSACRegressor`, `loss="squared_loss"` is
     deprecated, use `"squared_error"` instead.
@@ -389,8 +390,8 @@ Changelog
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in 
-  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``. 
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
 :mod:`sklearn.tree`
