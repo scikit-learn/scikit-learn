@@ -878,11 +878,13 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
     cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
-    mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-
-    if np.isnan(mcc):
+    t_nonzero = np.nonzero(t_sum)[0].size
+    p_nonzero = np.nonzero(p_sum)[0].size
+    
+    if t_nonzero == 1 or p_nonzero == 1:
         return 0.
     else:
+        mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
         return mcc
 
 
