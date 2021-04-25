@@ -6,8 +6,8 @@ Generalized Additive Model Bagging with Gradient Boosting Trees
 .. currentmodule:: sklearn
 
 In this example, we show how a Generalized Additive Model
-(`GAMBoostingRegressor`) can be used to learn from a dataset generated from a
-summation of different shape functions.
+(:class:`GAMBoostingRegressor`) can be used to learn from a dataset generated
+from a summation of different shape functions.
 """
 print(__doc__)
 
@@ -44,11 +44,12 @@ gam_reg.fit(X, y)
 # %%
 # Compare the GAM predicts to actual shape functions
 # --------------------------------------------------
-# Notice that the GAM is able to reproduce the shape functions up to a
-# constant
+# Here we plot the GAm's shape functions and the actual data on the same axes.
+# We can see that the shape functions are able to model the actual data up to a
+# constant.
 import matplotlib.pyplot as plt
 
-fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+fig, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 for feature_idx, ax in enumerate(axes.ravel()):
     predicted = gam_reg.apply(X, feature_idx=feature_idx)
     X_idx = X[:, feature_idx]

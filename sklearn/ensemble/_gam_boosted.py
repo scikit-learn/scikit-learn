@@ -190,6 +190,10 @@ class GAMBoostingRegressor(RegressorMixin, BaseGAMBoosting):
     """Generalized Additive Models (GAMs) with Bagged Histogram-based Gradient
     Boosting Regression Trees.
 
+    Read more in the :ref:`User Guide <gam_boosted_trees>`.
+
+    .. versionadded:: 1.0
+
     Parameters
     ----------
     learning_rate: float, default=0.1
@@ -240,15 +244,40 @@ class GAMBoostingRegressor(RegressorMixin, BaseGAMBoosting):
         )
 
     def predict(self, X):
+        """Predict values for X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            The predicted values.
+        """
         check_is_fitted(self)
         return self._loss.inverse_link_function(self._raw_predict(X).ravel())
 
     def apply(self, X, feature_idx):
+        """Predict only for the shape function at `feature_idx`.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The input samples.
+        feature_idx : int
+            Index of shape function.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            The predicted values for shape function.
+        """
         check_is_fitted(self)
         return self._raw_predict(X, feature_idx=feature_idx).ravel()
 
     def _encode_y(self, y):
-        # TODO: Regression for now
         self.n_trees_per_iteration_ = 1
         return y.astype(Y_DTYPE, copy=False)
 
@@ -259,6 +288,10 @@ class GAMBoostingRegressor(RegressorMixin, BaseGAMBoosting):
 class GAMBoostingClassifier(ClassifierMixin, BaseGAMBoosting):
     """Generalized Additive Models (GAMs) with Bagged Histogram-based Gradient
     Boosting Regression Trees.
+
+    Read more in the :ref:`User Guide <gam_boosted_trees>`.
+
+    .. versionadded:: 1.0
 
     Parameters
     ----------
@@ -311,10 +344,34 @@ class GAMBoostingClassifier(ClassifierMixin, BaseGAMBoosting):
         )
 
     def predict(self, X):
+        """Predict classes for X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            The predicted classes.
+        """
         encoded_classes = np.argmax(self.predict_proba(X), axis=1)
         return self.classes_[encoded_classes]
 
     def predict_proba(self, X):
+        """Predict class probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        p : ndarray, shape (n_samples, n_classes)
+            The class probabilities of the input samples.
+        """
         check_is_fitted(self)
         return self._loss.predict_proba(self._raw_predict(X))
 

@@ -1218,6 +1218,45 @@ Finally, many parts of the implementation of
   .. [Fisher1958] Walter D. Fisher. `"On Grouping for Maximum Homogeneity"
      <http://www.csiss.org/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
 
+.. _gam_boosted_trees:
+
+Generalized Additive Models with Gradient Boosted Regression Trees
+==================================================================
+
+Generalized additive models (GAM) is a powerful technique for modeling the
+dependent variable as a sum of univariate models [Hastie1990]_. The standard
+GAM can be written as follows:
+
+:math:`g(E[y])=\sum f_i(x_i)`
+
+where :math:`x_i` is the ith feature, `f_i` are the shape functions,
+:math:`E[y]` is the expected value and `g` is the link function. By design,
+GAMS are easy to interpret because the relationship between the univariate
+terms of the GAM and the dependent variable is represented by :math:`f_i(x_i)`.
+It was empirically shown in [Lou2012]_ that shape functions modeled with tree
+based methods performed between than regression splines. Scikit-learn
+implements :class:`GAMBoostingClassifier` and :class:`GAMBoostingRegressor`
+based on [Lou2013]_, where with histogram-based gradient boosting trees and
+bagging in each iteration. In the following example, the GAM's shape functions
+are plotted together with the actual data. We can see that the shape functions
+are able to model the actual data up to a constant.
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gam_boosted_regression_simple_001.png
+    :target: ../auto_examples/ensemble/plot_gam_boosted_regression_simple.html
+    :align: center
+    :scale: 80%
+
+.. topic:: References
+
+  .. [Hastie1990] T. Hastie and R. Tibshirani. "Generalized Additive Models".
+     New York: Chapman and Hall, 1990.
+  .. [Lou2012] Y. Lou, R. Caruana and J. Gehrke, `"Intelligible Models for
+     Classification and Regression", KDD'12, 2012
+     <http://www.cs.cornell.edu/~yinlou/papers/lou-kdd12.pdf>`_.
+  .. [Lou2013] Y. Lou, R. Caruana, J. Gehrke, and G. Hooker.
+     `"Accurate Intelligible Models with Pairwise Interactions",
+     KDD'13, 2013 <http://www.cs.cornell.edu/~yinlou/papers/lou-kdd13.pdf>`_.
+
 .. _voting_classifier:
 
 Voting Classifier
