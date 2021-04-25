@@ -381,12 +381,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         return self
 
-    # def _more_tags(self):
-    #     return {
-    #         '_xfail_checks': {
-    #             'check_methods_subset_invariance':
-    #             'fails for the decision_function method',
-    #             'check_methods_sample_order_invariance':
-    #             'fails for the score_samples method',
-    #         }
-    #     }
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_methods_subset_invariance':
+                'fails for the decision_function method',
+                'check_methods_sample_order_invariance':
+                'fails for the score_samples method',
+            }
+        }

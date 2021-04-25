@@ -346,16 +346,16 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         else:
             return [np.log(p) for p in proba]
 
-    # def _more_tags(self):
-    #     return {
-    #         'poor_score': True, 'no_validation': True,
-    #         '_xfail_checks': {
-    #             'check_methods_subset_invariance':
-    #             'fails for the predict method',
-    #             'check_methods_sample_order_invariance':
-    #             'fails for the predict method'
-    #         }
-    #     }
+    def _more_tags(self):
+        return {
+            'poor_score': True, 'no_validation': True,
+            '_xfail_checks': {
+                'check_methods_subset_invariance':
+                'fails for the predict method',
+                'check_methods_sample_order_invariance':
+                'fails for the predict method'
+            }
+        }
 
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
