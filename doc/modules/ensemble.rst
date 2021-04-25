@@ -1246,6 +1246,10 @@ are able to model the actual data up to a constant.
     :align: center
     :scale: 80%
 
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_gam_boosted_regression_simple.py`
+
 .. topic:: References
 
   .. [Hastie1990] T. Hastie and R. Tibshirani. "Generalized Additive Models".
