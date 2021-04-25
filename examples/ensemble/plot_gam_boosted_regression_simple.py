@@ -49,7 +49,7 @@ gam_reg.fit(X, y)
 # constant.
 import matplotlib.pyplot as plt
 
-fig, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
+fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 for feature_idx, ax in enumerate(axes.ravel()):
     predicted = gam_reg.apply(X, feature_idx=feature_idx)
     X_idx = X[:, feature_idx]
@@ -58,5 +58,5 @@ for feature_idx, ax in enumerate(axes.ravel()):
                alpha=0.5, s=2)
     ax.set_title(f"X{feature_idx}")
     ax.legend()
-
+fig.tight_layout()
 plt.show()
