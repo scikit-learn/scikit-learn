@@ -224,7 +224,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 self._m_step(X, log_resp)
                 lower_bound = self._compute_lower_bound(
                     log_resp, log_prob_norm)
-
+                if math.isnan(log_prob_norm):
+                    print ("Numerical issue occured! Termination.")
+                    return
                 change = lower_bound - prev_lower_bound
                 self._print_verbose_msg_iter_end(n_iter, change)
 
@@ -234,7 +236,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
             self._print_verbose_msg_init_end(lower_bound)
 
-            if lower_bound > max_lower_bound:
+            if lower_bound >= max_lower_bound:
                 max_lower_bound = lower_bound
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
