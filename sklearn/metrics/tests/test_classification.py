@@ -20,7 +20,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_warns_div0
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
@@ -622,7 +621,6 @@ def test_cohen_kappa():
                         weights="quadratic"), 0.9541, decimal=4)
 
 
-@ignore_warnings
 def test_matthews_corrcoef_nan():
     assert matthews_corrcoef([0], [1]) == 0.0
     assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
@@ -684,17 +682,11 @@ def test_matthews_corrcoef():
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
-    # result in a RuntimeWarning
-    mcc = assert_warns_div0(matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
-
-    # But will output 0
-    assert_almost_equal(mcc, 0.)
+    # output 0
+    assert_almost_equal(matthews_corrcoef([0, 0, 0, 0], [0, 0, 0, 0]), 0.)
 
     # And also for any other vector with 0 variance
-    mcc = assert_warns_div0(matthews_corrcoef, y_true, ['a'] * len(y_true))
-
-    # But will output 0
-    assert_almost_equal(mcc, 0.)
+    assert_almost_equal(matthews_corrcoef(y_true, ['a'] * len(y_true)), 0.)
 
     # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
@@ -731,12 +723,15 @@ def test_matthews_corrcoef_multiclass():
     assert_almost_equal(matthews_corrcoef(y_true, y_pred_min),
                         -12 / np.sqrt(24 * 16))
 
-    # Zero variance will result in an mcc of zero and a Runtime Warning
+    # Zero variance will result in an mcc of zero
     y_true = [0, 1, 2]
     y_pred = [3, 3, 3]
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true, y_pred)
-    assert_almost_equal(mcc, 0.0)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred), 0.0)
+
+    # Also for ground truth with zero variance
+    y_true = [3, 3, 3]
+    y_pred = [0, 1, 2]
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred), 0.0)
 
     # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
@@ -754,16 +749,12 @@ def test_matthews_corrcoef_multiclass():
                                           sample_weight=sample_weight), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
-    # result in a RuntimeWarning
+    # output 0
     y_true = [0, 0, 1, 2]
     y_pred = [0, 0, 1, 2]
     sample_weight = [1, 1, 0, 0]
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true, y_pred,
-                               sample_weight=sample_weight)
-
-    # But will output 0
-    assert_almost_equal(mcc, 0.)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred,
+                                          sample_weight=sample_weight), 0.)
 
 
 @pytest.mark.parametrize('n_points', [100, 10000])
