@@ -990,17 +990,3 @@ def test_uint8_predict(Est):
     est = Est()
     est.fit(X, y)
     est.predict(X)
-
-
-# TODO: Remove in v1.2
-def test_loss_least_squares_deprecated():
-    X, y = make_regression(n_samples=50, random_state=0)
-    est1 = HistGradientBoostingRegressor(loss="least_squares", random_state=0)
-
-    with pytest.warns(FutureWarning,
-                      match="The loss 'least_squares' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = HistGradientBoostingRegressor(loss="squared_error", random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
