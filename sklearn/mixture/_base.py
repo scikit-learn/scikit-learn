@@ -8,6 +8,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
 
+import math
 import numpy as np
 from scipy.special import logsumexp
 
