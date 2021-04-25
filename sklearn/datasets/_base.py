@@ -12,7 +12,7 @@ import os
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
-from os.path import dirname, exists, expanduser, isdir, join, splitext
+from os.path import dirname, expanduser, isdir, join, splitext
 
 from ..utils import Bunch
 from ..utils import check_random_state
@@ -52,8 +52,7 @@ def get_data_home(data_home=None) -> str:
         data_home = environ.get('SCIKIT_LEARN_DATA',
                                 join('~', 'scikit_learn_data'))
     data_home = expanduser(data_home)
-    if not exists(data_home):
-        makedirs(data_home)
+    makedirs(data_home, exist_ok=True)
     return data_home
 
 
@@ -766,6 +765,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
     Features         real, -.2 < x < .2
     Targets          integer 25 - 346
     ==============   ==================
+    
+    .. note::
+       The meaning of each feature (i.e. `feature_names`) might be unclear
+       (especially for `ltg`) as the documentation of the original dataset is
+       not explicit. We provide information that seems correct in regard with
+       the scientific literature in this field of research.
 
     Read more in the :ref:`User Guide <diabetes_dataset>`.
 

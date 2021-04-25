@@ -315,7 +315,17 @@ def _fetch_brute_kddcup99(data_home=None,
     column_names = [c[0] for c in dt]
     target_names = column_names[-1]
     feature_names = column_names[:-1]
-    if download_if_missing and not available:
+
+    if available:
+        try:
+            X = joblib.load(samples_path)
+            y = joblib.load(targets_path)
+        except Exception as e:
+            raise IOError(
+                "The cache for fetch_kddcup99 is invalid, please delete "
+                f"{str(kddcup_dir)} and run the fetch_kddcup99 again") from e
+
+    elif download_if_missing:
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
         _fetch_remote(archive, dirname=kddcup_dir)
@@ -343,15 +353,8 @@ def _fetch_brute_kddcup99(data_home=None,
 
         joblib.dump(X, samples_path, compress=0)
         joblib.dump(y, targets_path, compress=0)
-    elif not available:
-        if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
-
-    try:
-        X, y
-    except NameError:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+    else:
+        raise IOError("Data not found and `download_if_missing` is False")
 
     return Bunch(
         data=X,

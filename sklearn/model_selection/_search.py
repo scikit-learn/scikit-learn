@@ -897,6 +897,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         out = _aggregate_score_dicts(out)
 
         results = dict(more_results or {})
+        for key, val in results.items():
+            # each value is a list (as per evaluate_candidate's convention)
+            # we convert it to an array for consistency with the other keys
+            results[key] = np.asarray(val)
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
@@ -1006,7 +1010,7 @@ class GridSearchCV(BaseSearchCV):
         - a single string (see :ref:`scoring_parameter`);
         - a callable (see :ref:`scoring`) that returns a single value.
 
-        If `scoring` reprents multiple scores, one can use:
+        If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
@@ -1065,7 +1069,8 @@ class GridSearchCV(BaseSearchCV):
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1346,7 +1351,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - a single string (see :ref:`scoring_parameter`);
         - a callable (see :ref:`scoring`) that returns a single value.
 
-        If `scoring` reprents multiple scores, one can use:
+        If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
@@ -1407,7 +1412,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

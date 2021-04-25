@@ -480,15 +480,6 @@ def test_parallel_classification():
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
-    X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
-    err_msg = (
-        f"Number of features of the model must match the input. Model "
-        f"n_features is {X_test.shape[1]} and input n_features is "
-        f"{X_err.shape[1]} "
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        ensemble.decision_function(X_err)
-
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
@@ -921,3 +912,16 @@ def test_bagging_get_estimators_indices():
 
     assert_array_equal(clf.estimators_[0]._sample_indices,
                        clf.estimators_samples_[0])
+
+
+# FIXME: remove in 1.2
+@pytest.mark.parametrize("Estimator", [BaggingClassifier, BaggingRegressor])
+def test_n_features_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `n_features_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+        est.n_features_

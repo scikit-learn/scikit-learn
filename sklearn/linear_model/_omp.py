@@ -20,9 +20,11 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..model_selection import check_cv
 
-premature = """ Orthogonal matching pursuit ended prematurely due to linear
-dependence in the dictionary. The requested precision might not have been met.
-"""
+premature = (
+    "Orthogonal matching pursuit ended prematurely due to linear"
+    " dependence in the dictionary. The requested precision might"
+    " not have been met."
+)
 
 
 def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,

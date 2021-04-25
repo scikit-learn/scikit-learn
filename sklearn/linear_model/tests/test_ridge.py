@@ -10,7 +10,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -39,6 +38,7 @@ from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import LeaveOneOut
 
+from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
 
@@ -161,10 +161,14 @@ def test_ridge_regression_convergence_fail():
     rng = np.random.RandomState(0)
     y = rng.randn(5)
     X = rng.randn(5, 10)
-
-    assert_warns(ConvergenceWarning, ridge_regression,
-                 X, y, alpha=1.0, solver="sparse_cg",
-                 tol=0., max_iter=None, verbose=1)
+    warning_message = (
+        r"sparse_cg did not converge after"
+        r" [0-9]+ iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        ridge_regression(X, y,
+                         alpha=1.0, solver="sparse_cg",
+                         tol=0., max_iter=None, verbose=1)
 
 
 def test_ridge_sample_weights():
@@ -405,6 +409,8 @@ def _make_sparse_offset_regression(
     return X, y
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     'solver, sparse_X',
     ((solver, sparse_X) for
@@ -415,24 +421,32 @@ def _make_sparse_offset_regression(
 @pytest.mark.parametrize(
     'n_samples,dtype,proportion_nonzero',
     [(20, 'float32', .1), (40, 'float32', 1.), (20, 'float64', .2)])
+@pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('seed', np.arange(3))
 def test_solver_consistency(
-        solver, proportion_nonzero, n_samples, dtype, sparse_X, seed):
+        solver, proportion_nonzero, n_samples, dtype, sparse_X, seed,
+        normalize):
     alpha = 1.
     noise = 50. if proportion_nonzero > .9 else 500.
     X, y = _make_sparse_offset_regression(
         bias=10, n_features=30, proportion_nonzero=proportion_nonzero,
         noise=noise, random_state=seed, n_samples=n_samples)
+    if not normalize:
+        # Manually scale the data to avoid pathological cases. We use
+        # minmax_scale to deal with the sparse case without breaking
+        # the sparsity pattern.
+        X = minmax_scale(X)
     svd_ridge = Ridge(
-        solver='svd', normalize=True, alpha=alpha).fit(X, y)
+        solver='svd', normalize=normalize, alpha=alpha).fit(X, y)
     X = X.astype(dtype, copy=False)
     y = y.astype(dtype, copy=False)
     if sparse_X:
         X = sp.csr_matrix(X)
     if solver == 'ridgecv':
-        ridge = RidgeCV(alphas=[alpha], normalize=True)
+        ridge = RidgeCV(alphas=[alpha], normalize=normalize)
     else:
-        ridge = Ridge(solver=solver, tol=1e-10, normalize=True, alpha=alpha)
+        ridge = Ridge(solver=solver, tol=1e-10, normalize=normalize,
+                      alpha=alpha)
     ridge.fit(X, y)
     assert_allclose(
         ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
@@ -440,6 +454,8 @@ def test_solver_consistency(
         ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
@@ -492,12 +508,10 @@ def test_ridge_loo_cv_asym_scoring():
 
     alphas = [1e-3, .1, 1., 10., 1e3]
     loo_ridge = RidgeCV(cv=n_samples, fit_intercept=True,
-                        alphas=alphas, scoring=scoring,
-                        normalize=True)
+                        alphas=alphas, scoring=scoring)
 
     gcv_ridge = RidgeCV(fit_intercept=True,
-                        alphas=alphas, scoring=scoring,
-                        normalize=True)
+                        alphas=alphas, scoring=scoring)
 
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
@@ -646,6 +660,7 @@ def _test_ridge_loo(filter_):
     return ret
 
 
+# FIXME: 'normalize' to be removed in 1.2
 def _test_ridge_cv_normalize(filter_):
     ridge_cv = RidgeCV(normalize=True, cv=3)
     ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
@@ -859,6 +874,8 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
