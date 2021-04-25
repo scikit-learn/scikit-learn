@@ -9,7 +9,6 @@ from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import permutations
 
-from sklearn.utils._testing import assert_allclose, assert_raises_regexp
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raise_message
