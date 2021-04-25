@@ -61,12 +61,15 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     # deviation reduction and balancing algorithms.
     X = make_nonnegative(X)
     X_scaled = X
+    X = np.nan_to_num(X)
+    X_scaled = np.nan_to_num(X_scaled)
     for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
+        X_new = np.nan_to_num(X_new)
         if issparse(X):
             dist = norm(X_scaled.data - X.data)
         else:
-            dist = norm(X_scaled - X_new)
+            dist = norm(X_scaled.data - X_new)
         X_scaled = X_new
         if dist is not None and dist < tol:
             break
@@ -182,19 +185,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         centroid = model.cluster_centers_
         labels = model.labels_
         return centroid, labels
-
-    # def _more_tags(self):
-    #     return {
-    #         "_xfail_checks": {
-    #             "check_estimators_dtypes": "raises nan error",
-    #             "check_fit2d_1sample": "_scale_normalize fails",
-    #             "check_fit2d_1feature": "raises apply_along_axis error",
-    #             "check_estimator_sparse_data": "does not fail gracefully",
-    #             "check_methods_subset_invariance": "empty array passed inside",
-    #             "check_dont_overwrite_parameters": "empty array passed inside",
-    #             "check_fit2d_predict1d": "emptry array passed inside",
-    #         }
-    #     }
 
 
 class SpectralCoclustering(BaseSpectral):
@@ -318,6 +308,7 @@ class SpectralCoclustering(BaseSpectral):
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
+        normalized_data = np.nan_to_num(normalized_data)
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
         row_diag[np.isnan(row_diag)] = 0
         row_diag[np.isinf(row_diag)] = 0
