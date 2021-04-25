@@ -319,6 +319,8 @@ class SpectralCoclustering(BaseSpectral):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
+        row_diag[np.isnan(row_diag)] = 0
+        row_diag[np.isinf(row_diag)] = 0
         z = np.vstack((row_diag[:, np.newaxis] * u,
                        col_diag[:, np.newaxis] * v))
 
