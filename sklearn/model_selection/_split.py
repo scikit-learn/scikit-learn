@@ -2282,15 +2282,15 @@ class GroupTimeSeriesSplit(_BaseKFold):
 
     max_train_size : int, default=None
         Maximum number of groups for a single training set.
-    
+
     test_size : int, default=None
         Used to limit the number of groups in the test set. Defaults to
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
     gap : int, default=0
-        Number of groups in samples to exclude from the end of each train set before
-        the test set.
+        Number of groups in samples to exclude from the end of each train set
+        before the test set.
 
     Examples
     --------
@@ -2405,7 +2405,8 @@ class GroupTimeSeriesSplit(_BaseKFold):
         if n_groups - gap - (group_test_size * n_splits) <= 0:
             raise ValueError(
                 (f"Too many splits={n_splits} for number of groups"
-                f"={n_groups} with test_size={group_test_size} and gap={gap}."))
+                    f"={n_groups} with \
+                    test_size={group_test_size} and gap={gap}."))
 
         for group_test_start in range(n_groups - n_splits * group_test_size,
                                       n_groups, group_test_size):
