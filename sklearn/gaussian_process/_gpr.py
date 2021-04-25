@@ -360,11 +360,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
             elif return_std:
                 # cache result of K_inv computation
                 if self._K_inv is None:
+                    #calculate K_inv * K_trans.T using cho_solve
                     v = cho_solve((self.L_, True), K_trans.T)
 
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ij->i",
+                y_var -= np.einsum("ij,ji->i",
                                    K_trans, v)
 
                 # Check if any of the variances is negative because of
