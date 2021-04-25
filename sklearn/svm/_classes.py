@@ -883,16 +883,16 @@ class NuSVC(BaseSVC):
             break_ties=break_ties,
             random_state=random_state)
 
-    def _more_tags(self):
-        return {
-            '_xfail_checks': {
-                'check_methods_subset_invariance':
-                'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored.',
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
-            }
-        }
+    # def _more_tags(self):
+    #     return {
+    #         '_xfail_checks': {
+    #             'check_methods_subset_invariance':
+    #             'fails for the decision_function method',
+    #             'check_class_weight_classifiers': 'class_weight is ignored.',
+    #             'check_sample_weights_invariance':
+    #             'zero sample_weight is not equivalent to removing samples',
+    #         }
+    #     }
 
 
 class SVR(RegressorMixin, BaseLibSVM):
