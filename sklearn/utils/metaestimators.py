@@ -113,6 +113,15 @@ class _AvailableIfDescriptor:
 
 
 def available_if(check):
+    """An attribute that is available only if check returns a truthy value
+
+    Parameters
+    ----------
+    check : callable
+        When passed the object with the decorated method, this should return
+        a truthy value if the attribute is available, and either return False
+        or raise an AttributeError if not available.
+    """
     return lambda fn: _AvailableIfDescriptor(fn, check,
                                              attribute_name=fn.__name__)
 

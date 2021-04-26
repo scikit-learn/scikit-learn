@@ -571,7 +571,7 @@ class Pipeline(_BaseComposition):
         return all(hasattr(t, 'inverse_transform') for _, _, t in self._iter())
 
     @available_if(_can_inverse_transform)
-    def inverse_transform(self, X):
+    def inverse_transform(self, Xt):
         """Apply inverse transformations in reverse order
 
         All estimators in the pipeline must support ``inverse_transform``.
@@ -588,7 +588,6 @@ class Pipeline(_BaseComposition):
         -------
         Xt : array-like of shape (n_samples, n_features)
         """
-        Xt = X
         reverse_iter = reversed(list(self._iter()))
         for _, _, transform in reverse_iter:
             Xt = transform.inverse_transform(Xt)
