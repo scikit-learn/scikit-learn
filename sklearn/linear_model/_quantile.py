@@ -191,7 +191,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         solution = result.x
         if not result.success:
             warnings.warn(
-                f"Linear programming for Quantile regression did not converge. "
+                f"Linear programming for QuantileRegressor did not converge. "
                 f"Status is {result.status}", ConvergenceWarning
             )
             if solution is np.nan:
