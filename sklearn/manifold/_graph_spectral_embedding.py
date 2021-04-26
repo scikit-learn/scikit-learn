@@ -11,10 +11,10 @@ from scipy import sparse
 from scipy.sparse import diags, isspmatrix_csr
 from scipy.stats import norm
 
+from ._spectral_embedding import _graph_is_connected as graph_is_connected
 from ..base import BaseEstimator
 from ..utils import check_symmetric
 from ..utils.extmath import randomized_svd
-from ..utils.graph import graph_is_connected
 
 def _augment_diagonal(graph, weight=1):
     r"""
@@ -50,7 +50,7 @@ def _augment_diagonal(graph, weight=1):
 
     return graph
 
-def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized", n_iter=5):
+def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized"):
     r"""
     Dimensionality reduction using SVD.
     Performs linear dimensionality reduction by using either full singular
@@ -81,10 +81,7 @@ def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized", n_iter
             Does not support ``graph`` input of type scipy.sparse.csr_matrix
         - 'truncated'
             Computes truncated svd using :func:`scipy.sparse.linalg.svds`
-    n_iter : int, optional (default = 5)
-        Number of iterations for randomized SVD solver. Not used by 'full' or
-        'truncated'. The default is larger than the default in randomized_svd
-        to handle sparse matrices that may have large slowly decaying spectrum.
+
     Returns
     -------
     U : array-like, shape (n_samples, n_components)
@@ -141,9 +138,7 @@ def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized", n_iter
         U = U[:, idx]
         V = V[idx, :]
     elif svd_solver == "randomized":
-        if not isinstance(n_iter, int):
-            raise TypeError("n_iter must be integer valued")
-        U, D, V = randomized_svd(X, n_components, n_iter=n_iter)
+        U, D, V = randomized_svd(X, n_components)
 
     return U, D, V
 
@@ -303,7 +298,7 @@ def _compute_likelihood(arr):
 
     return likelihoods
 
-def _to_laplacian(A, form="DAD", regularizer=None):
+def _to_laplacian(A, regularizer=None):
     r"""
     A function to convert graph adjacency matrix to graph Laplacian.
     Currently supports I-DAD, DAD, and R-DAD Laplacians, where D is the diagonal
@@ -351,25 +346,22 @@ def _to_laplacian(A, form="DAD", regularizer=None):
            [0.70710678, 0.        , 0.        ]])
     """
 
-    valid_inputs = ["I-DAD", "DAD", "R-DAD"]
-    if form not in valid_inputs:
-        raise TypeError("Unsuported Laplacian normalization")
-
     in_degree = np.reshape(np.asarray(A.sum(axis=0)), (-1,))
     out_degree = np.reshape(np.asarray(A.sum(axis=1)), (-1,))
 
     # regularize laplacian with parameter
     # set to average degree
-    if form == "R-DAD":
-        if regularizer is None:
-            regularizer = np.mean(out_degree)
-        elif not isinstance(regularizer, (int, float)):
-            raise TypeError(
-                "Regularizer must be a int or float, not {}".format(type(regularizer))
-            )
-        elif regularizer < 0:
-            raise ValueError("Regularizer must be greater than or equal to 0")
+    # if regularizer == True or int:
+    if isinstance(regularizer, bool) and regularizer:
+        regularizer = np.mean(out_degree)
+    elif not isinstance(regularizer, (int, float, bool)):
+        raise TypeError(
+            "Regularizer must be a int or float, not {}".format(type(regularizer))
+        )
+    elif regularizer < 0:
+        raise ValueError("Regularizer must be greater than or equal to 0")
 
+    if isinstance(regularizer, (int, float)):
         in_degree += regularizer
         out_degree += regularizer
 
@@ -385,11 +377,7 @@ def _to_laplacian(A, form="DAD", regularizer=None):
     in_root = diag(in_root)  # just change to sparse diag for sparse support
     out_root = diag(out_root)
 
-    if form == "I-DAD":
-        L = diag(in_degree) - A
-        L = in_root @ L @ in_root
-    elif form == "DAD" or form == "R-DAD":
-        L = out_root @ A @ in_root
+    L = out_root @ A @ in_root
     if _is_symmetric(A):
         return check_symmetric(L)
         # sometimes machine prec. makes this necessary
@@ -452,26 +440,19 @@ class GraphSpectralEmbedding(BaseEstimator):
             Does not support ``graph`` input of type scipy.sparse.csr_matrix
         - 'truncated'
             Computes truncated svd using :func:`scipy.sparse.linalg.svds`
-    form : {'DAD' (default), 'I-DAD', 'R-DAD'}, optional
-        Specifies the type of Laplacian normalization to use when ``algorithm='LSE'``.
-    n_iter : int, optional (default = 5)
-        Number of iterations for randomized SVD solver. Not used by 'full' or
-        'truncated'. The default is larger than the default in randomized_svd
-        to handle sparse matrices that may have large slowly decaying spectrum.
     check_lcc : bool , optional (default = True)
         Whether to check if input graph is connected. May result in non-optimal
         results if the graph is unconnected. If True and input is unconnected,
         a UserWarning is thrown. Not checking for connectedness may result in
         faster computation.
     diag_aug : bool, optional (default = True)
-        Whether to replace the main diagonal of the adjacency matrix with a vector
+        When `algorithm`='ASE', whether to replace the main diagonal of the adjacency matrix with a vector
         corresponding to the degree (or sum of edge weights for a weighted network)
         before embedding. Empirically, this produces latent position estimates closer
         to the ground truth.
-    regularizer: int, float or None, optional (default=None)
-        Constant to be added to the diagonal of degree matrix. If None, average
-        node degree is added. If int or float, must be >= 0. Only used when
-        ``form`` is 'R-DAD'.
+    regularizer: int, float or bool, optional (default = False)
+        When `algorithm`='LSE', constant to be added to the diagonal of degree matrix. If `True`, average
+        node degree is added. If int or float, must be >= 0.
     concat : bool, optional (default False)
         If graph is directed, whether to concatenate left and right (out and in) latent positions along axis 1.
     Attributes
@@ -515,11 +496,9 @@ class GraphSpectralEmbedding(BaseEstimator):
         n_elbows=2,
         algorithm='ASE',
         svd_solver="randomized",
-        form="DAD",
-        n_iter=5,
         check_lcc=True,
         diag_aug=True,
-        regularizer=None,
+        regularizer=False,
         concat=False,
     ):
 
@@ -527,8 +506,6 @@ class GraphSpectralEmbedding(BaseEstimator):
         self.n_elbows=n_elbows
         self.algorithm=algorithm
         self.svd_solver=svd_solver
-        self.form=form
-        self.n_iter=n_iter
         self.check_lcc=check_lcc
         self.regularizer=regularizer
         self.concat=concat
@@ -577,14 +554,13 @@ class GraphSpectralEmbedding(BaseEstimator):
         if self.algorithm.lower() == 'ase' and self.diag_aug:
             A = _augment_diagonal(A)
         elif self.algorithm.lower() == 'lse':
-            A = _to_laplacian(A, form=self.form, regularizer=self.regularizer)
+            A = _to_laplacian(A, regularizer=self.regularizer)
 
         U, D, V = _selectSVD(
             A,
             n_components=self.n_components,
             n_elbows=self.n_elbows,
             svd_solver=self.svd_solver,
-            n_iter=self.n_iter,
             )
 
         self.n_components_ = D.size

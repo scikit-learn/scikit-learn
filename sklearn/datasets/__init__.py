@@ -42,6 +42,8 @@ from ._samples_generator import make_sparse_spd_matrix
 from ._samples_generator import make_gaussian_quantiles
 from ._samples_generator import make_biclusters
 from ._samples_generator import make_checkerboard
+from ._samples_generator import make_er_graph
+from ._samples_generator import make_sbm_graph
 from ._svmlight_format_io import load_svmlight_file
 from ._svmlight_format_io import load_svmlight_files
 from ._svmlight_format_io import dump_svmlight_file
@@ -82,6 +84,7 @@ __all__ = ['clear_data_home',
            'make_circles',
            'make_classification',
            'make_checkerboard',
+           'make_er_graph',
            'make_friedman1',
            'make_friedman2',
            'make_friedman3',
@@ -92,6 +95,7 @@ __all__ = ['clear_data_home',
            'make_multilabel_classification',
            'make_regression',
            'make_s_curve',
+           'make_sbm_graph',
            'make_sparse_coded_signal',
            'make_sparse_spd_matrix',
            'make_sparse_uncorrelated',
