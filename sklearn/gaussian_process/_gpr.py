@@ -363,7 +363,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 V = solve_triangular(
                     self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER
                 )
-                # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v . v^T
+                # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v
                 y_cov = self.kernel_(X) - V.T.dot(V)
 
                 # undo normalisation
