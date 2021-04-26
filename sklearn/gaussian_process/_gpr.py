@@ -8,7 +8,7 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve
+from scipy.linalg import cholesky, cho_solve, solve_triangular
 import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
@@ -18,6 +18,8 @@ from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _deprecate_positional_args
+
+GPR_CHOLESKY_LOWER = True
 
 
 class GaussianProcessRegressor(MultiOutputMixin,
@@ -276,8 +278,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         K = self.kernel_(self.X_train_)
         K[np.diag_indices_from(K)] += self.alpha
         try:
-            self._L_lower_flag = True
-            self.L_ = cholesky(K, lower=self._L_lower_flag)
+            self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER)
         except np.linalg.LinAlgError as exc:
             exc.args = ("The kernel, %s, is not returning a "
                         "positive definite matrix. Try gradually "
@@ -286,7 +287,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
                         % self.kernel_,) + exc.args
             raise
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
-        self.alpha_ = cho_solve((self.L_, self._L_lower_flag), self.y_train_)
+        self.alpha_ = cho_solve((self.L_, GPR_CHOLESKY_LOWER), self.y_train_)
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
@@ -359,11 +360,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
             if return_cov:
                 # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
-                V = cho_solve(
-                    (self.L_, self._L_lower_flag), K_trans.T
+                V = solve_triangular(
+                    self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER
                 )
                 # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v . v^T
-                y_cov = self.kernel_(X) - K_trans.dot(V)
+                y_cov = self.kernel_(X) - V.T.dot(V)
 
                 # undo normalisation
                 y_cov = y_cov * self._y_train_std**2
@@ -371,15 +372,15 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 return y_mean, y_cov
             elif return_std:
                 # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
-                V = cho_solve(
-                    (self.L_, self._L_lower_flag), K_trans.T
+                V = solve_triangular(
+                    self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER
                 )
 
                 # Compute variance of predictive distribution
                 # Use einsum to avoid explicitly forming the large matrix
-                # K_trans @ v just to extract its diagonal afterward.
+                # V^T @ V just to extract its diagonal afterward.
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ji->i", K_trans, V)
+                y_var -= np.einsum("ij,ji->i", V.T, V)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
@@ -483,8 +484,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
         K[np.diag_indices_from(K)] += self.alpha
         try:
-            lower = True
-            L = cholesky(K, lower=lower)
+            L = cholesky(K, lower=GPR_CHOLESKY_LOWER)
         except np.linalg.LinAlgError:
             return (
                 (-np.inf, np.zeros_like(theta)) if eval_gradient else -np.inf
@@ -496,7 +496,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             y_train = y_train[:, np.newaxis]
 
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
-        alpha = cho_solve((L, lower), y_train)
+        alpha = cho_solve((L, GPR_CHOLESKY_LOWER), y_train)
 
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
@@ -507,7 +507,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         if eval_gradient:  # compare Equation 5.9 from GPML
             tmp = np.einsum("ik,jk->ijk", alpha, alpha)  # k: output-dimension
-            tmp -= cho_solve((L, lower), np.eye(K.shape[0]))[:, :, np.newaxis]
+            tmp -= cho_solve(
+                (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0])
+            )[:, :, np.newaxis]
             # Compute "0.5 * trace(tmp.dot(K_gradient))" without
             # constructing the full matrix tmp.dot(K_gradient) since only
             # its diagonal is required
