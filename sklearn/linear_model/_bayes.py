@@ -91,6 +91,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
+
     verbose : bool, default=False
         Verbose mode when fitting the model.
 
@@ -400,6 +401,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
 class ARDRegression(RegressorMixin, LinearModel):
     """Bayesian ARD regression.
+
     Fit the weights of a regression model, using an ARD prior. The weights of
     the regression model are assumed to be in Gaussian distributions.
     Also estimate the parameters lambda (precisions of the distributions of the
@@ -686,6 +688,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
+
         return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
 
