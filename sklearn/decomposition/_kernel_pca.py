@@ -25,11 +25,11 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
 
-    It uses the LAPACK implementation of the full SVD or a randomized truncated
-    SVD by the method of Halko et al. 2009, depending on the shape of the input
-    data and the number of components to extract. It can also use the
-    scipy.sparse.linalg ARPACK implementation of the truncated SVD, see
-    `eigen_solver`.
+    It uses the `scipy.linalg.eigh` LAPACK implementation of the full SVD or
+    the `scipy.sparse.linalg.eigsh` ARPACK implementation of the truncated SVD,
+    depending on the shape of the input data and the number of components to
+    extract. It can also use a randomized truncated SVD by the method of
+    Halko et al. 2009, see `eigen_solver`.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
