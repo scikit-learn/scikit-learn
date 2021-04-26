@@ -25,10 +25,6 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
-- |Feature|, |Enhancement| :class:`decomposition.KernelPCA` now offers a new
-  `'randomized'` solver for faster fit.
-
-
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
