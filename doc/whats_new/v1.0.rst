@@ -279,6 +279,12 @@ Changelog
   during affinity matrix computation for :class:`manifold.TSNE`.
   :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
 
+- |Enhancement| Implement `'auto'` heuristic for the `learning_rate` in
+  :class:`manifold.TSNE`. It will become default in 1.2. The default
+  initialization will change to `pca` in 1.2. PCA initialization will
+  be scaled to have standard deviation 1e-4 in 1.2.
+  :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
+
 :mod:`sklearn.metrics`
 ......................
 
