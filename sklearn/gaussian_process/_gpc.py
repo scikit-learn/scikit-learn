@@ -290,7 +290,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         # Based on Algorithm 3.2 of GPML
         K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Line 4
-        v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
+        v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star, check_finite=False)  # Line 5
         # Line 6 (compute np.diag(v.T.dot(v)) via einsum)
         var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
 
@@ -369,7 +369,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         # Compute gradient based on Algorithm 5.1 of GPML
         d_Z = np.empty(theta.shape[0])
         # XXX: Get rid of the np.diag() in the next line
-        R = W_sr[:, np.newaxis] * cho_solve((L, True), np.diag(W_sr))  # Line 7
+        R = W_sr[:, np.newaxis] * cho_solve((L, True), np.diag(W_sr), check_finite=False)  # Line 7
         C = solve(L, W_sr[:, np.newaxis] * K)  # Line 8
         # Line 9: (use einsum to compute np.diag(C.T.dot(C))))
         s_2 = -0.5 * (np.diag(K) - np.einsum('ij, ij -> j', C, C)) \
@@ -414,11 +414,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             W_sr = np.sqrt(W)
             W_sr_K = W_sr[:, np.newaxis] * K
             B = np.eye(W.shape[0]) + W_sr_K * W_sr
-            L = cholesky(B, lower=True)
+            L = cholesky(B, lower=True, check_finite=False)
             # Line 6
             b = W * f + (self.y_train_ - pi)
             # Line 7
-            a = b - W_sr * cho_solve((L, True), W_sr_K.dot(b))
+            a = b - W_sr * cho_solve((L, True), W_sr_K.dot(b), check_finite=False)
             # Line 8
             f = K.dot(a)
 
