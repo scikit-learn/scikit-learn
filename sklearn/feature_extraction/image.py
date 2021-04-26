@@ -455,7 +455,7 @@ class PatchExtractor(BaseEstimator):
 
     Parameters
     ----------
-    patch_size : tuple of int (patch_height, patch_width)
+    patch_size : tuple of int (patch_height, patch_width), default=None
         The dimensions of one patch.
 
     max_patches : int or float, default=None

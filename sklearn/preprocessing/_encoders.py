@@ -2,13 +2,16 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import sparse
+import numbers
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
+from ..utils import check_array, is_scalar_nan
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
 
@@ -26,7 +29,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X):
+    def _check_X(self, X, force_all_finite=True):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -40,17 +43,19 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None)
+            X_temp = check_array(X, dtype=None,
+                                 force_all_finite=force_all_finite)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
-                X = check_array(X, dtype=object)
+                X = check_array(X, dtype=object,
+                                force_all_finite=force_all_finite)
             else:
                 X = X_temp
             needs_validation = False
         else:
             # pandas dataframe, do validation later column by column, in order
             # to keep the dtype information to be used in the encoder.
-            needs_validation = True
+            needs_validation = force_all_finite
 
         n_samples, n_features = X.shape
         X_columns = []
@@ -70,8 +75,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
-    def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+    def _fit(self, X, handle_unknown='error', force_all_finite=True):
+        X_list, n_samples, n_features = self._check_X(
+            X, force_all_finite=force_all_finite)
 
         if self.categories != 'auto':
             if len(self.categories) != n_features:
@@ -86,10 +92,17 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 cats = _unique(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
-                if Xi.dtype != object:
-                    if not np.all(np.sort(cats) == cats):
-                        raise ValueError("Unsorted categories are not "
-                                         "supported for numerical categories")
+                if Xi.dtype.kind not in 'OUS':
+                    sorted_cats = np.sort(cats)
+                    error_msg = ("Unsorted categories are not "
+                                 "supported for numerical categories")
+                    # if there are nans, nan should be the last element
+                    stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
+                    if (np.any(sorted_cats[:stop_idx] != cats[:stop_idx]) or
+                        (np.isnan(sorted_cats[-1]) and
+                         not np.isnan(sorted_cats[-1]))):
+                        raise ValueError(error_msg)
+
                 if handle_unknown == 'error':
                     diff = _check_unknown(Xi, cats)
                     if diff:
@@ -98,8 +111,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+    def _transform(self, X, handle_unknown='error', force_all_finite=True,
+                   warn_on_unknown=False):
+        X_list, n_samples, n_features = self._check_X(
+            X, force_all_finite=force_all_finite)
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
@@ -112,10 +127,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 .format(len(self.categories_,), n_features)
             )
 
+        columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
             diff, valid_mask = _check_unknown(Xi, self.categories_[i],
-                                                     return_mask=True)
+                                              return_mask=True)
 
             if not np.all(valid_mask):
                 if handle_unknown == 'error':
@@ -123,6 +139,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                            " during transform".format(diff, i))
                     raise ValueError(msg)
                 else:
+                    if warn_on_unknown:
+                        columns_with_unknown.append(i)
                     # Set the problematic rows to an acceptable value and
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
@@ -132,6 +150,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     if (self.categories_[i].dtype.kind in ('U', 'S')
                             and self.categories_[i].itemsize > Xi.itemsize):
                         Xi = Xi.astype(self.categories_[i].dtype)
+                    elif (self.categories_[i].dtype.kind == 'O' and
+                            Xi.dtype.kind == 'U'):
+                        # categories are objects and Xi are numpy strings.
+                        # Cast Xi to an object dtype to prevent truncation
+                        # when setting invalid values.
+                        Xi = Xi.astype('O')
                     else:
                         Xi = Xi.copy()
 
@@ -140,6 +164,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # already called above.
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
                                   check_unknown=False)
+        if columns_with_unknown:
+            warnings.warn("Found unknown categories in columns "
+                          f"{columns_with_unknown} during transform. These "
+                          "unknown categories will be encoded as all zeros",
+                          UserWarning)
 
         return X_int, X_mask
 
@@ -169,8 +198,6 @@ class OneHotEncoder(_BaseEncoder):
     instead.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
-
-    .. versionchanged:: 0.20
 
     Parameters
     ----------
@@ -207,6 +234,12 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
+        .. versionadded:: 0.21
+           The parameter `drop` was added in 0.21.
+
+        .. versionchanged:: 0.23
+           The option `drop='if_binary'` was added in 0.23.
+
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
@@ -238,17 +271,20 @@ class OneHotEncoder(_BaseEncoder):
         - ``drop_idx_ = None`` if all the transformed features will be
           retained.
 
+        .. versionchanged:: 0.23
+           Added the possibility to contain `None` values.
+
     See Also
     --------
-    sklearn.preprocessing.OrdinalEncoder : Performs an ordinal (integer)
+    OrdinalEncoder : Performs an ordinal (integer)
       encoding of the categorical features.
     sklearn.feature_extraction.DictVectorizer : Performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : Performs an approximate one-hot
       encoding of dictionary items or strings.
-    sklearn.preprocessing.LabelBinarizer : Binarizes labels in a one-vs-all
+    LabelBinarizer : Binarizes labels in a one-vs-all
       fashion.
-    sklearn.preprocessing.MultiLabelBinarizer : Transforms between iterable of
+    MultiLabelBinarizer : Transforms between iterable of
       iterables and a multilabel format, e.g. a (samples x classes) binary
       matrix indicating the presence of a class label.
 
@@ -308,14 +344,6 @@ class OneHotEncoder(_BaseEncoder):
             msg = ("handle_unknown should be either 'error' or 'ignore', "
                    "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
-        # If we have both dropped columns and ignored unknown
-        # values, there will be ambiguous cells. This creates difficulties
-        # in interpreting the model.
-        if self.drop is not None and self.handle_unknown != 'error':
-            raise ValueError(
-                "`handle_unknown` must be 'error' when the drop parameter is "
-                "specified, as both would create categories that are all "
-                "zero.")
 
     def _compute_drop_idx(self):
         if self.drop is None:
@@ -335,21 +363,38 @@ class OneHotEncoder(_BaseEncoder):
 
         else:
             try:
-                self.drop = np.asarray(self.drop, dtype=object)
-                droplen = len(self.drop)
+                drop_array = np.asarray(self.drop, dtype=object)
+                droplen = len(drop_array)
             except (ValueError, TypeError):
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
                     "'first', 'if_binary', None or array of objects, got {}"
                     )
-                raise ValueError(msg.format(type(self.drop)))
+                raise ValueError(msg.format(type(drop_array)))
             if droplen != len(self.categories_):
                 msg = ("`drop` should have length equal to the number "
                        "of features ({}), got {}")
-                raise ValueError(msg.format(len(self.categories_),
-                                            len(self.drop)))
-            missing_drops = [(i, val) for i, val in enumerate(self.drop)
-                             if val not in self.categories_[i]]
+                raise ValueError(msg.format(len(self.categories_), droplen))
+            missing_drops = []
+            drop_indices = []
+            for col_idx, (val, cat_list) in enumerate(zip(drop_array,
+                                                          self.categories_)):
+                if not is_scalar_nan(val):
+                    drop_idx = np.where(cat_list == val)[0]
+                    if drop_idx.size:  # found drop idx
+                        drop_indices.append(drop_idx[0])
+                    else:
+                        missing_drops.append((col_idx, val))
+                    continue
+
+                # val is nan, find nan in categories manually
+                for cat_idx, cat in enumerate(cat_list):
+                    if is_scalar_nan(cat):
+                        drop_indices.append(cat_idx)
+                        break
+                else:  # loop did not break thus drop is missing
+                    missing_drops.append((col_idx, val))
+
             if any(missing_drops):
                 msg = ("The following categories were supposed to be "
                        "dropped, but were not found in the training "
@@ -358,10 +403,7 @@ class OneHotEncoder(_BaseEncoder):
                                 ["Category: {}, Feature: {}".format(c, v)
                                     for c, v in missing_drops])))
                 raise ValueError(msg)
-            return np.array([np.where(cat_list == val)[0][0]
-                             for (val, cat_list) in
-                             zip(self.drop, self.categories_)],
-                            dtype=object)
+            return np.array(drop_indices, dtype=object)
 
     def fit(self, X, y=None):
         """
@@ -369,7 +411,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to determine the categories of each feature.
 
         y : None
@@ -381,7 +423,8 @@ class OneHotEncoder(_BaseEncoder):
         self
         """
         self._validate_keywords()
-        self._fit(X, handle_unknown=self.handle_unknown)
+        self._fit(X, handle_unknown=self.handle_unknown,
+                  force_all_finite='allow-nan')
         self.drop_idx_ = self._compute_drop_idx()
         return self
 
@@ -393,7 +436,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         y : None
@@ -402,8 +445,10 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array
-            Transformed input.
+        X_out : {ndarray, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
+            Transformed input. If `sparse=True`, a sparse matrix will be
+            returned.
         """
         self._validate_keywords()
         return super().fit_transform(X, y)
@@ -414,17 +459,23 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array
-            Transformed input.
+        X_out : {ndarray, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
+            Transformed input. If `sparse=True`, a sparse matrix will be
+            returned.
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        warn_on_unknown = (self.handle_unknown == "ignore"
+                           and self.drop is not None)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
+                                        force_all_finite='allow-nan',
+                                        warn_on_unknown=warn_on_unknown)
 
         n_samples, n_features = X_int.shape
 
@@ -473,17 +524,20 @@ class OneHotEncoder(_BaseEncoder):
         """
         Convert the data back to the original representation.
 
-        In case unknown categories are encountered (all zeros in the
-        one-hot encoding), ``None`` is used to represent this category.
+        When unknown categories are encountered (all zeros in the
+        one-hot encoding), ``None`` is used to represent this category. If the
+        feature with the unknown category has a dropped caregory, the dropped
+        category will be its inverse.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
+        X : {array-like, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
             The transformed data.
 
         Returns
         -------
-        X_tr : array-like, shape [n_samples, n_features]
+        X_tr : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
@@ -535,14 +589,28 @@ class OneHotEncoder(_BaseEncoder):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():
-                    found_unknown[i] = unknown
-            # drop will either be None or handle_unknown will be error. If
-            # self.drop_idx_ is not None, then we can safely assume that all of
-            # the nulls in each column are the dropped value
-            elif self.drop_idx_ is not None:
+                    # if categories were dropped then unknown categories will
+                    # be mapped to the dropped category
+                    if self.drop_idx_ is None or self.drop_idx_[i] is None:
+                        found_unknown[i] = unknown
+                    else:
+                        X_tr[unknown, i] = self.categories_[i][
+                            self.drop_idx_[i]
+                        ]
+            else:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
-                    X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
+                    if self.drop_idx_ is None:
+                        all_zero_samples = np.flatnonzero(dropped)
+                        raise ValueError(
+                            f"Samples {all_zero_samples} can not be inverted "
+                            "when drop=None and handle_unknown='error' "
+                            "because they contain all zeros")
+                    # we can safely assume that all of the nulls in each column
+                    # are the dropped value
+                    X_tr[dropped, i] = self.categories_[i][
+                        self.drop_idx_[i]
+                    ]
 
             j += n_categories
 
@@ -621,19 +689,36 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
+    handle_unknown : {'error', 'use_encoded_value'}, default='error'
+        When set to 'error' an error will be raised in case an unknown
+        categorical feature is present during transform. When set to
+        'use_encoded_value', the encoded value of unknown categories will be
+        set to the value given for the parameter `unknown_value`. In
+        :meth:`inverse_transform`, an unknown category will be denoted as None.
+
+        .. versionadded:: 0.24
+
+    unknown_value : int or np.nan, default=None
+        When the parameter handle_unknown is set to 'use_encoded_value', this
+        parameter is required and will set the encoded value of unknown
+        categories. It has to be distinct from the values used to encode any of
+        the categories in `fit`. If set to np.nan, the `dtype` parameter must
+        be a float dtype.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     categories_ : list of arrays
-        The categories of each feature determined during fitting
-        (in order of the features in X and corresponding with the output
-        of ``transform``).
+        The categories of each feature determined during ``fit`` (in order of
+        the features in X and corresponding with the output of ``transform``).
+        This does not include categories that weren't seen during ``fit``.
 
     See Also
     --------
-    sklearn.preprocessing.OneHotEncoder : Performs a one-hot encoding of
-      categorical features.
-    sklearn.preprocessing.LabelEncoder : Encodes target labels with values
-      between 0 and n_classes-1.
+    OneHotEncoder : Performs a one-hot encoding of categorical features.
+    LabelEncoder : Encodes target labels with values between 0 and
+        ``n_classes-1``.
 
     Examples
     --------
@@ -657,9 +742,12 @@ class OrdinalEncoder(_BaseEncoder):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, categories='auto', dtype=np.float64):
+    def __init__(self, *, categories='auto', dtype=np.float64,
+                 handle_unknown='error', unknown_value=None):
         self.categories = categories
         self.dtype = dtype
+        self.handle_unknown = handle_unknown
+        self.unknown_value = unknown_value
 
     def fit(self, X, y=None):
         """
@@ -667,7 +755,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to determine the categories of each feature.
 
         y : None
@@ -678,7 +766,55 @@ class OrdinalEncoder(_BaseEncoder):
         -------
         self
         """
-        self._fit(X)
+        handle_unknown_strategies = ("error", "use_encoded_value")
+        if self.handle_unknown not in handle_unknown_strategies:
+            raise ValueError(
+                f"handle_unknown should be either 'error' or "
+                f"'use_encoded_value', got {self.handle_unknown}."
+            )
+
+        if self.handle_unknown == 'use_encoded_value':
+            if is_scalar_nan(self.unknown_value):
+                if np.dtype(self.dtype).kind != 'f':
+                    raise ValueError(
+                        f"When unknown_value is np.nan, the dtype "
+                        f"parameter should be "
+                        f"a float dtype. Got {self.dtype}."
+                    )
+            elif not isinstance(self.unknown_value, numbers.Integral):
+                raise TypeError(f"unknown_value should be an integer or "
+                                f"np.nan when "
+                                f"handle_unknown is 'use_encoded_value', "
+                                f"got {self.unknown_value}.")
+        elif self.unknown_value is not None:
+            raise TypeError(f"unknown_value should only be set when "
+                            f"handle_unknown is 'use_encoded_value', "
+                            f"got {self.unknown_value}.")
+
+        self._fit(X, force_all_finite='allow-nan')
+
+        if self.handle_unknown == 'use_encoded_value':
+            for feature_cats in self.categories_:
+                if 0 <= self.unknown_value < len(feature_cats):
+                    raise ValueError(f"The used value for unknown_value "
+                                     f"{self.unknown_value} is one of the "
+                                     f"values already used for encoding the "
+                                     f"seen categories.")
+
+        # stores the missing indices per category
+        self._missing_indices = {}
+        for cat_idx, categories_for_idx in enumerate(self.categories_):
+            for i, cat in enumerate(categories_for_idx):
+                if is_scalar_nan(cat):
+                    self._missing_indices[cat_idx] = i
+                    continue
+
+        if np.dtype(self.dtype).kind != 'f' and self._missing_indices:
+            raise ValueError(
+                "There are missing values in features "
+                f"{list(self._missing_indices)}. For OrdinalEncoder to "
+                "passthrough missing values, the dtype parameter must be a "
+                "float")
 
         return self
 
@@ -688,16 +824,26 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         Returns
         -------
-        X_out : sparse matrix or a 2-d array
+        X_out : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
-        X_int, _ = self._transform(X)
-        return X_int.astype(self.dtype, copy=False)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
+                                        force_all_finite='allow-nan')
+        X_trans = X_int.astype(self.dtype, copy=False)
+
+        for cat_idx, missing_idx in self._missing_indices.items():
+            X_missing_mask = X_int[:, cat_idx] == missing_idx
+            X_trans[X_missing_mask, cat_idx] = np.nan
+
+        # create separate category for unknown values
+        if self.handle_unknown == 'use_encoded_value':
+            X_trans[~X_mask] = self.unknown_value
+        return X_trans
 
     def inverse_transform(self, X):
         """
@@ -705,16 +851,16 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
+        X : array-like of shape (n_samples, n_encoded_features)
             The transformed data.
 
         Returns
         -------
-        X_tr : array-like, shape [n_samples, n_features]
+        X_tr : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, force_all_finite='allow-nan')
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
@@ -729,8 +875,29 @@ class OrdinalEncoder(_BaseEncoder):
         dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
+        found_unknown = {}
+
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
-            X_tr[:, i] = self.categories_[i][labels]
+
+            # replace values of X[:, i] that were nan with actual indices
+            if i in self._missing_indices:
+                X_i_mask = _get_mask(X[:, i], np.nan)
+                labels[X_i_mask] = self._missing_indices[i]
+
+            if self.handle_unknown == 'use_encoded_value':
+                unknown_labels = labels == self.unknown_value
+                X_tr[:, i] = self.categories_[i][np.where(
+                    unknown_labels, 0, labels)]
+                found_unknown[i] = unknown_labels
+            else:
+                X_tr[:, i] = self.categories_[i][labels]
+
+        # insert None values for unknown values
+        if found_unknown:
+            X_tr = X_tr.astype(object, copy=False)
+
+            for idx, mask in found_unknown.items():
+                X_tr[mask, idx] = None
 
         return X_tr

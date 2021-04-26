@@ -25,7 +25,9 @@ from sklearn.utils._testing import (
     TempMemmap,
     create_memmap_backed_data,
     _delete_folder,
-    _convert_container)
+    _convert_container,
+    raises,
+)
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -622,16 +624,120 @@ def test_create_memmap_backed_data(monkeypatch):
 
 @pytest.mark.parametrize(
     "constructor_name, container_type",
-    [('list', list),
-     ('tuple', tuple),
-     ('array', np.ndarray),
-     ('sparse', sparse.csr_matrix),
-     ('dataframe', pytest.importorskip('pandas').DataFrame),
-     ('series', pytest.importorskip('pandas').Series),
-     ('index', pytest.importorskip('pandas').Index),
-     ('slice', slice)]
+    [
+        ('list', list),
+        ('tuple', tuple),
+        ('array', np.ndarray),
+        ('sparse', sparse.csr_matrix),
+        ('sparse_csr', sparse.csr_matrix),
+        ('sparse_csc', sparse.csc_matrix),
+        ('dataframe', lambda: pytest.importorskip('pandas').DataFrame),
+        ('series', lambda: pytest.importorskip('pandas').Series),
+        ('index', lambda: pytest.importorskip('pandas').Index),
+        ('slice', slice),
+    ]
 )
-def test_convert_container(constructor_name, container_type):
+@pytest.mark.parametrize(
+    "dtype, superdtype",
+    [
+        (np.int32, np.integer),
+        (np.int64, np.integer),
+        (np.float32, np.floating),
+        (np.float64, np.floating),
+    ]
+)
+def test_convert_container(
+    constructor_name, container_type, dtype, superdtype,
+):
+    """Check that we convert the container to the right type of array with the
+    right data type."""
+    if constructor_name in ("dataframe", "series", "index"):
+        # delay the import of pandas within the function to only skip this test
+        # instead of the whole file
+        container_type = container_type()
     container = [0, 1]
-    assert isinstance(_convert_container(container, constructor_name),
-                      container_type)
+    container_converted = _convert_container(
+        container, constructor_name, dtype=dtype,
+    )
+    assert isinstance(container_converted, container_type)
+
+    if constructor_name in ("list", "tuple", "index"):
+        # list and tuple will use Python class dtype: int, float
+        # pandas index will always use high precision: np.int64 and np.float64
+        assert np.issubdtype(type(container_converted[0]), superdtype)
+    elif hasattr(container_converted, "dtype"):
+        assert container_converted.dtype == dtype
+    elif hasattr(container_converted, "dtypes"):
+        assert container_converted.dtypes[0] == dtype
+
+
+def test_raises():
+    # Tests for the raises context manager
+
+    # Proper type, no match
+    with raises(TypeError):
+        raise TypeError()
+
+    # Proper type, proper match
+    with raises(TypeError, match="how are you") as cm:
+        raise TypeError("hello how are you")
+    assert cm.raised_and_matched
+
+    # Proper type, proper match with multiple patterns
+    with raises(TypeError, match=["not this one", "how are you"]) as cm:
+        raise TypeError("hello how are you")
+    assert cm.raised_and_matched
+
+    # bad type, no match
+    with pytest.raises(ValueError, match="this will be raised"):
+        with raises(TypeError) as cm:
+            raise ValueError("this will be raised")
+    assert not cm.raised_and_matched
+
+    # Bad type, no match, with a err_msg
+    with pytest.raises(AssertionError, match="the failure message"):
+        with raises(TypeError, err_msg="the failure message") as cm:
+            raise ValueError()
+    assert not cm.raised_and_matched
+
+    # bad type, with match (is ignored anyway)
+    with pytest.raises(ValueError, match="this will be raised"):
+        with raises(TypeError, match="this is ignored") as cm:
+            raise ValueError("this will be raised")
+    assert not cm.raised_and_matched
+
+    # proper type but bad match
+    with pytest.raises(
+        AssertionError, match="should contain one of the following patterns"
+    ):
+        with raises(TypeError, match="hello") as cm:
+            raise TypeError("Bad message")
+    assert not cm.raised_and_matched
+
+    # proper type but bad match, with err_msg
+    with pytest.raises(AssertionError, match="the failure message"):
+        with raises(
+            TypeError, match="hello", err_msg="the failure message"
+        ) as cm:
+            raise TypeError("Bad message")
+    assert not cm.raised_and_matched
+
+    # no raise with default may_pass=False
+    with pytest.raises(AssertionError, match="Did not raise"):
+        with raises(TypeError) as cm:
+            pass
+    assert not cm.raised_and_matched
+
+    # no raise with may_pass=True
+    with raises(TypeError, match="hello", may_pass=True) as cm:
+        pass  # still OK
+    assert not cm.raised_and_matched
+
+    # Multiple exception types:
+    with raises((TypeError, ValueError)):
+        raise TypeError()
+    with raises((TypeError, ValueError)):
+        raise ValueError()
+    with pytest.raises(AssertionError):
+        with raises((TypeError, ValueError)):
+            pass

@@ -1,15 +1,18 @@
+import re
+
 import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal, assert_raises
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
+from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
@@ -18,6 +21,40 @@ X = rng.random_sample(size=(300, 50))
 Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
+
+
+@pytest.mark.parametrize('degree', [-1, 0])
+def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
+    with pytest.raises(ValueError, match=f'degree={degree} should be >=1.'):
+        ps_transform = PolynomialCountSketch(degree=degree)
+        ps_transform.fit(X, Y)
+
+
+@pytest.mark.parametrize('X', [X, csr_matrix(X)])
+@pytest.mark.parametrize('Y', [Y, csr_matrix(Y)])
+@pytest.mark.parametrize('gamma', [0.1, 1, 2.5])
+@pytest.mark.parametrize('degree', [1, 2, 3])
+@pytest.mark.parametrize('coef0', [0, 1, 2.5])
+def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
+    # test that PolynomialCountSketch approximates polynomial
+    # kernel on random data
+
+    # compute exact kernel
+    kernel = polynomial_kernel(X, Y, gamma=gamma, degree=degree, coef0=coef0)
+
+    # approximate kernel mapping
+    ps_transform = PolynomialCountSketch(n_components=5000, gamma=gamma,
+                                         coef0=coef0, degree=degree,
+                                         random_state=42)
+    X_trans = ps_transform.fit_transform(X)
+    Y_trans = ps_transform.transform(Y)
+    kernel_approx = np.dot(X_trans, Y_trans.T)
+
+    error = kernel - kernel_approx
+    assert np.abs(np.mean(error)) <= 0.05  # close to unbiased
+    np.abs(error, out=error)
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
 
 
 def _linear_kernel(X, Y):
@@ -55,11 +92,18 @@ def test_additive_chi2_sampler():
     # test error is raised on negative input
     Y_neg = Y.copy()
     Y_neg[0, 0] = -1
-    assert_raises(ValueError, transform.transform, Y_neg)
+    msg = 'Negative values in data passed to'
+    with pytest.raises(ValueError, match=msg):
+        transform.transform(Y_neg)
 
     # test error on invalid sample_steps
     transform = AdditiveChi2Sampler(sample_steps=4)
-    assert_raises(ValueError, transform.fit, X)
+    msg = re.escape(
+        "If sample_steps is not in [1, 2, 3],"
+        " you need to provide sample_interval"
+    )
+    with pytest.raises(ValueError, match=msg):
+        transform.fit(X)
 
     # test that the sample interval is set correctly
     sample_steps_available = [1, 2, 3]
@@ -119,7 +163,9 @@ def test_skewed_chi2_sampler():
     # test error is raised on when inputs contains values smaller than -c
     Y_neg = Y.copy()
     Y_neg[0, 0] = -c * 2.
-    assert_raises(ValueError, transform.transform, Y_neg)
+    msg = 'X may not contain entries smaller than -skewedness'
+    with pytest.raises(ValueError, match=msg):
+        transform.transform(Y_neg)
 
 
 def test_additive_chi2_sampler_exceptions():

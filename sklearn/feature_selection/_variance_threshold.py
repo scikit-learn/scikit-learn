@@ -31,6 +31,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     Notes
     -----
     Allows NaN in the input.
+    Raises ValueError if no feature in X meets the variance threshold.
 
     Examples
     --------

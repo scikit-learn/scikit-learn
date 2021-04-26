@@ -23,6 +23,7 @@ from ..externals._arff import ArffSparseDataType, ArffContainerType
 from . import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
+from ..utils import is_scalar_nan
 from ..utils import get_chunk_n_rows
 from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
@@ -357,7 +358,10 @@ def _convert_arff_data_dataframe(
     for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
         if dtype == 'category':
-            dtype = pd.api.types.CategoricalDtype(attributes[column])
+            cats_without_missing = [cat for cat in attributes[column]
+                                    if cat is not None and
+                                    not is_scalar_nan(cat)]
+            dtype = pd.api.types.CategoricalDtype(cats_without_missing)
         df[column] = df[column].astype(dtype, copy=False)
     return (df, )
 
@@ -696,7 +700,7 @@ def fetch_openml(
     target_column: Optional[Union[str, List]] = 'default-target',
     cache: bool = True,
     return_X_y: bool = False,
-    as_frame: bool = False
+    as_frame: Union[str, bool] = 'auto'
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -713,7 +717,8 @@ def fetch_openml(
     .. note:: EXPERIMENTAL
 
         The API is experimental (particularly the return value structure),
-        and might have small backward-incompatible changes in future releases.
+        and might have small backward-incompatible changes without notice
+        or warning in future releases.
 
     Parameters
     ----------
@@ -752,16 +757,21 @@ def fetch_openml(
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
-    as_frame : bool or 'auto', default=False
+    as_frame : bool or 'auto', default='auto'
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
         The Bunch will contain a ``frame`` attribute with the target and the
         data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
         DataFrames or Series as describe above.
+
         If as_frame is 'auto', the data and target will be converted to
         DataFrame or Series as if as_frame is set to True, unless the dataset
         is stored in sparse format.
+
+        .. versionchanged:: 0.24
+           The default value of `as_frame` changed from `False` to `'auto'`
+           in 0.24.
 
     Returns
     -------
@@ -806,11 +816,12 @@ def fetch_openml(
         in 'target' are represented as NaN's (numerical target) or None
         (categorical target)
     """
-    data_home = get_data_home(data_home=data_home)
-    data_home = join(data_home, 'openml')
     if cache is False:
         # no caching will be applied
         data_home = None
+    else:
+        data_home = get_data_home(data_home=data_home)
+        data_home = join(data_home, 'openml')
 
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
@@ -906,7 +917,7 @@ def fetch_openml(
     # obtain the data
     url = _DATA_FILE.format(data_description['file_id'])
     bunch = _download_data_to_bunch(url, return_sparse, data_home,
-                                    as_frame=as_frame,
+                                    as_frame=bool(as_frame),
                                     features_list=features_list, shape=shape,
                                     target_columns=target_columns,
                                     data_columns=data_columns,

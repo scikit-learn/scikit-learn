@@ -15,6 +15,7 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
+from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
 from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
@@ -52,7 +53,7 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the generation of the random
         integers. Pass an int for reproducible output across multiple function
         calls.
@@ -150,6 +151,15 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         estimator = clone(self.base_estimator_)
         estimator.set_params(**{p: getattr(self, p)
                                 for p in self.estimator_params})
+
+        # TODO: Remove in v1.2
+        # criterion "mse" would cause warnings in every call to
+        # DecisionTreeRegressor.fit(..)
+        if (
+            isinstance(estimator, (DecisionTreeRegressor, ExtraTreeRegressor))
+            and getattr(estimator, "criterion", None) == "mse"
+        ):
+            estimator.set_params(criterion="squared_error")
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
@@ -250,16 +260,18 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         """
         Set the parameters of an estimator from the ensemble.
 
-        Valid parameter keys can be listed with `get_params()`.
+        Valid parameter keys can be listed with `get_params()`. Note that you
+        can directly set the parameters of the estimators contained in
+        `estimators`.
 
         Parameters
         ----------
         **params : keyword arguments
             Specific parameters using e.g.
             `set_params(parameter_name=new_value)`. In addition, to setting the
-            parameters of the stacking estimator, the individual estimator of
-            the stacking estimators can also be set, or can be removed by
-            setting them to 'drop'.
+            parameters of the estimator, the individual estimator of the
+            estimators can also be set, or can be removed by setting them to
+            'drop'.
         """
         super()._set_params('estimators', **params)
         return self
@@ -268,10 +280,13 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         """
         Get the parameters of an estimator from the ensemble.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `estimators` parameter.
+
         Parameters
         ----------
         deep : bool, default=True
-            Setting it to True gets the various classifiers and the parameters
-            of the classifiers as well.
+            Setting it to True gets the various estimators and the parameters
+            of the estimators as well.
         """
         return super()._get_params('estimators', deep=deep)
