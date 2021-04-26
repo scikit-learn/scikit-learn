@@ -53,7 +53,7 @@ print(__doc__)
 # 1- Design the Experiment
 # ------------------------
 n_train, n_test = 2000, 1000            # the sample sizes to use
-max_n_compo = 1999                      # max n_compo to try
+max_n_compo = 1999                      # max n_components to try
 n_compo_grid_size = 10                  # nb of positions in the grid to try
 # generate the grid
 n_compo_range = [np.round(np.exp((x / (n_compo_grid_size - 1))
