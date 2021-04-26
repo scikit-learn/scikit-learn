@@ -108,7 +108,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             alpha = np.sum(sample_weight) * self.alpha
         else:
             raise ValueError(f"Penalty alpha must be a non-negative number, "
-                             f"got {self.alpha}".format(self.alpha))
+                             f"got {self.alpha}")
 
         if self.quantile >= 1.0 or self.quantile <= 0.0:
             raise ValueError(
@@ -191,8 +191,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         solution = result.x
         if not result.success:
             warnings.warn(
-                'Linear programming for Quantile regression did not converge. '
-                'Status is {}'.format(result.status), ConvergenceWarning
+                f"Linear programming for Quantile regression did not converge. "
+                f"Status is {result.status}", ConvergenceWarning
             )
             if solution is np.nan:
                 solution = np.zeros(A_eq.shape[1])
