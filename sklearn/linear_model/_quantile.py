@@ -38,8 +38,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
             'revised simplex'}, default='interior-point'
         Method used by scipy.optimize.linprog to solve the linear programming
-        formulation. Note that the 'highs' methods are only available with
-        scipy>=1.6.0, but recommended for usage.
+        formulation. Note that 'highs' is recommended for usage with
+        scipy>=1.6.0.
 
     solver_options : dict, default=None
         Additional parameters passed to scipy.optimize.linprog as options.
