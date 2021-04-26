@@ -209,7 +209,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         if np.iterable(self.alpha) \
            and self.alpha.shape[0] != y.shape[0]:
-            #Ensure alpha contains only finite values
+            # Ensure alpha contains only finite values
             check_array(self.alpha)
             if self.alpha.shape[0] == 1:
                 self.alpha = self.alpha[0]
@@ -217,7 +217,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 raise ValueError("alpha must be a scalar or an array"
                                  " with same number of entries as y.(%d != %d)"
                                  % (self.alpha.shape[0], y.shape[0]))
-
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
@@ -280,7 +279,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
                         "GaussianProcessRegressor estimator."
                         % self.kernel_,) + exc.args
             raise
-        self.alpha_ = cho_solve((self.L_, True), self.y_train_, check_finite=False)  # Line 3
+        self.alpha_ = cho_solve((self.L_, True), self.y_train_,
+                                check_finite=False)  # Line 3
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
@@ -352,7 +352,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
             if return_cov:
-                v = cho_solve((self.L_, True), K_trans.T, check_finite=False)  # Line 5
+                v = cho_solve((self.L_, True), K_trans.T,
+                              check_finite=False)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
 
                 # undo normalisation
@@ -484,7 +485,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
         if y_train.ndim == 1:
             y_train = y_train[:, np.newaxis]
 
-        alpha = cho_solve((L, True), y_train, check_finite=False)  # Line 3
+        alpha = cho_solve((L, True), y_train,
+                          check_finite=False)  # Line 3
 
         # Compute log-likelihood (compare line 7)
         log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
@@ -494,7 +496,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         if eval_gradient:  # compare Equation 5.9 from GPML
             tmp = np.einsum("ik,jk->ijk", alpha, alpha)  # k: output-dimension
-            tmp -= cho_solve((L, True), np.eye(K.shape[0]), check_finite=False)[:, :, np.newaxis]
+            tmp -= cho_solve((L, True), np.eye(K.shape[0]),
+                             check_finite=False)[:, :, np.newaxis]
             # Compute "0.5 * trace(tmp.dot(K_gradient))" without
             # constructing the full matrix tmp.dot(K_gradient) since only
             # its diagonal is required
