@@ -1345,9 +1345,10 @@ def test_num_features(constructor_name):
         [1, 2, 3],
         ["a", "b", "c"],
         [False, True, False],
-        [1.0, 3.4, 4.0]
+        [1.0, 3.4, 4.0],
+        [{"a": 1}, {"b": 2}, {"c": 3}],
     ],
-    ids=["int", "str", "bool", "float"]
+    ids=["int", "str", "bool", "float", "dict"]
 )
 @pytest.mark.parametrize("constructor_name", [
     "list", "tuple", "array", "series"
@@ -1368,6 +1369,8 @@ def test_num_features_errors_1d_containers(X, constructor_name):
         message += " with shape (3,)"
     elif isinstance(X[0], str):
         message += " where the samples are of type str"
+    elif isinstance(X[0], dict):
+        message += " where the samples are of type dict"
     with pytest.raises(TypeError, match=re.escape(message)):
         _num_features(X)
 
