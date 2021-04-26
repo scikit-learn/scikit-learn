@@ -215,3 +215,17 @@ def test_equivariance(quantile):
     model2.fit(X@A, y)
     assert model2.intercept_ == pytest.approx(model1.intercept_)
     assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=2e-6)
+
+
+def test_linprog_failure():
+    """Test that linprog fails."""
+    X = np.linspace(0, 10, num=10).reshape(-1, 1)
+    y = np.linspace(0, 10, num=10)
+    reg = QuantileRegressor(
+        alpha=0,
+        solver="interior-point",
+        solver_options={"maxiter": 1})
+
+    msg = "Linear programming for QuantileRegressor did not succeed."
+    with pytest.raises(ValueError, match=msg):
+        reg.fit(X, y)
