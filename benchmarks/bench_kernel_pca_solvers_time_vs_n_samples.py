@@ -33,9 +33,9 @@ explore a wider range of values for `n_samples`.
 You can also set `include_arpack=True` to add this other solver in the
 experiments (much slower).
 
-Finally you can have a look at the second example of this series,
-"Kernel PCA Solvers comparison benchmark 2", where this time the number of
-examples is fixed, and the desired number of components varies.
+Finally you can have a look at the second example of this series, "Kernel PCA
+Solvers comparison benchmark: time vs n_components", where this time the number
+of examples is fixed, and the desired number of components varies.
 """
 # Author: Sylvain MARIE, Schneider Electric
 
