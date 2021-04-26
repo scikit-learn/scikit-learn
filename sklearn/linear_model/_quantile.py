@@ -1,4 +1,5 @@
-# Authors: David Dale dale.david@mail.ru
+# Authors: David Dale <dale.david@mail.ru>
+#          Christian Lorentzen <lorentzen.ch@gmail.com>
 # License: BSD 3 clause
 import warnings
 
