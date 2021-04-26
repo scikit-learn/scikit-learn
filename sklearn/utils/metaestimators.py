@@ -96,12 +96,14 @@ class _AvailableIfDescriptor:
         # update the docstring of the descriptor
         update_wrapper(self, fn)
 
-    def __get__(self, obj, type=None):
+    def __get__(self, obj, owner=None):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
             if not self.check(obj):
-                raise AttributeError
+                raise AttributeError(f"This {repr(owner.__name__)}"
+                                     f" has no attribute"
+                                     f" {repr(self.attribute_name)}")
 
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
@@ -131,20 +133,20 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     descriptors.
     """
     def __init__(self, fn, delegate_names, attribute_name):
-        super().__init__(fn, self.check, attribute_name)
+        super().__init__(fn, self._check, attribute_name)
         self.delegate_names = delegate_names
 
-    def check(self, obj):
-        # raise an AttributeError if the attribute is not present on the object
+    def _check(self, obj):
         for delegate_name in self.delegate_names:
             try:
                 delegate = attrgetter(delegate_name)(obj)
             except AttributeError:
                 continue
-            else:
-                return getattr(delegate, self.attribute_name)
+            break
         else:
-            return attrgetter(self.delegate_names[-1])(obj)
+            return False
+        # raise original AttributeError
+        return getattr(delegate, self.attribute_name) or True
 
 
 def if_delegate_has_method(delegate):

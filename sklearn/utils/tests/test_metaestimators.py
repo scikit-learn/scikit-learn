@@ -66,7 +66,9 @@ class HasNoPredict:
 
 def test_if_delegate_has_method():
     assert hasattr(MetaEst(HasPredict()), 'predict')
-    assert not hasattr(MetaEst(HasNoPredict()), 'predict')
+    obj = MetaEst(HasNoPredict())
+    print(obj)
+    assert not hasattr(obj, 'predict')
     assert not hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()),
                        'predict')
     assert hasattr(MetaEstTestTuple(HasPredict(), HasNoPredict()), 'predict')

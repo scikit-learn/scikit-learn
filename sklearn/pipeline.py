@@ -542,7 +542,7 @@ class Pipeline(_BaseComposition):
         )
 
     def _can_transform(self):
-        return (self._final_estimator != "passthrough" and
+        return (self._final_estimator == "passthrough" or
                 hasattr(self._final_estimator, "transform"))
 
     @available_if(_can_transform)
