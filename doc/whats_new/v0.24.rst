@@ -47,7 +47,7 @@ Changelog
 
 - |Fix| Fixed a bug to support multiple strings for a category when
   `sparse=False` in :class:`feature_extraction.DictVectorizer`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`19982` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
