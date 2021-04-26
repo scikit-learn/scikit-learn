@@ -20,10 +20,12 @@ from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
 
-from sklearn.utils._testing \
-    import (assert_array_less,
-            assert_almost_equal, assert_array_almost_equal,
-            assert_array_equal, assert_allclose)
+from sklearn.utils._testing import (
+    assert_array_less,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_allclose
+)
 
 
 def f(x):
@@ -185,7 +187,8 @@ def test_no_optimizer():
 
 
 @pytest.mark.parametrize('kernel', kernels)
-def test_predict_cov_vs_std(kernel):
+@pytest.mark.parametrize("target", [y, np.ones(X.shape[0], dtype=np.float64)])
+def test_predict_cov_vs_std(kernel, target):
     if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
         pytest.xfail("This test may fail on 32bit Py3.6")
 
@@ -455,25 +458,6 @@ def test_no_fit_default_predict():
     assert_array_almost_equal(y_cov1, y_cov2)
 
 
-@pytest.mark.parametrize('kernel', kernels)
-def test_K_inv_reset(kernel):
-    y2 = f(X2).ravel()
-
-    # Test that self._K_inv is reset after a new fit
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert hasattr(gpr, '_K_inv')
-    assert gpr._K_inv is None
-    gpr.predict(X, return_std=True)
-    assert gpr._K_inv is not None
-    gpr.fit(X2, y2)
-    assert gpr._K_inv is None
-    gpr.predict(X2, return_std=True)
-    gpr2 = GaussianProcessRegressor(kernel=kernel).fit(X2, y2)
-    gpr2.predict(X2, return_std=True)
-    # the value of K_inv should be independent of the first fit
-    assert_array_equal(gpr._K_inv, gpr2._K_inv)
-
-
 def test_warning_bounds():
     kernel = RBF(length_scale_bounds=[1e-5, 1e-3])
     gpr = GaussianProcessRegressor(kernel=kernel)
@@ -569,3 +553,28 @@ def test_constant_target(kernel):
     assert_allclose(y_pred, y_constant)
     # set atol because we compare to zero
     assert_allclose(np.diag(y_cov), 0., atol=1e-9)
+
+
+def test_gpr_consistency_std_cov_non_invertible_kernel():
+    """Check the consistency between the returned std. dev. and the covariance.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19936
+    Inconsistencies were observed when the kernel cannot be inverted (or
+    numerically stable).
+    """
+    kernel = (C(8.98576054e+05, (1e-12, 1e12)) *
+              RBF([5.91326520e+02, 1.32584051e+03], (1e-12, 1e12)) +
+              WhiteKernel(noise_level=1e-5))
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0, optimizer=None)
+    X_train = np.array([[0., 0.], [1.54919334, -0.77459667], [-1.54919334, 0.],
+                        [0., -1.54919334], [0.77459667, 0.77459667],
+                        [-0.77459667, 1.54919334]])
+    y_train = np.array([[-2.14882017e-10], [-4.66975823e+00], [4.01823986e+00],
+                        [-1.30303674e+00], [-1.35760156e+00],
+                        [3.31215668e+00]])
+    gpr.fit(X_train, y_train)
+    X_test = np.array([[-1.93649167, -1.93649167], [1.93649167, -1.93649167],
+                       [-1.93649167, 1.93649167], [1.93649167, 1.93649167]])
+    pred1, std = gpr.predict(X_test, return_std=True)
+    pred2, cov = gpr.predict(X_test, return_cov=True)
+    assert_allclose(std, np.sqrt(np.diagonal(cov)), rtol=1e-5)
