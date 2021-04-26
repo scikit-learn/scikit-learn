@@ -692,7 +692,8 @@ def test_encoder_dtypes():
 
     for X in [np.array([[1, 2], [3, 4]], dtype='int64'),
               np.array([[1, 2], [3, 4]], dtype='float64'),
-              np.array([['a', 'b'], ['c', 'd']]),  # string dtype
+              np.array([['a', 'b'], ['c', 'd']]),      # unicode dtype
+              np.array([[b'a', b'b'], [b'c', b'd']]),  # string dtype
               np.array([[1, 'a'], [3, 'b']], dtype='object')]:
         enc.fit(X)
         assert all([enc.categories_[i].dtype == X.dtype for i in range(2)])
@@ -827,21 +828,25 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-@pytest.mark.parametrize('input_dtype', ['O', 'U'])
-@pytest.mark.parametrize('category_dtype', ['O', 'U'])
+# deliberately omit 'OS' as an invalid combo
+@pytest.mark.parametrize('input_dtype, category_dtype', ['OO', 'OU',
+                                                         'UO', 'UU', 'US',
+                                                         'SO', 'SU', 'SS'])
 @pytest.mark.parametrize('array_type', ['list', 'array', 'dataframe'])
-def test_encoders_unicode_categories(input_dtype, category_dtype, array_type):
-    """Check that encoding work with string and object dtypes.
+def test_encoders_string_categories(input_dtype, category_dtype, array_type):
+    """Check that encoding work with object, unicode, and byte string dtypes.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/15616
     https://github.com/scikit-learn/scikit-learn/issues/15726
+    https://github.com/scikit-learn/scikit-learn/issues/19677
     """
 
     X = np.array([['b'], ['a']], dtype=input_dtype)
     categories = [np.array(['b', 'a'], dtype=category_dtype)]
     ohe = OneHotEncoder(categories=categories, sparse=False).fit(X)
 
-    X_test = _convert_container([['a'], ['a'], ['b'], ['a']], array_type)
+    X_test = _convert_container([['a'], ['a'], ['b'], ['a']], array_type,
+                                dtype=input_dtype)
     X_trans = ohe.transform(X_test)
 
     expected = np.array([[0, 1], [0, 1], [1, 0], [0, 1]])

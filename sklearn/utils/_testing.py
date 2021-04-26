@@ -758,30 +758,58 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-def _convert_container(container, constructor_name, columns_name=None):
+def _convert_container(
+    container, constructor_name, columns_name=None, dtype=None
+):
+    """Convert a given container to a specific array-like with a dtype.
+
+    Parameters
+    ----------
+    container : array-like
+        The container to convert.
+    constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
+            "series", "index", "slice", "sparse_csr", "sparse_csc"}
+        The type of the returned container.
+    columns_name : index or array-like, default=None
+        For pandas container supporting `columns_names`, it will affect
+        specific names.
+    dtype : dtype, default=None
+        Force the dtype of the container. Does not apply to `"slice"`
+        container.
+
+    Returns
+    -------
+    converted_container
+    """
     if constructor_name == 'list':
-        return list(container)
+        if dtype is None:
+            return list(container)
+        else:
+            return np.asarray(container, dtype=dtype).tolist()
     elif constructor_name == 'tuple':
-        return tuple(container)
+        if dtype is None:
+            return tuple(container)
+        else:
+            return tuple(np.asarray(container, dtype=dtype).tolist())
     elif constructor_name == 'array':
-        return np.asarray(container)
+        return np.asarray(container, dtype=dtype)
     elif constructor_name == 'sparse':
-        return sp.sparse.csr_matrix(container)
+        return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == 'dataframe':
         pd = pytest.importorskip('pandas')
-        return pd.DataFrame(container, columns=columns_name)
+        return pd.DataFrame(container, columns=columns_name, dtype=dtype)
     elif constructor_name == 'series':
         pd = pytest.importorskip('pandas')
-        return pd.Series(container)
+        return pd.Series(container, dtype=dtype)
     elif constructor_name == 'index':
         pd = pytest.importorskip('pandas')
-        return pd.Index(container)
+        return pd.Index(container, dtype=dtype)
     elif constructor_name == 'slice':
         return slice(container[0], container[1])
     elif constructor_name == 'sparse_csr':
-        return sp.sparse.csr_matrix(container)
+        return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == 'sparse_csc':
-        return sp.sparse.csc_matrix(container)
+        return sp.sparse.csc_matrix(container, dtype=dtype)
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
