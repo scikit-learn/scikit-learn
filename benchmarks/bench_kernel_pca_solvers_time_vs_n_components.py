@@ -25,7 +25,7 @@ What you can observe:
 ---------------------
 When the number of requested principal components is small, the dense solver
 takes more time to complete, while the randomized method returns similar
-results shorter execution times.
+results with shorter execution times.
 
 Going further:
 --------------
