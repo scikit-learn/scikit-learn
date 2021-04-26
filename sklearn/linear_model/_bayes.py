@@ -27,41 +27,52 @@ class BayesianRidge(RegressorMixin, LinearModel):
     implementation and the optimization of the regularization parameters
     lambda (precision of the weights) and alpha (precision of the noise).
     Read more in the :ref:`User Guide <bayesian_regression>`.
+
     Parameters
     ----------
     n_iter : int, default=300
         Maximum number of iterations. Should be greater than or equal to 1.
+
     tol : float, default=1e-3
         Stop the algorithm if w has converged.
+
     alpha_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
         over the alpha parameter.
+
     alpha_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the alpha parameter.
+
     lambda_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
         over the lambda parameter.
+
     lambda_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the lambda parameter.
+
     alpha_init : float, default=None
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
             .. versionadded:: 0.22
+
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
             .. versionadded:: 0.22
+
     compute_score : bool, default=False
         If True, compute the log marginal likelihood at each iteration of the
         optimization.
+
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model.
         The intercept is not treated as a probabilistic parameter
         and thus has no associated variance. If set
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
+
     normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
@@ -78,25 +89,33 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If True, X will be copied; else, it may be overwritten.
     verbose : bool, default=False
         Verbose mode when fitting the model.
+
+
     Attributes
     ----------
     coef_ : array-like of shape (n_features,)
         Coefficients of the regression model (mean of distribution)
+
     intercept_ : float
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
+
     alpha_ : float
        Estimated precision of the noise.
+
     lambda_ : float
        Estimated precision of the weights.
+
     sigma_ : array-like of shape (n_features, n_features)
         Estimated variance-covariance matrix of the weights
+
     scores_ : array-like of shape (n_iter_+1,)
         If computed_score is True, value of the log marginal likelihood (to be
         maximized) at each iteration of the optimization. The array starts
         with the value of the log marginal likelihood obtained for the initial
         values of alpha and lambda and ends with the value obtained for the
         estimated alpha and lambda.
+
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
@@ -116,6 +135,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     BayesianRidge()
     >>> clf.predict([[1, 1]])
     array([1.])
+
     Notes
     -----
     There exist several strategies to perform Bayesian ridge regression. This
@@ -125,6 +145,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     View of Automatic Relevance Determination (Wipf and Nagarajan, 2008) these
     update rules do not guarantee that the marginal likelihood is increasing
     between two consecutive iterations of the optimization.
+
     References
     ----------
     D. J. C. MacKay, Bayesian Interpolation, Computation and Neural Systems,
