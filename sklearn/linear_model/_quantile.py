@@ -1,14 +1,11 @@
 # Authors: David Dale <dale.david@mail.ru>
 #          Christian Lorentzen <lorentzen.ch@gmail.com>
 # License: BSD 3 clause
-import warnings
-
 import numpy as np
 from scipy.optimize import linprog
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
-from ..exceptions import ConvergenceWarning
 from ..utils.validation import _check_sample_weight
 from ..utils.fixes import sp_version, parse_version
 
@@ -190,12 +187,17 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         )
         solution = result.x
         if not result.success:
-            warnings.warn(
-                f"Linear programming for QuantileRegressor did not converge. "
-                f"Status is {result.status}", ConvergenceWarning
+            failure = {
+                1: "Iteration limit reached.",
+                2: "Problem appears to be infeasible.",
+                3: "Problem appears to be unbounded.",
+                4: "Numerical difficulties encountered."
+            }
+            raise ValueError(
+                f"Linear programming for QuantileRegressor did not succeed. "
+                f"Status is {result.status}: "
+                + failure.setdefault(result.status, "unknown reason")
             )
-            if solution is np.nan:
-                solution = np.zeros(A_eq.shape[1])
 
         # positive - negative
         params = solution[:n_params] - solution[n_params:2 * n_params]
