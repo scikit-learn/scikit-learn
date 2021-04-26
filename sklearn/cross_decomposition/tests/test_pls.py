@@ -568,3 +568,18 @@ def test_loadings_converges():
 
     # Loadings converges to reasonable values
     assert np.all(np.abs(cca.x_loadings_) < 1)
+
+
+def test_pls_constant_y():
+    """Checks warning when y is constant. Non-regression test for #19831"""
+    rng = np.random.RandomState(42)
+    x = rng.rand(100, 3)
+    y = np.zeros(100)
+
+    pls = PLSRegression()
+
+    msg = "Y residual is constant at iteration"
+    with pytest.warns(UserWarning, match=msg):
+        pls.fit(x, y)
+
+    assert_allclose(pls.x_rotations_, 0)
