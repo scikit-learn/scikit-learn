@@ -25,10 +25,6 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
-- |Feature|, |Enhancement| :class:`decomposition.KernelPCA` now offers a new
-  `'randomized'` solver for faster fit.
-
-
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -168,6 +164,12 @@ Changelog
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
 
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  significantly accelerates computation when the number of samples is much
+  larger than the desired number of components.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
+
 - |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning`,
   :class:`MiniBatchSparsePCA` and :func:`dict_learning_online` where the
   update of the dictionary was incorrect. :pr:`19198` by
@@ -178,12 +180,6 @@ Changelog
   :func:`dict_learning` and :func:`dict_learning_online` where the restart of
   unused atoms during the dictionary update was not working as expected.
   :pr:`19198` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Enhancement| added a new approximate solver (randomized SVD, available with
-  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
-  significantly accelerates computation when the number of samples is much
-  larger than the desired number of components.
-  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
 
 :mod:`sklearn.ensemble`
 .......................

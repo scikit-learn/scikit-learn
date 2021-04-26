@@ -93,7 +93,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             run randomized SVD by the method of Halko et al. The current
             implementation selects eigenvalues based on their module; therefore
             using this method can lead to unexpected results if the kernel is
-            not PSD.
+            not positive semi-definite.
 
         .. versionchanged:: 1.0
            `'randomized'` was added.

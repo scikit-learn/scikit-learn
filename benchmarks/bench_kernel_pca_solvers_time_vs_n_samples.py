@@ -16,8 +16,8 @@ An increasing number of examples is used to train a KernelPCA, between
 `n_samples_grid_size` positions (default: 4). Samples have 2 features, and are
 generated using `make_circles`. For each training sample size, KernelPCA models
 are trained for the various possible `eigen_solver` values. All of them are
-trained to obtain p principal components (default: 100). The execution times
-are displayed in a plot at the end of the experiment.
+trained to obtain `n_components` principal components (default: 100). The
+execution times are displayed in a plot at the end of the experiment.
 
 What you can observe:
 ---------------------
@@ -33,9 +33,9 @@ explore a wider range of values for `n_samples`.
 You can also set `include_arpack=True` to add this other solver in the
 experiments (much slower).
 
-Finally you can have a look at the second example of this series,
-"Kernel PCA Solvers comparison benchmark 2", where this time the number of
-examples is fixed, and the desired number of components varies.
+Finally you can have a look at the second example of this series, "Kernel PCA
+Solvers comparison benchmark: time vs n_components", where this time the number
+of examples is fixed, and the desired number of components varies.
 """
 # Author: Sylvain MARIE, Schneider Electric
 

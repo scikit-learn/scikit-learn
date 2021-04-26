@@ -302,7 +302,7 @@ features, in :class:`KernelPCA` the number of components is bounded by the
 number of samples. Many real-world datasets have large number of samples! In
 these cases finding *all* the components with a full kPCA is a waste of
 computation time, as data is mostly described by the first few components
-(e.g. ``n_components<=100``). In other words, the centered gram matrix that
+(e.g. ``n_components<=100``). In other words, the centered Gram matrix that
 is eigendecomposed in the Kernel PCA fitting process has an effective rank that
 is much smaller than its size. This is a situation where approximate
 eigensolvers can provide speedup with very low precision loss.
