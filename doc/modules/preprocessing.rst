@@ -251,7 +251,7 @@ positive semidefinite kernel :math:`K`.
 
 We can have a look at the mathematical formulation now that we have the
 intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
-computed from :math:`X`, a data matrix of shape `(n_samples, n_features)`.
+computed from :math:`X`, a data matrix of shape `(n_samples, n_features)`, during the `fit` step.
 :math:`K` is defined by
 
 .. math::
@@ -276,7 +276,7 @@ can implicitly center as shown in Appendix B in [Scholkopf1998]_:
   \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
 
 :math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)` where
-all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. At `transform`,
+all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. In the `transform` step,
 the kernel becomes :math:`K_{test}(X, Y)` defined as:
 
 .. math::
@@ -289,7 +289,7 @@ centering :math:`K_{test}` is done as:
 .. math::
   \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
 
-:math:`1_{\text{n}_{samples}}` is a matrix of shape
+:math:`1'_{\text{n}_{samples}}` is a matrix of shape
 `(n_samples_test, n_samples)` where all entries are equal to
 :math:`\frac{1}{\text{n}_{samples}}`.
 
