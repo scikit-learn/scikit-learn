@@ -624,19 +624,51 @@ def test_create_memmap_backed_data(monkeypatch):
 
 @pytest.mark.parametrize(
     "constructor_name, container_type",
-    [('list', list),
-     ('tuple', tuple),
-     ('array', np.ndarray),
-     ('sparse', sparse.csr_matrix),
-     ('dataframe', pytest.importorskip('pandas').DataFrame),
-     ('series', pytest.importorskip('pandas').Series),
-     ('index', pytest.importorskip('pandas').Index),
-     ('slice', slice)]
+    [
+        ('list', list),
+        ('tuple', tuple),
+        ('array', np.ndarray),
+        ('sparse', sparse.csr_matrix),
+        ('sparse_csr', sparse.csr_matrix),
+        ('sparse_csc', sparse.csc_matrix),
+        ('dataframe', lambda: pytest.importorskip('pandas').DataFrame),
+        ('series', lambda: pytest.importorskip('pandas').Series),
+        ('index', lambda: pytest.importorskip('pandas').Index),
+        ('slice', slice),
+    ]
 )
-def test_convert_container(constructor_name, container_type):
+@pytest.mark.parametrize(
+    "dtype, superdtype",
+    [
+        (np.int32, np.integer),
+        (np.int64, np.integer),
+        (np.float32, np.floating),
+        (np.float64, np.floating),
+    ]
+)
+def test_convert_container(
+    constructor_name, container_type, dtype, superdtype,
+):
+    """Check that we convert the container to the right type of array with the
+    right data type."""
+    if constructor_name in ("dataframe", "series", "index"):
+        # delay the import of pandas within the function to only skip this test
+        # instead of the whole file
+        container_type = container_type()
     container = [0, 1]
-    assert isinstance(_convert_container(container, constructor_name),
-                      container_type)
+    container_converted = _convert_container(
+        container, constructor_name, dtype=dtype,
+    )
+    assert isinstance(container_converted, container_type)
+
+    if constructor_name in ("list", "tuple", "index"):
+        # list and tuple will use Python class dtype: int, float
+        # pandas index will always use high precision: np.int64 and np.float64
+        assert np.issubdtype(type(container_converted[0]), superdtype)
+    elif hasattr(container_converted, "dtype"):
+        assert container_converted.dtype == dtype
+    elif hasattr(container_converted, "dtypes"):
+        assert container_converted.dtypes[0] == dtype
 
 
 def test_raises():

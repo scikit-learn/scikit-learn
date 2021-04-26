@@ -99,8 +99,29 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
+- |Efficiency| :class:`cluster.MiniBatchKMeans` is now faster in multicore
+  settings. :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.MiniBatchKMeans` where the sample
+  weights were partially ignored when the input is sparse. :pr:`17622` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Improved convergence detection based on center change in
+  :class:`cluster.MiniBatchKMeans` which was almost never achievable.
+  :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
+
+- |API| the default value for the `batch_size` parameter of
+  :class:`MiniBatchKMeans` was changed from 100 to 1024 due to efficiency
+  reasons. The `n_iter_` attribute of :class:`MiniBatchKMeans` now reports the
+  number of started epochs and the `n_steps_` attribute reports the number of
+  mini batches processed. :pr:`17622`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -108,6 +129,15 @@ Changelog
 - |Enhancement| :class:`compose.ColumnTransformer` now records the output
   of each transformer in `output_indices_`. :pr:`18393` by
   :user:`Luca Bittarello <lbittarello>`.
+
+- |FIX| :meth:`compose.ColumnTransformer.get_feature_names` supports
+  non-string feature names returned by any of its transformers.
+  :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
+- |Fix| :class:`compose.TransformedTargetRegressor` now takes nD targets with
+  an adequate transformer.
+  :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -138,8 +168,16 @@ Changelog
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
 
-:mod:`sklearn.decomposition`
-............................
+- |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning`,
+  :class:`MiniBatchSparsePCA` and :func:`dict_learning_online` where the
+  update of the dictionary was incorrect. :pr:`19198` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`DictionaryLearning`, :class:`SparsePCA`,
+  :class:`MiniBatchDictionaryLearning`, :class:`MiniBatchSparsePCA`,
+  :func:`dict_learning` and :func:`dict_learning_online` where the restart of
+  unused atoms during the dictionary update was not working as expected.
+  :pr:`19198` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| added a new approximate solver (randomized SVD, available with
   `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
@@ -162,12 +200,24 @@ Changelog
   experimental. They are now considered stable and are subject to the same
   deprecation cycles as all other estimators. :pr:`19799` by `Nicolas Hug`_.
 
+- |Enhancement| Improve the HTML rendering of the
+  :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
+  :pr:`19564` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
 - |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| :func:`feature_selection.r_regression` computes Pearson's R
+  correlation coefficients between the features and the target.
+  :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
+  and `Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -291,6 +341,19 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+
+:mod:`sklearn.neighbors`
+..........................
+
+- |Enhancement| The creation of :class:`neighbors.KDTree` and
+  :class:`neighbors.BallTree` has been improved for their worst-cases time
+  complexity from :math:`\mathcal{O}(n^2)` to :math:`\mathcal{O}(n)`.
+  :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
+  :user:`Julien Jerphanion <jjerphan>`.
+
+- |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
+  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
@@ -319,7 +382,8 @@ Changelog
   very large values. This problem happens in particular when using a scaler on
   sparse data with a constant column with sample weights, in which case
   centering is typically disabled. :pr:`19527` by :user:`Oliver Grisel
-  <ogrisel>` and :user:`Maria Telenczuk <maikia>`.
+  <ogrisel>` and :user:`Maria Telenczuk <maikia>` and :pr:`19788` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| :meth:`preprocessing.StandardScaler.inverse_transform` now
   correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
@@ -327,6 +391,14 @@ Changelog
 - |Feature| :class:`preprocessing.OneHotEncoder` now supports
   `handle_unknown='ignore'` and dropping categories. :pr:`19041` by
   `Thomas Fan`_.
+
+- |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
+  supporting sparse matrix and raise the appropriate error message.
+  :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
+  :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
 :mod:`sklearn.tree`
 ...................

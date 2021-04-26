@@ -313,9 +313,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         In case of perfect fit, the learning procedure is stopped early.
 
     learning_rate : float, default=1.
-        Learning rate shrinks the contribution of each classifier by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
+        Weight applied to each classifier at each boosting iteration. A higher
+        learning rate increases the contribution of each classifier. There is
+        a trade-off between the `learning_rate` and `n_estimators` parameters.
 
     algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
@@ -898,9 +898,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         In case of perfect fit, the learning procedure is stopped early.
 
     learning_rate : float, default=1.
-        Learning rate shrinks the contribution of each regressor by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
+        Weight applied to each classifier at each boosting iteration. A higher
+        learning rate increases the contribution of each classifier. There is
+        a trade-off between the `learning_rate` and `n_estimators` parameters.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
         The loss function to use when updating the weights after each

@@ -1499,12 +1499,11 @@ def test_partial_fit_oneclass(klass):
     assert clf.coef_.shape == (X.shape[1], )
     assert clf.offset_.shape == (1,)
     assert clf.predict([[0, 0]]).shape == (1, )
-    id1 = id(clf.coef_.data)
+    previous_coefs = clf.coef_
 
     clf.partial_fit(X[third:])
-    id2 = id(clf.coef_.data)
     # check that coef_ haven't been re-allocated
-    assert id1 == id2
+    assert clf.coef_ is previous_coefs
 
     # raises ValueError if number of features does not match previous data
     with pytest.raises(ValueError):

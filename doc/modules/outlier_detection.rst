@@ -356,7 +356,7 @@ on new unseen data when LOF is applied for novelty detection, i.e. when the
 This strategy is illustrated below.
 
 .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_outlier_detection_001.png
-   :target: ../auto_examples/neighbors/sphx_glr_plot_lof_outlier_detection.html
+   :target: ../auto_examples/neighbors/plot_lof_outlier_detection.html
    :align: center
    :scale: 75%
 
@@ -401,6 +401,6 @@ Note that ``fit_predict`` is not available in this case.
 Novelty detection with Local Outlier Factor is illustrated below.
 
   .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
-     :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
+     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
