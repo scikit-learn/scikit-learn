@@ -29,7 +29,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         The quantile that the model tries to predicts. It must be strictly
         between 0 and 1.
 
-    alpha : float, default=1e-4
+    alpha : float, default=1.0
         Constant that multiplies L1 penalty term.
 
     fit_intercept : bool, default=True
@@ -60,7 +60,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self,
         *,
         quantile=0.5,
-        alpha=0.0001,
+        alpha=1.0,
         fit_intercept=True,
         solver="interior-point",
         solver_options=None,
