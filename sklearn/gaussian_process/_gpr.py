@@ -27,7 +27,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
     The implementation is based on Algorithm 2.1 of [1]_.
 
     In addition to standard scikit-learn estimator API,
-    `GaussianProcessRegressor`:
+    :class:`GaussianProcessRegressor`:
 
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method `sample_y(X)`, which evaluates samples
