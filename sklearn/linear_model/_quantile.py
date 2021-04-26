@@ -154,7 +154,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # 1_n = vector of length n with entries equal one
         # see https://stats.stackexchange.com/questions/384909/
         c = np.concatenate([
-            np.ones(n_params * 2) * alpha,
+            np.full(n_params * 2, fill_value=alpha),
             sample_weight * self.quantile,
             sample_weight * (1 - self.quantile),
         ])
