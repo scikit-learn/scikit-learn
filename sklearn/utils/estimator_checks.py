@@ -3229,7 +3229,7 @@ def check_classifiers_array_bytes_targets(name, classifier_orig):
     X = _pairwise_estimator_convert_X(X, classifier)
 
     classes_bytes = np.array([b'a', b'b'], dtype=object)
-    y = classes_bytes[y]
+    y = classes_bytes[y].astype("S")
 
     classifier.fit(X, y)
     y_pred = classifier.predict(X)
