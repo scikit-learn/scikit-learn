@@ -6,8 +6,9 @@
 
 
 import numpy as np
+import joblib
 from joblib import Parallel
-from ..utils.fixes import delayed
+from ..utils.fixes import delayed, parse_version
 import warnings
 
 from . import GaussianMixture
@@ -562,10 +563,18 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 X, X_subset, y, ag_params, gm_params, agg_clustering, seed
             )
 
-        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        if parse_version(joblib.__version__) < parse_version('0.12'):
+            parallel_kwargs = {"backend": "threading"}
+        else:
+            parallel_kwargs = {"prefer": "threads"}
+        
+        results = Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose, **parallel_kwargs
+        )(
             delayed(_fit_for_data)(ag_params, gm_params, seed)
             for (ag_params, gm_params), seed in zip(param_grid, seeds)
         )
+
         best_idx = np.argmin([result.criterion for result in results])
 
         self.best_criterion_ = results[best_idx].criterion
