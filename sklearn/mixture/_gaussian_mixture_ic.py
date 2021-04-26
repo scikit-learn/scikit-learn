@@ -567,7 +567,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             parallel_kwargs = {"backend": "threading"}
         else:
             parallel_kwargs = {"prefer": "threads"}
-        
+
         results = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose, **parallel_kwargs
         )(
