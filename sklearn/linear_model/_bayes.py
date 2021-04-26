@@ -99,8 +99,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         estimated alpha and lambda.
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
-<<<<<<< HEAD
-=======
 
     X_offset_ : float
         If `normalize=True`, offset subtracted for centering data to a
@@ -110,7 +108,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If `normalize=True`, parameter used to scale data to a unit
         standard deviation.
 
->>>>>>> 6927fa26aedf48162314b675016180e3356ad557
     Examples
     --------
     >>> from sklearn import linear_model
@@ -446,8 +443,6 @@ class ARDRegression(RegressorMixin, LinearModel):
     intercept_ : float
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
-<<<<<<< HEAD
-=======
 
     X_offset_ : float
         If `normalize=True`, offset subtracted for centering data to a
@@ -457,7 +452,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         If `normalize=True`, parameter used to scale data to a unit
         standard deviation.
 
->>>>>>> 6927fa26aedf48162314b675016180e3356ad557
     Examples
     --------
     >>> from sklearn import linear_model
