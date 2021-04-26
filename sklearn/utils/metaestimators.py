@@ -131,7 +131,7 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     descriptors.
     """
     def __init__(self, fn, delegate_names, attribute_name):
-        super(fn, self.check, attribute_name)
+        super().__init__(fn, self.check, attribute_name)
         self.delegate_names = delegate_names
 
     def check(self, obj):
