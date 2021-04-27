@@ -269,6 +269,8 @@ Changelog
   Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV were deprecated in:
   :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
+  BayesianRidge, ARDRegression were deprecated in:
+  :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
 
 - |Fix|: `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature
