@@ -52,6 +52,13 @@ Changelog
 :mod:`sklearn.gaussian_process`
 ...............................
 
+- |Fix| Avoid explicitly forming inverse covariance matrix in
+  :class:`gaussian_process.GaussianProcessRegressor` when set to output
+  standard deviation. With certain covariance matrices this inverse is unstable
+  to compute explicitly. Calling Cholesky solver mitigates this issue in
+  computation.
+  :pr:`19939` by :user:`Ian Halvic <iwhalvic>`.
+
 - |Fix| Avoid division by zero when scaling constant target in
   :class:`gaussian_process.GaussianProcessRegressor`. It was due to a std. dev.
   equal to 0. Now, such case is detected and the std. dev. is affected to 1
