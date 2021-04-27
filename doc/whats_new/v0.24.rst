@@ -42,6 +42,13 @@ Changelog
   with `sample_weight` parameter and `least_absolute_deviation` loss function.
   :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
 
+:mod:`feature_extraction`
+.........................
+
+- |Fix| Fixed a bug to support multiple strings for a category when
+  `sparse=False` in :class:`feature_extraction.DictVectorizer`.
+  :pr:`19982` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
 
