@@ -274,8 +274,8 @@ def test_nmf_sparse_input(Estimator, solver, regularization):
     A_sparse = csc_matrix(A)
 
     est1 = Estimator(solver=solver, n_components=5, init='random',
-               regularization=regularization, random_state=0,
-               tol=1e-2)
+                     regularization=regularization, random_state=0,
+                     tol=1e-2)
     est2 = clone(est1)
 
     W1 = est1.fit_transform(A)
@@ -738,7 +738,7 @@ def test_nmf_close_minibatch_nmf(batch_size):
     X = np.abs(rng.randn(48, 5))
     max_iter = 5000
     solver = 'mu'
-    beta_loss='kullback-leibler'
+    beta_loss = 'kullback-leibler'
     init = 'nndsvda'  # FIXME : should be removed in 1.1
     nmf = NMF(5, solver=solver, init=init, random_state=0,
               max_iter=max_iter, beta_loss=beta_loss)
