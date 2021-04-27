@@ -903,13 +903,11 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     for n_i, batch in zip(range(n_steps), batches):
         # update W
         # H_sum, HHt are saved and reused if not update_H
-        # XHt is updated if batch_size is smaller than n_samples
-        if batch_size < n_samples:
-            XHt = None
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
             X[batch], W[batch], H, beta_loss, l1_reg_W, l2_reg_W,
             gamma, H_sum, HHt, XHt, update_H)
         W[batch] *= delta_W
+
         # necessary for stability with beta_loss < 1
         if beta_loss < 1:
             W[batch][W[batch] < np.finfo(np.float64).eps] = 0.
@@ -928,9 +926,13 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
             if beta_loss <= 1:
                 H[H < np.finfo(np.float64).eps] = 0.
 
+        # XHt is updated if batch_size is smaller than n_samples
+        if batch_size < n_samples:
+            XHt = None
+
         # test convergence criterion every 10 iterations
         if tol > 0 and n_i % (10*n_batches) == 0:
-            error = _beta_divergence(X[batch], W[batch], H,
+            error = _beta_divergence(X, W, H,
                                      beta_loss, square_root=True)
             if verbose:
                 iter_time = time.time()
@@ -1686,13 +1688,13 @@ class MiniBatchNMF(NMF):
         For now, this is the only available solver in the
         MiniBatch implementation.
 
-    beta_loss : float or string, default 'itakura-saito'
-        String must be in {'kullback-leibler', 'itakura-saito'}.
+    beta_loss : float or {'frobenius', 'kullback-leibler', \
+            'itakura-saito'}, default='frobenius'
         Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from
-        'kullback-leibler' (or 1) lead to significantly slower
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros. Used only in 'mu' solver.
+        matrix X cannot contain zeros.
 
     tol : float, default: 1e-4
         Tolerance of the stopping condition.
@@ -1774,7 +1776,7 @@ class MiniBatchNMF(NMF):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, init=None, solver='mu',
                  batch_size=1024,
-                 beta_loss='itakura-saito', tol=1e-4, max_iter=200,
+                 beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  regularization='both', forget_factor=0.7):
 
