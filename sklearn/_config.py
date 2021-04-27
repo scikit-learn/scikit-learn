@@ -14,7 +14,7 @@ _threadlocal = threading.local()
 
 
 def _get_threadlocal_config():
-    """Get the configuration that is local to the thread. If the configuration
+    """Get a threadlocal **mutable** configuration. If the configuration
     does not exist, copy the default global configuration."""
     if not hasattr(_threadlocal, 'global_config'):
         _threadlocal.global_config = _global_config.copy()
