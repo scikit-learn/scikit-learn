@@ -343,8 +343,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # scale eigenvectors (properly account for null-space for dot product)
         non_zeros = np.flatnonzero(self.eigenvalues_)
         scaled_eigenvectors = np.zeros_like(self.eigenvectors_)
-        scaled_eigenvectors[:, non_zeros] = (self.eigenvectors_[:, non_zeros]
-                                             / np.sqrt(self.eigenvalues_[non_zeros]))
+        scaled_eigenvectors[:, non_zeros] = (
+            self.eigenvectors_[:, non_zeros]
+            / np.sqrt(self.eigenvalues_[non_zeros])
+        )
 
         # Project with a scalar product between K and the scaled eigenvectors
         return np.dot(K, scaled_eigenvectors)
