@@ -59,6 +59,14 @@ Changelog
 - |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
+  
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metrics.top_k_accuracy_score` now supports multiclass
+  problems where only two classes appear in `y_true` and all the classes
+  are specified in `labels`.
+  :pr:`19721` by :user:`Joris Clement <flyingdutchman23>`.
 
 :mod:`sklearn.model_selection`
 ..............................
