@@ -495,7 +495,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
             y_train = y_train[:, np.newaxis]
 
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
-        alpha = cho_solve((L, GPR_CHOLESKY_LOWER), y_train, check_finite=False)
+        alpha = cho_solve(
+            (L, GPR_CHOLESKY_LOWER), y_train, check_finite=False
+        )
 
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
@@ -511,7 +513,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
             # compute K^-1
             inner_term -= cho_solve(
-                (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False
+                (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]),
+                check_finite=False
             )[:, :, np.newaxis]
             # Since we are interested about the trace of
             # inner_term.dot(K_gradient), we don't explicitly compute the
