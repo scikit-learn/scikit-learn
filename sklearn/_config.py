@@ -34,6 +34,8 @@ def get_config():
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
     """
+    # Return a copy of the threadlocal configuration so that users will
+    # not be able to modify the configuration with the returned dict.
     return _get_threadlocal_config().copy()
 
 
