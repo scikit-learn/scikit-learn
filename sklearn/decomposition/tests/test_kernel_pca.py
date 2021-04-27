@@ -3,6 +3,7 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils._testing import (assert_array_almost_equal,
+                                    assert_array_equal,
                                     assert_allclose)
 
 from sklearn.decomposition import PCA, KernelPCA
@@ -281,15 +282,27 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     because the kernel centerer does its job correctly.
     """
 
-    K = [  # a non symmetric gram matrix
+    # a non symmetric gram matrix
+    K = [
         [1, 2],
         [3, 40]
     ]
-
     kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
-                     n_components=1)
-    # no error
-    kpca.fit(K)
+                     n_components=1, random_state=0)
+    kpca.fit(K)  # no error
+
+    # same test with centered kernel
+    Kc = [
+        [9, -9],
+        [-9, 9]
+    ]
+    kpca_c = KernelPCA(kernel="precomputed", eigen_solver=solver,
+                       n_components=1, random_state=0)
+    kpca_c.fit(Kc)
+
+    # comparison between the non-centered and centered versions
+    assert_array_equal(kpca.alphas_, kpca_c.alphas_)
+    assert_array_equal(kpca.lambdas_, kpca_c.lambdas_)
 
 
 def test_kernel_pca_invalid_kernel():
