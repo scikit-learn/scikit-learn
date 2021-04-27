@@ -15,8 +15,8 @@ from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_outlier_corruption
+from sklearn.utils.estimator_checks import parametrize_with_checks
 
 from sklearn.datasets import load_iris
 
@@ -208,11 +208,11 @@ def test_hasattr_prediction():
     assert not hasattr(clf, 'score_samples')
 
 
-def test_novelty_true_common_tests():
-
+@parametrize_with_checks([neighbors.LocalOutlierFactor(novelty=True)])
+def test_novelty_true_common_tests(estimator, check):
     # the common tests are run for the default LOF (novelty=False).
     # here we run these common tests for LOF when novelty=True
-    check_estimator(neighbors.LocalOutlierFactor(novelty=True))
+    check(estimator)
 
 
 @pytest.mark.parametrize('expected_outliers', [30, 53])

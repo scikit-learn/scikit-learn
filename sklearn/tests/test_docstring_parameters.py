@@ -256,6 +256,11 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == 'MiniBatchNMF':
         est.beta_loss = 'kullback-leibler'
 
+    # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
+    if Estimator.__name__ == 'TSNE':
+        est.learning_rate = 200.0
+        est.init = 'random'
+
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
                                random_state=2)
