@@ -546,3 +546,26 @@ def test_bound_check_fixed_hyperparameter():
                         periodicity_bounds="fixed")  # seasonal component
     kernel = k1 + k2
     GaussianProcessRegressor(kernel=kernel).fit(X, y)
+
+
+# FIXME: we should test for multitargets as well. However, GPR is broken:
+# see: https://github.com/scikit-learn/scikit-learn/pull/19706
+@pytest.mark.parametrize('kernel', kernels)
+def test_constant_target(kernel):
+    """Check that the std. dev. is affected to 1 when normalizing a constant
+    feature.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/18318
+    NaN where affected to the target when scaling due to null std. dev. with
+    constant target.
+    """
+    y_constant = np.ones(X.shape[0], dtype=np.float64)
+
+    gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+    gpr.fit(X, y_constant)
+    assert gpr._y_train_std == pytest.approx(1.0)
+
+    y_pred, y_cov = gpr.predict(X, return_cov=True)
+    assert_allclose(y_pred, y_constant)
+    # set atol because we compare to zero
+    assert_allclose(np.diag(y_cov), 0., atol=1e-9)

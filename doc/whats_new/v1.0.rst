@@ -105,7 +105,7 @@ Changelog
 - |Fix| Improved convergence detection based on center change in
   :class:`cluster.MiniBatchKMeans` which was almost never achievable.
   :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-  
+
 - |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
@@ -159,13 +159,16 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
-:mod:`sklearn.decomposition`
-............................
-
 - |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
   ensure determinism of the output. Achieved by flipping signs of the SVD
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
+
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  significantly accelerates computation when the number of samples is much
+  larger than the desired number of components.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning`,
   :class:`MiniBatchSparsePCA` and :func:`dict_learning_online` where the
@@ -203,6 +206,14 @@ Changelog
 - |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| :func:`feature_selection.r_regression` computes Pearson's R
+  correlation coefficients between the features and the target.
+  :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
+  and `Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -271,6 +282,12 @@ Changelog
   during affinity matrix computation for :class:`manifold.TSNE`.
   :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
 
+- |Enhancement| Implement `'auto'` heuristic for the `learning_rate` in
+  :class:`manifold.TSNE`. It will become default in 1.2. The default
+  initialization will change to `pca` in 1.2. PCA initialization will
+  be scaled to have standard deviation 1e-4 in 1.2.
+  :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -310,11 +327,6 @@ Changelog
   each split while keeping each group within a single split.
   :pr:`18649` by `Leandro Hermida <hermidalc>` and
   `Rodion Martynov <marrodion>`.
-
-- |Fix| The `fit` method of the successive halving parameter search 
-  (:class:`model_selection.HalvingGridSearchCV`, and
-  :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
-  `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -385,6 +397,10 @@ Changelog
 - |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
+  :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
 :mod:`sklearn.tree`
 ...................
