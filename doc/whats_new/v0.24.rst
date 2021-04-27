@@ -209,6 +209,9 @@ random sampling procedures.
 
 - |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`.
 
+- |Fix| Change in the random sampling procedures for the center initialization
+  of :class:`cluster.KMeans`.
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
