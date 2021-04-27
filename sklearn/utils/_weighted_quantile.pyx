@@ -1,11 +1,81 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# distutils: language = c
 
 cimport numpy as np
 import numpy as np
 from numpy.lib.function_base import _quantile_is_valid
 from libc.math cimport isnan
+from libc.stdlib cimport malloc, free
+
+
+cdef extern from "stdlib.h":
+    ctypedef void const_void "const void"
+    void qsort(void *base, int nmemb, int size,
+            int(*compar)(const_void *, const_void *)) nogil
+
+
+cdef struct IndexedElement:
+    np.ulong_t index
+    np.float32_t value
+
+
+cdef int _compare(const_void *a, const_void *b):
+    cdef np.float32_t v
+    if isnan((<IndexedElement*> a).value): return 1
+    if isnan((<IndexedElement*> b).value): return -1
+    v = (<IndexedElement*> a).value-(<IndexedElement*> b).value
+    if v < 0: return -1
+    if v >= 0: return 1
+
+
+cdef long[:] argsort(float[:] data) nogil:
+    """source: https://github.com/jcrudy/cython-argsort/blob/master/cyargsort/argsort.pyx"""
+    cdef np.ulong_t i
+    cdef np.ulong_t n = data.shape[0]
+    cdef long[:] order
+
+    with gil:
+        order = np.empty(n, dtype=np.int_)
+
+    # Allocate index tracking array.
+    cdef IndexedElement *order_struct = <IndexedElement *> malloc(n * sizeof(IndexedElement))
+
+    # Copy data into index tracking array.
+    for i in range(n):
+        order_struct[i].index = i
+        order_struct[i].value = data[i]
+
+    # Sort index tracking array.
+    qsort(<void *> order_struct, n, sizeof(IndexedElement), _compare)
+
+    # Copy indices from index tracking array to output array.
+    for i in range(n):
+        order[i] = order_struct[i].index
+
+    # Free index tracking array.
+    free(order_struct)
+
+    return order
+
+
+cdef int _searchsorted1D(float[:] A, float x) nogil:
+    """
+    source: https://github.com/gesellkammer/numpyx/blob/master/numpyx.pyx
+    """
+    cdef:
+        int imin = 0
+        int imax = A.shape[0]
+        int imid
+    while imin < imax:
+        imid = imin + ((imax - imin) / 2)
+        if A[imid] < x:
+            imin = imid + 1
+        else:
+            imax = imid
+    return imin
+
 
 cdef void _weighted_quantile_presorted_1D(float[:] a,
                                           float[:] q,
@@ -14,46 +84,36 @@ cdef void _weighted_quantile_presorted_1D(float[:] a,
                                           Interpolation interpolation) nogil:
     """
     Weighted quantile (1D) on presorted data. 
-    Note: the data is not guaranteed to not be changed within this function
+    Note: the weights data will be changed
     """
-    cdef long[:] q_idx
+    cdef long q_idx
     cdef float weights_total, weights_cum, frac
     cdef int i
 
     cdef int n_samples = a.shape[0]
     cdef int n_q = q.shape[0]
 
-    cdef float[:] weights_norm
-
-    # todo; this should in theory not be necessary, but by overwriting `weights`
-    #  the procedure does not pass the tests
-    with gil:
-        weights_norm = np.empty(n_samples, dtype=np.float32)
-
     weights_total = 0
     for i in range(n_samples):
         weights_total += weights[i]
 
     weights_cum = weights[0]
-    weights_norm[0] = 0.5 * weights[0] / weights_total
+    weights[0] = 0.5 * weights[0] / weights_total
     for i in range(1, n_samples):
         weights_cum += weights[i]
-        weights_norm[i] = (weights_cum - 0.5 * weights[i]) / weights_total
-
-    # todo; this is most likely easily implementable in C (based on standard search algorithms),
-    #  but this is roughly the idea
-    with gil:
-        q_idx = np.searchsorted(weights_norm, q) - 1
+        weights[i] = (weights_cum - 0.5 * weights[i]) / weights_total
 
     for i in range(n_q):
-        if q_idx[i] == -1:
+        q_idx = _searchsorted1D(weights, q[i]) - 1
+
+        if q_idx == -1:
             quantiles[i] = a[0]
-        elif q_idx[i] == n_samples - 1:
+        elif q_idx == n_samples - 1:
             quantiles[i] = a[n_samples - 1]
         else:
-            quantiles[i] = a[q_idx[i]]
+            quantiles[i] = a[q_idx]
             if interpolation == linear:
-                frac = (q[i] - weights_norm[q_idx[i]]) / (weights_norm[q_idx[i] + 1] - weights_norm[q_idx[i]])
+                frac = (q[i] - weights[q_idx]) / (weights[q_idx + 1] - weights[q_idx])
             elif interpolation == lower:
                 frac = 0
             elif interpolation == higher:
@@ -61,60 +121,53 @@ cdef void _weighted_quantile_presorted_1D(float[:] a,
             elif interpolation == midpoint:
                 frac = 0.5
             elif interpolation == nearest:
-                frac = (q[i] - weights_norm[q_idx[i]]) / (weights_norm[q_idx[i] + 1] - weights_norm[q_idx[i]])
+                frac = (q[i] - weights[q_idx]) / (weights[q_idx + 1] - weights[q_idx])
                 if frac < 0.5:
                     frac = 0
                 else:
                     frac = 1
 
-            quantiles[i] = a[q_idx[i]] + frac * (a[q_idx[i] + 1] - a[q_idx[i]])
+            quantiles[i] = a[q_idx] + frac * (a[q_idx + 1] - a[q_idx])
 
 
 cdef void _weighted_quantile_unchecked_1D(float[:] a,
                                           float[:] q,
                                           float[:] weights,
                                           float[:] quantiles,
-                                          Interpolation interpolation):
+                                          Interpolation interpolation) nogil:
     """
     Weighted quantile (1D)
     Note: the data is not guaranteed to not be changed within this function
     """
     cdef long[:] sort_idx
-    cdef int n_samples = len(a)
+    cdef int n_samples = a.shape[0]
+    cdef long count_samples = 0
+    cdef float[:] a_processed
+    cdef float[:] weights_processed
+    cdef int i
 
     for i in range(n_samples):
         if isnan(a[i]):
-            n_samples -= 1
+            continue
         elif weights[i] == 0:
-            n_samples -= 1
-            a[i] = np.nan
+            continue
+        else:
+            a[count_samples] = a[i]
+            weights[count_samples] = weights[i]
+            count_samples += 1
 
-    # todo; if it can be implemented without the GIL it could be integrated into the function above
-    sort_idx = np.argsort(a)
-    a = a.base[sort_idx]
-    weights = weights.base[sort_idx]
+    sort_idx = argsort(a[:count_samples])
 
-    _weighted_quantile_presorted_1D(a[:n_samples], q, weights[:n_samples], quantiles, interpolation)
+    with gil:
+        a_processed = np.empty(count_samples, dtype=np.float32)
+        weights_processed = np.empty(count_samples, dtype=np.float32)
 
+    for i in range(count_samples):
+        a_processed[i] = a[sort_idx[i]]
+        weights_processed[i] = weights[sort_idx[i]]
 
-cdef void _weighted_quantile_unchecked_2D(np.ndarray[np.float32_t, ndim=2] a,
-                                          np.ndarray[np.float32_t, ndim=1] q,
-                                          np.ndarray[np.float32_t, ndim=2] weights,
-                                          np.ndarray[np.float32_t, ndim=3] quantiles,
-                                          Interpolation interpolation = linear):
-    """
-    Weighted quantile (2D) -> the first axis will be collapsed
-    Note: the data is not guaranteed to not be changed within this function
-    This function is currently not used as it requires the GIL to loop over
-    the samples. After conversion to memoryviews it didn't seem to pass the
-    right buffersize. It would be worth checking if this can be resolved.
-    In the meantime I fall back on the direct numpy implementation.
-    """
-    cdef int i
-    cdef int n_samples = a.shape[1]
-
-    for i in range(n_samples):
-        _weighted_quantile_unchecked_1D(a[:, i], q, weights[:, i], quantiles[:, 0, i], interpolation)
+    _weighted_quantile_presorted_1D(a_processed[:count_samples], q, weights_processed[:count_samples],
+                                    quantiles, interpolation)
 
 
 def _weighted_quantile_unchecked(a, q, weights, axis, overwrite_input=False, interpolation='linear',
