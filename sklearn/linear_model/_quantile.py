@@ -16,18 +16,21 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     The linear Quantile Regressor optimizes the pinball loss for a
     desired `quantile` and is robust to outliers.
 
-    Read more in the :ref:`User Guide <quantile_regression>`
+    This model uses an L1 regularization like Lasso.
+
+    Read more in the :ref:`User Guide <quantile_regression>`.
 
     .. versionadded:: 1.0
 
     Parameters
     ----------
     quantile : float, default=0.5
-        The quantile that the model tries to predicts. It must be strictly
-        between 0 and 1.
+        The quantile that the model tries to predict. It must be strictly
+        between 0 and 1. If 0.5, the model predicts the 50% quantile, i.e. the
+        median.
 
     alpha : float, default=1.0
-        Constant that multiplies L1 penalty term.
+        Regularization constant that multiplies the L1 penalty term.
 
     fit_intercept : bool, default=True
         Whether or not to fit the intercept.
