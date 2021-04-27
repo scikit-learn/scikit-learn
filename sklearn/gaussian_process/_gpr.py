@@ -278,7 +278,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         K = self.kernel_(self.X_train_)
         K[np.diag_indices_from(K)] += self.alpha
         try:
-            self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER)
+            self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError as exc:
             exc.args = ("The kernel, %s, is not returning a "
                         "positive definite matrix. Try gradually "
@@ -287,7 +287,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
                         % self.kernel_,) + exc.args
             raise
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
-        self.alpha_ = cho_solve((self.L_, GPR_CHOLESKY_LOWER), self.y_train_)
+        self.alpha_ = cho_solve(
+            (self.L_, GPR_CHOLESKY_LOWER), self.y_train_, check_finite=False,
+        )
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
@@ -358,11 +360,13 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
+            # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
+            V = solve_triangular(
+                self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER,
+                check_finite=False
+            )
+
             if return_cov:
-                # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
-                V = solve_triangular(
-                    self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER
-                )
                 # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v
                 y_cov = self.kernel_(X) - V.T.dot(V)
 
@@ -371,11 +375,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
                 return y_mean, y_cov
             elif return_std:
-                # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
-                V = solve_triangular(
-                    self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER
-                )
-
                 # Compute variance of predictive distribution
                 # Use einsum to avoid explicitly forming the large matrix
                 # V^T @ V just to extract its diagonal afterward.
@@ -484,7 +483,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
         K[np.diag_indices_from(K)] += self.alpha
         try:
-            L = cholesky(K, lower=GPR_CHOLESKY_LOWER)
+            L = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError:
             return (
                 (-np.inf, np.zeros_like(theta)) if eval_gradient else -np.inf
@@ -496,7 +495,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             y_train = y_train[:, np.newaxis]
 
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
-        alpha = cho_solve((L, GPR_CHOLESKY_LOWER), y_train)
+        alpha = cho_solve((L, GPR_CHOLESKY_LOWER), y_train, check_finite=False)
 
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
@@ -505,16 +504,20 @@ class GaussianProcessRegressor(MultiOutputMixin,
         log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
         log_likelihood = log_likelihood_dims.sum(-1)  # sum over dimensions
 
-        if eval_gradient:  # compare Equation 5.9 from GPML
-            tmp = np.einsum("ik,jk->ijk", alpha, alpha)  # k: output-dimension
-            tmp -= cho_solve(
-                (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0])
+        if eval_gradient:
+            # Eq. 5.9, p. 114, and footnote 5 in p. 114
+            # 0.5 * trace((alpha . alpha^T - K^-1) . K_gradient)
+            # compute most inner term
+            inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
+            # compute K^-1
+            inner_term -= cho_solve(
+                (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False
             )[:, :, np.newaxis]
-            # Compute "0.5 * trace(tmp.dot(K_gradient))" without
-            # constructing the full matrix tmp.dot(K_gradient) since only
-            # its diagonal is required
+            # Since we are interested about the trace of
+            # inner_term.dot(K_gradient), we don't explicitly compute the
+            # matrix-by-matrix operation and instead use an einsum
             log_likelihood_gradient_dims = \
-                0.5 * np.einsum("ijl,jik->kl", tmp, K_gradient)
+                0.5 * np.einsum("ijl,jik->kl", inner_term, K_gradient)
             log_likelihood_gradient = log_likelihood_gradient_dims.sum(-1)
 
         if eval_gradient:
