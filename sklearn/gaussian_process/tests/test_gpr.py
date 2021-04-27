@@ -23,7 +23,8 @@ from sklearn.utils._testing import (
     assert_array_less,
     assert_almost_equal,
     assert_array_almost_equal,
-    assert_allclose
+    assert_allclose,
+    assert_raise_message,
 )
 
 
