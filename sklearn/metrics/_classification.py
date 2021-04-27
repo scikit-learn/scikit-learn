@@ -881,11 +881,10 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     t_nonzero = np.nonzero(t_sum)[0].size
     p_nonzero = np.nonzero(p_sum)[0].size
 
-    if t_nonzero == 1 or p_nonzero == 1:
+    if cov_ypyp * cov_ytyt == 0:
         return 0.
     else:
-        mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-        return mcc
+        return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
 
 @_deprecate_positional_args
