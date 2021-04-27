@@ -466,23 +466,21 @@ def test_kernel_pca_solvers_equivalence(n_components):
     assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
 
 
-@pytest.mark.parametrize("kernel",
-                         ["linear", "poly", "rbf", "sigmoid", "cosine"])
-def test_kernel_pca_inverse_transform(kernel):
-    """Check that transform + inverse transform = identity
+def test_kernel_pca_inverse_transform_reconstruction():
+    """Test if the reconstruction is a good approximation.
 
-    Makes sure that whatever the solver, transforming and then inverse
-    transforming the training set leads to the train set, if the
-    number of components is large enough.
+    Note that in general it is not possible to get an arbitrarily good
+    reconstruction because of kernel centering that does not
+    preserve all the information of the original data.
     """
-    X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
-                       random_state=0)
+    X, *_ = make_blobs(n_samples=100, n_features=4, random_state=0)
 
-    kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True,
-                   random_state=0)
-    X_trans = kp.fit_transform(X)
-    X_inv = kp.inverse_transform(X_trans)
-    assert_allclose(X, X_inv)
+    kpca = KernelPCA(
+        n_components=20, kernel='rbf', fit_inverse_transform=True, alpha=1e-3
+    )
+    X_trans = kpca.fit_transform(X)
+    X_reconst = kpca.inverse_transform(X_trans)
+    assert np.linalg.norm(X - X_reconst) / np.linalg.norm(X) < 1e-1
 
 
 def test_32_64_decomposition_shape():
