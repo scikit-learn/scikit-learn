@@ -159,13 +159,16 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
-:mod:`sklearn.decomposition`
-............................
-
 - |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
   ensure determinism of the output. Achieved by flipping signs of the SVD
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
+
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  significantly accelerates computation when the number of samples is much
+  larger than the desired number of components.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning`,
   :class:`MiniBatchSparsePCA` and :func:`dict_learning_online` where the
@@ -395,8 +398,8 @@ Changelog
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in 
-  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``. 
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
 :mod:`sklearn.tree`
