@@ -1,6 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: profile=True
 
 # Authors: Jasper Roebroek <roebroek.jasper@gmail.com>
 # License: BSD 3 clause
@@ -27,7 +28,7 @@ to pick the right training algorithm.
 """
 from abc import ABCMeta, abstractmethod
 
-from cython.parallel cimport prange, parallel
+from cython.parallel cimport prange
 cimport openmp
 cimport numpy as np
 from numpy cimport ndarray
@@ -39,6 +40,7 @@ import numpy as np
 from numpy.lib.function_base import _quantile_is_valid
 
 import threading
+import joblib
 from joblib import Parallel
 
 from ._forest import ForestRegressor, _accumulate_prediction, _generate_sample_indices
@@ -53,28 +55,24 @@ from ..utils.validation import check_is_fitted
 __all__ = ["RandomForestQuantileRegressor", "ExtraTreesQuantileRegressor"]
 
 
-cdef void _quantile_forest_predict(long[:, ::1] X_leaves,
-                                   float[:, ::1] y_train,
-                                   long[:, ::1] y_train_leaves,
-                                   float[:, ::1] y_weights,
-                                   float[::1] q,
-                                   float[:, :, ::1] quantiles):
+cpdef void _quantile_forest_predict(long[:, ::1] X_leaves,
+                                    float[:, ::1] y_train,
+                                    long[:, ::1] y_train_leaves,
+                                    float[:, ::1] y_weights,
+                                    float[::1] q,
+                                    float[:, :, ::1] quantiles,
+                                    long start,
+                                    long stop):
     """
     X_leaves : (n_estimators, n_test_samples)
     y_train : (n_samples, n_outputs)
     y_train_leaves : (n_estimators, n_samples)
     y_weights : (n_estimators, n_samples)
     q : (n_q)
-    quantiles : (n_q, n_test_samplse, n_outputs)
-    
-    Notes
-    -----
-    inspired by:
-    https://stackoverflow.com/questions/42281886/cython-make-prange-parallelization-thread-safe
+    quantiles : (n_q, n_test_samples, n_outputs)
+    start, stop : indices to break up computation across threads (used in range)
     """
-    # todo: potential speedup (according to the article linked in the notes) by padding x_weights and x_a:
-    #   "You get a little bit extra performance by avoiding padding the private parts of the array to 64 byte,
-    #   which is a typical cache line size.". I am not sure how to deal with this
+    # todo; this does not compile with function cdef, only with cpdef
 
     cdef:
         int n_estimators = X_leaves.shape[0]
@@ -83,17 +81,15 @@ cdef void _quantile_forest_predict(long[:, ::1] X_leaves,
         int n_samples = y_train.shape[0]
         int n_test_samples = X_leaves.shape[1]
 
-        int i, j, e, o, tid, count_samples
+        int i, j, e, o, count_samples
         float curr_weight
         bint sorted = y_train.shape[1] == 1
 
-        int num_threads = openmp.omp_get_max_threads()
-        float[::1] x_weights = np.empty(n_samples * num_threads, dtype=np.float32)
-        float[:, ::1] x_a = np.empty((n_samples * num_threads, n_outputs), dtype=np.float32)
+        float[::1] x_weights = np.empty(n_samples, dtype=np.float32)
+        float[:, ::1] x_a = np.empty((n_samples, n_outputs), dtype=np.float32)
 
-    with nogil, parallel():
-        tid = openmp.omp_get_thread_num()
-        for i in prange(n_test_samples):
+    with nogil:
+        for i in range(start, stop):
             count_samples = 0
             for j in range(n_samples):
                 curr_weight = 0
@@ -101,21 +97,17 @@ cdef void _quantile_forest_predict(long[:, ::1] X_leaves,
                     if X_leaves[e, i] == y_train_leaves[e, j]:
                         curr_weight = curr_weight + y_weights[e, j]
                 if curr_weight > 0:
-                    x_weights[tid * n_samples + count_samples] = curr_weight
-                    x_a[tid * n_samples + count_samples] = y_train[j]
+                    x_weights[count_samples] = curr_weight
+                    x_a[count_samples] = y_train[j]
                     count_samples = count_samples + 1
             if sorted:
-                _weighted_quantile_presorted_1D(x_a[tid * n_samples: tid * n_samples + count_samples, 0],
-                                                q, x_weights[tid * n_samples: tid * n_samples + count_samples],
+                _weighted_quantile_presorted_1D(x_a[:count_samples, 0],
+                                                q, x_weights[:count_samples],
                                                 quantiles[:, i, 0], Interpolation.linear)
             else:
                 for o in range(n_outputs):
-                    with gil:
-                        curr_x_weights = x_weights[tid * n_samples: tid * n_samples + count_samples].copy()
-                        curr_x_a = x_a[tid * n_samples: tid * n_samples + count_samples, o].copy()
-                        _weighted_quantile_unchecked_1D(curr_x_a, q, curr_x_weights, quantiles[:, i, o],
-                                                        Interpolation.linear)
-
+                    _weighted_quantile_unchecked_1D(x_a[:count_samples, o], q, x_weights[:count_samples],
+                                                    quantiles[:, i, o], Interpolation.linear)
 
 
 cdef void _weighted_random_sample(long[::1] leaves,
@@ -123,7 +115,8 @@ cdef void _weighted_random_sample(long[::1] leaves,
                                   float[::1] weights,
                                   long[::1] idx,
                                   double[::1] random_numbers,
-                                  long[::1] sampled_idx):
+                                  long[::1] sampled_idx,
+                                  int n_jobs):
     """
     Random sample for each unique leaf
 
@@ -138,8 +131,8 @@ cdef void _weighted_random_sample(long[::1] leaves,
     idx : array, shape = (n_samples)
         Indices of original observations. The output will drawn from this.
     random numbers : array, shape = (n_unique_leaves)
-    
     sampled_idx : shape = (n_unique_leaves)
+    n_jobs : number of threads, similar to joblib
     """
     cdef:
         long c_leaf
@@ -148,8 +141,9 @@ cdef void _weighted_random_sample(long[::1] leaves,
 
         int n_unique_leaves = unique_leaves.shape[0]
         int n_samples = weights.shape[0]
+        int num_threads = joblib.effective_n_jobs(n_jobs)
 
-    for i in prange(n_unique_leaves, nogil=True):
+    for i in prange(n_unique_leaves, nogil=True, num_threads=num_threads):
         p = 0
         r = random_numbers[i]
         c_leaf = unique_leaves[i]
@@ -497,15 +491,25 @@ class _DefaultForestQuantileRegressor(_ForestQuantileRegressor):
         check_is_fitted(self)
         q = self.validate_quantiles()
 
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+
         # apply method requires X to be of dtype np.float32
         X = check_array(X, dtype=np.float32, accept_sparse="csc")
         X_leaves = self.apply(X).T
         n_test_samples = X.shape[0]
 
+        chunks = np.full(n_jobs, n_test_samples//n_jobs)
+        chunks[:n_test_samples % n_jobs] +=1
+        chunks = np.cumsum(np.insert(chunks, 0, 0))
+
         quantiles = np.empty((q.size, n_test_samples, self.n_outputs_), dtype=np.float32)
 
-        _quantile_forest_predict(X_leaves, self.y_train_, self.y_train_leaves_, self.y_weights_,
-                                 q, quantiles)
+        Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                 **_joblib_parallel_args(require="sharedmem"))(
+            delayed(_quantile_forest_predict)(X_leaves, self.y_train_, self.y_train_leaves_, self.y_weights_, q,
+                                              quantiles, chunks[i], chunks[i+1])
+            for i in range(n_jobs))
+
         if q.size == 1:
             quantiles = quantiles[0]
         if self.n_outputs_ == 1:
@@ -539,7 +543,8 @@ class _RandomSampleForestQuantileRegressor(_DefaultForestQuantileRegressor):
             random_numbers = random_instance.rand(len(unique_leaves))
 
             sampled_idx = np.empty(len(unique_leaves), dtype=np.int64)
-            _weighted_random_sample(leaves, unique_leaves, est.y_weights_[mask], idx, random_numbers, sampled_idx)
+            _weighted_random_sample(leaves, unique_leaves, est.y_weights_[mask], idx, random_numbers, sampled_idx,
+                                    self.n_jobs)
 
             est.tree_.value[unique_leaves, :, 0] = self.y_train_[sampled_idx]
 
