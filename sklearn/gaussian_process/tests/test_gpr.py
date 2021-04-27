@@ -25,6 +25,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_allclose,
     assert_raise_message,
+    assert_warns_message,
 )
 
 
