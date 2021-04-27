@@ -11,16 +11,16 @@ cimport numpy as np
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
-from libc.string cimport memset, memcpy
+from libc.string cimport memset
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ..utils.extmath import row_norms
 from ..utils._cython_blas cimport _gemm
 from ..utils._cython_blas cimport RowMajor, Trans, NoTrans
-from ._k_means_fast import CHUNK_SIZE
-from ._k_means_fast cimport _relocate_empty_clusters_dense
-from ._k_means_fast cimport _relocate_empty_clusters_sparse
-from ._k_means_fast cimport _average_centers, _center_shift
+from ._k_means_common import CHUNK_SIZE
+from ._k_means_common cimport _relocate_empty_clusters_dense
+from ._k_means_common cimport _relocate_empty_clusters_sparse
+from ._k_means_common cimport _average_centers, _center_shift
 
 
 np.import_array()
