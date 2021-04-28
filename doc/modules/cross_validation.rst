@@ -948,16 +948,14 @@ Example of 2-split time series cross-validation on a dataset with
 
     >>> import numpy as np
     >>> from sklearn.model_selection import GroupTimeSeriesSplit
-    >>> groups = np.array(['a', 'a', 'a', 'a', 'a', 'a',\
-                           'b', 'b', 'b', 'b', 'b',\
-                           'c', 'c', 'c', 'c',\
-                           'd', 'd', 'd'])
-    >>> gtss = GroupTimeSeriesSplit(n_splits=2, test_size=1, gap=1,\
-                                    max_train_size=3)
+    >>> groups = np.array(['a', 'a', 'a', 'a', 'a', 'a',
+    ...                    'b', 'b', 'b', 'b', 'b',
+    ...                    'c', 'c', 'c', 'c',
+    ...                    'd', 'd', 'd'])
+    >>> gtss = GroupTimeSeriesSplit(n_splits=2, test_size=1, gap=1, max_train_size=3)
     >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
     ...     print("TRAIN:", train_idx, "TEST:", test_idx)
-    ...     print("TRAIN GROUP:", groups[train_idx],\
-                  "TEST GROUP:", groups[test_idx])
+    ...     print("TRAIN GROUP:", groups[train_idx], "TEST GROUP:", groups[test_idx])
     TRAIN: [0, 1, 2, 3, 4, 5] TEST: [11, 12, 13, 14]
     TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a'] TEST GROUP: ['c' 'c' 'c' 'c']
     TRAIN: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] TEST: [15, 16, 17]
