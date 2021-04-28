@@ -355,7 +355,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         else:  # Predict based on GP posterior
             # Alg 2.1, page 19, line 4 -> f*_bar = K(X_test, X_train) . alpha
             K_trans = self.kernel_(X, self.X_train_)
-            y_mean = K_trans.dot(self.alpha_)
+            y_mean = K_trans @ self.alpha_
 
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
@@ -368,7 +368,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
             if return_cov:
                 # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v
-                y_cov = self.kernel_(X) - V.T.dot(V)
+                y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
                 y_cov = y_cov * self._y_train_std**2
@@ -535,7 +535,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # K_inv
             inner_term -= K_inv[..., np.newaxis]
             # Since we are interested about the trace of
-            # inner_term.dot(K_gradient), we don't explicitly compute the
+            # inner_term @ K_gradient, we don't explicitly compute the
             # matrix-by-matrix operation and instead use an einsum. Therefore
             # it is equivalent to:
             # for param_idx in range(n_kernel_params):
