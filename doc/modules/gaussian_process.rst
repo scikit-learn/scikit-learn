@@ -77,39 +77,12 @@ the API of standard scikit-learn estimators, GaussianProcessRegressor:
   externally for other ways of selecting hyperparameters, e.g., via
   Markov chain Monte Carlo.
 
+.. topic:: Examples
+
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy.py`
 
 GPR examples
 ============
-
-GPR with noise-level estimation
--------------------------------
-This example illustrates that GPR with a sum-kernel including a WhiteKernel can
-estimate the noise level of data. An illustration of the
-log-marginal-likelihood (LML) landscape shows that there exist two local
-maxima of LML.
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_001.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
-   :align: center
-
-The first corresponds to a model with a high noise level and a
-large length scale, which explains all variations in the data by noise.
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_002.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
-   :align: center
-
-The second one has a smaller noise level and shorter length scale, which explains
-most of the variation by the noise-free functional relationship. The second
-model has a higher likelihood; however, depending on the initial value for the
-hyperparameters, the gradient-based optimization might also converge to the
-high-noise solution. It is thus important to repeat the optimization several
-times for different initializations.
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
-   :align: center
-
 
 Comparison of GPR and Kernel Ridge Regression
 ---------------------------------------------
