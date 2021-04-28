@@ -22,6 +22,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
 
+
 class BernoulliRBM(TransformerMixin, BaseEstimator):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 

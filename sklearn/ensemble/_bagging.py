@@ -22,7 +22,8 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, \
-    _check_sample_weightfrom ..utils.fixes import delayed
+    _check_sample_weight
+from ..utils.fixes import delayed
 
 
 __all__ = ["BaggingClassifier",

@@ -11,7 +11,8 @@ import math
 
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
-from .utils.validation import _check_sample_weightfrom ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
+from .utils.validation import _check_sample_weight
+from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
 __all__ = ['check_increasing', 'isotonic_regression',

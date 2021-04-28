@@ -26,6 +26,7 @@ from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
 
+
 class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     """Polynomial kernel approximation via Tensor Sketch.
 
