@@ -1598,7 +1598,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
         non-thresholded decision values (as returned by
         :term:`decision_function` on some classifiers). The binary case expects
         scores with shape (n_samples,) while the multiclass case expects scores
-        with shape (n_samples, n_classes). In the nulticlass case, the order of
+        with shape (n_samples, n_classes). In the multiclass case, the order of
         the class scores must correspond to the order of ``labels``, if
         provided, or else to the numerical or lexicographical order of the
         labels in ``y_true``.
@@ -1655,6 +1655,8 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
     y_type = type_of_target(y_true)
+    if y_type == "binary" and labels is not None and len(labels) > 2:
+        y_type = "multiclass"
     y_score = check_array(y_score, ensure_2d=False)
     y_score = column_or_1d(y_score) if y_type == 'binary' else y_score
     check_consistent_length(y_true, y_score, sample_weight)
