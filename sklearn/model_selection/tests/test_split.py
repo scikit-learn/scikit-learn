@@ -21,6 +21,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupTimeSeriesSplit
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import LeaveOneGroupOut
@@ -1775,6 +1776,302 @@ def test_random_state_shuffle_false(Klass):
         Klass(3, shuffle=False, random_state=0)
 
 
+def test_group_time_series_fail_groups_are_none():
+    # The GroupTimeSeriesSplit with no group should raise an Error
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
+
+    # Should fail if the 'groups' is None
+    with pytest.raises(
+            ValueError,
+            match="The 'groups' parameter should not be None"):
+        next(GroupTimeSeriesSplit(n_splits=7).split(X))
+
+
+def test_group_time_series_ordering_and_group_preserved():
+    # With this test we check that we are only evaluating
+    # unseen groups in the future
+    groups = np.array(['a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c',
+                       'd', 'd', 'd'])
+    n_samples = len(groups)
+    n_splits = 3
+
+    X = y = np.ones(n_samples)
+    # Fake array of time like
+    time_stamps = X * np.arange(n_samples)
+
+    gtf = GroupTimeSeriesSplit(n_splits=n_splits)
+
+    # We check two things here:
+    # 1. Elements of a group in the evaluation split should not be
+    # in the training split
+    # 2. Elements of the training split should be in the past
+    splits = gtf.split(X, y, groups)
+
+    # Get all the other entries for the groups found in test
+    for (train, test) in splits:
+        # verify that they are not in the test set
+        assert len(np.intersect1d(groups[train], groups[test])) == 0
+        # All the elements in the train set should be in past of the
+        # elements of the test set
+        for e in time_stamps[train]:
+            assert (e < time_stamps[test]).all()
+
+
+def test_group_time_series_more_folds_than_group():
+    # Should fail if there are more folds than groups
+    groups = np.array([1, 1, 1, 2, 2])
+    X = y = np.ones(len(groups))
+    with pytest.raises(
+            ValueError,
+            match="Cannot have number of folds=4 greater"
+                  " than the number of groups=2"):
+        next(GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+
+
+def _check_group_time_series_max_train_size(splits, check_splits, groups,
+                                            max_train_size):
+    for (train, test), (check_train, check_test) in zip(splits, check_splits):
+        train_groups = _get_unique_groups(train, groups)
+        check_train_groups = _get_unique_groups(check_train, groups)
+        assert_array_equal(test, check_test)
+        assert len(check_train_groups) <= max_train_size
+        suffix_start = max(len(train_groups) - max_train_size, 0)
+        print(suffix_start)
+        assert_array_equal(check_train_groups, train_groups[suffix_start:])
+
+
+def _get_unique_groups(index_set, groups):
+    unique_groups = set()
+    for i in index_set:
+        unique_groups.add(groups[i])
+    result = list(unique_groups)
+    result.sort()
+    return result
+
+
+def test_group_time_series_max_train_size():
+    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4',
+                       '5', '5', '6', '7', '7'])
+    # X = np.zeros((6, 1))
+    X = y = np.ones(len(groups))
+    splits = GroupTimeSeriesSplit(n_splits=3).split(X, y, groups)
+    check_splits = GroupTimeSeriesSplit(
+        n_splits=3,
+        max_train_size=3).split(X, y, groups)
+    _check_group_time_series_max_train_size(
+        splits,
+        check_splits,
+        groups,
+        max_train_size=3)
+
+    # Test for the case where the size of a fold is greater than max_train_size
+    check_splits = GroupTimeSeriesSplit(
+        n_splits=3,
+        max_train_size=2).split(X, y, groups)
+    _check_group_time_series_max_train_size(
+        splits,
+        check_splits,
+        groups,
+        max_train_size=2)
+
+    # Test for the case where the size of each fold is less than max_train_size
+    check_splits = GroupTimeSeriesSplit(
+        n_splits=3,
+        max_train_size=5).split(X, y, groups)
+    _check_group_time_series_max_train_size(
+        splits,
+        check_splits,
+        groups,
+        max_train_size=5)
+
+
+def test_group_time_series_non_overlap_group():
+    groups = np.array(['a', 'a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b',
+                       'c', 'c', 'c', 'c', 'd', 'd', 'd'])
+    gtss = GroupTimeSeriesSplit(n_splits=3)
+    splits = gtss.split(groups, groups=groups)
+    train, test = next(splits)
+    assert_array_equal(train, np.array([0, 1, 2, 3, 4, 5]))
+    assert_array_equal(test, np.array([6, 7, 8, 9, 10]))
+    assert_array_equal(groups[train], np.array(['a', 'a', 'a',
+                                                'a', 'a', 'a']))
+    assert_array_equal(groups[test], np.array(['b', 'b', 'b', 'b', 'b']))
+
+    train, test = next(splits)
+    assert_array_equal(train, np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+    assert_array_equal(test, np.array([11, 12, 13, 14]))
+    assert_array_equal(groups[train], np.array(['a', 'a', 'a', 'a',
+                                                'a', 'a',
+                                                'b', 'b', 'b', 'b', 'b']))
+    assert_array_equal(groups[test], np.array(['c', 'c', 'c', 'c']))
+
+    train, test = next(splits)
+    assert_array_equal(train, np.array([0, 1, 2, 3, 4, 5, 6, 7, 8,
+                                        9, 10, 11, 12, 13, 14]))
+    assert_array_equal(test, np.array([15, 16, 17]))
+    assert_array_equal(groups[train], np.array(['a', 'a', 'a',
+                                                'a', 'a', 'a',
+                                                'b', 'b', 'b', 'b', 'b',
+                                                'c', 'c', 'c', 'c']))
+    assert_array_equal(groups[test], ['d', 'd', 'd'])
+
+
+def test_group_time_series_non_continuous():
+    groups = np.array(['a', 'a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b',
+                       'c', 'c', 'c', 'c', 'a', 'd', 'd'])
+    X = y = np.ones(len(groups))
+    with pytest.raises(
+            ValueError,
+            match="The groups should be continuous."
+                  " Found a non-continuous group at"
+                  " index=15"):
+        next(GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+
+
+def test_group_time_series_cv():
+    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4',
+                       '5', '5', '6', '7', '7'])
+    X = y = np.ones(len(groups))
+
+    tscv = GroupTimeSeriesSplit(2)
+
+    # Manually check that Time Series CV preserves the data
+    # ordering on toy datasets
+    # Remove the last group ['7', '7']
+    splits = tscv.split(X[:-2], y[:-2], groups[:-2])
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5])
+    assert_array_equal(test, [6, 7, 8, 9, 10])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    assert_array_equal(test, [11, 12, 13])
+
+    splits = GroupTimeSeriesSplit(2).split(X, y, groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
+    assert_array_equal(test, [8, 9, 10, 11, 12])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    assert_array_equal(test, [13, 14, 15])
+
+    # Check get_n_splits returns the correct number of splits
+    splits = TimeSeriesSplit(2).split(X)
+    n_splits_actual = len(list(splits))
+    assert n_splits_actual == tscv.get_n_splits()
+    assert n_splits_actual == 2
+
+
+def test_group_time_series_test_size():
+    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4',
+                       '5', '5', '6', '7', '7', '8', '9', '10', '10'])
+    X = y = np.ones(len(groups))
+
+    # Test alone
+    splits = GroupTimeSeriesSplit(n_splits=3, test_size=3).split(X, y, groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3, 4, 5, 6, 7, 8, 9, 10])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    assert_array_equal(test, [11, 12, 13, 14, 15])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+                               14, 15])
+    assert_array_equal(test, [16, 17, 18, 19])
+
+    # Test with max_train_size
+    splits = GroupTimeSeriesSplit(
+        n_splits=2,
+        test_size=2,
+        max_train_size=4).split(X, y, groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [6, 7, 8, 9, 10, 11, 12, 13])
+    assert_array_equal(test, [14, 15, 16])
+
+    train, test = next(splits)
+    assert_array_equal(train, [11, 12, 13, 14, 15, 16])
+    assert_array_equal(test, [17, 18, 19])
+
+    # Should fail with not enough data points for configuration
+    with pytest.raises(ValueError, match="Too many splits.*with test_size"):
+        splits = GroupTimeSeriesSplit(n_splits=5, test_size=2).split(X, y,
+                                                                     groups)
+        next(splits)
+
+
+def test_group_time_series_gap():
+    groups = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '4', '4', '4',
+                       '5', '5', '6', '7', '7', '8', '9', '10', '10'])
+    X = y = np.ones(len(groups))
+
+    # Test alone
+    splits = GroupTimeSeriesSplit(n_splits=2, gap=2).split(X, y, groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5])
+    assert_array_equal(test, [11, 12, 13, 14, 15])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    assert_array_equal(test, [16, 17, 18, 19])
+
+    # Test with max_train_size
+    splits = GroupTimeSeriesSplit(n_splits=3, gap=2,
+                                  max_train_size=2).split(X, y, groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5])
+    assert_array_equal(test, [11, 12, 13])
+
+    train, test = next(splits)
+    assert_array_equal(train, [6, 7, 8, 9, 10])
+    assert_array_equal(test, [14, 15, 16])
+
+    train, test = next(splits)
+    assert_array_equal(train, [11, 12, 13])
+    assert_array_equal(test, [17, 18, 19])
+
+    # Test with test_size
+    splits = GroupTimeSeriesSplit(
+        n_splits=2,
+        gap=2,
+        max_train_size=4,
+        test_size=2).split(X, y, groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    assert_array_equal(test, [14, 15, 16])
+
+    train, test = next(splits)
+    assert_array_equal(train, [6, 7, 8, 9, 10, 11, 12, 13])
+    assert_array_equal(test, [17, 18, 19])
+
+    # Test with additional test_size
+    splits = GroupTimeSeriesSplit(
+        n_splits=2,
+        gap=2,
+        test_size=3).split(X, y, groups)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5])
+    assert_array_equal(test, [11, 12, 13, 14, 15])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    assert_array_equal(test, [16, 17, 18, 19])
+
+    # Verify proper error is thrown
+    with pytest.raises(ValueError, match="Too many splits.*and gap"):
+        splits = GroupTimeSeriesSplit(n_splits=4, gap=2).split(X, y, groups)
+        next(splits)
+
 @pytest.mark.parametrize('cv, expected', [
     (KFold(), True),
     (KFold(shuffle=True, random_state=123), True),
@@ -1789,6 +2086,9 @@ def test_random_state_shuffle_false(Klass):
     (StratifiedShuffleSplit(random_state=123), True),
     (GroupKFold(), True),
     (TimeSeriesSplit(), True),
+    (GroupTimeSeriesSplit(), True),
+    (GroupTimeSeriesSplit(n_splits=3), True),
+    (GroupTimeSeriesSplit(n_splits=3, max_train_size=3), True),
     (LeaveOneOut(), True),
     (LeaveOneGroupOut(), True),
     (LeavePGroupsOut(n_groups=2), True),

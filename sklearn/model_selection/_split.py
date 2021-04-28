@@ -47,7 +47,8 @@ __all__ = ['BaseCrossValidator',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
            'train_test_split',
-           'check_cv']
+           'check_cv',
+           'GroupTimeSeriesSplit']
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
@@ -2153,6 +2154,202 @@ class PredefinedSplit(BaseCrossValidator):
         """
         return len(self.unique_folds)
 
+class GroupTimeSeriesSplit(_BaseKFold):
+    """Time Series cross-validator variant with non-overlapping groups.
+
+    Provides train/test indices to split time series data samples
+    that are observed at fixed time intervals according to a
+    third-party provided group.
+    In each split, test indices must be higher than before, and thus shuffling
+    in cross validator is inappropriate.
+
+    This cross-validation object is a variation of :class:`KFold`.
+    In the kth split, it returns first k folds as train set and the
+    (k+1)th fold as test set.
+
+    The same group will not appear in two different folds (the number of
+    distinct groups has to be at least equal to the number of folds).
+
+    Note that unlike standard cross-validation methods, successive
+    training sets are supersets of those that come before them.
+
+    The groups should be continuous. For Example:
+    np.array(['a', 'a', 'a', 'a', 'a', 'a',\
+                           'b', 'b', 'b', 'b', 'b',\
+                           'c', 'c', 'c', 'c',\
+                           'd', 'd', 'd'])
+
+    Non-continuous groups like below will give an error.
+    np.array(['a', 'a', 'a', 'a', 'a', 'a',\
+                           'b', 'b', 'b', 'b', 'b',\
+                           'a', 'c', 'c', 'c',\
+                           'b', 'd', 'd'])
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of splits. Must be at least 2.
+
+    max_train_size : int, default=None
+        Maximum number of groups for a single training set.
+    
+    test_size : int, default=None
+        Used to limit the number of groups in the test set. Defaults to
+        ``n_samples // (n_splits + 1)``, which is the maximum allowed value
+        with ``gap=0``.
+
+    gap : int, default=0
+        Number of groups in samples to exclude from the end of each train set before
+        the test set.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupTimeSeriesSplit
+    >>> groups = np.array(['a', 'a', 'a', 'a', 'a', 'a',\
+                           'b', 'b', 'b', 'b', 'b',\
+                           'c', 'c', 'c', 'c',\
+                           'd', 'd', 'd'])
+    >>> gtss = GroupTimeSeriesSplit(n_splits=3)
+    >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
+    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
+    ...     print("TRAIN GROUP:", groups[train_idx],\
+                  "TEST GROUP:", groups[test_idx])
+    TRAIN: [0, 1, 2, 3, 4, 5] TEST: [6, 7, 8, 9, 10]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a']\
+    TEST GROUP: ['b' 'b' 'b' 'b' 'b']
+    TRAIN: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] TEST: [11, 12, 13, 14]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a' 'b' 'b' 'b' 'b' 'b']\
+    TEST GROUP: ['c' 'c' 'c' 'c']
+    TRAIN: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]\
+    TEST: [15, 16, 17]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a' 'b' 'b' 'b' 'b' 'b' 'c' 'c' 'c' 'c']\
+    TEST GROUP: ['d' 'd' 'd']
+    >>> # Fix test_size to 1, max_train_size to 3, and add in a 1 period gap
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupTimeSeriesSplit
+    >>> groups = np.array(['a', 'a', 'a', 'a', 'a', 'a',\
+                           'b', 'b', 'b', 'b', 'b',\
+                           'c', 'c', 'c', 'c',\
+                           'd', 'd', 'd'])
+    >>> gtss = GroupTimeSeriesSplit(n_splits=2, test_size=1, gap=1,\
+                                    max_train_size=3)
+    >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
+    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
+    ...     print("TRAIN GROUP:", groups[train_idx],\
+                  "TEST GROUP:", groups[test_idx])
+    TRAIN: [0, 1, 2, 3, 4, 5] TEST: [11, 12, 13, 14]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a'] TEST GROUP: ['c' 'c' 'c' 'c']
+    TRAIN: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] TEST: [15, 16, 17]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a' 'b' 'b' 'b' 'b' 'b']\
+    TEST GROUP: ['d' 'd' 'd']
+    """
+    @_deprecate_positional_args
+    def __init__(self,
+                 n_splits=5,
+                 *,
+                 max_train_size=None,
+                 test_size=None,
+                 gap=0):
+        super().__init__(n_splits, shuffle=False, random_state=None)
+        self.max_train_size = max_train_size
+        self.test_size = test_size
+        self.gap = gap
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Always ignored, exists for compatibility.
+
+        groups : array-like of shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        if groups is None:
+            raise ValueError(
+                "The 'groups' parameter should not be None")
+        X, y, groups = indexable(X, y, groups)
+        n_samples = _num_samples(X)
+        n_splits = self.n_splits
+        n_folds = n_splits + 1
+        gap = self.gap
+        max_train_size = self.max_train_size
+        group_dict = {}
+        u, ind = np.unique(groups, return_index=True)
+        unique_groups = u[np.argsort(ind)]
+        n_samples = _num_samples(X)
+        n_groups = _num_samples(unique_groups)
+        # test size is handled here
+        group_test_size = self.test_size if self.test_size is not None \
+            else n_groups // n_folds
+        for idx in np.arange(n_samples):
+            if (groups[idx] in group_dict):
+                if (idx - group_dict[groups[idx]][-1] == 1):
+                    group_dict[groups[idx]].append(idx)
+                else:
+                    raise ValueError(
+                        ("The groups should be continuous."
+                         " Found a non-continuous group at"
+                         " index={0}").format(idx))
+            else:
+                group_dict[groups[idx]] = [idx]
+        if n_folds > n_groups:
+            raise ValueError(
+                (f"Cannot have number of folds={n_folds} greater"
+                 f" than the number of groups={n_groups}."))
+        if n_groups - gap - (group_test_size * n_splits) <= 0:
+            raise ValueError(
+                (f"Too many splits={n_splits} for number of groups"
+                 f"={n_groups} with test_size={group_test_size} and gap={gap}."))
+        
+        for group_test_start in range(n_groups - n_splits * group_test_size,
+                                      n_groups, group_test_size):
+            train_array = []
+            test_array = []
+            train_group_idxs = unique_groups[:group_test_start]
+            train_end = train_group_idxs.size
+            # handle gap: remove gap amount of groups from the end of 
+            # train_group_idxs
+            if gap:
+                train_group_idxs = train_group_idxs[:train_end - gap]
+                train_end -= gap
+            # handle max_train_size: remove max_train_size amount of group 
+            # from the beginning of train_group_idxs
+            if max_train_size and max_train_size < train_end:
+                train_group_idxs = train_group_idxs[train_end -
+                                          max_train_size:train_end]
+            for train_group_idx in train_group_idxs:
+                train_array_tmp = group_dict[train_group_idx]
+                train_array = np.sort(np.unique(
+                                      np.concatenate((train_array,
+                                                      train_array_tmp)),
+                                      axis=None), axis=None)
+            for test_group_idx in unique_groups[group_test_start:
+                                                group_test_start +
+                                                group_test_size]:
+                test_array_tmp = group_dict[test_group_idx]
+                test_array = np.sort(np.unique(
+                                              np.concatenate((test_array,
+                                                              test_array_tmp)),
+                                     axis=None), axis=None)
+            yield [int(i) for i in train_array], [int(i) for i in test_array]
 
 class _CVIterableWrapper(BaseCrossValidator):
     """Wrapper class for old style cv objects and iterables."""

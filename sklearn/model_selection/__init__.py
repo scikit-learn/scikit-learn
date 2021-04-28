@@ -3,6 +3,7 @@ import typing
 from ._split import BaseCrossValidator
 from ._split import KFold
 from ._split import GroupKFold
+from ._split import GroupTimeSeriesSplit
 from ._split import StratifiedKFold
 from ._split import TimeSeriesSplit
 from ._split import LeaveOneGroupOut
@@ -46,6 +47,7 @@ __all__ = ['BaseCrossValidator',
            'KFold',
            'GroupKFold',
            'GroupShuffleSplit',
+           'GroupTimeSeriesSplit',
            'LeaveOneGroupOut',
            'LeaveOneOut',
            'LeavePGroupsOut',

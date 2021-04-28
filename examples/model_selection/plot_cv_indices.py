@@ -11,9 +11,10 @@ This example visualizes the behavior of several common scikit-learn objects
 for comparison.
 """
 
-from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
-                                     StratifiedKFold, GroupShuffleSplit,
-                                     GroupKFold, StratifiedShuffleSplit,
+from sklearn.model_selection import (TimeSeriesSplit, GroupTimeSeriesSplit,
+                                     KFold, ShuffleSplit, StratifiedKFold,
+                                     GroupShuffleSplit, GroupKFold,
+                                     StratifiedShuffleSplit,
                                      StratifiedGroupKFold)
 import numpy as np
 import matplotlib.pyplot as plt
@@ -151,12 +152,15 @@ for cv in cvs:
 # Note how some use the group/class information while others do not.
 
 cvs = [KFold, GroupKFold, ShuffleSplit, StratifiedKFold, StratifiedGroupKFold,
-       GroupShuffleSplit, StratifiedShuffleSplit, TimeSeriesSplit]
+       GroupShuffleSplit, StratifiedShuffleSplit, TimeSeriesSplit,
+       GroupTimeSeriesSplit]
 
 
 for cv in cvs:
     this_cv = cv(n_splits=n_splits)
     fig, ax = plt.subplots(figsize=(6, 3))
+    if cv == GroupTimeSeriesSplit:
+        groups = unevengroups
     plot_cv_indices(this_cv, X, y, groups, ax, n_splits)
 
     ax.legend([Patch(color=cmap_cv(.8)), Patch(color=cmap_cv(.02))],

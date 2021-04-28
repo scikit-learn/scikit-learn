@@ -892,6 +892,78 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
+Group Time Series Split
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`GroupTimeSeriesSplit` combines :class:`TimeSeriesSplit` with the Group awareness
+of `GroupKFold`. Like :class:`TimeSeriesSplit` this also returns first :math:`k` folds
+as train set and the :math:`(k+1)` th fold as test set.
+Successive training sets are supersets of those that come before them.
+Also, it adds all surplus data to the first training partition, which
+is always used to train the model.
+This class can be used to cross-validate time series data samples
+that are observed at fixed time intervals.
+
+The same group will not appear in two different folds (the number of
+distinct groups has to be at least equal to the number of folds).
+
+The groups should be Continuous like below.
+['a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b', 'b', 'c', 'c', 'c', 'c', 'd', 'd', 'd']
+
+Non-continuous groups like below will give an error.
+['a', 'a', 'a', 'a', 'a', 'b','b', 'b', 'b', 'b', 'b', 'a', 'c', 'c', 'c', 'b', 'd', 'd']
+
+`GroupTimeSeriesSplit` is useful in cases where we have time series data for
+say multiple days with multiple data points within a day. 
+During cross-validation we may not want the training days to be be used in testing.
+Here the days can act as groups to keep the training and test splits separate.
+
+Example of 3-split time series cross-validation on a dataset with
+18 samples and 4 groups::
+
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupTimeSeriesSplit
+    >>> groups = np.array(['a', 'a', 'a', 'a', 'a', 'a',
+    ...                    'b', 'b', 'b', 'b', 'b',
+    ...                    'c', 'c', 'c', 'c',
+    ...                    'd', 'd', 'd'])
+    >>> gtss = GroupTimeSeriesSplit(n_splits=3)
+    >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
+    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
+    ...     print("TRAIN GROUP:", groups[train_idx],
+    ...           "TEST GROUP:", groups[test_idx])
+    TRAIN: [0, 1, 2, 3, 4, 5] TEST: [6, 7, 8, 9, 10]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a']
+    TEST GROUP: ['b' 'b' 'b' 'b' 'b']
+    TRAIN: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] TEST: [11, 12, 13, 14]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a' 'b' 'b' 'b' 'b' 'b']
+    TEST GROUP: ['c' 'c' 'c' 'c']
+    TRAIN: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    TEST: [15, 16, 17]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a' 'b' 'b' 'b' 'b' 'b' 'c' 'c' 'c' 'c']
+    TEST GROUP: ['d' 'd' 'd']
+
+Example of 2-split time series cross-validation on a dataset with
+18 samples and 4 groups and 1 test_size and 3 max_train_size and 1 period gap::
+
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupTimeSeriesSplit
+    >>> groups = np.array(['a', 'a', 'a', 'a', 'a', 'a',\
+                           'b', 'b', 'b', 'b', 'b',\
+                           'c', 'c', 'c', 'c',\
+                           'd', 'd', 'd'])
+    >>> gtss = GroupTimeSeriesSplit(n_splits=2, test_size=1, gap=1,\
+                                    max_train_size=3)
+    >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
+    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
+    ...     print("TRAIN GROUP:", groups[train_idx],\
+                  "TEST GROUP:", groups[test_idx])
+    TRAIN: [0, 1, 2, 3, 4, 5] TEST: [11, 12, 13, 14]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a'] TEST GROUP: ['c' 'c' 'c' 'c']
+    TRAIN: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] TEST: [15, 16, 17]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'a' 'a' 'b' 'b' 'b' 'b' 'b']
+    TEST GROUP: ['d' 'd' 'd']
+
 A note on shuffling
 ===================
 
