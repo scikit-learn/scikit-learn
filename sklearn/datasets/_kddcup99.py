@@ -24,7 +24,6 @@ from ._base import RemoteFileMetadata
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
-from ..utils.validation import _deprecate_positional_args
 
 
 # The original data can be found at:
@@ -46,7 +45,6 @@ ARCHIVE_10_PERCENT = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-@_deprecate_positional_args
 def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
                    random_state=None,
                    percent10=True, download_if_missing=True, return_X_y=False,

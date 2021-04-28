@@ -43,7 +43,6 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _deprecate_positional_args
 from ..base import is_regressor
 
 
@@ -397,7 +396,6 @@ def _passthrough_scorer(estimator, *args, **kwargs):
     return estimator.score(*args, **kwargs)
 
 
-@_deprecate_positional_args
 def check_scoring(estimator, scoring=None, *, allow_none=False):
     """Determine scorer from user options.
 
@@ -534,7 +532,6 @@ def _check_multimetric_scoring(estimator, scoring):
     return scorers
 
 
-@_deprecate_positional_args
 def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
                 needs_threshold=False, **kwargs):
     """Make a scorer from a performance metric or loss function.
