@@ -1614,7 +1614,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
 
 class MiniBatchNMF(NMF):
-    r"""Mini-Batch and online Non-Negative Matrix Factorization (NMF)
+    """Mini-Batch and online Non-Negative Matrix Factorization (NMF)
 
     .. versionadded:: 1.0
 
@@ -1660,23 +1660,23 @@ class MiniBatchNMF(NMF):
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+        - `None`: 'nndsvd' if n_components <= min(n_samples, n_features),
           otherwise random.
 
-        - 'random': non-negative random matrices, scaled with:
+        - `'random'`: non-negative random matrices, scaled with:
           sqrt(X.mean() / n_components)
 
-        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+        - `'nndsvd'`: Nonnegative Double Singular Value Decomposition (NNDSVD)
           initialization (better for sparseness)
 
-        - 'nndsvda': NNDSVD with zeros filled with the average of X
+        - `'nndsvda'`: NNDSVD with zeros filled with the average of X
           (better when sparsity is not desired)
 
-        - 'nndsvdar': NNDSVD with zeros filled with small random values
+        - `'nndsvdar'` NNDSVD with zeros filled with small random values
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired)
 
-        - 'custom': use custom matrices W and H
+        - `'custom'`: use custom matrices W and H
 
     batch_size : int, default=1024
         Number of samples in each mini-batch. Large batch sizes
