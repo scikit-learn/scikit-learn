@@ -166,32 +166,16 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
 .. topic:: References:
 
-    * `"Finding structure with randomness: Stochastic algorithms for
+    * Algorithm 4.3 in
+      `"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
       <https://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
-
-.. _kernel_PCA:
-
-Kernel PCA
-----------
-
-:class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It
-has many applications including denoising, compression and structured
-prediction (kernel dependency estimation). :class:`KernelPCA` supports both
-``transform`` and ``inverse_transform``.
-
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
-    :target: ../auto_examples/decomposition/plot_kernel_pca.html
-    :align: center
-    :scale: 75%
-
-.. topic:: Examples:
-
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
-
+    * `"An implementation of a randomized algorithm for principal component
+      analysis"
+      <https://arxiv.org/pdf/1412.3510.pdf>`_
+      A. Szlam et al. 2014
 
 .. _SparsePCA:
 
@@ -276,6 +260,100 @@ factorization, while larger values shrink many coefficients to zero.
   .. [Jen09] `"Structured Sparse Principal Component Analysis"
      <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
+
+
+.. _kernel_PCA:
+
+Kernel Principal Component Analysis (kPCA)
+==========================================
+
+Exact Kernel PCA
+----------------
+
+:class:`KernelPCA` is an extension of PCA which achieves non-linear
+dimensionality reduction through the use of kernels (see :ref:`metrics`). It
+has many applications including denoising, compression and structured
+prediction (kernel dependency estimation). :class:`KernelPCA` supports both
+``transform`` and ``inverse_transform``.
+
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
+    :target: ../auto_examples/decomposition/plot_kernel_pca.html
+    :align: center
+    :scale: 75%
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
+
+.. topic:: References:
+
+    * Kernel PCA was introduced in "Kernel principal component analysis"
+      Bernhard Schoelkopf, Alexander J. Smola, and Klaus-Robert Mueller. 1999.
+      In Advances in kernel methods, MIT Press, Cambridge, MA, USA 327-352.
+
+
+.. _kPCA_Solvers:
+
+Choice of solver for Kernel PCA
+-------------------------------
+
+While in :class:`PCA` the number of components is bounded by the number of
+features, in :class:`KernelPCA` the number of components is bounded by the
+number of samples. Many real-world datasets have large number of samples! In
+these cases finding *all* the components with a full kPCA is a waste of
+computation time, as data is mostly described by the first few components
+(e.g. ``n_components<=100``). In other words, the centered Gram matrix that
+is eigendecomposed in the Kernel PCA fitting process has an effective rank that
+is much smaller than its size. This is a situation where approximate
+eigensolvers can provide speedup with very low precision loss.
+
+The optional parameter ``eigen_solver='randomized'`` can be used to
+*significantly* reduce the computation time when the number of requested
+``n_components`` is small compared with the number of samples. It relies on
+randomized decomposition methods to find an approximate solution in a shorter
+time.
+
+The time complexity of the randomized :class:`KernelPCA` is
+:math:`O(n_{\mathrm{samples}}^2 \cdot n_{\mathrm{components}})`
+instead of :math:`O(n_{\mathrm{samples}}^3)` for the exact method
+implemented with ``eigen_solver='dense'``.
+
+The memory footprint of randomized :class:`KernelPCA` is also proportional to
+:math:`2 \cdot n_{\mathrm{samples}} \cdot n_{\mathrm{components}}` instead of
+:math:`n_{\mathrm{samples}}^2` for the exact method.
+
+Note: this technique is the same as in :ref:`RandomizedPCA`.
+
+In addition to the above two solvers, ``eigen_solver='arpack'`` can be used as
+an alternate way to get an approximate decomposition. In practice, this method
+only provides reasonable execution times when the number of components to find
+is extremely small. It is enabled by default when the desired number of
+components is less than 10 (strict) and the number of samples is more than 200
+(strict). See :class:`KernelPCA` for details.
+
+.. topic:: References:
+
+    * *dense* solver:
+      `scipy.linalg.eigh documentation
+      <https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.eigh.html>`_
+
+    * *randomized* solver:
+
+        - Algorithm 4.3 in
+          `"Finding structure with randomness: Stochastic algorithms for
+          constructing approximate matrix decompositions"
+          <https://arxiv.org/abs/0909.4061>`_
+          Halko, et al., 2009
+
+        - `"An implementation of a randomized algorithm for principal component
+          analysis"
+          <https://arxiv.org/pdf/1412.3510.pdf>`_
+          A. Szlam et al. 2014
+
+    * *arpack* solver:
+      `scipy.sparse.linalg.eigsh documentation
+      <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
+      R. B. Lehoucq, D. C. Sorensen, and C. Yang, 1998
 
 
 .. _LSA:
