@@ -2154,6 +2154,7 @@ class PredefinedSplit(BaseCrossValidator):
         """
         return len(self.unique_folds)
 
+
 class GroupTimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator variant with non-overlapping groups.
 
@@ -2194,15 +2195,15 @@ class GroupTimeSeriesSplit(_BaseKFold):
 
     max_train_size : int, default=None
         Maximum number of groups for a single training set.
-    
+
     test_size : int, default=None
         Used to limit the number of groups in the test set. Defaults to
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
     gap : int, default=0
-        Number of groups in samples to exclude from the end of each train set before
-        the test set.
+        Number of groups in samples to exclude from the end of each train set
+        before the test set.
 
     Examples
     --------
@@ -2315,26 +2316,27 @@ class GroupTimeSeriesSplit(_BaseKFold):
                 (f"Cannot have number of folds={n_folds} greater"
                  f" than the number of groups={n_groups}."))
         if n_groups - gap - (group_test_size * n_splits) <= 0:
-            raise ValueError(
-                (f"Too many splits={n_splits} for number of groups"
-                 f"={n_groups} with test_size={group_test_size} and gap={gap}."))
-        
+            raise ValueError((
+                f"Too many splits={n_splits} for number of groups"
+                f"={n_groups} with test_size={group_test_size} and gap={gap}."
+                ))
+
         for group_test_start in range(n_groups - n_splits * group_test_size,
                                       n_groups, group_test_size):
             train_array = []
             test_array = []
             train_group_idxs = unique_groups[:group_test_start]
             train_end = train_group_idxs.size
-            # handle gap: remove gap amount of groups from the end of 
+            # handle gap: remove gap amount of groups from the end of
             # train_group_idxs
             if gap:
                 train_group_idxs = train_group_idxs[:train_end - gap]
                 train_end -= gap
-            # handle max_train_size: remove max_train_size amount of group 
+            # handle max_train_size: remove max_train_size amount of group
             # from the beginning of train_group_idxs
             if max_train_size and max_train_size < train_end:
-                train_group_idxs = train_group_idxs[train_end -
-                                          max_train_size:train_end]
+                train_group_idxs = train_group_idxs[
+                    train_end - max_train_size:train_end]
             for train_group_idx in train_group_idxs:
                 train_array_tmp = group_dict[train_group_idx]
                 train_array = np.sort(np.unique(
@@ -2350,6 +2352,7 @@ class GroupTimeSeriesSplit(_BaseKFold):
                                                               test_array_tmp)),
                                      axis=None), axis=None)
             yield [int(i) for i in train_array], [int(i) for i in test_array]
+
 
 class _CVIterableWrapper(BaseCrossValidator):
     """Wrapper class for old style cv objects and iterables."""
