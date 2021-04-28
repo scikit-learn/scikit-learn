@@ -299,9 +299,11 @@ def test_exactly_zero_info_score():
             labels_a, labels_b) == pytest.approx(0.0)
         for method in ["min", "geometric", "arithmetic", "max"]:
             assert adjusted_mutual_info_score(
-                labels_a, labels_b,  method) == pytest.approx(0.0)
+                labels_a, labels_b,
+                average_method=method) == pytest.approx(0.0)
             assert normalized_mutual_info_score(
-                labels_a, labels_b, method) == pytest.approx(0.0)
+                labels_a, labels_b,
+                average_method=method) == pytest.approx(0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
