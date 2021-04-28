@@ -527,7 +527,7 @@ def test_negative_sample_weights_mask_all_samples(Estimator,
     "Classifier, err_msg",
     [(svm.SVC,
      'Invalid input - all samples with positive weights have the same label'),
-     (svm.NuSVC, 'specified nu is infeasible')],
+     (svm.NuSVC, 'specified nu is infeasible')],  # type: ignore
     ids=['SVC', 'NuSVC']
 )
 @pytest.mark.parametrize(
@@ -548,7 +548,7 @@ def test_negative_weights_svc_leave_just_one_label(Classifier,
     "Classifier, model",
     [(svm.SVC, {'when-left': [0.3998, 0.4], 'when-right': [0.4, 0.3999]}),
      (svm.NuSVC, {'when-left': [0.3333, 0.3333],
-      'when-right': [0.3333, 0.3333]})],
+      'when-right': [0.3333, 0.3333]})],  # type: ignore
     ids=['SVC', 'NuSVC']
 )
 @pytest.mark.parametrize(
@@ -1130,7 +1130,10 @@ def test_ovr_decision_function():
     assert np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1])
 
 
-@pytest.mark.parametrize("SVCClass", [svm.SVC, svm.NuSVC])
+@pytest.mark.parametrize(
+    "SVCClass",
+    [svm.SVC, svm.NuSVC]  # type: ignore
+)
 def test_svc_invalid_break_ties_param(SVCClass):
     X, y = make_blobs(random_state=42)
 
@@ -1141,7 +1144,10 @@ def test_svc_invalid_break_ties_param(SVCClass):
         svm.predict(y)
 
 
-@pytest.mark.parametrize("SVCClass", [svm.SVC, svm.NuSVC])
+@pytest.mark.parametrize(
+    "SVCClass",
+    [svm.SVC, svm.NuSVC]  # type: ignore
+)
 def test_svc_ovr_tie_breaking(SVCClass):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277

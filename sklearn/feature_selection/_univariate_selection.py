@@ -850,8 +850,8 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     """
 
-    _selection_modes = {'percentile': SelectPercentile,
-                        'k_best': SelectKBest,
+    _selection_modes = {'percentile': SelectPercentile,  # type: ignore
+                        'k_best': SelectKBest,  # type: ignore
                         'fpr': SelectFpr,
                         'fdr': SelectFdr,
                         'fwe': SelectFwe}

@@ -189,7 +189,10 @@ def test_pca_vs_spca():
     assert_allclose(results_test_pca, results_test_spca)
 
 
-@pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
+@pytest.mark.parametrize(
+    "SPCA",
+    [SparsePCA, MiniBatchSparsePCA]  # type: ignore
+)
 @pytest.mark.parametrize("n_components", [None, 3])
 def test_spca_n_components_(SPCA, n_components):
     rng = np.random.RandomState(0)
