@@ -1661,20 +1661,20 @@ class MiniBatchNMF(NMF):
         Valid options:
 
         - None: 'nndsvd' if n_components <= min(n_samples, n_features),
-            otherwise random.
+          otherwise random.
 
         - 'random': non-negative random matrices, scaled with:
-            sqrt(X.mean() / n_components)
+          sqrt(X.mean() / n_components)
 
         - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-            initialization (better for sparseness)
+          initialization (better for sparseness)
 
         - 'nndsvda': NNDSVD with zeros filled with the average of X
-            (better when sparsity is not desired)
+          (better when sparsity is not desired)
 
         - 'nndsvdar': NNDSVD with zeros filled with small random values
-            (generally faster, less accurate alternative to NNDSVDa
-            for when sparsity is not desired)
+          (generally faster, less accurate alternative to NNDSVDa
+          for when sparsity is not desired)
 
         - 'custom': use custom matrices W and H
 
