@@ -2249,7 +2249,7 @@ class GroupTimeSeriesSplit(_BaseKFold):
     """
     @_deprecate_positional_args
     def __init__(self,
-                 n_splits=5,
+                 n_splits=2,
                  *,
                  max_train_size=None,
                  test_size=None,
@@ -2258,6 +2258,9 @@ class GroupTimeSeriesSplit(_BaseKFold):
         self.max_train_size = max_train_size
         self.test_size = test_size
         self.gap = gap
+        self.tscv = TimeSeriesSplit(n_splits=n_splits,
+                                    max_train_size=max_train_size,
+                                    test_size=test_size, gap=gap)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -2269,7 +2272,7 @@ class GroupTimeSeriesSplit(_BaseKFold):
             and n_features is the number of features.
 
         y : array-like of shape (n_samples,)
-            Always ignored, exists for compatibility.
+            The target variable for supervised learning problems.
 
         groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
@@ -2284,74 +2287,43 @@ class GroupTimeSeriesSplit(_BaseKFold):
             The testing set indices for that split.
         """
         if groups is None:
-            raise ValueError(
-                "The 'groups' parameter should not be None")
+            raise ValueError("The 'groups' parameter should not be None.")
         X, y, groups = indexable(X, y, groups)
-        n_samples = _num_samples(X)
-        n_splits = self.n_splits
-        n_folds = n_splits + 1
-        gap = self.gap
-        max_train_size = self.max_train_size
-        group_dict = {}
-        u, ind = np.unique(groups, return_index=True)
-        unique_groups = u[np.argsort(ind)]
-        n_samples = _num_samples(X)
-        n_groups = _num_samples(unique_groups)
-        # test size is handled here
-        group_test_size = self.test_size if self.test_size is not None \
-            else n_groups // n_folds
-        for idx in np.arange(n_samples):
-            if (groups[idx] in group_dict):
-                if (idx - group_dict[groups[idx]][-1] == 1):
-                    group_dict[groups[idx]].append(idx)
-                else:
-                    raise ValueError(
-                        ("The groups should be continuous."
-                         " Found a non-continuous group at"
+        unique_groups, i_unique_groups = np.unique(groups, return_index=True)
+        tscv = self.tscv
+        check_list = []
+        # validate group supports time series data, i.e.same elements can only
+        # be consecutive(each unique element in the group should inside
+        # continuous interval)
+        for idx in range(len(groups)):
+            fold = groups[idx]
+            if fold not in check_list:
+                check_list.append(fold)
+            elif fold != check_list[-1]:
+                raise ValueError(
+                        ("The groups should be contiguous."
+                         " Found a non-contiguous group at"
                          " index={0}").format(idx))
-            else:
-                group_dict[groups[idx]] = [idx]
-        if n_folds > n_groups:
-            raise ValueError(
-                (f"Cannot have number of folds={n_folds} greater"
-                 f" than the number of groups={n_groups}."))
-        if n_groups - gap - (group_test_size * n_splits) <= 0:
-            raise ValueError((
-                f"Too many splits={n_splits} for number of groups"
-                f"={n_groups} with test_size={group_test_size} and gap={gap}."
-                ))
 
-        for group_test_start in range(n_groups - n_splits * group_test_size,
-                                      n_groups, group_test_size):
-            train_array = []
-            test_array = []
-            train_group_idxs = unique_groups[:group_test_start]
-            train_end = train_group_idxs.size
-            # handle gap: remove gap amount of groups from the end of
-            # train_group_idxs
-            if gap:
-                train_group_idxs = train_group_idxs[:train_end - gap]
-                train_end -= gap
-            # handle max_train_size: remove max_train_size amount of group
-            # from the beginning of train_group_idxs
-            if max_train_size and max_train_size < train_end:
-                train_group_idxs = train_group_idxs[
-                    train_end - max_train_size:train_end]
-            for train_group_idx in train_group_idxs:
-                train_array_tmp = group_dict[train_group_idx]
-                train_array = np.sort(np.unique(
-                                      np.concatenate((train_array,
-                                                      train_array_tmp)),
-                                      axis=None), axis=None)
-            for test_group_idx in unique_groups[group_test_start:
-                                                group_test_start +
-                                                group_test_size]:
-                test_array_tmp = group_dict[test_group_idx]
-                test_array = np.sort(np.unique(
-                                              np.concatenate((test_array,
-                                                              test_array_tmp)),
-                                     axis=None), axis=None)
-            yield [int(i) for i in train_array], [int(i) for i in test_array]
+        index_group = []
+        sorted_bound = i_unique_groups.tolist()
+        sorted_bound.sort()
+        for i in range(len(sorted_bound)):
+            if sorted_bound[i] == sorted_bound[-1]:
+                index_group.append(
+                    list(range(sorted_bound[i], len(groups))))
+            else:
+                index_group.append(
+                    list(range(sorted_bound[i], sorted_bound[i+1])))
+
+        for train_index, test_index in tscv.split(unique_groups):
+            train_group = []
+            test_group = []
+            for i in train_index:
+                train_group += index_group[i]
+            for j in test_index:
+                test_group += index_group[j]
+            yield (train_group, test_group)
 
 
 class _CVIterableWrapper(BaseCrossValidator):

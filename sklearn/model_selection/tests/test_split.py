@@ -1824,7 +1824,7 @@ def test_group_time_series_more_folds_than_group():
     with pytest.raises(
             ValueError,
             match="Cannot have number of folds=4 greater"
-                  " than the number of groups=2"):
+                  " than the number of samples=2"):
         next(GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
 
 
@@ -1922,8 +1922,8 @@ def test_group_time_series_non_continuous():
     X = y = np.ones(len(groups))
     with pytest.raises(
             ValueError,
-            match="The groups should be continuous."
-                  " Found a non-continuous group at"
+            match="The groups should be contiguous."
+                  " Found a non-contiguous group at"
                   " index=15"):
         next(GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
 
