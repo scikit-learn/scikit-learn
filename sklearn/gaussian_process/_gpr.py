@@ -501,27 +501,54 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
+        # y is originally thought to be a (1, n_samples) row vector. However,
+        # in multioutputs, y is of shape (n_samples, 2) and we need to compute
+        # y^T . alpha for each output, independently using einsum. Thus, it
+        # is equivalent to:
+        # for output_idx in range(n_outputs):
+        #     log_likelihood_dims[output_idx] = (
+        #         y_train[:, [output_idx]] @ alpha[:, [output_idx]]
+        #     )
         log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
-        log_likelihood = log_likelihood_dims.sum(-1)  # sum over dimensions
+        # the log likehood is sum-up across the outputs
+        log_likelihood = log_likelihood_dims.sum(axis=-1)
 
         if eval_gradient:
             # Eq. 5.9, p. 114, and footnote 5 in p. 114
             # 0.5 * trace((alpha . alpha^T - K^-1) . K_gradient)
-            # compute most inner term
+            # alpha is supposed to be a vector of (n_samples,) elements. With
+            # multioutputs, alpha is a matrix of size (n_samples, n_outputs).
+            # Therefore, we want to construct a matrix of
+            # (n_samples, n_samples, n_outputs) equivalent to
+            # for output_idx in range(n_outputs):
+            #     output_alpha = alpha[:, [output_idx]]
+            #     inner_term[..., output_idx] = output_alpha @ output_alpha.T
             inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
-            # compute K^-1
-            inner_term -= cho_solve(
+            # compute K^-1 of shape (n_samples, n_samples)
+            K_inv = cho_solve(
                 (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]),
                 check_finite=False
-            )[:, :, np.newaxis]
+            )
+            # create a new axis to use broadcasting between inner_term and
+            # K_inv
+            inner_term -= K_inv[..., np.newaxis]
             # Since we are interested about the trace of
             # inner_term.dot(K_gradient), we don't explicitly compute the
-            # matrix-by-matrix operation and instead use an einsum
-            log_likelihood_gradient_dims = \
+            # matrix-by-matrix operation and instead use an einsum. Therefore
+            # it is equivalent to:
+            # for param_idx in range(n_kernel_params):
+            #     for output_idx in range(n_output):
+            #         log_likehood_gradient_dims[param_idx, output_idx] = (
+            #             inner_term[..., output_idx] @
+            #             K_gradient[..., param_idx]
+            #         )
+            log_likelihood_gradient_dims = (
                 0.5 * np.einsum("ijl,jik->kl", inner_term, K_gradient)
-            log_likelihood_gradient = log_likelihood_gradient_dims.sum(-1)
+            )
+            # the log likehood gradient is the sum-up across the outputs
+            log_likelihood_gradient = log_likelihood_gradient_dims.sum(axis=-1)
 
         if eval_gradient:
             return log_likelihood, log_likelihood_gradient
