@@ -8,7 +8,6 @@ import pytest
 from sklearn import neighbors, manifold
 from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_raise_message
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -106,11 +105,13 @@ def test_lle_init_parameters():
 
     clf = manifold.LocallyLinearEmbedding(eigen_solver="error")
     msg = "unrecognized eigen_solver 'error'"
-    assert_raise_message(ValueError, msg, clf.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X)
 
     clf = manifold.LocallyLinearEmbedding(method="error")
     msg = "unrecognized method 'error'"
-    assert_raise_message(ValueError, msg, clf.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X)
 
 
 def test_pipeline():
