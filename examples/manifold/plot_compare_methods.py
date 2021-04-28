@@ -60,7 +60,8 @@ methods['LLE'] = LLE(method='standard')
 methods['LTSA'] = LLE(method='ltsa')
 methods['Hessian LLE'] = LLE(method='hessian')
 methods['Modified LLE'] = LLE(method='modified')
-methods['Isomap'] = manifold.Isomap(n_neighbors, n_components)
+methods['Isomap'] = manifold.Isomap(n_neighbors=n_neighbors,
+                                    n_components=n_components)
 methods['MDS'] = manifold.MDS(n_components, max_iter=100, n_init=1)
 methods['SE'] = manifold.SpectralEmbedding(n_components=n_components,
                                            n_neighbors=n_neighbors)
