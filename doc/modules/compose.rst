@@ -535,7 +535,7 @@ will use the column names to select the columns::
   >>> ct = ColumnTransformer(
   ...          [("scale", StandardScaler(), ["expert_rating"])]).fit(X)
   >>> X_new = pd.DataFrame({"expert_rating": [5, 6, 1],
-  ...                       "unused_col": [1.2, 0.3, -0.1]})
+  ...                       "ignored_new_col": [1.2, 0.3, -0.1]})
   >>> ct.transform(X_new)
   array([[ 0.9...],
          [ 2.1...],
