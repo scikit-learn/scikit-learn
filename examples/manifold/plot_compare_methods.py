@@ -53,7 +53,8 @@ ax.view_init(4, -72)
 
 # Set-up manifold methods
 LLE = partial(manifold.LocallyLinearEmbedding,
-              n_neighbors, n_components, eigen_solver='auto')
+              n_neighbors=n_neighbors, n_components=n_components,
+              eigen_solver='auto')
 
 methods = OrderedDict()
 methods['LLE'] = LLE(method='standard')
