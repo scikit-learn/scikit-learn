@@ -267,7 +267,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
-        for name, trans, column in transformers:
+        for name, trans, columns in transformers:
             if replace_strings:
                 # replace 'passthrough' with identity transformer and
                 # skip in case of 'drop'
@@ -277,21 +277,21 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     )
                 elif trans == 'drop':
                     continue
-                elif _is_empty_column_selection(column):
+                elif _is_empty_column_selection(columns):
                     continue
 
             if column_as_strings and self._only_str_columns:
                 # Convert all columns to using their string labels
-                column_is_scalar = np.isscalar(column)
+                columns_is_scalar = np.isscalar(columns)
 
                 indices = self._transformer_to_input_indices[name]
-                column = self._feature_names_in[indices]
+                columns = self._feature_names_in[indices]
 
-                if column_is_scalar:
+                if columns_is_scalar:
                     # selection is done with one dimension
-                    column = column[0]
+                    columns = columns[0]
 
-            yield (name, trans, column, get_weight(name))
+            yield (name, trans, columns, get_weight(name))
 
     def _validate_transformers(self):
         if not self.transformers:
