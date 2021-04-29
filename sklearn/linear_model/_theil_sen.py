@@ -293,7 +293,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, copy_X=True,
-                 max_subpopulation=1e4, n_subsamples=None, max_iter=300,
+                 max_subpopulation=1_000, n_subsamples=None, max_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=None, verbose=False):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
