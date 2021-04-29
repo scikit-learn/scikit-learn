@@ -530,7 +530,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         n = X.shape[0]
         if self.max_agglom_size is None or n <= self.max_agglom_size:
-            X_subset = X
+            X_subset = X.copy()
         else:  # if dataset is huge, agglomerate a subset
             subset_idxs = random_state.choice(
                 np.arange(0, n), self.max_agglom_size
