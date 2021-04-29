@@ -76,6 +76,11 @@ Changelog
   - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
     use `"squared_error"` instead which is now the default.
 
+:mod:`sklearn.base`
+...................
+
+- |Fix| :func:`config_context` is now threadsafe. :pr:`18736` by `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -168,6 +173,12 @@ Changelog
   ensure determinism of the output. Achieved by flipping signs of the SVD
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
+
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  significantly accelerates computation when the number of samples is much
+  larger than the desired number of components.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning`,
   :class:`MiniBatchSparsePCA` and :func:`dict_learning_online` where the
@@ -263,6 +274,8 @@ Changelog
   Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV were deprecated in:
   :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
+  BayesianRidge, ARDRegression were deprecated in:
+  :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
 
 - |Fix|: `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature
@@ -280,6 +293,12 @@ Changelog
 - |Fix| Change numerical precision to prevent underflow issues
   during affinity matrix computation for :class:`manifold.TSNE`.
   :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
+
+- |Enhancement| Implement `'auto'` heuristic for the `learning_rate` in
+  :class:`manifold.TSNE`. It will become default in 1.2. The default
+  initialization will change to `pca` in 1.2. PCA initialization will
+  be scaled to have standard deviation 1e-4 in 1.2.
+  :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
 
 :mod:`sklearn.metrics`
 ......................
