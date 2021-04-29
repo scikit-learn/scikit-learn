@@ -426,6 +426,11 @@ class SimpleImputer(_BaseImputer):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
+
+        Returns
+        -------
+        X_imputed : ndarray of shape (n_samples, n_features)
+            input X with imputed values
         """
         check_is_fitted(self)
 
