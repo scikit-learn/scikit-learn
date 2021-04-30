@@ -429,7 +429,8 @@ class SimpleImputer(_BaseImputer):
 
         Returns
         -------
-        X_imputed : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_imputed : {ndarray, sparse matrix} of shape (n_samples, \
+                    n_features_out)
             input X with imputed values
         """
         check_is_fitted(self)
