@@ -1923,7 +1923,8 @@ class MiniBatchNMF(NMF):
         if not is_first_call_to_partial_fit:
             with config_context(assume_finite=True):
                 # Compute W given H and X using transform
-                W = self.transform(X)
+                W, *_ = self._fit_transform(X, H=self.components_,
+                                            update_H=False)
 
                 # Add 1 iteration to the current estimation
                 l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = \
