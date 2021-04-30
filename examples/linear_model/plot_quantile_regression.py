@@ -78,12 +78,13 @@ ax2.yaxis.set_tick_params(labelbottom=True)
 plt.show()
 
 # %%
-# Note that both targets have the same mean value, indicated by the dotted
+# Note that both targets have the same mean value, indicated by the dashed
 # black line. As the Normal distribution is symmetric, mean and median are
 # identical and the predicted 0.5 quantile almost hits the true mean.
 # In the Pareto case, the difference between predicted median and true mean
 # is evident. We also marked the points below the 0.05 and above 0.95
-# predicted quantiles.
+# predicted quantiles by small crosses. You might count them and consider
+# that we have 100 samples in total.
 #
 # The second part of the example shows that LinearRegression minimizes MSE
 # in order to predict the mean, while QuantileRegressor with `quantile=0.5`
