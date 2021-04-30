@@ -32,6 +32,7 @@ def plot_points_highlighted(x, y, model_low, model_high, ax):
     mask = (y > model_low.predict(X)) & (y <= model_high.predict(X))
     ax.scatter(x[mask], y[mask], c="k")
 
+
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5), sharey=True)
 
 rng = np.random.RandomState(42)
