@@ -23,6 +23,24 @@ from ..utils.deprecation import deprecated
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
 
+def _pinv2_old(a):
+    # Used previous scipy pinv2 that was updated in:
+    # https://github.com/scipy/scipy/pull/10067
+    # We can not set `cond` or `rcond` for pinv2 in scipy >= 1.3 to keep the
+    # same behavior of pinv2 for scipy < 1.3, because the condition used to
+    # determine the rank is dependent on the output of svd.
+    u, s, vh = svd(a, full_matrices=False, check_finite=False)
+
+    t = u.dtype.char.lower()
+    factor = {'f': 1E3, 'd': 1E6}
+    cond = np.max(s) * factor[t] * np.finfo(t).eps
+    rank = np.sum(s > cond)
+
+    u = u[:, :rank]
+    u /= s[:rank]
+    return np.transpose(np.conjugate(np.dot(u, vh[:rank])))
+
+
 def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
                                              tol=1e-06, norm_y_weights=False):
     """Return the first left and right singular vectors of X'Y.
@@ -34,7 +52,11 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
     """
 
     eps = np.finfo(X.dtype).eps
-    y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
+    try:
+        y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
+    except StopIteration as e:
+        raise StopIteration("Y residual is constant") from e
+
     x_weights_old = 100  # init to big value for first convergence check
 
     if mode == 'B':
@@ -44,8 +66,7 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
         # As a result, and as detailed in the Wegelin's review, CCA (i.e. mode
         # B) will be unstable if n_features > n_samples or n_targets >
         # n_samples
-        X_pinv = pinv2(X, check_finite=False, cond=10*eps)
-        Y_pinv = pinv2(Y, check_finite=False, cond=10*eps)
+        X_pinv, Y_pinv = _pinv2_old(X), _pinv2_old(Y)
 
     for i in range(max_iter):
         if mode == "B":
@@ -239,10 +260,17 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
                 Yk[:, Yk_mask] = 0.0
 
-                x_weights, y_weights, n_iter_ = \
-                    _get_first_singular_vectors_power_method(
-                        Xk, Yk, mode=self.mode, max_iter=self.max_iter,
-                        tol=self.tol, norm_y_weights=norm_y_weights)
+                try:
+                    x_weights, y_weights, n_iter_ = \
+                        _get_first_singular_vectors_power_method(
+                            Xk, Yk, mode=self.mode, max_iter=self.max_iter,
+                            tol=self.tol, norm_y_weights=norm_y_weights)
+                except StopIteration as e:
+                    if str(e) != "Y residual is constant":
+                        raise
+                    warnings.warn(f"Y residual is constant at iteration {k}")
+                    break
+
                 self.n_iter_.append(n_iter_)
 
             elif self.algorithm == "svd":
