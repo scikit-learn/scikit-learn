@@ -51,6 +51,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # sklearn/svm/_libsvm.cpython-38-darwin.so,
             # 2): Symbol not found: _svm_check_parameter error
             TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
+        else
+            # Without openmp, we use the system clang. Here we use /usr/bin/ar
+            # instead because llvm-ar errors
+            export AR=/usr/bin/ar
         fi
     fi
 	make_conda $TO_INSTALL
