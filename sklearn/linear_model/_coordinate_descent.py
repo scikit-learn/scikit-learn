@@ -88,10 +88,10 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
-    y : ndarray of shape (n_samples,)
+    y : ndarray of shape (n_samples, n_outputs)
         Target values
 
-    Xy : array-like of shape (n_features,), default=None
+    Xy : array-like of shape (n_features, n_outputs), default=None
         Xy = np.dot(X.T, y) that can be precomputed.
 
     l1_ratio : float, default=1.0
