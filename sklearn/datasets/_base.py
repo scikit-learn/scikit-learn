@@ -202,7 +202,7 @@ def load_files(container_path, *, description=None, categories=None,
     try:
         assert not (allowed_extensions and ignored_extensions)
     except AssertionError:
-        raise AssertionError("Ignored extensions and allowed extensions cannot"
+        raise ValueError("Ignored extensions and allowed extensions cannot"
                              " both be present. Please choose one or the"
                              " other.")
 
