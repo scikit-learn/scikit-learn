@@ -794,19 +794,39 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                                      "sparse matrices.")
                 sample_weight = _check_sample_weight(sample_weight, X,
                                                      dtype=X.dtype)
-            # simplify things by rescaling sw to sum up to n_samples
-            # => np.average(x, weights=sw) = np.mean(sw * x)
+            # TLDR: Rescale sw to sum up to n_samples.
+            # Long: The objective function of Enet
+            #
+            #    1/2 * np.average(squared error, weights=sw)
+            #    + alpha * penalty                                   (1)
+            #
+            # is invariant under rescaling of sw.
+            # But enet_path coordinate descent minimizes
+            #
+            #     1/2 * sum(squared error) + alpha * penalty
+            #
+            # and therefore sets
+            #
+            #     alpha = n_samples * alpha
+            #
+            # inside its function body, which results in an objective
+            # equivalent to (1) without sw.
+            # With sw, however, enet_path should set
+            #
+            #     alpha = sum(sw) * alpha                            (2)
+            #
+            # Therefore, using the freedom of Eq. (1) to rescale alpha before
+            # calling enet_path, we do
+            #
+            #     alpha = sum(sw) / n_samples * alpha
+            #
+            # such that the rescaling inside enet_path is exactly Eq. (2)
+            # because now sum(sw) = n_samples.
             sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
-            # Objective function is:
-            # 1/2 * np.average(squared error, weights=sw) + alpha * penalty
-            # but coordinate descent minimizes:
-            # 1/2 * sum(squared error) + alpha * penalty
-            # enet_path therefore sets alpha = n_samples * alpha
-            # With sw, enet_path should set alpha = sum(sw) * alpha
-            # Therefore, we rescale alpha = sum(sw) / n_samples * alpha
-            # Note: As we rescaled sample_weight to sum up to n_samples,
-            #       we don't need this
-            # alpha *= np.sum(sample_weight) / n_samples
+            # Note: Alternatively, we could also have rescaled alpha instead
+            # of sample_weight:
+            #
+            #     alpha *= np.sum(sample_weight) / n_samples
 
         # Ensure copying happens only once, don't do it again if done above.
         # X and y will be rescaled if sample_weight is not None, order='F'
@@ -1100,20 +1120,13 @@ def _path_residuals(X, y, sample_weight, train, test, path, path_params,
         sw_train = sample_weight[train]
         sw_test = sample_weight[test]
         n_samples = X_train.shape[0]
-        # simplify things by rescaling sw_train to sum up to n_samples on
-        # training set.
-        # => np.average(x, weights=sw) = np.mean(sw * x)
+        # TLDR: Rescale sw_train to sum up to n_samples on the training set.
+        # See TLDR and long comment inside ElasticNet.fit.
         sw_train *= (n_samples / np.sum(sw_train))
-        # Objective function is:
-        # 1/2 * np.average(squared error, weights=sw) + alpha * penalty
-        # but coordinate descent minimizes:
-        # 1/2 * sum(squared error) + alpha * penalty
-        # enet_path therefore sets alpha = n_samples * alpha
-        # With sw, enet_path should set alpha = sum(sw) * alpha
-        # Therefore, we rescale alpha = sum(sw) / n_samples * alpha
-        # Note: As we rescaled sample_weight to sum up to n_samples,
-        #       we don't need this
-        # alpha *= np.sum(sample_weight) / n_samples
+        # Note: Alternatively, we could also have rescaled alpha instead
+        # of sample_weight:
+        #
+        #     alpha *= np.sum(sample_weight) / n_samples
 
     if not sparse.issparse(X):
         for array, array_input in ((X_train, X), (y_train, y),
