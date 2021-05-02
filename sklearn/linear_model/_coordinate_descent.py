@@ -1376,6 +1376,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             mean_mse = np.mean(mse_paths, axis=1)  # mean over folds
         else:
             if sample_weight is None:
+                # Note that both len(test) and sample_weight[test].sum() can
+                # have different values for different folds.
                 sw_paths = [len(test) for train, test in folds]
             else:
                 sw_paths = [sample_weight[test].sum() for train, test in folds]
