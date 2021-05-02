@@ -1390,9 +1390,9 @@ def test_enet_sample_weight_sparse(estimator):
         reg.fit(X, y, sample_weight=sw, check_input=True)
 
 
-@pytest.mark.parametrize('cv_weighted', [True, False])
+@pytest.mark.parametrize('use_weights_in_cv', [True, False])
 @pytest.mark.parametrize('fit_intercept', [True, False])
-def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
+def test_enet_cv_sample_weight_correctness(use_weights_in_cv, fit_intercept):
     """Test that ElasticNetCV with sample weights gives correct results."""
     rng = np.random.RandomState(42)
     n_splits, n_samples, n_features = 3, 10, 5
@@ -1414,7 +1414,8 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
                       np.full(n_samples, 2)]
     splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
     reg_sw = ElasticNetCV(alphas=alphas, cv=splits_sw,
-                          fit_intercept=fit_intercept, cv_weighted=cv_weighted)
+                          fit_intercept=fit_intercept,
+                          use_weights_in_cv=use_weights_in_cv)
     reg_sw.fit(X, y, sample_weight=sw)
 
     # We repeat the first fold 2 times and provide splits ourselves
@@ -1424,7 +1425,7 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
                    np.full(n_samples, 2)]
     splits = list(LeaveOneGroupOut().split(X, groups=groups))
     reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept,
-                       cv_weighted=cv_weighted)
+                       use_weights_in_cv=use_weights_in_cv)
     reg.fit(X, y)
 
     # ensure that we chose meaningful alphas, i.e. not boundaries
@@ -1433,7 +1434,7 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
     assert_allclose(reg_sw.coef_, reg.coef_)
     if fit_intercept is not None:
         assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
-    if cv_weighted:
+    if use_weights_in_cv:
         # Note: The order of groups from LeaveOneGroupOut is the same for both.
         assert_allclose(reg_sw.mse_path_, reg.mse_path_)
 
@@ -1445,9 +1446,9 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
 @pytest.mark.parametrize('l1_ratio', [0, 0.5, 1])
 @pytest.mark.parametrize('normalize', [False, True])
 @pytest.mark.parametrize('precompute', [False, True])
-@pytest.mark.parametrize('cv_weighted', [False, True])
+@pytest.mark.parametrize('use_weights_in_cv', [False, True])
 def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, normalize,
-                                           precompute, cv_weighted):
+                                           precompute, use_weights_in_cv):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
@@ -1455,7 +1456,7 @@ def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, normalize,
     X = rng.rand(n_samples, n_features)
     y = X.sum(axis=1) + rng.rand(n_samples)
     params = dict(l1_ratio=l1_ratio, fit_intercept=fit_intercept,
-                  precompute=precompute, cv_weighted=cv_weighted,
+                  precompute=precompute, use_weights_in_cv=use_weights_in_cv,
                   tol=1e-6, cv=3)
 
     if l1_ratio == 0:

@@ -1185,7 +1185,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic',
-                 cv_weighted=False):
+                 use_weights_in_cv=False):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1201,7 +1201,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
-        self.cv_weighted = cv_weighted
+        self.use_weights_in_cv = use_weights_in_cv
 
     @abstractmethod
     def _get_estimator(self):
@@ -1359,7 +1359,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                              **_joblib_parallel_args(prefer="threads"))(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
-        if not self.cv_weighted:
+        if not self.use_weights_in_cv:
             mean_mse = np.mean(mse_paths, axis=1)  # mean over folds
         else:
             if sample_weight is None:
@@ -1523,7 +1523,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    cv_weighted : bool, default=False
+    use_weights_in_cv : bool, default=False
         If `True`, the MSE over test folds is calculated as a weighted average,
         weighted by the sum of `sample_weight` of each test fold. Here,
         `sample_weight=None` acts like `sample_weight=1`, which means the sum
@@ -1590,14 +1590,14 @@ class LassoCV(RegressorMixin, LinearModelCV):
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic',
-                 cv_weighted=False):
+                 use_weights_in_cv=False):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
             random_state=random_state, selection=selection,
-            cv_weighted=cv_weighted)
+            use_weights_in_cv=use_weights_in_cv)
 
     def _get_estimator(self):
         return Lasso()
@@ -1713,7 +1713,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    cv_weighted : bool, default=False
+    use_weights_in_cv : bool, default=False
         If `True`, the MSE over test folds is calculated as a weighted average,
         weighted by the sum of `sample_weight` of each test fold. Here,
         `sample_weight=None` acts like `sample_weight=1`, which means the sum
@@ -1803,7 +1803,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, positive=False, random_state=None,
-                 selection='cyclic', cv_weighted=False):
+                 selection='cyclic', use_weights_in_cv=False):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1820,7 +1820,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
-        self.cv_weighted = cv_weighted
+        self.use_weights_in_cv = use_weights_in_cv
 
     def _get_estimator(self):
         return ElasticNet()
@@ -2282,7 +2282,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    cv_weighted : bool, default=False
+    use_weights_in_cv : bool, default=False
         If `True`, the MSE over test folds is calculated as a weighted average,
         weighted by the number of observations in each folds.
 
@@ -2348,7 +2348,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, random_state=None,
-                 selection='cyclic', cv_weighted=False):
+                 selection='cyclic', use_weights_in_cv=False):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -2363,7 +2363,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.selection = selection
-        self.cv_weighted = cv_weighted
+        self.use_weights_in_cv = use_weights_in_cv
 
     def _get_estimator(self):
         return MultiTaskElasticNet()
@@ -2491,7 +2491,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    cv_weighted : bool, default=False
+    use_weights_in_cv : bool, default=False
         If `True`, the MSE over test folds is calculated as a weighted average,
         weighted by the number of observations in each folds.
 
@@ -2554,13 +2554,13 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
                  fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
                  cv=None, verbose=False, n_jobs=None, random_state=None,
-                 selection='cyclic', cv_weighted=False):
+                 selection='cyclic', use_weights_in_cv=False):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
-            selection=selection, cv_weighted=cv_weighted)
+            selection=selection, use_weights_in_cv=use_weights_in_cv)
 
     def _get_estimator(self):
         return MultiTaskLasso()
