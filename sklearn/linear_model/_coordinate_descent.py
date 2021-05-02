@@ -731,7 +731,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weight. Internally, the `sample_weight` vector will be
+            Sample weights. Internally, the `sample_weight` vector will be
             rescaled to sum to `n_samples`.
 
             .. versionadded:: 0.23
@@ -1057,7 +1057,7 @@ def _path_residuals(X, y, sample_weight, train, test, path, path_params,
         Target values.
 
     sample_weight : None or array-like of shape (n_samples,)
-        Sample weight.
+        Sample weights.
 
     train : list of indices
         The indices of the train set.
@@ -1227,7 +1227,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             Target values.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weight.
+            Sample weights.
 
         Returns
         -------
