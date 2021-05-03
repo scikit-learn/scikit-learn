@@ -11,7 +11,7 @@ from scipy import sparse
 from scipy.sparse import diags, isspmatrix_csr
 from scipy.stats import norm
 
-from ._spectral_embedding import _graph_is_connected as graph_is_connected
+from scipy.sparse.csgraph import connected_components
 from ..base import BaseEstimator
 from ..utils import check_symmetric
 from ..utils.extmath import randomized_svd
@@ -404,6 +404,7 @@ def _is_symmetric(array, tol=1e-15):
         symmetric = np.allclose(array, array.T, atol=tol)
 
     return symmetric
+
 class GraphSpectralEmbedding(BaseEstimator):
     r"""Spectral embedding for dimensionality reduction of graph represented data.
 
@@ -445,12 +446,11 @@ class GraphSpectralEmbedding(BaseEstimator):
         results if the graph is unconnected. If True and input is unconnected,
         a UserWarning is thrown. Not checking for connectedness may result in
         faster computation.
-    diag_aug : bool, optional (default = True)
+    regularizer: int, float or bool, optional (default = True)
         When `algorithm`='ASE', whether to replace the main diagonal of the adjacency matrix with a vector
         corresponding to the degree (or sum of edge weights for a weighted network)
         before embedding. Empirically, this produces latent position estimates closer
         to the ground truth.
-    regularizer: int, float or bool, optional (default = False)
         When `algorithm`='LSE', constant to be added to the diagonal of degree matrix. If `True`, average
         node degree is added. If int or float, must be >= 0.
     concat : bool, optional (default False)
@@ -497,8 +497,7 @@ class GraphSpectralEmbedding(BaseEstimator):
         algorithm='ASE',
         svd_solver="randomized",
         check_lcc=True,
-        diag_aug=True,
-        regularizer=False,
+        regularizer=True,
         concat=False,
     ):
 
@@ -510,10 +509,6 @@ class GraphSpectralEmbedding(BaseEstimator):
         self.regularizer=regularizer
         self.concat=concat
 
-
-        if not isinstance(diag_aug, bool):
-            raise TypeError("`diag_aug` must be of type bool")
-        self.diag_aug = diag_aug
         self.is_fitted_ = False
 
     def fit(self, X, y=None):
@@ -533,7 +528,10 @@ class GraphSpectralEmbedding(BaseEstimator):
                                 estimator=self)
 
         if self.check_lcc:
-            if not graph_is_connected(A):
+            directed = ~_is_symmetric(A)
+            n_components = connected_components(
+                            A, directed, connection="weak", return_labels=False)
+            if n_components != 1:
                 msg = (
                     "Input graph is not fully connected. Results may not"
                     + "be optimal. You can compute the largest connected component by"
@@ -551,7 +549,7 @@ class GraphSpectralEmbedding(BaseEstimator):
             raise TypeError('"algorithm" must be of type string')
 
         # reduces the dimensionality of an adjacency matrix using the desired embedding method.
-        if self.algorithm.lower() == 'ase' and self.diag_aug:
+        if self.algorithm.lower() == 'ase' and self.regularizer:
             A = _augment_diagonal(A)
         elif self.algorithm.lower() == 'lse':
             A = _to_laplacian(A, regularizer=self.regularizer)
@@ -632,7 +630,7 @@ class GraphSpectralEmbedding(BaseEstimator):
             vertices to in-sample vertices.
         Notes
         -----
-        If the matrix was diagonally augmented (e.g., ``self.diag_aug`` was True), ``fit``
+        If the matrix was diagonally augmented (e.g., ``self.regularizer`` was True), ``fit``
         followed by ``transform`` will produce a slightly different matrix than
         ``fit_transform``.
         To get the original embedding, using ``fit_transform`` is recommended. In the
