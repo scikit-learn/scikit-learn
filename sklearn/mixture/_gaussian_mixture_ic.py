@@ -1,8 +1,9 @@
 """GaussianMixtureIC"""
 
 # Author: Thomas Athey <tathey1@jhmi.edu>
-# Modified by Benjamin Pedigo <bpedigo@jhu.edu>, Tingshan Liu <tliu68@jhmi.edu>
-# and Giorgio Di Salvo <gdisalv1@jhu.edu>
+# Modified by: Benjamin Pedigo <bpedigo@jhu.edu>
+#              Tingshan Liu <tliu68@jhmi.edu>
+#              Giorgio Di Salvo <gdisalv1@jhu.edu>
 
 
 import numpy as np
@@ -27,7 +28,9 @@ from ..base import BaseEstimator, ClusterMixin
 
 class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     """
-    Automatic Gaussian Mixture Model (GMM) selection via BIC/AIC.
+    Automatic Gaussian Mixture Model (GMM) selection via the
+    Bayesian Information Criterion (BIC)
+    or the Akaike Information Criterion (AIC).
 
     Clustering algorithm using a hierarchical agglomerative clustering
     prior to a Gaussian mixture model (GMM) fitting. Different combinations
@@ -40,11 +43,12 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         The minimum number of mixture components to consider.
         If ``max_components`` is not None, ``min_components`` must be
         less than or equal to ``max_components``. If ``label_init`` is given,
-        min_components must match number of unique labels in ``label_init``.
+        ``min_components`` must match the number of unique labels
+        in ``label_init``.
 
     max_components : int or None, default=10.
         The maximum number of mixture components to consider. Must be greater
-        than or equal to min_components.
+        than or equal to ``min_components``.
         If ``label_init`` is given, ``min_components`` must match number of
         unique labels in ``label_init``.
 
@@ -63,7 +67,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             no agglomeration - GMM is initialized with k-means
         - 'all'
             considers all affinities in
-            ['euclidean','manhattan','cosine','none']
+            ['euclidean', 'manhattan', 'cosine', 'none']
 
         If a list/array, it must be a list/array of strings containing only
         'euclidean', 'manhattan', 'cosine', and/or 'none'.
@@ -86,7 +90,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         - 'single'
             single linkage
         - 'all'
-            considers all linkages in ['ward','complete','average','single']
+            considers all linkages in ['ward', 'complete', 'average', 'single']
 
         If a list/array, it must be a list/array of strings containing only
         'ward', 'complete', 'average', and/or 'single'.
@@ -161,32 +165,32 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     Attributes
     ----------
     best_criterion_ : float
-        the best (lowest) Bayesian or Aikake Information Criterion
+        The best (lowest) Bayesian or Aikake Information Criterion.
 
     n_components_ : int
-        number of clusters in the model with the best bic/aic
+        Number of clusters for the model with the best bic/aic.
 
     covariance_type_ : str
-        covariance type in the model with the best bic/aic
+        Covariance type for the model with the best bic/aic.
 
     affinity_ : str
-        affinity used in the model with the best bic/aic
+        Affinity used for the model with the best bic/aic.
 
     linkage_ : str
-        linkage used in the model with the best bic/aic
+        Linkage used for the model with the best bic/aic.
 
     reg_covar_ : float
-        regularization used in the model with the best bic/aic
+        Regularization used in the model with the best bic/aic.
 
     best_model_ : :class:`sklearn.mixture.GaussianMixture`
-        object with the best bic/aic
+        Object with the best bic/aic.
 
     labels_ : array-like, shape (n_samples,)
-        labels of each point predicted by the best model
+        Labels of each point predicted by the best model.
 
     n_iter_ : int
-        number of step used by the best fit of EM for the best model
-        to reach the convergence
+        Number of step used by the best fit of EM for the best model
+        to reach the convergence.
 
     results_ : list
         Contains exhaustive information about all the clustering runs.
@@ -194,19 +198,19 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         for a single run with the following attributes:
 
         model : GaussianMixture object
-            GMM clustering fit to the data
+            GMM clustering fit to the data.
         criterion_score : float
-            Bayesian or Aikake Information Criterion score
+            Bayesian or Aikake Information Criterion score.
         n_components : int
-            number of clusters
-        affinity : {'euclidean','manhattan','cosine','none'}
-            affinity used in Agglomerative Clustering
-        linkage : {'ward','complete','average','single'}
-            linkage used in Agglomerative Clustering
+            Number of clusters.
+        affinity : {'euclidean', 'manhattan', 'cosine', 'none'}
+            Affinity used for the Agglomerative Clustering.
+        linkage : {'ward', 'complete', 'average', 'single'}
+            Linkage used for the Agglomerative Clustering.
         covariance_type : {'full', 'tied', 'diag', 'spherical'}
-            covariance type used in GMM
+            Covariance type used for the GMM.
         reg_covar : float
-            regularization used in GMM
+            Regularization used for the GMM.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -231,15 +235,18 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     Notes
     -----
     This algorithm was strongly inspired by mclust, a clustering package in R
+    https://sites.stat.washington.edu/mclust/
 
     References
     ----------
     .. [1] Jeffrey D. Banfield and Adrian E. Raftery. Model-based gaussian and
        non-gaussian clustering. Biometrics, 49:803–821, 1993.
+       https://doi.org/10.2307/2532201
 
     .. [2] Abhijit Dasgupta and Adrian E. Raftery. Detecting features in
        spatial point processes with clutter via model-based clustering.
        Journal of the American Statistical Association, 93(441):294–302, 1998.
+       https://doi.org/10.2307/2669625
     """
 
     def __init__(
@@ -278,16 +285,16 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             input = list(np.unique(input))
         elif isinstance(input, str):
             if input not in default:
-                msg = f"{name} is {input} but must be one of {default}."
-                raise ValueError(msg)
+                raise ValueError(
+                    f"{name} is {input} but must be one of {default}."
+                )
             if input != "all":
                 input = [input]
         else:
-            msg = (
+            raise TypeError(
                 f"{name} is a {type(input)} but must be a numpy array, "
                 "a list, or a string."
             )
-            raise TypeError(msg)
         return input
 
     def _check_parameters(self):
@@ -312,11 +319,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         )
 
         if ("ward" in self.linkage) and not ("euclidean" in self.affinity):
-            msg = (
+            raise ValueError(
                 'If "ward" is a linkage option, '
                 '"euclidean" must be an affinity option.'
             )
-            raise ValueError(msg)
 
         self.linkage = self._check_multi_comp_inputs(
             self.linkage,
@@ -336,14 +342,12 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             if self.label_init.ndim > 2 or (
                 self.label_init.ndim == 2 and 1 not in self.label_init.shape
             ):
-                msg = "label_init must be a one dimension array."
-                raise TypeError(msg)
+                raise TypeError("label_init must be a one dimension array.")
         elif self.label_init is not None:
-            msg = (
+            raise TypeError(
                 f"label_init is a {type(self.label_init)} but must be a "
                 "1-D number array, a list, or None."
             )
-            raise TypeError(msg)
 
         # Adjust elements in label_init to range(n_components of label_init)
         if self.label_init is not None:
@@ -364,8 +368,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         )
 
         if self.criterion not in ["aic", "bic"]:
-            msg = f'criterion is {self.criterion} but must be "aic" or "bic".'
-            raise ValueError(msg)
+            raise ValueError(
+                f'criterion is {self.criterion} but must be "aic" or "bic".'
+            )
 
         check_scalar(
             self.max_agglom_size,
@@ -490,14 +495,16 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                     "X contains a zero vector, will not run cosine affinity."
                 )
             if self.affinity == "cosine":
-                msg = "X contains a zero vector, cannot run cosine affinity."
-                raise ValueError(msg)
+                raise ValueError(
+                    "X contains a zero vector, cannot run cosine affinity."
+                )
 
         label_init = self.label_init
         if label_init is not None:
             if label_init.size != X.shape[0]:
-                msg = "n_samples must be the same as the length of label_init"
-                raise ValueError(msg)
+                raise ValueError(
+                    "n_samples must be the same as the length of label_init"
+                )
 
         param_grid = dict(
             n_components=range(self.min_components, self.max_components + 1),
@@ -637,7 +644,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
 def _increase_reg(reg):
     """
-    Increase regularization factor by factor of 10.
+    Scale the regularization factor by 10.
 
     Parameters
     ----------
@@ -684,7 +691,7 @@ def _onehot_to_initial_params(X, onehot, cov_type):
         precisions = np.dot(c, c.T)
     elif cov_type == "diag":
         precisions = precisions_cholesky_
-    else:
+    else:  # "spherical" or "full"
         precisions = [np.dot(c, c.T) for c in precisions_cholesky_]
 
     return weights, means, precisions
@@ -707,7 +714,7 @@ def _process_paramgrid(paramgrid, n_init, label_init):
         for AgglomerativeClustering.
         The second dict include the options for GaussianMixture.
     ag_paramgrid_processed : list of dicts
-        options for AgglomerativeClustering
+        Options for AgglomerativeClustering.
     """
     gm_keys = ["covariance_type", "n_components", "random_state"]
     ag_keys = ["affinity", "linkage"]
@@ -794,19 +801,20 @@ class _CollectResults:
         Bayesian or Aikake Information Criterion
 
     n_components : int
-        number of components
+        Number of components
 
-    affinity : {'euclidean','manhattan','cosine','none'}
-        affinity used in Agglomerative Clustering
+    affinity : {'euclidean', 'manhattan', 'cosine', 'none'}
+        Affinity used for the Agglomerative Clustering
 
-    linkage : {'ward','complete','average','single'}
-        linkage used in Agglomerative Clustering
+    linkage : {'ward', 'complete', 'average', 'single'}
+        Linkage used for the Agglomerative Clustering
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'}
-        covariance type used in GMM
+        Covariance type used for the GMM
 
     reg_covar : float
-        regularization used in GMM
+        Regularization factor used for the regularization of the
+        GMM covariance matrices
 
     """
 

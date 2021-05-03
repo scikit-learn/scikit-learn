@@ -164,6 +164,32 @@ def test_two_class():
     assert_equal(n_components <= 5, True)
 
 
+def test_two_class_different_n_jobs():
+    """
+    Solving an easily separable two gaussian problem in parallel
+    using different number of n_jobs.
+    """
+    np.random.seed(1)
+
+    n = 100
+    d = 3
+
+    X1 = np.random.normal(2, 0.75, size=(n, d))
+    X2 = np.random.normal(-2, 0.5, size=(n, d))
+    X = np.vstack((X1, X2))
+
+    # run with n_jobs = -1
+    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", n_jobs=-1)
+    pred1 = gmIC.fit_predict(X)
+
+    # run with n_jobs = 1
+    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", n_jobs=1)
+    pred2 = gmIC.fit_predict(X)
+
+    # Assert that the two predictions are the same
+    assert_equal(pred1, pred2)
+
+
 def test_five_class():
     """
     Easily separable five gaussian problem.

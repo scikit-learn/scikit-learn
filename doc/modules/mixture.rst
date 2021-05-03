@@ -103,9 +103,9 @@ assuming that the data was actually generated i.i.d. from a mixture of Gaussian
 distribution). Automatically selecting the best Gaussian Mixture model based on
 BIC can be achieved via :class:`GaussianMixtureIC`. It compares models of different
 initializations and parameters such as the number of components and selects the
-one with the lowest BIC. Note that using a :ref:`Variational Bayesian Gaussian mixture <bgmm>`
-avoids the specification of the number of components for a Gaussian mixture
-model.
+one with the lowest BIC. Note that using a
+:ref:`Variational Bayesian Gaussian mixture <bgmm>` avoids the specification
+of the number of components for a Gaussian mixture model.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_001.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html

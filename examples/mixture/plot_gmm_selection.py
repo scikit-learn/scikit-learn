@@ -71,11 +71,11 @@ for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
                         width=.2, color=color))
 plt.xticks(n_components_range)
 plt.ylim([bic.min() * 1.01 - .01 * bic.max(), bic.max()])
-plt.title("BIC score per model")
+plt.title('BIC score per model')
 xpos = np.mod(bic.argmin(), len(n_components_range)) + .65 +\
     .2 * np.floor(bic.argmin() / len(n_components_range))
-plt.text(xpos, bic.min() * 0.97 + .03 * bic.max(), "*", fontsize=14)
-spl.set_xlabel("Number of components")
+plt.text(xpos, bic.min() * 0.97 + .03 * bic.max(), '*', fontsize=14)
+spl.set_xlabel('Number of components')
 spl.legend([b[0] for b in bars], cv_types)
 
 # Plot the winner
