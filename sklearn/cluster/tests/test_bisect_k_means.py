@@ -33,6 +33,7 @@ class MyTestCase(unittest.TestCase):
         assert_array_equal(expected_centers, bisect_means.cluster_centers_)
         assert_array_equal(bisect_means.predict([[0, 0], [12, 3]]), [0, 2])
 
+
     # def test_performance(self):
     #     X = np.random.randint(10, size=(100, 2))
     #     results = []
