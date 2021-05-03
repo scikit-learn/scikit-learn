@@ -38,18 +38,10 @@ class BisectKMeans(KMeans):
         -------
         sse - dictionary containing sse of each point by label
         """
-        labels_by_index = [[], []]
-
-        for x in range(0, len(labels)):
-            if labels[x] == 0:
-                labels_by_index[0].append(x)
-            else:
-                labels_by_index[1].append(x)
-
         sse = {}
 
-        for index, labels in enumerate(labels_by_index):
-            sse[index] = ((X[labels] - centers[index]) ** 2).sum(axis=1)
+        for value in range(2):
+            sse[value] = ((X[np.where(labels == value)] - centers[value]) ** 2).sum(axis=1)
 
         return sse
 
@@ -118,10 +110,6 @@ class BisectKMeans(KMeans):
                                 order='C', copy=self.copy_x,
                                 accept_large_sparse=False)
 
-        # self._check_params(X)
-        # self.random_state = check_random_state(self.random_state)
-        # sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
         #Validate init array
         init = self.init
 
@@ -137,12 +125,6 @@ class BisectKMeans(KMeans):
                 init -= X_mean
 
         x_squared_norms = row_norms(X, squared=True)
-
-        # if self._algorithm == "full":
-        #     self._kmeans_single = _kmeans_single_lloyd
-        #     self._check_mkl_vcomp(X, X.shape[0])
-        # else:
-        #     self._kmeans_single = _kmeans_single_elkan
 
         best_inertia = None
 
@@ -244,13 +226,11 @@ class BisectKMeans(KMeans):
             data_left = data_left[indexes]
             weights_left = weights_left[indexes]
 
-            n_iter += 1
-
         x_squared_norms = row_norms(X, squared=True)
 
         _centers = np.asarray(centroids)
 
-        self.cluster_centers_, self.n_iter_ = _centers, n_iter
+        self.cluster_centers_, self.n_iter_ = _centers, n_iter + 1
 
         self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
             X, sample_weight, x_squared_norms,
