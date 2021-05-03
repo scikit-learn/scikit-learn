@@ -1951,23 +1951,45 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
 
 class KernelCenterer(TransformerMixin, BaseEstimator):
-    """Center a kernel matrix.
+    r"""Center an arbitrary kernel matrix :math:`K`.
 
-    Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
-    function mapping x to a Hilbert space. KernelCenterer centers (i.e.,
-    normalize to have zero mean) the data without explicitly computing phi(x).
-    It is equivalent to centering phi(x) with
-    sklearn.preprocessing.StandardScaler(with_std=False).
+    Let define a kernel :math:`K` such that:
+
+    .. math::
+        K(X, Y) = \phi(X) . \phi(Y)^{T}
+
+    :math:`\phi(X)` is a function mapping of rows of :math:`X` to a
+    Hilbert space and :math:`K` is of shape `(n_samples, n_samples)`.
+
+    This class allows to compute :math:`\tilde{K}(X, Y)` such that:
+
+    .. math::
+        \tilde{K(X, Y)} = \tilde{\phi}(X) . \tilde{\phi}(Y)^{T}
+
+    :math:`\tilde{\phi}(X)` is the centered mapped data in the Hilbert
+    space.
+
+    `KernelCenterer` centers the features without explicitly computing the
+    mapping :math:`\phi(\cdot)`. Working with centered kernels is sometime
+    expected when dealing with algebra computation such as eigendecomposition
+    for :class:`~sklearn.decomposition.KernelPCA` for instance.
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
     Attributes
     ----------
-    K_fit_rows_ : array of shape (n_samples,)
+    K_fit_rows_ : ndarray of shape (n_samples,)
         Average of each column of kernel matrix.
 
     K_fit_all_ : float
         Average of kernel matrix.
+
+    References
+    ----------
+    .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       "Nonlinear component analysis as a kernel eigenvalue problem."
+       Neural computation 10.5 (1998): 1299-1319.
+       <https://www.mlpack.org/papers/kpca.pdf>`_
 
     Examples
     --------
