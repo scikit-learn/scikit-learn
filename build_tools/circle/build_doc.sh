@@ -177,9 +177,11 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
     joblib memory_profiler packaging seaborn pillow pytest coverage
 
 source activate testenv
-pip install sphinx-gallery==0.8.2
+pip install sphinx-gallery
 pip install numpydoc
 pip install sphinx-prompt
+# FIXME:
+pip install docutils==0.16
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
