@@ -2,9 +2,13 @@ import warnings
 
 import numpy as np
 
-from sklearn.utils.validation import check_array, check_is_fitted, _check_sample_weight, check_random_state
+from sklearn.utils.validation import check_array, check_is_fitted, \
+    _check_sample_weight, check_random_state
+
 from ..utils.extmath import row_norms
-from ._kmeans import KMeans, _kmeans_single_elkan, _kmeans_single_lloyd, _labels_inertia_threadpool_limit
+
+from ._kmeans import KMeans, _kmeans_single_elkan, \
+    _kmeans_single_lloyd, _labels_inertia_threadpool_limit
 
 import scipy.sparse as sp
 from sklearn.exceptions import ConvergenceWarning, EfficiencyWarning
@@ -125,12 +129,15 @@ class BisectKMeans(KMeans):
             Index of the cluster each sample belongs to.
         Returns
         -------
-        errors_by_label - dictionary containing squered error of each point by label
+        errors_by_label : dict
+            dictionary containing squered error of each point by label
+            as ndarray
         """
         errors_by_label = {}
 
         for value in range(2):
-            errors_by_label[value] = ((X[np.where(labels == value)] - centers[value]) ** 2).sum(axis=1)
+            errors_by_label[value] = ((X[np.where(labels == value)]
+                                       - centers[value]) ** 2).sum(axis=1)
 
         return errors_by_label
 
@@ -138,8 +145,9 @@ class BisectKMeans(KMeans):
         super()._check_params(X)
 
         if self.n_clusters < 3:
-            warnings.warn("BisectKMeans might be inefficient for n_cluster smaller"
-                          " than 3  - Use Normal KMeans from sklearn.cluster instead",
+            warnings.warn("BisectKMeans might be inefficient for n_cluster "
+                          "smaller than 3  "
+                          "- Use Normal KMeans from sklearn.cluster instead",
                           EfficiencyWarning)
 
     def _init_two_centroids(self, X, x_squared_norms, init, random_state,
@@ -228,7 +236,7 @@ class BisectKMeans(KMeans):
                                 order='C', copy=self.copy_x,
                                 accept_large_sparse=False)
 
-        #Validate init array
+        # Validate init array
         init = self.init
 
         if hasattr(init, '__array__'):
@@ -255,8 +263,8 @@ class BisectKMeans(KMeans):
 
             labels, inertia, centers, n_iter_ = self._kmeans_single(
                 X, sample_weight, centers_init, max_iter=self.max_iter,
-                verbose=self.verbose, tol=self.tol, x_squared_norms=x_squared_norms,
-                n_threads=self._n_threads
+                verbose=self.verbose, tol=self.tol,
+                x_squared_norms=x_squared_norms, n_threads=self._n_threads
             )
 
             if best_inertia is None or inertia < best_inertia:
@@ -332,7 +340,9 @@ class BisectKMeans(KMeans):
 
             errors = self._calc_bisect_errors(X, centers, labels)
 
-            lower_sse_index = 0 if errors[0].sum(axis=0) < errors[1].sum(axis=0) else 1
+            lower_sse_index = 0 if \
+                errors[0].sum(axis=0) < errors[1].sum(axis=0) else 1
+
             higher_sse_index = 1 if lower_sse_index == 0 else 0
 
             # Lower SSE is added to centroids.
@@ -344,7 +354,9 @@ class BisectKMeans(KMeans):
                 break
 
             # Data with label that has higher SSE will be further processed
-            indexes = [x for x in range(len(labels)) if labels[x] == higher_sse_index]
+            indexes = [x for x in range(len(labels))
+                       if labels[x] == higher_sse_index]
+
             data_left = data_left[indexes]
             weights_left = weights_left[indexes]
 
@@ -354,7 +366,7 @@ class BisectKMeans(KMeans):
 
         self.cluster_centers_, self.n_iter_ = _centers, n_iter + 1
 
-        # Since all clusters are calculated - simply label each data to valid center
+        # Since all clusters are calculated - label each data to valid center
         self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
             X, sample_weight, x_squared_norms,
             _centers, n_threads=self._n_threads)

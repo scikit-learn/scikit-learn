@@ -1,13 +1,13 @@
 import unittest
 import numpy as np
-import numpy.random
 
 from .._bisect_k_means import BisectKMeans
 from numpy.testing import assert_array_equal
-from .._kmeans import KMeans
 
-import time
-import statistics
+# import numpy.random
+# import time
+# import statistics
+# from .._kmeans import KMeans
 
 
 class MyTestCase(unittest.TestCase):
@@ -32,7 +32,6 @@ class MyTestCase(unittest.TestCase):
         expected_centers = [[1, 2], [10, 8], [10, 2]]
         assert_array_equal(expected_centers, bisect_means.cluster_centers_)
         assert_array_equal(bisect_means.predict([[0, 0], [12, 3]]), [0, 2])
-
 
     # def test_performance(self):
     #     X = np.random.randint(10, size=(100, 2))
