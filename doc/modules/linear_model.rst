@@ -4,6 +4,8 @@
 Linear Models
 =============
 
+FIXME: trigger change
+
 .. currentmodule:: sklearn.linear_model
 
 The following are a set of methods intended for regression in which

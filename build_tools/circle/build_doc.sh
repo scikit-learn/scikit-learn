@@ -177,7 +177,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
     joblib memory_profiler packaging seaborn pillow pytest coverage
 
 source activate testenv
-pip install sphinx-gallery
+pip install sphinx-gallery==0.8.2
 pip install numpydoc
 pip install sphinx-prompt
 
