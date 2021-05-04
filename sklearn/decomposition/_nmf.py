@@ -1879,6 +1879,17 @@ class MiniBatchNMF(NMF):
 
         n_iter_ : int
             Actual number of iterations.
+
+        iter_offset : int, default=0
+            Number of previous iterations completed used for
+            initialization, only used in
+            :class:`sklearn.decomposition.MiniBatchNMF`.
+
+        A : array-like of shape (n_components, n_features)
+            Initial guess for the numerator auxiliary function
+
+        B : array-like of shape (n_components, n_features)
+            Initial guess for the denominator auxiliary function
         """
         check_non_negative(X, "NMF (input X)")
         # check parameters
@@ -1890,7 +1901,6 @@ class MiniBatchNMF(NMF):
                              "to X, or use a positive beta_loss.")
 
         n_samples, n_features = X.shape
-
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
 
@@ -1922,8 +1932,14 @@ class MiniBatchNMF(NMF):
 
         if not is_first_call_to_partial_fit:
             with config_context(assume_finite=True):
+                X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                        dtype=[np.float64, np.float32],
+                                        reset=False)
+                # initialize W and H
+                H = self.components_
+                W = None
                 # Compute W given H and X using transform
-                W, *_ = self._fit_transform(X, H=self.components_,
+                W, *_ = self._fit_transform(X, H=H,
                                             update_H=False)
 
                 # Add 1 iteration to the current estimation
