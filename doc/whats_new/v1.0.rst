@@ -367,7 +367,7 @@ Changelog
 ....................................
 
 - |Enhancement| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis` 
-  will now raise 'LinAlgError' in case of collinear variables. These errors
+  will now cause 'RuntimeWarning' in case of collinear variables. These errors
   can be silenced by the 'reg_param' attribute.:pr:`19731` by 
   :user:`Alihan Zihna <azihna>`
 

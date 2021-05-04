@@ -16,8 +16,6 @@ from functools import partial
 
 import pytest
 
-from scipy.linalg import LinAlgWarning
-
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -88,7 +86,7 @@ def test_estimators(estimator, check, request):
     with ignore_warnings(category=(FutureWarning,
                                    ConvergenceWarning,
                                    UserWarning, FutureWarning,
-                                   LinAlgWarning)):
+                                   RuntimeWarning)):
         _set_checking_parameters(estimator)
         check(estimator)
 

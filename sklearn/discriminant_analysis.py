@@ -693,9 +693,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     tol : float, default=1.0e-4
         Absolute threshold for the covariance matrix to be considered rank
-        deficient after  the regularization is applied for each `Sk` where `Sk`
+        deficient after the regularization is applied for each `Sk` where `Sk`
         represents covariance matrix for kth class. This parameter does not
-        affect the predictions. It controls when an error is raised when the
+        affect the predictions. It controls when a warning is raised when the
         covariance matrix is not full rank.
 
         .. versionadded:: 0.17
@@ -810,11 +810,13 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             rank = np.sum(S2 > self.tol)
             if rank < n_features:
-                warnings.warn(linalg.LinAlgWarning(
+                warnings.warn(
                     f"The covariance matrix of class {ind} is not full rank. "
                     "Increasing the value of parameter `reg_param` might help"
-                    " reducing the colinearity."
-                ))
+                    " reducing the collinearity.",
+                    # TODO: Switch to LinAlgWarning when min SciPy>=1.1.0
+                    RuntimeWarning  
+                )
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))

@@ -544,7 +544,7 @@ def test_qda_regularization():
     # triggers a LinAlgError.
     msg = r"The covariance matrix of class .+ is not full rank"
     clf = QuadraticDiscriminantAnalysis()
-    with pytest.warns(linalg.LinAlgWarning, match=msg):
+    with pytest.warns(RuntimeWarning, match=msg):
         y_pred = clf.fit(X2, y6)
 
     # Adding a little regularization fixes the fit time error.
@@ -558,12 +558,12 @@ def test_qda_regularization():
     # LinAlgWarning should also be there for the n_samples_in_a_class <
     # n_features case.
     clf = QuadraticDiscriminantAnalysis()
-    with pytest.warns(linalg.LinAlgWarning, match=msg):
+    with pytest.warns(RuntimeWarning, match=msg):
         clf.fit(X5, y5)
 
     # The error will persist even with regularization
     clf = QuadraticDiscriminantAnalysis(reg_param=0.3)
-    with pytest.warns(linalg.LinAlgWarning, match=msg):
+    with pytest.warns(RuntimeWarning, match=msg):
         clf.fit(X5, y5)
 
 
