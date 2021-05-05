@@ -1192,7 +1192,7 @@ def test_vectorizers_invalid_ngram_range(vec):
     # test for raising error message
     invalid_range = vec.ngram_range
     message = re.escape(
-        f"Invalid value for ngram_range={str(invalid_range)} "
+        f"Invalid value for ngram_range={invalid_range} "
         "lower boundary larger than the upper boundary."
     )
     if isinstance(vec, HashingVectorizer) and IS_PYPY:
