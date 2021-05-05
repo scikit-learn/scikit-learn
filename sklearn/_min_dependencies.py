@@ -8,7 +8,7 @@ if platform.python_implementation() == 'PyPy':
     SCIPY_MIN_VERSION = '1.1.0'
     NUMPY_MIN_VERSION = '1.19.0'
 else:
-    SCIPY_MIN_VERSION = '0.19.1'
+    SCIPY_MIN_VERSION = '1.0.0'
     NUMPY_MIN_VERSION = '1.13.3'
 
 JOBLIB_MIN_VERSION = '0.11'
