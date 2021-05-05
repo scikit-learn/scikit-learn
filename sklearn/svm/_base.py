@@ -560,7 +560,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         return np.asarray(y, dtype=np.float64, order='C')
 
-    def decision_function(self, X):
+    def decision_function(self, X, init='warn'):
         """Evaluates the decision function for the samples in X.
 
         Parameters
@@ -574,6 +574,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             in the model.
             If decision_function_shape='ovr', the shape is (n_samples,
             n_classes).
+        init: issues a warning by default and makes it possible to choose
+              between the past or future behaviour.
 
         Notes
         -----
@@ -591,35 +593,39 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             return _ovr_decision_function(dec < 0, -dec, len(self.classes_))
         return dec
 
-    def predict(self, X):
-        """Perform classification on samples in X.
+        @deprecated(deprecated_in="0.24", removed_in="1.1",
+                    details="decision_function was deprecated in "
+                    "version 0.24 and will be removed in 1.1.")
+        def predict(self, X):
+            """Perform classification on samples in X.
 
-        For an one-class model, +1 or -1 is returned.
+            For an one-class model, +1 or -1 is returned.
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+            Parameters
+            ----------
+            X : {array-like, sparse matrix} of shape
+                (n_samples, n_features) or \
                 (n_samples_test, n_samples_train)
-            For kernel="precomputed", the expected shape of X is
-            (n_samples_test, n_samples_train).
+                For kernel="precomputed", the expected shape of X is
+                (n_samples_test, n_samples_train).
 
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,)
-            Class labels for samples in X.
-        """
-        check_is_fitted(self)
-        if self.break_ties and self.decision_function_shape == 'ovo':
-            raise ValueError("break_ties must be False when "
-                             "decision_function_shape is 'ovo'")
+            Returns
+            -------
+            y_pred : ndarray of shape (n_samples,)
+                Class labels for samples in X.
+            """
+            check_is_fitted(self)
+            if self.break_ties and self.decision_function_shape == 'ovo':
+                raise ValueError("break_ties must be False when "
+                                 "decision_function_shape is 'ovo'")
 
-        if (self.break_ties
-                and self.decision_function_shape == 'ovr'
-                and len(self.classes_) > 2):
-            y = np.argmax(self.decision_function(X), axis=1)
-        else:
-            y = super().predict(X)
-        return self.classes_.take(np.asarray(y, dtype=np.intp))
+            if (self.break_ties
+                    and self.decision_function_shape == 'ovr'
+                    and len(self.classes_) > 2):
+                y = np.argmax(self.decision_function(X), axis=1)
+            else:
+                y = super().predict(X)
+            return self.classes_.take(np.asarray(y, dtype=np.intp))
 
     # Hacky way of getting predict_proba to raise an AttributeError when
     # probability=False using properties. Do not use this in new code; when

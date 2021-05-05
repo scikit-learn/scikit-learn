@@ -726,7 +726,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             return self.classes_[(Y > 0).astype(int)]
         return self.classes_[Y.argmax(axis=1)]
 
-    def decision_function(self, X):
+    def decision_function(self, X, init='warn'):
         """Decision function for the OneVsOneClassifier.
 
         The decision values for the samples are computed by adding the
@@ -737,6 +737,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+        init: issues a warning by default and makes it possible to choose
+              between the past or future behaviour.
 
         Returns
         -------
@@ -765,9 +767,13 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             return Y[:, 1]
         return Y
 
-    @property
-    def n_classes_(self):
-        return len(self.classes_)
+        @deprecated(deprecated_in="0.24", removed_in="1.1",
+                    details="decision_function was deprecated in "
+                    "version 0.24 and will be removed in 1.1"
+                    )
+        @property
+        def n_classes_(self):
+            return len(self.classes_)
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
