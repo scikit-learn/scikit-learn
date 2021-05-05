@@ -1043,9 +1043,12 @@ def test_init():
 
 
 def test_gaussian_mixture_setting_best_params():
-    # test that best_params is set appropriately
-    # even if convergence was not reached
-    # also a regression test for issue #18216
+    """`GaussianMixture`'s best_parameters, `n_iter_` and `lower_bound_`
+    must be set appropriately in the case of divergence.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/18216
+    """
     rnd = np.random.RandomState(0)
     n_samples = 30
     X = rnd.uniform(size=(n_samples, 3))
@@ -1072,3 +1075,9 @@ def test_gaussian_mixture_setting_best_params():
                           precisions_init=precisions_init)
     # ensure that no error is thrown during fit
     gmm.fit(X)
+    # check that best_params of gmm, and `n_iter_` and `lower_bound_` are set
+    for attr in [
+        "weights_", "means_", "covariances_", "precisions_cholesky_",
+        "n_iter_", "lower_bound_",
+    ]:
+        assert hasattr(gmm, attr)
