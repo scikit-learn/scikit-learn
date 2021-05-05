@@ -242,7 +242,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     .. [1] `Fraley, C., & Raftery, A. E. (2002). Model-based clustering,
         discriminant analysis, and density estimation.
         Journal of the American statistical Association, 97(458), 611-631.
-       <https://doi.org/10.1198/016214502760047131>_`
+        <https://doi.org/10.1198/016214502760047131>_`
 
     .. [2] `Athey, T. L., Pedigo, B. D., Liu, T., & Vogelstein, J. T. (2019).
         AutoGMM: Automatic and Hierarchical Gaussian Mixture Modeling
@@ -410,14 +410,14 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             )
         else:
             gm_params["init_params"] = "kmeans"
-        gm_params["reg_covar"] = 0
         gm_params["max_iter"] = self.max_iter
         gm_params["random_state"] = seed
+        reg_covar = 0
 
         # if none of the iterations converge, bic/aic is set to inf
         criter = np.inf
         # below is the regularization scheme
-        while gm_params["reg_covar"] <= 1 and criter == np.inf:
+        while reg_covar <= 1 and criter == np.inf:
             model = GaussianMixture(**gm_params)
             try:
                 # ignoring warning here because if convergence is not reached,
@@ -434,10 +434,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 assert not any([count <= 1 for count in counts])
 
             except ValueError:
-                gm_params["reg_covar"] = _increase_reg(gm_params["reg_covar"])
+                reg_covar = _increase_reg(reg_covar)
                 continue
             except AssertionError:
-                gm_params["reg_covar"] = _increase_reg(gm_params["reg_covar"])
+                reg_covar = _increase_reg(reg_covar)
                 continue
             # if the code gets here, then the model has been fit with
             # no errors or singleton clusters
@@ -447,6 +447,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 criter = model.aic(X)
             break
 
+        gm_params["reg_covar"] = reg_covar
         results = _CollectResults(model, criter, gm_params, ag_params)
         return results
 
