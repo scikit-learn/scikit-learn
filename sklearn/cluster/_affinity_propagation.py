@@ -135,7 +135,7 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
         # n_samples clusters, depending on preferences
         warnings.warn("All samples have mutually equal similarities. "
                       "Returning arbitrary cluster center(s).")
-        if preference.flat[0] >= S.flat[n_samples - 1]:
+        if preference.flat[0] > S.flat[n_samples - 1]:
             return ((np.arange(n_samples), np.arange(n_samples), 0)
                     if return_n_iter
                     else (np.arange(n_samples), np.arange(n_samples)))
