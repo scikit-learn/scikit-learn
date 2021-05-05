@@ -66,6 +66,18 @@ def test_input_param():
     # criterion is not "aic" or "bic"
     _test_inputs(X, ValueError, criterion="cic")
 
+    # n_init is not an integer
+    _test_inputs(X, TypeError, n_init='1')
+
+    # n_init must be at least 1
+    _test_inputs(X, ValueError, n_init=0)
+
+    # max_agglom_size is not an integer
+    _test_inputs(X, TypeError, max_agglom_size='1')
+
+    # max_agglom_size must be at least 2
+    _test_inputs(X, ValueError, max_agglom_size=1)
+
 
 def test_labels_init():
     X = np.random.normal(0, 1, size=(100, 3))
@@ -128,7 +140,7 @@ def test_cosine_with_0():
         gmIC.fit(X)
 
 
-def test_two_class():
+def _test_two_class(**kws):
     """
     Easily separable two gaussian problem.
     """
@@ -143,7 +155,7 @@ def test_two_class():
     y = np.repeat([0, 1], n)
 
     # test BIC
-    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", n_jobs=2)
+    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", **kws)
     gmIC.fit(X, y)
     n_components = gmIC.n_components_
 
@@ -155,7 +167,7 @@ def test_two_class():
     assert_allclose(ari, 1)
 
     # test AIC
-    gmIC = GaussianMixtureIC(max_components=5, criterion="aic", n_jobs=2)
+    gmIC = GaussianMixtureIC(max_components=5, criterion="aic", **kws)
     gmIC.fit(X, y)
     n_components = gmIC.n_components_
 
@@ -164,10 +176,29 @@ def test_two_class():
     assert_equal(n_components <= 5, True)
 
 
-def test_two_class_different_n_jobs():
+def test_two_class():
+    _test_two_class()
+
+
+def test_X_exceeds_max_agglom_size():
     """
-    Solving an easily separable two gaussian problem in parallel
-    using different number of n_jobs.
+    Testing agglomerating a subset of X to initialize GM parameters.
+    """
+    # set max_agglom_size to be smaller than the number of data points
+    _test_two_class(max_agglom_size=50)
+
+
+def test_multiple_kmeans_inits():
+    """
+    Testing running multiple inits for KMeans.
+    """
+    _test_two_class(n_init=2)
+
+
+def test_two_class_sequential_v_parallel():
+    """
+    Testing independence of results from the execution mode
+    (sequential vs. parallel using ``joblib.Parallel``).
     """
     np.random.seed(1)
 
@@ -178,16 +209,19 @@ def test_two_class_different_n_jobs():
     X2 = np.random.normal(-2, 0.5, size=(n, d))
     X = np.vstack((X1, X2))
 
-    # run with n_jobs = -1
-    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", n_jobs=-1)
-    pred1 = gmIC.fit_predict(X)
+    gmIC_parallel = GaussianMixtureIC(
+        max_components=5, criterion="bic", n_jobs=-1
+    )
+    preds_parallel = gmIC_parallel.fit_predict(X)
 
-    # run with n_jobs = 1
-    gmIC = GaussianMixtureIC(max_components=5, criterion="bic", n_jobs=1)
-    pred2 = gmIC.fit_predict(X)
+    gmIC_sequential = GaussianMixtureIC(
+        max_components=5, criterion="bic", n_jobs=1
+    )
+    preds_sequential = gmIC_sequential.fit_predict(X)
 
-    # Assert that the two predictions are the same
-    assert_equal(pred1, pred2)
+    # Results obtained with sequential and parallel executions
+    # must be identical
+    assert_equal(preds_parallel, preds_sequential)
 
 
 def test_five_class():
@@ -236,7 +270,8 @@ def test_five_class():
 )
 def test_covariances(cov1, cov2, expected_cov_type):
     """
-    Easily separable two gaussian problem.
+    Testing that the predicted covariance type is correct
+    on an easily separable two gaussian problem for each covariance type.
     """
     np.random.seed(1)
     n = 100

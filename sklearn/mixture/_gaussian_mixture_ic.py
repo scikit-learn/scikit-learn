@@ -197,7 +197,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         Each item represents a class object storing the results
         for a single run with the following attributes:
 
-        model : GaussianMixture object
+        model : :class:`~sklearn.mixture.GaussianMixture` object
             GMM clustering fit to the data.
         criterion_score : float
             Bayesian or Aikake Information Criterion score.
@@ -234,19 +234,25 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    This algorithm was strongly inspired by mclust, a clustering package in R
-    https://sites.stat.washington.edu/mclust/
+    This algorithm was strongly inspired by mclust [3]_,
+    a clustering package for R.
 
     References
     ----------
-    .. [1] Jeffrey D. Banfield and Adrian E. Raftery. Model-based gaussian and
-       non-gaussian clustering. Biometrics, 49:803–821, 1993.
-       https://doi.org/10.2307/2532201
+    .. [1] `Fraley, C., & Raftery, A. E. (2002). Model-based clustering,
+        discriminant analysis, and density estimation.
+        Journal of the American statistical Association, 97(458), 611-631.
+       <https://doi.org/10.1198/016214502760047131>_`
 
-    .. [2] Abhijit Dasgupta and Adrian E. Raftery. Detecting features in
-       spatial point processes with clutter via model-based clustering.
-       Journal of the American Statistical Association, 93(441):294–302, 1998.
-       https://doi.org/10.2307/2669625
+    .. [2] `Athey, T. L., Pedigo, B. D., Liu, T., & Vogelstein, J. T. (2019).
+        AutoGMM: Automatic and Hierarchical Gaussian Mixture Modeling
+        in Python. arXiv preprint arXiv:1909.02688.
+        <https://arxiv.org/abs/1909.02688>_`
+
+    .. [3] `Scrucca, L., Fop, M., Murphy, T. B., & Raftery, A. E. (2016).
+        mclust 5: Clustering, Classification and Density Estimation Using
+        Gaussian Finite Mixture Models. The R journal, 8(1), 289–317.
+        <https://doi.org/10.32614/RJ-2016-021>_`
     """
 
     def __init__(
@@ -676,7 +682,7 @@ def _onehot_to_initial_params(X, onehot, cov_type):
     onehot : ndarray, shape (n_samples, n_clusters)
         Each row has a 1 indicating cluster membership, other entries are 0.
     cov_type : {'full', 'tied', 'diag', 'spherical'}
-        Covariance type for Gaussian mixture model
+        Covariance type for :class:`sklearn.mixture.GaussianMixture`.
     """
     n = X.shape[0]
     weights, means, covariances = _estimate_gaussian_parameters(
@@ -711,10 +717,11 @@ def _process_paramgrid(paramgrid, n_init, label_init):
     -------
     paramgrid_processed : list pairs of dicts
         For each pair, the first dict are the options
-        for AgglomerativeClustering.
-        The second dict include the options for GaussianMixture.
+        for :class:`sklearn.cluster.AgglomerativeClustering`.
+        The second dict include the options
+        for :class:`sklearn.mixture.GaussianMixture`.
     ag_paramgrid_processed : list of dicts
-        Options for AgglomerativeClustering.
+        Options for :class:`~sklearn.cluster.AgglomerativeClustering`.
     """
     gm_keys = ["covariance_type", "n_components", "random_state"]
     ag_keys = ["affinity", "linkage"]
