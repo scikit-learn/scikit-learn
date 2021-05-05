@@ -287,7 +287,7 @@ modifying code and submitting a PR:
    .. prompt:: bash $
 
         git checkout main
-        git pull upstream/main
+        git merge upstream/main
 
 8. Create a feature branch to hold your development changes:
 
