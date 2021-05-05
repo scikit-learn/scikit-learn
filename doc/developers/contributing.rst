@@ -455,8 +455,8 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    functionality is useful in practice and, if possible, compare it to other
    methods available in scikit-learn.
 
-10. New features have some maintenance overhead. It is expected that the person
-    who submits new code does part of the maintenance for that code at least
+10. New features have some maintenance overhead. We expect PR authors
+    to take part in the maintenance for the code they submit, at least
     initially. New features need to be illustrated with narrative
     documentation in the user guide, with small code snippets.
     If relevant, please also add references in the literature, with PDF links
