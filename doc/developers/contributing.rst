@@ -1250,6 +1250,30 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+.. _communication::
+
+Communication Guidelines [1]_
+-----------------------------
+
+- Every PR, good or bad, is an act of generosity. Opening with a positive
+  comment will help the author feel rewarded, and your subsequent remarks may
+  be heard more clearly. You may feel good also.
+- Begin if possible with the large issues, so the author knows they’ve been
+  understood. Resist the temptation to immediately go line by line, or to open
+  with small pervasive issues.
+- Do not let perfect be the enemy of the good, particularly for documentation.
+  If you find yourself making many small suggestions, or being too nitpicky
+  on style or grammar, consider merging the current PR when all important
+  concerns are addressed. Then, either push a commit directly
+  (if you are a maintainer) or open a follow-up PR yourself.
+- Do not rush, take the time to make your comments clear and justify your
+  suggestions.
+- You are the face of the project. Bad days occurs to everyone, in that
+  occasions you deserve a break: try to take your time and stay off line.
+
+.. [1] Adapted from the numpy `communication guidelines
+       <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_
+
 Reading the existing code base
 ==============================
 
