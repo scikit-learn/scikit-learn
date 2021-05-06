@@ -100,7 +100,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                                    y_numeric=True, multi_output=False)
         sample_weight = _check_sample_weight(sample_weight, X)
 
-        n_samples, n_features = X.shape
+        n_features = X.shape[1]
         n_params = n_features
 
         if self.fit_intercept:
