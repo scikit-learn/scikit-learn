@@ -1271,8 +1271,8 @@ contributor to keep involved in the project. [1]_
 - Do not let perfect be the enemy of the good, particularly for documentation.
   If you find yourself making many small suggestions, or being too nitpicky
   on style or grammar, consider merging the current PR when all important
-  concerns are addressed. Then, either push a commit directly
-  (if you are a maintainer) or open a follow-up PR yourself.
+  concerns are addressed. There will always be the opportunity to improve it in
+  a follow-up PR.
 - Do not rush, take the time to make your comments clear and justify your
   suggestions.
 - You are the face of the project. Bad days occurs to everyone, in that
