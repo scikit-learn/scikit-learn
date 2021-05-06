@@ -474,7 +474,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self._check_parameters()
         X = check_array(
             X, dtype=[np.float64, np.float32], ensure_min_samples=1
-        )
+        ).copy()
 
         random_state = check_random_state(self.random_state)
 
@@ -544,7 +544,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         n = X.shape[0]
         if self.max_agglom_size is None or n <= self.max_agglom_size:
-            X_subset = X.copy()
+            X_subset = X
         else:  # if dataset is huge, agglomerate a subset
             subset_idxs = random_state.choice(
                 np.arange(0, n), self.max_agglom_size
@@ -803,26 +803,26 @@ class _CollectResults:
     ----------
 
     model : GaussianMixture object
-        GMM clustering fit to the data
+        GMM clustering fit to the data.
 
     criterion : float
-        Bayesian or Aikake Information Criterion
+        Bayesian or Aikake Information Criterion.
 
     n_components : int
-        Number of components
+        Number of components.
 
     affinity : {'euclidean', 'manhattan', 'cosine', 'none'}
-        Affinity used for the Agglomerative Clustering
+        Affinity used for the Agglomerative Clustering.
 
     linkage : {'ward', 'complete', 'average', 'single'}
-        Linkage used for the Agglomerative Clustering
+        Linkage used for the Agglomerative Clustering.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'}
-        Covariance type used for the GMM
+        Covariance type used for the GMM.
 
     reg_covar : float
         Regularization factor used for the regularization of the
-        GMM covariance matrices
+        GMM covariance matrices.
 
     """
 
