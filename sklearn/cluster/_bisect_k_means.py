@@ -39,7 +39,7 @@ class BisectKMeans(KMeans):
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    Verbose : int, default=0
+    verbose : int, default=0
         Verbosity mode.
 
     tol : float, default=1e-4
