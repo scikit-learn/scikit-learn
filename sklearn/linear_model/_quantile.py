@@ -159,10 +159,15 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # n = n_samples
         # 1_n = vector of length n with entries equal one
         # see https://stats.stackexchange.com/questions/384909/
+        #
+        # Filtering out zero samples weights from the beginning makes life
+        # easier for the linprog solver.
+        mask = sample_weight != 0
+        n_mask = int(np.sum(mask))  # use n_mask instead of n_samples
         c = np.concatenate([
-            np.full(n_params * 2, fill_value=alpha),
-            sample_weight * self.quantile,
-            sample_weight * (1 - self.quantile),
+            np.full(2 * n_params, fill_value=alpha),
+            sample_weight[mask] * self.quantile,
+            sample_weight[mask] * (1 - self.quantile),
         ])
         if self.fit_intercept:
             # do not penalize the intercept
@@ -170,22 +175,22 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[n_params] = 0
 
             A_eq = np.concatenate([
-                np.ones((n_samples, 1)),
-                X,
-                -np.ones((n_samples, 1)),
-                -X,
-                np.eye(n_samples),
-                -np.eye(n_samples),
+                np.ones((n_mask, 1)),
+                X[mask],
+                -np.ones((n_mask, 1)),
+                -X[mask],
+                np.eye(n_mask),
+                -np.eye(n_mask),
             ], axis=1)
         else:
             A_eq = np.concatenate([
-                X,
-                -X,
-                np.eye(n_samples),
-                -np.eye(n_samples),
+                X[mask],
+                -X[mask],
+                np.eye(n_mask),
+                -np.eye(n_mask),
             ], axis=1)
 
-        b_eq = y
+        b_eq = y[mask]
 
         result = linprog(
             c=c,
