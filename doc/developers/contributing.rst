@@ -282,11 +282,13 @@ You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-7. Synchronize your ``main`` branch with the ``upstream/main`` branch:
+7. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+   more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash $
 
         git checkout main
+        git fetch upstream
         git merge upstream/main
 
 8. Create a feature branch to hold your development changes:
