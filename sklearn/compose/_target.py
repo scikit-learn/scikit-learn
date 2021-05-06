@@ -176,7 +176,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self : object
         """
         y = check_array(y, accept_sparse=False, force_all_finite=True,
-                        ensure_2d=False, dtype='numeric')
+                        ensure_2d=False, dtype='numeric', allow_nd=True)
 
         # store the number of dimension of the target to predict an array of
         # similar shape at predict

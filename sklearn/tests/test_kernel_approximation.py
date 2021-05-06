@@ -1,9 +1,11 @@
+import re
+
 import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal, assert_raises
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -90,11 +92,18 @@ def test_additive_chi2_sampler():
     # test error is raised on negative input
     Y_neg = Y.copy()
     Y_neg[0, 0] = -1
-    assert_raises(ValueError, transform.transform, Y_neg)
+    msg = 'Negative values in data passed to'
+    with pytest.raises(ValueError, match=msg):
+        transform.transform(Y_neg)
 
     # test error on invalid sample_steps
     transform = AdditiveChi2Sampler(sample_steps=4)
-    assert_raises(ValueError, transform.fit, X)
+    msg = re.escape(
+        "If sample_steps is not in [1, 2, 3],"
+        " you need to provide sample_interval"
+    )
+    with pytest.raises(ValueError, match=msg):
+        transform.fit(X)
 
     # test that the sample interval is set correctly
     sample_steps_available = [1, 2, 3]
@@ -154,7 +163,9 @@ def test_skewed_chi2_sampler():
     # test error is raised on when inputs contains values smaller than -c
     Y_neg = Y.copy()
     Y_neg[0, 0] = -c * 2.
-    assert_raises(ValueError, transform.transform, Y_neg)
+    msg = 'X may not contain entries smaller than -skewedness'
+    with pytest.raises(ValueError, match=msg):
+        transform.transform(Y_neg)
 
 
 def test_additive_chi2_sampler_exceptions():

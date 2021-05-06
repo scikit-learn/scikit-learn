@@ -517,13 +517,19 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, default=200.0
+    learning_rate : float or 'auto', default=200.0
         The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
         the learning rate is too high, the data may look like a 'ball' with any
         point approximately equidistant from its nearest neighbours. If the
         learning rate is too low, most points may look compressed in a dense
         cloud with few outliers. If the cost function gets stuck in a bad local
         minimum increasing the learning rate may help.
+        Note that many other t-SNE implementations (bhtsne, FIt-SNE, openTSNE,
+        etc.) use a definition of learning_rate that is 4 times smaller than
+        ours. So our learning_rate=200 corresponds to learning_rate=800 in
+        those other implementations. The 'auto' option sets the learning_rate
+        to `max(N / early_exaggeration / 4, 50)` where N is the sample size,
+        following [4] and [5]. This will become default in 1.2.
 
     n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
@@ -559,7 +565,8 @@ class TSNE(BaseEstimator):
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
-        usually more globally stable than random initialization.
+        usually more globally stable than random initialization. `init='pca'`
+        will become default in 1.2.
 
     verbose : int, default=0
         Verbosity level.
@@ -631,7 +638,8 @@ class TSNE(BaseEstimator):
     >>> import numpy as np
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> X_embedded = TSNE(n_components=2).fit_transform(X)
+    >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
+    ...                   init='random').fit_transform(X)
     >>> X_embedded.shape
     (4, 2)
 
@@ -647,6 +655,14 @@ class TSNE(BaseEstimator):
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
         https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
+
+    [4] Belkina, A. C., Ciccolella, C. O., Anno, R., Halpert, R., Spidlen, J.,
+        & Snyder-Cappione, J. E. (2019). Automated optimized parameters for
+        T-distributed stochastic neighbor embedding improve visualization
+        and analysis of large datasets. Nature Communications, 10(1), 1-12.
+
+    [5] Kobak, D., & Berens, P. (2019). The art of using t-SNE for single-cell
+        transcriptomics. Nature Communications, 10(1), 1-14.
     """
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
@@ -656,9 +672,9 @@ class TSNE(BaseEstimator):
 
     @_deprecate_positional_args
     def __init__(self, n_components=2, *, perplexity=30.0,
-                 early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
+                 early_exaggeration=12.0, learning_rate="warn", n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
-                 metric="euclidean", init="random", verbose=0,
+                 metric="euclidean", init="warn", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
                  n_jobs=None, square_distances='legacy'):
         self.n_components = n_components
@@ -681,12 +697,39 @@ class TSNE(BaseEstimator):
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
 
+        if isinstance(self.init, str) and self.init == 'warn':
+            # See issue #18018
+            warnings.warn("The default initialization in TSNE will change "
+                          "from 'random' to 'pca' in 1.2.", FutureWarning)
+            self._init = 'random'
+        else:
+            self._init = self.init
+        if self.learning_rate == 'warn':
+            # See issue #18018
+            warnings.warn("The default learning rate in TSNE will change "
+                          "from 200.0 to 'auto' in 1.2.", FutureWarning)
+            self._learning_rate = 200.0
+        else:
+            self._learning_rate = self.learning_rate
+
+        if isinstance(self._init, str) and self._init == 'pca' and issparse(X):
+            raise TypeError("PCA initialization is currently not suported "
+                            "with the sparse input matrix. Use "
+                            "init=\"random\" instead.")
         if self.method not in ['barnes_hut', 'exact']:
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.square_distances not in [True, 'legacy']:
             raise ValueError("'square_distances' must be True or 'legacy'.")
+        if self._learning_rate == 'auto':
+            # See issue #18018
+            self._learning_rate = X.shape[0] / self.early_exaggeration / 4
+            self._learning_rate = np.maximum(self._learning_rate, 50)
+        else:
+            if not (self._learning_rate > 0):
+                raise ValueError("'learning_rate' must be a positive number "
+                                 "or 'auto'.")
         if self.metric != "euclidean" and self.square_distances is not True:
             warnings.warn(
                 "'square_distances' has been introduced in 0.24 to help phase "
@@ -706,7 +749,7 @@ class TSNE(BaseEstimator):
             X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
                                     dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
-            if isinstance(self.init, str) and self.init == 'pca':
+            if isinstance(self._init, str) and self._init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
@@ -817,13 +860,21 @@ class TSNE(BaseEstimator):
             P = _joint_probabilities_nn(distances_nn, self.perplexity,
                                         self.verbose)
 
-        if isinstance(self.init, np.ndarray):
-            X_embedded = self.init
-        elif self.init == 'pca':
+        if isinstance(self._init, np.ndarray):
+            X_embedded = self._init
+        elif self._init == 'pca':
             pca = PCA(n_components=self.n_components, svd_solver='randomized',
                       random_state=random_state)
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
-        elif self.init == 'random':
+            # TODO: Update in 1.2
+            # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
+            # the default value for random initialization. See issue #18018.
+            warnings.warn("The PCA initialization in TSNE will change to "
+                          "have the standard deviation of PC1 equal to 1e-4 "
+                          "in 1.2. This will ensure better convergence.",
+                          FutureWarning)
+            # X_embedded = X_embedded / np.std(X_embedded[:, 0]) * 1e-4
+        elif self._init == 'random':
             # The embedding is initialized with iid samples from Gaussians with
             # standard deviation 1e-4.
             X_embedded = 1e-4 * random_state.randn(
@@ -857,7 +908,7 @@ class TSNE(BaseEstimator):
             "it": 0,
             "n_iter_check": self._N_ITER_CHECK,
             "min_grad_norm": self.min_grad_norm,
-            "learning_rate": self.learning_rate,
+            "learning_rate": self._learning_rate,
             "verbose": self.verbose,
             "kwargs": dict(skip_num_points=skip_num_points),
             "args": [P, degrees_of_freedom, n_samples, self.n_components],

@@ -670,12 +670,12 @@ def explained_variance_score(y_true, y_pred, *,
 @_deprecate_positional_args
 def r2_score(y_true, y_pred, *, sample_weight=None,
              multioutput="uniform_average"):
-    """R^2 (coefficient of determination) regression score function.
+    """:math:`R^2` (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
     model can be arbitrarily worse). A constant model that always
     predicts the expected value of y, disregarding the input features,
-    would get a R^2 score of 0.0.
+    would get a :math:`R^2` score of 0.0.
 
     Read more in the :ref:`User Guide <r2_score>`.
 
@@ -713,15 +713,15 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     Returns
     -------
     z : float or ndarray of floats
-        The R^2 score or ndarray of scores if 'multioutput' is
+        The :math:`R^2` score or ndarray of scores if 'multioutput' is
         'raw_values'.
 
     Notes
     -----
     This is not a symmetric function.
 
-    Unlike most other scores, R^2 score may be negative (it need not actually
-    be the square of a quantity R).
+    Unlike most other scores, :math:`R^2` score may be negative (it need not
+    actually be the square of a quantity R).
 
     This metric is not well-defined for single samples and will return a NaN
     value if n_samples is less than two.
