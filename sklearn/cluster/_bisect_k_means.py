@@ -114,7 +114,7 @@ class BisectKMeans(KMeans):
 
     def _calc_bisect_errors(self, X, centers, labels):
         """
-        Calculates Squered Error of each point and group them by label
+        Calculates Squared Error of each point and group them by label
         .. note:: That function work only if there are two labels (0,1)
 
         Parameters
