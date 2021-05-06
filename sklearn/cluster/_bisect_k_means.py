@@ -19,7 +19,7 @@ from ._kmeans import _kmeans_plusplus
 
 class BisectKMeans(KMeans):
     """ Bisecting K-Means clustering
-    K-Means variant that spilits consequntly data with two centroids.
+    K-Means variant that splits consecutively data with two centroids.
     Centroid with lower SSE (inertia) are kept as new cluster centers
     Centroid with higher SSE is further spilited till reach
     desired number of clusters
