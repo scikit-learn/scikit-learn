@@ -1,3 +1,5 @@
+# Author: Michal Krawczyk <mkrwczyk.1@gmail.com>
+
 import warnings
 
 import numpy as np
@@ -17,6 +19,17 @@ from ._kmeans import _kmeans_plusplus
 
 class BisectKMeans(KMeans):
     """ Bisecting K-Means clustering
+    K-Means variant that spilits consequntly data with two centroids.
+    Centroid with lower SSE (inertia) are kept as new cluster centers
+    Centroid with higher SSE is further spilited till reach
+    desired number of clusters
+
+    That algorithm can produce partitional/hierarchical clustering and
+    should be able to recognize clusters of any shape and size
+
+    That approach is also preferable to agglomerative clustering
+    if the number of clusters is small
+    compared to the number of data points
 
     Parameters
     ----------
@@ -99,7 +112,7 @@ class BisectKMeans(KMeans):
     >>> bisect_means.predict([[0, 0], [12, 3]])
     array([0, 2], dtype=int32)
     >>> bisect_means.cluster_centers_
-    array([ 1.  2.],
+    array([[ 1.  2.],
            [10.  8.],
            [10.  2.]])
     """
