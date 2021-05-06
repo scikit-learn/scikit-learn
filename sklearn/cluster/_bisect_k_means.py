@@ -20,9 +20,9 @@ from ._kmeans import _kmeans_plusplus
 class BisectKMeans(KMeans):
     """ Bisecting K-Means clustering
     K-Means variant that splits consecutively data with two centroids.
-    Centroid with lower SSE (inertia) are kept as new cluster centers
-    Centroid with higher SSE is further spilited till reach
-    desired number of clusters
+    Centroids with lower SSE (inertia) are kept as new cluster centers.
+    Centroids with higher SSE are further split until the desired number of cluster
+    is reached.
 
     That algorithm can produce partitional/hierarchical clustering and
     should be able to recognize clusters of any shape and size
