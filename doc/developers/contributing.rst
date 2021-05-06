@@ -1268,11 +1268,17 @@ contributor to keep involved in the project. [1]_
 - Begin if possible with the large issues, so the author knows they’ve been
   understood. Resist the temptation to immediately go line by line, or to open
   with small pervasive issues.
-- Do not let perfect be the enemy of the good, particularly for documentation.
-  If you find yourself making many small suggestions, or being too nitpicky
-  on style or grammar, consider merging the current PR when all important
-  concerns are addressed. There will always be the opportunity to improve it in
-  a follow-up PR.
+- Do not let perfect be the enemy of the good. If you find yourself making
+  many small suggestions that are a matter of subjective taste rather than
+  somewhat objective, consider that the frontier between a subjective nit and
+  an objective improvement is often subjective. The following approaches are
+  suggested:
+
+  - refrain from submitting these;
+  - prefix them as "Nit" so that the contributor knows it's OK not to address;
+  - follow up in a subsequent PR, out of courtesy, you may want to let the
+    original contributor know.
+
 - Do not rush, take the time to make your comments clear and justify your
   suggestions.
 - You are the face of the project. Bad days occur to everyone, in that
