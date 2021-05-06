@@ -1275,8 +1275,8 @@ contributor to keep involved in the project. [1]_
   a follow-up PR.
 - Do not rush, take the time to make your comments clear and justify your
   suggestions.
-- You are the face of the project. Bad days occurs to everyone, in that
-  occasions you deserve a break: try to take your time and stay off line.
+- You are the face of the project. Bad days occur to everyone, in that
+  occasion you deserve a break: try to take your time and stay offline.
 
 .. [1] Adapted from the numpy `communication guidelines
        <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
