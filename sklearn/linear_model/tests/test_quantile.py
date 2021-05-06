@@ -85,11 +85,11 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
         alpha=alpha,
         fit_intercept=fit_intercept
     ).fit(X, y)
+    assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
     if fit_intercept:
         assert huber.intercept_ == pytest.approx(quant.intercept_, abs=1e-1)
-    assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
-    # check that we still predict fraction
-    assert np.mean(y < quant.predict(X)) == pytest.approx(0.5, abs=1e-1)
+        # check that we still predict fraction
+        assert np.mean(y < quant.predict(X)) == pytest.approx(0.5, abs=1e-1)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
@@ -106,7 +106,7 @@ def test_quantile_estimates_calibration(q):
 def test_quantile_sample_weight():
     # test that with unequal sample weights we still estimate weighted fraction
     n = 1000
-    X, y = make_regression(n_samples=n, n_features=10, random_state=0,
+    X, y = make_regression(n_samples=n, n_features=5, random_state=0,
                            noise=10.0)
     weight = np.ones(n)
     # when we increase weight of upper observations,
@@ -116,9 +116,8 @@ def test_quantile_sample_weight():
     quant.fit(X, y, sample_weight=weight)
     fraction_below = np.mean(y < quant.predict(X))
     assert fraction_below > 0.5
-    weighted_fraction_below = np.sum((y < quant.predict(X)) * weight) \
-        / np.sum(weight)
-    assert weighted_fraction_below == pytest.approx(0.5, abs=1e-2)
+    weighted_fraction_below = np.average(y < quant.predict(X), weights=weight)
+    assert weighted_fraction_below == pytest.approx(0.5, abs=3e-2)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
