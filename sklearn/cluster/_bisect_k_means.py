@@ -127,6 +127,7 @@ class BisectKMeans(KMeans):
 
         labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
+
         Returns
         -------
         errors_by_label : dict
