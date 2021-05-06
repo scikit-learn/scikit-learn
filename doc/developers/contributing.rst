@@ -1253,10 +1253,14 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
-.. _communication::
+.. _communication:
 
-Communication Guidelines [1]_
------------------------------
+Communication Guidelines
+------------------------
+
+Reviewing open pull requests (PRs) helps move the project forward. It is a
+great way to get familiar with the codebase and should motivate the
+contributor to keep involved in the project. [1]_
 
 - Every PR, good or bad, is an act of generosity. Opening with a positive
   comment will help the author feel rewarded, and your subsequent remarks may
@@ -1275,7 +1279,7 @@ Communication Guidelines [1]_
   occasions you deserve a break: try to take your time and stay off line.
 
 .. [1] Adapted from the numpy `communication guidelines
-       <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_
+       <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
 
 Reading the existing code base
 ==============================
