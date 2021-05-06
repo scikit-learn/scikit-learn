@@ -1270,7 +1270,7 @@ contributor to keep involved in the project. [1]_
   with small pervasive issues.
 - Do not let perfect be the enemy of the good. If you find yourself making
   many small suggestions that are a matter of subjective taste rather than
-  somewhat objective. The following approaches are suggested:
+  somewhat objective, the following approaches are suggested:
 
   - refrain from submitting these;
   - prefix them as "Nit" so that the contributor knows it's OK not to address;
