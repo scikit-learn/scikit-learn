@@ -1,6 +1,7 @@
 import typing
 
 from ._split import BaseCrossValidator
+from ._split import BaseShuffleSplit
 from ._split import KFold
 from ._split import GroupKFold
 from ._split import StratifiedKFold
@@ -41,6 +42,7 @@ if typing.TYPE_CHECKING:
 
 
 __all__ = ['BaseCrossValidator',
+           'BaseShuffleSplit',
            'GridSearchCV',
            'TimeSeriesSplit',
            'KFold',
