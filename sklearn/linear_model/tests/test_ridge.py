@@ -10,6 +10,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.estimator_checks import check_sample_weights_invariance
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -1419,7 +1420,28 @@ def test_ridge_sag_with_X_fortran():
     "solver",
     ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga"]
 )
-def test_sample_weight_invariance(normalize, solver):
+def test_ridge_sample_weight_invariance(normalize, solver):
+    """Test that Ridge fulfils sample weight invariance.
+
+    Note that this test is stricter than the common test
+    check_sample_weights_invariance alone.
+    """
+    params = dict(
+        alpha=1.,
+        normalize=normalize,
+        solver=solver,
+        tol=1e-12,
+    )
+    reg = Ridge(**params)
+    name = reg.__class__.__name__
+    check_sample_weights_invariance(name, reg, kind="ones")
+    check_sample_weights_invariance(name, reg, kind="zeros")
+
+    # Check that duplicating the training dataset is equivalent to multiplying
+    # the weights by 2:
+    if solver.startswith("sag") and normalize:
+        pytest.xfail("sag/saga diverge on the second part of this test")
+
     rng = np.random.RandomState(42)
     X, y = make_regression(
         n_samples=100,
@@ -1429,40 +1451,6 @@ def test_sample_weight_invariance(normalize, solver):
         random_state=rng,
     )
     sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
-    params = dict(
-        alpha=1.,
-        normalize=normalize,
-        solver=solver,
-        tol=1e-12,
-    )
-
-    # Check that setting some weights to 0 is equivalent to trimming the
-    # samples:
-    cutoff = X.shape[0] // 3
-    sw_with_null = sw.copy()
-    sw_with_null[:cutoff] = 0.
-    X_trimmed, y_trimmed = X[cutoff:, :], y[cutoff:]
-    sw_trimmed = sw[cutoff:]
-
-    ridge_null_weighted = Ridge(**params).fit(
-        X, y, sample_weight=sw_with_null)
-    ridge_trimmed = Ridge(**params).fit(
-        X_trimmed, y_trimmed, sample_weight=sw_trimmed)
-
-    np.testing.assert_allclose(
-        ridge_null_weighted.coef_,
-        ridge_trimmed.coef_,
-    )
-    np.testing.assert_allclose(
-        ridge_null_weighted.intercept_,
-        ridge_trimmed.intercept_,
-    )
-
-    if solver.startswith("sag") and normalize:
-        pytest.xfail("sag/saga diverge on the second part of this test")
-
-    # Check that duplicating the training dataset is equivalent to multiplying
-    # the weights by 2:
     X_dup = np.concatenate([X, X], axis=0)
     y_dup = np.concatenate([y, y], axis=0)
     sw_dup = np.concatenate([sw, sw], axis=0)
@@ -1471,11 +1459,5 @@ def test_sample_weight_invariance(normalize, solver):
     ridge_dup = Ridge(**params).fit(
         X_dup, y_dup, sample_weight=sw_dup)
 
-    np.testing.assert_allclose(
-        ridge_2sw.coef_,
-        ridge_dup.coef_,
-    )
-    np.testing.assert_allclose(
-        ridge_2sw.intercept_,
-        ridge_dup.intercept_,
-    )
+    assert_allclose(ridge_2sw.coef_, ridge_dup.coef_)
+    assert_allclose(ridge_2sw.intercept_, ridge_dup.intercept_)
