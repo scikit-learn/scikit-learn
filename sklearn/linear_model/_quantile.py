@@ -98,8 +98,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        X, y = self._validate_data(X, y, accept_sparse=False,
-                                   y_numeric=True, multi_output=False)
+        X, y = self._validate_data(
+            X, y, accept_sparse=False, y_numeric=True, multi_output=False
+        )
         sample_weight = _check_sample_weight(sample_weight, X)
 
         n_features = X.shape[1]
@@ -115,33 +116,52 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         if self.alpha >= 0:
             alpha = np.sum(sample_weight) * self.alpha
         else:
-            raise ValueError(f"Penalty alpha must be a non-negative number, "
-                             f"got {self.alpha}")
+            raise ValueError(
+                f"Penalty alpha must be a non-negative number, "
+                f"got {self.alpha}"
+            )
 
         if self.quantile >= 1.0 or self.quantile <= 0.0:
             raise ValueError(
                 f"Quantile should be strictly between 0.0 and 1.0, got "
-                f"{self.quantile}")
+                f"{self.quantile}"
+            )
 
         if not isinstance(self.fit_intercept, bool):
-            raise ValueError(f"The argument fit_intercept must be bool, "
-                             f"got {self.fit_intercept}")
+            raise ValueError(
+                f"The argument fit_intercept must be bool, "
+                f"got {self.fit_intercept}"
+            )
 
         if self.solver not in (
-            "highs-ds", "highs-ipm", "highs", "interior-point",
+            "highs-ds",
+            "highs-ipm",
+            "highs",
+            "interior-point",
             "revised simplex",
         ):
-            raise ValueError(f"Invalid value for argument solver, "
-                             f"got {self.solver}")
-        elif (
-            self.solver == "revised simplex"
-            and sp_version < parse_version('1.3.0')
+            raise ValueError(
+                f"Invalid value for argument solver, " f"got {self.solver}"
+            )
+        elif self.solver == "revised simplex" and sp_version < parse_version(
+            "1.3.0"
         ):
-            raise ValueError(f"Solver 'revised simplex' is only available "
-                             f"with scipy>=1.3.0, got {sp_version}")
-        elif (
-            self.solver in ("highs-ds", "highs-ipm", "highs")
-            and sp_version < parse_version('1.6.0')
+            raise ValueError(
+                f"Solver 'revised simplex' is only available "
+                f"with scipy>=1.3.0, got {sp_version}"
+            )
+        elif self.solver in (
+            "highs-ds",
+            "highs-ipm",
+            "highs",
+        ) and sp_version < parse_version("1.6.0"):
+            raise ValueError(
+                f"Solver {self.solver} is only available "
+                f"with scipy>=1.6.0, got {sp_version}"
+            )
+
+        if self.solver_options is not None and not isinstance(
+            self.solver_options, dict
         ):
             raise ValueError(
                 f"Invalid value for argument solver_options, "
@@ -176,31 +196,33 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # easier for the linprog solver.
         mask = sample_weight != 0
         n_mask = int(np.sum(mask))  # use n_mask instead of n_samples
-        c = np.concatenate([
-            np.full(2 * n_params, fill_value=alpha),
-            sample_weight[mask] * self.quantile,
-            sample_weight[mask] * (1 - self.quantile),
-        ])
+        c = np.concatenate(
+            [
+                np.full(2 * n_params, fill_value=alpha),
+                sample_weight[mask] * self.quantile,
+                sample_weight[mask] * (1 - self.quantile),
+            ]
+        )
         if self.fit_intercept:
             # do not penalize the intercept
             c[0] = 0
             c[n_params] = 0
 
-            A_eq = np.concatenate([
-                np.ones((n_mask, 1)),
-                X[mask],
-                -np.ones((n_mask, 1)),
-                -X[mask],
-                np.eye(n_mask),
-                -np.eye(n_mask),
-            ], axis=1)
+            A_eq = np.concatenate(
+                [
+                    np.ones((n_mask, 1)),
+                    X[mask],
+                    -np.ones((n_mask, 1)),
+                    -X[mask],
+                    np.eye(n_mask),
+                    -np.eye(n_mask),
+                ],
+                axis=1,
+            )
         else:
-            A_eq = np.concatenate([
-                X[mask],
-                -X[mask],
-                np.eye(n_mask),
-                -np.eye(n_mask),
-            ], axis=1)
+            A_eq = np.concatenate(
+                [X[mask], -X[mask], np.eye(n_mask), -np.eye(n_mask),], axis=1
+            )
 
         b_eq = y[mask]
 
@@ -209,7 +231,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             A_eq=A_eq,
             b_eq=b_eq,
             method=self.solver,
-            options=self.solver_options,
+            options=solver_options,
         )
         solution = result.x
         if not result.success:
@@ -217,7 +239,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 1: "Iteration limit reached.",
                 2: "Problem appears to be infeasible.",
                 3: "Problem appears to be unbounded.",
-                4: "Numerical difficulties encountered."
+                4: "Numerical difficulties encountered.",
             }
             raise ValueError(
                 f"Linear programming for QuantileRegressor did not succeed. "
@@ -226,7 +248,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             )
 
         # positive - negative
-        params = solution[:n_params] - solution[n_params:2 * n_params]
+        params = solution[:n_params] - solution[n_params : 2 * n_params]
 
         self.n_iter_ = result.nit
 
@@ -239,13 +261,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         return self
 
     def _more_tags(self):
-        if sp_version >= parse_version('1.0.0'):
+        if sp_version >= parse_version("1.0.0"):
             return {}
         return {
-            '_xfail_checks': {
-                'check_regressors_train':
-                'scipy.optimize.linprog is unstable in versions before 1.0.0',
-                'check_regressor_data_not_an_array':
-                'scipy.optimize.linprog is unstable in versions before 1.0.0',
+            "_xfail_checks": {
+                "check_regressors_train": "scipy.optimize.linprog is unstable in versions before 1.0.0",
+                "check_regressor_data_not_an_array": "scipy.optimize.linprog is unstable in versions before 1.0.0",
             }
         }

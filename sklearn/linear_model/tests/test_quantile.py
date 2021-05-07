@@ -48,7 +48,7 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize(
-    'quantile, alpha, intercept, coef',
+    "quantile, alpha, intercept, coef",
     [
         # for 50% quantile w/o regularization, any slope in [1, 10] is okay
         [0.5, 0, 1, None],
@@ -60,7 +60,7 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
         [0.5, 0.01, 1, 1],
         # for a large lasso penalty, the model predicts the constant median
         [0.5, 100, 2, 0],
-    ]
+    ],
 )
 def test_quantile_toy_example(quantile, alpha, intercept, coef):
     # test how different parameters affect a small intuitive example
@@ -78,18 +78,16 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef):
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
-    X, y = make_regression(n_samples=100, n_features=20, random_state=0,
-                           noise=1.0)
+    X, y = make_regression(
+        n_samples=100, n_features=20, random_state=0, noise=1.0
+    )
     alpha = 1e-4
     huber = HuberRegressor(
-        epsilon=1 + 1e-4,
-        alpha=alpha,
-        fit_intercept=fit_intercept
+        epsilon=1 + 1e-4, alpha=alpha, fit_intercept=fit_intercept
     ).fit(X, y)
-    quant = QuantileRegressor(
-        alpha=alpha,
-        fit_intercept=fit_intercept
-    ).fit(X, y)
+    quant = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(
+        X, y
+    )
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
     if fit_intercept:
         assert huber.intercept_ == pytest.approx(quant.intercept_, abs=1e-1)
@@ -101,9 +99,14 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
 @pytest.mark.parametrize("q", [0.5, 0.9, 0.05])
 def test_quantile_estimates_calibration(q):
     # Test that model estimates percentage of points below the prediction
-    X, y = make_regression(n_samples=1000, n_features=20, random_state=0,
-                           noise=1.0)
-    quant = QuantileRegressor(quantile=q, alpha=0).fit(X, y)
+    X, y = make_regression(
+        n_samples=1000, n_features=20, random_state=0, noise=1.0
+    )
+    quant = QuantileRegressor(
+        quantile=q,
+        alpha=0,
+        solver_options={"lstsq": False},
+    ).fit(X, y)
     assert np.mean(y < quant.predict(X)) == pytest.approx(q, abs=1e-2)
 
 
@@ -111,13 +114,18 @@ def test_quantile_estimates_calibration(q):
 def test_quantile_sample_weight():
     # test that with unequal sample weights we still estimate weighted fraction
     n = 1000
-    X, y = make_regression(n_samples=n, n_features=5, random_state=0,
-                           noise=10.0)
+    X, y = make_regression(
+        n_samples=n, n_features=5, random_state=0, noise=10.0
+    )
     weight = np.ones(n)
     # when we increase weight of upper observations,
     # estimate of quantile should go up
     weight[y > y.mean()] = 100
-    quant = QuantileRegressor(quantile=0.5, alpha=1e-8)
+    quant = QuantileRegressor(
+        quantile=0.5,
+        alpha=1e-8,
+        solver_options={"lstsq": False}
+    )
     quant.fit(X, y, sample_weight=weight)
     fraction_below = np.mean(y < quant.predict(X))
     assert fraction_below > 0.5
@@ -126,17 +134,18 @@ def test_quantile_sample_weight():
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
-@pytest.mark.parametrize('quantile', [0.2, 0.5, 0.8])
+@pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
 def test_asymmetric_error(quantile):
     """Test quantile regression for asymmetric distributed targets."""
     n_samples = 1000
     rng = np.random.RandomState(42)
     # take care that X@coef + intercept > 0
-    X = np.concatenate((
+    X = np.concatenate(
+        (
             np.abs(rng.randn(n_samples)[:, None]),
-            -rng.randint(2, size=(n_samples, 1))
+            -rng.randint(2, size=(n_samples, 1)),
         ),
-        axis=1
+        axis=1,
     )
     intercept = 1.23
     coef = np.array([0.5, -2])
@@ -145,14 +154,14 @@ def test_asymmetric_error(quantile):
     #   quantile(q) = - log(1 - q) / lambda
     #   scale = 1/lambda = -quantile(q) / log(1-q)
     y = rng.exponential(
-        scale=-(X@coef + intercept) / np.log(1 - quantile),
-        size=n_samples
+        scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
     )
     model = QuantileRegressor(
         quantile=quantile,
         alpha=0,
         solver="interior-point",
-        solver_options={"tol": 1e-5}).fit(X, y)
+        solver_options={"tol": 1e-5},
+    ).fit(X, y)
     assert model.intercept_ == pytest.approx(intercept, rel=0.2)
     assert_allclose(model.coef_, coef, rtol=0.6)
     assert_allclose(np.mean(model.predict(X) > y), quantile)
@@ -170,9 +179,9 @@ def test_asymmetric_error(quantile):
     res = minimize(
         fun=func,
         x0=[1, 0, -1],
-        method='Nelder-Mead',
+        method="Nelder-Mead",
         tol=1e-12,
-        options={"maxiter": 2000}
+        options={"maxiter": 2000},
     )
 
     assert func(model_coef) == pytest.approx(func(res.x), rel=1e-3)
@@ -181,7 +190,7 @@ def test_asymmetric_error(quantile):
     assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=8e-3)
 
 
-@pytest.mark.parametrize('quantile', [0.2, 0.5, 0.8])
+@pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
 def test_equivariance(quantile):
     """Test equivariace of quantile regression.
 
@@ -189,9 +198,13 @@ def test_equivariance(quantile):
     """
     rng = np.random.RandomState(42)
     n_samples, n_features = 100, 5
-    X, y = make_regression(n_samples=n_samples, n_features=n_features,
-                           n_informative=n_features, noise=1.0,
-                           random_state=rng)
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        noise=1.0,
+        random_state=rng,
+    )
     # make y asymmetric
     y += rng.exponential(scale=100, size=y.shape)
     model1 = QuantileRegressor(quantile=quantile, alpha=0).fit(X, y)
@@ -217,7 +230,7 @@ def test_equivariance(quantile):
     # coef(q; y, X @ A) = A^-1 @ coef(q; y, X)
     A = rng.randn(n_features, n_features)
     model2 = QuantileRegressor(quantile=quantile, alpha=0)
-    model2.fit(X@A, y)
+    model2.fit(X @ A, y)
     assert model2.intercept_ == pytest.approx(model1.intercept_)
     assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=2e-6)
 
@@ -227,9 +240,8 @@ def test_linprog_failure():
     X = np.linspace(0, 10, num=10).reshape(-1, 1)
     y = np.linspace(0, 10, num=10)
     reg = QuantileRegressor(
-        alpha=0,
-        solver="interior-point",
-        solver_options={"maxiter": 1})
+        alpha=0, solver="interior-point", solver_options={"maxiter": 1}
+    )
 
     msg = "Linear programming for QuantileRegressor did not succeed."
     with pytest.raises(ValueError, match=msg):
