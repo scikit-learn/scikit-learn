@@ -220,7 +220,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             )
         else:
             A_eq = np.concatenate(
-                [X[mask], -X[mask], np.eye(n_mask), -np.eye(n_mask),], axis=1
+                [X[mask], -X[mask], np.eye(n_mask), -np.eye(n_mask)], axis=1
             )
 
         b_eq = y[mask]
@@ -247,7 +247,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             )
 
         # positive - negative
-        params = solution[:n_params] - solution[n_params : 2 * n_params]
+        params = solution[:n_params] - solution[n_params:2 * n_params]
 
         self.n_iter_ = result.nit
 
@@ -264,7 +264,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             return {}
         return {
             "_xfail_checks": {
-                "check_regressors_train": "scipy.optimize.linprog is unstable in versions before 1.0.0",
-                "check_regressor_data_not_an_array": "scipy.optimize.linprog is unstable in versions before 1.0.0",
+                "check_regressors_train":
+                    "scipy.optimize.linprog is unstable in versions before "
+                    "1.0.0",
+                "check_regressor_data_not_an_array":
+                    "scipy.optimize.linprog is unstable in versions before "
+                    "1.0.0",
             }
         }
