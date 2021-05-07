@@ -92,7 +92,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 cats = _unique(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
-                if Xi.dtype.kind not in 'OU':
+                if Xi.dtype.kind not in 'OUS':
                     sorted_cats = np.sort(cats)
                     error_msg = ("Unsorted categories are not "
                                  "supported for numerical categories")
@@ -150,6 +150,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     if (self.categories_[i].dtype.kind in ('U', 'S')
                             and self.categories_[i].itemsize > Xi.itemsize):
                         Xi = Xi.astype(self.categories_[i].dtype)
+                    elif (self.categories_[i].dtype.kind == 'O' and
+                            Xi.dtype.kind == 'U'):
+                        # categories are objects and Xi are numpy strings.
+                        # Cast Xi to an object dtype to prevent truncation
+                        # when setting invalid values.
+                        Xi = Xi.astype('O')
                     else:
                         Xi = Xi.copy()
 
@@ -357,22 +363,21 @@ class OneHotEncoder(_BaseEncoder):
 
         else:
             try:
-                self.drop = np.asarray(self.drop, dtype=object)
-                droplen = len(self.drop)
+                drop_array = np.asarray(self.drop, dtype=object)
+                droplen = len(drop_array)
             except (ValueError, TypeError):
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
                     "'first', 'if_binary', None or array of objects, got {}"
                     )
-                raise ValueError(msg.format(type(self.drop)))
+                raise ValueError(msg.format(type(drop_array)))
             if droplen != len(self.categories_):
                 msg = ("`drop` should have length equal to the number "
                        "of features ({}), got {}")
-                raise ValueError(msg.format(len(self.categories_),
-                                            len(self.drop)))
+                raise ValueError(msg.format(len(self.categories_), droplen))
             missing_drops = []
             drop_indices = []
-            for col_idx, (val, cat_list) in enumerate(zip(self.drop,
+            for col_idx, (val, cat_list) in enumerate(zip(drop_array,
                                                           self.categories_)):
                 if not is_scalar_nan(val):
                     drop_idx = np.where(cat_list == val)[0]
@@ -406,7 +411,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to determine the categories of each feature.
 
         y : None
@@ -431,7 +436,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         y : None
@@ -440,8 +445,10 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array
-            Transformed input.
+        X_out : {ndarray, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
+            Transformed input. If `sparse=True`, a sparse matrix will be
+            returned.
         """
         self._validate_keywords()
         return super().fit_transform(X, y)
@@ -452,13 +459,15 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array
-            Transformed input.
+        X_out : {ndarray, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
+            Transformed input. If `sparse=True`, a sparse matrix will be
+            returned.
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
@@ -522,12 +531,13 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
+        X : {array-like, sparse matrix} of shape \
+                (n_samples, n_encoded_features)
             The transformed data.
 
         Returns
         -------
-        X_tr : array-like, shape [n_samples, n_features]
+        X_tr : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
@@ -745,7 +755,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to determine the categories of each feature.
 
         y : None
@@ -814,12 +824,12 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         Returns
         -------
-        X_out : sparse matrix or a 2-d array
+        X_out : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
@@ -841,16 +851,16 @@ class OrdinalEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
+        X : array-like of shape (n_samples, n_encoded_features)
             The transformed data.
 
         Returns
         -------
-        X_tr : array-like, shape [n_samples, n_features]
+        X_tr : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr', force_all_finite='allow-nan')
+        X = check_array(X, force_all_finite='allow-nan')
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)

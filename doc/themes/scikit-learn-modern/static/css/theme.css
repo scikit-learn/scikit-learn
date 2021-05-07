@@ -849,7 +849,8 @@ div.body dd > p {
     hyphens: none;
 }
 
-img.align-center, .figure.align-center, object.align-center {
+img.align-center, figure.align-center,
+.figure.align-center, object.align-center {
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -857,7 +858,8 @@ img.align-center, .figure.align-center, object.align-center {
   text-align: center;
 }
 
-img.align-right, .figure.align-right, object.align-right {
+img.align-right, figure.align-right,
+.figure.align-right, object.align-right {
   clear: right;
   float: right;
   margin-left: 1em;
