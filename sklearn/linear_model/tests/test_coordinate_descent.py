@@ -1453,15 +1453,15 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
     # effective_rank are more problematic in particular.
 
     rng = np.random.RandomState(42)
+    n_samples = 300
     X, y = make_regression(
-        n_samples=100,
-        n_features=300,
+        n_samples=n_samples,
+        n_features=100,
         effective_rank=10,
         n_informative=50,
         random_state=rng,
     )
-    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
-    # sw = 2 * np.ones(shape=X.shape[0])
+    sw = rng.uniform(low=0.01, high=10, size=X.shape[0])
     alpha = 1.
     common_params = dict(
         normalize=normalize,
@@ -1470,7 +1470,11 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
     ridge = Ridge(alpha=alpha, **common_params).fit(
         X, y, sample_weight=sw
     )
-    enet = ElasticNet(alpha=alpha / sw.sum(), l1_ratio=0, **common_params).fit(
+    if normalize:
+        alpha_enet = alpha / n_samples
+    else:
+        alpha_enet = alpha / sw.sum()
+    enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, **common_params).fit(
         X, y, sample_weight=sw
     )
     assert_allclose(ridge.coef_, enet.coef_)
