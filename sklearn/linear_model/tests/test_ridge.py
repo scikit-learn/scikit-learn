@@ -1415,6 +1415,8 @@ def test_ridge_sag_with_X_fortran():
     Ridge(solver='sag').fit(X, y)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize(
     "solver",
