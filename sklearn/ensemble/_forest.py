@@ -545,6 +545,132 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                                   axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
 
+    def unbiased_feature_importances_(self, X, y):
+        """
+        The unbiased impurity-based feature importances based on
+        https://dl.acm.org/doi/abs/10.1145/3429445.
+
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature
+        when evaluated on out-of-bag samples.  It is also known as
+        the Gini importance.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Internally, its dtype will be converted
+            to ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csc_matrix``.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        feature_importances_ : ndarray of shape (n_features,)
+            Unlike the regular feature_importances_,
+            unbiased_feature_importances_ provides unnormalized
+            (does not sum to 1) importance scores.
+        """
+        check_is_fitted(self)
+
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse='csr',
+                                reset=False)
+
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples=X.shape[0],
+            max_samples=self.max_samples
+        )
+
+        # calculate inbag times for each sample
+        inbag = np.zeros((X.shape[0], self.n_estimators))
+        for t_idx in range(self.n_estimators):
+            sample_idx = _generate_sample_indices(
+                            self.estimators_[t_idx].random_state,
+                            X.shape[0], n_samples_bootstrap)
+            inbag[:, t_idx] = np.bincount(sample_idx, minlength=X.shape[0])
+
+        ufi = np.array([0.] * self.n_features_in_)
+
+        for index, tree in enumerate(self.estimators_):
+            temp = np.array([0.] * self.n_features_in_)
+            n_nodes = tree.tree_.node_count
+
+            tree_X_inb = X.repeat((inbag[:, index]).astype("int"), axis=0)
+            tree_y_inb = y.repeat((inbag[:, index]).astype("int"), axis=0)
+            decision_path_inb = tree.decision_path(tree_X_inb).todense()
+
+            tree_X_oob = X[inbag[:, index] == 0]
+            tree_y_oob = y[inbag[:, index] == 0]
+            decision_path_oob = tree.decision_path(tree_X_oob).todense()
+
+            impurity_inb = tree.tree_.impurity
+            impurity_oob = [0] * n_nodes
+            flag = [True] * n_nodes
+            weighted_n_node_samples = \
+                np.array(np.sum(decision_path_inb, axis=0))[0] \
+                / tree_X_inb.shape[0]
+
+            for i in range(n_nodes):
+                arr1 = tree_y_oob[np.array(decision_path_oob[:, i]).ravel()
+                                    .nonzero()[0].tolist()]
+                arr2 = tree_y_inb[np.array(decision_path_inb[:, i]).ravel()
+                                    .nonzero()[0].tolist()]
+
+                if len(arr1) == 0:
+                    if sum(tree.tree_.children_left == i) > 0:
+                        parent_node = np.arange(n_nodes)[
+                                      tree.tree_.children_left == i][0]
+                        flag[parent_node] = False
+                    else:
+                        parent_node = np.arange(n_nodes)[
+                                      tree.tree_.children_right == i][0]
+                        flag[parent_node] = False
+                else:
+                    if is_classifier(self):
+                        p1 = float(sum(arr1)) / len(arr1)
+                        pp1 = float(sum(arr2)) / len(arr2)
+                        p2 = 1 - p1
+                        pp2 = 1 - pp1
+                        impurity_oob[i] = 1 - p1 * pp1 - p2 * pp2
+                    else:
+                        impurity_oob[i] = np.sum((arr1 - np.mean(arr2)) ** 2) \
+                                        / len(arr1)
+
+            for node in range(n_nodes):
+                if tree.tree_.children_left[node] == -1 \
+                  or tree.tree_.children_right[node] == -1:
+                    continue
+
+                v = tree.tree_.feature[node]
+                node_left = tree.tree_.children_left[node]
+                node_right = tree.tree_.children_right[node]
+
+                if flag[node]:
+                    if is_classifier(self):
+                        incre = (weighted_n_node_samples[node] *
+                                 impurity_oob[node] -
+                                 weighted_n_node_samples[node_left] *
+                                 impurity_oob[node_left] -
+                                 weighted_n_node_samples[node_right] *
+                                 impurity_oob[node_right])
+                    else:
+                        incre = (weighted_n_node_samples[node] *
+                                 (impurity_oob[node] + impurity_inb[node]) -
+                                 weighted_n_node_samples[node_left] *
+                                 (impurity_oob[node_left] +
+                                 impurity_inb[node_left]) -
+                                 weighted_n_node_samples[node_right] *
+                                 (impurity_inb[node_right] +
+                                 impurity_oob[node_right]))
+                    temp[v] += incre
+
+            ufi += temp
+
+        return ufi / self.n_estimators
+
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
