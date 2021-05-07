@@ -454,7 +454,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         X_train = sparse.csr_matrix(X_train)
         X_test = _convert_container(X_train, 'sparse')
 
-    sample_weight = rng.rand(X_train.shape[0])
+    sample_weight = rng.uniform(low=0.1, high=100, size=X_train.shape[0])
 
     # linear estimator with built-in feature normalization
     reg_with_normalize = estimator(normalize=True, fit_intercept=True,
@@ -465,7 +465,10 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     linear_regressor = estimator(normalize=False, fit_intercept=True, **params)
 
     # rescale alpha
-    _scale_alpha_inplace(linear_regressor, sample_weight.sum())
+    if model_name in ["Lasso", "ElasticNet"]:
+        _scale_alpha_inplace(linear_regressor, y_test.shape[0])
+    else:
+        _scale_alpha_inplace(linear_regressor, sample_weight.sum())
     reg_with_scaler = Pipeline([
         ("scaler", StandardScaler(with_mean=with_mean)),
         ("linear_regressor", linear_regressor)
