@@ -1498,11 +1498,7 @@ def test_sample_weight_invariance(normalize, estimator):
         random_state=rng,
     )
     sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
-    # sw = 2 * np.ones(shape=X.shape[0])
-    params = dict(
-        normalize=normalize,
-        tol=1e-12,
-    )
+    params = dict(normalize=normalize, tol=1e-12)
 
     # Check that setting some weights to 0 is equivalent to trimming the
     # samples:
