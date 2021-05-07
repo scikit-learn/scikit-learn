@@ -1512,14 +1512,8 @@ def test_sample_weight_invariance(normalize, estimator):
         X_trimmed, y_trimmed, sample_weight=sw_trimmed)
     reg_null_weighted = clone(estimator).set_params(**params).fit(
         X, y, sample_weight=sw_with_null)
-    np.testing.assert_allclose(
-        reg_null_weighted.coef_,
-        reg_trimmed.coef_,
-    )
-    np.testing.assert_allclose(
-        reg_null_weighted.intercept_,
-        reg_trimmed.intercept_,
-    )
+    assert_allclose(reg_null_weighted.coef_, reg_trimmed.coef_)
+    assert_allclose(reg_null_weighted.intercept_, reg_trimmed.intercept_)
 
     # Check that duplicating the training dataset is equivalent to multiplying
     # the weights by 2:
@@ -1532,11 +1526,5 @@ def test_sample_weight_invariance(normalize, estimator):
     reg_dup = clone(estimator).set_params(**params).fit(
         X_dup, y_dup, sample_weight=sw_dup)
 
-    np.testing.assert_allclose(
-        reg_2sw.coef_,
-        reg_dup.coef_,
-    )
-    np.testing.assert_allclose(
-        reg_2sw.intercept_,
-        reg_dup.intercept_,
-    )
+    assert_allclose(reg_2sw.coef_, reg_dup.coef_)
+    assert_allclose(reg_2sw.intercept_, reg_dup.intercept_)
