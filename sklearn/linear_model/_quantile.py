@@ -170,11 +170,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             )
 
         # make default solver more stable
-        if self.solver_options is not None:
-            solver_options = self.solver_options
+        if self.solver_options is None and self.solver == "interior-point":
+            solver_options = {"lstsq": True}
         else:
-            if self.solver == "interior-point":
-                solver_options = {"lstsq": True}
+            solver_options = self.solver_options
 
         # Use linear programming formulation of quantile regression
         #     min_x c x
