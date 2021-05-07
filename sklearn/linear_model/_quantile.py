@@ -43,6 +43,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     solver_options : dict, default=None
         Additional parameters passed to scipy.optimize.linprog as options.
+        If None and if solver is interior-point, then {"lstsq": True} is
+        passed to scipy.optimize.linprog for the sake of stability.
 
     Attributes
     ----------
@@ -146,6 +148,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 f"must be None or a dictionary, got "
                 f"{self.solver_options}"
             )
+
+        # make default solver more stable
+        if self.solver_options is not None:
+            solver_options = self.solver_options
+        else:
+            if self.solver == "interior-point":
+                solver_options = {"lstsq": True}
 
         # Use linear programming formulation of quantile regression
         #     min_x c x
