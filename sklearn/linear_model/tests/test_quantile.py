@@ -24,15 +24,20 @@ def X_y_data():
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize(
     "params, err_msg",
-    [({"quantile": 2}, "Quantile should be strictly between 0.0 and 1.0"),
-     ({"quantile": 1}, "Quantile should be strictly between 0.0 and 1.0"),
-     ({"quantile": 0}, "Quantile should be strictly between 0.0 and 1.0"),
-     ({"quantile": -1}, "Quantile should be strictly between 0.0 and 1.0"),
-     ({"alpha": -1.5}, "Penalty alpha must be a non-negative number"),
-     ({"fit_intercept": "blah"}, "The argument fit_intercept must be bool"),
-     ({"fit_intercept": 0}, "The argument fit_intercept must be bool"),
-     ({"solver": "blah"}, "Invalid value for argument solver"),
-     ]
+    [
+        ({"quantile": 2}, "Quantile should be strictly between 0.0 and 1.0"),
+        ({"quantile": 1}, "Quantile should be strictly between 0.0 and 1.0"),
+        ({"quantile": 0}, "Quantile should be strictly between 0.0 and 1.0"),
+        ({"quantile": -1}, "Quantile should be strictly between 0.0 and 1.0"),
+        ({"alpha": -1.5}, "Penalty alpha must be a non-negative number"),
+        ({"fit_intercept": "blah"}, "The argument fit_intercept must be bool"),
+        ({"fit_intercept": 0}, "The argument fit_intercept must be bool"),
+        ({"solver": "blah"}, "Invalid value for argument solver"),
+        (
+            {"solver_options": "blah"},
+            "Invalid value for argument solver_options",
+        ),
+    ],
 )
 def test_init_parameters_validation(X_y_data, params, err_msg):
     """Test that invalid init parameters raise errors."""

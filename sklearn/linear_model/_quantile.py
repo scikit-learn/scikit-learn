@@ -141,8 +141,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             self.solver in ("highs-ds", "highs-ipm", "highs")
             and sp_version < parse_version('1.6.0')
         ):
-            raise ValueError(f"Solver {self.solver} is only available "
-                             f"with scipy>=1.6.0, got {sp_version}")
+            raise ValueError(
+                f"Invalid value for argument solver_options, "
+                f"must be None or a dictionary, got "
+                f"{self.solver_options}"
+            )
 
         # Use linear programming formulation of quantile regression
         #     min_x c x
