@@ -220,7 +220,7 @@ latest up-to-date workflow.
 
 .. note::
   In January 2021, the default branch name changed from ``master`` to ``main``
-  for scikit-learn to remove any unnecessary references to slavery and
+  for the scikit-learn GitHub repository, to remove any unnecessary references to slavery and
   replace them with more inclusive terms. These videos were created prior
   to the renaming of the branch. For contributors who are viewing these
   videos to set up their working environment and submitting a PR, ``master``
