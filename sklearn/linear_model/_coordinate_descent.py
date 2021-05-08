@@ -22,9 +22,13 @@ from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
-from ..utils.validation import (check_consistent_length, check_is_fitted,
-                                _check_sample_weight, column_or_1d,
-                                _deprecate_positional_args)
+from ..utils.validation import (
+    _check_sample_weight,
+    _deprecate_positional_args,
+    check_consistent_length,
+    check_is_fitted,
+    column_or_1d,
+)
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -1373,7 +1377,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                              **_joblib_parallel_args(prefer="threads"))(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         if not self.use_weights_in_cv:
-            mean_mse = np.mean(mse_paths, axis=1)  # mean over folds
+            # The mean is computed over folds.
+            mean_mse = np.mean(mse_paths, axis=1)
         else:
             if sample_weight is None:
                 # Note that both len(test) and sample_weight[test].sum() can
@@ -1381,7 +1386,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 sw_paths = [len(test) for train, test in folds]
             else:
                 sw_paths = [sample_weight[test].sum() for train, test in folds]
-            # average over folds
+            # The average is computed over folds.
             mean_mse = np.average(mse_paths, axis=1, weights=sw_paths)
 
         self.mse_path_ = np.squeeze(np.moveaxis(mse_paths, 2, 1))
@@ -2026,7 +2031,8 @@ class MultiTaskElasticNet(Lasso):
         if y.ndim == 1:
             raise ValueError("For mono-task outputs, use %s" % model_str)
 
-        (n_samples, n_features), n_targets = X.shape, y.shape[1]
+        n_samples, n_features = X.shape
+        n_targets = y.shape[1]
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
