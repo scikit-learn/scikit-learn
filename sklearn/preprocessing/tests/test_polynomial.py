@@ -11,9 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     KBinsDiscretizer, PolynomialFeatures, SplineTransformer
 )
-from sklearn.utils.fixes import linspace, sp_version
-
-from pkg_resources import parse_version
+from sklearn.utils.fixes import linspace, sp_version, parse_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
