@@ -225,7 +225,7 @@ class Pipeline(_BaseComposition):
 
     @property
     def _estimator_type(self):
-        return self.steps[-1][1]._estimator_type
+        return self.steps[-1][-1]._estimator_type
 
     @property
     def named_steps(self):
@@ -234,7 +234,7 @@ class Pipeline(_BaseComposition):
 
     @property
     def _final_estimator(self):
-        estimator = self.steps[-1][1]
+        estimator = self.steps[-1][-1]
         return 'passthrough' if estimator is None else estimator
 
     def _log_message(self, step_idx):
