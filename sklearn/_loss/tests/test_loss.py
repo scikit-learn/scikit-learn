@@ -135,26 +135,46 @@ def test_loss_boundary(loss):
     loss.loss(y_true=y_true, raw_prediction=raw_prediction)
 
 
+# Fixture to test valid value ranges.
+Y_COMMON_PARAMS = [
+    # (loss, [y success], [y fail])
+    (HalfSquaredError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
+    (AbsoluteError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
+    (PinballLoss(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
+    (HalfPoissonLoss(), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
+    (HalfGammaLoss(), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
+    (HalfTweedieLoss(power=-3), [0.1, 100], [-np.inf, np.inf]),
+    (HalfTweedieLoss(power=0), [0.1, 100], [-np.inf, np.inf]),
+    (HalfTweedieLoss(power=1.5), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
+    (HalfTweedieLoss(power=2), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
+    (HalfTweedieLoss(power=3), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
+    (BinaryCrossEntropy(), [0.1, 0.5, 0.9], [-np.inf, -1, 2, np.inf]),
+    (CategoricalCrossEntropy(), [], [-np.inf, -1, 1.1, np.inf]),
+]
+# y_pred and y_true do not always have the same domain (valid value range).
+# Hence, we define extra sets of parameters for each of them.
+Y_TRUE_PARAMS = [
+    # (loss, [y success], [y fail])
+    (HalfPoissonLoss(), [0], []),
+    (HalfTweedieLoss(power=-3), [-100, -0.1, 0], []),
+    (HalfTweedieLoss(power=0), [-100, 0], []),
+    (HalfTweedieLoss(power=1.5), [0], []),
+    (BinaryCrossEntropy(), [0, 1], []),
+    (CategoricalCrossEntropy(), [0.0, 1.0, 2], []),
+]
+Y_PRED_PARAMS = [
+    # (loss, [y success], [y fail])
+    (HalfPoissonLoss(), [], [0]),
+    (HalfTweedieLoss(power=-3), [], [-3, -0.1, 0]),
+    (HalfTweedieLoss(power=0), [], [-3, -0.1, 0]),
+    (HalfTweedieLoss(power=1.5), [], [0]),
+    (BinaryCrossEntropy(), [], [0, 1]),
+    (CategoricalCrossEntropy(), [0.1, 0.5], [0, 1]),
+]
+
+
 @pytest.mark.parametrize(
-    "loss, y_true_success, y_true_fail",
-    [
-        (HalfSquaredError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
-        (AbsoluteError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
-        (PinballLoss(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
-        (HalfPoissonLoss(), [0, 0.1, 100], [-np.inf, -3, -0.1, np.inf]),
-        (HalfGammaLoss(), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-        (HalfTweedieLoss(power=-3), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
-        (HalfTweedieLoss(power=0), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
-        (
-            HalfTweedieLoss(power=1.5),
-            [0, 0.1, 100],
-            [-np.inf, -3, -0.1, np.inf],
-        ),
-        (HalfTweedieLoss(power=2), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-        (HalfTweedieLoss(power=3), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-        (BinaryCrossEntropy(), [0, 0.5, 1], [-np.inf, -1, 2, np.inf]),
-        (CategoricalCrossEntropy(), [0.0, 1.0, 2], [-np.inf, -1, 1.1, np.inf]),
-    ],
+    "loss, y_true_success, y_true_fail", Y_COMMON_PARAMS + Y_TRUE_PARAMS
 )
 def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
     # Test boundaries of y_true for loss functions.
@@ -165,29 +185,7 @@ def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
 
 
 @pytest.mark.parametrize(
-    "loss, y_pred_success, y_pred_fail",
-    [
-        (HalfSquaredError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
-        (AbsoluteError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
-        (PinballLoss(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
-        (HalfPoissonLoss(), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-        (HalfGammaLoss(), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-        (
-            HalfTweedieLoss(power=-3),
-            [0.1, 100],
-            [-np.inf, -3, -0.1, 0, np.inf],
-        ),
-        (HalfTweedieLoss(power=0), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-        (
-            HalfTweedieLoss(power=1.5),
-            [0.1, 100],
-            [-np.inf, -3, -0.1, 0, np.inf],
-        ),
-        (HalfTweedieLoss(power=2), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-        (HalfTweedieLoss(power=3), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-        (BinaryCrossEntropy(), [0.1, 0.5], [-np.inf, 0, 1, np.inf]),
-        (CategoricalCrossEntropy(), [0.1, 0.5], [-np.inf, 0, 1, np.inf]),
-    ],
+    "loss, y_pred_success, y_pred_fail", Y_COMMON_PARAMS + Y_PRED_PARAMS
 )
 def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
     # Test boundaries of y_pred for loss functions.
