@@ -11,7 +11,11 @@ import joblib
 from sklearn.base import is_classifier
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
-from sklearn.model_selection import LeaveOneGroupOut, train_test_split
+from sklearn.model_selection import (
+    GridSearchCV,
+    LeaveOneGroupOut,
+    train_test_split,
+)
 from sklearn.pipeline import make_pipeline
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -1379,7 +1383,7 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
     assert_allclose(reg1.coef_, reg2.coef_)
 
 
-@pytest.mark.parametrize('estimator', (Lasso, ElasticNet))
+@pytest.mark.parametrize("estimator", (Lasso, ElasticNet))
 def test_enet_sample_weight_sparse(estimator):
     reg = estimator()
     X = sparse.csc_matrix(np.zeros((3, 2)))
@@ -1390,8 +1394,8 @@ def test_enet_sample_weight_sparse(estimator):
         reg.fit(X, y, sample_weight=sw, check_input=True)
 
 
-@pytest.mark.parametrize('use_weights_in_cv', [True, False])
-@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize("use_weights_in_cv", [True, False])
+@pytest.mark.parametrize("fit_intercept", [True, False])
 def test_enet_cv_sample_weight_correctness(use_weights_in_cv, fit_intercept):
     """Test that ElasticNetCV with sample weights gives correct results."""
     rng = np.random.RandomState(42)
@@ -1439,14 +1443,46 @@ def test_enet_cv_sample_weight_correctness(use_weights_in_cv, fit_intercept):
         assert_allclose(reg_sw.mse_path_, reg.mse_path_)
 
 
-# TODO: Compare ElasticNetCV to GridSearchCV
+@pytest.mark.parametrize("sample_weight", [False, True])
+def test_enet_cv_grid_search(sample_weight):
+    """Test that ElasticNetCV gives same result as GridSearchCV."""
+    n_samples, n_features = 200, 10
+    cv = 5
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        effective_rank=10,
+        n_informative=n_features - 4,
+        noise=10,
+        random_state=0,
+    )
+    if sample_weight:
+        sample_weight = np.linspace(1, 5, num=n_samples)
+    else:
+        sample_weight = None
+
+    alphas = np.logspace(np.log10(1e-5), np.log10(1), num=10)
+    l1_ratios = [0.1, 0.5, 0.9]
+    reg = ElasticNetCV(cv=cv, alphas=alphas, l1_ratio=l1_ratios)
+    reg.fit(X, y, sample_weight=sample_weight)
+
+    param = {"alpha": alphas, "l1_ratio": l1_ratios}
+    gs = GridSearchCV(
+        estimator=ElasticNet(),
+        param_grid=param,
+        cv=cv,
+        scoring="neg_mean_squared_error",
+    ).fit(X, y, sample_weight=sample_weight)
+
+    assert reg.l1_ratio_ == pytest.approx(gs.best_params_["l1_ratio"])
+    assert reg.alpha_ == pytest.approx(gs.best_params_["alpha"])
 
 
-@pytest.mark.parametrize('fit_intercept', [True, False])
-@pytest.mark.parametrize('l1_ratio', [0, 0.5, 1])
-@pytest.mark.parametrize('normalize', [False, True])
-@pytest.mark.parametrize('precompute', [False, True])
-@pytest.mark.parametrize('use_weights_in_cv', [False, True])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
+@pytest.mark.parametrize("normalize", [False, True])
+@pytest.mark.parametrize("precompute", [False, True])
+@pytest.mark.parametrize("use_weights_in_cv", [False, True])
 def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, normalize,
                                            precompute, use_weights_in_cv):
     """Test that the impact of sample_weight is consistent."""
@@ -1460,7 +1496,7 @@ def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, normalize,
                   tol=1e-6, cv=3)
 
     if l1_ratio == 0:
-        params.pop('l1_ratio', None)
+        params.pop("l1_ratio", None)
         reg = LassoCV(**params).fit(X, y)
     else:
         reg = ElasticNetCV(**params).fit(X, y)
@@ -1490,7 +1526,7 @@ def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, normalize,
         assert_allclose(reg.intercept_, intercept)
 
 
-@pytest.mark.parametrize('estimator', (LassoCV, ElasticNetCV))
+@pytest.mark.parametrize("estimator", (LassoCV, ElasticNetCV))
 def test_enet_cv_sample_weight_sparse(estimator):
     reg = estimator()
     X = sparse.csc_matrix(np.zeros((3, 2)))
