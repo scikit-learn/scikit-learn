@@ -13,6 +13,7 @@ print(__doc__)
 #
 # License: BSD 3 clause
 
+# %%
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -24,7 +25,8 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
 
 
 kernels = [1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0)),
-           1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1),
+           1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1,
+                                   alpha_bounds=(1e-5, 1e10)),
            1.0 * ExpSineSquared(length_scale=1.0, periodicity=3.0,
                                 length_scale_bounds=(0.1, 10.0),
                                 periodicity_bounds=(1.0, 10.0)),
@@ -76,3 +78,5 @@ for kernel in kernels:
     plt.tight_layout()
 
 plt.show()
+
+# %%
