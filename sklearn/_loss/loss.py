@@ -560,8 +560,8 @@ class PinballLoss(IdentityLink, BaseLoss, cPinballLoss):
         loss(x_i) = rho_{quantile}(y_true_i - raw_prediction_i)
 
         rho_{quantile}(u) = u * (quantile - 1_{u<0})
-                          = -u (1 - quantile)  if u < 0
-                            u * quantile       if u >= 0
+                          = -u *(1 - quantile)  if u < 0
+                             u * quantile       if u >= 0
 
     Note: 2 * PinballLoss(quantile=0.5) equals AbsoluteError().
 
@@ -649,9 +649,9 @@ class HalfGammaLoss(LogLink, BaseLoss, cHalfGammaLoss):
         loss(x_i) = log(exp(raw_prediction_i)/y_true_i)
                     + y_true/exp(raw_prediction_i) - 1
 
-    Half the Gamma deviance is actually proportional the negative log
-    likelihood up constant terms (not involving raw_prediction) and simplifies
-    the computation of the gradients.
+    Half the Gamma deviance is actually proportional to the negative log
+    likelihood up to constant terms (not involving raw_prediction) and
+    simplifies the computation of the gradients.
     We also skip the constant term `-log(y_true_i) - 1`.
     """
 
