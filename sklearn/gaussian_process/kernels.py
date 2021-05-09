@@ -1985,7 +1985,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             dists = squareform(pdist(
                 X,
                 metric=lambda u, v:
-                np.sum(np.sin(periodic_cst * (u - v)) ** 2)
+                np.sum(np.sin(periodic_cst * np.abs(u - v)) ** 2)
             ))
             K = np.exp(-2.0 / self.length_scale ** 2 * dists)
         else:
@@ -1998,7 +1998,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             dists = cdist(
                 X, Y,
                 metric=lambda u, v:
-                np.sum(np.sin(periodic_cst * (u - v)) ** 2)
+                np.sum(np.sin(periodic_cst * np.abs(u - v)) ** 2)
             )
             K = np.exp(-2.0 / self.length_scale ** 2 * dists)
 
@@ -2013,7 +2013,8 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             if not self.hyperparameter_periodicity.fixed:
                 periodicity_gradient = 4 * np.pi * squareform(pdist(
                     X,
-                    metric=lambda u, v: np.sum(u - v)
+                    # metric=lambda u, v: np.sum(np.abs(u - v))
+                    metric="cityblock"
                 ))
                 periodicity_gradient /= (
                     self.length_scale ** 2 * self.periodicity ** 2
@@ -2022,32 +2023,16 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                 periodicity_gradient *= squareform(pdist(
                     X,
                     metric=lambda u, v:
-                    np.sum(np.sin(periodic_cst * (u - v)))
+                    np.sum(np.sin(periodic_cst * np.abs(u - v)))
                 ))
                 periodicity_gradient *= squareform(pdist(
                     X,
                     metric=lambda u, v:
-                    np.sum(np.cos(periodic_cst * (u - v)))
+                    np.sum(np.cos(periodic_cst * np.abs(u - v)))
                 ))
                 periodicity_gradient = periodicity_gradient[..., np.newaxis]
             else:
                 periodicity_gradient = np.empty((K.shape[0], K.shape[1], 0))
-            # cos_of_arg = np.cos(arg)
-            # # gradient with respect to length_scale
-            # if not self.hyperparameter_length_scale.fixed:
-            #     length_scale_gradient = \
-            #         4 / self.length_scale**2 * sin_of_arg**2 * K
-            #     length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
-            # else:  # length_scale is kept fixed
-            #     length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
-            # # gradient with respect to p
-            # if not self.hyperparameter_periodicity.fixed:
-            #     periodicity_gradient = \
-            #         4 * arg / self.length_scale**2 * cos_of_arg \
-            #         * sin_of_arg * K
-            #     periodicity_gradient = periodicity_gradient[:, :, np.newaxis]
-            # else:  # p is kept fixed
-            #     periodicity_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
             return K, np.dstack((length_scale_gradient, periodicity_gradient))
         else:
