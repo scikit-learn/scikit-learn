@@ -367,3 +367,24 @@ def test_rational_quadratic_kernel():
     )
     with pytest.raises(AttributeError, match=message):
         kernel(X)
+
+
+def test_xxx():
+    import numpy as np
+    import scipy
+
+    L = 1.0
+
+    # create some train/test data on a grid
+    train_len = 4
+    r = np.linspace(0, L, train_len)
+    train_x, train_y = np.meshgrid(r, r)
+    train_in = np.stack((train_x.flatten(), train_y.flatten()), axis=-1)
+
+    # get the kernel
+    kernel = ExpSineSquared()
+
+    K = kernel(train_in)
+
+    print(np.sort(np.linalg.eigvals(K)))
+    print()
