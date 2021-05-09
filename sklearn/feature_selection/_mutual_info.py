@@ -139,8 +139,13 @@ def _compute_mi_cd(c, d, n_neighbors):
     c = c[mask]
     radius = radius[mask]
 
-    kd = KDTree(c)
-    m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
+    with config_context(assume_finite=True):
+        # We remove the validation of c done at the beginning of
+        # KDTree.__init__ and KDTree.query_radius as c already got validated
+        # at the beginning of feature_selection._estimate_mi.
+        kd = KDTree(c)
+        m_all = kd.query_radius(c, radius, count_only=True,
+                                return_distance=False)
     m_all = np.array(m_all) - 1.0
 
     mi = (digamma(n_samples) + np.mean(digamma(k_all)) -
