@@ -1987,7 +1987,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                 metric=lambda u, v:
                 np.sum(np.sin(periodic_cst * np.abs(u - v)) ** 2)
             ))
-            K = np.exp(-2.0 / self.length_scale ** 2 * dists)
+            K = np.exp(-2 * dists / self.length_scale ** 2)
         else:
             if eval_gradient:
                 raise ValueError(
@@ -2000,25 +2000,24 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                 metric=lambda u, v:
                 np.sum(np.sin(periodic_cst * np.abs(u - v)) ** 2)
             )
-            K = np.exp(-2.0 / self.length_scale ** 2 * dists)
+            K = np.exp(-2 * dists / self.length_scale ** 2)
 
         if eval_gradient:
             if not self.hyperparameter_length_scale.fixed:
-                length_scale_gradient = 4 * K / self.length_scale ** 3
+                length_scale_gradient = 4 / self.length_scale ** 3
+                length_scale_gradient *= K
                 length_scale_gradient *= dists
                 length_scale_gradient = length_scale_gradient[..., np.newaxis]
             else:
                 length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
             if not self.hyperparameter_periodicity.fixed:
-                periodicity_gradient = 4 * np.pi * squareform(pdist(
-                    X,
-                    # metric=lambda u, v: np.sum(np.abs(u - v))
-                    metric="cityblock"
-                ))
-                periodicity_gradient /= (
+                periodicity_gradient = 4 / (
                     self.length_scale ** 2 * self.periodicity ** 2
                 )
+                periodicity_gradient *= squareform(pdist(
+                    X, metric=lambda u, v: np.sum(np.pi * np.abs(u - v))
+                ))
                 periodicity_gradient *= K
                 periodicity_gradient *= squareform(pdist(
                     X,

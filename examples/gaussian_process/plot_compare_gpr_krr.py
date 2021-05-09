@@ -83,7 +83,7 @@ gp_kernel = (
     * ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e2))
     + WhiteKernel(1e-1)
 )
-gpr = GaussianProcessRegressor(alpha=0.5, kernel=gp_kernel, normalize_y=False)
+gpr = GaussianProcessRegressor(alpha=0.5, kernel=gp_kernel, normalize_y=True)
 stime = time.time()
 gpr.fit(X, y)
 print("Time for GPR fitting: %.3f" % (time.time() - stime))
