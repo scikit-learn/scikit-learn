@@ -27,7 +27,13 @@ source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    TO_INSTALL="python=$PYTHON_VERSION ccache pip blas[build=$BLAS]"
+    if [[ "$CONDA_CHANNEL" != "" ]]; then
+        TO_INSTALL="-c $CONDA_CHANNEL"
+    else
+        TO_INSTALL=""
+    fi
+
+    TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION ccache pip blas[build=$BLAS]"
 
     TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
@@ -44,8 +50,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # TODO: Remove !=1.1.0 when the following is fixed:
             # sklearn/svm/_libsvm.cpython-38-darwin.so,
             # 2): Symbol not found: _svm_check_parameter error
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers>=1.0.4,!=1.1.0 \
-                        conda-forge::llvm-openmp"
+            TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
         fi
     fi
 	make_conda $TO_INSTALL

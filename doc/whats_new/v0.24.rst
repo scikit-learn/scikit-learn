@@ -703,6 +703,11 @@ Changelog
   By :user:`Alex Gramfort <agramfort>`.
 
 
+- |Enhancement| Add support for weights in
+  :func:`utils.sparse_func.incr_mean_variance_axis`.
+  By :user:`Maria Telenczuk <maikia>` and :user:`Alex Gramfort <agramfort>`.
+
+
 Miscellaneous
 .............
 

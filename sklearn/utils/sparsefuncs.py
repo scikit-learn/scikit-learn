@@ -11,6 +11,7 @@ from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
     incr_mean_variance_axis0 as _incr_mean_var_axis0)
+from ..utils.validation import _check_sample_weight
 
 
 def _raise_typeerror(X):
@@ -100,7 +101,8 @@ def mean_variance_axis(X, axis):
 
 
 @_deprecate_positional_args
-def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
+def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
+                            weights=None):
     """Compute incremental mean and variance along an axix on a CSR or
     CSC matrix.
 
@@ -125,9 +127,17 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
         Array of variances to update with the new data X.
         Should be of shape (n_features,) if axis=0 or (n_samples,) if axis=1.
 
-    last_n : ndarray of shape (n_features,) or (n_samples,), dtype=integral
+    last_n : float or ndarray of shape (n_features,) or (n_samples,), \
+            dtype=floating
         Sum of the weights seen so far, excluding the current weights
-        Should be of shape (n_samples,) if axis=0 or (n_features,) if axis=1.
+        If not float, it should be of shape (n_samples,) if
+        axis=0 or (n_features,) if axis=1. If float it corresponds to
+        having same weights for all samples (or features).
+
+    weights : ndarray, shape (n_samples,) or (n_features,) | None
+        if axis is set to 0 shape is (n_samples,) or
+        if axis is set to 1 shape is (n_features,).
+        If it is set to None, then samples are equally weighted.
 
     Returns
     -------
@@ -143,15 +153,21 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
         Updated number of seen samples per feature if axis=0
         or number of seen features per sample if axis=1.
 
+        If weights is not None, n is a sum of the weights of the seen
+        samples or features instead of the actual number of seen
+        samples or features.
+
     Notes
     -----
     NaNs are ignored in the algorithm.
-
     """
     _raise_error_wrong_axis(axis)
 
     if not isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
         _raise_typeerror(X)
+
+    if np.size(last_n) == 1:
+        last_n = np.full(last_mean.shape, last_n, dtype=last_mean.dtype)
 
     if not (np.size(last_mean) == np.size(last_var) == np.size(last_n)):
         raise ValueError(
@@ -171,20 +187,14 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
                 f"size n_features {X.shape[1]} (Got {np.size(last_mean)})."
             )
 
-    if isinstance(X, sp.csr_matrix):
-        if axis == 0:
-            return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
-        else:
-            return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
-    elif isinstance(X, sp.csc_matrix):
-        if axis == 0:
-            return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
-        else:
-            return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+    X = X.T if axis == 1 else X
+
+    if weights is not None:
+        weights = _check_sample_weight(weights, X, dtype=X.dtype)
+
+    return _incr_mean_var_axis0(X, last_mean=last_mean,
+                                last_var=last_var, last_n=last_n,
+                                weights=weights)
 
 
 def inplace_column_scale(X, scale):
