@@ -350,7 +350,8 @@ class BisectKMeans(KMeans):
         for n_iter in range(self.n_clusters):
 
             # Perform Bisection
-            centers, labels, _,  _ = self._bisect(data_left, y, weights_left, random_state)
+            centers, labels, _,  _ = self._bisect(data_left, y, weights_left,
+                                                  random_state)
 
             errors = self._calc_bisect_errors(X, centers, labels)
 
