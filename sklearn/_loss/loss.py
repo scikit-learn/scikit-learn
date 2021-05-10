@@ -438,7 +438,7 @@ class BaseLoss(BaseLink, cLossFunction):
 
 
 class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
-    """Half Squared Error with identity link, for regression.
+    """Half squared error with identity link, for regression.
 
     Domain:
     y_true and y_pred all real numbers
@@ -446,7 +446,7 @@ class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
     Link:
     y_pred = raw_prediction
 
-    For a given sample x_i, half squares error is defined as::
+    For a given sample x_i, half squared error is defined as::
 
         loss(x_i) = 0.5 * (y_true_i - raw_prediction_i)**2
 
@@ -549,7 +549,7 @@ class AbsoluteError(IdentityLink, BaseLoss, cAbsoluteError):
 
 
 class PinballLoss(IdentityLink, BaseLoss, cPinballLoss):
-    """Quantile Loss aka Pinball Loss, for regression.
+    """Quantile loss aka pinball loss, for regression.
 
     Domain:
     y_true and y_pred all real numbers
@@ -558,7 +558,7 @@ class PinballLoss(IdentityLink, BaseLoss, cPinballLoss):
     Link:
     y_pred = raw_prediction
 
-    For a given sample x_i, the pinball loss loss is defined as::
+    For a given sample x_i, the pinball loss is defined as::
 
         loss(x_i) = rho_{quantile}(y_true_i - raw_prediction_i)
 
@@ -620,7 +620,7 @@ class HalfPoissonLoss(LogLink, BaseLoss, cHalfPoissonLoss):
         loss(x_i) = y_true_i * log(y_true_i/exp(raw_prediction_i))
                     - y_true_i + exp(raw_prediction_i)
 
-    Half the Poisson deviance is actually the negative log likelihood up to
+    Half the Poisson deviance is actually the negative log-likelihood up to
     constant terms (not involving raw_prediction) and simplifies the
     computation of the gradients.
     We also skip the constant term `y_true_i * log(y_true_i) - y_true_i`.
@@ -652,7 +652,7 @@ class HalfGammaLoss(LogLink, BaseLoss, cHalfGammaLoss):
         loss(x_i) = log(exp(raw_prediction_i)/y_true_i)
                     + y_true/exp(raw_prediction_i) - 1
 
-    Half the Gamma deviance is actually proportional to the negative log
+    Half the Gamma deviance is actually proportional to the negative log-
     likelihood up to constant terms (not involving raw_prediction) and
     simplifies the computation of the gradients.
     We also skip the constant term `-log(y_true_i) - 1`.
@@ -744,7 +744,7 @@ class BinaryCrossEntropy(LogitLink, BaseLoss, cBinaryCrossEntropy):
     y_pred = expit(raw_prediction)
 
     For a given sample x_i, the binary cross-entropy, aka log loss, is defined
-    as the negative log-likelihood of the Bernoulli distributions and can be
+    as the negative log-likelihood of the Bernoulli distribution and can be
     expressed as::
 
         loss(x_i) = log(1 + exp(raw_pred_i)) - y_true_i * raw_pred_i
@@ -784,7 +784,7 @@ class CategoricalCrossEntropy(
 
     Domain:
     y_true in {0, 1, 2, 3, .., n_classes - 1}
-    y_pred a n_classes array, each element in (0, 1)
+    y_pred has n_classes elements, each element in (0, 1)
 
     Link:
     y_pred = softmax(raw_prediction)
@@ -792,8 +792,8 @@ class CategoricalCrossEntropy(
     Note: We assume y_true to be already label encoded.
 
     For a given sample x_i, the categorical cross-entropy loss is defined as
-    the negative log-likelihood of the multinomial distribution, it generalizes
-    the binary cross-entropy to more than 2 classes::
+    the negative log-likelihood of the multinomial distribution, it
+    generalizes the binary cross-entropy to more than 2 classes::
 
         loss_i = log(sum(exp(raw_pred_{i, k}), k=0..n_classes-1))
                 - sum(y_true_{i, k} * raw_pred_{i, k}, k=0..n_classes-1)
@@ -855,7 +855,7 @@ class CategoricalCrossEntropy(
         proba=None,
         n_threads=1,
     ):
-        """Compute gradient and probabilities of loss w.r.t raw_prediction.
+        """Compute gradient and probabilities fow raw_prediction.
 
         Parameters
         ----------
