@@ -121,7 +121,7 @@ jobs:
 # Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
 - template: build_tools/azure/posix.yml
   parameters:
-    name: bionic_scipy_conda
+    name: Linux
     vmImage: ubuntu-18.04
     dependsOn: [git_commit, linting]
     condition: |
@@ -133,7 +133,7 @@ jobs:
     matrix:
       py36_ubuntubionic_conda_scipy:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '*'
+        PYTHON_VERSION: '3.6'
         BLAS: 'openblas'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
