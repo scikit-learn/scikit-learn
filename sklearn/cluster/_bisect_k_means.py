@@ -112,9 +112,9 @@ class BisectKMeans(KMeans):
     >>> bisect_means.predict([[0, 0], [12, 3]])
     array([0, 2], dtype=int32)
     >>> bisect_means.cluster_centers_
-    array([[ 1.  2.],
-           [10.  8.],
-           [10.  2.]])
+    array([[ 1.,  2.],
+           [10.,  8.],
+           [10.,  2.]])
     """
     def __init__(self,  n_clusters: int = 8, n_init: int = 10,
                  random_state=None, max_iter: int = 30, verbose=0,
@@ -220,7 +220,7 @@ class BisectKMeans(KMeans):
 
         return centers
 
-    def _bisect(self, X, y=None, sample_weight=None):
+    def _bisect(self, X, y=None, sample_weight=None, random_state=None):
         """
 
         Parameters
@@ -273,7 +273,7 @@ class BisectKMeans(KMeans):
 
         for i in range(self.n_init):
             centers_init = self._init_two_centroids(X, x_squared_norms,
-                                                    init, self.random_state)
+                                                    init, random_state)
 
             labels, inertia, centers, n_iter_ = self._kmeans_single(
                 X, sample_weight, centers_init, max_iter=self.max_iter,
@@ -333,7 +333,7 @@ class BisectKMeans(KMeans):
                                 accept_large_sparse=False)
 
         self._check_params(X)
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if self._algorithm == "full":
@@ -350,7 +350,7 @@ class BisectKMeans(KMeans):
         for n_iter in range(self.n_clusters):
 
             # Perform Bisection
-            centers, labels, _,  _ = self._bisect(data_left, y, weights_left)
+            centers, labels, _,  _ = self._bisect(data_left, y, weights_left, random_state)
 
             errors = self._calc_bisect_errors(X, centers, labels)
 
