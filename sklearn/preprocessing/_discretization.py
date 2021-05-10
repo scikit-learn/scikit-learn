@@ -139,7 +139,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), dtype={int, float}
+        X : array-like of shape (n_samples, n_features)
             Data to be discretized.
 
         y : None
@@ -205,7 +205,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
-                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1,
+                            algorithm='full')
                 centers = km.fit(column[:, None]).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
@@ -276,7 +277,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), dtype={int, float}
+        X : array-like of shape (n_samples, n_features)
             Data to be discretized.
 
         Returns
@@ -326,7 +327,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        Xt : array-like of shape (n_samples, n_features), dtype={int, float}
+        Xt : array-like of shape (n_samples, n_features)
             Transformed data in the binned space.
 
         Returns

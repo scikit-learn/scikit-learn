@@ -23,8 +23,11 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_array, gen_even_slices
-from ..utils import _to_object_array
+from ..utils import (
+    check_array,
+    gen_even_slices,
+    _to_object_array,
+)
 from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -352,7 +355,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             effective_p = self.p
 
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
-            raise ValueError("p must be greater than one for minkowski metric")
+            raise ValueError("p must be greater or equal to one for "
+                             "minkowski metric")
 
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
@@ -408,8 +412,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric == 'minkowski':
             p = self.effective_metric_params_.pop('p', 2)
             if p < 1:
-                raise ValueError("p must be greater than one "
-                                 "for minkowski metric")
+                raise ValueError("p must be greater or equal to one for "
+                                 "minkowski metric")
             elif p == 1:
                 self.effective_metric_ = 'manhattan'
             elif p == 2:
@@ -440,19 +444,18 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_samples_fit_ = X.data.shape[0]
             return self
 
-        if self.effective_metric_ == 'precomputed':
+        if self.metric == 'precomputed':
             X = _check_precomputed(X)
+            # Precomputed matrix X must be squared
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("Precomputed matrix must be square."
+                                 " Input is a {}x{} matrix."
+                                 .format(X.shape[0], X.shape[1]))
             self.n_features_in_ = X.shape[1]
 
         n_samples = X.shape[0]
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
-
-        # Precomputed matrix X must be squared
-        if self.metric == 'precomputed' and X.shape[0] != X.shape[1]:
-            raise ValueError("Precomputed matrix must be a square matrix."
-                             " Input is a {}x{} matrix."
-                             .format(X.shape[0], X.shape[1]))
 
         if issparse(X):
             if self.algorithm not in ('auto', 'brute'):
@@ -510,14 +513,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.n_neighbors <= 0:
                 raise ValueError(
                     "Expected n_neighbors > 0. Got %d" %
-                    self.n_neighbors
-                )
-            else:
-                if not isinstance(self.n_neighbors, numbers.Integral):
-                    raise TypeError(
-                        "n_neighbors does not take %s value, "
-                        "enter integer value" %
-                        type(self.n_neighbors))
+                    self.n_neighbors)
+            elif not isinstance(self.n_neighbors, numbers.Integral):
+                raise TypeError(
+                    "n_neighbors does not take %s value, "
+                    "enter integer value" %
+                    type(self.n_neighbors))
 
         return self
 
@@ -525,10 +526,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # For cross-validation routines to split data correctly
         return {'pairwise': self.metric == 'precomputed'}
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly
@@ -650,21 +651,19 @@ class KNeighborsMixin:
         elif n_neighbors <= 0:
             raise ValueError(
                 "Expected n_neighbors > 0. Got %d" %
-                n_neighbors
-            )
-        else:
-            if not isinstance(n_neighbors, numbers.Integral):
-                raise TypeError(
-                    "n_neighbors does not take %s value, "
-                    "enter integer value" %
-                    type(n_neighbors))
+                n_neighbors)
+        elif not isinstance(n_neighbors, numbers.Integral):
+            raise TypeError(
+                "n_neighbors does not take %s value, "
+                "enter integer value" %
+                type(n_neighbors))
 
         if X is not None:
             query_is_train = False
-            if self.effective_metric_ == 'precomputed':
+            if self.metric == 'precomputed':
                 X = _check_precomputed(X)
             else:
-                X = check_array(X, accept_sparse='csr')
+                X = self._validate_data(X, accept_sparse='csr', reset=False)
         else:
             query_is_train = True
             X = self._fit_X
@@ -683,7 +682,7 @@ class KNeighborsMixin:
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
         if (self._fit_method == 'brute' and
-                self.effective_metric_ == 'precomputed' and issparse(X)):
+                self.metric == 'precomputed' and issparse(X)):
             results = _kneighbors_from_graph(
                 X, n_neighbors=n_neighbors,
                 return_distance=return_distance)
@@ -789,8 +788,8 @@ class KNeighborsMixin:
         Returns
         -------
         A : sparse-matrix of shape (n_queries, n_samples_fit)
-            `n_samples_fit` is the number of samples in the fitted data
-            `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
+            `n_samples_fit` is the number of samples in the fitted data.
+            `A[i, j]` gives the weight of the edge connecting `i` to `j`.
             The matrix is of CSR format.
 
         Examples
@@ -976,10 +975,10 @@ class RadiusNeighborsMixin:
 
         if X is not None:
             query_is_train = False
-            if self.effective_metric_ == 'precomputed':
+            if self.metric == 'precomputed':
                 X = _check_precomputed(X)
             else:
-                X = check_array(X, accept_sparse='csr')
+                X = self._validate_data(X, accept_sparse='csr', reset=False)
         else:
             query_is_train = True
             X = self._fit_X
@@ -988,7 +987,7 @@ class RadiusNeighborsMixin:
             radius = self.radius
 
         if (self._fit_method == 'brute' and
-                self.effective_metric_ == 'precomputed' and issparse(X)):
+                self.metric == 'precomputed' and issparse(X)):
             results = _radius_neighbors_from_graph(
                 X, radius=radius, return_distance=return_distance)
 
@@ -1112,9 +1111,9 @@ class RadiusNeighborsMixin:
         Returns
         -------
         A : sparse-matrix of shape (n_queries, n_samples_fit)
-            `n_samples_fit` is the number of samples in the fitted data
-            `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
-            The matrix if of format CSR.
+            `n_samples_fit` is the number of samples in the fitted data.
+            `A[i, j]` gives the weight of the edge connecting `i` to `j`.
+            The matrix is of CSR format.
 
         Examples
         --------

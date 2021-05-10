@@ -8,7 +8,6 @@ agglomeration.
 import numpy as np
 
 from ..base import TransformerMixin
-from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from scipy.sparse import issparse
 
@@ -38,10 +37,7 @@ class AgglomerationTransform(TransformerMixin):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
-        if len(self.labels_) != X.shape[1]:
-            raise ValueError("X has a different number of features than "
-                             "during fitting.")
+        X = self._validate_data(X, reset=False)
         if self.pooling_func == np.mean and not issparse(X):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]

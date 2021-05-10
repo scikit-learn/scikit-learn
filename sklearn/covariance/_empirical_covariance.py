@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
+from .. import config_context
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import fast_logdet
@@ -167,7 +168,7 @@ class EmpiricalCovariance(BaseEstimator):
         self.covariance_ = covariance
         # set precision
         if self.store_precision:
-            self.precision_ = linalg.pinvh(covariance)
+            self.precision_ = linalg.pinvh(covariance, check_finite=False)
         else:
             self.precision_ = None
 
@@ -182,7 +183,7 @@ class EmpiricalCovariance(BaseEstimator):
         if self.store_precision:
             precision = self.precision_
         else:
-            precision = linalg.pinvh(self.covariance_)
+            precision = linalg.pinvh(self.covariance_, check_finite=False)
         return precision
 
     def fit(self, X, y=None):
@@ -196,7 +197,7 @@ class EmpiricalCovariance(BaseEstimator):
           n_features is the number of features.
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -226,7 +227,7 @@ class EmpiricalCovariance(BaseEstimator):
             the data used in fit (including centering).
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -234,6 +235,7 @@ class EmpiricalCovariance(BaseEstimator):
             The likelihood of the data set with `self.covariance_` as an
             estimator of its covariance matrix.
         """
+        X_test = self._validate_data(X_test, reset=False)
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(
             X_test - self.location_, assume_centered=True)
@@ -309,9 +311,12 @@ class EmpiricalCovariance(BaseEstimator):
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
         """
+        X = self._validate_data(X, reset=False)
+
         precision = self.get_precision()
-        # compute mahalanobis distances
-        dist = pairwise_distances(X, self.location_[np.newaxis, :],
-                                  metric='mahalanobis', VI=precision)
+        with config_context(assume_finite=True):
+            # compute mahalanobis distances
+            dist = pairwise_distances(X, self.location_[np.newaxis, :],
+                                      metric='mahalanobis', VI=precision)
 
         return np.reshape(dist, (len(X),)) ** 2

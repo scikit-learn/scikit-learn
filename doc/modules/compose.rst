@@ -527,6 +527,20 @@ above example would be::
                                   ('countvectorizer', CountVectorizer(),
                                    'title')])
 
+If :class:`~sklearn.compose.ColumnTransformer` is fitted with a dataframe
+and the dataframe only has string column names, then transforming a dataframe
+will use the column names to select the columns::
+
+
+  >>> ct = ColumnTransformer(
+  ...          [("scale", StandardScaler(), ["expert_rating"])]).fit(X)
+  >>> X_new = pd.DataFrame({"expert_rating": [5, 6, 1],
+  ...                       "ignored_new_col": [1.2, 0.3, -0.1]})
+  >>> ct.transform(X_new)
+  array([[ 0.9...],
+         [ 2.1...],
+         [-3.9...]])
+
 .. _visualizing_composite_estimators:
 
 Visualizing Composite Estimators

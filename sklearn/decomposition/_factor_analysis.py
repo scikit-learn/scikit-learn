@@ -212,7 +212,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         # to allow for unified computation of loglikelihood
         if self.svd_method == 'lapack':
             def my_svd(X):
-                _, s, Vt = linalg.svd(X, full_matrices=False)
+                _, s, Vt = linalg.svd(X,
+                                      full_matrices=False,
+                                      check_finite=False)
                 return (s[:n_components], Vt[:n_components],
                         squared_norm(s[n_components:]))
         elif self.svd_method == 'randomized':

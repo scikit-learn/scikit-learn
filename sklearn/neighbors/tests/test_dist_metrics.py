@@ -10,7 +10,7 @@ from scipy.spatial.distance import cdist
 from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
 
 
@@ -25,9 +25,14 @@ n2 = 25
 X1 = rng.random_sample((n1, d)).astype('float64', copy=False)
 X2 = rng.random_sample((n2, d)).astype('float64', copy=False)
 
+[X1_mmap, X2_mmap] = create_memmap_backed_data([X1, X2])
+
 # make boolean arrays: ones and zeros
 X1_bool = X1.round(0)
 X2_bool = X2.round(0)
+
+[X1_bool_mmap, X2_bool_mmap] = create_memmap_backed_data([X1_bool, X2_bool])
+
 
 V = rng.random_sample((d, d))
 VI = np.dot(V, V.T)
@@ -48,19 +53,37 @@ METRICS_DEFAULT_PARAMS = {'euclidean': {},
                           'canberra': {},
                           'braycurtis': {}}
 
-
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
-def test_cdist(metric):
+@pytest.mark.parametrize('X1, X2', [(X1, X2), (X1_mmap, X2_mmap)])
+def test_cdist(metric, X1, X2):
     argdict = METRICS_DEFAULT_PARAMS[metric]
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        D_true = cdist(X1, X2, metric, **kwargs)
+        if metric == "mahalanobis":
+            # See: https://github.com/scipy/scipy/issues/13861
+            pytest.xfail("scipy#13861: cdist with 'mahalanobis' fails on"
+                         "memmap data")
+        elif metric == "wminkowski":
+            if sp_version >= parse_version("1.8.0"):
+                pytest.skip("wminkowski will be removed in SciPy 1.8.0")
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if sp_version >= parse_version("1.6.0"):
+                ExceptionToAssert = DeprecationWarning
+            with pytest.warns(ExceptionToAssert):
+                D_true = cdist(X1, X2, metric, **kwargs)
+        else:
+            D_true = cdist(X1, X2, metric, **kwargs)
+
         check_cdist(metric, kwargs, D_true)
 
 
 @pytest.mark.parametrize('metric', BOOL_METRICS)
-def test_cdist_bool_metric(metric):
+@pytest.mark.parametrize('X1_bool, X2_bool', [(X1_bool, X2_bool),
+                                              (X1_bool_mmap, X2_bool_mmap)])
+def test_cdist_bool_metric(metric, X1_bool, X2_bool):
     D_true = cdist(X1_bool, X2_bool, metric)
     check_cdist_bool(metric, D_true)
 
@@ -78,17 +101,35 @@ def check_cdist_bool(metric, D_true):
 
 
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
-def test_pdist(metric):
+@pytest.mark.parametrize('X1, X2', [(X1, X2), (X1_mmap, X2_mmap)])
+def test_pdist(metric, X1, X2):
     argdict = METRICS_DEFAULT_PARAMS[metric]
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        D_true = cdist(X1, X1, metric, **kwargs)
+        if metric == "mahalanobis":
+            # See: https://github.com/scipy/scipy/issues/13861
+            pytest.xfail("scipy#13861: pdist with 'mahalanobis' fails on"
+                         "memmap data")
+        elif metric == "wminkowski":
+            if sp_version >= parse_version("1.8.0"):
+                pytest.skip("wminkowski will be removed in SciPy 1.8.0")
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if sp_version >= parse_version("1.6.0"):
+                ExceptionToAssert = DeprecationWarning
+            with pytest.warns(ExceptionToAssert):
+                D_true = cdist(X1, X1, metric, **kwargs)
+        else:
+            D_true = cdist(X1, X1, metric, **kwargs)
+
         check_pdist(metric, kwargs, D_true)
 
 
 @pytest.mark.parametrize('metric', BOOL_METRICS)
-def test_pdist_bool_metrics(metric):
+@pytest.mark.parametrize('X1_bool', [X1_bool, X1_bool_mmap])
+def test_pdist_bool_metrics(metric, X1_bool):
     D_true = cdist(X1_bool, X1_bool, metric)
     check_pdist_bool(metric, D_true)
 
@@ -120,7 +161,8 @@ def test_pickle(metric):
 
 
 @pytest.mark.parametrize('metric', BOOL_METRICS)
-def test_pickle_bool_metrics(metric):
+@pytest.mark.parametrize('X1_bool', [X1_bool, X1_bool_mmap])
+def test_pickle_bool_metrics(metric, X1_bool):
     dm = DistanceMetric.get_metric(metric)
     D1 = dm.pairwise(X1_bool)
     dm2 = pickle.loads(pickle.dumps(dm))
@@ -183,9 +225,9 @@ def test_bad_pyfunc_metric():
         return "1"
 
     X = np.ones((5, 2))
-    assert_raises_regex(TypeError,
-                        "Custom distance function must accept two vectors",
-                        BallTree, X, metric=wrong_distance)
+    msg = "Custom distance function must accept two vectors"
+    with pytest.raises(TypeError, match=msg):
+        BallTree(X, metric=wrong_distance)
 
 
 def test_input_data_size():

@@ -7,7 +7,6 @@ import pytest
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
@@ -145,16 +144,20 @@ def test_clone_buggy():
     # Check that clone raises an error on buggy estimators.
     buggy = Buggy()
     buggy.a = 2
-    assert_raises(RuntimeError, clone, buggy)
+    with pytest.raises(RuntimeError):
+        clone(buggy)
 
     no_estimator = NoEstimator()
-    assert_raises(TypeError, clone, no_estimator)
+    with pytest.raises(TypeError):
+        clone(no_estimator)
 
     varg_est = VargEstimator()
-    assert_raises(RuntimeError, clone, varg_est)
+    with pytest.raises(RuntimeError):
+        clone(varg_est)
 
     est = ModifyInitParams()
-    assert_raises(RuntimeError, clone, est)
+    with pytest.raises(RuntimeError):
+        clone(est)
 
 
 def test_clone_empty_array():
@@ -233,7 +236,9 @@ def test_get_params():
 
     test.set_params(a__d=2)
     assert test.a.d == 2
-    assert_raises(ValueError, test.set_params, a__a=2)
+
+    with pytest.raises(ValueError):
+        test.set_params(a__a=2)
 
 
 def test_is_classifier():
@@ -248,10 +253,15 @@ def test_is_classifier():
 def test_set_params():
     # test nested estimator parameter setting
     clf = Pipeline([("svc", SVC())])
+
     # non-existing parameter in svc
-    assert_raises(ValueError, clf.set_params, svc__stupid_param=True)
+    with pytest.raises(ValueError):
+        clf.set_params(svc__stupid_param=True)
+
     # non-existing parameter of pipeline
-    assert_raises(ValueError, clf.set_params, svm__stupid_param=True)
+    with pytest.raises(ValueError):
+        clf.set_params(svm__stupid_param=True)
+
     # we don't currently catch if the things in pipeline are estimators
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
     # assert_raises(AttributeError, bad_pipeline.set_params,
@@ -500,7 +510,7 @@ def test_tag_inheritance():
     assert inherit_diamond_tag_est._get_tags()['allow_nan']
 
 
-def test_warns_on_get_params_non_attribute():
+def test_raises_on_get_params_non_attribute():
     class MyEstimator(BaseEstimator):
         def __init__(self, param=5):
             pass
@@ -509,10 +519,10 @@ def test_warns_on_get_params_non_attribute():
             return self
 
     est = MyEstimator()
-    with pytest.warns(FutureWarning, match='AttributeError'):
-        params = est.get_params()
+    msg = "'MyEstimator' object has no attribute 'param'"
 
-    assert params['param'] is None
+    with pytest.raises(AttributeError, match=msg):
+        est.get_params()
 
 
 def test_repr_mimebundle_():
@@ -540,7 +550,7 @@ def test_repr_html_wraps():
         assert "<style>" in output
 
 
-# TODO: Remove in 0.26 when the _pairwise attribute is removed
+# TODO: Remove in 1.1 when the _pairwise attribute is removed
 def test_is_pairwise():
     # simple checks for _is_pairwise
     pca = KernelPCA(kernel='precomputed')
@@ -553,29 +563,13 @@ def test_is_pairwise():
         _pairwise = False
 
     pca = IncorrectTagPCA(kernel='precomputed')
-    msg = ("_pairwise was deprecated in 0.24 and will be removed in 0.26. "
-           "Set the estimator tags of your estimator instead")
+    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         assert not _is_pairwise(pca)
 
-    # the _pairwise attribute is present and set to False while the pairwise
-    # tag is not present
-    class FalsePairwise(BaseEstimator):
-        _pairwise = False
-
-        def _get_tags(self):
-            tags = super()._get_tags()
-            del tags['pairwise']
-            return tags
-
-    false_pairwise = FalsePairwise()
-    with pytest.warns(None) as record:
-        assert not _is_pairwise(false_pairwise)
-    assert not record
-
     # the _pairwise attribute is present and set to True while pairwise tag is
     # not present
-    class TruePairwise(FalsePairwise):
+    class TruePairwise(BaseEstimator):
         _pairwise = True
 
     true_pairwise = TruePairwise()
@@ -587,3 +581,29 @@ def test_is_pairwise():
     with pytest.warns(None) as record:
         assert not _is_pairwise(est)
     assert not record
+
+
+def test_n_features_in_validation():
+    """Check that `_check_n_features` validates data when reset=False"""
+    est = MyEstimator()
+    X_train = [[1, 2, 3], [4, 5, 6]]
+    est._check_n_features(X_train, reset=True)
+
+    assert est.n_features_in_ == 3
+
+    msg = ("X does not contain any features, but MyEstimator is expecting "
+           "3 features")
+    with pytest.raises(ValueError, match=msg):
+        est._check_n_features("invalid X", reset=False)
+
+
+def test_n_features_in_no_validation():
+    """Check that `_check_n_features` does not validate data when
+    n_features_in_ is not defined."""
+    est = MyEstimator()
+    est._check_n_features("invalid X", reset=True)
+
+    assert not hasattr(est, "n_features_in_")
+
+    # does not raise
+    est._check_n_features("invalid X", reset=False)

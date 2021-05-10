@@ -33,6 +33,7 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                brier_score_loss, jaccard_score, mean_absolute_percentage_error)
 
 from .cluster import adjusted_rand_score
+from .cluster import rand_score
 from .cluster import homogeneity_score
 from .cluster import completeness_score
 from .cluster import v_measure_score
@@ -214,7 +215,7 @@ class _PredictScorer(_BaseScorer):
             arguments, potentially caching results.
 
         estimator : object
-            Trained estimator to use for scoring. Must have a predict_proba
+            Trained estimator to use for scoring. Must have a `predict`
             method; the output of that is used to compute the score.
 
         X : {array-like, sparse matrix}
@@ -253,7 +254,7 @@ class _ProbaScorer(_BaseScorer):
             arguments, potentially caching results.
 
         clf : object
-            Trained classifier to use for scoring. Must have a predict_proba
+            Trained classifier to use for scoring. Must have a `predict_proba`
             method; the output of that is used to compute the score.
 
         X : {array-like, sparse matrix}
@@ -468,11 +469,15 @@ def _check_multimetric_scoring(estimator, scoring):
         The estimator for which the scoring will be applied.
 
     scoring : list, tuple or dict
-        A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        Strategy to evaluate the performance of the cross-validated model on
+        the test set.
 
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
+        The possibilities are:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where they keys are the metric
+          names and the values are the metric scores;
+        - a dictionary with metric names as keys and callables a values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -684,6 +689,7 @@ brier_score_loss_scorer = make_scorer(brier_score_loss,
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
+rand_scorer = make_scorer(rand_score)
 homogeneity_scorer = make_scorer(homogeneity_score)
 completeness_scorer = make_scorer(completeness_score)
 v_measure_scorer = make_scorer(v_measure_score)
@@ -717,6 +723,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_brier_score=neg_brier_score_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
+               rand_score=rand_scorer,
                homogeneity_score=homogeneity_scorer,
                completeness_score=completeness_scorer,
                v_measure_score=v_measure_scorer,

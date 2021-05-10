@@ -194,7 +194,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         Number of documents to use in each EM iteration. Only used in online
         learning.
 
-    evaluate_every : int, default=0
+    evaluate_every : int, default=-1
         How often to evaluate perplexity. Only used in `fit` method.
         set it to 0 or negative number to not evaluate perplexity in
         training at all. Evaluating perplexity can help you check convergence

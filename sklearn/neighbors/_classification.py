@@ -17,7 +17,6 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
-from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
@@ -148,14 +147,13 @@ class KNeighborsClassifier(KNeighborsMixin,
     @_deprecate_positional_args
     def __init__(self, n_neighbors=5, *,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None):
         super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params,
-            n_jobs=n_jobs, **kwargs)
+            n_jobs=n_jobs)
         self.weights = _check_weights(weights)
 
     def fit(self, X, y):
@@ -192,7 +190,7 @@ class KNeighborsClassifier(KNeighborsMixin,
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
@@ -236,7 +234,7 @@ class KNeighborsClassifier(KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -416,7 +414,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
               algorithm=algorithm,
               leaf_size=leaf_size,
               metric=metric, p=p, metric_params=metric_params,
-              n_jobs=n_jobs, **kwargs)
+              n_jobs=n_jobs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 
@@ -545,7 +543,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
             by lexicographic order.
         """
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)

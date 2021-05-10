@@ -2,12 +2,17 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 from functools import partial
+from unittest.mock import patch
+
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.datasets.tests.test_common import check_as_frame
+from sklearn.datasets.tests.test_common import check_pandas_dependency_message
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.preprocessing import normalize
 
 
@@ -88,3 +93,46 @@ def test_20news_normalization(fetch_20newsgroups_vectorized_fxt):
 
     assert_allclose_dense_sparse(X_norm, normalize(X))
     assert np.allclose(np.linalg.norm(X_norm.todense(), axis=1), 1)
+
+
+def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
+    pd = pytest.importorskip('pandas')
+
+    bunch = fetch_20newsgroups_vectorized_fxt(as_frame=True)
+    check_as_frame(bunch, fetch_20newsgroups_vectorized_fxt)
+
+    frame = bunch.frame
+    assert frame.shape == (11314, 130108)
+    assert all([isinstance(col, pd.SparseDtype) for col in bunch.data.dtypes])
+
+    # Check a small subset of features
+    for expected_feature in [
+        "beginner",
+        "beginners",
+        "beginning",
+        "beginnings",
+        "begins",
+        "begley",
+        "begone",
+    ]:
+        assert expected_feature in frame.keys()
+    assert "category_class" in frame.keys()
+    assert bunch.target.name == "category_class"
+
+
+def test_as_frame_no_pandas(
+    fetch_20newsgroups_vectorized_fxt, hide_available_pandas
+):
+    check_pandas_dependency_message(fetch_20newsgroups_vectorized_fxt)
+
+
+def test_outdated_pickle(fetch_20newsgroups_vectorized_fxt):
+    with patch("os.path.exists") as mock_is_exist:
+        with patch("joblib.load") as mock_load:
+            # mock that the dataset was cached
+            mock_is_exist.return_value = True
+            # mock that we have an outdated pickle with only X and y returned
+            mock_load.return_value = ("X", "y")
+            err_msg = "The cached dataset located in"
+            with pytest.raises(ValueError, match=err_msg):
+                fetch_20newsgroups_vectorized_fxt(as_frame=True)

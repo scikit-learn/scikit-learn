@@ -8,6 +8,10 @@ elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "ubuntu-32" ]]; then
     source $VIRTUALENV/bin/activate
 fi
 
+if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+    source /opt/intel/oneapi/setvars.sh
+fi
+
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
@@ -24,8 +28,13 @@ pip list
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
 if [[ "$COVERAGE" == "true" ]]; then
+    # Note: --cov-report= is used to disable to long text output report in the
+    # CI logs. The coverage data is consolidated by codecov to get an online
+    # web report across all the platforms so there is no need for this text
+    # report that otherwise hides the test failures and forces long scrolls in
+    # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
-    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn"
+    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn --cov-report="
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then

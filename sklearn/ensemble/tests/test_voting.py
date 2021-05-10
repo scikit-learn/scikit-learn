@@ -1,12 +1,12 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
+import warnings
 import pytest
 import re
 import numpy as np
 
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
@@ -69,16 +69,16 @@ def test_notfitted():
     ereg = VotingRegressor([('dr', DummyRegressor())])
     msg = ("This %s instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this estimator.")
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.predict, X)
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.predict_proba, X)
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.transform, X)
-    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
-                         ereg.predict, X_r)
-    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
-                         ereg.transform, X_r)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.predict(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.predict_proba(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.transform(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingRegressor'):
+        ereg.predict(X_r)
+    with pytest.raises(NotFittedError, match=msg % 'VotingRegressor'):
+        ereg.transform(X_r)
 
 
 def test_majority_label_iris():
@@ -370,7 +370,11 @@ def test_set_estimator_drop():
                                          ('nb', clf3)],
                              voting='hard', weights=[1, 1, 0.5])
     with pytest.warns(None) as record:
-        eclf2.set_params(rf='drop').fit(X, y)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            eclf2.set_params(rf='drop').fit(X, y)
+
     assert not record
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
@@ -382,7 +386,11 @@ def test_set_estimator_drop():
 
     eclf1.set_params(voting='soft').fit(X, y)
     with pytest.warns(None) as record:
-        eclf2.set_params(voting='soft').fit(X, y)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            eclf2.set_params(voting='soft').fit(X, y)
+
     assert not record
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
@@ -403,7 +411,10 @@ def test_set_estimator_drop():
                              voting='soft', weights=[1, 0.5],
                              flatten_transform=False)
     with pytest.warns(None) as record:
-        eclf2.set_params(rf='drop').fit(X1, y1)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            eclf2.set_params(rf='drop').fit(X1, y1)
     assert not record
     assert_array_almost_equal(eclf1.transform(X1),
                               np.array([[[0.7, 0.3], [0.3, 0.7]],

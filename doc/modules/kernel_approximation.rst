@@ -191,7 +191,7 @@ determined by ``n_components``.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_scalable_poly_kernels.py`
+    * :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
 
 .. _tensor_sketch_kernel_approx:
 
