@@ -1982,10 +1982,12 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             # arg = np.pi * dists / self.periodicity
             # sin_of_arg = np.sin(arg)
             # K = np.exp(- 2 * (sin_of_arg / self.length_scale) ** 2)
+
+            # K = exp(-2/l^2 * sum_i( sin^2 (pi/p * (x_i - x_i')) ))
             dists = squareform(pdist(
                 X,
                 metric=lambda u, v:
-                np.sum(np.sin(periodic_cst * np.abs(u - v)) ** 2)
+                np.sum(np.sin(periodic_cst * (u - v)) ** 2)
             ))
             K = np.exp(-2 * dists / self.length_scale ** 2)
         else:
@@ -1995,16 +1997,20 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             # dists = cdist(X, Y, metric='euclidean')
             # K = np.exp(- 2 * (np.sin(np.pi / self.periodicity * dists)
             #                   / self.length_scale) ** 2)
+
+            # K = exp(-2/l^2 * sum_i( sin^2 (pi/p * (x_i - y_i)) ))
             dists = cdist(
                 X, Y,
                 metric=lambda u, v:
-                np.sum(np.sin(periodic_cst * np.abs(u - v)) ** 2)
+                np.sum(np.sin(periodic_cst * (u - v)) ** 2)
             )
             K = np.exp(-2 * dists / self.length_scale ** 2)
 
         if eval_gradient:
             if not self.hyperparameter_length_scale.fixed:
-                length_scale_gradient = 4 / self.length_scale ** 3
+                # dK/dl = 4/l^3 * K * sum_i( sin^2 (pi/p * (x_i - x_i')) )
+                # approximation is taking 4/l^2 instead of
+                length_scale_gradient = 2 / self.length_scale ** 3
                 length_scale_gradient *= K
                 length_scale_gradient *= dists
                 length_scale_gradient = length_scale_gradient[..., np.newaxis]
@@ -2012,23 +2018,26 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                 length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
             if not self.hyperparameter_periodicity.fixed:
-                periodicity_gradient = 4 / (
-                    self.length_scale ** 2 * self.periodicity ** 2
+                # dK/dp = (4 * pi)/(l^2 * p^2) * sum_i(
+                #    sin(pi/p * (x_i - x_i')) *
+                #    cos(pi/p * (x_i - x_i')) *
+                #    (x_i - x_i')
+                # )
+                # approximation is taking p instead of p^2
+                periodicity_gradient = (4 * np.pi) / (
+                    self.length_scale ** 2 * self.periodicity
                 )
-                periodicity_gradient *= squareform(pdist(
-                    X, metric=lambda u, v: np.sum(np.pi * np.abs(u - v))
-                ))
                 periodicity_gradient *= K
-                periodicity_gradient *= squareform(pdist(
-                    X,
-                    metric=lambda u, v:
-                    np.sum(np.sin(periodic_cst * np.abs(u - v)))
-                ))
-                periodicity_gradient *= squareform(pdist(
-                    X,
-                    metric=lambda u, v:
-                    np.sum(np.cos(periodic_cst * np.abs(u - v)))
-                ))
+                periodicity_gradient *= squareform(
+                    pdist(
+                        X,
+                        metric=lambda u, v: np.sum(
+                            np.sin(periodic_cst * (u - v))
+                            * np.cos(periodic_cst * (u - v))
+                            * (u - v)
+                        ),
+                    )
+                )
                 periodicity_gradient = periodicity_gradient[..., np.newaxis]
             else:
                 periodicity_gradient = np.empty((K.shape[0], K.shape[1], 0))
