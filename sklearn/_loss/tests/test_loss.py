@@ -7,9 +7,8 @@ from scipy.optimize import (
     minimize_scalar,
     newton,
 )
-from scipy.special import logit
 
-from sklearn._loss.link import _inclusive_low_high
+from sklearn._loss.link import _inclusive_low_high, IdentityLink
 from sklearn._loss.loss import (
     _LOSSES,
     AbsoluteError,
@@ -104,6 +103,7 @@ def numerical_derivative(func, x, eps):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 def test_loss_boundary(loss):
+    """Test interval ranges of y_true and y_pred in losses."""
     # make sure low and high are always within the interval, used for linspace
     if loss.n_classes is None or loss.n_classes <= 2:
         low, high = _inclusive_low_high(loss.interval_y_true)
@@ -177,7 +177,7 @@ Y_PRED_PARAMS = [
     "loss, y_true_success, y_true_fail", Y_COMMON_PARAMS + Y_TRUE_PARAMS
 )
 def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
-    # Test boundaries of y_true for loss functions.
+    """Test boundaries of y_true for loss functions."""
     for y in y_true_success:
         assert loss.in_y_true_range(np.array([y]))
     for y in y_true_fail:
@@ -188,7 +188,7 @@ def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
     "loss, y_pred_success, y_pred_fail", Y_COMMON_PARAMS + Y_PRED_PARAMS
 )
 def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
-    # Test boundaries of y_pred for loss functions.
+    """Test boundaries of y_pred for loss functions."""
     for y in y_pred_success:
         assert loss.in_y_pred_range(np.array([y]))
     for y in y_pred_fail:
@@ -205,8 +205,11 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
 def test_loss_dtype(
     loss, dtype_in, dtype_out, sample_weight, out1, out2, n_threads
 ):
-    # Test that loss accepts if all input arrays are either all float32 or all
-    # float64, and all output arrays are either all float32 or all float64.
+    """Test acceptance of dtypes in loss functions.
+
+    Check that loss accepts if all input arrays are either all float32 or all
+    float64, and all output arrays are either all float32 or all float64.
+    """
     loss = loss()
     if loss.n_classes <= 2:
         # generate a y_true in valid range
@@ -263,6 +266,7 @@ def test_loss_dtype(
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 def test_loss_same_as_C_functions(loss, sample_weight):
+    """Test that Python and Cython functions return same results."""
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss,
         n_samples=20,
@@ -344,8 +348,10 @@ def test_loss_same_as_C_functions(loss, sample_weight):
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 def test_loss_gradients_are_the_same(loss, sample_weight):
-    # Test that loss and gradient are the same across different functions.
-    # Also test that output arguments contain correct result.
+    """Test that loss and gradient are the same across different functions.
+
+    Also test that output arguments contain correct result.
+    """
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss,
         n_samples=20,
@@ -423,9 +429,11 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", ["ones", "random"])
 def test_sample_weight_multiplies_gradients(loss, sample_weight):
-    # Make sure that passing sample weights to the gradient and hessians
-    # computation methods is equivalent to multiplying by the weights.
+    """Test sample weights in gradients and hessians.
 
+    Make sure that passing sample weights to the gradient and hessians
+    computation methods is equivalent to multiplying by the weights.
+    """
     n_samples = 100
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss,
@@ -476,8 +484,11 @@ def test_sample_weight_multiplies_gradients(loss, sample_weight):
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 def test_loss_of_perfect_prediction(loss, sample_weight):
-    # Test that loss of y_true = y_pred plus constant_to_optimal_zero sums up
-    # to zero.
+    """Test value of perfect predictions.
+
+    Loss of y_pred = y_true plus constant_to_optimal_zero should sums up to
+    zero.
+    """
     if loss.n_classes <= 2:
         # Use small values such that exp(value) is not nan.
         raw_prediction = np.array([-10, -0.1, 0, 0.1, 3, 10])
@@ -513,9 +524,11 @@ def test_loss_of_perfect_prediction(loss, sample_weight):
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 def test_gradients_hessians_numerically(loss, sample_weight):
-    # Test that gradients are computed correctly by comparing to numerical
-    # derivatives of loss functions.
-    # Test that hessians are correct by numerical derivative of gradients.
+    """Test gradients and hessians with numerical derivatives.
+
+    Gradient should equal the numerical derivatives of the loss function.
+    Hessians should equal the numerical derivatives of gradients.
+    """
     n_samples = 20
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss,
@@ -620,19 +633,23 @@ def test_gradients_hessians_numerically(loss, sample_weight):
 )
 @skip_if_32bit
 def test_derivatives(loss, x0, y_true):
-    # Check that gradients are zero when the loss is minimized on a single
-    # value/sample using Halley's method with the first and second order
-    # derivatives computed by the Loss instance.
-    # Note that methods of Loss instances operate on arrays while the newton
-    # root finder expects a scalar or a one-element array for this purpose.
+    """Test that gradients are zero at the minimum of the loss.
 
+    We check this on a single value/sample using Halley's method with the
+    first and second order derivatives computed by the Loss instance.
+    Note that methods of Loss instances operate on arrays while the newton
+    root finder expects a scalar or a one-element array for this purpose.
+    """
     loss = _LOSSES[loss](sample_weight=None)
     y_true = np.array([y_true], dtype=np.float64)
     x0 = np.array([x0], dtype=np.float64)
 
     def func(x: np.ndarray) -> np.ndarray:
-        # Add constant term such that loss has its minimum at zero, which is
-        # required by the newton method.
+        """Compute loss plus constant term.
+
+        The constant term is such that the minimum function value is zero,
+        which is required by the Newton method.
+        """
         return loss.loss(
             y_true=y_true, raw_prediction=x
         ) + loss.constant_to_optimal_zero(y_true=y_true)
@@ -652,7 +669,8 @@ def test_derivatives(loss, x0, y_true):
         tol=5e-8,
     )
 
-    # Need to ravel arrays because assert_allclose requires matching dimensions
+    # Need to ravel arrays because assert_allclose requires matching
+    # dimensions.
     y_true = y_true.ravel()
     optimum = optimum.ravel()
     assert_allclose(loss.inverse(optimum), y_true)
@@ -665,8 +683,10 @@ def test_derivatives(loss, x0, y_true):
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 def test_loss_intercept_only(loss, sample_weight):
-    # Test that fit_intercept_only returns the argmin of the loss and that the
-    # gradient is zero.
+    """Test that fit_intercept_only returns the argmin of the loss.
+
+    Also test that the gradient is zero at the minimum.
+    """
     n_samples = 50
     if loss.n_classes <= 2:
         y_true = loss.inverse(np.linspace(-4, 4, num=n_samples))
@@ -734,15 +754,20 @@ def test_loss_intercept_only(loss, sample_weight):
 
 
 @pytest.mark.parametrize(
-    "loss, func, link, low, high, random_dist",
+    "loss, func, random_dist",
     [
-        (HalfSquaredError, np.mean, "identity", None, None, "normal"),
-        (AbsoluteError, np.median, "identity", None, None, "normal"),
-        (HalfPoissonLoss, np.mean, np.log, 0, None, "poisson"),
-        (BinaryCrossEntropy, np.mean, logit, 0, 1, "binomial"),
+        (HalfSquaredError, np.mean, "normal"),
+        (AbsoluteError, np.median, "normal"),
+        (HalfPoissonLoss, np.mean, "poisson"),
+        (BinaryCrossEntropy, np.mean, "binomial"),
     ],
 )
-def test_specific_fit_intercept_only(loss, func, link, low, high, random_dist):
+def test_specific_fit_intercept_only(loss, func, random_dist):
+    """Test that fit_intercept_only returns the correct functional.
+
+    We test the functional for specific, meaningful distributions, e.g.
+    squared error estimates the expectation of a probability distribution.
+    """
     rng = np.random.RandomState(0)
     loss = loss()
     if random_dist == "binomial":
@@ -750,32 +775,33 @@ def test_specific_fit_intercept_only(loss, func, link, low, high, random_dist):
     else:
         y_train = getattr(rng, random_dist)(size=100)
     baseline_prediction = loss.fit_intercept_only(y_true=y_train)
-    # Make sure baseline prediction is the expected one, i.e. func, e.g.
-    # mean or median.
+    # Make sure baseline prediction is the expected functional=func, e.g. mean
+    # or median.
     assert_all_finite(baseline_prediction)
-    if link == "identity":
-        assert baseline_prediction == approx(func(y_train))
-        assert_allclose(loss.inverse(baseline_prediction), baseline_prediction)
-    else:
-        assert baseline_prediction == approx(link(func(y_train)))
+    assert baseline_prediction == approx(loss.link(func(y_train)))
+    if isinstance(loss, IdentityLink):
+        assert_allclose(
+            loss.inverse(baseline_prediction), baseline_prediction
+        )
 
     # Test baseline at boundary
-    if low is not None:
-        y_train.fill(low)
+    if loss.interval_y_true.low_inclusive:
+        y_train.fill(loss.interval_y_true.low)
         baseline_prediction = loss.fit_intercept_only(y_true=y_train)
         assert_all_finite(baseline_prediction)
-    if high is not None:
-        y_train.fill(high)
+    if loss.interval_y_true.high_inclusive:
+        y_train.fill(loss.interval_y_true.high)
         baseline_prediction = loss.fit_intercept_only(y_true=y_train)
         assert_all_finite(baseline_prediction)
 
 
 def test_categorical_crossentropy_fit_intercept_only():
+    """Test that fit_intercept_only returns the mean functional for CCE."""
     rng = np.random.RandomState(0)
     n_classes = 4
     loss = CategoricalCrossEntropy(n_classes=n_classes)
-    # Same logic as test_single_fit_intercept_only. Here inverse link function
-    # = softmax and link function = log - symmetry term
+    # Same logic as test_specific_fit_intercept_only. Here inverse link
+    # function = softmax and link function = log - symmetry term.
     y_train = rng.randint(0, n_classes + 1, size=100).astype(np.float64)
     baseline_prediction = loss.fit_intercept_only(y_true=y_train)
     assert baseline_prediction.shape == (n_classes,)
@@ -793,8 +819,7 @@ def test_categorical_crossentropy_fit_intercept_only():
 
 
 def test_binary_and_categorical_crossentropy():
-    # Test that CategoricalCrossEntropy with n_classes = 2 is the same as
-    # BinaryCrossEntropy
+    """Test that CCE with n_classes = 2 is the same as BinaryCrossEntropy."""
     rng = np.random.RandomState(0)
     n_samples = 20
     bce = BinaryCrossEntropy()
