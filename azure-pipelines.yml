@@ -170,8 +170,13 @@ jobs:
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
-        JOBLIB_VERSION: 'latest'
+        # latest version of joblib available in conda for Python 3.6
+        JOBLIB_VERSION: '0.13.2'
         THREADPOOLCTL_VERSION: '2.0.0'
+        # temporary pin pytest due to unknown failure with pytest 5.4 and
+        # python 3.6
+        PYTEST_VERSION: 'min'
+        PYTEST_XDIST_VERSION: 'none'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
