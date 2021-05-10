@@ -118,6 +118,28 @@ jobs:
         BLAS: 'mkl'
         COVERAGE: 'true'
 
+# Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: bionic_scipy_conda
+    vmImage: ubuntu-18.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[icc-build]')
+        )
+      )
+    matrix:
+      py36_ubuntubionic_conda_scipy:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        BLAS: 'openblas'
+        COVERAGE: 'false'
+        BUILD_WITH_ICC: 'false'
+
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux
@@ -142,7 +164,7 @@ jobs:
         PYTEST_VERSION: 'min'
         PYTEST_XDIST_VERSION: 'none'
         COVERAGE: 'false'
-      # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
+      # Linux + Python 3.9 build with OpenBLAS and without SITE_JOBLIB
       py39_conda_openblas:
         DISTRIB: 'conda'
         PYTHON_VERSION: '3.9'
@@ -179,7 +201,7 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py36_ubuntu_atlas_32bit:
+      py39_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
         PYTHON_VERSION: '3.9'
         JOBLIB_VERSION: 'min'
