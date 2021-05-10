@@ -330,6 +330,11 @@ class OneHotEncoder(_BaseEncoder):
         - ``drop_idx_ = None`` if all the transformed features will be
           retained.
 
+        If infrequent categories are enabled by setting `min_frequency` or
+        `max_categories` to a non-default value and `drop_idx[i]` corresponds
+        to a infrequent category, then the entire infrequent category is
+        dropped.
+
         .. versionchanged:: 0.23
            Added the possibility to contain `None` values.
 
