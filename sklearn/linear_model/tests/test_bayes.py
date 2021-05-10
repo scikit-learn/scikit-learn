@@ -274,6 +274,8 @@ def test_update_sigma(seed):
     np.testing.assert_allclose(sigma, sigma_woodbury)
 
 
+# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_ard_regression_predict_normalize_true():
     """Check that we can predict with `normalize=True` and `return_std=True`.
     Non-regression test for:

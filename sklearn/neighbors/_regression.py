@@ -146,13 +146,12 @@ class KNeighborsRegressor(KNeighborsMixin,
     @_deprecate_positional_args
     def __init__(self, n_neighbors=5, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None):
         super().__init__(
               n_neighbors=n_neighbors,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
-              metric_params=metric_params, n_jobs=n_jobs, **kwargs)
+              metric_params=metric_params, n_jobs=n_jobs)
         self.weights = _check_weights(weights)
 
     def _more_tags(self):
@@ -346,14 +345,13 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
     @_deprecate_positional_args
     def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None):
         super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,
               p=p, metric=metric, metric_params=metric_params,
-              n_jobs=n_jobs, **kwargs)
+              n_jobs=n_jobs)
         self.weights = _check_weights(weights)
 
     def fit(self, X, y):
