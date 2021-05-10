@@ -53,7 +53,15 @@ def random_y_true_raw_prediction(
 ):
     """Random generate y_true and raw_prediction in valid range."""
     rng = np.random.RandomState(seed)
-    if loss.n_classes <= 2:
+    if loss.is_multiclass:
+        raw_prediction = np.empty((n_samples, loss.n_classes))
+        raw_prediction.flat[:] = rng.uniform(
+            low=raw_bound[0],
+            high=raw_bound[1],
+            size=n_samples * loss.n_classes,
+        )
+        y_true = np.arange(n_samples).astype(float) % loss.n_classes
+    else:
         raw_prediction = rng.uniform(
             low=raw_bound[0], high=raw_bound[0], size=n_samples
         )
@@ -73,14 +81,6 @@ def random_y_true_raw_prediction(
             and loss.interval_y_true.high_inclusive
         ):
             y_true[1:: (n_samples // 3)] = 1
-    else:
-        raw_prediction = np.empty((n_samples, loss.n_classes))
-        raw_prediction.flat[:] = rng.uniform(
-            low=raw_bound[0],
-            high=raw_bound[1],
-            size=n_samples * loss.n_classes,
-        )
-        y_true = np.arange(n_samples).astype(float) % loss.n_classes
 
     return y_true, raw_prediction
 
@@ -105,11 +105,11 @@ def numerical_derivative(func, x, eps):
 def test_loss_boundary(loss):
     """Test interval ranges of y_true and y_pred in losses."""
     # make sure low and high are always within the interval, used for linspace
-    if loss.n_classes is None or loss.n_classes <= 2:
+    if loss.is_multiclass:
+        y_true = np.linspace(0, 9, num=10)
+    else:
         low, high = _inclusive_low_high(loss.interval_y_true)
         y_true = np.linspace(low, high, num=10)
-    else:
-        y_true = np.linspace(0, 9, num=10)
 
     # add boundaries if they are included
     if loss.interval_y_true.low_inclusive:
@@ -120,13 +120,13 @@ def test_loss_boundary(loss):
     assert loss.in_y_true_range(y_true)
 
     low, high = _inclusive_low_high(loss.interval_y_pred)
-    if loss.n_classes is None or loss.n_classes <= 2:
-        y_pred = np.linspace(low, high, num=10)
-    else:
+    if loss.is_multiclass:
         y_pred = np.empty((10, 3))
         y_pred[:, 0] = np.linspace(low, high, num=10)
         y_pred[:, 1] = 0.5 * (1 - y_pred[:, 0])
         y_pred[:, 2] = 0.5 * (1 - y_pred[:, 0])
+    else:
+        y_pred = np.linspace(low, high, num=10)
 
     assert loss.in_y_pred_range(y_pred)
 
@@ -153,7 +153,7 @@ Y_COMMON_PARAMS = [
 ]
 # y_pred and y_true do not always have the same domain (valid value range).
 # Hence, we define extra sets of parameters for each of them.
-Y_TRUE_PARAMS = [
+Y_TRUE_PARAMS = [  # type: ignore
     # (loss, [y success], [y fail])
     (HalfPoissonLoss(), [0], []),
     (HalfTweedieLoss(power=-3), [-100, -0.1, 0], []),
@@ -185,7 +185,8 @@ def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
 
 
 @pytest.mark.parametrize(
-    "loss, y_pred_success, y_pred_fail", Y_COMMON_PARAMS + Y_PRED_PARAMS
+    "loss, y_pred_success, y_pred_fail",
+    Y_COMMON_PARAMS + Y_PRED_PARAMS  # type: ignore
 )
 def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
     """Test boundaries of y_pred for loss functions."""
@@ -211,16 +212,16 @@ def test_loss_dtype(
     float64, and all output arrays are either all float32 or all float64.
     """
     loss = loss()
-    if loss.n_classes <= 2:
-        # generate a y_true in valid range
-        low, high = _inclusive_low_high(loss.interval_y_true, dtype=dtype_in)
-        y_true = np.array([0.5 * (high - low)], dtype=dtype_in)
-        raw_prediction = np.array([0.0], dtype=dtype_in)
-    else:
+    # generate a y_true and raw_prediction in valid range
+    if loss.is_multiclass:
         y_true = np.array([0], dtype=dtype_in)
         raw_prediction = np.full(
             shape=(1, loss.n_classes), fill_value=0.0, dtype=dtype_in
         )
+    else:
+        low, high = _inclusive_low_high(loss.interval_y_true, dtype=dtype_in)
+        y_true = np.array([0.5 * (high - low)], dtype=dtype_in)
+        raw_prediction = np.array([0.0], dtype=dtype_in)
 
     if sample_weight is not None:
         sample_weight = np.array([2.0], dtype=dtype_in)
@@ -251,7 +252,7 @@ def test_loss_dtype(
         gradient=out2,
         n_threads=n_threads,
     )
-    if out1 is not None and loss.n_classes >= 3:
+    if out1 is not None and loss.is_multiclass:
         out1 = np.empty_like(raw_prediction, dtype=dtype_out)
     loss.gradient_hessian(
         y_true=y_true,
@@ -350,7 +351,7 @@ def test_loss_same_as_C_functions(loss, sample_weight):
 def test_loss_gradients_are_the_same(loss, sample_weight):
     """Test that loss and gradient are the same across different functions.
 
-    Also test that output arguments contain correct result.
+    Also test that output arguments contain correct results.
     """
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss,
@@ -410,7 +411,7 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
     assert np.shares_memory(g3, out_g3)
 
     if hasattr(loss, "gradient_proba"):
-        assert loss.n_classes >= 3  # only for CategoricalCrossEntropy
+        assert loss.is_multiclass  # only for CategoricalCrossEntropy
         out_g4 = np.empty_like(raw_prediction)
         out_proba = np.empty_like(raw_prediction)
         g4, proba = loss.gradient_proba(
