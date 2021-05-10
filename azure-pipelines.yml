@@ -164,7 +164,7 @@ jobs:
       # Linux + Python 3.8 build with OpenBLAS and without SITE_JOBLIB
       conda_openblas:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '3.8'
+        PYTHON_VERSION: '3.6'
         BLAS: 'openblas'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
