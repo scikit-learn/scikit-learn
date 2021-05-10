@@ -163,9 +163,11 @@ jobs:
         PYTEST_XDIST_VERSION: 'none'
         COVERAGE: 'false'
       # Linux + Python 3.9 build with OpenBLAS and without SITE_JOBLIB
+      # Python version is not specified as Ubuntu 20.04 comes with 3.9 and
+      # the conda version gives dependency conflicts
       py39_conda_openblas:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '3.9'
+        PYTHON_VERSION: '*'
         BLAS: 'openblas'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
