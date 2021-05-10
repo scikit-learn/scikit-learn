@@ -691,7 +691,7 @@ class OneHotEncoder(_BaseEncoder):
                 continue
             X_int[:, i] = np.take(mapping, X_int[:, i])
 
-    def _compute_transformed_categories(self, i):
+    def _compute_transformed_categories(self, i, remove_dropped=True):
         """Compute the transformed categories used for column `i`.
 
         1. Dropped columns are removed.
@@ -701,28 +701,29 @@ class OneHotEncoder(_BaseEncoder):
         """
         cats = self.categories_[i]
 
-        if self.drop_idx_ is not None:
-            if self.drop_idx_[i] is None:
-                return cats
-            return np.delete(cats, self.drop_idx_[i])
+        if self._infrequent_enabled:
+            infreq_map = self._default_to_infrequent_mappings[i]
+            if infreq_map is not None:
+                frequent_mask = infreq_map < infreq_map.max()
 
-        # drop is None
-        if not self._infrequent_enabled:
-            return cats
+                if cats.dtype.kind in 'US' and 'infrequent' in cats:
+                    infrequent_cat = 'infrequent_sklearn'
+                else:
+                    infrequent_cat = 'infrequent'
+                # infrequent category is always at the end
+                cats = np.concatenate(
+                    (cats[frequent_mask],
+                     np.array([infrequent_cat], dtype=object)))
 
-        # infrequent is enabled
-        infreq_map = self._default_to_infrequent_mappings[i]
-        if infreq_map is None:
-            return cats
+        if remove_dropped:
+            cats = self._remove_dropped_categories(cats, i)
+        return cats
 
-        frequent_mask = infreq_map < infreq_map.max()
-
-        if cats.dtype.kind in 'US' and 'infrequent' in cats:
-            infrequent_cat = 'infrequent_sklearn'
-        else:
-            infrequent_cat = 'infrequent'
-        return np.concatenate((cats[frequent_mask],
-                               np.array([infrequent_cat], dtype=object)))
+    def _remove_dropped_categories(self, categories, i):
+        """Remove dropped categories."""
+        if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
+            return np.delete(categories, self.drop_idx_[i])
+        return categories
 
     def _compute_n_features_outs(self):
         """Compute the n_features_out for each input feature."""
@@ -770,6 +771,7 @@ class OneHotEncoder(_BaseEncoder):
             self._fit_infrequent_category_mapping(
                 fit_results["n_samples"], fit_results["category_counts"])
         self.drop_idx_ = self._compute_drop_idx()
+        self._n_features_outs = self._compute_n_features_outs()
         return self
 
     def fit_transform(self, X, y=None):
@@ -842,10 +844,8 @@ class OneHotEncoder(_BaseEncoder):
             X_int[X_int > to_drop] -= 1
             X_mask &= keep_cells
 
-        n_values = self._compute_n_features_outs()
-
         mask = X_mask.ravel()
-        feature_indices = np.cumsum([0] + n_values)
+        feature_indices = np.cumsum([0] + self._n_features_outs)
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
 
         indptr = np.empty(n_samples + 1, dtype=int)
@@ -892,15 +892,18 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
-        transformed_features = [self._compute_transformed_categories(i)
-                                for i, _ in enumerate(self.categories_)]
-        n_features_out = sum(cats.shape[0] for cats in transformed_features)
+
+        n_features_out = np.sum(self._n_features_outs)
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
                "columns, got {1}.")
         if X.shape[1] != n_features_out:
             raise ValueError(msg.format(n_features_out, X.shape[1]))
+
+        transformed_features = [
+            self._compute_transformed_categories(i, remove_dropped=False)
+            for i, _ in enumerate(self.categories_)]
 
         # create resulting array of appropriate dtype
         dt = np.find_common_type([cat.dtype
@@ -916,8 +919,9 @@ class OneHotEncoder(_BaseEncoder):
             infrequent_indices = [None] * n_features
 
         for i in range(n_features):
-            cats = transformed_features[i]
-            n_categories = cats.shape[0]
+            cats_wo_dropped = self._remove_dropped_categories(
+                transformed_features[i], i)
+            n_categories = cats_wo_dropped.shape[0]
 
             # Only happens if there was a column with a unique
             # category. In this case we just fill the column with this
@@ -929,7 +933,7 @@ class OneHotEncoder(_BaseEncoder):
             sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(sub.argmax(axis=1)).flatten()
-            X_tr[:, i] = cats[labels]
+            X_tr[:, i] = cats_wo_dropped[labels]
 
             if (self.handle_unknown == 'ignore' or
                 (self.handle_unknown == 'infrequent_if_exist' and
@@ -956,9 +960,8 @@ class OneHotEncoder(_BaseEncoder):
                             "because they contain all zeros")
                     # we can safely assume that all of the nulls in each column
                     # are the dropped value
-                    X_tr[dropped, i] = self.categories_[i][
-                        self.drop_idx_[i]
-                    ]
+                    drop_idx = self.drop_idx_[i]
+                    X_tr[dropped, i] = transformed_features[i][drop_idx]
 
             j += n_categories
 

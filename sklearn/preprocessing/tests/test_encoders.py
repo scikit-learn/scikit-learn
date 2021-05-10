@@ -925,6 +925,7 @@ def test_ohe_infrequent_two_levels_drop_infrequent(drop):
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3]).T
     ohe = OneHotEncoder(handle_unknown='infrequent_if_exist', sparse=False,
                         max_categories=2, drop=drop).fit(X_train)
+    assert_array_equal(ohe.drop_idx_, [1])
 
     X_test = np.array([['b'], ['c']])
     X_trans = ohe.transform(X_test)
