@@ -87,6 +87,8 @@ class BaseLoss(BaseLink, cLossFunction):
         approximated, it should be larger or equal to the exact one.
     constant_hessian : bool
         Indicates whether the hessian is one for this loss.
+    is_multiclass : bool
+        Indicates whether n_classes > 2 is allowed.
     """
 
     # Inherited methods from BaseLink:
@@ -107,6 +109,7 @@ class BaseLoss(BaseLink, cLossFunction):
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
     need_update_leaves_values = False
     differentiable = True
+    is_multiclass = False
 
     def __init__(self, n_classes=1):
         self.approx_hessian = False
@@ -808,6 +811,8 @@ class CategoricalCrossEntropy(
         Multinomial Regression."
         https://arxiv.org/pdf/1311.6529.pdf
     """
+
+    is_multiclass = True
 
     def __init__(self, sample_weight=None, n_classes=3):
         super().__init__(n_classes=n_classes)
