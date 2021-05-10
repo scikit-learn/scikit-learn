@@ -121,7 +121,7 @@ jobs:
 # Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
 - template: build_tools/azure/posix.yml
   parameters:
-    name: Linux
+    name: Ubuntu_Bionic
     vmImage: ubuntu-18.04
     dependsOn: [git_commit, linting]
     condition: |
