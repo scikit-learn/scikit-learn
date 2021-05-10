@@ -59,14 +59,14 @@ import matplotlib.pyplot as plt
 # from sklearn.kernel_ridge import KernelRidge
 # from sklearn.model_selection import GridSearchCV
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
+from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared, RBF
 
 rng = np.random.RandomState(0)
 
 # Generate sample data
 X = 15 * rng.rand(100, 1)
 y = np.sin(X).ravel()
-y += 3 * (0.5 - rng.rand(X.shape[0]))  # add noise
+y += 1.5 * (0.5 - rng.rand(X.shape[0]))  # add noise
 
 # # Fit KernelRidge with parameter selection based on 5-fold cross validation
 # param_grid = {"alpha": [1e0, 1e-1, 1e-2, 1e-3],
@@ -79,17 +79,17 @@ y += 3 * (0.5 - rng.rand(X.shape[0]))  # add noise
 # print("Time for KRR fitting: %.3f" % (time.time() - stime))
 
 gp_kernel = (
-    1.0
-    * ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e2))
+    ExpSineSquared(1.0, periodicity=5.0, periodicity_bounds=(1e-2, 1e1))
+    * RBF(length_scale=10, length_scale_bounds=(1e-2, 1e2))
     + WhiteKernel(1e-1)
 )
-gpr = GaussianProcessRegressor(alpha=0.5, kernel=gp_kernel, normalize_y=True)
+gpr = GaussianProcessRegressor(kernel=gp_kernel, normalize_y=True)
 stime = time.time()
 gpr.fit(X, y)
 print("Time for GPR fitting: %.3f" % (time.time() - stime))
 
 # # Predict using kernel ridge
-X_plot = np.linspace(0, 50, 10000)[:, None]
+X_plot = np.linspace(0, 40, 1000)[:, None]
 # stime = time.time()
 # y_kr = kr.predict(X_plot)
 # print("Time for KRR prediction: %.3f" % (time.time() - stime))
@@ -117,7 +117,7 @@ plt.fill_between(X_plot[:, 0], y_gpr - y_std, y_gpr + y_std, color='darkorange',
                  alpha=0.2)
 plt.xlabel('data')
 plt.ylabel('target')
-plt.xlim(0, 50)
+plt.xlim(0, 40)
 plt.ylim(-4, 4)
 plt.title('GPR versus Kernel Ridge')
 plt.legend(loc="best", scatterpoints=1, prop={'size': 8})
