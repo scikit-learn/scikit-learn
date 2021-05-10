@@ -988,6 +988,7 @@ def test_ohe_infrequent_three_levels_drop_frequent(drop):
     X_test = np.array([['b'], ['c'], ['d']])
     assert_allclose([[0, 0], [1, 0], [0, 1]], ohe.transform(X_test))
 
+
 @pytest.mark.parametrize("drop", [['a'], ['d']])
 def test_ohe_infrequent_three_levels_drop_infrequent(drop):
     """Test three levels and dropping the infrequent category."""
