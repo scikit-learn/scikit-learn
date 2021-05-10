@@ -131,7 +131,7 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py36_ubuntubionic_conda_scipy:
+      py36_conda:
         DISTRIB: 'conda'
         PYTHON_VERSION: '3.6'
         BLAS: 'openblas'
