@@ -32,7 +32,7 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(func=None, *, version="1.0 (renaming of 0.25)"):
+def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -42,7 +42,7 @@ def _deprecate_positional_args(func=None, *, version="1.0 (renaming of 0.25)"):
     ----------
     func : callable, default=None
         Function to check arguments on.
-    version : callable, default="1.0 (renaming of 0.25)"
+    version : callable, default="1.1 (renaming of 0.26)"
         The version when positional arguments will result in error.
     """
     def _inner_deprecate_positional_args(f):
