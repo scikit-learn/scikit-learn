@@ -40,7 +40,6 @@ def _cast_to_int64_if_needed(X, degree, interaction_only):
         # if the expansion needs int64 ints, we cast every index value in X
         # to int64
         X = X.copy()
-        X.data = X.data.astype(np.int64)
         X.indices = X.indices.astype(np.int64)
         X.indptr = X.indptr.astype(np.int64)
         return X, np.int64(d), np.int64(expanded_dimensionality)
