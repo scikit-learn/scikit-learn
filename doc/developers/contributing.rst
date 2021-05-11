@@ -1286,7 +1286,6 @@ contributor to keep involved in the project. [1]_
 - Begin if possible with the large issues, so the author knows they’ve been
   understood. Resist the temptation to immediately go line by line, or to open
   with small pervasive issues.
-
 - Do not let perfect be the enemy of the good. If you find yourself making
   many small suggestions that don't fall into the :ref:`code_review`, consider
   the following approaches:
