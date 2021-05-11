@@ -11,7 +11,6 @@ at which the fixe is no longer needed.
 # License: BSD 3 clause
 
 from functools import update_wrapper
-from distutils.version import LooseVersion
 import functools
 
 import numpy as np
@@ -20,12 +19,7 @@ import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 from .._config import config_context, get_config
-
-try:
-    from pkg_resources import parse_version  # type: ignore
-except ImportError:
-    # setuptools not installed
-    parse_version = LooseVersion  # type: ignore
+from ..externals._packaging.version import parse as parse_version
 
 
 np_version = parse_version(np.__version__)
