@@ -692,7 +692,8 @@ def test_encoder_dtypes():
 
     for X in [np.array([[1, 2], [3, 4]], dtype='int64'),
               np.array([[1, 2], [3, 4]], dtype='float64'),
-              np.array([['a', 'b'], ['c', 'd']]),  # string dtype
+              np.array([['a', 'b'], ['c', 'd']]),      # unicode dtype
+              np.array([[b'a', b'b'], [b'c', b'd']]),  # string dtype
               np.array([[1, 'a'], [3, 'b']], dtype='object')]:
         enc.fit(X)
         assert all([enc.categories_[i].dtype == X.dtype for i in range(2)])
@@ -748,6 +749,8 @@ def test_one_hot_encoder_drop_manual(missing_value):
            [0, 1, 0, 1, 1],
            [0, 0, 0, 0, 0]]
     assert_array_equal(trans, exp)
+    assert enc.drop is cats_to_drop
+
     dropped_cats = [cat[feature]
                     for cat, feature in zip(enc.categories_,
                                             enc.drop_idx_)]
@@ -825,21 +828,25 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-@pytest.mark.parametrize('input_dtype', ['O', 'U'])
-@pytest.mark.parametrize('category_dtype', ['O', 'U'])
+# deliberately omit 'OS' as an invalid combo
+@pytest.mark.parametrize('input_dtype, category_dtype', ['OO', 'OU',
+                                                         'UO', 'UU', 'US',
+                                                         'SO', 'SU', 'SS'])
 @pytest.mark.parametrize('array_type', ['list', 'array', 'dataframe'])
-def test_encoders_unicode_categories(input_dtype, category_dtype, array_type):
-    """Check that encoding work with string and object dtypes.
+def test_encoders_string_categories(input_dtype, category_dtype, array_type):
+    """Check that encoding work with object, unicode, and byte string dtypes.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/15616
     https://github.com/scikit-learn/scikit-learn/issues/15726
+    https://github.com/scikit-learn/scikit-learn/issues/19677
     """
 
     X = np.array([['b'], ['a']], dtype=input_dtype)
     categories = [np.array(['b', 'a'], dtype=category_dtype)]
     ohe = OneHotEncoder(categories=categories, sparse=False).fit(X)
 
-    X_test = _convert_container([['a'], ['a'], ['b'], ['a']], array_type)
+    X_test = _convert_container([['a'], ['a'], ['b'], ['a']], array_type,
+                                dtype=input_dtype)
     X_trans = ohe.transform(X_test)
 
     expected = np.array([[0, 1], [0, 1], [1, 0], [0, 1]])
@@ -1110,3 +1117,45 @@ def test_ordinal_encoder_handle_missing_and_unknown(
     assert_allclose(X_trans, expected_X_trans)
 
     assert_allclose(oe.transform(X_test), [[-1.0]])
+
+
+def test_ordinal_encoder_sparse():
+    """Check that we raise proper error with sparse input in OrdinalEncoder.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19878
+    """
+    X = np.array([[3, 2, 1], [0, 1, 1]])
+    X_sparse = sparse.csr_matrix(X)
+
+    encoder = OrdinalEncoder()
+
+    err_msg = "A sparse matrix was passed, but dense data is required"
+    with pytest.raises(TypeError, match=err_msg):
+        encoder.fit(X_sparse)
+    with pytest.raises(TypeError, match=err_msg):
+        encoder.fit_transform(X_sparse)
+
+    X_trans = encoder.fit_transform(X)
+    X_trans_sparse = sparse.csr_matrix(X_trans)
+    with pytest.raises(TypeError, match=err_msg):
+        encoder.inverse_transform(X_trans_sparse)
+
+
+@pytest.mark.parametrize("X_train", [
+    [['AA', 'B']],
+    np.array([['AA', 'B']], dtype='O'),
+    np.array([['AA', 'B']], dtype='U'),
+])
+@pytest.mark.parametrize("X_test", [
+    [['A', 'B']],
+    np.array([['A', 'B']], dtype='O'),
+    np.array([['A', 'B']], dtype='U'),
+])
+def test_ordinal_encoder_handle_unknown_string_dtypes(X_train, X_test):
+    """Checks that ordinal encoder transforms string dtypes. Non-regression
+    test for #19872."""
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-9)
+    enc.fit(X_train)
+
+    X_trans = enc.transform(X_test)
+    assert_allclose(X_trans, [[-9, 0]])

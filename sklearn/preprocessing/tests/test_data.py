@@ -224,13 +224,6 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
 @pytest.mark.parametrize("constant", [0, 1., 100.])
 def test_standard_scaler_constant_features(
         scaler, add_sample_weight, sparse_constructor, dtype, constant):
-    if (isinstance(scaler, StandardScaler)
-            and constant > 1
-            and sparse_constructor is not np.asarray
-            and add_sample_weight):
-        # https://github.com/scikit-learn/scikit-learn/issues/19546
-        pytest.xfail("Computation of weighted variance is numerically unstable"
-                     " for sparse data. See: #19546.")
 
     if isinstance(scaler, RobustScaler) and add_sample_weight:
         pytest.skip(f"{scaler.__class__.__name__} does not yet support"
@@ -267,6 +260,62 @@ def test_standard_scaler_constant_features(
             assert_allclose(X_scaled_2.toarray(), X_scaled_2.toarray())
         else:
             assert_allclose(X_scaled_2, X_scaled_2)
+
+
+@pytest.mark.parametrize("n_samples", [10, 100, 10_000])
+@pytest.mark.parametrize("average", [1e-10, 1, 1e10])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("array_constructor",
+                         [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
+def test_standard_scaler_near_constant_features(n_samples, array_constructor,
+                                                average, dtype):
+    # Check that when the variance is too small (var << mean**2) the feature
+    # is considered constant and not scaled.
+
+    scale_min, scale_max = -30, 19
+    scales = np.array([10**i for i in range(scale_min, scale_max + 1)],
+                      dtype=dtype)
+
+    n_features = scales.shape[0]
+    X = np.empty((n_samples, n_features), dtype=dtype)
+    # Make a dataset of known var = scales**2 and mean = average
+    X[:n_samples//2, :] = average + scales
+    X[n_samples//2:, :] = average - scales
+    X_array = array_constructor(X)
+
+    scaler = StandardScaler(with_mean=False).fit(X_array)
+
+    # StandardScaler uses float64 accumulators even if the data has a float32
+    # dtype.
+    eps = np.finfo(np.float64).eps
+
+    # if var < bound = N.eps.var + N².eps².mean², the feature is considered
+    # constant and the scale_ attribute is set to 1.
+    bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2 * average**2
+    within_bounds = scales**2 <= bounds
+
+    # Check that scale_min is small enough to have some scales below the
+    # bound and therefore detected as constant:
+    assert np.any(within_bounds)
+
+    # Check that such features are actually treated as constant by the scaler:
+    assert all(scaler.var_[within_bounds] <= bounds[within_bounds])
+    assert_allclose(scaler.scale_[within_bounds], 1.)
+
+    # Depending the on the dtype of X, some features might not actually be
+    # representable as non constant for small scales (even if above the
+    # precision bound of the float64 variance estimate). Such feature should
+    # be correctly detected as constants with 0 variance by StandardScaler.
+    representable_diff = X[0, :] - X[-1, :] != 0
+    assert_allclose(scaler.var_[np.logical_not(representable_diff)], 0)
+    assert_allclose(scaler.scale_[np.logical_not(representable_diff)], 1)
+
+    # The other features are scaled and scale_ is equal to sqrt(var_) assuming
+    # that scales are large enough for average + scale and average - scale to
+    # be distinct in X (depending on X's dtype).
+    common_mask = np.logical_and(scales**2 > bounds, representable_diff)
+    assert_allclose(scaler.scale_[common_mask],
+                    np.sqrt(scaler.var_)[common_mask])
 
 
 def test_scale_1d():
@@ -2117,6 +2166,80 @@ def test_center_kernel():
     K_pred_centered = np.dot(X_pred_centered, X_fit_centered.T)
     K_pred_centered2 = centerer.transform(K_pred)
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
+
+    # check the results coherence with the method proposed in:
+    # B. Schölkopf, A. Smola, and K.R. Müller,
+    # "Nonlinear component analysis as a kernel eigenvalue problem"
+    # equation (B.3)
+
+    # K_centered3 = (I - 1_M) K (I - 1_M)
+    #             =  K - 1_M K - K 1_M + 1_M K 1_M
+    ones_M = np.ones_like(K_fit) / K_fit.shape[0]
+    K_fit_centered3 = (
+        K_fit - ones_M @ K_fit - K_fit @ ones_M + ones_M @ K_fit @ ones_M
+    )
+    assert_allclose(K_fit_centered, K_fit_centered3)
+
+    # K_test_centered3 = (K_test - 1'_M K)(I - 1_M)
+    #                  = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
+    ones_prime_M = np.ones_like(K_pred) / K_fit.shape[0]
+    K_pred_centered3 = (
+        K_pred - ones_prime_M @ K_fit - K_pred @ ones_M +
+        ones_prime_M @ K_fit @ ones_M
+    )
+    assert_allclose(K_pred_centered, K_pred_centered3)
+
+
+def test_kernelcenterer_non_linear_kernel():
+    """Check kernel centering for non-linear kernel."""
+    rng = np.random.RandomState(0)
+    X, X_test = rng.randn(100, 50), rng.randn(20, 50)
+
+    def phi(X):
+        """Our mapping function phi."""
+        return np.vstack([
+            np.clip(X, a_min=0, a_max=None),
+            -np.clip(X, a_min=None, a_max=0),
+        ])
+
+    phi_X = phi(X)
+    phi_X_test = phi(X_test)
+
+    # centered the projection
+    scaler = StandardScaler(with_std=False)
+    phi_X_center = scaler.fit_transform(phi_X)
+    phi_X_test_center = scaler.transform(phi_X_test)
+
+    # create the different kernel
+    K = phi_X @ phi_X.T
+    K_test = phi_X_test @ phi_X.T
+    K_center = phi_X_center @ phi_X_center.T
+    K_test_center = phi_X_test_center @ phi_X_center.T
+
+    kernel_centerer = KernelCenterer()
+    kernel_centerer.fit(K)
+
+    assert_allclose(kernel_centerer.transform(K), K_center)
+    assert_allclose(kernel_centerer.transform(K_test), K_test_center)
+
+    # check the results coherence with the method proposed in:
+    # B. Schölkopf, A. Smola, and K.R. Müller,
+    # "Nonlinear component analysis as a kernel eigenvalue problem"
+    # equation (B.3)
+
+    # K_centered = (I - 1_M) K (I - 1_M)
+    #            =  K - 1_M K - K 1_M + 1_M K 1_M
+    ones_M = np.ones_like(K) / K.shape[0]
+    K_centered = K - ones_M @ K - K @ ones_M + ones_M @ K @ ones_M
+    assert_allclose(kernel_centerer.transform(K), K_centered)
+
+    # K_test_centered = (K_test - 1'_M K)(I - 1_M)
+    #                 = K_test - 1'_M K - K_test 1_M + 1'_M K 1_M
+    ones_prime_M = np.ones_like(K_test) / K.shape[0]
+    K_test_centered = (
+        K_test - ones_prime_M @ K - K_test @ ones_M + ones_prime_M @ K @ ones_M
+    )
+    assert_allclose(kernel_centerer.transform(K_test), K_test_centered)
 
 
 def test_cv_pipeline_precomputed():

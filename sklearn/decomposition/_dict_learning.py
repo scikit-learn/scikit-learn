@@ -355,27 +355,31 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
     return code
 
 
-def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
+def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
                  random_state=None, positive=False):
     """Update the dense dictionary factor in place.
 
     Parameters
     ----------
-    dictionary : ndarray of shape (n_features, n_components)
+    dictionary : ndarray of shape (n_components, n_features)
         Value of the dictionary at the previous iteration.
 
-    Y : ndarray of shape (n_features, n_samples)
+    Y : ndarray of shape (n_samples, n_features)
         Data matrix.
 
-    code : ndarray of shape (n_components, n_samples)
+    code : ndarray of shape (n_samples, n_components)
         Sparse coding of the data against which to optimize the dictionary.
+
+    A : ndarray of shape (n_components, n_components), default=None
+        Together with `B`, sufficient stats of the online model to update the
+        dictionary.
+
+    B : ndarray of shape (n_features, n_components), default=None
+        Together with `A`, sufficient stats of the online model to update the
+        dictionary.
 
     verbose: bool, default=False
         Degree of output the procedure will print.
-
-    return_r2 : bool, default=False
-        Whether to compute and return the residual sum of squares corresponding
-        to the computed solution.
 
     random_state : int, RandomState instance or None, default=None
         Used for randomly initializing the dictionary. Pass an int for
@@ -386,54 +390,41 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to enforce positivity when finding the dictionary.
 
         .. versionadded:: 0.20
-
-    Returns
-    -------
-    dictionary : ndarray of shape (n_features, n_components)
-        Updated dictionary.
     """
-    n_components = len(code)
-    n_features = Y.shape[0]
+    n_samples, n_components = code.shape
     random_state = check_random_state(random_state)
-    # Get BLAS functions
-    gemm, = linalg.get_blas_funcs(('gemm',), (dictionary, code, Y))
-    ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
-    nrm2, = linalg.get_blas_funcs(('nrm2',), (dictionary,))
-    # Residuals, computed with BLAS for speed and efficiency
-    # R <- -1.0 * U * V^T + 1.0 * Y
-    # Outputs R as Fortran array for efficiency
-    R = gemm(-1.0, dictionary, code, 1.0, Y)
+
+    if A is None:
+        A = code.T @ code
+    if B is None:
+        B = Y.T @ code
+
+    n_unused = 0
+
     for k in range(n_components):
-        # R <- 1.0 * U_k * V_k^T + R
-        R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
-        dictionary[:, k] = np.dot(R, code[k, :])
-        if positive:
-            np.clip(dictionary[:, k], 0, None, out=dictionary[:, k])
-        # Scale k'th atom
-        # (U_k * U_k) ** 0.5
-        atom_norm = nrm2(dictionary[:, k])
-        if atom_norm < 1e-10:
-            if verbose == 1:
-                sys.stdout.write("+")
-                sys.stdout.flush()
-            elif verbose:
-                print("Adding new random atom")
-            dictionary[:, k] = random_state.randn(n_features)
-            if positive:
-                np.clip(dictionary[:, k], 0, None, out=dictionary[:, k])
-            # Setting corresponding coefs to 0
-            code[k, :] = 0.0
-            # (U_k * U_k) ** 0.5
-            atom_norm = nrm2(dictionary[:, k])
-            dictionary[:, k] /= atom_norm
+        if A[k, k] > 1e-6:
+            # 1e-6 is arbitrary but consistent with the spams implementation
+            dictionary[k] += (B[:, k] - A[k] @ dictionary) / A[k, k]
         else:
-            dictionary[:, k] /= atom_norm
-            # R <- -1.0 * U_k * V_k^T + R
-            R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
-    if return_r2:
-        R = nrm2(R) ** 2.0
-        return dictionary, R
-    return dictionary
+            # kth atom is almost never used -> sample a new one from the data
+            newd = Y[random_state.choice(n_samples)]
+
+            # add small noise to avoid making the sparse coding ill conditioned
+            noise_level = 0.01 * (newd.std() or 1)  # avoid 0 std
+            noise = random_state.normal(0, noise_level, size=len(newd))
+
+            dictionary[k] = newd + noise
+            code[:, k] = 0
+            n_unused += 1
+
+        if positive:
+            np.clip(dictionary[k], 0, None, out=dictionary[k])
+
+        # Projection on the constraint set ||V_k|| == 1
+        dictionary[k] /= linalg.norm(dictionary[k])
+
+    if verbose and n_unused > 0:
+        print(f"{n_unused} unused atoms resampled.")
 
 
 @_deprecate_positional_args
@@ -579,10 +570,9 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         dictionary = np.r_[dictionary,
                            np.zeros((n_components - r, dictionary.shape[1]))]
 
-    # Fortran-order dict, as we are going to access its row vectors
-    dictionary = np.array(dictionary, order='F')
-
-    residuals = 0
+    # Fortran-order dict better suited for the sparse coding which is the
+    # bottleneck of this algorithm.
+    dictionary = np.asfortranarray(dictionary)
 
     errors = []
     current_cost = np.nan
@@ -607,15 +597,14 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
                              init=code, n_jobs=n_jobs, positive=positive_code,
                              max_iter=method_max_iter, verbose=verbose)
-        # Update dictionary
-        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
-                                             verbose=verbose, return_r2=True,
-                                             random_state=random_state,
-                                             positive=positive_dict)
-        dictionary = dictionary.T
+
+        # Update dictionary in place
+        _update_dict(dictionary, X, code, verbose=verbose,
+                     random_state=random_state, positive=positive_dict)
 
         # Cost function
-        current_cost = 0.5 * residuals + alpha * np.sum(np.abs(code))
+        current_cost = (0.5 * np.sum((X - code @ dictionary)**2)
+                        + alpha * np.sum(np.abs(code)))
         errors.append(current_cost)
 
         if ii > 0:
@@ -807,7 +796,9 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
     else:
         X_train = X
 
-    dictionary = check_array(dictionary.T, order='F', dtype=np.float64,
+    # Fortran-order dict better suited for the sparse coding which is the
+    # bottleneck of this algorithm.
+    dictionary = check_array(dictionary, order='F', dtype=np.float64,
                              copy=False)
     dictionary = np.require(dictionary, requirements='W')
 
@@ -839,11 +830,11 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
                 print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
                       % (ii, dt, dt / 60))
 
-        this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
+        this_code = sparse_encode(this_X, dictionary, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs,
                                   check_input=False,
                                   positive=positive_code,
-                                  max_iter=method_max_iter, verbose=verbose).T
+                                  max_iter=method_max_iter, verbose=verbose)
 
         # Update the auxiliary variables
         if ii < batch_size - 1:
@@ -853,15 +844,13 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         beta = (theta + 1 - batch_size) / (theta + 1)
 
         A *= beta
-        A += np.dot(this_code, this_code.T)
+        A += np.dot(this_code.T, this_code)
         B *= beta
-        B += np.dot(this_X.T, this_code.T)
+        B += np.dot(this_X.T, this_code)
 
-        # Update dictionary
-        dictionary = _update_dict(dictionary, B, A, verbose=verbose,
-                                  random_state=random_state,
-                                  positive=positive_dict)
-        # XXX: Can the residuals be of any use?
+        # Update dictionary in place
+        _update_dict(dictionary, this_X, this_code, A, B, verbose=verbose,
+                     random_state=random_state, positive=positive_dict)
 
         # Maybe we need a stopping criteria based on the amount of
         # modification in the dictionary
@@ -870,15 +859,15 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
 
     if return_inner_stats:
         if return_n_iter:
-            return dictionary.T, (A, B), ii - iter_offset + 1
+            return dictionary, (A, B), ii - iter_offset + 1
         else:
-            return dictionary.T, (A, B)
+            return dictionary, (A, B)
     if return_code:
         if verbose > 1:
             print('Learning code...', end=' ')
         elif verbose == 1:
             print('|', end=' ')
-        code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
+        code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
                              n_jobs=n_jobs, check_input=False,
                              positive=positive_code, max_iter=method_max_iter,
                              verbose=verbose)
@@ -886,14 +875,14 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
             dt = (time.time() - t0)
             print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
         if return_n_iter:
-            return code, dictionary.T, ii - iter_offset + 1
+            return code, dictionary, ii - iter_offset + 1
         else:
-            return code, dictionary.T
+            return code, dictionary
 
     if return_n_iter:
-        return dictionary.T, ii - iter_offset + 1
+        return dictionary, ii - iter_offset + 1
     else:
-        return dictionary.T
+        return dictionary
 
 
 class _BaseSparseCoding(TransformerMixin):
@@ -1286,7 +1275,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.88...
+    0.87...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1294,7 +1283,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.07...
+    0.08...
 
     Notes
     -----
@@ -1523,7 +1512,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.87...
+    0.86...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1531,7 +1520,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.10...
+    0.07...
 
     Notes
     -----

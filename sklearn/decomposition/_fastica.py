@@ -427,9 +427,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         -------
             X_new : ndarray of shape (n_samples, n_components)
         """
-
-        X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                                ensure_min_samples=2).T
+        XT = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                                 ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
 
@@ -454,7 +453,7 @@ class FastICA(TransformerMixin, BaseEstimator):
                 % self.fun
             )
 
-        n_samples, n_features = X.shape
+        n_features, n_samples = XT.shape
 
         n_components = self.n_components
         if not self.whiten and n_components is not None:
@@ -471,24 +470,24 @@ class FastICA(TransformerMixin, BaseEstimator):
             )
 
         if self.whiten:
-            # Centering the columns (ie the variables)
-            X_mean = X.mean(axis=-1)
-            X -= X_mean[:, np.newaxis]
+            # Centering the features of X
+            X_mean = XT.mean(axis=-1)
+            XT -= X_mean[:, np.newaxis]
 
             # Whitening and preprocessing by PCA
-            u, d, _ = linalg.svd(X, full_matrices=False, check_finite=False)
+            u, d, _ = linalg.svd(XT, full_matrices=False, check_finite=False)
 
             del _
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d
-            X1 = np.dot(K, X)
+            X1 = np.dot(K, XT)
             # see (13.6) p.267 Here X1 is white and data
             # in X has been projected onto a subspace by PCA
-            X1 *= np.sqrt(n_features)
+            X1 *= np.sqrt(n_samples)
         else:
             # X must be casted to floats to avoid typing issues with numpy
             # 2.0 and the line below
-            X1 = as_float_array(X, copy=False)  # copy has been taken care of
+            X1 = as_float_array(XT, copy=False)  # copy has been taken care of
 
         w_init = self.w_init
         if w_init is None:
@@ -519,9 +518,9 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if compute_sources:
             if self.whiten:
-                S = np.linalg.multi_dot([W, K, X]).T
+                S = np.linalg.multi_dot([W, K, XT]).T
             else:
-                S = np.dot(W, X).T
+                S = np.dot(W, XT).T
         else:
             S = None
 

@@ -14,7 +14,6 @@ import setuptools  # noqa
 from distutils.command.clean import clean as Clean
 from distutils.command.sdist import sdist
 
-from pkg_resources import parse_version
 import traceback
 import importlib
 try:
@@ -51,6 +50,7 @@ PROJECT_URLS = {
 # does not need the compiled code
 import sklearn
 import sklearn._min_dependencies as min_deps  # noqa
+from sklearn.externals._packaging.version import parse as parse_version  # noqa
 
 
 VERSION = sklearn.__version__
