@@ -944,7 +944,7 @@ controls the number of iterations of the boosting process::
   0.8965
 
 Available losses for regression are 'squared_error',
-'least_absolute_deviation', which is less sensitive to outliers, and
+'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
 'categorical_crossentropy' is used for multiclass classification. By default
