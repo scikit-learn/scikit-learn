@@ -152,7 +152,7 @@ class KNeighborsRegressor(KNeighborsMixin,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
               metric_params=metric_params, n_jobs=n_jobs)
-        self.weights = _check_weights(weights)
+        self.weights = weights
 
     def _more_tags(self):
         # For cross-validation routines to split data correctly
@@ -185,6 +185,8 @@ class KNeighborsRegressor(KNeighborsMixin,
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
+        _check_weights(self.weights)
+
         return self._fit(X, y)
 
     def predict(self, X):
@@ -352,7 +354,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
               leaf_size=leaf_size,
               p=p, metric=metric, metric_params=metric_params,
               n_jobs=n_jobs)
-        self.weights = _check_weights(weights)
+        self.weights = weights
 
     def fit(self, X, y):
         """Fit the radius neighbors regressor from the training dataset.
@@ -372,6 +374,8 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
+        _check_weights(self.weights)
+
         return self._fit(X, y)
 
     def predict(self, X):

@@ -1167,24 +1167,24 @@ def test_radius_neighbors_graph_sparse(seed=36):
 
 def test_neighbors_badargs():
     # Test bad argument values: these should all raise ValueErrors
-    with pytest.raises(ValueError):
-        neighbors.NearestNeighbors(algorithm='blah')
-
     X = rng.random_sample((10, 2))
     Xsparse = csr_matrix(X)
     X3 = rng.random_sample((10, 3))
     y = np.ones(10)
+
+    with pytest.raises(ValueError):
+        neighbors.NearestNeighbors(algorithm='blah').fit(X)
 
     for cls in (neighbors.KNeighborsClassifier,
                 neighbors.RadiusNeighborsClassifier,
                 neighbors.KNeighborsRegressor,
                 neighbors.RadiusNeighborsRegressor):
         with pytest.raises(ValueError):
-            cls(weights='blah')
+            cls(weights='blah').fit(X, y)
         with pytest.raises(ValueError):
-            cls(p=-1)
+            cls(p=-1).fit(X, y)
         with pytest.raises(ValueError):
-            cls(algorithm='blah')
+            cls(algorithm='blah').fit(X, y)
 
         nbrs = cls(algorithm='ball_tree', metric='haversine')
         with pytest.raises(ValueError):
@@ -1254,9 +1254,10 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
             if (algorithm == 'kd_tree' and
                     metric not in neighbors.KDTree.valid_metrics):
                 with pytest.raises(ValueError):
-                    neighbors.NearestNeighbors(algorithm=algorithm,
-                                               metric=metric,
-                                               metric_params=metric_params)
+                    neighbors.NearestNeighbors(
+                        algorithm=algorithm,
+                        metric=metric,
+                        metric_params=metric_params).fit(X)
                 continue
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
@@ -1359,8 +1360,10 @@ def test_valid_brute_metric_for_auto_algorithm():
 
 
 def test_metric_params_interface():
+    X = rng.rand(5, 5)
+    y = rng.randint(0, 2, 5)
     with pytest.warns(SyntaxWarning):
-        neighbors.KNeighborsClassifier(metric_params={'p': 3})
+        neighbors.KNeighborsClassifier(metric_params={'p': 3}).fit(X, y)
 
 
 def test_predict_sparse_ball_kd_tree():
