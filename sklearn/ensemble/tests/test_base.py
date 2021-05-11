@@ -6,8 +6,7 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3 clause
 
 import numpy as np
-
-from sklearn.utils._testing import assert_raise_message
+import pytest
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
@@ -54,9 +53,9 @@ def test_base_zero_n_estimators():
     ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                  n_estimators=0)
     iris = load_iris()
-    assert_raise_message(ValueError,
-                         "n_estimators must be greater than zero, got 0.",
-                         ensemble.fit, iris.data, iris.target)
+    err_msg = "n_estimators must be greater than zero, got 0."
+    with pytest.raises(ValueError, match=err_msg):
+        ensemble.fit(iris.data, iris.target)
 
 
 def test_base_not_int_n_estimators():
@@ -65,14 +64,12 @@ def test_base_not_int_n_estimators():
     string_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                         n_estimators='3')
     iris = load_iris()
-    assert_raise_message(ValueError,
-                         "n_estimators must be an integer",
-                         string_ensemble.fit, iris.data, iris.target)
+    with pytest.raises(ValueError, match="n_estimators must be an integer"):
+        string_ensemble.fit(iris.data, iris.target)
     float_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                        n_estimators=3.0)
-    assert_raise_message(ValueError,
-                         "n_estimators must be an integer",
-                         float_ensemble.fit, iris.data, iris.target)
+    with pytest.raises(ValueError, match="n_estimators must be an integer"):
+        float_ensemble.fit(iris.data, iris.target)
 
 
 def test_set_random_states():

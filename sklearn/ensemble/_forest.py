@@ -57,7 +57,7 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array, compute_sample_weight
+from ..utils import check_random_state, compute_sample_weight, deprecated
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
@@ -312,9 +312,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # ensemble sorts the indices.
             X.sort_indices()
 
-        # Remap output
-        self.n_features_ = X.shape[1]
-
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
             warn("A column-vector y was passed when a 1d array was"
@@ -348,6 +345,22 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         # Check parameters
         self._validate_estimator()
+        # TODO: Remove in v1.2
+        if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
+            if self.criterion == "mse":
+                warn(
+                    "Criterion 'mse' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
+            elif self.criterion == "mae":
+                warn(
+                    "Criterion 'mae' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='absolute_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
 
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
@@ -446,7 +459,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 (n_samples, 1, n_outputs)
             The OOB predictions.
       """
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse='csr',
+                                reset=False)
 
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
@@ -530,11 +544,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             for tree in self.estimators_ if tree.tree_.node_count > 1)
 
         if not all_importances:
-            return np.zeros(self.n_features_, dtype=np.float64)
+            return np.zeros(self.n_features_in_, dtype=np.float64)
 
         all_importances = np.mean(all_importances,
                                   axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use 'n_features_in_' instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -1064,6 +1088,7 @@ class RandomForestClassifier(ForestClassifier):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1151,6 +1176,10 @@ class RandomForestClassifier(ForestClassifier):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1284,14 +1313,23 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"mse", "mae"}, default="mse"
+    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, and "absolute_error"
+        for the mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1374,6 +1412,7 @@ class RandomForestRegressor(ForestRegressor):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1439,6 +1478,10 @@ class RandomForestRegressor(ForestRegressor):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1495,7 +1538,7 @@ class RandomForestRegressor(ForestRegressor):
     @_deprecate_positional_args
     def __init__(self,
                  n_estimators=100, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -1643,6 +1686,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1745,6 +1789,10 @@ class ExtraTreesClassifier(ForestClassifier):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1859,14 +1907,23 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"mse", "mae"}, default="mse"
+    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, and "absolute_error"
+        for the mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1949,6 +2006,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2018,6 +2076,10 @@ class ExtraTreesRegressor(ForestRegressor):
     n_features_ : int
         The number of features.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     n_outputs_ : int
         The number of outputs.
 
@@ -2063,7 +2125,7 @@ class ExtraTreesRegressor(ForestRegressor):
     @_deprecate_positional_args
     def __init__(self,
                  n_estimators=100, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -2229,6 +2291,10 @@ class RandomTreesEmbedding(BaseForest):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -2258,7 +2324,7 @@ class RandomTreesEmbedding(BaseForest):
            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
     """
 
-    criterion = 'mse'
+    criterion = "squared_error"
     max_features = 1
 
     @_deprecate_positional_args
@@ -2355,7 +2421,7 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        X = check_array(X, accept_sparse=['csc'])
+        X = self._validate_data(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
