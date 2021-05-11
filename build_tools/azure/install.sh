@@ -72,7 +72,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev
+    apt-get install -y python3-dev wget
 
     MINICONDA_PATH=$HOME/miniconda
     # Install dependencies with miniconda
