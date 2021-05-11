@@ -201,6 +201,7 @@ jobs:
     matrix:
       ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
+        SCIPY_VERSION: 'min'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
