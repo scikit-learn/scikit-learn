@@ -39,6 +39,7 @@ print(__doc__)
 # Author: Mathieu Blondel
 #         Jake Vanderplas
 #         Christian Lorentzen
+#         Malte Londschien
 # License: BSD 3 clause
 
 import numpy as np
@@ -145,3 +146,70 @@ plt.show()
 # function has local support and is continued as a constant beyond the fitted
 # range. This extrapolating behaviour could be changed by the argument
 # ``extrapolation``.
+
+# %%
+# Periodic Splines
+# ----------------
+# In the previous example we saw the limitations of polynomials and splines for
+# extrapolation beyond the range of the training observations. In some
+# settings, e.g. with seasonal effects, we expect a periodic continuation of
+# the underlying signal. Such effects can be modelled using periodic splines,
+# which have equal function value and equal derivatives at the first and last
+# knot. In the following case we show how periodic splines provide a better fit
+# both within and outside of the range of training data given the additional
+# information of periodicity. The splines period is the distance between
+# the first and last knot, which we specify manually.
+#
+# Periodic splines can also be useful for naturally periodic features (such as
+# day of the year), as the smoothness at the boundary knots prevents a jump in
+# the transformed values (e.g. from Dec 31st to Jan 1st). For such naturally
+# periodic features or more generally features where the period is known, it is
+# advised to explicitly pass this information to the `SplineTransformer` by
+# setting the knots manually.
+
+
+# %%
+def g(x):
+    """Function to be approximated by periodic spline interpolation."""
+    return np.sin(x) - 0.7 * np.cos(x * 3)
+
+
+y_train = g(x_train)
+
+# Extend the test data into the future:
+x_plot_ext = np.linspace(-1, 21, 200)
+X_plot_ext = x_plot_ext[:, np.newaxis]
+
+lw = 2
+fig, ax = plt.subplots()
+ax.set_prop_cycle(color=["black", "tomato", "teal"])
+ax.plot(x_plot_ext, g(x_plot_ext), linewidth=lw, label="ground truth")
+ax.scatter(x_train, y_train, label="training points")
+
+for transformer, label in [
+  (SplineTransformer(degree=3, n_knots=10), "spline"),
+  (SplineTransformer(
+      degree=3,
+      knots=np.linspace(0, 2 * np.pi, 10)[:, None],
+      extrapolation="periodic"
+  ), "periodic spline")
+]:
+    model = make_pipeline(transformer, Ridge(alpha=1e-3))
+    model.fit(X_train, y_train)
+    y_plot_ext = model.predict(X_plot_ext)
+    ax.plot(x_plot_ext, y_plot_ext, label=label)
+
+ax.legend()
+fig.show()
+
+# %% We again plot the underlying splines.
+fig, ax = plt.subplots()
+knots = np.linspace(0, 2 * np.pi, 4)
+splt = SplineTransformer(
+  knots=knots[:, None],
+  degree=3,
+  extrapolation="periodic"
+).fit(X_train)
+ax.plot(x_plot_ext, splt.transform(X_plot_ext))
+ax.legend(ax.lines, [f"spline {n}" for n in range(3)])
+plt.show()

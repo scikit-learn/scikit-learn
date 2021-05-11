@@ -333,7 +333,7 @@ class _CFSubcluster:
 
 
 class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
-    """Implements the Birch clustering algorithm.
+    """Implements the BIRCH clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
     alternative to :class:`MiniBatchKMeans`. It constructs a tree
@@ -674,7 +674,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             self.subcluster_labels_ = np.arange(len(centroids))
             if not_enough_centroids:
                 warnings.warn(
-                    "Number of subclusters found (%d) by Birch is less "
+                    "Number of subclusters found (%d) by BIRCH is less "
                     "than (%d). Decrease the threshold."
                     % (len(centroids), self.n_clusters), ConvergenceWarning)
         else:

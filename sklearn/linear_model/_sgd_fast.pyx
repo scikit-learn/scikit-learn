@@ -55,7 +55,7 @@ cdef class LossFunction:
         Parameters
         ----------
         p : double
-            The prediction, p = w^T x
+            The prediction, p = w^T x + intercept
         y : double
             The true value (aka target)
 
@@ -358,6 +358,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double weight_pos, double weight_neg,
                int learning_rate, double eta0,
                double power_t,
+               bint one_class,
                double t=1.0,
                double intercept_decay=1.0,
                int average=0):
@@ -427,6 +428,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The initial learning rate.
     power_t : double
         The exponent for inverse scaling learning rate.
+    one_class : boolean
+        Whether to solve the One-Class SVM optimization problem.
     t : double
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
@@ -434,6 +437,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     average : int
         The number of iterations before averaging starts. average=1 is
         equivalent to averaging for all iterations.
+
 
     Returns
     -------
@@ -468,6 +472,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double eta = 0.0
     cdef double p = 0.0
     cdef double update = 0.0
+    cdef double intercept_update = 0.0
     cdef double sumloss = 0.0
     cdef double score = 0.0
     cdef double best_loss = INFINITY
@@ -574,10 +579,15 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     # do not scale to negative values when eta or alpha are too
                     # big: instead set the weights to zero
                     w.scale(max(0, 1.0 - ((1.0 - l1_ratio) * eta * alpha)))
+
                 if update != 0.0:
                     w.add(x_data_ptr, x_ind_ptr, xnnz, update)
-                    if fit_intercept == 1:
-                        intercept += update * intercept_decay
+                if fit_intercept == 1:
+                    intercept_update = update
+                    if one_class:  # specific for One-Class SVM
+                        intercept_update -= 2. * eta * alpha
+                    if intercept_update != 0:
+                        intercept += intercept_update * intercept_decay
 
                 if 0 < average <= t:
                     # compute the average for the intercept and update the
