@@ -339,19 +339,21 @@ class OneHotEncoder(_BaseEncoder):
            Added the possibility to contain `None` values.
 
     infrequent_categories_ : list of ndarray
-        Defined if infrequent categories are enabled by setting `min_frequency`
-        or `max_categories` to a non-default value. `infrequent_indices_[i]`
-        are the infrequent categories for feature `i`. If the feature `i` has
-        no infrequent categories `infrequent_categories_[i]` is None.
+        Defined only if infrequent categories are enabled by setting
+        `min_frequency` or `max_categories` to a non-default value.
+        `infrequent_indices_[i]` are the infrequent categories for feature `i`.
+        If the feature `i` has no infrequent categories
+        `infrequent_categories_[i]` is None.
 
         .. versionadded:: 1.0
 
     infrequent_indices_ : list of ndarray
-        Defined if infrequent categories are enabled by setting `min_frequency`
-        or `max_categories` to a non-default value. `infrequent_indices_[i]` is
-        an array of indices such that `categories_[i][infrequent_indices_[i]]`
-        are all the infrequent category labels. If the feature `i` has
-        no infrequent categories `infrequent_indices_[i]` is None.
+        Defined only if infrequent categories are enabled by setting
+        `min_frequency` or `max_categories` to a non-default value.
+        `infrequent_indices_[i]` is an array of indices such that
+        `categories_[i][infrequent_indices_[i]]` are all the infrequent
+        category labels. If the feature `i` has no infrequent categories
+        `infrequent_indices_[i]` is None.
 
         .. versionadded:: 1.0
 
