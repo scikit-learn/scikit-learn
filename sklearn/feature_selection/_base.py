@@ -79,11 +79,12 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         """
         # note: we use _safe_tags instead of _get_tags because this is a
         # public Mixin.
-        X = check_array(
+        X = self._validate_data(
             X,
             dtype=None,
             accept_sparse="csr",
             force_all_finite=not _safe_tags(self, key="allow_nan"),
+            reset=False,
         )
         mask = self.get_support()
         if not mask.any():
