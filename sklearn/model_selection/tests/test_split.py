@@ -344,10 +344,7 @@ def test_stratified_kfold_no_shuffle():
 
 @pytest.mark.parametrize('shuffle', [False, True])
 @pytest.mark.parametrize('k', [4, 5, 6, 7, 8, 9, 10])
-@pytest.mark.parametrize(
-    'kfold',
-    [StratifiedKFold, StratifiedGroupKFold]  # type: ignore
-)
+@pytest.mark.parametrize('kfold', [StratifiedKFold, StratifiedGroupKFold])
 def test_stratified_kfold_ratios(k, shuffle, kfold):
     # Check that stratified kfold preserves class ratios in individual splits
     # Repeat with shuffling turned off and on
@@ -372,10 +369,7 @@ def test_stratified_kfold_ratios(k, shuffle, kfold):
 
 @pytest.mark.parametrize('shuffle', [False, True])
 @pytest.mark.parametrize('k', [4, 6, 7])
-@pytest.mark.parametrize(
-    'kfold',
-    [StratifiedKFold, StratifiedGroupKFold]  # type: ignore
-)
+@pytest.mark.parametrize('kfold', [StratifiedKFold, StratifiedGroupKFold])
 def test_stratified_kfold_label_invariance(k, shuffle, kfold):
     # Check that stratified kfold gives the same indices regardless of labels
     n_samples = 100
@@ -410,10 +404,7 @@ def test_kfold_balance():
         assert np.sum(sizes) == i
 
 
-@pytest.mark.parametrize(
-    'kfold',
-    [StratifiedKFold, StratifiedGroupKFold]  # type: ignore
-)
+@pytest.mark.parametrize('kfold', [StratifiedKFold, StratifiedGroupKFold])
 def test_stratifiedkfold_balance(kfold):
     # Check that KFold returns folds with balanced sizes (only when
     # stratification is possible)
@@ -455,10 +446,8 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
-@pytest.mark.parametrize(
-    "kfold",
-    [KFold, StratifiedKFold, StratifiedGroupKFold]  # type: ignore
-)
+@pytest.mark.parametrize("kfold",
+                         [KFold, StratifiedKFold, StratifiedGroupKFold])
 def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8

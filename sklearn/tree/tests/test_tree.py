@@ -63,9 +63,9 @@ REG_TREES = {
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
-ALL_TREES = dict()
+ALL_TREES: dict = dict()
 ALL_TREES.update(CLF_TREES)
-ALL_TREES.update(REG_TREES)  # type: ignore
+ALL_TREES.update(REG_TREES)
 
 SPARSE_TREES = ["DecisionTreeClassifier", "DecisionTreeRegressor",
                 "ExtraTreeClassifier", "ExtraTreeRegressor"]

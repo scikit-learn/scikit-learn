@@ -850,11 +850,11 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     """
 
-    _selection_modes = {'percentile': SelectPercentile,  # type: ignore
-                        'k_best': SelectKBest,  # type: ignore
-                        'fpr': SelectFpr,
-                        'fdr': SelectFdr,
-                        'fwe': SelectFwe}
+    _selection_modes: dict = {'percentile': SelectPercentile,
+                              'k_best': SelectKBest,
+                              'fpr': SelectFpr,
+                              'fdr': SelectFdr,
+                              'fwe': SelectFwe}
 
     def __init__(self, score_func=f_classif, *, mode='percentile', param=1e-5):
         super().__init__(score_func=score_func)
