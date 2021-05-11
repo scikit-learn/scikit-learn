@@ -74,6 +74,12 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
     apt-get install -y python3-dev
 
+    MINICONDA_PATH=$HOME/miniconda
+    # Install dependencies with miniconda
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+    export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
+
     make_conda "ccache pip blas[build=$BLAS]"
     setup_ccache
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
