@@ -101,7 +101,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     cats = result
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
-                if Xi.dtype.kind not in 'OU':
+                if Xi.dtype.kind not in 'OUS':
                     sorted_cats = np.sort(cats)
                     error_msg = ("Unsorted categories are not "
                                  "supported for numerical categories")
@@ -520,24 +520,22 @@ class OneHotEncoder(_BaseEncoder):
 
         else:
             try:
-                self.drop = np.asarray(self.drop, dtype=object)
-                droplen = len(self.drop)
+                drop_array = np.asarray(self.drop, dtype=object)
+                droplen = len(drop_array)
             except (ValueError, TypeError):
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
                     "'first', 'if_binary', None or array of objects, got {}"
                     )
-                raise ValueError(msg.format(type(self.drop)))
+                raise ValueError(msg.format(type(drop_array)))
             if droplen != len(self.categories_):
                 msg = ("`drop` should have length equal to the number "
                        "of features ({}), got {}")
-                raise ValueError(msg.format(len(self.categories_),
-                                            len(self.drop)))
+                raise ValueError(msg.format(len(self.categories_), droplen))
             missing_drops = []
             drop_indices = []
-
-            drop_cat_itr = enumerate(zip(self.drop, self.categories_))
-            for col_idx, (drop_val, cat_list) in drop_cat_itr:
+            for col_idx, (drop_val, cat_list) in enumerate(
+                    zip(drop_array, self.categories_)):
                 if not is_scalar_nan(drop_val):
                     drop_idx = np.where(cat_list == drop_val)[0]
                     if drop_idx.size:  # found drop idx

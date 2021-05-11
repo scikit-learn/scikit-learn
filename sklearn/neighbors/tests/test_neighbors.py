@@ -978,7 +978,6 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
 def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
                                               n_features=5,
                                               n_test_pts=10,
-                                              n_neighbors=3,
                                               random_state=0):
     # Test k-neighbors in multi-output regression with various weight
     rng = np.random.RandomState(random_state)
@@ -991,8 +990,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
     weights = ['uniform', 'distance', _weight_func]
 
     for algorithm, weights in product(ALGORITHMS, weights):
-        rnn = neighbors.RadiusNeighborsRegressor(n_neighbors=n_neighbors,
-                                                 weights=weights,
+        rnn = neighbors.RadiusNeighborsRegressor(weights=weights,
                                                  algorithm=algorithm)
         rnn.fit(X, y)
         epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)

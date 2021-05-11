@@ -51,7 +51,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("squared_error", "mae", "friedman_mse", "poisson")
+REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -294,7 +294,7 @@ def test_diabetes_overfit(name, Tree, criterion):
 @pytest.mark.parametrize(
     "criterion, max_depth, metric, max_loss",
     [("squared_error", 15, mean_squared_error, 60),
-     ("mae", 20, mean_squared_error, 60),
+     ("absolute_error", 20, mean_squared_error, 60),
      ("friedman_mse", 15, mean_squared_error, 60),
      ("poisson", 15, mean_poisson_deviance, 30)]
 )
@@ -1772,7 +1772,7 @@ def test_mae():
             = 0.75
             ------
     """
-    dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
+    dt_mae = DecisionTreeRegressor(random_state=0, criterion="absolute_error",
                                    max_leaf_nodes=2)
 
     # Test MAE where sample weights are non-uniform (as illustrated above):
@@ -2121,12 +2121,16 @@ def test_X_idx_sorted_deprecated(TreeEstimator):
 
 # TODO: Remove in v1.2
 @pytest.mark.parametrize("Tree", REG_TREES.values())
-def test_mse_deprecated(Tree):
-    tree = Tree(criterion="mse")
+@pytest.mark.parametrize("old_criterion, new_criterion", [
+    ("mse", "squared_error"),
+    ("mae", "absolute_error"),
+])
+def test_criterion_deprecated(Tree, old_criterion, new_criterion):
+    tree = Tree(criterion=old_criterion)
 
     with pytest.warns(FutureWarning,
-                      match="Criterion 'mse' was deprecated"):
+                      match=f"Criterion '{old_criterion}' was deprecated"):
         tree.fit(X, y)
 
-    tree_sqer = Tree(criterion="squared_error").fit(X, y)
-    assert_allclose(tree.predict(X), tree_sqer.predict(X))
+    tree_new = Tree(criterion=new_criterion).fit(X, y)
+    assert_allclose(tree.predict(X), tree_new.predict(X))
