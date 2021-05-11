@@ -131,7 +131,7 @@ Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 
     >>> clf = SGDClassifier(loss="log", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
-    array([[4.97248476e-07, 9.99999503e-01]])
+    array([[0.00..., 0.99...]])
 
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:
