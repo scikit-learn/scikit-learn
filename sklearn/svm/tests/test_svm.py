@@ -19,10 +19,8 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils import shuffle
 from sklearn.exceptions import ConvergenceWarning
@@ -979,7 +977,12 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    assert_warns(ConvergenceWarning, a.fit, np.array(X), Y)
+    warning_msg = (
+        r'Solver terminated early \(max_iter=1\).  Consider pre-processing '
+        r'your data with StandardScaler or MinMaxScaler.'
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
+        a.fit(np.array(X), Y)
 
 
 def test_unfitted():
@@ -1008,11 +1011,16 @@ def test_linear_svm_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
     lsvc = svm.LinearSVC(random_state=0, max_iter=2)
-    assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
+    warning_msg = (
+        "Liblinear failed to converge, increase the number of iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
+        lsvc.fit(X, Y)
     assert lsvc.n_iter_ == 2
 
     lsvr = svm.LinearSVR(random_state=0, max_iter=2)
-    assert_warns(ConvergenceWarning, lsvr.fit, iris.data, iris.target)
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
+        lsvr.fit(iris.data, iris.target)
     assert lsvr.n_iter_ == 2
 
 
@@ -1160,21 +1168,30 @@ def test_svc_ovr_tie_breaking(SVCClass):
 def test_gamma_auto():
     X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
 
-    assert_no_warnings(svm.SVC(kernel='linear').fit, X, y)
-    assert_no_warnings(svm.SVC(kernel='precomputed').fit, X, y)
+    with pytest.warns(None) as record:
+        svm.SVC(kernel='linear').fit(X, y)
+    assert not len(record)
+
+    with pytest.warns(None) as record:
+        svm.SVC(kernel='precomputed').fit(X, y)
+    assert not len(record)
 
 
 def test_gamma_scale():
     X, y = [[0.], [1.]], [0, 1]
 
     clf = svm.SVC()
-    assert_no_warnings(clf.fit, X, y)
+    with pytest.warns(None) as record:
+        clf.fit(X, y)
+    assert not len(record)
     assert_almost_equal(clf._gamma, 4)
 
     # X_var ~= 1 shouldn't raise warning, for when
     # gamma is not explicitly set.
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
-    assert_no_warnings(clf.fit, X, y)
+    with pytest.warns(None) as record:
+        clf.fit(X, y)
+    assert not len(record)
 
 
 @pytest.mark.parametrize(

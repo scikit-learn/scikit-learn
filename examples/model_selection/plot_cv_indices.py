@@ -13,7 +13,8 @@ for comparison.
 
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
                                      StratifiedKFold, GroupShuffleSplit,
-                                     GroupKFold, StratifiedShuffleSplit)
+                                     GroupKFold, StratifiedShuffleSplit,
+                                     StratifiedGroupKFold)
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
@@ -113,16 +114,32 @@ plot_cv_indices(cv, X, y, groups, ax, n_splits)
 # %%
 # As you can see, by default the KFold cross-validation iterator does not
 # take either datapoint class or group into consideration. We can change this
-# by using the ``StratifiedKFold`` like so.
+# by using either:
+#
+# - ``StratifiedKFold`` to preserve the percentage of samples for each class.
+# - ``GroupKFold`` to ensure that the same group will not appear in two
+#   different folds.
+# - ``StratifiedGroupKFold`` to keep the constraint of ``GroupKFold`` while
+#   attempting to return stratified folds.
 
-fig, ax = plt.subplots()
-cv = StratifiedKFold(n_splits)
-plot_cv_indices(cv, X, y, groups, ax, n_splits)
+# To better demonstrate the difference, we will assign samples to groups
+# unevenly:
+
+uneven_groups = np.sort(np.random.randint(0, 10, n_points))
+
+cvs = [StratifiedKFold, GroupKFold, StratifiedGroupKFold]
+
+for cv in cvs:
+    fig, ax = plt.subplots(figsize=(6, 3))
+    plot_cv_indices(cv(n_splits), X, y, uneven_groups, ax, n_splits)
+    ax.legend([Patch(color=cmap_cv(.8)), Patch(color=cmap_cv(.02))],
+              ['Testing set', 'Training set'], loc=(1.02, .8))
+    # Make the legend fit
+    plt.tight_layout()
+    fig.subplots_adjust(right=.7)
 
 # %%
-# In this case, the cross-validation retained the same ratio of classes across
-# each CV split. Next we'll visualize this behavior for a number of CV
-# iterators.
+# Next we'll visualize this behavior for a number of CV iterators.
 #
 # Visualize cross-validation indices for many CV objects
 # ------------------------------------------------------
@@ -133,7 +150,7 @@ plot_cv_indices(cv, X, y, groups, ax, n_splits)
 #
 # Note how some use the group/class information while others do not.
 
-cvs = [KFold, GroupKFold, ShuffleSplit, StratifiedKFold,
+cvs = [KFold, GroupKFold, ShuffleSplit, StratifiedKFold, StratifiedGroupKFold,
        GroupShuffleSplit, StratifiedShuffleSplit, TimeSeriesSplit]
 
 

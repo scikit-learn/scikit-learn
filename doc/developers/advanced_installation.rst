@@ -479,9 +479,9 @@ repository:
 
 .. prompt:: bash $
 
-    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
 
 Then, add the oneAPI repository to your APT repositories:
 
@@ -490,11 +490,12 @@ Then, add the oneAPI repository to your APT repositories:
     sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
     sudo apt-get update
 
-Install ICC, packaged under the name ``intel-oneapi-icc``:
+Install ICC, packaged under the name
+``intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic``:
 
 .. prompt:: bash $
 
-    sudo apt-get install intel-oneapi-icc
+    sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
 
 Before using ICC, you need to set up environment variables:
 
