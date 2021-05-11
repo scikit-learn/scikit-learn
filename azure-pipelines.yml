@@ -190,7 +190,7 @@ jobs:
 - template: build_tools/azure/posix-32.yml
   parameters:
     name: Linux32
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-18.04
     dependsOn: [linting, git_commit]
     condition: |
       and(

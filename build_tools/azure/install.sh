@@ -72,25 +72,13 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev wget
+    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
-    MINICONDA_PATH=$HOME/miniconda
-    # Install dependencies with miniconda
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-    export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
-
-    make_conda "ccache pip blas[build=$BLAS]"
+    python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
+    source $VIRTUALENV/bin/activate
     setup_ccache
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                          $(get_dep joblib $JOBLIB_VERSION) \
-                          $(get_dep numpy $NUMPY_VERSION) \
-                          $(get_dep scipy $SCIPY_VERSION) \
-                          $(get_dep joblib $JOBLIB_VERSION) \
-                          $(get_dep pandas $PANDAS_VERSION) \
-                          $(get_dep pyamg $PYAMG_VERSION) \
-                          $(get_dep Pillow $PILLOW_VERSION) \
-                          $(get_dep matplotlib $MATPLOTLIB_VERSION)
+                          $(get_dep joblib $JOBLIB_VERSION)
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # Since conda main channel usually lacks behind on the latest releases,
