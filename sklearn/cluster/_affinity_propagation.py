@@ -35,7 +35,7 @@ def _equal_similarities_and_preferences(S, preference):
 @_deprecate_positional_args
 def affinity_propagation(S, *, preference=None, convergence_iter=15,
                          max_iter=200, damping=0.5, copy=True, verbose=False,
-                         return_n_iter=False, random_state='warn'):
+                         return_n_iter=False, random_state=None):
     """Perform Affinity Propagation Clustering of data.
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
@@ -75,7 +75,7 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    random_state : int, RandomState instance or None, default=0
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -144,16 +144,6 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
                     if return_n_iter
                     else (np.array([0]), np.array([0] * n_samples)))
 
-    if random_state == 'warn':
-        warnings.warn(
-            "'random_state' has been introduced in 0.23. It will be set to "
-            "None starting from 1.0 (renaming of 0.25) which means that "
-            "results will differ at every function call. Set 'random_state' "
-            "to None to silence this warning, or to 0 to keep the behavior of "
-            "versions <0.23.",
-            FutureWarning
-        )
-        random_state = 0
     random_state = check_random_state(random_state)
 
     # Place preference on the diagonal of S
@@ -295,7 +285,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
-    random_state : int, RandomState instance or None, default=0
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -365,7 +355,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
-                 verbose=False, random_state='warn'):
+                 verbose=False, random_state=None):
 
         self.damping = damping
         self.max_iter = max_iter
