@@ -63,6 +63,8 @@ def _check_weights(weights):
         raise ValueError("weights not recognized: should be 'uniform', "
                          "'distance', or a callable function")
 
+    return weights
+
 
 def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
