@@ -76,6 +76,35 @@ Changelog
   - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
     use `"squared_error"` instead which is now the default.
 
+- |API| The option for using the absolute error via ``loss`` and
+  ``criterion`` parameters was made more consistent. The preferred way is by
+  setting the value to `"absolute_error"`. Old option names are still valid,
+  produce the same models, but are deprecated and will be removed in version
+  1.2.
+  :pr:`19733` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`ensemble.ExtraTreesRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.GradientBoostingRegressor`, `loss="lad"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.RandomForestRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.HistGradientBoostingRegressor`,
+    `loss="least_absolute_deviation"` is deprecated, use `"absolute_error"`
+    instead.
+
+  - For :class:`linear_model.RANSACRegressor`, `loss="absolute_loss"` is
+    deprecated, use `"absolute_error"` instead which is now the default.
+
+  - For :class:`tree.DecisionTreeRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`tree.ExtraTreeRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
 :mod:`sklearn.base`
 ...................
 
