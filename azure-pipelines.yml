@@ -131,9 +131,9 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py36_conda:
+      py37_conda:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '3.6'
+        PYTHON_VERSION: '3.7'
         BLAS: 'openblas'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
@@ -161,20 +161,14 @@ jobs:
         COVERAGE: 'false'
       # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
       # scipy==1.0.0 -> python[>=3.5,<3.6.0a0|>=3.6,<3.7.0a0']
-      py36_conda_openblas:
+      py37_conda_openblas:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '3.6'
+        PYTHON_VERSION: '3.7'
         BLAS: 'openblas'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
-        # latest version of joblib available in conda for Python 3.6
-        JOBLIB_VERSION: '0.13.2'
         THREADPOOLCTL_VERSION: '2.0.0'
-        # temporary pin pytest due to unknown failure with pytest 5.4 and
-        # python 3.6
-        PYTEST_VERSION: 'min'
-        PYTEST_XDIST_VERSION: 'none'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
@@ -246,6 +240,6 @@ jobs:
         PYTHON_ARCH: '64'
         PYTEST_VERSION: '*'
         COVERAGE: 'true'
-      py36_pip_openblas_32bit:
-        PYTHON_VERSION: '3.6'
+      py37_pip_openblas_32bit:
+        PYTHON_VERSION: '3.7'
         PYTHON_ARCH: '32'
