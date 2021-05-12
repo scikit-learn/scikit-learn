@@ -37,11 +37,13 @@ X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
 
 bic = []
 n_components_range = range(1, 7)
-cv_types = ["spherical", "tied", "diag", "full"]
+cv_types = ['spherical', 'tied', 'diag', 'full']
 
 # Fit Gaussian mixture with EM for a range of n_components and cv_types
 gmIC = GaussianMixtureIC(
-    min_components=1, max_components=6, covariance_type=cv_types
+    min_components=n_components_range[0],
+    max_components=n_components_range[-1],
+    covariance_type=cv_types, random_state=0
 )
 gmIC.fit(X)
 results = gmIC.results_

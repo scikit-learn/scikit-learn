@@ -33,8 +33,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     or the Akaike Information Criterion (AIC).
 
     Clustering algorithm using a hierarchical agglomerative clustering
-    prior to a Gaussian mixture model (GMM) fitting. Different combinations
-    of agglomeration, GMM, and cluster numbers are used and the clustering
+    or k-means clustering prior to a Gaussian mixture model (GMM) fitting.
+    Different combinations of initialization, agglomeration, GMM,
+    and cluster numbers are used and the clustering
     with the best selection criterion (BIC or AIC) is chosen.
 
     Parameters
@@ -47,12 +48,12 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         in ``label_init``.
 
     max_components : int or None, default=10.
-        The maximum number of mixture components to consider. Must be greater
-        than or equal to ``min_components``.
-        If ``label_init`` is given, ``min_components`` must match number of
-        unique labels in ``label_init``.
+        The maximum number of mixture components to consider.
+        Must be greater than or equal to ``min_components``.
+        If ``label_init`` is given, ``max_components`` must match
+        the number of unique labels in ``label_init``.
 
-    affinity : {'euclidean', 'manhattan', 'cosine', 'none', 'all' (default)},
+    affinity : {'euclidean', 'manhattan', 'cosine', 'all', 'none' (default)},
         optional
         String or list/array describing the type of affinities to use
         in agglomeration. If a string, it must be one of:
@@ -63,11 +64,11 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             L1 norm
         - 'cosine'
             cosine similarity
-        - 'none'
-            no agglomeration - GMM is initialized with k-means
         - 'all'
             considers all affinities in
             ['euclidean', 'manhattan', 'cosine', 'none']
+        - 'none'
+            no agglomeration - GMM is initialized with k-means
 
         If a list/array, it must be a list/array of strings containing only
         'euclidean', 'manhattan', 'cosine', and/or 'none'.
@@ -79,7 +80,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     linkage : {'ward', 'complete', 'average', 'single', 'all' (default)},
         optional
         String or list/array describing the type of linkages to use
-        in agglomeration. If a string, it must be one of:
+        in agglomeration. Not used if ``affinity`` is 'none'.
+        If a string, it must be one of:
 
         - 'ward'
             ward's clustering, can only be used with euclidean affinity
@@ -144,7 +146,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         and each iteration step. If greater than 1 then it prints also
         the log probability and the time needed for each step.
 
-    criterion : str {"bic" or "aic"}, optional, (default="bic")
+    criterion : str {"bic" or "aic"}, optional, (default = "bic")
         Select the best model based on Bayesian Information Criterion (bic) or
         Aikake Information Criterion (aic).
 
@@ -205,7 +207,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             Number of clusters.
         affinity : {'euclidean', 'manhattan', 'cosine', 'none'}
             Affinity used for the Agglomerative Clustering.
-        linkage : {'ward', 'complete', 'average', 'single'}
+        linkage : {'ward', 'complete', 'average', 'single', 'none'}
             Linkage used for the Agglomerative Clustering.
         covariance_type : {'full', 'tied', 'diag', 'spherical'}
             Covariance type used for the GMM.
@@ -259,7 +261,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self,
         min_components=2,
         max_components=10,
-        affinity="all",
+        affinity="none",
         linkage="all",
         covariance_type="all",
         random_state=None,
@@ -296,6 +298,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 )
             if input != "all":
                 input = [input]
+            else:
+                input = default.copy()
+                input.remove("all")
         else:
             raise TypeError(
                 f"{name} is a {type(input)} but must be a numpy array, "
@@ -318,7 +323,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             target_type=int,
         )
 
-        self.affinity = self._check_multi_comp_inputs(
+        affinity = self._check_multi_comp_inputs(
             self.affinity,
             "affinity",
             ["euclidean", "manhattan", "cosine", "none", "all"],
@@ -330,13 +335,13 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 '"euclidean" must be an affinity option.'
             )
 
-        self.linkage = self._check_multi_comp_inputs(
+        linkage = self._check_multi_comp_inputs(
             self.linkage,
             "linkage",
             ["ward", "complete", "average", "single", "all"],
         )
 
-        self.covariance_type = self._check_multi_comp_inputs(
+        covariance_type = self._check_multi_comp_inputs(
             self.covariance_type,
             "covariance_type",
             ["spherical", "diag", "tied", "full", "all"],
@@ -385,6 +390,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             min_val=2,
         )
 
+        return affinity, linkage, covariance_type
+
     def _init_gm_params(self, X, labels, gm_params):
         labels = labels.reshape(-1, 1)
         enc = OneHotEncoder()
@@ -412,13 +419,14 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             gm_params["init_params"] = "kmeans"
         gm_params["max_iter"] = self.max_iter
         gm_params["random_state"] = seed
-        reg_covar = 0
 
         # if none of the iterations converge, bic/aic is set to inf
         criter = np.inf
         # below is the regularization scheme
+        reg_covar = 0
         while reg_covar <= 1 and criter == np.inf:
             model = GaussianMixture(**gm_params)
+            model.reg_covar = reg_covar
             try:
                 # ignoring warning here because if convergence is not reached,
                 # the regularization is automatically increased
@@ -471,10 +479,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             Returns an instance of self.
         """
 
-        self._check_parameters()
+        affinity, linkage, covariance_type = self._check_parameters()
         X = check_array(
             X, dtype=[np.float64, np.float32], ensure_min_samples=1
-        ).copy()
+        )
 
         random_state = check_random_state(self.random_state)
 
@@ -489,21 +497,14 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         # check if X contains the 0 vector
         if np.any(~X.any(axis=1)):
-            if "cosine" in self.affinity or self.affinity == "all":
-                if isinstance(self.affinity, np.ndarray):
-                    self.affinity = np.delete(
-                        self.affinity, np.argwhere(self.affinity == "cosine")
-                    )
-                if isinstance(self.affinity, list):
-                    self.affinity.remove("cosine")
-                if self.affinity == "all":
-                    self.affinity = ["euclidean", "manhattan", "none"]
-                warnings.warn(
-                    "X contains a zero vector, will not run cosine affinity."
-                )
-            if self.affinity == "cosine":
+            if affinity == ["cosine"]:
                 raise ValueError(
                     "X contains a zero vector, cannot run cosine affinity."
+                )
+            elif "cosine" in affinity:
+                affinity.remove("cosine")
+                warnings.warn(
+                    "X contains a zero vector, will not run cosine affinity."
                 )
 
         label_init = self.label_init
@@ -514,23 +515,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 )
 
         param_grid = dict(
+            affinity=affinity,
+            linkage=linkage,
+            covariance_type=covariance_type,
             n_components=range(self.min_components, self.max_components + 1),
-            random_state=[random_state],
-        )
-        param_grid["affinity"] = (
-            self.affinity
-            if self.affinity != "all"
-            else ["euclidean", "manhattan", "cosine", "none"]
-        )
-        param_grid["linkage"] = (
-            self.linkage
-            if self.linkage != "all"
-            else ["ward", "complete", "average", "single"]
-        )
-        param_grid["covariance_type"] = (
-            self.covariance_type
-            if self.covariance_type != "all"
-            else ["spherical", "diag", "tied", "full"]
         )
 
         param_grid = list(ParameterGrid(param_grid))
@@ -724,7 +712,7 @@ def _process_paramgrid(paramgrid, n_init, label_init):
     ag_paramgrid_processed : list of dicts
         Options for :class:`~sklearn.cluster.AgglomerativeClustering`.
     """
-    gm_keys = ["covariance_type", "n_components", "random_state"]
+    gm_keys = ["covariance_type", "n_components"]
     ag_keys = ["affinity", "linkage"]
     ag_params_processed = []
     paramgrid_processed = []

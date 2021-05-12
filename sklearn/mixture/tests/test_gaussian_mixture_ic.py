@@ -45,7 +45,7 @@ def test_input_param():
     # affinity is not an array, string or list
     _test_inputs(X, TypeError, affinity=1)
 
-    # affinity is not in ['euclidean', 'manhattan', 'cosine', 'none']
+    # affinity is not in ['euclidean', 'manhattan', 'cosine', 'none', 'all']
     _test_inputs(X, ValueError, affinity="1")
 
     # linkage is not an array, string or list
@@ -57,7 +57,7 @@ def test_input_param():
     # covariance type is not an array, string or list
     _test_inputs(X, TypeError, covariance_type=1)
 
-    # covariance type is not in ['spherical', 'diag', 'tied', 'full']
+    # covariance type is not in ['spherical', 'diag', 'tied', 'full', 'all']
     _test_inputs(X, ValueError, covariance_type="1")
 
     # euclidean is not an affinity option when ward is a linkage option
@@ -185,7 +185,7 @@ def test_X_exceeds_max_agglom_size():
     Testing agglomerating a subset of X to initialize GM parameters.
     """
     # set max_agglom_size to be smaller than the number of data points
-    _test_two_class(max_agglom_size=50)
+    _test_two_class(max_agglom_size=50, affinity="all")
 
 
 def test_multiple_kmeans_inits():
@@ -210,12 +210,12 @@ def test_two_class_sequential_v_parallel():
     X = np.vstack((X1, X2))
 
     gmIC_parallel = GaussianMixtureIC(
-        max_components=5, criterion="bic", n_jobs=-1
+        max_components=5, criterion="bic", n_jobs=-1, affinity="all"
     )
     preds_parallel = gmIC_parallel.fit_predict(X)
 
     gmIC_sequential = GaussianMixtureIC(
-        max_components=5, criterion="bic", n_jobs=1
+        max_components=5, criterion="bic", n_jobs=1, affinity="all"
     )
     preds_sequential = gmIC_sequential.fit_predict(X)
 
@@ -240,7 +240,7 @@ def test_five_class():
     gmIC = GaussianMixtureIC(
         min_components=3,
         max_components=10,
-        covariance_type="all",
+        affinity="all",
         criterion="bic",
     )
     gmIC.fit(X)
@@ -250,7 +250,7 @@ def test_five_class():
     gmIC = GaussianMixtureIC(
         min_components=3,
         max_components=10,
-        covariance_type="all",
+        affinity="all",
         criterion="aic",
     )
     gmIC.fit(X)
@@ -281,6 +281,6 @@ def test_covariances(cov1, cov2, expected_cov_type):
     X2 = np.random.multivariate_normal(mu2, cov2, n)
     X = np.concatenate((X1, X2))
 
-    gmIC = GaussianMixtureIC(min_components=2, covariance_type="all")
+    gmIC = GaussianMixtureIC(min_components=2, affinity="all")
     gmIC.fit(X)
     assert_equal(gmIC.covariance_type_, expected_cov_type)
