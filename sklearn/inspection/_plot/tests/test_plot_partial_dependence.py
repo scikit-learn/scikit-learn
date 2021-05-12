@@ -35,8 +35,9 @@ def clf_diabetes(diabetes):
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("grid_resolution", [10, 20])
+@pytest.mark.parametrize("n_jobs", (None, 8))
 def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
-                                 diabetes):
+                                 diabetes, n_jobs):
     # Test partial dependence plot function.
     # Use columns 0 & 2 as 1 is not quantitative (sex)
     feature_names = diabetes.feature_names
@@ -44,7 +45,8 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
                                    [0, 2, (0, 2)],
                                    grid_resolution=grid_resolution,
                                    feature_names=feature_names,
-                                   contour_kw={"cmap": "jet"})
+                                   contour_kw={"cmap": "jet"},
+                                   n_jobs=n_jobs)
     fig = pyplot.gcf()
     axs = fig.get_axes()
     assert disp.figure_ is fig
@@ -242,14 +244,17 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
 @pytest.mark.parametrize("kind, lines", [
     ('average', 1), ('individual', 442), ('both', 443)
 ])
+@pytest.mark.parametrize("n_jobs", (None, 8))
 def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_diabetes,
-                                                    diabetes, kind, lines):
+                                                    diabetes, kind, lines,
+                                                    n_jobs):
     grid_resolution = 25
     feature_names = diabetes.feature_names
     disp1 = plot_partial_dependence(clf_diabetes, diabetes.data,
                                     ['age', 'bmi'], kind=kind,
                                     grid_resolution=grid_resolution,
-                                    feature_names=feature_names)
+                                    feature_names=feature_names,
+                                    n_jobs=n_jobs)
     assert disp1.axes_.shape == (1, 2)
     assert disp1.axes_[0, 0].get_ylabel() == "Partial dependence"
     assert disp1.axes_[0, 1].get_ylabel() == ""
@@ -427,7 +432,9 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
-def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes):
+@pytest.mark.parametrize("n_jobs", (None, 8))
+def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes,
+                                           n_jobs):
     pd = pytest.importorskip('pandas')
     df = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
 
@@ -435,7 +442,8 @@ def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes):
 
     plot_partial_dependence(
         clf_diabetes, df, ['bp', 's1'], grid_resolution=grid_resolution,
-        feature_names=df.columns.tolist()
+        feature_names=df.columns.tolist(),
+        n_jobs=n_jobs
     )
 
 
