@@ -79,6 +79,8 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     setup_ccache
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION) \
+                          # scipy should be installed via pip
+                          # pyhon3-scipy version is less than 1.0.0
                           $(get_dep scipy $SCIPY_VERSION)
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
