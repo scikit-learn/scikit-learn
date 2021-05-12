@@ -158,8 +158,6 @@ jobs:
         JOBLIB_VERSION: 'min'
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
-        PYTEST_VERSION: 'min'
-        PYTEST_XDIST_VERSION: 'none'
         COVERAGE: 'false'
       # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
       # scipy==1.0.0 -> python[>=3.5,<3.6.0a0|>=3.6,<3.7.0a0']
