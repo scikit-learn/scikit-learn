@@ -1188,7 +1188,7 @@ def test_neighbors_badargs():
             est.fit(X, y)
         est = cls(algorithm='blah')
         with pytest.raises(ValueError):
-            cls(algorithm='blah').fit(X, y)
+            est.fit(X, y)
 
         nbrs = cls(algorithm='ball_tree', metric='haversine')
         with pytest.raises(ValueError):
