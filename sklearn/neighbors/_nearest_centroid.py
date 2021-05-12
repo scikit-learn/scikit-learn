@@ -5,6 +5,7 @@ Nearest Centroid Classification
 
 # Author: Robert Layton <robertlayton@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Andreas W. Kempa-Liehr <a.kempa-liehr@auckland.ac.nz>
 #
 # License: BSD 3 clause
 
@@ -64,7 +65,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
-    NearestCentroid()
+    NearestCentroid(...)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -79,17 +80,24 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     References
     ----------
-    Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
+    Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002a). Diagnosis of
     multiple cancer types by shrunken centroids of gene expression. Proceedings
     of the National Academy of Sciences of the United States of America,
     99(10), 6567-6572. The National Academy of Sciences.
 
+    Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002b). Class Prediction
+    by Nearest Shrunken Centroids, with Applications to DNA Microaarrays. Statistical
+    Science 18(1), p. 104-117.
     """
 
     @_deprecate_positional_args
-    def __init__(self, metric='euclidean', *, shrink_threshold=None):
+    def __init__(self, metric='euclidean', *, shrink_threshold=None, prob=False, prior='sample'):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
+        self.prob_ = prob
+        if not prior in ['sample', 'uninformative']:
+            raise ValueError('Prior `{}` is not implemented. Choose either `sample` or `uninformative`.'.format(prior))
+        self.prior_ = prior
 
     def fit(self, X, y):
         """
@@ -122,7 +130,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
         self.classes_ = classes = le.classes_
-        n_classes = classes.size
+        self.n_classes_ = n_classes = classes.size
         if n_classes < 2:
             raise ValueError('The number of classes has to be greater than'
                              ' one; got %d class' % (n_classes))
@@ -178,6 +186,14 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             # Now adjust the centroids using the deviation
             msd = ms * deviation
             self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
+
+        if self.prob_:
+            # Calculate deviation using the standard deviation of centroids.
+            variance = (X - self.centroids_[y_ind]) ** 2
+            variance = variance.sum(axis=0)
+            self.s_ = np.sqrt(variance / (n_samples - n_classes))
+            self.sample_prior_ = nk / n_samples
+
         return self
 
     def predict(self, X):
@@ -204,3 +220,42 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse='csr', reset=False)
         return self.classes_[pairwise_distances(
             X, self.centroids_, metric=self.metric).argmin(axis=1)]
+
+    def predict_proba(self, X):
+        """Probability estimates.
+
+        The returned estimates for all classes are ordered by the
+        label of classes. The estimation has been implemented according to
+        Tibshirani et al. (2002b), p. 108f
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+
+        Returns
+        -------
+        T : ndarray of shape (n_samples, n_classes)
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in ``self.classes_``.
+        """
+
+        check_is_fitted(self, 's_')
+
+        # Tibshirani et al. (2002b), p. 109
+        if self.prior_ == 'uninformative':
+            prior = np.ones(self.n_classes_) / self.n_classes_
+        else:
+            prior = self.sample_prior_
+
+        X = check_array(X, accept_sparse='csr')
+
+        discriminant_score = np.empty((X.shape[0], self.n_classes_), dtype=np.float64)
+        coef = np.empty((X.shape[0], self.n_classes_), dtype=np.float64)
+        for c in range(self.n_classes_):
+            Xdist = X - self.centroids_[c, :]
+            Xdist_norm = (Xdist / self.s_) ** 2
+            # Tibshirani et al. (2002b), p. 108, Eq. (8)
+            discriminant_score[:, c] = np.sum(Xdist_norm, axis=1) - 2.0 * np.log(prior[c])
+            coef[:, c] = np.exp(-0.5 * discriminant_score[:, c])
+        # Tibshirani et al. (2002b), p. 109, Eq. (8)
+        return (coef.transpose() / np.sum(coef, axis=1)).transpose()
