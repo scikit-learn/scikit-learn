@@ -37,7 +37,6 @@ from ._sgd_fast import Huber
 from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import SquaredEpsilonInsensitive
 from ..utils.fixes import _joblib_parallel_args
-from ..utils import deprecated
 
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
                        "adaptive": 4, "pa1": 5, "pa2": 6}
@@ -308,39 +307,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         return _ValidationScoreCallback(
             self, X[validation_mask], y[validation_mask],
             sample_weight[validation_mask], classes=classes)
-
-    # mypy error: Decorated property not supported
-    @deprecated("Attribute standard_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 1.0 "
-                "(renaming of 0.25).")
-    @property
-    def standard_coef_(self):
-        return self._standard_coef
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute standard_intercept_ was deprecated "
-        "in version 0.23 and will be removed in 1.0 (renaming of 0.25)."
-    )
-    @property
-    def standard_intercept_(self):
-        return self._standard_intercept
-
-    # mypy error: Decorated property not supported
-    @deprecated("Attribute average_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 1.0 "
-                "(renaming of 0.25).")
-    @property
-    def average_coef_(self):
-        return self._average_coef
-
-    # mypy error: Decorated property not supported
-    @deprecated("Attribute average_intercept_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 1.0 "
-                "(renaming of 0.25).")
-    @property
-    def average_intercept_(self):
-        return self._average_intercept
 
 
 def _prepare_fit_binary(est, y, i):
@@ -1569,21 +1535,6 @@ class SGDRegressor(BaseSGDRegressor):
 
     intercept_ : ndarray of shape (1,)
         The intercept term.
-
-    average_coef_ : ndarray of shape (n_features,)
-        Averaged weights assigned to the features. Only available
-        if ``average=True``.
-
-        .. deprecated:: 0.23
-            Attribute ``average_coef_`` was deprecated
-            in version 0.23 and will be removed in 1.0 (renaming of 0.25).
-
-    average_intercept_ : ndarray of shape (1,)
-        The averaged intercept term. Only available if ``average=True``.
-
-        .. deprecated:: 0.23
-            Attribute ``average_intercept_`` was deprecated
-            in version 0.23 and will be removed in 1.0 (renaming of 0.25).
 
     n_iter_ : int
         The actual number of iterations before reaching the stopping criterion.

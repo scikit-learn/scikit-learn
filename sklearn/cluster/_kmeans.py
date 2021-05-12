@@ -254,9 +254,9 @@ def _tolerance(X, tol):
 
 @_deprecate_positional_args
 def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
-            precompute_distances='deprecated', n_init=10, max_iter=300,
-            verbose=False, tol=1e-4, random_state=None, copy_x=True,
-            n_jobs='deprecated', algorithm="auto", return_n_iter=False):
+            n_init=10, max_iter=300, verbose=False, tol=1e-4,
+            random_state=None, copy_x=True, algorithm="auto",
+            return_n_iter=False):
     """K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -293,21 +293,6 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
 
-    precompute_distances : {'auto', True, False}
-        Precompute distances (faster but takes more memory).
-
-        'auto' : do not precompute distances if n_samples * n_clusters > 12
-        million. This corresponds to about 100MB overhead per job using
-        double precision.
-
-        True : always precompute distances
-
-        False : never precompute distances
-
-        .. deprecated:: 0.23
-            'precompute_distances' was deprecated in version 0.23 and will be
-            removed in 1.0 (renaming of 0.25). It has no effect.
-
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
@@ -338,17 +323,6 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         the original data is not C-contiguous, a copy will be made even if
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
-
-    n_jobs : int, default=None
-        The number of OpenMP threads to use for the computation. Parallelism is
-        sample-wise on the main cython loop which assigns each sample to its
-        closest center.
-
-        ``None`` or ``-1`` means using all processors.
-
-        .. deprecated:: 0.23
-            ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            1.0 (renaming of 0.25).
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -382,8 +356,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
     """
     est = KMeans(
         n_clusters=n_clusters, init=init, n_init=n_init, max_iter=max_iter,
-        verbose=verbose, precompute_distances=precompute_distances, tol=tol,
-        random_state=random_state, copy_x=copy_x, n_jobs=n_jobs,
+        verbose=verbose, tol=tol, random_state=random_state, copy_x=copy_x,
         algorithm=algorithm
     ).fit(X, sample_weight=sample_weight)
     if return_n_iter:
@@ -747,21 +720,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         in the cluster centers of two consecutive iterations to declare
         convergence.
 
-    precompute_distances : {'auto', True, False}, default='auto'
-        Precompute distances (faster but takes more memory).
-
-        'auto' : do not precompute distances if n_samples * n_clusters > 12
-        million. This corresponds to about 100MB overhead per job using
-        double precision.
-
-        True : always precompute distances.
-
-        False : never precompute distances.
-
-        .. deprecated:: 0.23
-            'precompute_distances' was deprecated in version 0.22 and will be
-            removed in 1.0 (renaming of 0.25). It has no effect.
-
     verbose : int, default=0
         Verbosity mode.
 
@@ -779,17 +737,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         the original data is not C-contiguous, a copy will be made even if
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
-
-    n_jobs : int, default=None
-        The number of OpenMP threads to use for the computation. Parallelism is
-        sample-wise on the main cython loop which assigns each sample to its
-        closest center.
-
-        ``None`` or ``-1`` means using all processors.
-
-        .. deprecated:: 0.23
-            ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            1.0 (renaming of 0.25).
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -868,38 +815,20 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, init='k-means++', n_init=10,
-                 max_iter=300, tol=1e-4, precompute_distances='deprecated',
-                 verbose=0, random_state=None, copy_x=True,
-                 n_jobs='deprecated', algorithm='auto'):
+                 max_iter=300, tol=1e-4, verbose=0, random_state=None,
+                 copy_x=True, algorithm='auto'):
 
         self.n_clusters = n_clusters
         self.init = init
         self.max_iter = max_iter
         self.tol = tol
-        self.precompute_distances = precompute_distances
         self.n_init = n_init
         self.verbose = verbose
         self.random_state = random_state
         self.copy_x = copy_x
-        self.n_jobs = n_jobs
         self.algorithm = algorithm
 
     def _check_params(self, X):
-        # precompute_distances
-        if self.precompute_distances != 'deprecated':
-            warnings.warn("'precompute_distances' was deprecated in version "
-                          "0.23 and will be removed in 1.0 (renaming of 0.25)"
-                          ". It has no effect", FutureWarning)
-
-        # n_jobs
-        if self.n_jobs != 'deprecated':
-            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 1.0 (renaming of 0.25).", FutureWarning)
-            self._n_threads = self.n_jobs
-        else:
-            self._n_threads = None
-        self._n_threads = _openmp_effective_n_threads(self._n_threads)
-
         # n_init
         if self.n_init <= 0:
             raise ValueError(
@@ -1088,6 +1017,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self._check_params(X)
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        self._n_threads = _openmp_effective_n_threads()
 
         # Validate init array
         init = self.init
@@ -1757,6 +1687,7 @@ class MiniBatchKMeans(KMeans):
         self._check_params(X)
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        self._n_threads = _openmp_effective_n_threads()
         n_samples, n_features = X.shape
 
         # Validate init array
@@ -1906,6 +1837,7 @@ class MiniBatchKMeans(KMeans):
         if not has_centers:
             # this instance has not been fitted yet (fit or partial_fit)
             self._check_params(X)
+            self._n_threads = _openmp_effective_n_threads()
 
             # Validate init array
             init = self.init

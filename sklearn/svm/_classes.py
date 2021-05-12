@@ -7,7 +7,6 @@ from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
 from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
-from ..utils.deprecation import deprecated
 
 
 class LinearSVC(LinearClassifierMixin,
@@ -1045,22 +1044,6 @@ class SVR(RegressorMixin, BaseLibSVM):
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 1.0 (renaming of 0.25).")
-    @property
-    def probA_(self):
-        return self._probA
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 1.0 (renaming of 0.25).")
-    @property
-    def probB_(self):
-        return self._probB
-
     def _more_tags(self):
         return {
             '_xfail_checks': {
@@ -1434,22 +1417,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 1.0.")
-    @property
-    def probA_(self):
-        return self._probA
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 1.0.")
-    @property
-    def probB_(self):
-        return self._probB
 
     def _more_tags(self):
         return {
