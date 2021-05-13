@@ -192,8 +192,6 @@ jobs:
     matrix:
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
-        NUMPY_VERSION: 'min'
-        SCIPY_VERSION: 'min'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'

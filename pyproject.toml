@@ -11,5 +11,5 @@ requires = [
     # see: https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
     "oldest-supported-numpy",
 
-    "scipy>=1.0.0",
+    "scipy>=1.1.0",
 ]

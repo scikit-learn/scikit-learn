@@ -77,7 +77,6 @@ elif [[ "$DISTRIB" == "debian-32" ]]; then
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     setup_ccache
-    # scipy should be installed via pip pyhon3-scipy version is <1.0.0
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION)
 
