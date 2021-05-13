@@ -194,7 +194,6 @@ jobs:
         DISTRIB: 'debian-32'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
-        MATPLOTLIB_VERSION: 'min'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'

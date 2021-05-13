@@ -72,7 +72,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
 
 elif [[ "$DISTRIB" == "debian-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
+    apt-get install -y python3-dev python3-scipy python3-matplotliblibatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
@@ -80,8 +80,7 @@ elif [[ "$DISTRIB" == "debian-32" ]]; then
     # scipy should be installed via pip pyhon3-scipy version is <1.0.0
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION) \
-                          $(get_dep numpy $NUMPY_VERSION) \
-                          $(get_dep matplotlib $MATPLOTLIB_VERSION) \
+                          $(get_dep numpy $NUMPY_VERSION)
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # Since conda main channel usually lacks behind on the latest releases,
