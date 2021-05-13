@@ -401,13 +401,8 @@ Accuracy score
 --------------
 
 The :func:`accuracy_score` function computes the
-`accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, either the fraction
-(default) or the count (normalize=False) of correct predictions.
-
-
-In multilabel classification, the function returns the subset accuracy. If
-the entire set of predicted labels for a sample strictly match with the true
-set of labels, then the subset accuracy is 1.0; otherwise it is 0.0.
+`accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, either the
+fraction (default) or the count (normalize=False) of correct predictions.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -430,16 +425,51 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred, normalize=False)
   2
 
-In the multilabel case with binary label indicators::
+For the multilabel case where the target `y` is a binary indicator matrix of
+shape :math:`n_\text{samples}` by :math:`n_\text{outputs}`, we can extend the
+previous formula. Thus, :math:`y_i` and :math:`\hat{y}_i` are vectors of length
+:math:`n_\text{outputs}` and a correct predictions is an exact match between
+the two vectors. This score is also known as the "exact match ratio"
+[Sorower2010]_. We give an example by computing the the exact match ratio on
+two samples where only a single sample strictly match:
 
-  >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
+  >>> accuracy_score([[0, 1], [0, 1]], [[1, 1], [0, 1]],
+  ...                multilabel="exact-match")
   0.5
+
+This formulation is rather conservative and does not allow to consider partial
+correctness. Indeed, one can relax the constraint of the exact match and check
+the predictions at the level of each label instead. The accuracy is then
+formalized as
+
+.. math::
+
+  \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \frac{\| \hat{y}_i \cap y_i \|}{\| \hat{y}_i \cup y_i \|}
+
+Passing the parameter `multilabel="average"` will use this definition:
+
+  >>> accuracy_score([[0, 1], [0, 1]], [[1, 1], [0, 1]],
+  ...                multilabel="average")
+  0.75
+
+This formulation is also known as the Hamming score [Sorower2010]_.
+
+.. note::
+  When `multilabel="average"`, the parameter `normalize` cannot be set to
+  `False`. Indeed, by comparing individual labels, we loose the "sample"
+  semantic.
 
 .. topic:: Example:
 
   * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
+
+.. topic:: References:
+
+  .. [Sorower2010] S. M. Sorower, `A literature survey on algorithms for multi-label learning.
+     <https://api.semanticscholar.org/CorpusID:13222909>`_,
+     Oregon State University, Corvallis 18 (2010): 1-25.
 
 .. _top_k_accuracy_score:
 

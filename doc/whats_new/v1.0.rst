@@ -359,6 +359,11 @@ Changelog
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
+- |Enhancement| Add a parameter `multilabel` to :func:`metrics.accuracy_score`
+  allowing to whether imposed or not the exact label set constraint when
+  computing the ratio of correct predictions.
+  :pr:`19874` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 

@@ -138,29 +138,46 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
 
 
 @_deprecate_positional_args
-def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
+def accuracy_score(
+    y_true,
+    y_pred,
+    *,
+    normalize=True,
+    sample_weight=None,
+    multilabel="exact-match",
+):
     """Accuracy classification score.
 
-    In multilabel classification, this function computes subset accuracy:
-    the set of labels predicted for a sample must *exactly* match the
-    corresponding set of labels in y_true.
+    For multilabel classification, the accuracy is either computed as:
+
+    - an exact match between the set of the true labels and the set of the
+      predicted labels. Thus, a true classification is defined as an exact
+      match between a row of `y_true` and a row in `y_pred`;
+    - an average of the true labels over the total number of labels. Thus, we
+      do not group labels per rows.
 
     Read more in the :ref:`User Guide <accuracy_score>`.
 
     Parameters
     ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
+    y_true : {array-like, sparse matrix} of shape (n_samples,) or \
+            (n_samples, n_outputs)
         Ground truth (correct) labels.
 
-    y_pred : 1d array-like, or label indicator array / sparse matrix
+    y_pred : {array-like, sparse matrix} of shape (n_samples,) or \
+            (n_samples, n_outputs)
         Predicted labels, as returned by a classifier.
 
     normalize : bool, default=True
         If ``False``, return the number of correctly classified samples.
         Otherwise, return the fraction of correctly classified samples.
+        This option is not valid when `multilabel="average"`.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    multilabel : {"exact-match", "average"}, default="exact-match"
+        Only used when the targets are multilabel indicator.
 
     Returns
     -------
@@ -191,19 +208,41 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(y_true, y_pred, normalize=False)
     2
 
-    In the multilabel case with binary label indicators:
+    In multilabel, the parameter `multilabel` can enforce an exact match or
+    not for labels associated with a sample:
 
-    >>> import numpy as np
-    >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
+    >>> y_true = [[0, 1]]
+    >>> y_pred = [[1, 1]]
+    >>> accuracy_score(y_true, y_pred, multilabel="exact-match")
+    0.0
+    >>> accuracy_score(y_true, y_pred, multilabel="average")
     0.5
     """
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
+
     if y_type.startswith('multilabel'):
+        # validate the associated parameters
+        if multilabel not in {"exact-match", "average"}:
+            raise ValueError(
+                f"The parameter multilabel should be either 'exact-match' or "
+                f"'average'. Got '{multilabel}' instead."
+            )
+        if multilabel == "average" and not normalize:
+            raise ValueError(
+                "When multilabel='average', normalize should be set to True. "
+                "Otherwise, the score will not correspond to the number of "
+                "samples and would be ambiguous."
+            )
+
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
-        score = differing_labels == 0
+        if multilabel == "exact-match":
+            score = differing_labels == 0
+        else:
+            n_outputs = y_true.shape[1]
+            score = (n_outputs - differing_labels) / n_outputs
     else:
         score = y_true == y_pred
 

@@ -194,18 +194,57 @@ def test_classification_report_zero_division_warning(zero_division):
             assert not record
 
 
-def test_multilabel_accuracy_score_subset_accuracy():
-    # Dense label indicator matrix format
+def test_accuracy_parameter_validation():
+    """Check that we raise an error with non-valid parameters"""
+    # with binary and multiclass targets, multilabel will not be checked
+    y1, y2 = [0, 1, 1], [1, 1, 1]
+    accuracy_score(y1, y2, multilabel="xxx")
+
+    # however, it will be checked with multilabel target
+    y1 = [[0, 1, 1], [1, 0, 1]]
+    y2 = [[0, 0, 1], [1, 0, 1]]
+
+    err_msg = (
+        "The parameter multilabel should be either 'exact-match' or 'average'."
+        " Got 'xxx' instead."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        accuracy_score(y1, y2, multilabel="xxx")
+
+    # we don't support normalize=False and multilabel="average" with multilabel
+    # targets
+    err_msg = (
+        "When multilabel='average', normalize should be set to True. "
+        "Otherwise, the score will not correspond to the number of samples "
+        "and would be ambiguous."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        accuracy_score(y1, y2, multilabel="average", normalize=False)
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred, multilabel, expected_score",
+    [
+        ([[0, 1, 1], [1, 0, 1]], [[0, 0, 1], [1, 0, 1]], "exact-match", 0.5),
+        ([[0, 1, 1], [1, 0, 1]], [[0, 1, 1], [1, 0, 1]], "exact-match", 1),
+        ([[0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 0]], "exact-match", 0),
+        ([[0, 1, 1], [1, 0, 1]], [[0, 0, 0], [0, 0, 0]], "exact-match", 0),
+        ([[1, 1, 1], [1, 1, 1]], [[0, 0, 1], [1, 0, 1]], "average", 0.5),
+        ([[0, 1, 1], [1, 0, 1]], [[0, 1, 1], [1, 0, 1]], "average", 1),
+        ([[0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 0]], "average", 0),
+        ([[0, 1, 1], [1, 0, 0]], [[0, 0, 0], [0, 0, 0]], "average", 0.5),
+    ],
+)
+def test_multilabel_accuracy_score(y_true, y_pred, multilabel, expected_score):
+    score = accuracy_score(y_true, y_pred, multilabel=multilabel)
+    assert score == pytest.approx(expected_score)
+
+
+def test_multilabel_accuracy_score_average():
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
     y2 = np.array([[0, 0, 1], [1, 0, 1]])
 
-    assert accuracy_score(y1, y2) == 0.5
-    assert accuracy_score(y1, y1) == 1
-    assert accuracy_score(y2, y2) == 1
-    assert accuracy_score(y2, np.logical_not(y2)) == 0
-    assert accuracy_score(y1, np.logical_not(y1)) == 0
-    assert accuracy_score(y1, np.zeros(y1.shape)) == 0
-    assert accuracy_score(y2, np.zeros(y1.shape)) == 0
+    accuracy_score(y1, y2, multilabel="average")
 
 
 def test_precision_recall_f1_score_binary():
