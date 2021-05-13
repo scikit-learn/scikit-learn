@@ -181,7 +181,7 @@ jobs:
 - template: build_tools/azure/posix-32.yml
   parameters:
     name: Linux32
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
     dependsOn: [linting, git_commit]
     condition: |
       and(
@@ -190,10 +190,11 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      ubuntu_atlas_32bit:
-        DISTRIB: 'ubuntu-32'
+      debian_atlas_32bit:
+        DISTRIB: 'debian-32'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
+        MATPLOTLIB_VERSION: 'min'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
