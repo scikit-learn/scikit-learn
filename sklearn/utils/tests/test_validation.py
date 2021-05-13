@@ -370,9 +370,6 @@ def test_check_array_numeric_warns(X):
    np.array([['11', '12'], ['13', 'xx']], dtype='S'),
    [[b'a', b'b'], [b'c', b'd']]
 ])
-
-# TODO: Add back this case in 1.1 when implicit conversion is removed
-# np.array([[b'a', b'b'], [b'c', b'd']], dtype='V1')
 def test_check_array_dtype_numeric_errors(X):
     """Error when string-ike array can not be converted"""
     expected_warn_msg = "Unable to convert array of bytes/strings"
