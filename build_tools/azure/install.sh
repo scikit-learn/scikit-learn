@@ -72,7 +72,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
 
 elif [[ "$DISTRIB" == "debian-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotliblibatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
+    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
