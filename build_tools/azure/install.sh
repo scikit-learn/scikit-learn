@@ -80,8 +80,8 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     # scipy should be installed via pip pyhon3-scipy version is <1.0.0
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION) \
-                          $(get_dep scipy $SCIPY_VERSION) \
-                          $(get_dep numpy $NUMPY_VERSION)
+                          $(get_dep numpy $NUMPY_VERSION) \
+                          $(get_dep scipy $SCIPY_VERSION)
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # Since conda main channel usually lacks behind on the latest releases,
