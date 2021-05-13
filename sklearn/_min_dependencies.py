@@ -5,12 +5,11 @@ import argparse
 
 # numpy scipy and cython should by in sync with pyproject.toml
 if platform.python_implementation() == 'PyPy':
-    SCIPY_MIN_VERSION = '1.1.0'
     NUMPY_MIN_VERSION = '1.19.0'
 else:
-    SCIPY_MIN_VERSION = '1.0.0'
-    NUMPY_MIN_VERSION = '1.13.3'
+    NUMPY_MIN_VERSION = '1.14.5'
 
+SCIPY_MIN_VERSION = '1.1.0'
 JOBLIB_MIN_VERSION = '0.11'
 THREADPOOLCTL_MIN_VERSION = '2.0.0'
 PYTEST_MIN_VERSION = '5.0.1'
