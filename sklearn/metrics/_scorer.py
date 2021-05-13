@@ -611,7 +611,8 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     output of :term:`predict_proba` (For binary `y_true`, the score function is
     supposed to accept probability of the positive class). If
     `needs_threshold=True`, the score function is supposed to accept the
-    output of :term:`decision_function`.
+    output of :term:`decision_function` or :term:`predict_proba` when
+    :term:`decision_function` is not present.
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
