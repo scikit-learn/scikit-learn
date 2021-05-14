@@ -11,7 +11,6 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
-from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
@@ -19,7 +18,6 @@ from ..manifold import spectral_embedding
 from ._kmeans import k_means
 
 
-@_deprecate_positional_args
 def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
                random_state=None):
     """Search for a partition matrix (clustering) which is closest to the
@@ -158,7 +156,6 @@ def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
     return labels
 
 
-@_deprecate_positional_args
 def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
                         eigen_tol=0.0, assign_labels='kmeans',
@@ -455,7 +452,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
       Stella X. Yu, Jianbo Shi
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, eigen_solver=None, n_components=None,
                  random_state=None, n_init=10, gamma=1., affinity='rbf',
                  n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',

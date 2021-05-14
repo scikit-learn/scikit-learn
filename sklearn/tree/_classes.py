@@ -36,7 +36,6 @@ from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -89,7 +88,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    @_deprecate_positional_args
     def __init__(self, *,
                  criterion,
                  splitter,
@@ -851,7 +849,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
-    @_deprecate_positional_args
     def __init__(self, *,
                  criterion="gini",
                  splitter="best",
@@ -1212,7 +1209,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
-    @_deprecate_positional_args
     def __init__(self, *,
                  criterion="squared_error",
                  splitter="best",
@@ -1525,7 +1521,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     >>> cls.score(X_test, y_test)
     0.8947...
     """
-    @_deprecate_positional_args
     def __init__(self, *,
                  criterion="gini",
                  splitter="random",
@@ -1756,7 +1751,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> reg.score(X_test, y_test)
     0.33...
     """
-    @_deprecate_positional_args
     def __init__(self, *,
                  criterion="squared_error",
                  splitter="random",

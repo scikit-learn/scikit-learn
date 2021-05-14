@@ -12,6 +12,18 @@ Version 1.0.0
 
 .. include:: changelog_legend.inc
 
+Enforcing keyword-only arguments
+--------------------------------
+
+In an effort to promote clear and non-ambiguous use of the library, most
+constructor and function parameters must now be passed as keyword arguments
+(i.e. using the `param=value` syntax) instead of positional. If a keyword-only
+parameter is used as positional, a `TypeError` is now raised.
+:issue:`15005` :pr:`20002` by `Joel Nothman`_, `Adrin Jalali`_, `Thomas Fan`_,
+`Nicolas Hug`_, and `Tom Dupre la Tour`_. See `SLEP009
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
+for more details.
+
 Put the changes in their relevant module.
 
 Changed models

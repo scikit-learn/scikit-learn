@@ -24,7 +24,6 @@ from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import deprecated
@@ -252,7 +251,6 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
-@_deprecate_positional_args
 def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
             n_init=10, max_iter=300, verbose=False, tol=1e-4,
             random_state=None, copy_x=True, algorithm="auto",
@@ -813,7 +811,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     array([[10.,  2.],
            [ 1.,  2.]])
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, verbose=0, random_state=None,
                  copy_x=True, algorithm='auto'):
@@ -1508,7 +1505,6 @@ class MiniBatchKMeans(KMeans):
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
                  batch_size=1024, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
