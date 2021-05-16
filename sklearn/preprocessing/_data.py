@@ -29,6 +29,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 _check_sample_weight,
                                 FLOAT_DTYPES)
+from ..utils._array_out import _array_out_wrap
 
 from ._encoders import OneHotEncoder
 
@@ -440,13 +441,19 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         self.data_range_ = data_range
         return self
 
-    def transform(self, X):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, array_out="default"):
         """Scale features of X according to feature_range.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Input data that will be transformed.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -884,7 +891,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         return self
 
-    def transform(self, X, copy=None):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, copy=None, array_out="default"):
         """Perform standardization by centering and scaling
 
         Parameters
@@ -893,6 +901,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             The data used to scale along the features axis.
         copy : bool, default=None
             Copy the input X or not.
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -1103,13 +1115,19 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         self.scale_ = _handle_zeros_in_scale(max_abs, copy=True)
         return self
 
-    def transform(self, X):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, array_out="default"):
         """Scale the data
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data that should be scaled.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -1403,13 +1421,19 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         return self
 
-    def transform(self, X):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, array_out="default"):
         """Center and scale the data.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the specified axis.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -1755,7 +1779,8 @@ class Normalizer(TransformerMixin, BaseEstimator):
         self._validate_data(X, accept_sparse='csr')
         return self
 
-    def transform(self, X, copy=None):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, copy=None, array_out="default"):
         """Scale each non zero row of X to unit norm
 
         Parameters
@@ -1766,6 +1791,11 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
         copy : bool, default=None
             Copy the input X or not.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -1909,7 +1939,8 @@ class Binarizer(TransformerMixin, BaseEstimator):
         self._validate_data(X, accept_sparse='csr')
         return self
 
-    def transform(self, X, copy=None):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, copy=None, array_out="default"):
         """Binarize each element of X.
 
         Parameters
@@ -1921,6 +1952,11 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
         copy : bool
             Copy the input X or not.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -2033,7 +2069,8 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
-    def transform(self, K, copy=True):
+    @_array_out_wrap("one_to_one")
+    def transform(self, K, copy=True, array_out="default"):
         """Center kernel matrix.
 
         Parameters
@@ -2043,6 +2080,11 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         copy : bool, default=True
             Set to False to perform inplace computation.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -2500,7 +2542,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         return X
 
-    def transform(self, X):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, array_out="default"):
         """Feature-wise transformation of the data.
 
         Parameters
@@ -2510,6 +2553,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -2792,7 +2840,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         self._fit(X, y=y, force_transform=False)
         return self
 
-    def fit_transform(self, X, y=None):
+    @_array_out_wrap("one_to_one")
+    def fit_transform(self, X, y=None, array_out="default"):
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):
@@ -2825,13 +2874,19 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
         return X
 
-    def transform(self, X):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, array_out="default"):
         """Apply the power transform to each feature using the fitted lambdas.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             The data to be transformed using a power transformation.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------

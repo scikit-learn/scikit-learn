@@ -15,6 +15,7 @@ from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
+from ..utils._array_out import _array_out_wrap
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -269,7 +270,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                              .format(KBinsDiscretizer.__name__, indices))
         return n_bins
 
-    def transform(self, X):
+    @_array_out_wrap(lambda self: self._encoder.get_feature_names)
+    def transform(self, X, array_out="default"):
         """
         Discretize the data.
 
@@ -277,6 +279,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features)
             Data to be discretized.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------

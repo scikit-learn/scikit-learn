@@ -10,6 +10,7 @@ import numbers
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.validation import check_is_fitted
+from ..utils._array_out import _array_out_wrap
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
@@ -75,6 +76,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown='error', force_all_finite=True):
+        self._check_feature_names(X)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite)
 
@@ -112,6 +114,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     def _transform(self, X, handle_unknown='error', force_all_finite=True,
                    warn_on_unknown=False):
+        self._check_feature_names(X, reset=False)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite)
 
@@ -426,7 +429,7 @@ class OneHotEncoder(_BaseEncoder):
         self.drop_idx_ = self._compute_drop_idx()
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, array_out="default"):
         """
         Fit OneHotEncoder to X, then transform X.
 
@@ -441,6 +444,11 @@ class OneHotEncoder(_BaseEncoder):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
+
         Returns
         -------
         X_out : {ndarray, sparse matrix} of shape \
@@ -449,9 +457,10 @@ class OneHotEncoder(_BaseEncoder):
             returned.
         """
         self._validate_keywords()
-        return super().fit_transform(X, y)
+        return super().fit_transform(X, y, array_out=array_out)
 
-    def transform(self, X):
+    @_array_out_wrap(lambda self: self.get_feature_names)
+    def transform(self, X, array_out="default"):
         """
         Transform X using one-hot encoding.
 
@@ -459,6 +468,11 @@ class OneHotEncoder(_BaseEncoder):
         ----------
         X : array-like of shape (n_samples, n_features)
             The data to encode.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -815,7 +829,8 @@ class OrdinalEncoder(_BaseEncoder):
 
         return self
 
-    def transform(self, X):
+    @_array_out_wrap("one_to_one")
+    def transform(self, X, array_out="default"):
         """
         Transform X to ordinal codes.
 
@@ -823,6 +838,11 @@ class OrdinalEncoder(_BaseEncoder):
         ----------
         X : array-like of shape (n_samples, n_features)
             The data to encode.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------

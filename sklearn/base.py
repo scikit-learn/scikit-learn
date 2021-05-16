@@ -23,6 +23,7 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
+from .utils._array_out import _get_feature_names
 
 
 def clone(estimator, *, safe=True):
@@ -376,6 +377,33 @@ class BaseEstimator:
                 f"X has {n_features} features, but {self.__class__.__name__} "
                 f"is expecting {self.n_features_in_} features as input.")
 
+    def _check_feature_names(self, X, reset=True):
+        """Set the `feature_names_in_` attribute, or check against it.
+
+        Parameters
+        ----------
+        X : array-like
+            The input samples.
+        reset : bool, default=True
+            If True, the `n_feature_names_` attribute is set to the feature
+            names of `X`.
+            Else, the attribute must already exist and the function checks
+            that it is equal to the feature names of `X`.
+        """
+        feature_names = _get_feature_names(X)
+        if reset:
+            self.feature_names_in_ = feature_names
+            return
+
+        if (not hasattr(self, 'feature_names_in_') or
+                self.feature_names_in_ is None or
+                feature_names is None):
+            return
+
+        if any(feature_names != self.feature_names_in_):
+            raise ValueError("The input's feature names does not match the "
+                             "feature_names_in_ attribute.")
+
     def _validate_data(self, X, y='no_validation', reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
@@ -418,6 +446,7 @@ class BaseEstimator:
         out : {ndarray, sparse matrix} or tuple of these
             The validated input. A tuple is returned if `y` is not None.
         """
+        self._check_feature_names(X, reset=reset)
 
         if y is None:
             if self._get_tags()['requires_y']:
@@ -678,7 +707,7 @@ class BiclusterMixin:
 class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, array_out="default", **fit_params):
         """
         Fit to data, then transform it.
 
@@ -694,6 +723,11 @@ class TransformerMixin:
                 default=None
             Target values (None for unsupervised transformations).
 
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
+
         **fit_params : dict
             Additional fit parameters.
 
@@ -706,10 +740,20 @@ class TransformerMixin:
         # method is possible for a given clustering algorithm
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
-            return self.fit(X, **fit_params).transform(X)
+            fitted = self.fit(X, **fit_params)
         else:
             # fit method of arity 2 (supervised transformation)
-            return self.fit(X, y, **fit_params).transform(X)
+            fitted = self.fit(X, y, **fit_params)
+
+        if array_out == "default":
+            return fitted.transform(X)
+
+        # array_out != "default"
+        transform_params = inspect.signature(fitted.transform).parameters
+        if "array_out" not in transform_params:
+            raise ValueError("Transform does not support array_out")
+
+        return fitted.transform(X, array_out=array_out)
 
 
 class DensityMixin:

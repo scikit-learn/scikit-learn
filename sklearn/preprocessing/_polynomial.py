@@ -14,6 +14,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.fixes import linspace
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils._array_out import _array_out_wrap
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
@@ -200,7 +201,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         return self
 
-    def transform(self, X):
+    @_array_out_wrap(lambda self: self.get_feature_names)
+    def transform(self, X, array_out="default"):
         """Transform data to polynomial features.
 
         Parameters
@@ -220,6 +222,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             this reason, a CSC input will be converted to CSR, and the output
             will be converted back to CSC prior to being returned, hence the
             preference of CSR.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------
@@ -663,13 +670,19 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.n_features_out_ = n_out - n_features * (1 - self.include_bias)
         return self
 
-    def transform(self, X):
+    @_array_out_wrap(lambda self: self.get_feature_names)
+    def transform(self, X, array_out="default"):
         """Transform each feature data to B-splines.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             The data to transform.
+
+        array_out : {"default", "pandas"}, default="default"
+            Specify the output array type. If "pandas", a pandas DataFrame is
+            returned. If "default", an array-like without feature names is
+            returned.
 
         Returns
         -------

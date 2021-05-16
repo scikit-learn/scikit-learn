@@ -269,7 +269,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(X, y)
 
     skipped_attributes = {'x_scores_',  # For PLS, TODO remove in 1.1
-                          'y_scores_'}  # For PLS, TODO remove in 1.1
+                          'y_scores_',  # For PLS, TODO remove in 1.1
+                          'feature_names_in_'}  # Ignore for now
 
     module = est.__module__.split(".")[1]
     if module in N_FEATURES_MODULES_TO_IGNORE:
