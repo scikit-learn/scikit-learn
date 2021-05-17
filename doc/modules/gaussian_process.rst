@@ -79,72 +79,7 @@ the API of standard scikit-learn estimators, GaussianProcessRegressor:
 
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy.py`
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`
-
-GPR examples
-============
-
-GPR on Mauna Loa CO2 data
--------------------------
-
-This example is based on Section 5.4.3 of [RW2006]_.
-It illustrates an example of complex kernel engineering and
-hyperparameter optimization using gradient ascent on the
-log-marginal-likelihood. The data consists of the monthly average atmospheric
-CO2 concentrations (in parts per million by volume (ppmv)) collected at the
-Mauna Loa Observatory in Hawaii, between 1958 and 1997. The objective is to
-model the CO2 concentration as a function of the time t.
-
-The kernel is composed of several terms that are responsible for explaining
-different properties of the signal:
-
-- a long term, smooth rising trend is to be explained by an RBF kernel. The
-  RBF kernel with a large length-scale enforces this component to be smooth;
-  it is not enforced that the trend is rising which leaves this choice to the
-  GP. The specific length-scale and the amplitude are free hyperparameters.
-
-- a seasonal component, which is to be explained by the periodic
-  ExpSineSquared kernel with a fixed periodicity of 1 year. The length-scale
-  of this periodic component, controlling its smoothness, is a free parameter.
-  In order to allow decaying away from exact periodicity, the product with an
-  RBF kernel is taken. The length-scale of this RBF component controls the
-  decay time and is a further free parameter.
-
-- smaller, medium term irregularities are to be explained by a
-  RationalQuadratic kernel component, whose length-scale and alpha parameter,
-  which determines the diffuseness of the length-scales, are to be determined.
-  According to [RW2006]_, these irregularities can better be explained by
-  a RationalQuadratic than an RBF kernel component, probably because it can
-  accommodate several length-scales.
-
-- a "noise" term, consisting of an RBF kernel contribution, which shall
-  explain the correlated noise components such as local weather phenomena,
-  and a WhiteKernel contribution for the white noise. The relative amplitudes
-  and the RBF's length scale are further free parameters.
-
-Maximizing the log-marginal-likelihood after subtracting the target's mean
-yields the following kernel with an LML of -83.214:
-
-::
-
-   34.4**2 * RBF(length_scale=41.8)
-   + 3.27**2 * RBF(length_scale=180) * ExpSineSquared(length_scale=1.44,
-                                                      periodicity=1)
-   + 0.446**2 * RationalQuadratic(alpha=17.7, length_scale=0.957)
-   + 0.197**2 * RBF(length_scale=0.138) + WhiteKernel(noise_level=0.0336)
-
-Thus, most of the target signal (34.4ppm) is explained by a long-term rising
-trend (length-scale 41.8 years). The periodic component has an amplitude of
-3.27ppm, a decay time of 180 years and a length-scale of 1.44. The long decay
-time indicates that we have a locally very close to periodic seasonal
-component. The correlated noise has an amplitude of 0.197ppm with a length
-scale of 0.138 years and a white-noise contribution of 0.197ppm. Thus, the
-overall noise level is very small, indicating that the data can be very well
-explained by the model. The figure shows also that the model makes very
-confident predictions until around 2015
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_co2_001.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_co2.html
-   :align: center
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_fpr_co2.py`
 
 .. _gpc:
 
