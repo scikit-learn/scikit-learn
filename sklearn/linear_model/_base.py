@@ -31,7 +31,6 @@ from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import _incremental_mean_and_var
@@ -595,7 +594,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
-    @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize='deprecated',
                  copy_X=True, n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept
