@@ -8,7 +8,7 @@ from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 
 def _check_params(X, metric, p, metric_params):
@@ -36,7 +36,6 @@ def _query_include_self(X, include_self, mode):
     return X
 
 
-@_deprecate_positional_args
 def kneighbors_graph(X, n_neighbors, *, mode='connectivity',
                      metric='minkowski', p=2, metric_params=None,
                      include_self=False, n_jobs=None):
@@ -113,7 +112,6 @@ def kneighbors_graph(X, n_neighbors, *, mode='connectivity',
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
 
-@_deprecate_positional_args
 def radius_neighbors_graph(X, radius, *, mode='connectivity',
                            metric='minkowski', p=2, metric_params=None,
                            include_self=False, n_jobs=None):
@@ -300,7 +298,6 @@ class KNeighborsTransformer(KNeighborsMixin,
     ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
     ...     Isomap(neighbors_algorithm='precomputed'))
     """
-    @_deprecate_positional_args
     def __init__(self, *, mode='distance', n_neighbors=5, algorithm='auto',
                  leaf_size=30, metric='minkowski', p=2, metric_params=None,
                  n_jobs=1):
@@ -483,7 +480,6 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
     ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
-    @_deprecate_positional_args
     def __init__(self, *, mode='distance', radius=1., algorithm='auto',
                  leaf_size=30, metric='minkowski', p=2, metric_params=None,
                  n_jobs=1):
