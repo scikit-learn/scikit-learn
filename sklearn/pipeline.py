@@ -26,7 +26,6 @@ from .utils import (
 from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
-from .utils.validation import _deprecate_positional_args
 from .utils.fixes import delayed
 
 from .utils.metaestimators import _BaseComposition
@@ -110,7 +109,6 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
     _required_parameters = ['steps']
 
-    @_deprecate_positional_args
     def __init__(self, steps, *, memory=None, verbose=False):
         self.steps = steps
         self.memory = memory
@@ -846,7 +844,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     """
     _required_parameters = ["transformer_list"]
 
-    @_deprecate_positional_args
     def __init__(self, transformer_list, *, n_jobs=None,
                  transformer_weights=None, verbose=False):
         self.transformer_list = transformer_list

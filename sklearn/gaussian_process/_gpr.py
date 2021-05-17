@@ -17,7 +17,6 @@ from .kernels import RBF, ConstantKernel as C
 from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
-from ..utils.validation import _deprecate_positional_args
 
 
 class GaussianProcessRegressor(MultiOutputMixin,
@@ -153,7 +152,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
-    @_deprecate_positional_args
     def __init__(self, kernel=None, *, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None):

@@ -10,7 +10,6 @@ import numbers
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
@@ -330,7 +329,6 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 1., 0.]])
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, categories='auto', drop=None, sparse=True,
                  dtype=np.float64, handle_unknown='error'):
         self.categories = categories
@@ -741,7 +739,6 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, categories='auto', dtype=np.float64,
                  handle_unknown='error', unknown_value=None):
         self.categories = categories
