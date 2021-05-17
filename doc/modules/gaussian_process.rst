@@ -1,5 +1,3 @@
-
-
 .. _gaussian_process:
 
 ==================
@@ -27,8 +25,8 @@ The advantages of Gaussian processes are:
 
 The disadvantages of Gaussian processes include:
 
-    - They are not sparse, i.e., they use the whole samples/features information to
-      perform the prediction.
+    - They are not sparse, i.e., they use the whole samples/features
+      information to perform the prediction.
 
     - They lose efficiency in high dimensional spaces -- namely when the number
       of features exceeds a few dozens.
