@@ -78,59 +78,10 @@ the API of standard scikit-learn estimators, GaussianProcessRegressor:
 .. topic:: Examples
 
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy.py`
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`
 
 GPR examples
 ============
-
-Comparison of GPR and Kernel Ridge Regression
----------------------------------------------
-
-Both kernel ridge regression (KRR) and GPR learn
-a target function by employing internally the "kernel trick". KRR learns a
-linear function in the space induced by the respective kernel which corresponds
-to a non-linear function in the original space. The linear function in the
-kernel space is chosen based on the mean-squared error loss with
-ridge regularization. GPR uses the kernel to define the covariance of
-a prior distribution over the target functions and uses the observed training
-data to define a likelihood function. Based on Bayes theorem, a (Gaussian)
-posterior distribution over target functions is defined, whose mean is used
-for prediction.
-
-A major difference is that GPR can choose the kernel's hyperparameters based
-on gradient-ascent on the marginal likelihood function while KRR needs to
-perform a grid search on a cross-validated loss function (mean-squared error
-loss). A further difference is that GPR learns a generative, probabilistic
-model of the target function and can thus provide meaningful confidence
-intervals and posterior samples along with the predictions while KRR only
-provides predictions.
-
-The following figure illustrates both methods on an artificial dataset, which
-consists of a sinusoidal target function and strong noise. The figure compares
-the learned model of KRR and GPR based on a ExpSineSquared kernel, which is
-suited for learning periodic functions. The kernel's hyperparameters control
-the smoothness (length_scale) and periodicity of the kernel (periodicity).
-Moreover, the noise level
-of the data is learned explicitly by GPR by an additional WhiteKernel component
-in the kernel and by the regularization parameter alpha of KRR.
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_compare_gpr_krr_001.png
-   :target: ../auto_examples/gaussian_process/plot_compare_gpr_krr.html
-   :align: center
-
-The figure shows that both methods learn reasonable models of the target
-function. GPR correctly identifies the periodicity of the function to be
-roughly :math:`2*\pi` (6.28), while KRR chooses the doubled periodicity
-:math:`4*\pi` . Besides
-that, GPR provides reasonable confidence bounds on the prediction which are not
-available for KRR. A major difference between the two methods is the time
-required for fitting and predicting: while fitting KRR is fast in principle,
-the grid-search for hyperparameter optimization scales exponentially with the
-number of hyperparameters ("curse of dimensionality"). The gradient-based
-optimization of the parameters in GPR does not suffer from this exponential
-scaling and is thus considerably faster on this example with 3-dimensional
-hyperparameter space. The time for predicting is similar; however, generating
-the variance of the predictive distribution of GPR takes considerably longer
-than just predicting the mean.
 
 GPR on Mauna Loa CO2 data
 -------------------------
