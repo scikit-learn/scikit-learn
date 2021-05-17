@@ -13,8 +13,7 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.fixes import linspace
-from ..utils.validation import (check_is_fitted, FLOAT_DTYPES,
-                                _deprecate_positional_args)
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
@@ -99,7 +98,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-    @_deprecate_positional_args
     def __init__(self, degree=2, *, interaction_only=False, include_bias=True,
                  order='C'):
         self.degree = degree

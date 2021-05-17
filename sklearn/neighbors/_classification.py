@@ -17,7 +17,6 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
-from ..utils.validation import _deprecate_positional_args
 
 
 class KNeighborsClassifier(KNeighborsMixin,
@@ -144,7 +143,6 @@ class KNeighborsClassifier(KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_neighbors=5, *,
                  weights='uniform', algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None):
@@ -404,7 +402,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, n_jobs=None,
