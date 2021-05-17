@@ -894,7 +894,7 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+            https://en.wikipedia.org/wiki/Receiver_operating_characteristic`
 
     .. [2] Fawcett T. An introduction to ROC analysis[J]. Pattern Recognition
            Letters, 2006, 27(8):861-874.
