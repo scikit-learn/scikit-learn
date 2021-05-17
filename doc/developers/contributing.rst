@@ -218,6 +218,13 @@ latest up-to-date workflow.
   `Transcript
   <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
 
+.. note::
+  In January 2021, the default branch name changed from ``master`` to ``main``
+  for the scikit-learn GitHub repository to use more inclusive terms.
+  These videos were created prior to the renaming of the branch.
+  For contributors who are viewing these videos to set up their
+  working environment and submitting a PR, ``master`` should be replaced to ``main``.
+
 How to contribute
 -----------------
 
@@ -274,12 +281,14 @@ You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-7. Synchronize your main branch with the upstream main branch:
+7. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+   more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash $
 
         git checkout main
-        git pull upstream main
+        git fetch upstream
+        git merge upstream/main
 
 8. Create a feature branch to hold your development changes:
 
@@ -416,12 +425,12 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    verify the correct behavior of the fix or feature. In this manner, further
    modifications on the code base are granted to be consistent with the
    desired behavior. In the case of bug fixes, at the time of the PR, the
-   non-regression tests should fail for the code base in the main branch
+   non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
 5. **Make sure that your PR does not add PEP8 violations**. To check the
    code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the upstream remote):
+   :ref:`above <upstream>` to set up the ``upstream`` remote):
 
    .. prompt:: bash $
 
@@ -934,7 +943,7 @@ scikit-learn. Make sure it is up to date:
 
 In the benchmark suite, the benchmarks are organized following the same
 structure as scikit-learn. For example, you can compare the performance of a
-specific estimator between upstream/main and the branch you are working on:
+specific estimator between ``upstream/main`` and the branch you are working on:
 
 .. prompt:: bash $
 
