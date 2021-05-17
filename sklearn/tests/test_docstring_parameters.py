@@ -288,8 +288,7 @@ def test_fit_docstring_attributes(name, Estimator):
         with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'Birch', 'LarsCV', 'Lasso',
-               'OrthogonalMatchingPursuit'}
+    IGNORED = {}
 
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
