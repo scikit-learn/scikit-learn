@@ -82,7 +82,9 @@ def setup_preprocessing():
     try:
         import pandas  # noqa
         if parse_version(pandas.__version__) < parse_version('1.1.0'):
-            raise SkipTest("Skipping preprocessing.rst, pandas version < 1.1.0")
+            raise SkipTest(
+                "Skipping preprocessing.rst, pandas version < 1.1.0"
+                )
     except ImportError:
         raise SkipTest("Skipping preprocessing.rst, pandas not installed")
 
