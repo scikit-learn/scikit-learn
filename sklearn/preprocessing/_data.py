@@ -28,7 +28,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 _check_sample_weight,
-                                FLOAT_DTYPES, _deprecate_positional_args)
+                                FLOAT_DTYPES)
 
 from ._encoders import OneHotEncoder
 
@@ -106,7 +106,6 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         return scale
 
 
-@_deprecate_positional_args
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
@@ -344,7 +343,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
         self.copy = copy
@@ -492,7 +490,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
 
@@ -707,7 +704,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
 
-    @_deprecate_positional_args
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -1026,7 +1022,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, copy=True):
         self.copy = copy
 
@@ -1161,7 +1156,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
@@ -1337,7 +1331,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     https://en.wikipedia.org/wiki/Median
     https://en.wikipedia.org/wiki/Interquartile_range
     """
-    @_deprecate_positional_args
     def __init__(self, *, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
         self.with_centering = with_centering
@@ -1471,7 +1464,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
     """Standardize a dataset along any axis
@@ -1579,7 +1571,6 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
     return X
 
 
-@_deprecate_positional_args
 def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
@@ -1738,7 +1729,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
     normalize : Equivalent function without the estimator API.
     """
 
-    @_deprecate_positional_args
     def __init__(self, norm='l2', *, copy=True):
         self.norm = norm
         self.copy = copy
@@ -1790,7 +1780,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
         return {'stateless': True}
 
 
-@_deprecate_positional_args
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
 
@@ -1894,7 +1883,6 @@ class Binarizer(TransformerMixin, BaseEstimator):
     binarize : Equivalent function without the estimator API.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold
         self.copy = copy
@@ -2241,7 +2229,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
                  random_state=None, copy=True):
@@ -2560,7 +2547,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def quantile_transform(X, *, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
                        ignore_implicit_zeros=False,
@@ -2779,7 +2765,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
     """
-    @_deprecate_positional_args
     def __init__(self, method='yeo-johnson', *, standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
@@ -3057,7 +3042,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
     """
     Power transforms are a family of parametric, monotonic transformations
