@@ -3,7 +3,7 @@ version: 2
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: circleci/python:3.7.3-buster
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
@@ -47,7 +47,7 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: circleci/python:3.7.3-buster
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
