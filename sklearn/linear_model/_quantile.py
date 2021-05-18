@@ -241,9 +241,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 4: "Numerical difficulties encountered.",
             }
             raise ValueError(
-                f"Linear programming for QuantileRegressor did not succeed. "
+                f"Linear programming for QuantileRegressor did not succeed.\n"
                 f"Status is {result.status}: "
-                + failure.setdefault(result.status, "unknown reason")
+                + failure.setdefault(result.status, "unknown reason") + "\n"
+                + "Result message of linprog:\n" + result.message
             )
 
         # positive - negative
