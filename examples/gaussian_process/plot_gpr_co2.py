@@ -7,10 +7,10 @@ This example is based on Section 5.4.3 of "Gaussian Processes for Machine
 Learning" [RW2006]_. It illustrates an example of complex kernel engineering
 and hyperparameter optimization using gradient ascent on the
 log-marginal-likelihood. The data consists of the monthly average atmospheric
-CO:math:`_{2}` concentrations (in parts per million by volume (ppm)) collected
-at the Mauna Loa Observatory in Hawaii, between 1958 and 2001. The objective
-is to model the CO:math:`_{2}` concentration as a function of the time
-:math:`t` and extrapolate for years after 2001.
+CO2 concentrations (in parts per million by volume (ppm)) collected at the
+Mauna Loa Observatory in Hawaii, between 1958 and 2001. The objective is to
+model the CO2 concentration as a function of the time :math:`t` and extrapolate
+for years after 2001.
 
 .. topic: References
 
@@ -31,9 +31,9 @@ print(__doc__)
 # -----------------
 #
 # We will derive a dataset from the Mauna Loa Observatory that collected air
-# samples. We are interested in estimating the concentration of CO:math:`_{2}`
-# and extrapolate it for futher year. First, we load the original dataset
-# available in OpenML.
+# samples. We are interested in estimating the concentration of CO2 and
+# extrapolate it for futher year. First, we load the original dataset available
+# in OpenML.
 from sklearn.datasets import fetch_openml
 
 co2 = fetch_openml(data_id=41187, as_frame=True)
@@ -41,7 +41,7 @@ co2.frame.head()
 
 # %%
 # First, we process the original dataframe to create a date index and select
-# only the CO:math:`_{2}` column.
+# only the CO2 column.
 import pandas as pd
 
 co2_data = co2.frame
@@ -53,9 +53,9 @@ co2_data.head()
 co2_data.index.min(), co2_data.index.max()
 
 # %%
-# We see that we get CO:math:`_{2}` concentration for some days from
-# March, 1958 to December, 2001. We can plot these raw information to have a
-# better understanding.
+# We see that we get CO2 concentration for some days from March, 1958 to
+# December, 2001. We can plot these raw information to have a better
+# understanding.
 import matplotlib.pyplot as plt
 
 co2_data.plot()
@@ -75,9 +75,9 @@ _ = plt.title(
 )
 
 # %%
-# The idea in this example will be to predict the CO:math:`_{2}` concentration
-# in function of the date. We are as well interesting in extrapolating for
-# upcoming year after 2001.
+# The idea in this example will be to predict the CO2 concentration in function
+# of the date. We are as well interesting in extrapolating for upcoming year
+# after 2001.
 #
 # As a first step, we will divide the data and the target to estimate. The data
 # being a date, we will convert it into a numeric.
