@@ -32,7 +32,6 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -107,7 +106,6 @@ def auc(x, y):
     return area
 
 
-@_deprecate_positional_args
 def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores.
@@ -350,7 +348,6 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
-@_deprecate_positional_args
 def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
                   max_fpr=None, multi_class="raise", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
@@ -737,7 +734,6 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
-@_deprecate_positional_args
 def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
                            sample_weight=None):
     """Compute precision-recall pairs for different probability thresholds.
@@ -832,7 +828,6 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
     return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
 
 
-@_deprecate_positional_args
 def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
               drop_intermediate=True):
     """Compute Receiver operating characteristic (ROC).
@@ -965,7 +960,6 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     return fpr, tpr, thresholds
 
 
-@_deprecate_positional_args
 def label_ranking_average_precision_score(y_true, y_score, *,
                                           sample_weight=None):
     """Compute ranking-based average precision.
@@ -1055,7 +1049,6 @@ def label_ranking_average_precision_score(y_true, y_score, *,
     return out
 
 
-@_deprecate_positional_args
 def coverage_error(y_true, y_score, *, sample_weight=None):
     """Coverage error measure.
 
@@ -1115,7 +1108,6 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     return np.average(coverage, weights=sample_weight)
 
 
-@_deprecate_positional_args
 def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     """Compute Ranking loss measure.
 
@@ -1318,7 +1310,6 @@ def _check_dcg_target_type(y_true):
                 supported_fmt, y_type))
 
 
-@_deprecate_positional_args
 def dcg_score(y_true, y_score, *, k=None,
               log_base=2, sample_weight=None, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
@@ -1475,7 +1466,6 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     return gain
 
 
-@_deprecate_positional_args
 def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
                ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.

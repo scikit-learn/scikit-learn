@@ -54,7 +54,6 @@ from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
-from ..utils.validation import _deprecate_positional_args
 
 
 class VerboseReporter:
@@ -238,10 +237,16 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 or self.loss not in _gb_losses.LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
+        # TODO: Remove in v1.2
         if self.loss == "ls":
             warnings.warn("The loss 'ls' was deprecated in v1.0 and "
                           "will be removed in version 1.2. Use 'squared_error'"
                           " which is equivalent.",
+                          FutureWarning)
+        elif self.loss == "lad":
+            warnings.warn("The loss 'lad' was deprecated in v1.0 and "
+                          "will be removed in version 1.2. Use "
+                          "'absolute_error' which is equivalent.",
                           FutureWarning)
 
         if self.loss == 'deviance':
@@ -403,7 +408,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
-        if self.criterion == 'mae':
+        if self.criterion in ('absolute_error', 'mae'):
             # TODO: This should raise an error from 1.1
             self._warn_mae_for_criterion()
 
@@ -1106,7 +1111,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    @_deprecate_positional_args
     def __init__(self, *, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
@@ -1340,18 +1344,21 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'ls', 'lad', 'huber', 'quantile'}, \
-            default='squared_error'
+    loss : {'squared_error', 'ls', 'absolute_error', 'lad', 'huber', \
+            'quantile'}, default='squared_error'
         Loss function to be optimized. 'squared_error' refers to the squared
-        error for regression.
-        'lad' (least absolute deviation) is a highly robust
-        loss function solely based on order information of the input
-        variables. 'huber' is a combination of the two. 'quantile'
-        allows quantile regression (use `alpha` to specify the quantile).
+        error for regression. 'absolute_error' refers to the absolute error of
+        regression and is a robust loss function. 'huber' is a
+        combination of the two. 'quantile' allows quantile regression (use
+        `alpha` to specify the quantile).
 
         .. deprecated:: 1.0
             The loss 'ls' was deprecated in v1.0 and will be removed in
             version 1.2. Use `loss='squared_error'` which is equivalent.
+
+        .. deprecated:: 1.0
+            The loss 'lad' was deprecated in v1.0 and will be removed in
+            version 1.2. Use `loss='absolute_error'` which is equivalent.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -1383,7 +1390,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
             1.1 (renaming of 0.26). The correct way of minimizing the absolute
-            error is to use `loss='lad'` instead.
+            error is to use `loss='absolute_error'` instead.
 
         .. deprecated:: 1.0
             Criterion 'mse' was deprecated in v1.0 and will be removed in
@@ -1644,9 +1651,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """
 
     # TODO: remove "ls" in verion 1.2
-    _SUPPORTED_LOSS = ("squared_error", 'ls', 'lad', 'huber', 'quantile')
+    _SUPPORTED_LOSS = ("squared_error", 'ls', "absolute_error", 'lad', 'huber',
+                       'quantile')
 
-    @_deprecate_positional_args
     def __init__(self, *, loss="squared_error", learning_rate=0.1,
                  n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
@@ -1681,7 +1688,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         warnings.warn("criterion='mae' was deprecated in version 0.24 and "
                       "will be removed in version 1.1 (renaming of 0.26). The "
                       "correct way of minimizing the absolute error is to use "
-                      " loss='lad' instead.", FutureWarning)
+                      " loss='absolute_error' instead.", FutureWarning)
 
     def predict(self, X):
         """Predict regression target for X.

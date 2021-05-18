@@ -16,7 +16,6 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -130,7 +129,6 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
     return return_as(graph)
 
 
-@_deprecate_positional_args
 def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     """Graph of the pixel-to-pixel gradient connections
 
@@ -167,7 +165,6 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return _to_graph(n_x, n_y, n_z, mask, img, return_as, dtype)
 
 
-@_deprecate_positional_args
 def grid_to_graph(n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix,
                   dtype=int):
     """Graph of the pixel-to-pixel connections
@@ -305,7 +302,6 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     return patches
 
 
-@_deprecate_positional_args
 def extract_patches_2d(image, patch_size, *, max_patches=None,
                        random_state=None):
     """Reshape a 2D image into a collection of patches
@@ -483,7 +479,6 @@ class PatchExtractor(BaseEstimator):
     >>> print('Patches shape: {}'.format(pe_trans.shape))
     Patches shape: (545706, 2, 2)
     """
-    @_deprecate_positional_args
     def __init__(self, *, patch_size=None, max_patches=None,
                  random_state=None):
         self.patch_size = patch_size
