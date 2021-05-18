@@ -259,17 +259,3 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             self.coef_ = params
             self.intercept_ = 0.0
         return self
-
-    def _more_tags(self):
-        if sp_version >= parse_version("1.0.0"):
-            return {}
-        return {
-            "_xfail_checks": {
-                "check_regressors_train":
-                    "scipy.optimize.linprog is unstable in versions before "
-                    "1.0.0",
-                "check_regressor_data_not_an_array":
-                    "scipy.optimize.linprog is unstable in versions before "
-                    "1.0.0",
-            }
-        }
