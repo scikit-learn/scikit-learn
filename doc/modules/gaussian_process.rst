@@ -40,28 +40,41 @@ Gaussian Process Regression (GPR)
 .. currentmodule:: sklearn.gaussian_process
 
 The :class:`GaussianProcessRegressor` implements Gaussian processes (GP) for
-regression purposes. For this, the prior of the GP needs to be specified. The
-prior mean is assumed to be constant and zero (for ``normalize_y=False``) or the
-training data's mean (for ``normalize_y=True``). The prior's
-covariance is specified by passing a :ref:`kernel <gp_kernels>` object. The
-hyperparameters of the kernel are optimized during fitting of
-:class:`GaussianProcessRegressor` by maximizing the log-marginal-likelihood (LML) based
-on the passed ``optimizer``. As the LML may have multiple local optima, the
-optimizer can be started repeatedly by specifying ``n_restarts_optimizer``. The
-first run is always conducted starting from the initial hyperparameter values
-of the kernel; subsequent runs are conducted from hyperparameter values
-that have been chosen randomly from the range of allowed values.
-If the initial hyperparameters should be kept fixed, `None` can be passed as
-optimizer.
+regression purposes. For this, the prior of the GP needs to be specified. GP
+will combine this prior and the likelihood function based on training samples.
+It allows to give a probabilistic approach to prediction by giving the mean and
+standard deviation as output when predicting.
 
-The noise level in the targets can be specified by passing it via the
-parameter ``alpha``, either globally as a scalar or per datapoint.
-Note that a moderate noise level can also be helpful for dealing with numeric
-issues during fitting as it is effectively implemented as Tikhonov
-regularization, i.e., by adding it to the diagonal of the kernel matrix. An
-alternative to specifying the noise level explicitly is to include a
-:class:`~sklearn.gaussian_process.kernels.WhiteKernel` component into the kernel, which can estimate the global noise
-level from the data (see example below).
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_targets_001.png
+   :target: ../auto_examples/gaussian_process/plot_gpr_noisy_targets.html
+   :align: center
+
+The prior mean is assumed to be constant and zero (for `normalize_y=False`) or
+the training data's mean (for `normalize_y=True`). The prior's covariance is
+specified by passing a :ref:`kernel <gp_kernels>` object. The hyperparameters
+of the kernel are optimized during fitting of :class:`GaussianProcessRegressor`
+by maximizing the log-marginal-likelihood (LML) based on the passed
+`optimizer`. As the LML may have multiple local optima, the optimizer can be
+started repeatedly by specifying `n_restarts_optimizer`. The first run is
+always conducted starting from the initial hyperparameter values of the kernel;
+subsequent runs are conducted from hyperparameter values that have been chosen
+randomly from the range of allowed values. If the initial hyperparameters
+should be kept fixed, `None` can be passed as optimizer.
+
+The noise level in the targets can be specified by passing it via the parameter
+`alpha`, either globally as a scalar or per datapoint. Note that a moderate
+noise level can also be helpful for dealing with numeric issues during fitting
+as it is effectively implemented as Tikhonov regularization, i.e., by adding it
+to the diagonal of the kernel matrix. An alternative to specifying the noise
+level explicitly is to include a
+:class:`~sklearn.gaussian_process.kernels.WhiteKernel` component into the
+kernel, which can estimate the global noise level from the data (see example
+below). The figure below shows the effect of noisy target handled by setting
+the parameter `alpha`.
+
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_targets_002.png
+   :target: ../auto_examples/gaussian_process/plot_gpr_noisy_targets.html
+   :align: center
 
 The implementation is based on Algorithm 2.1 of [RW2006]_. In addition to
 the API of standard scikit-learn estimators, GaussianProcessRegressor:
@@ -77,6 +90,7 @@ the API of standard scikit-learn estimators, GaussianProcessRegressor:
 
 .. topic:: Examples
 
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy_target.py`
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy.py`
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_co2.py`
