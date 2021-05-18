@@ -11,9 +11,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
-from sklearn.utils.fixes import sp_version, parse_version
-
-_SCIPY_TOO_OLD = "requires at least scipy 1.0.0"
 
 
 @pytest.fixture
@@ -22,7 +19,6 @@ def X_y_data():
     return X, y
 
 
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -47,7 +43,6 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
         QuantileRegressor(**params).fit(X, y)
 
 
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize(
     "quantile, alpha, intercept, coef",
     [
@@ -76,7 +71,6 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef):
     assert model.coef_[0] <= 10
 
 
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
     X, y = make_regression(
@@ -96,7 +90,6 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
         assert np.mean(y < quant.predict(X)) == approx(0.5, abs=1e-1)
 
 
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize("q", [0.5, 0.9, 0.05])
 def test_quantile_estimates_calibration(q):
     # Test that model estimates percentage of points below the prediction
@@ -111,7 +104,6 @@ def test_quantile_estimates_calibration(q):
     assert np.mean(y < quant.predict(X)) == approx(q, abs=1e-2)
 
 
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 def test_quantile_sample_weight():
     # test that with unequal sample weights we still estimate weighted fraction
     n = 1000
@@ -134,7 +126,6 @@ def test_quantile_sample_weight():
     assert weighted_fraction_below == approx(0.5, abs=3e-2)
 
 
-@pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
 def test_asymmetric_error(quantile):
     """Test quantile regression for asymmetric distributed targets."""
