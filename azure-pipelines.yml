@@ -44,7 +44,8 @@ jobs:
       inputs:
         versionSpec: '3.9'
     - bash: |
-        pip install flake8 mypy==0.782
+        # Include pytest compatibility with mypy
+        pip install pytest flake8 mypy==0.782
       displayName: Install linters
     - bash: |
         ./build_tools/circle/linting.sh
