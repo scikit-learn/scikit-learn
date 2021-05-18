@@ -58,6 +58,7 @@ jobs:
       - SCIPY_VERSION: 'latest'
       - MATPLOTLIB_VERSION: 'latest'
       - CYTHON_VERSION: 'latest'
+      - DASK_VERSION: 'latest'
       - SCIKIT_IMAGE_VERSION: 'latest'
       - SPHINX_VERSION: 'min'
       - PANDAS_VERSION: 'latest'
