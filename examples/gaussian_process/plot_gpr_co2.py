@@ -85,16 +85,6 @@ X = (co2_data.index.year + co2_data.index.month / 12).to_numpy().reshape(-1, 1)
 y = co2_data["co2"].to_numpy()
 
 # %%
-plt.plot(X, y, label="Measurements")
-plt.legend()
-plt.xlabel("Year")
-plt.ylabel("Monthly average of CO$_2$ concentration (ppm)")
-_ = plt.title(
-    "Monthly average of air samples measurements\n"
-    "from the Mauna Loa Observatory"
-)
-
-# %%
 # Design the proper kernel
 # ------------------------
 #
