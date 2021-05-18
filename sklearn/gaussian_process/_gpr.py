@@ -337,7 +337,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
         """
         if return_std and return_cov:
             raise RuntimeError(
-                "At most one of return_std or return_cov can be requested.")
+                "At most one of return_std or return_cov can be requested."
+            )
 
         if self.kernel is None or self.kernel.requires_vector_input:
             dtype, ensure_2d = "numeric", True
