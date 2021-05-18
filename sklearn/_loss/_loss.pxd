@@ -19,7 +19,7 @@ ctypedef fused G_DTYPE_C:
 
 
 # Struct to return 2 doubles
-ctypedef struct double2:
+ctypedef struct double_pair:
    double val1
    double val2
 
@@ -28,48 +28,48 @@ ctypedef struct double2:
 cdef class cLossFunction:
     cdef double closs(self, double y_true, double raw_prediction) nogil
     cdef double cgradient(self, double y_true, double raw_prediction) nogil
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil
 
 
 cdef class cHalfSquaredError(cLossFunction):
     cdef double closs(self, double y_true, double raw_prediction) nogil
     cdef double cgradient(self, double y_true, double raw_prediction) nogil
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil
 
 
 cdef class cAbsoluteError(cLossFunction):
     cdef double closs(self, double y_true, double raw_prediction) nogil
     cdef double cgradient(self, double y_true, double raw_prediction) nogil
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil
 
 
 cdef class cPinballLoss(cLossFunction):
     cdef readonly double quantile  # readonly makes it inherited by children
     cdef double closs(self, double y_true, double raw_prediction) nogil
     cdef double cgradient(self, double y_true, double raw_prediction) nogil
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil
 
 
 cdef class cHalfPoissonLoss(cLossFunction):
     cdef double closs(self, double y_true, double raw_prediction) nogil
     cdef double cgradient(self, double y_true, double raw_prediction) nogil
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil
 
 
 cdef class cHalfGammaLoss(cLossFunction):
     cdef double closs(self, double y_true, double raw_prediction) nogil
     cdef double cgradient(self, double y_true, double raw_prediction) nogil
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil
 
 
 cdef class cHalfTweedieLoss(cLossFunction):
     cdef readonly double power  # readonly makes it inherited by children
     cdef double closs(self, double y_true, double raw_prediction) nogil
     cdef double cgradient(self, double y_true, double raw_prediction) nogil
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil
 
 
 cdef class cBinaryCrossEntropy(cLossFunction):
     cdef double closs(self, double y_true, double raw_prediction) nogil
     cdef double cgradient(self, double y_true, double raw_prediction) nogil
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil

@@ -28,7 +28,7 @@
 #
 # Note: We require 1-dim ndarrays to be contiguous.
 # TODO: Use const memoryviews with fused types with Cython 3.0 where
-#       appropriate (arguments marked by "# IN")
+#       appropriate (arguments marked by "# IN").
 
 cimport cython
 from cython.parallel import parallel, prange
@@ -62,9 +62,11 @@ cdef inline void sum_exp_minus_max(
     Y_DTYPE_C[:, :] raw_prediction,  # IN
     Y_DTYPE_C *p                     # OUT
 ) nogil:
-    # Store p[k] = exp(raw_prediction_i_k - max_value) for k = 0 to n_classes-1
-    #       p[-2] = max(raw_prediction_i_k, k = 0 to n_classes-1)
-    #       p[-1] = sum(p[k], k = 0 to n_classes-1) = sum of exponentials
+    # Thread local buffers are used to stores results of this function via p.
+    # The results are stored as follows:
+    #     p[k] = exp(raw_prediction_i_k - max_value) for k = 0 to n_classes-1
+    #     p[-2] = max(raw_prediction_i_k, k = 0 to n_classes-1)
+    #     p[-1] = sum(p[k], k = 0 to n_classes-1) = sum of exponentials
     # len(p) must be n_classes + 2
     # Notes:
     # - Using "by reference" arguments doesn't work well, therefore we use a
@@ -110,11 +112,11 @@ cdef inline double cgradient_half_squared_error(
     return raw_prediction - y_true
 
 
-cdef inline double2 cgrad_hess_half_squared_error(
+cdef inline double_pair cgrad_hess_half_squared_error(
     double y_true,
     double raw_prediction
 ) nogil:
-    cdef double2 gh
+    cdef double_pair gh
     gh.val1 = raw_prediction - y_true  # gradient
     gh.val2 = 1.                       # hessian
     return gh
@@ -135,11 +137,11 @@ cdef inline double cgradient_absolute_error(
     return 1. if raw_prediction > y_true else -1.
 
 
-cdef inline double2 cgrad_hess_absolute_error(
+cdef inline double_pair cgrad_hess_absolute_error(
     double y_true,
     double raw_prediction
 ) nogil:
-    cdef double2 gh
+    cdef double_pair gh
     # Note that exact hessian = 0 almost everywhere. Optimization routines like
     # in HGBT, however, need a hessian > 0. Therefore, we assign 1.
     gh.val1 = 1. if raw_prediction > y_true else -1.  # gradient
@@ -165,12 +167,12 @@ cdef inline double cgradient_pinball_loss(
     return -quantile if y_true >=raw_prediction else 1. - quantile
 
 
-cdef inline double2 cgrad_hess_pinball_loss(
+cdef inline double_pair cgrad_hess_pinball_loss(
     double y_true,
     double raw_prediction,
     double quantile
 ) nogil:
-    cdef double2 gh
+    cdef double_pair gh
     # Note that exact hessian = 0 almost everywhere. Optimization routines like
     # in HGBT, however, need a hessian > 0. Therefore, we assign 1.
     gh.val1 = -quantile if y_true >=raw_prediction else 1. - quantile  # gradient
@@ -194,22 +196,22 @@ cdef inline double cgradient_half_poisson(
     return exp(raw_prediction) - y_true
 
 
-cdef inline double2 closs_grad_half_poisson(
+cdef inline double_pair closs_grad_half_poisson(
     double y_true,
     double raw_prediction
 ) nogil:
-    cdef double2 lg
+    cdef double_pair lg
     lg.val2 = exp(raw_prediction)                # used as temporary
     lg.val1 = lg.val2 - y_true * raw_prediction  # loss
     lg.val2 -= y_true                            # gradient
     return lg
 
 
-cdef inline double2 cgrad_hess_half_poisson(
+cdef inline double_pair cgrad_hess_half_poisson(
     double y_true,
     double raw_prediction
 ) nogil:
-    cdef double2 gh
+    cdef double_pair gh
     gh.val2 = exp(raw_prediction)  # hessian
     gh.val1 = gh.val2 - y_true     # gradient
     return gh
@@ -230,22 +232,22 @@ cdef inline double cgradient_half_gamma(
     return 1. - y_true * exp(-raw_prediction)
 
 
-cdef inline double2 closs_grad_half_gamma(
+cdef inline double_pair closs_grad_half_gamma(
     double y_true,
     double raw_prediction
 ) nogil:
-    cdef double2 lg
+    cdef double_pair lg
     lg.val2 = exp(-raw_prediction)               # used as temporary
     lg.val1 = raw_prediction + y_true * lg.val2  # loss
     lg.val2 = 1. - y_true * lg.val2              # gradient
     return lg
 
 
-cdef inline double2 cgrad_hess_half_gamma(
+cdef inline double_pair cgrad_hess_half_gamma(
     double y_true,
     double raw_prediction
 ) nogil:
-    cdef double2 gh
+    cdef double_pair gh
     gh.val2 = exp(-raw_prediction)   # used as temporary
     gh.val1 = 1. - y_true * gh.val2  # gradient
     gh.val2 *= y_true                # hessian
@@ -288,12 +290,12 @@ cdef inline double cgradient_half_tweedie(
                 - y_true * exp((1. - power) * raw_prediction))
 
 
-cdef inline double2 closs_grad_half_tweedie(
+cdef inline double_pair closs_grad_half_tweedie(
     double y_true,
     double raw_prediction,
     double power
 ) nogil:
-    cdef double2 lg
+    cdef double_pair lg
     cdef double exp1, exp2
     if power == 0.:
         exp1 = exp(raw_prediction)
@@ -311,12 +313,12 @@ cdef inline double2 closs_grad_half_tweedie(
     return lg
 
 
-cdef inline double2 cgrad_hess_half_tweedie(
+cdef inline double_pair cgrad_hess_half_tweedie(
     double y_true,
     double raw_prediction,
     double power
 ) nogil:
-    cdef double2 gh
+    cdef double_pair gh
     cdef double exp1, exp2
     if power == 0.:
         exp1 = exp(raw_prediction)
@@ -368,11 +370,11 @@ cdef inline double cgradient_binary_crossentropy(
     return ((1 - y_true) - y_true * exp_tmp) / (1 + exp_tmp)
 
 
-cdef inline double2 closs_grad_binary_crossentropy(
+cdef inline double_pair closs_grad_binary_crossentropy(
     double y_true,
     double raw_prediction
 ) nogil:
-    cdef double2 lg
+    cdef double_pair lg
     if raw_prediction <= 0:
         lg.val2 = exp(raw_prediction)  # used as temporary
         if raw_prediction <= -37:
@@ -391,14 +393,14 @@ cdef inline double2 closs_grad_binary_crossentropy(
     return lg
 
 
-cdef inline double2 cgrad_hess_binary_crossentropy(
+cdef inline double_pair cgrad_hess_binary_crossentropy(
     double y_true,
     double raw_prediction
 ) nogil:
     # with y_pred = expit(raw)
     # hessian = y_pred * (1 - y_pred) = exp(raw) / (1 + exp(raw))**2
     #                                 = exp(-raw) / (1 + exp(-raw))**2
-    cdef double2 gh
+    cdef double_pair gh
     gh.val2 = exp(-raw_prediction)  # used as temporary
     gh.val1 = ((1 - y_true) - y_true * gh.val2) / (1 + gh.val2)  # gradient
     gh.val2 = gh.val2 / (1 + gh.val2)**2                         # hessian
@@ -445,7 +447,7 @@ cdef class cLossFunction:
         """
         pass
 
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil:
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil:
         """Compute gradient and hessian.
 
         Gradient and hessian of loss w.r.t. raw_prediction for a single sample.
@@ -465,7 +467,7 @@ cdef class cLossFunction:
 
         Returns
         -------
-        double2
+        double_pair
             Gradient and hessian of the loss function w.r.t. `raw_prediction`.
         """
         pass
@@ -627,7 +629,7 @@ cdef class cHalfSquaredError(cLossFunction):
     cdef double cgradient(self, double y_true, double raw_prediction) nogil:
         return cgradient_half_squared_error(y_true, raw_prediction)
 
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil:
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil:
         return cgrad_hess_half_squared_error(y_true, raw_prediction)
 
     def _loss(
@@ -699,7 +701,7 @@ cdef class cHalfSquaredError(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -735,7 +737,7 @@ cdef class cAbsoluteError(cLossFunction):
     cdef double cgradient(self, double y_true, double raw_prediction) nogil:
         return cgradient_absolute_error(y_true, raw_prediction)
 
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil:
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil:
         return cgrad_hess_absolute_error(y_true, raw_prediction)
 
     def _loss(
@@ -804,7 +806,7 @@ cdef class cAbsoluteError(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -846,7 +848,7 @@ cdef class cPinballLoss(cLossFunction):
     cdef double cgradient(self, double y_true, double raw_prediction) nogil:
         return cgradient_pinball_loss(y_true, raw_prediction, self.quantile)
 
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil:
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil:
         return cgrad_hess_pinball_loss(y_true, raw_prediction, self.quantile)
 
     def _loss(
@@ -919,7 +921,7 @@ cdef class cPinballLoss(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -968,7 +970,7 @@ cdef class cHalfPoissonLoss(cLossFunction):
     cdef double cgradient(self, double y_true, double raw_prediction) nogil:
         return cgradient_half_poisson(y_true, raw_prediction)
 
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil:
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil:
         return cgrad_hess_half_poisson(y_true, raw_prediction)
 
     def _loss(
@@ -1011,7 +1013,7 @@ cdef class cHalfPoissonLoss(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -1070,7 +1072,7 @@ cdef class cHalfPoissonLoss(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -1113,7 +1115,7 @@ cdef class cHalfGammaLoss(cLossFunction):
     cdef double cgradient(self, double y_true, double raw_prediction) nogil:
         return cgradient_half_gamma(y_true, raw_prediction)
 
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil:
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil:
         return cgrad_hess_half_gamma(y_true, raw_prediction)
 
     def _loss(
@@ -1156,7 +1158,7 @@ cdef class cHalfGammaLoss(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -1215,7 +1217,7 @@ cdef class cHalfGammaLoss(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -1276,7 +1278,7 @@ cdef class cHalfTweedieLoss(cLossFunction):
     cdef double cgradient(self, double y_true, double raw_prediction) nogil:
         return cgradient_half_tweedie(y_true, raw_prediction, self.power)
 
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil:
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil:
         return cgrad_hess_half_tweedie(y_true, raw_prediction, self.power)
 
     def _loss(
@@ -1319,7 +1321,7 @@ cdef class cHalfTweedieLoss(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -1380,7 +1382,7 @@ cdef class cHalfTweedieLoss(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -1417,7 +1419,7 @@ cdef class cBinaryCrossEntropy(cLossFunction):
     cdef double cgradient(self, double y_true, double raw_prediction) nogil:
         return cgradient_binary_crossentropy(y_true, raw_prediction)
 
-    cdef double2 cgrad_hess(self, double y_true, double raw_prediction) nogil:
+    cdef double_pair cgrad_hess(self, double y_true, double raw_prediction) nogil:
         return cgrad_hess_binary_crossentropy(y_true, raw_prediction)
 
     def _loss(
@@ -1460,7 +1462,7 @@ cdef class cBinaryCrossEntropy(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(
@@ -1519,7 +1521,7 @@ cdef class cBinaryCrossEntropy(cLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
-            double2 dbl2
+            double_pair dbl2
 
         if sample_weight is None:
             for i in prange(

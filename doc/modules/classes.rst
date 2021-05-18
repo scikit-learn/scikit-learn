@@ -1649,7 +1649,7 @@ To be removed in 1.0 (renaming of 0.25)
 
 .. _loss_function_ref:
 
-:mod:`sklearn._loss`: Non-public Loss Function Classes
+:mod:`sklearn._loss`: Private Loss Function Classes
 ===========================================================
 
 .. automodule:: sklearn._loss
