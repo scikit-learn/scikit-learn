@@ -4,6 +4,7 @@
 
 import numpy as np
 import pytest
+from pytest import approx
 from scipy.optimize import minimize
 
 from sklearn.utils._testing import assert_allclose
@@ -90,9 +91,9 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
     )
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
     if fit_intercept:
-        assert huber.intercept_ == pytest.approx(quant.intercept_, abs=1e-1)
+        assert huber.intercept_ == approx(quant.intercept_, abs=1e-1)
         # check that we still predict fraction
-        assert np.mean(y < quant.predict(X)) == pytest.approx(0.5, abs=1e-1)
+        assert np.mean(y < quant.predict(X)) == approx(0.5, abs=1e-1)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
@@ -107,7 +108,7 @@ def test_quantile_estimates_calibration(q):
         alpha=0,
         solver_options={"lstsq": False},
     ).fit(X, y)
-    assert np.mean(y < quant.predict(X)) == pytest.approx(q, abs=1e-2)
+    assert np.mean(y < quant.predict(X)) == approx(q, abs=1e-2)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
@@ -130,7 +131,7 @@ def test_quantile_sample_weight():
     fraction_below = np.mean(y < quant.predict(X))
     assert fraction_below > 0.5
     weighted_fraction_below = np.average(y < quant.predict(X), weights=weight)
-    assert weighted_fraction_below == pytest.approx(0.5, abs=3e-2)
+    assert weighted_fraction_below == approx(0.5, abs=3e-2)
 
 
 @pytest.mark.skipif(sp_version < parse_version("1.0.0"), reason=_SCIPY_TOO_OLD)
@@ -162,7 +163,7 @@ def test_asymmetric_error(quantile):
         solver="interior-point",
         solver_options={"tol": 1e-5},
     ).fit(X, y)
-    assert model.intercept_ == pytest.approx(intercept, rel=0.2)
+    assert model.intercept_ == approx(intercept, rel=0.2)
     assert_allclose(model.coef_, coef, rtol=0.6)
     assert_allclose(np.mean(model.predict(X) > y), quantile)
 
@@ -184,7 +185,7 @@ def test_asymmetric_error(quantile):
         options={"maxiter": 2000},
     )
 
-    assert func(model_coef) == pytest.approx(func(res.x), rel=1e-3)
+    assert func(model_coef) == approx(func(res.x), rel=1e-3)
     assert_allclose(model.intercept_, res.x[0], rtol=1e-3)
     assert_allclose(model.coef_, res.x[1:], rtol=1e-3)
     assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=8e-3)
@@ -202,8 +203,9 @@ def test_equivariance(quantile):
         n_samples=n_samples,
         n_features=n_features,
         n_informative=n_features,
-        noise=1.0,
+        noise=0,
         random_state=rng,
+        shuffle=False,
     )
     # make y asymmetric
     y += rng.exponential(scale=100, size=y.shape)
@@ -212,27 +214,27 @@ def test_equivariance(quantile):
     # coef(q; a*y, X) = a * coef(q; y, X)
     a = 2.5
     model2 = QuantileRegressor(quantile=quantile, alpha=0).fit(X, a * y)
-    assert model2.intercept_ == pytest.approx(a * model1.intercept_)
-    assert_allclose(model2.coef_, a * model1.coef_, rtol=1e-6)
+    assert model2.intercept_ == approx(a * model1.intercept_, rel=1e-5)
+    assert_allclose(model2.coef_, a * model1.coef_, rtol=1e-5)
 
     # coef(1-q; -a*y, X) = -a * coef(q; y, X)
     model2 = QuantileRegressor(quantile=1 - quantile, alpha=0).fit(X, -a * y)
-    assert model2.intercept_ == pytest.approx(-a * model1.intercept_)
-    assert_allclose(model2.coef_, -a * model1.coef_, rtol=1e-6)
+    assert model2.intercept_ == approx(-a * model1.intercept_, rel=1e-5)
+    assert_allclose(model2.coef_, -a * model1.coef_, rtol=1e-5)
 
     # coef(q; y + X @ g, X) = coef(q; y, X) + g
     g_intercept, g_coef = rng.randn(), rng.randn(n_features)
     model2 = QuantileRegressor(quantile=quantile, alpha=0)
     model2.fit(X, y + X @ g_coef + g_intercept)
-    assert model2.intercept_ == pytest.approx(model1.intercept_ + g_intercept)
+    assert model2.intercept_ == approx(model1.intercept_ + g_intercept)
     assert_allclose(model2.coef_, model1.coef_ + g_coef, rtol=1e-6)
 
     # coef(q; y, X @ A) = A^-1 @ coef(q; y, X)
     A = rng.randn(n_features, n_features)
     model2 = QuantileRegressor(quantile=quantile, alpha=0)
     model2.fit(X @ A, y)
-    assert model2.intercept_ == pytest.approx(model1.intercept_)
-    assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=2e-6)
+    assert model2.intercept_ == approx(model1.intercept_, rel=1e-5)
+    assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=1e-5)
 
 
 def test_linprog_failure():
