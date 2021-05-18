@@ -14,12 +14,11 @@ from scipy.special import erf, expit
 from ..base import BaseEstimator, ClassifierMixin, clone
 from .kernels \
     import RBF, CompoundKernel, ConstantKernel as C
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import check_is_fitted
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..preprocessing import LabelEncoder
 from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
-from ..utils.validation import _deprecate_positional_args
 
 
 # Values required for approximating the logistic sigmoid by
@@ -108,7 +107,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -145,7 +144,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         The log-marginal-likelihood of ``self.kernel_.theta``
 
     """
-    @_deprecate_positional_args
     def __init__(self, kernel=None, *, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None):
@@ -533,7 +531,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -595,7 +593,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     .. versionadded:: 0.18
     """
-    @_deprecate_positional_args
     def __init__(self, kernel=None, *, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
@@ -689,9 +686,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         check_is_fitted(self)
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = check_array(X, ensure_2d=True, dtype="numeric")
+            X = self._validate_data(X, ensure_2d=True, dtype="numeric",
+                                    reset=False)
         else:
-            X = check_array(X, ensure_2d=False, dtype=None)
+            X = self._validate_data(X, ensure_2d=False, dtype=None,
+                                    reset=False)
 
         return self.base_estimator_.predict(X)
 
@@ -717,9 +716,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                              "one_vs_rest mode instead.")
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = check_array(X, ensure_2d=True, dtype="numeric")
+            X = self._validate_data(X, ensure_2d=True, dtype="numeric",
+                                    reset=False)
         else:
-            X = check_array(X, ensure_2d=False, dtype=None)
+            X = self._validate_data(X, ensure_2d=False, dtype=None,
+                                    reset=False)
 
         return self.base_estimator_.predict_proba(X)
 

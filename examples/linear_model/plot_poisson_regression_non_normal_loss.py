@@ -258,7 +258,6 @@ score_estimator(poisson_glm, df_test)
 # least-squares loss. Here we only fit trees with the Poisson loss to keep this
 # example concise.
 
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.preprocessing import OrdinalEncoder
 

@@ -46,6 +46,9 @@ def get_openmp_flag(compiler):
 
 def check_openmp_support():
     """Check whether OpenMP test code can be compiled and run"""
+    if "PYODIDE_PACKAGE_ABI" in os.environ:
+        # Pyodide doesn't support OpenMP
+        return False
     code = textwrap.dedent(
         """\
         #include <omp.h>
@@ -71,9 +74,14 @@ def check_openmp_support():
                                       extra_preargs=extra_preargs,
                                       extra_postargs=extra_postargs)
 
-        if 'nthreads=' in output[0]:
+        if output and 'nthreads=' in output[0]:
             nthreads = int(output[0].strip().split('=')[1])
             openmp_supported = len(output) == nthreads
+        elif "PYTHON_CROSSENV" in os.environ:
+            # Since we can't run the test program when cross-compiling
+            # assume that openmp is supported if the program can be
+            # compiled.
+            openmp_supported = True
         else:
             openmp_supported = False
 

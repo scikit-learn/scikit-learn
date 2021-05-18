@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
 import numpy as np
-from joblib import Parallel, delayed
+from joblib import Parallel
 import scipy.sparse as sparse
 
 from ..base import clone
@@ -32,7 +32,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
@@ -249,9 +249,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         names, estimators = zip(*self.estimators)
         parallel = _VisualBlock('parallel', estimators, names=names,
                                 dash_wrapped=False)
-        serial = _VisualBlock('serial', (parallel, final_estimator),
-                              dash_wrapped=False)
-        return _VisualBlock('serial', [serial])
+
+        # final estimator is wrapped in a parallel block to show the label:
+        # 'final_estimator' in the html repr
+        final_block = _VisualBlock('parallel', [final_estimator],
+                                   names=['final_estimator'],
+                                   dash_wrapped=False)
+        return _VisualBlock('serial', (parallel, final_block),
+                            dash_wrapped=False)
 
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
@@ -266,9 +271,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`.
 
-    .. versionadded:: 0.22
-
     Read more in the :ref:`User Guide <stacking>`.
+
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -296,6 +301,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         either binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used.
         In all other cases, :class:`~sklearn.model_selection.KFold` is used.
+        These splitters are instantiated with `shuffle=False` so the splits
+        will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -389,7 +396,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
 
     """
-    @_deprecate_positional_args
     def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, passthrough=False,
                  verbose=0):
@@ -540,9 +546,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`.
 
-    .. versionadded:: 0.22
-
     Read more in the :ref:`User Guide <stacking>`.
+
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -569,6 +575,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         either binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used.
         In all other cases, :class:`~sklearn.model_selection.KFold` is used.
+        These splitters are instantiated with `shuffle=False` so the splits
+        will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -637,7 +645,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     0.3...
 
     """
-    @_deprecate_positional_args
     def __init__(self, estimators, final_estimator=None, *, cv=None,
                  n_jobs=None, passthrough=False, verbose=0):
         super().__init__(

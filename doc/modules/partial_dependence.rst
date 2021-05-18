@@ -105,6 +105,8 @@ generated. The ``values`` field returned by
 used in the grid for each input feature of interest. They also correspond to
 the axis of the plots.
 
+.. _individual_conditional:
+
 Individual conditional expectation (ICE) plot
 =============================================
 
@@ -180,7 +182,7 @@ values are defined by :math:`x_S` for the features in :math:`X_S`, and by
 
 Computing this integral for various values of :math:`x_S` produces a PDP plot
 as above. An ICE line is defined as a single :math:`f(x_{S}, x_{C}^{(i)})`
-evaluated at at :math:`x_{S}`.
+evaluated at :math:`x_{S}`.
 
 Computation methods
 ===================

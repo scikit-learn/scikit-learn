@@ -11,24 +11,27 @@ from scipy.sparse.linalg import eigsh
 
 from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
 from ..utils import check_random_state, check_array
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 
-def barycenter_weights(X, Z, reg=1e-3):
+def barycenter_weights(X, Y, indices, reg=1e-3):
     """Compute barycenter weights of X from Y along the first axis
 
-    We estimate the weights to assign to each point in Y[i] to recover
+    We estimate the weights to assign to each point in Y[indices] to recover
     the point X[i]. The barycenter weights sum to 1.
 
     Parameters
     ----------
     X : array-like, shape (n_samples, n_dim)
 
-    Z : array-like, shape (n_samples, n_neighbors, n_dim)
+    Y : array-like, shape (n_samples, n_dim)
+
+    indices : array-like, shape (n_samples, n_dim)
+            Indices of the points in Y used to compute the barycenter
 
     reg : float, default=1e-3
         amount of regularization to add for the problem to be
@@ -43,27 +46,30 @@ def barycenter_weights(X, Z, reg=1e-3):
     See developers note for more information.
     """
     X = check_array(X, dtype=FLOAT_DTYPES)
-    Z = check_array(Z, dtype=FLOAT_DTYPES, allow_nd=True)
+    Y = check_array(Y, dtype=FLOAT_DTYPES)
+    indices = check_array(indices, dtype=int)
 
-    n_samples, n_neighbors = X.shape[0], Z.shape[1]
+    n_samples, n_neighbors = indices.shape
+    assert X.shape[0] == n_samples
+
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
     v = np.ones(n_neighbors, dtype=X.dtype)
 
     # this might raise a LinalgError if G is singular and has trace
     # zero
-    for i, A in enumerate(Z.transpose(0, 2, 1)):
-        C = A.T - X[i]  # broadcasting
+    for i, ind in enumerate(indices):
+        A = Y[ind]
+        C = A - X[i]  # broadcasting
         G = np.dot(C, C.T)
         trace = np.trace(G)
         if trace > 0:
             R = reg * trace
         else:
             R = reg
-        G.flat[::Z.shape[1] + 1] += R
+        G.flat[::n_neighbors + 1] += R
         w = solve(G, v, sym_pos=True)
         B[i, :] = w / np.sum(w)
     return B
-
 
 def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
@@ -93,7 +99,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
         A[i, j] is assigned the weight of edge that connects i to j.
 
-    See also
+    See Also
     --------
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
@@ -102,7 +108,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     X = knn._fit_X
     n_samples = knn.n_samples_fit_
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
-    data = barycenter_weights(X, X[ind], reg=reg)
+    data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
     return csr_matrix((data.ravel(), ind.ravel(), indptr),
                       shape=(n_samples, n_samples))
@@ -156,22 +162,19 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
             eigen_solver = 'dense'
 
     if eigen_solver == 'arpack':
-        random_state = check_random_state(random_state)
-        # initialize with [-1,1] as in ARPACK
-        v0 = random_state.uniform(-1, 1, M.shape[0])
+        v0 = _init_arpack_v0(M.shape[0], random_state)
         try:
             eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
                                                 tol=tol, maxiter=max_iter,
                                                 v0=v0)
-        except RuntimeError as msg:
-            raise ValueError("Error in determining null-space with ARPACK. "
-                             "Error message: '%s'. "
-                             "Note that eigen_solver='arpack' can fail when "
-                             "the weight matrix is singular or otherwise "
-                             "ill-behaved. In that case, eigen_solver='dense' "
-                             "is recommended. See online documentation for "
-                             "more information."
-                             % msg)
+        except RuntimeError as e:
+            raise ValueError(
+                "Error in determining null-space with ARPACK. Error message: "
+                "'%s'. Note that eigen_solver='arpack' can fail when the "
+                "weight matrix is singular or otherwise ill-behaved. In that "
+                "case, eigen_solver='dense' is recommended. See online "
+                "documentation for more information." % e
+            ) from e
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':
@@ -185,7 +188,6 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
-@_deprecate_positional_args
 def locally_linear_embedding(
         X, *, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
         tol=1e-6, max_iter=100, method='standard', hessian_tol=1E-4,
@@ -559,15 +561,15 @@ class LocallyLinearEmbedding(TransformerMixin,
         Not used if eigen_solver=='dense'.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
-        standard : use the standard locally linear embedding algorithm.  see
-                   reference [1]
-        hessian  : use the Hessian eigenmap method. This method requires
-                   ``n_neighbors > n_components * (1 + (n_components + 1) / 2``
-                   see reference [2]
-        modified : use the modified locally linear embedding algorithm.
-                   see reference [3]
-        ltsa     : use local tangent space alignment algorithm
-                   see reference [4]
+        - `standard`: use the standard locally linear embedding algorithm. see
+          reference [1]_
+        - `hessian`: use the Hessian eigenmap method. This method requires
+          ``n_neighbors > n_components * (1 + (n_components + 1) / 2``. see
+          reference [2]_
+        - `modified`: use the modified locally linear embedding algorithm.
+          see reference [3]_
+        - `ltsa`: use local tangent space alignment algorithm. see
+          reference [4]_
 
     hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
@@ -632,7 +634,6 @@ class LocallyLinearEmbedding(TransformerMixin,
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
@@ -723,8 +724,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
                                     return_distance=False)
-        weights = barycenter_weights(X, self.nbrs_._fit_X[ind],
-                                     reg=self.reg)
+        weights = barycenter_weights(X, self.nbrs_._fit_X, ind, reg=self.reg)
         X_new = np.empty((X.shape[0], self.n_components))
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])

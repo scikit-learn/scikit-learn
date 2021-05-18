@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_roc_curve
 from sklearn.metrics import RocCurveDisplay
 from sklearn.metrics import roc_curve
@@ -11,7 +10,6 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.base import ClassifierMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -33,42 +31,6 @@ def data():
 def data_binary(data):
     X, y = data
     return X[y < 2], y[y < 2]
-
-
-def test_plot_roc_curve_error_non_binary(pyplot, data):
-    X, y = data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-
-    msg = "DecisionTreeClassifier should be a binary classifier"
-    with pytest.raises(ValueError, match=msg):
-        plot_roc_curve(clf, X, y)
-
-
-@pytest.mark.parametrize(
-    "response_method, msg",
-    [("predict_proba", "response method predict_proba is not defined in "
-                       "MyClassifier"),
-     ("decision_function", "response method decision_function is not defined "
-                           "in MyClassifier"),
-     ("auto", "response method decision_function or predict_proba is not "
-              "defined in MyClassifier"),
-     ("bad_method", "response_method must be 'predict_proba', "
-                    "'decision_function' or 'auto'")])
-def test_plot_roc_curve_error_no_response(pyplot, data_binary, response_method,
-                                          msg):
-    X, y = data_binary
-
-    class MyClassifier(ClassifierMixin):
-        def fit(self, X, y):
-            self.classes_ = [0, 1]
-            return self
-
-    clf = MyClassifier().fit(X, y)
-
-    with pytest.raises(ValueError, match=msg):
-        plot_roc_curve(clf, X, y, response_method=response_method)
-
 
 @pytest.mark.parametrize("response_method",
                          ["predict_proba", "decision_function"])
@@ -144,23 +106,6 @@ def test_roc_curve_not_fitted_errors(pyplot, data_binary, clf):
     disp = plot_roc_curve(clf, X, y)
     assert clf.__class__.__name__ in disp.line_.get_label()
     assert disp.estimator_name == clf.__class__.__name__
-
-
-def test_plot_roc_curve_estimator_name_multiple_calls(pyplot, data_binary):
-    # non-regression test checking that the `name` used when calling
-    # `plot_roc_curve` is used as well when calling `disp.plot()`
-    X, y = data_binary
-    clf_name = "my hand-crafted name"
-    clf = LogisticRegression().fit(X, y)
-    disp = plot_roc_curve(clf, X, y, name=clf_name)
-    assert disp.estimator_name == clf_name
-    pyplot.close("all")
-    disp.plot()
-    assert clf_name in disp.line_.get_label()
-    pyplot.close("all")
-    clf_name = "another_name"
-    disp.plot(name=clf_name)
-    assert clf_name in disp.line_.get_label()
 
 
 @pytest.mark.parametrize(

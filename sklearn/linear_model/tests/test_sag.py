@@ -453,14 +453,15 @@ def test_get_auto_step_size():
                          max_squared_sum_, alpha, "wrong", fit_intercept)
 
 
-def test_sag_regressor():
+@pytest.mark.parametrize("seed", range(3))  # locally tested with 1000 seeds
+def test_sag_regressor(seed):
     """tests if the sag regressor performs well"""
     xmin, xmax = -5, 5
-    n_samples = 20
+    n_samples = 300
     tol = .001
-    max_iter = 50
+    max_iter = 100
     alpha = 0.1
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(seed)
     X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
 
     # simple linear function without noise
@@ -473,8 +474,8 @@ def test_sag_regressor():
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
-    assert score1 > 0.99
-    assert score2 > 0.99
+    assert score1 > 0.98
+    assert score2 > 0.98
 
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -486,9 +487,8 @@ def test_sag_regressor():
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
-    score2 = clf2.score(X, y)
-    assert score1 > 0.5
-    assert score2 > 0.5
+    assert score1 > 0.45
+    assert score2 > 0.45
 
 
 @pytest.mark.filterwarnings('ignore:The max_iter was reached')

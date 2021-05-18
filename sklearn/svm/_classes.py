@@ -5,9 +5,7 @@ from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
-from ..utils.deprecation import deprecated
 
 
 class LinearSVC(LinearClassifierMixin,
@@ -35,7 +33,8 @@ class LinearSVC(LinearClassifierMixin,
     loss : {'hinge', 'squared_hinge'}, default='squared_hinge'
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
-        square of the hinge loss.
+        square of the hinge loss. The combination of ``penalty='l1'``
+        and ``loss='hinge'`` is not supported.
 
     dual : bool, default=True
         Select the algorithm to either solve the dual or primal
@@ -88,7 +87,7 @@ class LinearSVC(LinearClassifierMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         the dual coordinate descent (if ``dual=True``). When ``dual=False`` the
         underlying implementation of :class:`LinearSVC` is not random and
@@ -104,7 +103,7 @@ class LinearSVC(LinearClassifierMixin,
     coef_ : ndarray of shape (1, n_features) if n_classes == 2 \
             else (n_classes, n_features)
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of a linear kernel.
+        problem).
 
         ``coef_`` is a readonly property derived from ``raw_coef_`` that
         follows the internal memory layout of liblinear.
@@ -120,8 +119,7 @@ class LinearSVC(LinearClassifierMixin,
 
     See Also
     --------
-    SVC
-        Implementation of Support Vector Machine classifier using libsvm:
+    SVC : Implementation of Support Vector Machine classifier using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
@@ -133,8 +131,8 @@ class LinearSVC(LinearClassifierMixin,
         Finally SVC can fit dense data without memory copy if the input
         is C-contiguous. Sparse data will still incur memory copy though.
 
-    sklearn.linear_model.SGDClassifier
-        SGDClassifier can optimize the same cost function as LinearSVC
+    sklearn.linear_model.SGDClassifier : SGDClassifier can optimize the same
+        cost function as LinearSVC
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
@@ -179,7 +177,6 @@ class LinearSVC(LinearClassifierMixin,
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-    @_deprecate_positional_args
     def __init__(self, penalty='l2', loss='squared_hinge', *, dual=True,
                  tol=1e-4, C=1.0, multi_class='ovr', fit_intercept=True,
                  intercept_scaling=1, class_weight=None, verbose=0,
@@ -248,7 +245,7 @@ class LinearSVC(LinearClassifierMixin,
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -313,7 +310,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -326,7 +323,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     coef_ : ndarray of shape (n_features) if n_classes == 2 \
             else (n_classes, n_features)
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of a linear kernel.
+        problem).
 
         `coef_` is a readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
@@ -360,23 +357,20 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     See Also
     --------
-    LinearSVC
-        Implementation of Support Vector Machine classifier using the
+    LinearSVC : Implementation of Support Vector Machine classifier using the
         same library as this class (liblinear).
 
-    SVR
-        Implementation of Support Vector Machine regression using libsvm:
+    SVR : Implementation of Support Vector Machine regression using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
-    sklearn.linear_model.SGDRegressor
-        SGDRegressor can optimize the same cost function as LinearSVR
+    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
+        function as LinearSVR
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, epsilon=0.0, tol=1e-4, C=1.0,
                  loss='epsilon_insensitive', fit_intercept=True,
                  intercept_scaling=1., dual=True, verbose=0,
@@ -436,7 +430,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -552,7 +546,7 @@ class SVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
@@ -564,7 +558,7 @@ class SVC(BaseSVC):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     coef_ : ndarray of shape (n_classes * (n_classes - 1) / 2, n_features)
@@ -630,12 +624,10 @@ class SVC(BaseSVC):
 
     See Also
     --------
-    SVR
-        Support Vector Machine for Regression implemented using libsvm.
+    SVR : Support Vector Machine for Regression implemented using libsvm.
 
-    LinearSVC
-        Scalable Linear Support Vector Machine for classification
-        implemented using liblinear. Check the See also section of
+    LinearSVC : Scalable Linear Support Vector Machine for classification
+        implemented using liblinear. Check the See Also section of
         LinearSVC for more comparison element.
 
     References
@@ -650,7 +642,6 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    @_deprecate_positional_args
     def __init__(self, *, C=1.0, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
@@ -670,7 +661,7 @@ class SVC(BaseSVC):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -775,7 +766,7 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
@@ -854,11 +845,9 @@ class NuSVC(BaseSVC):
 
     See Also
     --------
-    SVC
-        Support Vector Machine for classification using libsvm.
+    SVC : Support Vector Machine for classification using libsvm.
 
-    LinearSVC
-        Scalable linear Support Vector Machine for classification using
+    LinearSVC : Scalable linear Support Vector Machine for classification using
         liblinear.
 
     References
@@ -873,7 +862,6 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    @_deprecate_positional_args
     def __init__(self, *, nu=0.5, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
@@ -895,7 +883,7 @@ class NuSVC(BaseSVC):
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
                 'check_class_weight_classifiers': 'class_weight is ignored.',
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1022,12 +1010,10 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     See Also
     --------
-    NuSVR
-        Support Vector Machine for regression implemented using libsvm
+    NuSVR : Support Vector Machine for regression implemented using libsvm
         using a parameter to control the number of support vectors.
 
-    LinearSVR
-        Scalable Linear Support Vector Machine for regression
+    LinearSVR : Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
 
     References
@@ -1042,7 +1028,6 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = 'epsilon_svr'
 
-    @_deprecate_positional_args
     def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
@@ -1053,26 +1038,10 @@ class SVR(RegressorMixin, BaseLibSVM):
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
-    @property
-    def probA_(self):
-        return self._probA
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
-    @property
-    def probB_(self):
-        return self._probB
-
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1193,12 +1162,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     See Also
     --------
-    NuSVC
-        Support Vector Machine for classification implemented with libsvm
+    NuSVC : Support Vector Machine for classification implemented with libsvm
         with a parameter to control the number of support vectors.
 
-    SVR
-        epsilon Support Vector Machine for regression implemented with libsvm.
+    SVR : Epsilon Support Vector Machine for regression implemented with
+        libsvm.
 
     References
     ----------
@@ -1212,7 +1180,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = 'nu_svr'
 
-    @_deprecate_positional_args
     def __init__(self, *, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma='scale', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
@@ -1226,7 +1193,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1343,11 +1310,14 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+
+    See also
+    --------
+    sklearn.linear_model.SGDOneClassSVM
     """
 
     _impl = 'one_class'
 
-    @_deprecate_positional_args
     def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
@@ -1440,26 +1410,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
-    @property
-    def probA_(self):
-        return self._probA
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
-    @property
-    def probB_(self):
-        return self._probB
-
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }

@@ -633,7 +633,8 @@ def test_assess_dimesion_rank_one():
     n_samples, n_features = 9, 6
     X = np.ones((n_samples, n_features))  # rank 1 matrix
     _, s, _ = np.linalg.svd(X, full_matrices=True)
-    assert sum(s[1:]) == 0  # except for rank 1, all eigenvalues are 0
+    # except for rank 1, all eigenvalues are 0 resp. close to 0 (FP)
+    assert_allclose(s[1:], np.zeros(n_features-1), atol=1e-12)
 
     assert np.isfinite(_assess_dimension(s, rank=1, n_samples=n_samples))
     for rank in range(2, n_features):

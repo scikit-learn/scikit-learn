@@ -4,7 +4,6 @@ from .. import auc
 from .. import roc_curve
 
 from ...utils import check_matplotlib_support
-from ...utils.validation import _deprecate_positional_args
 
 
 class RocCurveDisplay:
@@ -47,6 +46,12 @@ class RocCurveDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
 
+    See Also
+    --------
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    roc_auc_score : Compute the area under the ROC curve.
+
     Examples
     --------
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
@@ -61,7 +66,6 @@ class RocCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
-
     def __init__(self, *, fpr, tpr,
                  roc_auc=None, estimator_name=None, pos_label=None):
         self.estimator_name = estimator_name
@@ -70,7 +74,6 @@ class RocCurveDisplay:
         self.roc_auc = roc_auc
         self.pos_label = pos_label
 
-    @_deprecate_positional_args
     def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization
 
@@ -126,7 +129,6 @@ class RocCurveDisplay:
         return self
 
 
-@_deprecate_positional_args
 def plot_roc_curve(estimator, X, y, *, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
                    name=None, ax=None, pos_label=None, **kwargs):
@@ -184,9 +186,9 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
 
     See Also
     --------
-    roc_auc_score : Compute the area under the ROC curve
-
-    roc_curve : Compute Receiver operating characteristic (ROC) curve
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay : ROC Curve visualization.
+    roc_auc_score : Compute the area under the ROC curve.
 
     Examples
     --------

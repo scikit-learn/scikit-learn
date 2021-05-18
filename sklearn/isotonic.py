@@ -11,7 +11,7 @@ import math
 
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
-from .utils.validation import _check_sample_weight, _deprecate_positional_args
+from .utils.validation import _check_sample_weight
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
@@ -76,7 +76,6 @@ def check_increasing(x, y):
     return increasing_bool
 
 
-@_deprecate_positional_args
 def isotonic_regression(y, *, sample_weight=None, y_min=None, y_max=None,
                         increasing=True):
     """Solve the isotonic regression model.
@@ -153,13 +152,14 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         or decrease with `X`. 'auto' will decide based on the Spearman
         correlation estimate's sign.
 
-    out_of_bounds : str, default="nan"
-        The ``out_of_bounds`` parameter handles how `X` values outside of the
-        training domain are handled.  When set to "nan", predictions
-        will be NaN.  When set to "clip", predictions will be
-        set to the value corresponding to the nearest train interval endpoint.
-        When set to "raise" a `ValueError` is raised.
+    out_of_bounds : {'nan', 'clip', 'raise'}, default='nan'
+        Handles how `X` values outside of the training domain are handled
+        during prediction.
 
+        - 'nan', predictions will be NaN.
+        - 'clip', predictions will be set to the value corresponding to
+          the nearest train interval endpoint.
+        - 'raise', a `ValueError` is raised.
 
     Attributes
     ----------
@@ -189,7 +189,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    Ties are broken using the secondary method from Leeuw, 1977.
+    Ties are broken using the secondary method from de Leeuw, 1977.
 
     References
     ----------
@@ -200,11 +200,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Isotone Optimization in R : Pool-Adjacent-Violators
     Algorithm (PAVA) and Active Set Methods
-    Leeuw, Hornik, Mair
+    de Leeuw, Hornik, Mair
     Journal of Statistical Software 2009
 
     Correctness of Kruskal's algorithms for monotone regression with ties
-    Leeuw, Psychometrica, 1977
+    de Leeuw, Psychometrica, 1977
 
     Examples
     --------
@@ -215,7 +215,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     >>> iso_reg.predict([.1, .2])
     array([1.8628..., 3.7256...])
     """
-    @_deprecate_positional_args
     def __init__(self, *, y_min=None, y_max=None, increasing=True,
                  out_of_bounds='nan'):
         self.y_min = y_min
@@ -301,6 +300,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples,) or (n_samples, 1)
             Training data.
 
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
+
         y : array-like of shape (n_samples,)
             Training target.
 
@@ -344,6 +346,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         ----------
         T : array-like of shape (n_samples,) or (n_samples, 1)
             Data to transform.
+
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
 
         Returns
         -------

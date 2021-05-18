@@ -434,9 +434,10 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -745,9 +746,10 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -1293,9 +1295,10 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -1504,10 +1507,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
                     if current_proxy_improvement > best_proxy_improvement:
                         best_proxy_improvement = current_proxy_improvement
-                        current.improvement = self.criterion.impurity_improvement(impurity)
-
                         self.criterion.children_impurity(&current.impurity_left,
                                                          &current.impurity_right)
+                        current.improvement = self.criterion.impurity_improvement(
+                            impurity, current.impurity_left, current.impurity_right)
                         best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
@@ -1521,9 +1524,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling

@@ -22,10 +22,10 @@ from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
 from ..utils import _safe_indexing
-from ..utils import check_array, column_or_1d
+from ..utils import column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -131,7 +131,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'], reset=False)
 
         # Initialize first layer
         activation = X
@@ -358,8 +358,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
+        first_pass = (not hasattr(self, 'coefs_') or
+                      (not self.warm_start and not incremental))
 
-        X, y = self._validate_input(X, y, incremental)
+        X, y = self._validate_input(X, y, incremental, reset=first_pass)
 
         n_samples, n_features = X.shape
 
@@ -375,8 +377,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # check random state
         self._random_state = check_random_state(self.random_state)
 
-        if not hasattr(self, 'coefs_') or (not self.warm_start and not
-                                           incremental):
+        if first_pass:
             # First time training the model
             self._initialize(y, layer_units, X.dtype)
 
@@ -824,6 +825,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         validation score is not improving by at least tol for
         ``n_iter_no_change`` consecutive epochs. The split is stratified,
         except in a multilabel setting.
+        If early stopping is False, then the training stops when the training
+        loss does not improve by more than tol for n_iter_no_change consecutive
+        passes over the training set.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, default=0.1
@@ -883,7 +887,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         layer i + 1.
 
     n_iter_ : int
-        The number of iterations the solver has ran.
+        The number of iterations the solver has run.
 
     n_layers_ : int
         Number of layers.
@@ -893,13 +897,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     out_activation_ : str
         Name of the output activation function.
-
-    loss_curve_ : list of shape (n_iters,)
-        Loss value evaluated at the end of each training step.
-
-    t_ : int
-        Mathematically equals `n_iters * X.shape[0]`, it means
-        `time_step` and it is used by optimizer's learning rate scheduler.
 
     Examples
     --------
@@ -946,7 +943,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    @_deprecate_positional_args
     def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
@@ -970,30 +966,53 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
             n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
-    def _validate_input(self, X, y, incremental):
+    def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
                                    multi_output=True,
-                                   dtype=(np.float64, np.float32))
+                                   dtype=(np.float64, np.float32),
+                                   reset=reset)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
-        if not incremental:
+        # Matrix of actions to be taken under the possible combinations:
+        # The case that incremental == True and classes_ not defined is
+        # already checked by _check_partial_fit_first_call that is called
+        # in _partial_fit below.
+        # The cases are already grouped into the respective if blocks below.
+        #
+        # incremental warm_start classes_ def  action
+        #    0            0         0        define classes_
+        #    0            1         0        define classes_
+        #    0            0         1        redefine classes_
+        #
+        #    0            1         1        check compat warm_start
+        #    1            1         1        check compat warm_start
+        #
+        #    1            0         1        check compat last fit
+        #
+        # Note the reliance on short-circuiting here, so that the second
+        # or part implies that classes_ is defined.
+        if (
+            (not hasattr(self, "classes_")) or
+            (not self.warm_start and not incremental)
+        ):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
-        elif self.warm_start:
-            classes = unique_labels(y)
-            if set(classes) != set(self.classes_):
-                raise ValueError("warm_start can only be used where `y` has "
-                                 "the same classes as in the previous "
-                                 "call to fit. Previously got %s, `y` has %s" %
-                                 (self.classes_, classes))
         else:
             classes = unique_labels(y)
-            if len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
-                raise ValueError("`y` has classes not in `self.classes_`."
-                                 " `self.classes_` has %s. 'y' has %s." %
-                                 (self.classes_, classes))
+            if self.warm_start:
+                if set(classes) != set(self.classes_):
+                    raise ValueError(
+                        f"warm_start can only be used where `y` has the same "
+                        f"classes as in the previous call to fit. Previously "
+                        f"got {self.classes_}, `y` has {classes}"
+                    )
+            elif len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
+                raise ValueError(
+                    f"`y` has classes not in `self.classes_`. "
+                    f"`self.classes_` has {self.classes_}. 'y' has {classes}."
+                )
 
         # This downcast to bool is to prevent upcasting when working with
         # float32 data
@@ -1021,38 +1040,19 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
-    def fit(self, X, y):
-        """Fit the model to data matrix X and target(s) y.
-
-        Parameters
-        ----------
-        X : ndarray or sparse matrix of shape (n_samples, n_features)
-            The input data.
-
-        y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
-            The target values (class labels in classification, real numbers in
-            regression).
-
-        Returns
-        -------
-        self : returns a trained MLP model.
-        """
-        return self._fit(X, y, incremental=(self.warm_start and
-                                            hasattr(self, "classes_")))
-
     @property
     def partial_fit(self):
         """Update the model with a single iteration over the given data.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
-        classes : array, shape (n_classes), default None
+        classes : array of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -1129,7 +1129,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron regressor.
 
-    This model optimizes the squared-loss using LBFGS or stochastic gradient
+    This model optimizes the squared error using LBFGS or stochastic gradient
     descent.
 
     .. versionadded:: 0.18
@@ -1294,10 +1294,13 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         The minimum loss reached by the solver throughout fitting.
 
     loss_curve_ : list of shape (`n_iter_`,)
+        Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
+        Mathematically equals `n_iters * X.shape[0]`, it means
+        `time_step` and it is used by optimizer's learning rate scheduler.
 
     coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
@@ -1308,7 +1311,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         layer i + 1.
 
     n_iter_ : int
-        The number of iterations the solver has ran.
+        The number of iterations the solver has run.
 
     n_layers_ : int
         Number of layers.
@@ -1318,13 +1321,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     out_activation_ : str
         Name of the output activation function.
-
-    loss_curve_ : list of shape (n_iters,)
-        Loss value evaluated at the end of each training step.
-
-    t_ : int
-        Mathematically equals `n_iters * X.shape[0]`, it means
-        `time_step` and it is used by optimizer's learning rate scheduler.
 
     Examples
     --------
@@ -1369,7 +1365,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    @_deprecate_positional_args
     def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
@@ -1385,7 +1380,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             activation=activation, solver=solver, alpha=alpha,
             batch_size=batch_size, learning_rate=learning_rate,
             learning_rate_init=learning_rate_init, power_t=power_t,
-            max_iter=max_iter, loss='squared_loss', shuffle=shuffle,
+            max_iter=max_iter, loss='squared_error', shuffle=shuffle,
             random_state=random_state, tol=tol, verbose=verbose,
             warm_start=warm_start, momentum=momentum,
             nesterovs_momentum=nesterovs_momentum,
@@ -1413,10 +1408,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             return y_pred.ravel()
         return y_pred
 
-    def _validate_input(self, X, y, incremental):
+    def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
                                    multi_output=True, y_numeric=True,
-                                   dtype=(np.float64, np.float32))
+                                   dtype=(np.float64, np.float32),
+                                   reset=reset)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
