@@ -25,7 +25,6 @@ from scipy import sparse as sp
 from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.fixes import _astype_copy_false
 from ...utils.multiclass import type_of_target
-from ...utils.validation import _deprecate_positional_args
 from ...utils.validation import check_array, check_consistent_length
 
 
@@ -84,7 +83,6 @@ def _generalized_average(U, V, average_method):
                          "'arithmetic', or 'max'")
 
 
-@_deprecate_positional_args
 def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
                        dtype=np.int64):
     """Build a contingency matrix describing the relationship between labels.
@@ -390,7 +388,6 @@ def adjusted_rand_score(labels_true, labels_pred):
                                        (tp + fp) * (fp + tn))
 
 
-@_deprecate_positional_args
 def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
@@ -611,7 +608,6 @@ def completeness_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
-@_deprecate_positional_args
 def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     """V-measure cluster labeling given a ground truth.
 
@@ -711,7 +707,6 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
                                               beta=beta)[2]
 
 
-@_deprecate_positional_args
 def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     """Mutual Information between two clusterings.
 
@@ -799,7 +794,6 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     return np.clip(mi.sum(), 0.0, None)
 
 
-@_deprecate_positional_args
 def adjusted_mutual_info_score(labels_true, labels_pred, *,
                                average_method='arithmetic'):
     """Adjusted Mutual Information between two clusterings.
@@ -920,7 +914,6 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     return ami
 
 
-@_deprecate_positional_args
 def normalized_mutual_info_score(labels_true, labels_pred, *,
                                  average_method='arithmetic'):
     """Normalized Mutual Information between two clusterings.
@@ -1021,7 +1014,6 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     return nmi
 
 
-@_deprecate_positional_args
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 

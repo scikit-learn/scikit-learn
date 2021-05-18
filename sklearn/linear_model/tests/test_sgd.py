@@ -299,19 +299,6 @@ def test_plain_has_no_average_attr(klass):
     assert not hasattr(clf, '_standard_coef')
 
 
-# TODO: remove in 1.0
-@pytest.mark.parametrize('klass', [SGDClassifier, SGDRegressor])
-def test_sgd_deprecated_attr(klass):
-    est = klass(average=True, eta0=.01)
-    est.fit(X, Y)
-
-    msg = "Attribute {} was deprecated"
-    for att in ['average_coef_', 'average_intercept_',
-                'standard_coef_', 'standard_intercept_']:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(est, att)
-
-
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
                                    SGDRegressor, SparseSGDRegressor,
                                    SGDOneClassSVM, SparseSGDOneClassSVM])

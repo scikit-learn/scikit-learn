@@ -246,6 +246,7 @@ Examples
 Query for k-nearest neighbors
 
     >>> import numpy as np
+    >>> from sklearn.neighbors import {BinaryTree}
     >>> rng = np.random.RandomState(0)
     >>> X = rng.random_sample((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP

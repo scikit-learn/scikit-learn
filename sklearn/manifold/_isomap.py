@@ -7,7 +7,6 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -123,7 +122,6 @@ class Isomap(TransformerMixin, BaseEstimator):
     .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
