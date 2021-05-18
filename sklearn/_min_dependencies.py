@@ -40,6 +40,7 @@ dependent_packages = {
     'numpydoc': ('1.0.0', 'docs'),
     'Pillow': ('7.1.2', 'docs'),
     'sphinx-prompt': ('1.3.0', 'docs'),
+    'dask': ('1.2.0', 'docs, examples'),
 }
 
 

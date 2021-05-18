@@ -172,6 +172,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
     "$(get_dep cython $CYTHON_VERSION)" \
     "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
     "$(get_dep sphinx $SPHINX_VERSION)" \
+    "$(get_dep dask $DASK_VERSION)" \
     "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)" \
     "$(get_dep pandas $PANDAS_VERSION)" \
     joblib memory_profiler packaging seaborn pillow pytest coverage
