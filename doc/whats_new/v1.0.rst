@@ -174,8 +174,9 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Enhancement| :class:`compose.ColumnTransformer` returns a pandas DataFrame
-  when every transformer outputs a DataFrame in :meth:`transform`.
+- |Enhancement| :meth:`compose.ColumnTransformer.transform` returns a pandas
+  DataFrame when every transformer outputs a DataFrame from :meth:`transform`.
+  :pr:`20110` by `Thomas Fan`_.
 
 - |Enhancement| :class:`compose.ColumnTransformer` now records the output
   of each transformer in `output_indices_`. :pr:`18393` by
