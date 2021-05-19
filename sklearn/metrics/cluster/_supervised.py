@@ -1076,7 +1076,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     .. [1] `E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
        hierarchical clusterings". Journal of the American Statistical
        Association
-       <http://wildfire.stat.ucla.edu/pdflibrary/fowlkes.pdf>`_
+       <https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008>`_
 
     .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
            <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
