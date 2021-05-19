@@ -417,8 +417,9 @@ Changelog
 
 - |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
-  and :class:`neighbors.RadiusNeighborsRegressor` classes now follow design principles
-  for estimators. :pr:`20072` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+  and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
+  `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
+  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.pipeline`
 .......................
