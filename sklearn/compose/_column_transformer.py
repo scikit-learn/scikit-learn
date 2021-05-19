@@ -655,7 +655,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return self._hstack_np(Xs)
 
     def _hstack_np(self, Xs):
-        """Stack Xs horizontally."""
+        """Stack Xs horizontally into a numpy array or sparse matrix."""
         if self.sparse_output_:
             try:
                 # since all columns should be numeric before stacking them
