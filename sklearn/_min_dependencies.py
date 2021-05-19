@@ -5,12 +5,11 @@ import argparse
 
 # numpy scipy and cython should by in sync with pyproject.toml
 if platform.python_implementation() == 'PyPy':
-    SCIPY_MIN_VERSION = '1.1.0'
     NUMPY_MIN_VERSION = '1.19.0'
 else:
-    SCIPY_MIN_VERSION = '0.19.1'
-    NUMPY_MIN_VERSION = '1.13.3'
+    NUMPY_MIN_VERSION = '1.14.5'
 
+SCIPY_MIN_VERSION = '1.1.0'
 JOBLIB_MIN_VERSION = '0.11'
 THREADPOOLCTL_MIN_VERSION = '2.0.0'
 PYTEST_MIN_VERSION = '5.0.1'
@@ -26,9 +25,9 @@ dependent_packages = {
     'joblib': (JOBLIB_MIN_VERSION, 'install'),
     'threadpoolctl': (THREADPOOLCTL_MIN_VERSION, 'install'),
     'cython': (CYTHON_MIN_VERSION, 'build'),
-    'matplotlib': ('2.1.1', 'benchmark, docs, examples, tests'),
-    'scikit-image': ('0.13', 'docs, examples, tests'),
-    'pandas': ('0.25.0', 'benchmark, docs, examples, tests'),
+    'matplotlib': ('2.2.2', 'benchmark, docs, examples, tests'),
+    'scikit-image': ('0.14', 'docs, examples, tests'),
+    'pandas': ('0.23.4', 'benchmark, docs, examples, tests'),
     'seaborn': ('0.9.0', 'docs, examples'),
     'memory_profiler': ('0.57.0', 'benchmark, docs'),
     'pytest': (PYTEST_MIN_VERSION, 'tests'),
