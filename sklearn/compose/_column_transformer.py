@@ -633,12 +633,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         This allows subclasses to control the stacking behavior, while reusing
         everything else from ColumnTransformer.
 
+        If Xs are all DataFrames and their indexes are the same then a
+        DataFrame is returned.
+
         Parameters
         ----------
         Xs : list of {array-like, sparse matrix, dataframe}
         """
+        # Check that all output from transformers are pandas DataFrames
         if all(hasattr(X, "iloc") for X in Xs):
-            # All output from transformers are pandas DataFrames
             if any(not Xs[0].index.equals(X.index) for X in Xs[1:]):
                 warnings.warn(
                     "The DataFrame's indexes for each transformer do not "
