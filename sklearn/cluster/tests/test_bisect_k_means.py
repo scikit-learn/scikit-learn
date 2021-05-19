@@ -77,7 +77,8 @@ class MyTestCase(unittest.TestCase):
         sparse_centers = bisect_means.cluster_centers_
 
         bisect_means.fit(X)
-        assert_array_almost_equal(bisect_means.cluster_centers_, sparse_centers)
+        normal_centers = bisect_means.cluster_centers_
+        assert_array_almost_equal(normal_centers, sparse_centers)
 
 
 if __name__ == '__main__':

@@ -15,6 +15,7 @@ from ._kmeans import KMeans, _kmeans_single_elkan, \
 import scipy.sparse as sp
 from sklearn.exceptions import ConvergenceWarning, EfficiencyWarning
 from ._kmeans import _kmeans_plusplus
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 
 class BisectKMeans(KMeans):
@@ -338,6 +339,7 @@ class BisectKMeans(KMeans):
         self._check_params(X)
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        self._n_threads = _openmp_effective_n_threads()
 
         if self._algorithm == "full":
             self._kmeans_single = _kmeans_single_lloyd
