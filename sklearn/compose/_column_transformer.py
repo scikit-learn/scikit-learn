@@ -639,14 +639,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         if all(hasattr(X, "iloc") for X in Xs):
             # All output from transformers are pandas DataFrames
-            import pandas as pd
-
             if any(not Xs[0].index.equals(X.index) for X in Xs[1:]):
                 warnings.warn(
                     "The DataFrame's indexes for each transformer do not "
                     "match. A numpy array or a sparse matrix will be "
                     "returned.")
                 return self._hstack_np(Xs)
+
+            import pandas as pd
             return pd.concat(Xs, axis=1)
 
         return self._hstack_np(Xs)
