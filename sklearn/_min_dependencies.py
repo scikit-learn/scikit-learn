@@ -26,7 +26,7 @@ dependent_packages = {
     'threadpoolctl': (THREADPOOLCTL_MIN_VERSION, 'install'),
     'cython': (CYTHON_MIN_VERSION, 'build'),
     'matplotlib': ('2.2.2', 'benchmark, docs, examples, tests'),
-    'scikit-image': ('0.14', 'docs, examples, tests'),
+    'scikit-image': ('0.14.5', 'docs, examples, tests'),
     'pandas': ('0.23.4', 'benchmark, docs, examples, tests'),
     'seaborn': ('0.9.0', 'docs, examples'),
     'memory_profiler': ('0.57.0', 'benchmark, docs'),
@@ -40,7 +40,6 @@ dependent_packages = {
     'numpydoc': ('1.0.0', 'docs'),
     'Pillow': ('7.1.2', 'docs'),
     'sphinx-prompt': ('1.3.0', 'docs'),
-    'dask': ('1.2.0', 'docs, examples'),
 }
 
 
