@@ -438,6 +438,10 @@ Changelog
 - |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
   missing values by default. :pr:`19069` by `Thomas Fan`_.
 
+- |Feature| Transformers in the :mod:`sklearn.preprocessing` have a `array_out`
+  kwargs in :term:`transform` that can be set to `'pandas'` to output
+  DataFrames. :pr:`20100` by `Thomas Fan`_.
+
 - |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
   and similar scalers detect near-constant features to avoid scaling them to
   very large values. This problem happens in particular when using a scaler on
