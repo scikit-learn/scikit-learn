@@ -37,7 +37,7 @@ class BisectKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-     n_init : int, default=10
+    n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds in each bisection.
         The final results will be the best output of n_init consecutive
@@ -148,6 +148,9 @@ class BisectKMeans(KMeans):
             as ndarray
         """
         errors_by_label = {}
+
+        if sp.issparse(X):
+            X = X.toarray()
 
         for value in range(2):
             errors_by_label[value] = ((X[np.where(labels == value)]

@@ -1,8 +1,9 @@
 import unittest
 import numpy as np
+import scipy.sparse as sp
 
 from .._bisect_k_means import BisectKMeans
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 # import numpy.random
 # import time
@@ -62,6 +63,21 @@ class MyTestCase(unittest.TestCase):
     #     print("Biscect K-Means:{}, K-Means:{}".format(k1, k2))
     #     print("AVG:", statistics.mean(times))
     #     print("Bisect" if statistics.mean(times) < 0 else "Kmeans")
+
+    def test_sparse(self):
+        rng = np.random.RandomState(0)
+
+        X = rng.rand(40, 2)
+        X[X < .8] = 0
+        X_csr = sp.csr_matrix(X)
+
+        bisect_means = BisectKMeans(n_clusters=3, random_state=0)
+        bisect_means.fit(X_csr)
+
+        sparse_centers = bisect_means.cluster_centers_
+
+        bisect_means.fit(X)
+        assert_array_almost_equal(bisect_means.cluster_centers_, sparse_centers)
 
 
 if __name__ == '__main__':
