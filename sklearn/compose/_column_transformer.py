@@ -7,6 +7,7 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from itertools import chain
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -636,6 +637,22 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ----------
         Xs : list of {array-like, sparse matrix, dataframe}
         """
+        if all(hasattr(X, "iloc") for X in Xs):
+            # All output from transformers are pandas DataFrames
+            import pandas as pd
+
+            if any(not Xs[0].index.equals(X.index) for X in Xs[1:]):
+                warnings.warn(
+                    "The DataFrame's indexes for each transformer do not "
+                    "match. A numpy array or a sparse matrix will be "
+                    "returned.")
+                return self._hstack_np(Xs)
+            return pd.concat(Xs, axis=1)
+
+        return self._hstack_np(Xs)
+
+    def _hstack_np(self, Xs):
+        """Stack Xs horizontally."""
         if self.sparse_output_:
             try:
                 # since all columns should be numeric before stacking them

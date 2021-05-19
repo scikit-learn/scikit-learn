@@ -15,6 +15,7 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
 
 from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 from sklearn.compose import (
     ColumnTransformer, make_column_transformer, make_column_selector
 )
@@ -374,12 +375,12 @@ def test_column_transformer_output_indices_df():
     assert ct.output_indices_ == {'trans1': slice(0, 1),
                                   'trans2': slice(1, 2),
                                   'remainder': slice(0, 0)}
-    assert_array_equal(X_trans[:, [0]],
-                       X_trans[:, ct.output_indices_['trans1']])
-    assert_array_equal(X_trans[:, [1]],
-                       X_trans[:, ct.output_indices_['trans2']])
-    assert_array_equal(X_trans[:, []],
-                       X_trans[:, ct.output_indices_['remainder']])
+    assert_array_equal(X_trans.iloc[:, [0]],
+                       X_trans.iloc[:, ct.output_indices_['trans1']])
+    assert_array_equal(X_trans.iloc[:, [1]],
+                       X_trans.iloc[:, ct.output_indices_['trans2']])
+    assert_array_equal(X_trans.iloc[:, []],
+                       X_trans.iloc[:, ct.output_indices_['remainder']])
 
     ct = ColumnTransformer([('trans1', Trans(), [0]),
                             ('trans2', Trans(), [1])])
@@ -387,12 +388,12 @@ def test_column_transformer_output_indices_df():
     assert ct.output_indices_ == {'trans1': slice(0, 1),
                                   'trans2': slice(1, 2),
                                   'remainder': slice(0, 0)}
-    assert_array_equal(X_trans[:, [0]],
-                       X_trans[:, ct.output_indices_['trans1']])
-    assert_array_equal(X_trans[:, [1]],
-                       X_trans[:, ct.output_indices_['trans2']])
-    assert_array_equal(X_trans[:, []],
-                       X_trans[:, ct.output_indices_['remainder']])
+    assert_array_equal(X_trans.iloc[:, [0]],
+                       X_trans.iloc[:, ct.output_indices_['trans1']])
+    assert_array_equal(X_trans.iloc[:, [1]],
+                       X_trans.iloc[:, ct.output_indices_['trans2']])
+    assert_array_equal(X_trans.iloc[:, []],
+                       X_trans.iloc[:, ct.output_indices_['remainder']])
 
 
 def test_column_transformer_sparse_array():
@@ -1521,3 +1522,68 @@ def test_get_feature_names_empty_selection(selector):
     ct = ColumnTransformer([('ohe', OneHotEncoder(drop='first'), selector)])
     ct.fit([[1, 2], [3, 4]])
     assert ct.get_feature_names() == []
+
+
+class DataFrameTransformer(TransformerMixin, BaseEstimator):
+    def __init__(self, prefix="X", index_start=0, reverse_index=False):
+        self.prefix = prefix
+        self.index_start = index_start
+        self.reverse_index = reverse_index
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        import pandas as pd
+        n_samples, n_features = X.shape
+        columns = [f"{self.prefix}{i}" for i in range(n_features)]
+        index = [i + self.index_start for i in range(n_samples)]
+        if self.reverse_index:
+            index = index[::-1]
+
+        return pd.DataFrame(X.to_numpy(), columns=columns, index=index)
+
+
+def test_pandas_index_aligned_hstack():
+    """When transformers all output dataframes, ColumnTransformer will
+    output dataframes."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"X": [1, 0, 3], "Y": [4, 5, 0]}, columns=["X", "Y"])
+
+    ct = ColumnTransformer([
+        ("first",
+         DataFrameTransformer(prefix="first", index_start=1), ["X"]),
+        ("second",
+         DataFrameTransformer(prefix="second", index_start=1), ["X", "Y"])
+    ]).fit(X)
+
+    X_expected = pd.DataFrame({
+        "first0": [1, 0, 3],
+        "second0": [1, 0, 3],
+        "second1": [4, 5, 0],
+    }, columns=["first0", "second0", "second1"], index=[1, 2, 3])
+
+    X_trans = ct.transform(X)
+    pd.testing.assert_frame_equal(X_trans, X_expected)
+
+
+@pytest.mark.parametrize("first_kwargs", [
+    {"index_start": 2}, {"reverse_index": True}])
+def test_pandas_index_not_aligned_warns(first_kwargs):
+    """When transformers all output dataframes, ColumnTransformer will
+    warn and output numpy arrays."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"X": [1, 0, 3], "Y": [4, 5, 0]}, columns=["X", "Y"])
+
+    ct = ColumnTransformer([
+        ("first", DataFrameTransformer(prefix="first", **first_kwargs), ["X"]),
+        ("second", DataFrameTransformer(prefix="second"), ["X", "Y"])
+    ])
+
+    msg = "The DataFrame's indexes for each transformer do not match"
+    with pytest.warns(UserWarning, match=msg):
+        X_trans = ct.fit_transform(X)
+
+    assert isinstance(X_trans, np.ndarray)
+    X_expected = np.array([[1, 1, 4], [0, 0, 5], [3, 3, 0]])
+    assert_array_equal(X_trans, X_expected)
