@@ -48,7 +48,7 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
 @pytest.mark.parametrize("solver", ("highs-ds", "highs-ipm", "highs"))
 @pytest.mark.skipif(sp_version >= parse_version('1.6.0'),
                     reason="Solvers are available as of scipy 1.6.0")
-def test_too_new_solver_methods_raise_error(solver):
+def test_too_new_solver_methods_raise_error(X_y_data, solver):
     """Test that highs solver raises for scipy<1.6.0."""
     X, y = X_y_data
     with pytest.raises(ValueError, match="scipy>=1.6.0"):
