@@ -76,7 +76,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> reg = QuantileRegressor(quantile=0.8)
+    >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
     0.8
     """
