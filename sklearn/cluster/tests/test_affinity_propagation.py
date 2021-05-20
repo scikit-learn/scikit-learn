@@ -240,7 +240,7 @@ def test_affinity_propagation_float32():
 
 def test_sparse_input_for_predict():
     # Test to make sure sparse inputs are accepted for fit_predict
-    # (non-regression test for issue #10832)
+    # (non-regression test for issue #20049)
     af = AffinityPropagation(affinity="euclidean", random_state=42)
     af.fit(X)
     labels = af.predict(csr_matrix((2, 2)))
@@ -249,7 +249,7 @@ def test_sparse_input_for_predict():
 
 def test_sparse_input_for_fit_predict():
     # Test to make sure sparse inputs are accepted for predict
-    # (non-regression test for issue #10832)
+    # (non-regression test for issue #20049)
     af = AffinityPropagation(affinity="euclidean", random_state=42)
     rng = np.random.RandomState(42)
     X = csr_matrix(rng.randint(0, 2, size=(5, 5)))
