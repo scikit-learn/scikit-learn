@@ -171,6 +171,10 @@ Changelog
   mini batches processed. :pr:`17622`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Enhancement| :class:`cluster.AffinityPropagation` now supports sparse
+  data type as well for input data.
+  :pr:`20117` by :user:`Venkatachalam Natchiappan <venkyyuvy>`
+
 :mod:`sklearn.compose`
 ......................
 
