@@ -7,10 +7,11 @@ import pytest
 from pytest import approx
 from scipy.optimize import minimize
 
-from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
+from sklearn.utils._testing import assert_allclose
 
 
 @pytest.fixture
@@ -131,7 +132,7 @@ def test_asymmetric_error(quantile):
     """Test quantile regression for asymmetric distributed targets."""
     n_samples = 1000
     rng = np.random.RandomState(42)
-    # take care that X@coef + intercept > 0
+    # take care that X @ coef + intercept > 0
     X = np.concatenate(
         (
             np.abs(rng.randn(n_samples)[:, None]),
@@ -238,5 +239,5 @@ def test_linprog_failure():
     )
 
     msg = "Linear programming for QuantileRegressor did not succeed."
-    with pytest.raises(ValueError, match=msg):
+    with pytest.warns(ConvergenceWarning, match=msg):
         reg.fit(X, y)
