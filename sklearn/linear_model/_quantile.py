@@ -65,6 +65,18 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Lasso : The Lasso is a linear model that estimates sparse coefficients
         with l1 regularization.
     HuberRegressor : Linear regression model that is robust to outliers.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import QuantileRegressor
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 2
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
+    >>> reg = QuantileRegressor(quantile=0.8)
+    >>> np.mean(y <= reg.predict(X))
+    0.8
     """
 
     def __init__(
