@@ -16,10 +16,11 @@ from ..utils.fixes import sp_version, parse_version
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """Linear regression model that predicts conditional quantiles.
 
-    The linear Quantile Regressor optimizes the pinball loss for a
+    The linear :class:`QuantileRegressor` optimizes the pinball loss for a
     desired `quantile` and is robust to outliers.
 
-    This model uses an L1 regularization like Lasso.
+    This model uses an L1 regularization like
+    :class:`~sklearn.linear_model.Lasso`.
 
     Read more in the :ref:`User Guide <quantile_regression>`.
 
@@ -29,8 +30,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     ----------
     quantile : float, default=0.5
         The quantile that the model tries to predict. It must be strictly
-        between 0 and 1. If 0.5, the model predicts the 50% quantile, i.e. the
-        median.
+        between 0 and 1. If 0.5 (default), the model predicts the 50%
+        quantile, i.e. the median.
 
     alpha : float, default=1.0
         Regularization constant that multiplies the L1 penalty term.
@@ -40,18 +41,19 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
             'revised simplex'}, default='interior-point'
-        Method used by scipy.optimize.linprog to solve the linear programming
-        formulation. Note that 'highs' is recommended for usage with
-        scipy>=1.6.0.
+        Method used by :func:`scipy.optimize.linprog` to solve the linear
+        programming formulation. Note that the highs methods are recommended
+        for usage with `scipy>=1.6.0` because they are the fastest ones.
 
     solver_options : dict, default=None
-        Additional parameters passed to scipy.optimize.linprog as options.
-        If None and if solver is interior-point, then {"lstsq": True} is
-        passed to scipy.optimize.linprog for the sake of stability.
+        Additional parameters passed to :func:`scipy.optimize.linprog` as
+        options. If `None` and if `solver='interior-point'`, then
+        `{"lstsq": True}` is passed to :func:`scipy.optimize.linprog` for the
+        sake of stability.
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array of shape (n_features,)
         Estimated coefficients for the features.
 
     intercept_ : float
@@ -156,7 +158,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             "revised simplex",
         ):
             raise ValueError(
-                f"Invalid value for argument solver, " f"got {self.solver}"
+                f"Invalid value for argument solver, got {self.solver}"
             )
         elif self.solver == "revised simplex" and sp_version < parse_version(
             "1.3.0"
@@ -263,7 +265,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 ConvergenceWarning
             )
 
-        # positive - negative
+        # positive slack - negative slack
+        # solution is an array with (params_pos, params_neg, u, v)
         params = solution[:n_params] - solution[n_params:2 * n_params]
 
         self.n_iter_ = result.nit

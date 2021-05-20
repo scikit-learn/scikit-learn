@@ -1429,10 +1429,11 @@ Quantile Regression
 ===================
 
 Quantile regression estimates the median or other quantiles of :math:`y`
-conditional on :math:`X`, while OLS estimates the conditional mean.
+conditional on :math:`X`, while ordinary least squares (OLS) estimates the
+conditional mean.
 
 As a linear model, the :class:`QuantileRegressor` gives linear predictions
-:math:`\hat{y}(w, x) = Xw` for the :math:`q`-th quantile, :math:`q \in (0, 1)`.
+:math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile, :math:`q \in (0, 1)`.
 The weights or coefficients :math:`w` are then found by the following
 minimization problem:
 
@@ -1451,7 +1452,8 @@ see also :class:`~sklearn.metrics.mean_pinball_loss`,
         (1-q) t, & t < 0
     \end{cases}
 
-and the L1 penalty, similar to the :class:`Lasso`.
+and the L1 penalty controlled by parameter ``alpha``, similar to
+:class:`Lasso`.
 
 As the pinball loss is only linear in the residuals, quantile regression is
 much more robust to outliers than squared error based estimation of the mean.
@@ -1471,13 +1473,14 @@ predictable) variance or non-normal distribution.
 
 Based on minimizing the pinball loss, conditional quantiles can also be
 estimated by models other than linear models. For example,
-:class:`GradientBoostingRegressor` can predict conditional quantiles
-if its parameter ``loss`` is set to ``"quantile"`` and parameter ``alpha`` is
-set to the quantile that should be predicted. See the example in
+:class:`~sklearn.ensemble.GradientBoostingRegressor` can predict conditional
+quantiles if its parameter ``loss`` is set to ``"quantile"`` and parameter
+``alpha`` is set to the quantile that should be predicted. See the example in
 :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`.
 
 Most implementations of quantile regression are based on linear programming
-problem. The current implementation is based on :mod:`scipy.optimize.linprog`.
+problem. The current implementation is based on
+:func:`scipy.optimize.linprog`.
 
 .. topic:: Examples:
 
