@@ -96,7 +96,7 @@ enhance the functionality of scikit-learn's estimators.
   cross-validated parameter search using any of these strategies.
 
 - `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
-   algorithms instead of gridsearch in scikit-learn.
+  algorithms instead of gridsearch in scikit-learn.
 
 **Model export for production**
 
