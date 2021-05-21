@@ -3,7 +3,7 @@
 Pixel importances with a parallel forest of trees
 =================================================
 
-This example show the use of a forest of trees to evaluate
+This example shows the use of a forest of trees to evaluate
 the impurity based importance of the pixels in an image
 classification task on the faces dataset.
 The hotter the pixel, the more important it is.
