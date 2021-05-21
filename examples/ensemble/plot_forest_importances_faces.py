@@ -79,6 +79,8 @@ plt.matshow(imp_reshaped, cmap=plt.cm.hot)
 plt.title("Pixel importances using impurity values")
 plt.colorbar()
 plt.show()
+
+# %%
 # Can you still recognize a face?
 
 # %%
