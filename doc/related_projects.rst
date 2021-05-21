@@ -58,6 +58,12 @@ enhance the functionality of scikit-learn's estimators.
   it can stream minibatches, use data checkpoints, build funky pipelines, and
   serialize models with custom per-step savers.
 
+- `EvalML <https://github.com/alteryx/evalml>`_
+  EvalML is an AutoML library which builds, optimizes, and evaluates
+  machine learning pipelines using domain-specific objective functions.
+  It incorporates multiple modeling libraries under one API, and
+  the objects that EvalML creates use an sklearn-compatible API.
+
 **Experimentation frameworks**
 
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
