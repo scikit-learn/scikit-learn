@@ -72,8 +72,6 @@ elapsed_time = time.time() - start_time
 
 print(f"Elapsed time to compute the importances: "
       f"{elapsed_time:.3f} seconds")
-
-# %%
 imp_reshaped = importances.reshape(img_shape)
 plt.matshow(imp_reshaped, cmap=plt.cm.hot)
 plt.title("Pixel importances using impurity values")
