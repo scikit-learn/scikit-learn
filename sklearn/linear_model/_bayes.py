@@ -358,7 +358,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
                                               alpha_)[None, :],
                                          U.T, y])
 
-        rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+        dot_ = np.dot(X, coef_)
+        rmse_ = np.sum(dot_**2 + y*(y-2*dot_))
 
         return coef_, rmse_
 
