@@ -20,7 +20,8 @@ import matplotlib.pyplot as plt
 # Loading the data and model fitting
 # ----------------------------------
 # We use the faces data from datasets submodules when using impurity-based
-# feature importance. It is not possible to evaluate the importance
+# feature importance. One drawback of this method is that it cannot be
+applied on a separate test set...
 # on a separate test set but for this example, we are interested
 # in representing the information learned from the full dataset.
 # Also, we'll set the number of cores to use for the tasks.
