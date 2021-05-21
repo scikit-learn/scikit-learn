@@ -79,7 +79,7 @@ the document up to date as we work on these issues.
 #. Improved handling of categorical features
 
    * Tree-based models should be able to handle both continuous and categorical
-     features :issue:`12866` and |se| :issue:`15550` |se|.
+     features :issue:`12866` and |ss| :issue:`15550` |se|.
    * |ss| In dataset loaders :issue:`13902` |se|
    * As generic transformers to be used with ColumnTransforms (e.g. ordinal
      encoding supervised by correlation with target variable) :issue:`5853`,
