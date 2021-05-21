@@ -74,12 +74,12 @@ print(f"Elapsed time to compute the importances: "
       f"{elapsed_time:.3f} seconds")
 
 # %%
-# Can you still recognize a face?
 imp_reshaped = importances.reshape(img_shape)
 plt.matshow(imp_reshaped, cmap=plt.cm.hot)
 plt.title("Pixel importances using impurity values")
 plt.colorbar()
 plt.show()
+# Can you still recognize a face?
 
 # %%
 # The limitations of MDI is not a problem for this dataset because:
