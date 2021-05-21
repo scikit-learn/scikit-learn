@@ -84,7 +84,8 @@ plt.show()
 # %%
 # The limitations of MDI is not a problem for this dataset because:
 #
-#  1. All features are (ordered) numeric and will thus not suffer the cardinality bias
+#  1. All features are (ordered) numeric and will thus not suffer the 
+#     cardinality bias
 #  2. We are only interested to represent knowledge of the forest acquired
 #     on the training set.
 #
