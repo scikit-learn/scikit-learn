@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 # ----------------------------------
 # We use the faces data from datasets submodules when using impurity-based
 # feature importance. One drawback of this method is that it cannot be
-applied on a separate test set...
+# applied on a separate test set.
 # on a separate test set but for this example, we are interested
 # in representing the information learned from the full dataset.
 # Also, we'll set the number of cores to use for the tasks.
@@ -84,7 +84,7 @@ plt.show()
 # %%
 # The limitations of MDI is not a problem for this dataset because:
 #
-#  1. All features are (ordered) numeric and will thus not suffer the 
+#  1. All features are (ordered) numeric and will thus not suffer the
 #     cardinality bias
 #  2. We are only interested to represent knowledge of the forest acquired
 #     on the training set.
