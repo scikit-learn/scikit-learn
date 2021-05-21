@@ -25,7 +25,6 @@ from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
 from ..utils import check_random_state, Bunch
-from ..utils.validation import _deprecate_positional_args
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -36,7 +35,6 @@ FACES = RemoteFileMetadata(
               'd5fca46a4b8906c18e454d41af987794'))
 
 
-@_deprecate_positional_args
 def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True, return_X_y=False):
     """Load the Olivetti faces data-set from AT&T (classification).

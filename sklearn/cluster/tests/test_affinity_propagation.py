@@ -209,14 +209,6 @@ def test_affinity_propagation_random_state():
     assert np.mean((centers0 - centers76) ** 2) > 1
 
 
-# FIXME: to be removed in 1.0
-def test_affinity_propagation_random_state_warning():
-    # test that a warning is raised when random_state is not defined.
-    X = np.array([[0, 0], [1, 1], [-2, -2]])
-    match = "'random_state' has been introduced in 0.23."
-    with pytest.warns(FutureWarning, match=match):
-        AffinityPropagation().fit(X)
-
 @pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
                                      np.zeros((1, 10))])
 def test_affinity_propagation_convergence_warning_dense_sparse(centers):

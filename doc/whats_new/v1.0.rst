@@ -12,6 +12,24 @@ Version 1.0.0
 
 .. include:: changelog_legend.inc
 
+Minimal dependencies
+--------------------
+
+Version 1.0.0 of scikit-learn requires python 3.7+, numpy 1.14.5+ and
+scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.2+.
+
+Enforcing keyword-only arguments
+--------------------------------
+
+In an effort to promote clear and non-ambiguous use of the library, most
+constructor and function parameters must now be passed as keyword arguments
+(i.e. using the `param=value` syntax) instead of positional. If a keyword-only
+parameter is used as positional, a `TypeError` is now raised.
+:issue:`15005` :pr:`20002` by `Joel Nothman`_, `Adrin Jalali`_, `Thomas Fan`_,
+`Nicolas Hug`_, and `Tom Dupre la Tour`_. See `SLEP009
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
+for more details.
+
 Put the changes in their relevant module.
 
 Changed models
@@ -76,6 +94,40 @@ Changelog
   - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
     use `"squared_error"` instead which is now the default.
 
+- |API| The option for using the absolute error via ``loss`` and
+  ``criterion`` parameters was made more consistent. The preferred way is by
+  setting the value to `"absolute_error"`. Old option names are still valid,
+  produce the same models, but are deprecated and will be removed in version
+  1.2.
+  :pr:`19733` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`ensemble.ExtraTreesRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.GradientBoostingRegressor`, `loss="lad"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.RandomForestRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.HistGradientBoostingRegressor`,
+    `loss="least_absolute_deviation"` is deprecated, use `"absolute_error"`
+    instead.
+
+  - For :class:`linear_model.RANSACRegressor`, `loss="absolute_loss"` is
+    deprecated, use `"absolute_error"` instead which is now the default.
+
+  - For :class:`tree.DecisionTreeRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`tree.ExtraTreeRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+:mod:`sklearn.base`
+...................
+
+- |Fix| :func:`config_context` is now threadsafe. :pr:`18736` by `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -105,7 +157,7 @@ Changelog
 - |Fix| Improved convergence detection based on center change in
   :class:`cluster.MiniBatchKMeans` which was almost never achievable.
   :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-  
+
 - |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
 
@@ -125,6 +177,11 @@ Changelog
 - |Enhancement| :class:`compose.ColumnTransformer` now records the output
   of each transformer in `output_indices_`. :pr:`18393` by
   :user:`Luca Bittarello <lbittarello>`.
+
+- |Enhancement| :class:`compose.ColumnTransformer` now allows DataFrame input to
+  have its columns appear in a changed order in `transform`. Further, columns that
+  are dropped will not be required in transform, and additional columns will be
+  ignored if `remainder='drop'`. :pr:`19263` by `Thomas Fan`_
 
 - |FIX| :meth:`compose.ColumnTransformer.get_feature_names` supports
   non-string feature names returned by any of its transformers.
@@ -159,13 +216,16 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
-:mod:`sklearn.decomposition`
-............................
-
 - |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
   ensure determinism of the output. Achieved by flipping signs of the SVD
   output which is used to initialize the code.
   :pr:`18433` by :user:`Bruno Charron <brcharron>`.
+
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  significantly accelerates computation when the number of samples is much
+  larger than the desired number of components.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning`,
   :class:`MiniBatchSparsePCA` and :func:`dict_learning_online` where the
@@ -203,6 +263,14 @@ Changelog
 - |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| :func:`feature_selection.r_regression` computes Pearson's R
+  correlation coefficients between the features and the target.
+  :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
+  and `Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -253,6 +321,8 @@ Changelog
   Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV were deprecated in:
   :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
+  BayesianRidge, ARDRegression were deprecated in:
+  :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
 
 - |Fix|: `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature
@@ -270,6 +340,12 @@ Changelog
 - |Fix| Change numerical precision to prevent underflow issues
   during affinity matrix computation for :class:`manifold.TSNE`.
   :pr:`19472` by :user:`Dmitry Kobak <dkobak>`.
+
+- |Enhancement| Implement `'auto'` heuristic for the `learning_rate` in
+  :class:`manifold.TSNE`. It will become default in 1.2. The default
+  initialization will change to `pca` in 1.2. PCA initialization will
+  be scaled to have standard deviation 1e-4 in 1.2.
+  :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -311,11 +387,6 @@ Changelog
   :pr:`18649` by `Leandro Hermida <hermidalc>` and
   `Rodion Martynov <marrodion>`.
 
-- |Fix| The `fit` method of the successive halving parameter search
-  (:class:`model_selection.HalvingGridSearchCV`, and
-  :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
-  `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
-
 :mod:`sklearn.naive_bayes`
 ..........................
 
@@ -343,6 +414,12 @@ Changelog
 
 - |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
+- |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
+  and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
+  `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
+  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -385,6 +462,10 @@ Changelog
 - |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
+  :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
+  :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
 :mod:`sklearn.tree`
 ...................

@@ -15,7 +15,6 @@ from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -125,7 +124,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
@@ -205,7 +203,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
-                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1,
+                            algorithm='full')
                 centers = km.fit(column[:, None]).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()

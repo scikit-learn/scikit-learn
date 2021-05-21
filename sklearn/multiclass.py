@@ -51,7 +51,6 @@ from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
-from .utils.validation import _deprecate_positional_args
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
@@ -245,7 +244,6 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
         to binary indicator matrix.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -609,7 +607,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     >>> clf.predict(X_test[:10])
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -867,7 +864,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, code_size=1.5, random_state=None,
                  n_jobs=None):
         self.estimator = estimator
