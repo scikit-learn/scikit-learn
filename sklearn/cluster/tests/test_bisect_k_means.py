@@ -4,7 +4,7 @@ import scipy.sparse as sp
 from .._bisect_k_means import BisectKMeans
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
-import pytest
+# import pytest
 
 
 def test_three_clusters():
