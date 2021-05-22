@@ -129,7 +129,9 @@ class BisectKMeans(KMeans):
     def _calc_bisect_errors(self, X, centers, labels):
         """
         Calculates Squared Error of each point and group them by label
-        .. note:: That function work only if there are two labels (0,1)
+
+        .. note:: That function work only if there are two labels (0,1) and may
+        be less efficient for sparse data
 
         Parameters
         ----------
@@ -225,7 +227,11 @@ class BisectKMeans(KMeans):
         return centers
 
     def _bisect(self, X, y=None, sample_weight=None, random_state=None):
-        """
+        """ Bisection of data
+        Attempts to get best bisection of data by performing regular K-Means
+        for different pairs of centroids
+
+        .. note:: Number of attempts is specified by self.n_init
 
         Parameters
         ----------
@@ -358,6 +364,7 @@ class BisectKMeans(KMeans):
             centers, labels, _,  _ = self._bisect(data_left, y, weights_left,
                                                   random_state)
 
+            # Check SSE of each of computed centroids
             errors = self._calc_bisect_errors(X, centers, labels)
 
             lower_sse_index = 0 if \
@@ -365,11 +372,12 @@ class BisectKMeans(KMeans):
 
             higher_sse_index = 1 if lower_sse_index == 0 else 0
 
-            # Lower SSE is added to centroids.
+            # Centroid with lower SSE is added to result centroids.
             centroids.append(centers[lower_sse_index])
 
             if len(centroids) + 1 == self.n_clusters:
-                # Desired number of cluster centers is reached
+                # Desired number of cluster centers is reached so centroid with
+                # higher SSE would not be split further
                 centroids.append(centers[higher_sse_index])
                 break
 
