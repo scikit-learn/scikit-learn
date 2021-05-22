@@ -119,7 +119,7 @@ class BisectKMeans(KMeans):
     """
     def __init__(self,  n_clusters: int = 8, n_init: int = 10,
                  random_state=None, max_iter: int = 30, verbose=0,
-                 tol=1e4, copy_x: bool = True, algorithm='auto'):
+                 tol=1e-4, copy_x: bool = True, algorithm='auto'):
 
         super().__init__(
             n_clusters=n_clusters, max_iter=max_iter, verbose=verbose,
@@ -278,8 +278,8 @@ class BisectKMeans(KMeans):
 
         best_inertia = None
 
-        if self.verbose:
-            print("Initializing Centroids")
+        # if self.verbose:
+        #     print("Initializing Centroids for Bisection")
 
         for i in range(self.n_init):
             centers_init = self._init_two_centroids(X, x_squared_norms,
@@ -358,6 +358,13 @@ class BisectKMeans(KMeans):
 
         centroids = []
 
+        if self.verbose:
+            print("Running Bisecting K-Means with parameters:")
+            print("-> number of clusters: {}".format(self.n_clusters))
+            print("-> number of centroid initializations: {}"
+                  .format(self.n_init))
+            print("-> relative tolerance: {:.4e} \n".format(self.tol))
+
         for n_iter in range(self.n_clusters):
 
             # Perform Bisection
@@ -375,10 +382,17 @@ class BisectKMeans(KMeans):
             # Centroid with lower SSE is added to result centroids.
             centroids.append(centers[lower_sse_index])
 
+            if self.verbose:
+                print("Centroid Found: {}".format(centers[lower_sse_index]))
+
             if len(centroids) + 1 == self.n_clusters:
                 # Desired number of cluster centers is reached so centroid with
                 # higher SSE would not be split further
                 centroids.append(centers[higher_sse_index])
+
+                if self.verbose:
+                    print("Centroid Found: {}".format(
+                        centers[higher_sse_index], ))
                 break
 
             # Data with label that has higher SSE will be further processed
