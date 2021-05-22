@@ -13,6 +13,10 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 class MyTestCase(unittest.TestCase):
     def test_two_clusters(self):
+        """ Test Bisecting K-Means for two clusters
+            This should also result with
+        """
+
         X = np.array([[1, 2], [1, 4], [1, 0],
                       [10, 2], [10, 4], [10, 0]])
 
@@ -24,6 +28,10 @@ class MyTestCase(unittest.TestCase):
         assert_array_equal(bisect_means.predict([[0, 0], [12, 3]]), [0, 1])
 
     def test_three_clusters(self):
+        """ Tries to perform bisect k-means for three clusters to check
+            if splitting data is performed correctly
+        """
+
         X = np.array([[1, 2], [1, 4], [1, 0],
                       [10, 2], [10, 4], [10, 0],
                       [10, 6], [10, 8], [10, 10]])
@@ -34,37 +42,9 @@ class MyTestCase(unittest.TestCase):
         assert_array_equal(expected_centers, bisect_means.cluster_centers_)
         assert_array_equal(bisect_means.predict([[0, 0], [12, 3]]), [0, 2])
 
-    # def test_performance(self):
-    #     X = np.random.randint(10, size=(100, 2))
-    #     results = []
-    #     times = []
-    #     bisect_means = BisectKMeans(n_clusters=4, random_state=0)
-    #     kmeans = KMeans(n_clusters=4, random_state=0)
-    #
-    #     for i in range(10):
-    #         start_time = time.time()
-    #
-    #         kmeans.fit(X)
-    #
-    #         point1 = (time.time() - start_time)
-    #
-    #         start_time = time.time()
-    #
-    #         bisect_means.fit(X)
-    #
-    #         point2 = (time.time() - start_time)
-    #
-    #         msg = "k2" if point2 < point1 else "k1"
-    #         times.append(point1 - point2)
-    #         results.append(msg)
-    #
-    #     k1 = len([x for x in results if x == "k1"])
-    #     k2 = len(results) - k1
-    #     print("Biscect K-Means:{}, K-Means:{}".format(k1, k2))
-    #     print("AVG:", statistics.mean(times))
-    #     print("Bisect" if statistics.mean(times) < 0 else "Kmeans")
-
     def test_sparse(self):
+        """ Test Bisecting K-Means with sparse data """
+
         rng = np.random.RandomState(0)
 
         X = rng.rand(40, 2)
