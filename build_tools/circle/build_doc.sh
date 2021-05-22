@@ -172,11 +172,11 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
     "$(get_dep cython $CYTHON_VERSION)" \
     "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
     "$(get_dep sphinx $SPHINX_VERSION)" \
-    "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)" \
     "$(get_dep pandas $PANDAS_VERSION)" \
     joblib memory_profiler packaging seaborn pillow pytest coverage
 
 source activate testenv
+pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
 pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
 pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
 pip install "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"

@@ -12,6 +12,12 @@ Version 1.0.0
 
 .. include:: changelog_legend.inc
 
+Minimal dependencies
+--------------------
+
+Version 1.0.0 of scikit-learn requires python 3.7+, numpy 1.14.5+ and
+scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.2+.
+
 Enforcing keyword-only arguments
 --------------------------------
 
@@ -408,6 +414,12 @@ Changelog
 
 - |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
+- |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
+  and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
+  `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
+  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.pipeline`
 .......................
