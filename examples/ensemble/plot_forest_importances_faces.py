@@ -3,10 +3,9 @@
 Pixel importances with a parallel forest of trees
 =================================================
 
-This example shows the use of a forest of trees to evaluate
-the impurity based importance of the pixels in an image
-classification task on the faces dataset.
-The hotter the pixel, the more important it is.
+This example shows the use of a forest of trees to evaluate the impurity
+based importance of the pixels in an image classification task on the faces
+dataset. The hotter the pixel, the more important it is.
 
 The code below also illustrates how the construction and the computation
 of the predictions can be parallelized within multiple jobs.
@@ -14,17 +13,15 @@ of the predictions can be parallelized within multiple jobs.
 # %%
 print(__doc__)
 
-import matplotlib.pyplot as plt
-
 # %%
 # Loading the data and model fitting
 # ----------------------------------
-# We use the faces data from datasets submodules when using impurity-based
-# feature importance. One drawback of this method is that it cannot be
-# applied on a separate test set.
-# on a separate test set but for this example, we are interested
-# in representing the information learned from the full dataset.
-# Also, we'll set the number of cores to use for the tasks.
+# First, we load the olivetti faces dataset and limit the dataset to contain
+# only the first five classes. Then we train a random forest on the dataset
+# and evaluate the impurity-based feature importance. One drawback of this
+# method is that it cannot be evaluated on a separate test set. For this
+# example, we are interested in representing the information learned from
+# the full dataset. Also, we'll set the number of cores to use for the tasks.
 from sklearn.datasets import fetch_olivetti_faces
 
 # %%
@@ -64,6 +61,7 @@ forest.fit(X, y)
 #     features (many unique values). See :ref:`permutation_importance` as
 #     an alternative.
 import time
+import matplotlib.pyplot as plt
 
 start_time = time.time()
 img_shape = data.images[0].shape
