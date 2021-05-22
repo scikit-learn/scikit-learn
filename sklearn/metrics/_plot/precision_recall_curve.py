@@ -4,7 +4,6 @@ from .. import average_precision_score
 from .. import precision_recall_curve
 
 from ...utils import check_matplotlib_support
-from ...utils.validation import _deprecate_positional_args
 
 
 class PrecisionRecallDisplay:
@@ -71,7 +70,6 @@ class PrecisionRecallDisplay:
     >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)
     >>> disp.plot() # doctest: +SKIP
     """
-    @_deprecate_positional_args
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None, pos_label=None):
         self.estimator_name = estimator_name
@@ -80,7 +78,6 @@ class PrecisionRecallDisplay:
         self.average_precision = average_precision
         self.pos_label = pos_label
 
-    @_deprecate_positional_args
     def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization.
 
@@ -140,7 +137,6 @@ class PrecisionRecallDisplay:
         return self
 
 
-@_deprecate_positional_args
 def plot_precision_recall_curve(estimator, X, y, *,
                                 sample_weight=None, response_method="auto",
                                 name=None, ax=None, pos_label=None, **kwargs):
