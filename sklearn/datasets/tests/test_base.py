@@ -5,7 +5,6 @@ import warnings
 from pickle import loads
 from pickle import dumps
 from functools import partial
-import re
 import pytest
 
 import numpy as np
