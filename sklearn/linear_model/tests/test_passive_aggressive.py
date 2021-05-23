@@ -6,8 +6,6 @@ import pytest
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-
 from sklearn.base import ClassifierMixin
 from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris
@@ -130,7 +128,8 @@ def test_classifier_correctness(loss):
 def test_classifier_undefined_methods():
     clf = PassiveAggressiveClassifier(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba", "transform"):
-        assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
+        with pytest.raises(AttributeError):
+            getattr(clf, meth)
 
 
 def test_class_weights():
@@ -158,23 +157,24 @@ def test_class_weights():
 def test_partial_fit_weight_class_balanced():
     # partial_fit with class_weight='balanced' not supported
     clf = PassiveAggressiveClassifier(class_weight="balanced", max_iter=100)
-    assert_raises(ValueError, clf.partial_fit, X, y, classes=np.unique(y))
+    with pytest.raises(ValueError):
+        clf.partial_fit(X, y, classes=np.unique(y))
 
 
 def test_equal_class_weight():
     X2 = [[1, 0], [1, 0], [0, 1], [0, 1]]
     y2 = [0, 0, 1, 1]
     clf = PassiveAggressiveClassifier(
-        C=0.1, max_iter=1000, tol=None, class_weight=None)
+        C=0.1, tol=None, class_weight=None)
     clf.fit(X2, y2)
 
     # Already balanced, so "balanced" weights should have no effect
     clf_balanced = PassiveAggressiveClassifier(
-        C=0.1, max_iter=1000, tol=None, class_weight="balanced")
+        C=0.1, tol=None, class_weight="balanced")
     clf_balanced.fit(X2, y2)
 
     clf_weighted = PassiveAggressiveClassifier(
-        C=0.1, max_iter=1000, tol=None, class_weight={0: 0.5, 1: 0.5})
+        C=0.1, tol=None, class_weight={0: 0.5, 1: 0.5})
     clf_weighted.fit(X2, y2)
 
     # should be similar up to some epsilon due to learning rate schedule
@@ -189,7 +189,8 @@ def test_wrong_class_weight_label():
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(class_weight={0: 0.5}, max_iter=100)
-    assert_raises(ValueError, clf.fit, X2, y2)
+    with pytest.raises(ValueError):
+        clf.fit(X2, y2)
 
 
 def test_wrong_class_weight_format():
@@ -199,10 +200,12 @@ def test_wrong_class_weight_format():
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(class_weight=[0.5], max_iter=100)
-    assert_raises(ValueError, clf.fit, X2, y2)
+    with pytest.raises(ValueError):
+        clf.fit(X2, y2)
 
     clf = PassiveAggressiveClassifier(class_weight="the larch", max_iter=100)
-    assert_raises(ValueError, clf.fit, X2, y2)
+    with pytest.raises(ValueError):
+        clf.fit(X2, y2)
 
 
 def test_regressor_mse():
@@ -265,17 +268,5 @@ def test_regressor_correctness(loss):
 def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     for meth in ("transform",):
-        assert_raises(AttributeError, lambda x: getattr(reg, x), meth)
-
-# TODO: remove in 0.25
-@pytest.mark.parametrize('klass', [PassiveAggressiveClassifier,
-                                   PassiveAggressiveRegressor])
-def test_passive_aggressive_deprecated_attr(klass):
-    est = klass(average=True)
-    est.fit(X, y)
-
-    msg = "Attribute {} was deprecated"
-    for att in ['average_coef_', 'average_intercept_',
-                'standard_coef_', 'standard_intercept_']:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(est, att)
+        with pytest.raises(AttributeError):
+            getattr(reg, meth)

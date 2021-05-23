@@ -30,8 +30,7 @@ from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar,
-                         _deprecate_positional_args)
+                         check_symmetric, check_scalar)
 from .. import get_config
 
 
@@ -43,7 +42,6 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
-
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "check_random_state",
@@ -53,8 +51,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_html_repr"
-           ]
+           "DataConversionWarning", "estimator_html_repr"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -634,7 +631,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
                     random_state=random_state)
 
 
-@_deprecate_positional_args
 def safe_sqr(X, *, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
 
@@ -674,7 +670,6 @@ def _chunk_generator(gen, chunksize):
             return
 
 
-@_deprecate_positional_args
 def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
@@ -692,6 +687,10 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     Yields
     ------
     slice of batch_size elements
+
+    See Also
+    --------
+    gen_even_slices: Generator to create n_packs slices going up to n.
 
     Examples
     --------
@@ -724,7 +723,6 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
         yield slice(start, n)
 
 
-@_deprecate_positional_args
 def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
@@ -741,6 +739,11 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     Yields
     ------
     slice
+
+    See Also
+    --------
+    gen_batches: Generator to create slices containing batch_size elements
+        from 0 to n.
 
     Examples
     --------
@@ -813,10 +816,7 @@ def _to_object_array(sequence):
     array([array([0]), array([1])], dtype=object)
     >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
-    >>> np.array([np.array([0]), np.array([1])])
-    array([[0],
-       [1]])
-    >>> np.array([np.array([0]), np.array([1, 2])])
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
     """
     out = np.empty(len(sequence), dtype=object)
@@ -910,7 +910,6 @@ def _print_elapsed_time(source, message=None):
                                timeit.default_timer() - start))
 
 
-@_deprecate_positional_args
 def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     """Calculates how many rows can be processed within working_memory.
 
@@ -1071,7 +1070,7 @@ def check_matplotlib_support(caller_name):
 
 
 def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandsa is not
+    """Raise ImportError with detailed error message if pandas is not
     installed.
 
     Plot utilities like :func:`fetch_openml` should lazily import

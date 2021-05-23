@@ -15,12 +15,16 @@ from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, check_array, check_symmetric
+from ..utils import (
+    check_array,
+    check_random_state,
+    check_symmetric,
+)
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
 
 
@@ -136,7 +140,6 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
-@_deprecate_positional_args
 def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True):
@@ -270,7 +273,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
-            v0 = random_state.uniform(-1, 1, laplacian.shape[0])
+            v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=1.0, which='LM',
                 tol=eigen_tol, v0=v0)
@@ -330,7 +333,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
             # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
-            _, diffusion_map = eigh(laplacian)
+            _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 embedding = embedding / dd
@@ -451,7 +454,6 @@ class SpectralEmbedding(BaseEstimator):
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
                  n_neighbors=None, n_jobs=None):
@@ -467,10 +469,10 @@ class SpectralEmbedding(BaseEstimator):
         return {'pairwise': self.affinity in ["precomputed",
                                               "precomputed_nearest_neighbors"]}
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.affinity in ["precomputed",

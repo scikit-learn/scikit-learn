@@ -4,11 +4,12 @@ Todo: cross-check the F-value with stats model
 import itertools
 import warnings
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy import stats, sparse
 
 import pytest
 
-from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_almost_equal, _convert_container
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
@@ -18,9 +19,20 @@ from sklearn.utils import safe_mask
 
 from sklearn.datasets import make_classification, make_regression
 from sklearn.feature_selection import (
-    chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
-    mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
-    SelectFdr, SelectFwe, GenericUnivariateSelect)
+    chi2,
+    f_classif,
+    f_oneway,
+    f_regression,
+    GenericUnivariateSelect,
+    mutual_info_classif,
+    mutual_info_regression,
+    r_regression,
+    SelectPercentile,
+    SelectKBest,
+    SelectFpr,
+    SelectFdr,
+    SelectFwe,
+)
 
 
 ##############################################################################
@@ -71,6 +83,27 @@ def test_f_classif():
     assert_array_almost_equal(pv_sparse, pv)
 
 
+@pytest.mark.parametrize("center", [True, False])
+def test_r_regression(center):
+    X, y = make_regression(n_samples=2000, n_features=20, n_informative=5,
+                           shuffle=False, random_state=0)
+
+    corr_coeffs = r_regression(X, y, center=center)
+    assert ((-1 < corr_coeffs).all())
+    assert ((corr_coeffs < 1).all())
+
+    sparse_X = _convert_container(X, "sparse")
+
+    sparse_corr_coeffs = r_regression(sparse_X, y, center=center)
+    assert_allclose(sparse_corr_coeffs, corr_coeffs)
+
+    # Testing against numpy for reference
+    Z = np.hstack((X, y[:, np.newaxis]))
+    correlation_matrix = np.corrcoef(Z, rowvar=False)
+    np_corr_coeffs = correlation_matrix[:-1, -1]
+    assert_array_almost_equal(np_corr_coeffs, corr_coeffs, decimal=3)
+
+
 def test_f_regression():
     # Test whether the F test yields meaningful results
     # on a simple simulated regression problem
@@ -87,14 +120,14 @@ def test_f_regression():
     # with centering, compare with sparse
     F, pv = f_regression(X, y, center=True)
     F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=True)
-    assert_array_almost_equal(F_sparse, F)
-    assert_array_almost_equal(pv_sparse, pv)
+    assert_allclose(F_sparse, F)
+    assert_allclose(pv_sparse, pv)
 
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
     F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
-    assert_array_almost_equal(F_sparse, F)
-    assert_array_almost_equal(pv_sparse, pv)
+    assert_allclose(F_sparse, F)
+    assert_allclose(pv_sparse, pv)
 
 
 def test_f_regression_input_dtype():
@@ -106,8 +139,8 @@ def test_f_regression_input_dtype():
 
     F1, pv1 = f_regression(X, y)
     F2, pv2 = f_regression(X, y.astype(float))
-    assert_array_almost_equal(F1, F2, 5)
-    assert_array_almost_equal(pv1, pv2, 5)
+    assert_allclose(F1, F2, 5)
+    assert_allclose(pv1, pv2, 5)
 
 
 def test_f_regression_center():
@@ -123,7 +156,7 @@ def test_f_regression_center():
 
     F1, _ = f_regression(X, Y, center=True)
     F2, _ = f_regression(X, Y, center=False)
-    assert_array_almost_equal(F1 * (n_samples - 1.) / (n_samples - 2.), F2)
+    assert_allclose(F1 * (n_samples - 1.) / (n_samples - 2.), F2)
     assert_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
 
 
@@ -262,7 +295,7 @@ def test_select_heuristics_classif():
             f_classif, mode=mode, param=0.01).fit(X, y).transform(X)
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
-        assert_array_almost_equal(support, gtruth)
+        assert_allclose(support, gtruth)
 
 
 ##############################################################################
@@ -272,7 +305,7 @@ def test_select_heuristics_classif():
 def assert_best_scores_kept(score_filter):
     scores = score_filter.scores_
     support = score_filter.get_support()
-    assert_array_almost_equal(np.sort(scores[support]),
+    assert_allclose(np.sort(scores[support]),
                               np.sort(scores)[-support.sum():])
 
 

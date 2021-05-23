@@ -186,6 +186,13 @@ General Concepts
         :class:`~pipeline.Pipeline` and
         :class:`~pipeline.FeatureUnion`.)
 
+        If the estimator's `random_state` parameter is an integer (or if the
+        estimator doesn't have a `random_state` parameter), an *exact clone*
+        is returned: the clone and the original estimator will give the exact
+        same results. Otherwise, *statistical clone* is returned: the clone
+        might yield different results from the original estimator. More
+        details can be found in :ref:`randomness`.
+
     common tests
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
@@ -247,6 +254,13 @@ General Concepts
         We may support object or string data types for arrays before encoding
         or vectorizing.  Our estimators do not work with struct arrays, for
         instance.
+
+        Our documentation can sometimes give information about the dtype
+        precision, e.g. `np.int32`, `np.int64`, etc. When the precision is
+        provided, it refers to the NumPy dtype. If an arbitrary precision is
+        used, the documentation will refer to dtype `integer` or `floating`.
+        Note that in this case, the precision can be platform dependent.
+        The `numeric` dtype refers to accepting both `integer` and `floating`.
 
         TODO: Mention efficiency and precision issues; casting policy.
 
@@ -321,6 +335,12 @@ General Concepts
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
 
+    experimental
+        An experimental tool is already usable but its public API, such as
+        default parameter values or fitted attributes, is still subject to
+        change in future versions without the usual :term:`deprecation`
+        warning policy.
+
     evaluation metric
     evaluation metrics
         Evaluation metrics give a measure of how well a model performs.  We may
@@ -376,9 +396,9 @@ General Concepts
 
                 .. deprecated:: 0.24
 
-                    The _pairwise attribute is deprecated in 0.24. From 0.26
-                    onward, the `pairwise` estimator tag should be used
-                    instead.
+                    The _pairwise attribute is deprecated in 0.24. From 1.1
+                    (renaming of 0.26) onward, the `pairwise` estimator tag
+                    should be used instead.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -1583,6 +1603,9 @@ functions or non-estimator constructors.
         :func:`utils.check_random_state` is used internally to validate the
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
         instance.
+
+        For more details on how to control the randomness of scikit-learn
+        objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
         Specifies the score function to be maximized (usually by :ref:`cross

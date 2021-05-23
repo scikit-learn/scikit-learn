@@ -12,9 +12,9 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import check_is_fitted
 
 
@@ -87,18 +87,21 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     Examples
     --------
     >>> from sklearn.decomposition import TruncatedSVD
-    >>> from scipy.sparse import random as sparse_random
-    >>> X = sparse_random(100, 100, density=0.01, format='csr',
-    ...                   random_state=42)
+    >>> from scipy.sparse import csr_matrix
+    >>> import numpy as np
+    >>> np.random.seed(0)
+    >>> X_dense = np.random.rand(100, 100)
+    >>> X_dense[:, 2 * np.arange(50)] = 0
+    >>> X = csr_matrix(X_dense)
     >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> svd.fit(X)
     TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> print(svd.explained_variance_ratio_)
-    [0.0646... 0.0633... 0.0639... 0.0535... 0.0406...]
+    [0.0157... 0.0512... 0.0499... 0.0479... 0.0453...]
     >>> print(svd.explained_variance_ratio_.sum())
-    0.286...
+    0.2102...
     >>> print(svd.singular_values_)
-    [1.553... 1.512...  1.510... 1.370... 1.199...]
+    [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
 
     See Also
     --------
@@ -118,7 +121,6 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     class to data once, then keep the instance around to do transformations.
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, algorithm="randomized", n_iter=5,
                  random_state=None, tol=0.):
         self.algorithm = algorithm
@@ -165,7 +167,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
-            U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol)
+            v0 = _init_arpack_v0(min(X.shape), random_state)
+            U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]

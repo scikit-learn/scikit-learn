@@ -11,10 +11,10 @@ from scipy.sparse.linalg import eigsh
 
 from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
 from ..utils import check_random_state, check_array
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 
@@ -162,9 +162,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
             eigen_solver = 'dense'
 
     if eigen_solver == 'arpack':
-        random_state = check_random_state(random_state)
-        # initialize with [-1,1] as in ARPACK
-        v0 = random_state.uniform(-1, 1, M.shape[0])
+        v0 = _init_arpack_v0(M.shape[0], random_state)
         try:
             eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
                                                 tol=tol, maxiter=max_iter,
@@ -190,7 +188,6 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
-@_deprecate_positional_args
 def locally_linear_embedding(
         X, *, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
         tol=1e-6, max_iter=100, method='standard', hessian_tol=1E-4,
@@ -564,15 +561,15 @@ class LocallyLinearEmbedding(TransformerMixin,
         Not used if eigen_solver=='dense'.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
-        standard : use the standard locally linear embedding algorithm.  see
-                   reference [1]
-        hessian  : use the Hessian eigenmap method. This method requires
-                   ``n_neighbors > n_components * (1 + (n_components + 1) / 2``
-                   see reference [2]
-        modified : use the modified locally linear embedding algorithm.
-                   see reference [3]
-        ltsa     : use local tangent space alignment algorithm
-                   see reference [4]
+        - `standard`: use the standard locally linear embedding algorithm. see
+          reference [1]_
+        - `hessian`: use the Hessian eigenmap method. This method requires
+          ``n_neighbors > n_components * (1 + (n_components + 1) / 2``. see
+          reference [2]_
+        - `modified`: use the modified locally linear embedding algorithm.
+          see reference [3]_
+        - `ltsa`: use local tangent space alignment algorithm. see
+          reference [4]_
 
     hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
@@ -637,7 +634,6 @@ class LocallyLinearEmbedding(TransformerMixin,
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,

@@ -25,7 +25,7 @@ from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
-                               _check_fit_params, _deprecate_positional_args)
+                               _check_fit_params)
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
 
@@ -65,7 +65,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
                             BaseEstimator,
                             metaclass=ABCMeta):
     @abstractmethod
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -198,7 +197,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             Note: Separate models are generated for each predictor.
         """
         check_is_fitted(self)
-        if not hasattr(self.estimator, "predict"):
+        if not hasattr(self.estimators_[0], "predict"):
             raise ValueError("The base estimator should implement"
                              " a predict method")
 
@@ -229,14 +228,17 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         An estimator object implementing :term:`fit` and :term:`predict`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for :meth:`fit`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel.
+        :meth:`fit`, :meth:`predict` and :meth:`partial_fit` (if supported
+        by the passed estimator) will be parallelized for each target.
 
-        When individual estimators are fast to train or predict
-        using `n_jobs>1` can result in slower performance due
-        to the overhead of spawning processes.
+        When individual estimators are fast to train or predict,
+        using ``n_jobs > 1`` can result in slower performance due
+        to the parallelism overhead.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all available processes / threads.
+        See :term:`Glossary <n_jobs>` for more details.
 
         .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
@@ -257,7 +259,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> clf.predict(X[[0]])
     array([[176..., 35..., 57...]])
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
@@ -301,11 +302,17 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
-        It does each target variable in y in parallel.
+        The number of jobs to run in parallel.
+        :meth:`fit`, :meth:`predict` and :meth:`partial_fit` (if supported
+        by the passed estimator) will be parallelized for each target.
+
+        When individual estimators are fast to train or predict,
+        using ``n_jobs > 1`` can result in slower performance due
+        to the parallelism overhead.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        ``-1`` means using all available processes / threads.
+        See :term:`Glossary <n_jobs>` for more details.
 
         .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
@@ -330,7 +337,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> clf.predict(X[-2:])
     array([[1, 1, 0], [1, 1, 1]])
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
@@ -431,7 +437,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-    @_deprecate_positional_args
     def __init__(self, base_estimator, *, order=None, cv=None,
                  random_state=None):
         self.base_estimator = base_estimator
@@ -461,7 +466,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
-        check_array(X, accept_sparse=True)
         self.order_ = self.order
         if isinstance(self.order_, tuple):
             self.order_ = np.array(self.order_)

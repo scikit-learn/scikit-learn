@@ -10,10 +10,11 @@ import numpy as np
 import numbers
 from joblib import Parallel, effective_n_jobs
 
+
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
@@ -150,7 +151,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_features_to_select=None, step=1,
                  verbose=0, importance_getter='auto'):
         self.estimator = estimator
@@ -191,7 +191,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
+            force_all_finite=not tags.get("allow_nan", True),
             multi_output=True
         )
         error_msg = ("n_features_to_select must be either None, a "
@@ -371,11 +371,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True),
-                'requires_y': True,
-                }
+        return {
+            'poor_score': True,
+            'allow_nan': _safe_tags(self.estimator, key='allow_nan'),
+            'requires_y': True,
+        }
 
 
 class RFECV(RFE):
@@ -522,7 +522,6 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, step=1, min_features_to_select=1,
                  cv=None, scoring=None, verbose=0, n_jobs=None,
                  importance_getter='auto'):

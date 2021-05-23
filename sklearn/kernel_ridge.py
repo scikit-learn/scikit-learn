@@ -10,7 +10,6 @@ from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
-from .utils.validation import _deprecate_positional_args
 from .utils.deprecation import deprecated
 
 
@@ -113,7 +112,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> clf.fit(X, y)
     KernelRidge(alpha=1.0)
     """
-    @_deprecate_positional_args
     def __init__(self, alpha=1, *, kernel="linear", gamma=None, degree=3,
                  coef0=1, kernel_params=None):
         self.alpha = alpha
@@ -136,10 +134,10 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _more_tags(self):
         return {'pairwise': self.kernel == 'precomputed'}
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
@@ -205,5 +203,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Returns predicted values.
         """
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

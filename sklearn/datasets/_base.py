@@ -6,18 +6,17 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-import os
 import csv
+import hashlib
+import os
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
-from os.path import dirname, exists, expanduser, isdir, join, splitext
-import hashlib
+from os.path import dirname, expanduser, isdir, join, splitext
 
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
-from ..utils.validation import _deprecate_positional_args
 
 import numpy as np
 
@@ -44,15 +43,15 @@ def get_data_home(data_home=None) -> str:
 
     Parameters
     ----------
-    data_home : str | None
-        The path to scikit-learn data dir.
+    data_home : str, default=None
+        The path to scikit-learn data directory. If `None`, the default path
+        is `~/sklearn_learn_data`.
     """
     if data_home is None:
         data_home = environ.get('SCIKIT_LEARN_DATA',
                                 join('~', 'scikit_learn_data'))
     data_home = expanduser(data_home)
-    if not exists(data_home):
-        makedirs(data_home)
+    makedirs(data_home, exist_ok=True)
     return data_home
 
 
@@ -61,17 +60,24 @@ def clear_data_home(data_home=None):
 
     Parameters
     ----------
-    data_home : str | None
-        The path to scikit-learn data dir.
+    data_home : str, default=None
+        The path to scikit-learn data directory. If `None`, the default path
+        is `~/sklearn_learn_data`.
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
 
 
 def _convert_data_dataframe(caller_name, data, target,
-                            feature_names, target_names):
+                            feature_names, target_names, sparse_data=False):
     pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
-    data_df = pd.DataFrame(data, columns=feature_names)
+    if not sparse_data:
+        data_df = pd.DataFrame(data, columns=feature_names)
+    else:
+        data_df = pd.DataFrame.sparse.from_spmatrix(
+            data, columns=feature_names
+        )
+
     target_df = pd.DataFrame(target, columns=target_names)
     combined_df = pd.concat([data_df, target_df], axis=1)
     X = combined_df[feature_names]
@@ -81,7 +87,6 @@ def _convert_data_dataframe(caller_name, data, target,
     return combined_df, X, y
 
 
-@_deprecate_positional_args
 def load_files(container_path, *, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
                decode_error='strict', random_state=0):
@@ -269,7 +274,6 @@ def load_data(module_path, data_file_name):
     return data, target, target_names
 
 
-@_deprecate_positional_args
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
@@ -384,7 +388,6 @@ def load_wine(*, return_X_y=False, as_frame=False):
                  feature_names=feature_names)
 
 
-@_deprecate_positional_args
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -499,7 +502,6 @@ def load_iris(*, return_X_y=False, as_frame=False):
                  filename=iris_csv_filename)
 
 
-@_deprecate_positional_args
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
@@ -624,7 +626,6 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
                  filename=csv_filename)
 
 
-@_deprecate_positional_args
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
@@ -748,7 +749,6 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
                  DESCR=descr)
 
 
-@_deprecate_positional_args
 def load_diabetes(*, return_X_y=False, as_frame=False):
     """Load and return the diabetes dataset (regression).
 
@@ -758,6 +758,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
     Features         real, -.2 < x < .2
     Targets          integer 25 - 346
     ==============   ==================
+    
+    .. note::
+       The meaning of each feature (i.e. `feature_names`) might be unclear
+       (especially for `ltg`) as the documentation of the original dataset is
+       not explicit. We provide information that seems correct in regard with
+       the scientific literature in this field of research.
 
     Read more in the :ref:`User Guide <diabetes_dataset>`.
 
@@ -841,7 +847,6 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-@_deprecate_positional_args
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical excercise linnerud dataset.
 
@@ -945,7 +950,6 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-@_deprecate_positional_args
 def load_boston(*, return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 

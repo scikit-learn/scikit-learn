@@ -28,7 +28,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
@@ -147,7 +147,6 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, tol=1e-2, copy=True,
                  max_iter=1000,
                  noise_variance_init=None, svd_method='randomized',
@@ -212,7 +211,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         # to allow for unified computation of loglikelihood
         if self.svd_method == 'lapack':
             def my_svd(X):
-                _, s, Vt = linalg.svd(X, full_matrices=False)
+                _, s, Vt = linalg.svd(X,
+                                      full_matrices=False,
+                                      check_finite=False)
                 return (s[:n_components], Vt[:n_components],
                         squared_norm(s[n_components:]))
         elif self.svd_method == 'randomized':

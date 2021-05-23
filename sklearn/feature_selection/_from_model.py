@@ -7,11 +7,11 @@ import numbers
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.validation import _deprecate_positional_args
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -70,8 +70,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     estimator : object
         The base estimator from which the transformer is built.
         This can be both a fitted (if ``prefit`` is set to True)
-        or a non-fitted estimator. The estimator must have either a
+        or a non-fitted estimator. The estimator should have a
         ``feature_importances_`` or ``coef_`` attribute after fitting.
+        Otherwise, the ``importance_getter`` parameter should be used.
 
     threshold : string or float, default=None
         The threshold value to use for feature selection. Features whose
@@ -163,7 +164,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     SequentialFeatureSelector : Sequential cross-validation based feature
         selection. Does not rely on importance weights.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, threshold=None, prefit=False,
                  norm_order=1, max_features=None,
                  importance_getter='auto'):
@@ -283,5 +283,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         return self.estimator_.n_features_in_
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'allow_nan': estimator_tags.get('allow_nan', True)}
+        return {
+            'allow_nan': _safe_tags(self.estimator, key="allow_nan")
+        }

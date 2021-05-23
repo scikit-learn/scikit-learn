@@ -17,7 +17,6 @@ from scipy.stats import chi2
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
-from ..utils.validation import _deprecate_positional_args
 
 
 # Minimum Covariance Determinant
@@ -228,7 +227,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         (2 is enough to be close to the final solution. "Never" exceeds 20).
         This parameter must be a strictly positive integer.
 
-    verbose : bool, default False
+    verbose : bool, default=False
         Control the output verbosity.
 
     cov_computation_method : callable, \
@@ -615,7 +614,6 @@ class MinCovDet(EmpiricalCovariance):
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, random_state=None):
         self.store_precision = store_precision
@@ -632,8 +630,8 @@ class MinCovDet(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y: Ignored
-            Not used, present for API consistence purpose.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------

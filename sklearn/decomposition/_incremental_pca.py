@@ -10,7 +10,6 @@ from scipy import linalg, sparse
 from ._base import _BasePCA
 from ..utils import gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
-from ..utils.validation import _deprecate_positional_args
 
 
 class IncrementalPCA(_BasePCA):
@@ -164,7 +163,6 @@ class IncrementalPCA(_BasePCA):
     SparsePCA
     TruncatedSVD
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, whiten=False, copy=True,
                  batch_size=None):
         self.n_components = n_components
@@ -298,7 +296,7 @@ class IncrementalPCA(_BasePCA):
             X = np.vstack((self.singular_values_.reshape((-1, 1)) *
                            self.components_, X, mean_correction))
 
-        U, S, Vt = linalg.svd(X, full_matrices=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
         U, Vt = svd_flip(U, Vt, u_based_decision=False)
         explained_variance = S ** 2 / (n_total_samples - 1)
         explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)

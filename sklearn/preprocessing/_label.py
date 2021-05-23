@@ -18,9 +18,13 @@ from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
-from ..utils.validation import (check_array, check_is_fitted, _num_samples,
-                                _deprecate_positional_args)
-from ..utils.multiclass import type_of_target, unique_labels
+from ..utils.validation import (
+    _num_samples,
+    check_array,
+    check_is_fitted
+)
+from ..utils.multiclass import unique_labels
+from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
 
 
@@ -254,7 +258,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         scheme.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
         if neg_label >= pos_label:
             raise ValueError("neg_label={0} must be strictly less than "
@@ -403,7 +406,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         return {'X_types': ['1dlabels']}
 
 
-@_deprecate_positional_args
 def label_binarize(y, *, classes, neg_label=0, pos_label=1,
                    sparse_output=False):
     """Binarize labels in a one-vs-all fashion.
@@ -717,7 +719,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         scheme.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output

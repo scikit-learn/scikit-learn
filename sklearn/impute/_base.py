@@ -4,6 +4,7 @@
 
 import numbers
 import warnings
+from collections import Counter
 
 import numpy as np
 import numpy.ma as ma
@@ -14,7 +15,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
 
@@ -34,15 +34,20 @@ def _most_frequent(array, extra_value, n_repeat):
        of the array."""
     # Compute the most frequent value in array only
     if array.size > 0:
-        with warnings.catch_warnings():
-            # stats.mode raises a warning when input array contains objects due
-            # to incapacity to detect NaNs. Irrelevant here since input array
-            # has already been NaN-masked.
-            warnings.simplefilter("ignore", RuntimeWarning)
+        if array.dtype == object:
+            # scipy.stats.mode is slow with object dtype array.
+            # Python Counter is more efficient
+            counter = Counter(array)
+            most_frequent_count = counter.most_common(1)[0][1]
+            # tie breaking similarly to scipy.stats.mode
+            most_frequent_value = min(
+                value for value, count in counter.items()
+                if count == most_frequent_count
+            )
+        else:
             mode = stats.mode(array)
-
-        most_frequent_value = mode[0][0]
-        most_frequent_count = mode[1][0]
+            most_frequent_value = mode[0][0]
+            most_frequent_count = mode[1][0]
     else:
         most_frequent_value = 0
         most_frequent_count = 0
@@ -55,11 +60,8 @@ def _most_frequent(array, extra_value, n_repeat):
     elif most_frequent_count > n_repeat:
         return most_frequent_value
     elif most_frequent_count == n_repeat:
-        # Ties the breaks. Copy the behaviour of scipy.stats.mode
-        if most_frequent_value < extra_value:
-            return most_frequent_value
-        else:
-            return extra_value
+        # tie breaking similarly to scipy.stats.mode
+        return min(most_frequent_value, extra_value)
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
@@ -140,6 +142,7 @@ class SimpleImputer(_BaseImputer):
           each column. Can only be used with numeric data.
         - If "most_frequent", then replace missing using the most frequent
           value along each column. Can be used with strings or numeric data.
+          If there is more than one such value, only the smallest is returned.
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
 
@@ -207,7 +210,6 @@ class SimpleImputer(_BaseImputer):
     upon :meth:`transform` if strategy is not "constant".
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, missing_values=np.nan, strategy="mean",
                  fill_value=None, verbose=0, copy=True, add_indicator=False):
         super().__init__(
@@ -422,6 +424,12 @@ class SimpleImputer(_BaseImputer):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
+
+        Returns
+        -------
+        X_imputed : {ndarray, sparse matrix} of shape \
+                (n_samples, n_features_out)
+            `X` with imputed values.
         """
         check_is_fitted(self)
 
@@ -616,7 +624,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
            [False, False]])
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, missing_values=np.nan, features="missing-only",
                  sparse="auto", error_on_new=True):
         self.missing_values = missing_values
@@ -793,15 +800,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
-            X = self._validate_input(X, in_fit=True)
+            X = self._validate_input(X, in_fit=False)
         else:
             if not (hasattr(X, 'dtype') and X.dtype.kind == 'b'):
                 raise ValueError("precomputed is True but the input data is "
                                  "not a mask")
-
-        if X.shape[1] != self._n_features:
-            raise ValueError("X has a different number of features "
-                             "than during fitting.")
 
         imputer_mask, features = self._get_missing_features_info(X)
 

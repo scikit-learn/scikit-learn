@@ -20,11 +20,11 @@ except ImportError:   # scipy < 1.4
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import check_array, check_random_state, as_float_array
+from .utils import check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
-from .utils.validation import check_non_negative, _deprecate_positional_args
+from .utils.validation import check_non_negative
 
 
 class PolynomialCountSketch(BaseEstimator, TransformerMixin):
@@ -149,7 +149,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csc")
+        X = self._validate_data(X, accept_sparse="csc", reset=False)
 
         X_gamma = np.sqrt(self.gamma) * X
 
@@ -253,7 +253,6 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     Benjamin Recht.
     (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
-    @_deprecate_positional_args
     def __init__(self, *, gamma=1., n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
@@ -302,7 +301,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
@@ -369,7 +368,6 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
 
     sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
-    @_deprecate_positional_args
     def __init__(self, *, skewedness=1., n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
@@ -420,7 +418,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         X = as_float_array(X, copy=True)
-        X = check_array(X, copy=False)
+        X = self._validate_data(X, copy=False, reset=False)
         if (X <= -self.skewedness).any():
             raise ValueError("X may not contain entries smaller than"
                              " -skewedness.")
@@ -500,7 +498,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
     2011
     """
-    @_deprecate_positional_args
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
@@ -555,7 +552,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
                " calling transform")
         check_is_fitted(self, msg=msg)
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         check_non_negative(X, 'X in AdditiveChi2Sampler.transform')
         sparse = sp.issparse(X)
 
@@ -728,7 +725,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
-    @_deprecate_positional_args
     def __init__(self, kernel="rbf", *, gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None,
                  n_jobs=None):
@@ -802,7 +798,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(X, self.components_,

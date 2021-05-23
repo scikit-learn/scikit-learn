@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -8,7 +10,6 @@ from scipy.sparse import csc_matrix
 
 import pytest
 
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -42,37 +43,46 @@ def test_initialize_nn_output():
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     msg = "Invalid solver parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, NMF(solver=name, init=init).fit, A)
+    with pytest.raises(ValueError, match=msg):
+        NMF(solver=name, init=init).fit(A)
     msg = "Invalid init parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, NMF(init=name).fit, A)
+    with pytest.raises(ValueError, match=msg):
+        NMF(init=name).fit(A)
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, NMF(regularization=name,
-                                              init=init).fit, A)
+    with pytest.raises(ValueError, match=msg):
+        NMF(regularization=name, init=init).fit(A)
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
-    assert_raise_message(ValueError, msg, NMF(solver='mu', init=init,
-                                              beta_loss=name).fit, A)
-    msg = "Invalid beta_loss parameter: solver 'cd' does not handle "
-    msg += "beta_loss = 1.0"
-    assert_raise_message(ValueError, msg, NMF(solver='cd', init=init,
-                                              beta_loss=1.0).fit, A)
+    with pytest.raises(ValueError, match=msg):
+        NMF(solver='mu', init=init, beta_loss=name).fit(A)
+    msg = (
+        "Invalid beta_loss parameter: solver 'cd' does not handle "
+        "beta_loss = 1.0"
+    )
+    with pytest.raises(ValueError, match=msg):
+        NMF(solver='cd', init=init, beta_loss=1.0).fit(A)
 
     msg = "Negative values in data passed to"
-    assert_raise_message(ValueError, msg, NMF(init=init).fit, -A)
-    assert_raise_message(ValueError, msg, nmf._initialize_nmf, -A,
-                         2, 'nndsvd')
+    with pytest.raises(ValueError, match=msg):
+        NMF(init=init).fit(-A)
+    with pytest.raises(ValueError, match=msg):
+        nmf._initialize_nmf(-A, 2, 'nndsvd')
     clf = NMF(2, tol=0.1, init=init).fit(A)
-    assert_raise_message(ValueError, msg, clf.transform, -A)
+    with pytest.raises(ValueError, match=msg):
+        clf.transform(-A)
 
     for init in ['nndsvd', 'nndsvda', 'nndsvdar']:
-        msg = ("init = '{}' can only be used when "
-               "n_components <= min(n_samples, n_features)"
-               .format(init))
-        assert_raise_message(ValueError, msg, NMF(3, init=init).fit, A)
-        assert_raise_message(ValueError, msg, nmf._initialize_nmf, A,
-                             3, init)
+        msg = re.escape(
+            "init = '{}' can only be used when "
+            "n_components <= min(n_samples, n_features)"
+            .format(init)
+        )
+        with pytest.raises(ValueError, match=msg):
+            NMF(3, init=init).fit(A)
+        with pytest.raises(ValueError, match=msg):
+            nmf._initialize_nmf(A, 3, init)
 
 
 def test_initialize_close():
@@ -179,7 +189,7 @@ def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(30, 10))
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'random'
     NMF(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
@@ -257,21 +267,30 @@ def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
     nnmf = non_negative_factorization
-    msg = ("Number of components must be a positive integer; "
-           "got (n_components=1.5)")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, init='random')
-    msg = ("Number of components must be a positive integer; "
-           "got (n_components='2')")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', init='random')
-    msg = "Negative values in data passed to NMF (input H)"
-    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, init='custom')
-    msg = "Negative values in data passed to NMF (input W)"
-    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, init='custom')
-    msg = "Array passed to NMF (input H) is full of zeros"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom')
+    msg = re.escape(
+        "Number of components must be a positive integer; "
+        "got (n_components=1.5)"
+    )
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, A, A, 1.5, init='random')
+    msg = re.escape(
+        "Number of components must be a positive integer; "
+        "got (n_components='2')"
+    )
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, A, A, '2', init='random')
+    msg = re.escape("Negative values in data passed to NMF (input H)")
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, A, -A, 2, init='custom')
+    msg = re.escape("Negative values in data passed to NMF (input W)")
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, -A, A, 2, init='custom')
+    msg = re.escape("Array passed to NMF (input H) is full of zeros")
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, A, 0 * A, 2, init='custom')
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
-                         regularization='spam')
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, A, 0 * A, 2, init='custom', regularization='spam')
 
 
 def _beta_divergence_dense(X, W, H, beta):
@@ -425,7 +444,8 @@ def test_nmf_negative_beta_loss():
 
     msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
     for beta_loss in (-0.6, 0.):
-        assert_raise_message(ValueError, msg, _assert_nmf_no_nan, X, beta_loss)
+        with pytest.raises(ValueError, match=msg):
+            _assert_nmf_no_nan(X, beta_loss)
         _assert_nmf_no_nan(X + 1e-9, beta_loss)
 
     for beta_loss in (0.2, 1., 1.2, 2., 2.5):
@@ -441,7 +461,7 @@ def test_nmf_regularization():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
@@ -552,7 +572,7 @@ def test_nmf_dtype_match(dtype_in, dtype_out, solver, regularization):
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     nmf = NMF(solver=solver, regularization=regularization, init=init)
 
@@ -568,7 +588,7 @@ def test_nmf_float32_float64_consistency(solver, regularization):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     nmf32 = NMF(solver=solver, regularization=regularization, random_state=0,
                 init=init)
@@ -595,13 +615,13 @@ def test_nmf_custom_init_dtype_error():
         non_negative_factorization(X, H=H, update_H=False)
 
 
-# FIXME : should be removed in 0.26
+# FIXME : should be removed in 1.1
 def test_init_default_deprecation():
     # Test FutureWarning on init default
-    msg = ("The 'init' value, when 'init=None' and "
-           "n_components is less than n_samples and "
-           "n_features, will be changed from 'nndsvd' to "
-           "'nndsvda' in 0.26.")
+    msg = (r"The 'init' value, when 'init=None' and "
+           r"n_components is less than n_samples and "
+           r"n_features, will be changed from 'nndsvd' to "
+           r"'nndsvda' in 1.1 \(renaming of 0.26\).")
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     with pytest.warns(FutureWarning, match=msg):

@@ -10,11 +10,9 @@ from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
 from ..neighbors._base import _check_weights
-from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 
 class KNNImputer(_BaseImputer):
@@ -97,7 +95,6 @@ class KNNImputer(_BaseImputer):
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
     """
-    @_deprecate_positional_args
     def __init__(self, *, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean", copy=True,
                  add_indicator=False):
@@ -213,12 +210,9 @@ class KNNImputer(_BaseImputer):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
-
-        if X.shape[1] != self._fit_X.shape[1]:
-            raise ValueError("Incompatible dimension between the fitted "
-                             "dataset and the one to be transformed")
+        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+                                force_all_finite=force_all_finite,
+                                copy=self.copy, reset=False)
 
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X

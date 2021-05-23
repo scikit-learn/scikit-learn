@@ -47,10 +47,10 @@ from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.deprecation import deprecated
+from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
-from .utils.validation import _deprecate_positional_args
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
@@ -183,10 +183,28 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         Coefficient of the features in the decision function. This attribute
         exists only if the ``estimators_`` defines ``coef_``.
 
+        .. deprecated:: 0.24
+            This attribute is deprecated in 0.24 and will
+            be removed in 1.1 (renaming of 0.26). If you use this attribute
+            in :class:`~sklearn.feature_selection.RFE` or
+            :class:`~sklearn.feature_selection.SelectFromModel`,
+            you may pass a callable to the `importance_getter`
+            parameter that extracts feature the importances
+            from `estimators_`.
+
     intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
         If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
         This attribute exists only if the ``estimators_`` defines
         ``intercept_``.
+
+        .. deprecated:: 0.24
+            This attribute is deprecated in 0.24 and will
+            be removed in 1.1 (renaming of 0.26). If you use this attribute
+            in :class:`~sklearn.feature_selection.RFE` or
+            :class:`~sklearn.feature_selection.SelectFromModel`,
+            you may pass a callable to the `importance_getter`
+            parameter that extracts feature the importances
+            from `estimators_`.
 
     classes_ : array, shape = [`n_classes`]
         Class labels.
@@ -226,7 +244,6 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
         to binary indicator matrix.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -437,6 +454,13 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     def n_classes_(self):
         return len(self.classes_)
 
+    # TODO: Remove coef_ attribute in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
+                "If you observe this warning while using RFE "
+                "or SelectFromModel, use the importance_getter "
+                "parameter instead.")
     @property
     def coef_(self):
         check_is_fitted(self)
@@ -448,6 +472,13 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             return sp.vstack(coefs)
         return np.vstack(coefs)
 
+    # TODO: Remove intercept_ attribute in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
+                "If you observe this warning while using RFE "
+                "or SelectFromModel, use the importance_getter "
+                "parameter instead.")
     @property
     def intercept_(self):
         check_is_fitted(self)
@@ -456,10 +487,10 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                 "Base estimator doesn't have an intercept_ attribute.")
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
@@ -467,8 +498,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        estimator_tags = self.estimator._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', False)}
+        return {'pairwise': _safe_tags(self.estimator, key="pairwise")}
 
     @property
     def _first_estimator(self):
@@ -559,9 +589,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. deprecated:: 0.24
 
-            The _pairwise attribute is deprecated in 0.24. From 0.26 and
-            onward, `pairwise_indices_` will use the pairwise estimator tag
-            instead.
+            The _pairwise attribute is deprecated in 0.24. From 1.1
+            (renaming of 0.25) and onward, `pairwise_indices_` will use the
+            pairwise estimator tag instead.
 
     Examples
     --------
@@ -577,7 +607,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     >>> clf.predict(X_test[:10])
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -737,10 +766,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def n_classes_(self):
         return len(self.classes_)
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
@@ -748,8 +777,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        estimator_tags = self.estimator._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', True)}
+        return {
+            'pairwise': _safe_tags(self.estimator, key="pairwise")
+        }
 
 
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
@@ -834,7 +864,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, code_size=1.5, random_state=None,
                  n_jobs=None):
         self.estimator = estimator

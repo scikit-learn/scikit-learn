@@ -1,13 +1,13 @@
 import os
 from os.path import exists
 from os.path import join
+from os import environ
 import warnings
-
-import numpy as np
 
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import check_skip_network
+from sklearn.utils.fixes import parse_version
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
@@ -43,6 +43,20 @@ def setup_working_with_text_data():
         raise SkipTest("Skipping dataset loading doctests")
 
 
+def setup_loading_other_datasets():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping loading_other_datasets.rst, "
+                       "pandas not installed")
+
+    # checks SKLEARN_SKIP_NETWORK_TESTS to see if test should run
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", '1') == "0"
+    if not run_network_tests:
+        raise SkipTest("Skipping loading_other_datasets.rst, tests can be "
+                       "enabled by settting SKLEARN_SKIP_NETWORK_TESTS=0")
+
+
 def setup_compose():
     try:
         import pandas  # noqa
@@ -62,6 +76,17 @@ def setup_grid_search():
         import pandas  # noqa
     except ImportError:
         raise SkipTest("Skipping grid_search.rst, pandas not installed")
+
+
+def setup_preprocessing():
+    try:
+        import pandas  # noqa
+        if parse_version(pandas.__version__) < parse_version('1.1.0'):
+            raise SkipTest(
+                "Skipping preprocessing.rst, pandas version < 1.1.0"
+                )
+    except ImportError:
+        raise SkipTest("Skipping preprocessing.rst, pandas not installed")
 
 
 def setup_unsupervised_learning():
@@ -91,9 +116,13 @@ def pytest_runtest_setup(item):
         setup_compose()
     elif IS_PYPY and fname.endswith('modules/feature_extraction.rst'):
         raise SkipTest('FeatureHasher is not compatible with PyPy')
+    elif fname.endswith('datasets/loading_other_datasets.rst'):
+        setup_loading_other_datasets()
     elif fname.endswith('modules/impute.rst'):
         setup_impute()
     elif fname.endswith('modules/grid_search.rst'):
         setup_grid_search()
+    elif fname.endswith('modules/preprocessing.rst'):
+        setup_preprocessing()
     elif fname.endswith('statistical_inference/unsupervised_learning.rst'):
         setup_unsupervised_learning()

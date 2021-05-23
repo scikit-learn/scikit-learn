@@ -22,8 +22,8 @@ class DetCurveDisplay:
     fpr : ndarray
         False positive rate.
 
-    tpr : ndarray
-        True positive rate.
+    fnr : ndarray
+        False negative rate.
 
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
