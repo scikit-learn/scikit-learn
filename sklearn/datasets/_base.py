@@ -203,8 +203,8 @@ def load_files(container_path, *, description=None, categories=None,
         assert not (allowed_extensions and ignored_extensions)
     except AssertionError:
         raise ValueError("Ignored extensions and allowed extensions cannot"
-                             " both be present. Please choose one or the"
-                             " other.")
+                         " both be present. Please choose one or the"
+                         " other.")
 
     allowed_extensions = None if allowed_extensions is None else set(
         allowed_extensions)
