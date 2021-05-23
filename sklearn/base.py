@@ -23,10 +23,8 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
-from .utils.validation import _deprecate_positional_args
 
 
-@_deprecate_positional_args
 def clone(estimator, *, safe=True):
     """Constructs a new unfitted estimator with the same parameters.
 

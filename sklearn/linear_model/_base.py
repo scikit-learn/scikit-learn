@@ -28,9 +28,9 @@ from joblib import Parallel
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
+from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import _incremental_mean_and_var
@@ -39,7 +39,6 @@ from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
-
 from ..utils.fixes import delayed
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -271,8 +270,8 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             X_var = X_var.astype(X.dtype, copy=False)
             # Detect constant features on the computed variance, before taking
             # the np.sqrt. Otherwise constant features cannot be detected with
-            # sample_weights.
-            constant_mask = X_var < 10 * np.finfo(X.dtype).eps
+            # sample weights.
+            constant_mask = _is_constant_feature(X_var, X_offset, X.shape[0])
             X_var *= X.shape[0]
             X_scale = np.sqrt(X_var, out=X_var)
             X_scale[constant_mask] = 1.
@@ -591,11 +590,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.coef_
     array([1., 2.])
     >>> reg.intercept_
-    3.0000...
+    3.0...
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
-    @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize='deprecated',
                  copy_X=True, n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept

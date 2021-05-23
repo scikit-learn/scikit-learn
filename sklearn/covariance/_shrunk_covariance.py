@@ -18,7 +18,6 @@ import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils import check_array
-from ..utils.validation import _deprecate_positional_args
 
 
 # ShrunkCovariance estimator
@@ -118,7 +117,6 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     where mu = trace(cov) / n_features
     """
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
         super().__init__(store_precision=store_precision,
@@ -253,7 +251,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-@_deprecate_positional_args
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
@@ -391,7 +388,6 @@ class LedoitWolf(EmpiricalCovariance):
     Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
     February 2004, pages 365-411.
     """
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  block_size=1000):
         super().__init__(store_precision=store_precision,
@@ -431,7 +427,6 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-@_deprecate_positional_args
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
