@@ -6,7 +6,6 @@ from pickle import loads
 from pickle import dumps
 from functools import partial
 import pytest
-
 import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
