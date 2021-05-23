@@ -25,7 +25,7 @@ from ..utils import _safe_indexing
 from ..utils import column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -943,7 +943,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    @_deprecate_positional_args
     def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
@@ -1366,7 +1365,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    @_deprecate_positional_args
     def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",

@@ -16,7 +16,6 @@ from ...utils import _safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
-from ...utils.validation import _deprecate_positional_args
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -35,7 +34,6 @@ def check_number_of_labels(n_labels, n_samples):
                          "to n_samples - 1 (inclusive)" % n_labels)
 
 
-@_deprecate_positional_args
 def silhouette_score(X, labels, *, metric='euclidean', sample_size=None,
                      random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
@@ -149,7 +147,6 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     return intra_clust_dists, inter_clust_dists
 
 
-@_deprecate_positional_args
 def silhouette_samples(X, labels, *, metric='euclidean', **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
