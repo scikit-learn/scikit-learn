@@ -1496,6 +1496,9 @@ problem. The current implementation is based on
     tortoise: computability of squared-error versus absolute-error estimators.
     Statistical Science, 12, 279-300. https://doi.org/10.1214/ss/1030037960
 
+  * Koenker, R. (2005). Quantile Regression.
+    Cambridge University Press. https://doi.org/10.1017/CBO9780511754098
+
 
 .. _polynomial_regression:
 
