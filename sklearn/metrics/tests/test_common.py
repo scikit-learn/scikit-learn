@@ -50,6 +50,7 @@ from sklearn.metrics import mean_poisson_deviance
 from sklearn.metrics import mean_gamma_deviance
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import mean_pinball_loss
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -101,6 +102,7 @@ REGRESSION_METRICS = {
     "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
+    "mean_pinball_loss": mean_pinball_loss,
     "median_absolute_error": median_absolute_error,
     "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
@@ -340,16 +342,6 @@ METRICS_WITH_POS_LABEL = {
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "samples_average_precision_score",
-
-    # pos_label support deprecated; to be removed in 0.18:
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score", "weighted_recall_score",
-
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
-    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
-    "macro_precision_score", "macro_recall_score",
 }
 
 # Metrics with a "labels" argument
@@ -437,7 +429,8 @@ MULTILABELS_METRICS = {
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = {
     "mean_absolute_error", "median_absolute_error", "mean_squared_error",
-    "r2_score", "explained_variance_score", "mean_absolute_percentage_error"
+    "r2_score", "explained_variance_score", "mean_absolute_percentage_error",
+    "mean_pinball_loss"
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -459,6 +452,9 @@ SYMMETRIC_METRICS = {
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error", "max_error",
+
+    # Pinball loss is only symmetric for alpha=0.5 which is the default.
+    "mean_pinball_loss",
 
     "cohen_kappa_score", "mean_normal_deviance"
 }

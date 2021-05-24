@@ -14,6 +14,7 @@ from ._split import RepeatedStratifiedKFold
 from ._split import ShuffleSplit
 from ._split import GroupShuffleSplit
 from ._split import StratifiedShuffleSplit
+from ._split import StratifiedGroupKFold
 from ._split import PredefinedSplit
 from ._split import train_test_split
 from ._split import check_cv
@@ -29,7 +30,6 @@ from ._search import GridSearchCV
 from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
-from ._search import fit_grid_point
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
@@ -57,12 +57,12 @@ __all__ = ['BaseCrossValidator',
            'RandomizedSearchCV',
            'ShuffleSplit',
            'StratifiedKFold',
+           'StratifiedGroupKFold',
            'StratifiedShuffleSplit',
            'check_cv',
            'cross_val_predict',
            'cross_val_score',
            'cross_validate',
-           'fit_grid_point',
            'learning_curve',
            'permutation_test_score',
            'train_test_split',

@@ -30,7 +30,6 @@ from .._loss.glm_distribution import TweedieDistribution
 from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import _check_sample_weight
 from ..utils.stats import _weighted_percentile
 from ..exceptions import UndefinedMetricWarning
@@ -43,6 +42,7 @@ __ALL__ = [
     "mean_squared_log_error",
     "median_absolute_error",
     "mean_absolute_percentage_error",
+    "mean_pinball_loss",
     "r2_score",
     "explained_variance_score",
     "mean_tweedie_deviance",
@@ -122,7 +122,6 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     return y_type, y_true, y_pred, multioutput
 
 
-@_deprecate_positional_args
 def mean_absolute_error(y_true, y_pred, *,
                         sample_weight=None,
                         multioutput='uniform_average'):
@@ -190,6 +189,88 @@ def mean_absolute_error(y_true, y_pred, *,
         elif multioutput == 'uniform_average':
             # pass None as weights to np.average: uniform mean
             multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
+def mean_pinball_loss(y_true, y_pred, *,
+                      sample_weight=None,
+                      alpha=0.5,
+                      multioutput='uniform_average'):
+    """Pinball loss for quantile regression.
+
+    Read more in the :ref:`User Guide <pinball_loss>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    alpha: double, slope of the pinball loss, default=0.5,
+        this loss is equivalent to :ref:`mean_absolute_error` when `alpha=0.5`,
+        `alpha=0.95` is minimized by estimators of the 95th percentile.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+    Returns
+    -------
+    loss : float or ndarray of floats
+        If multioutput is 'raw_values', then mean absolute error is returned
+        for each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average of all output errors is returned.
+
+        The pinball loss output is a non-negative floating point. The best
+        value is 0.0.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_pinball_loss
+    >>> y_true = [1, 2, 3]
+    >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
+    0.03...
+    >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
+    0.3...
+    >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
+    0.3...
+    >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
+    0.03...
+    >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
+    0.0
+    >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
+    0.0
+    """
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    diff = y_true - y_pred
+    sign = (diff >= 0).astype(diff.dtype)
+    loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
+    output_errors = np.average(loss, weights=sample_weight, axis=0)
+    if isinstance(multioutput, str):
+        if multioutput == 'raw_values':
+            return output_errors
+        elif multioutput == 'uniform_average':
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+        else:
+            raise ValueError("multioutput is expected to be 'raw_values' "
+                             "or 'uniform_average' but we got %r"
+                             " instead." % multioutput)
 
     return np.average(output_errors, weights=multioutput)
 
@@ -271,7 +352,6 @@ def mean_absolute_percentage_error(y_true, y_pred,
     return np.average(output_errors, weights=multioutput)
 
 
-@_deprecate_positional_args
 def mean_squared_error(y_true, y_pred, *,
                        sample_weight=None,
                        multioutput='uniform_average', squared=True):
@@ -351,7 +431,6 @@ def mean_squared_error(y_true, y_pred, *,
     return np.average(output_errors, weights=multioutput)
 
 
-@_deprecate_positional_args
 def mean_squared_log_error(y_true, y_pred, *,
                            sample_weight=None,
                            multioutput='uniform_average'):
@@ -418,7 +497,6 @@ def mean_squared_log_error(y_true, y_pred, *,
                               multioutput=multioutput)
 
 
-@_deprecate_positional_args
 def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
                           sample_weight=None):
     """Median absolute error regression loss.
@@ -492,7 +570,6 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
     return np.average(output_errors, weights=multioutput)
 
 
-@_deprecate_positional_args
 def explained_variance_score(y_true, y_pred, *,
                              sample_weight=None,
                              multioutput='uniform_average'):
@@ -584,15 +661,14 @@ def explained_variance_score(y_true, y_pred, *,
     return np.average(output_scores, weights=avg_weights)
 
 
-@_deprecate_positional_args
 def r2_score(y_true, y_pred, *, sample_weight=None,
              multioutput="uniform_average"):
-    """R^2 (coefficient of determination) regression score function.
+    """:math:`R^2` (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
     model can be arbitrarily worse). A constant model that always
     predicts the expected value of y, disregarding the input features,
-    would get a R^2 score of 0.0.
+    would get a :math:`R^2` score of 0.0.
 
     Read more in the :ref:`User Guide <r2_score>`.
 
@@ -630,15 +706,15 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     Returns
     -------
     z : float or ndarray of floats
-        The R^2 score or ndarray of scores if 'multioutput' is
+        The :math:`R^2` score or ndarray of scores if 'multioutput' is
         'raw_values'.
 
     Notes
     -----
     This is not a symmetric function.
 
-    Unlike most other scores, R^2 score may be negative (it need not actually
-    be the square of a quantity R).
+    Unlike most other scores, :math:`R^2` score may be negative (it need not
+    actually be the square of a quantity R).
 
     This metric is not well-defined for single samples and will return a NaN
     value if n_samples is less than two.
@@ -756,7 +832,6 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
-@_deprecate_positional_args
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
@@ -821,7 +896,6 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     return np.average(dev, weights=sample_weight)
 
 
-@_deprecate_positional_args
 def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
@@ -859,7 +933,6 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     )
 
 
-@_deprecate_positional_args
 def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
 
