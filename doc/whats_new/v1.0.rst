@@ -272,6 +272,12 @@ Changelog
   :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
   and `Julien Jerphanion <jjerphan>`.
 
+:mod:`sklearn.impute`
+................................
+- |API| The `verbose` parameter was deprecated for :class:`impute.SimpleImputer`.
+  A warning will always be raised upon the removal of empty columns.
+  :pr:`18467` by :user:`Oleh Kozynets <OlehKSS>`.
+
 :mod:`sklearn.inspection`
 .........................
 
