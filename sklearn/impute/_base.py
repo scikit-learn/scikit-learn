@@ -167,8 +167,13 @@ class SimpleImputer(_BaseImputer):
     verbose : int, default=0
         Controls the verbosity of the imputer.
 
-    copy : bool, default=True
-        If True, a copy of `X` will be created. If False, imputation will
+        .. deprecated:: 1.0
+           The 'verbose' parameter was deprecated in version 1.0 and will be
+           removed in 1.2. A warning will always be raised upon the removal of
+           empty columns in the future version.
+
+    copy : boolean, default=True
+        If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
         a new copy will always be made, even if `copy=False`:
 
@@ -229,18 +234,13 @@ class SimpleImputer(_BaseImputer):
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
     """
-
-    def __init__(
-        self,
-        *,
-        missing_values=np.nan,
-        strategy="mean",
-        fill_value=None,
-        verbose=0,
-        copy=True,
-        add_indicator=False,
-    ):
-        super().__init__(missing_values=missing_values, add_indicator=add_indicator)
+    def __init__(self, *, missing_values=np.nan, strategy="mean",
+                 fill_value=None, verbose=None, copy=True,
+                 add_indicator=False):
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator
+        )
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
@@ -324,6 +324,12 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
+        if self.verbose is not None:
+            warnings.warn("The 'verbose' parameter was deprecated in version "
+                          "1.0 and will be removed in 1.2. A warning will "
+                          "always be raised upon the removal of empty columns "
+                          "in the future version.", FutureWarning)
+
         X = self._validate_input(X, in_fit=True)
 
         # default fill_value is 0 for numerical input and "missing_value"
