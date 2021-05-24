@@ -14,7 +14,6 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
-from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
 from ..utils.fixes import delayed
 
@@ -132,7 +131,6 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     return X, stress, it + 1
 
 
-@_deprecate_positional_args
 def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
            n_init=8, n_jobs=None, max_iter=300, verbose=0, eps=1e-3,
            random_state=None, return_n_iter=False):
@@ -372,7 +370,6 @@ class MDS(BaseEstimator):
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean"):

@@ -978,7 +978,6 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
 def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
                                               n_features=5,
                                               n_test_pts=10,
-                                              n_neighbors=3,
                                               random_state=0):
     # Test k-neighbors in multi-output regression with various weight
     rng = np.random.RandomState(random_state)
@@ -991,8 +990,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
     weights = ['uniform', 'distance', _weight_func]
 
     for algorithm, weights in product(ALGORITHMS, weights):
-        rnn = neighbors.RadiusNeighborsRegressor(n_neighbors=n_neighbors,
-                                                 weights=weights,
+        rnn = neighbors.RadiusNeighborsRegressor(weights=weights,
                                                  algorithm=algorithm)
         rnn.fit(X, y)
         epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
@@ -1169,24 +1167,28 @@ def test_radius_neighbors_graph_sparse(seed=36):
 
 def test_neighbors_badargs():
     # Test bad argument values: these should all raise ValueErrors
-    with pytest.raises(ValueError):
-        neighbors.NearestNeighbors(algorithm='blah')
-
     X = rng.random_sample((10, 2))
     Xsparse = csr_matrix(X)
     X3 = rng.random_sample((10, 3))
     y = np.ones(10)
 
+    est = neighbors.NearestNeighbors(algorithm='blah')
+    with pytest.raises(ValueError):
+        est.fit(X)
+
     for cls in (neighbors.KNeighborsClassifier,
                 neighbors.RadiusNeighborsClassifier,
                 neighbors.KNeighborsRegressor,
                 neighbors.RadiusNeighborsRegressor):
+        est = cls(weights='blah')
         with pytest.raises(ValueError):
-            cls(weights='blah')
+            est.fit(X, y)
+        est = cls(p=-1)
         with pytest.raises(ValueError):
-            cls(p=-1)
+            est.fit(X, y)
+        est = cls(algorithm='blah')
         with pytest.raises(ValueError):
-            cls(algorithm='blah')
+            est.fit(X, y)
 
         nbrs = cls(algorithm='ball_tree', metric='haversine')
         with pytest.raises(ValueError):
@@ -1255,10 +1257,11 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
                     metric not in neighbors.KDTree.valid_metrics):
+                est = neighbors.NearestNeighbors(algorithm=algorithm,
+                                                 metric=metric,
+                                                 metric_params=metric_params)
                 with pytest.raises(ValueError):
-                    neighbors.NearestNeighbors(algorithm=algorithm,
-                                               metric=metric,
-                                               metric_params=metric_params)
+                    est.fit(X)
                 continue
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
@@ -1361,8 +1364,11 @@ def test_valid_brute_metric_for_auto_algorithm():
 
 
 def test_metric_params_interface():
+    X = rng.rand(5, 5)
+    y = rng.randint(0, 2, 5)
+    est = neighbors.KNeighborsClassifier(metric_params={'p': 3})
     with pytest.warns(SyntaxWarning):
-        neighbors.KNeighborsClassifier(metric_params={'p': 3})
+        est.fit(X, y)
 
 
 def test_predict_sparse_ball_kd_tree():

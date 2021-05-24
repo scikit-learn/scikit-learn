@@ -37,7 +37,6 @@ from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
@@ -137,7 +136,6 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return sample_score.sum()
 
 
-@_deprecate_positional_args
 def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Accuracy classification score.
 
@@ -210,7 +208,6 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-@_deprecate_positional_args
 def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                      normalize=None):
     """Compute confusion matrix to evaluate the accuracy of a classification.
@@ -366,7 +363,6 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     return cm
 
 
-@_deprecate_positional_args
 def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
                                 labels=None, samplewise=False):
     """Compute a confusion matrix for each class or sample.
@@ -568,7 +564,6 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-@_deprecate_positional_args
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
                       sample_weight=None):
     r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
@@ -650,7 +645,6 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
     return 1 - k
 
 
-@_deprecate_positional_args
 def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
                   average='binary', sample_weight=None, zero_division="warn"):
     """Jaccard similarity coefficient score.
@@ -796,7 +790,6 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
     return np.average(jaccard, weights=weights)
 
 
-@_deprecate_positional_args
 def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC).
 
@@ -886,7 +879,6 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         return mcc
 
 
-@_deprecate_positional_args
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
@@ -957,7 +949,6 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         return n_samples - score
 
 
-@_deprecate_positional_args
 def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
              sample_weight=None, zero_division="warn"):
     """Compute the F1 score, also known as balanced F-score or F-measure.
@@ -1082,7 +1073,6 @@ def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
                        zero_division=zero_division)
 
 
-@_deprecate_positional_args
 def fbeta_score(y_true, y_pred, *, beta, labels=None, pos_label=1,
                 average='binary', sample_weight=None, zero_division="warn"):
     """Compute the F-beta score.
@@ -1310,7 +1300,6 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     return labels
 
 
-@_deprecate_positional_args
 def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
@@ -1551,7 +1540,6 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     return precision, recall, f_score, true_sum
 
 
-@_deprecate_positional_args
 def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
                     average='binary', sample_weight=None,
                     zero_division="warn"):
@@ -1671,7 +1659,6 @@ def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
     return p
 
 
-@_deprecate_positional_args
 def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
                  sample_weight=None, zero_division="warn"):
     """Compute the recall.
@@ -1789,7 +1776,6 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     return r
 
 
-@_deprecate_positional_args
 def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
                             adjusted=False):
     """Compute the balanced accuracy.
@@ -1870,7 +1856,6 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
     return score
 
 
-@_deprecate_positional_args
 def classification_report(y_true, y_pred, *, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,
                           zero_division="warn"):
@@ -2072,7 +2057,6 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         return report
 
 
-@_deprecate_positional_args
 def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
 
@@ -2164,7 +2148,6 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-@_deprecate_positional_args
 def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
              labels=None):
     r"""Log loss, aka logistic loss or cross-entropy loss.
@@ -2293,7 +2276,6 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-@_deprecate_positional_args
 def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized).
 
@@ -2433,7 +2415,6 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
-@_deprecate_positional_args
 def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     """Compute the Brier score loss.
 
