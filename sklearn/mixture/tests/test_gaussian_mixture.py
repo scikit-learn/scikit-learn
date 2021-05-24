@@ -1053,7 +1053,7 @@ def test_gaussian_mixture_setting_best_params():
     n_samples = 30
     X = rnd.uniform(size=(n_samples, 3))
 
-    # specify initialization parameters that won't lead to a convergence
+    # specify initialization parameters that won't lead to convergence
     means_init = np.array([
             [0.670637869618158, 0.21038256107384043, 0.12892629765485303],
             [0.09394051075844147, 0.5759464955561779, 0.929296197576212],
@@ -1075,7 +1075,7 @@ def test_gaussian_mixture_setting_best_params():
                           precisions_init=precisions_init)
     # ensure that no error is thrown during fit
     gmm.fit(X)
-    # check that best_params of gmm, and `n_iter_` and `lower_bound_` are set
+    # check that parameters are set for gmm
     for attr in [
         "weights_", "means_", "covariances_", "precisions_cholesky_",
         "n_iter_", "lower_bound_",
