@@ -377,6 +377,15 @@ Changelog
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
+:mod:`sklearn.mixture`
+..............................
+
+- |Fix| Ensure that the best parameters are set appropriately
+  in the case of divergency for :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`.
+  :pr:`20030` by :user:`Tingshan Liu <tliu68>` and
+  :user:`Benjamin Pedigo <bdpedigo>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
