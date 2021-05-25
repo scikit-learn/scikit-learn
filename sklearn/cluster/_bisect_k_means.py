@@ -137,8 +137,8 @@ class BisectKMeans(KMeans):
         """
         Calculates Squared Error of each point and group them by label
 
-        .. note:: That function work only if there are two labels (0,1) and may
-        be less efficient for sparse data
+        .. note:: That function works only if there are two labels (0,1) and may
+        be less efficient for sparse data.
 
         Parameters
         ----------
