@@ -135,7 +135,7 @@ class BisectKMeans(KMeans):
 
     def _compute_bisect_errors(self, X, centers, labels):
         """
-        Calculates Squared Error of each point and group them by label
+        Calculate the squared error of each sample and group them by label.
 
         .. note:: That function works only if there are two labels (0,1) and may
         be less efficient for sparse data.
