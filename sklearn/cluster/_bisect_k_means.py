@@ -3,19 +3,24 @@
 import warnings
 
 import numpy as np
+import scipy.sparse as sp
 
-from sklearn.utils.validation import check_array, check_is_fitted, \
-    _check_sample_weight, check_random_state
+from ..exceptions import ConvergenceWarning
+from ..exceptions import EfficiencyWarning
+
+from ._kmeans import KMeans
+from ._kmeans import _kmeans_single_elkan
+from ._kmeans import _kmeans_single_lloyd
+from ._kmeans import _labels_inertia_threadpool_limit
+from ._kmeans import _kmeans_plusplus
 
 from ..utils.extmath import row_norms
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 
-from ._kmeans import KMeans, _kmeans_single_elkan, \
-    _kmeans_single_lloyd, _labels_inertia_threadpool_limit
-
-import scipy.sparse as sp
-from sklearn.exceptions import ConvergenceWarning, EfficiencyWarning
-from ._kmeans import _kmeans_plusplus
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils.validation import check_array
+from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_sample_weight
+from ..utils.validation import check_random_state
 
 
 class BisectKMeans(KMeans):
@@ -26,11 +31,10 @@ class BisectKMeans(KMeans):
     number of cluster is reached.
 
     That algorithm can produce partitional/hierarchical clustering and
-    should be able to recognize clusters of any shape and size
+    should be able to recognize clusters of any shape and size.
 
     That approach is also preferable to agglomerative clustering
-    if the number of clusters is small
-    compared to the number of data points
+    if the number of clusters is small, compared to the number of data points.
 
     Parameters
     ----------
@@ -41,8 +45,8 @@ class BisectKMeans(KMeans):
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds in each bisection.
-        The final results will be the best output of n_init consecutive
-        runs in terms of inertia.
+        That will result producing for each bisection best output of n_init
+        consecutive runs in terms of inertia.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for centroid initialization. Use
@@ -86,11 +90,14 @@ class BisectKMeans(KMeans):
         Coordinates of cluster centers. If the algorithm stops before fully
         converging (see ``tol`` and ``max_iter``), these will not be
         consistent with ``labels_``.
+
     labels_ : ndarray of shape (n_samples,)
         Labels of each point
+
     inertia_ : float
         Sum of squared distances of samples to their closest cluster center,
         weighted by the sample weights if provided.
+
     n_iter_ : int
         Number of iterations run.
 
@@ -117,16 +124,16 @@ class BisectKMeans(KMeans):
            [10.,  8.],
            [10.,  2.]])
     """
-    def __init__(self,  n_clusters: int = 8, n_init: int = 10,
-                 random_state=None, max_iter: int = 30, verbose=0,
-                 tol=1e-4, copy_x: bool = True, algorithm='auto'):
+    def __init__(self,  n_clusters=8, n_init=10,
+                 random_state=None, max_iter=30, verbose=0,
+                 tol=1e-4, copy_x=True, algorithm='auto'):
 
         super().__init__(
             n_clusters=n_clusters, max_iter=max_iter, verbose=verbose,
             random_state=random_state, tol=tol, n_init=n_init,
             copy_x=copy_x, algorithm=algorithm)
 
-    def _calc_bisect_errors(self, X, centers, labels):
+    def _compute_bisect_errors(self, X, centers, labels):
         """
         Calculates Squared Error of each point and group them by label
 
@@ -267,6 +274,7 @@ class BisectKMeans(KMeans):
             init = check_array(init, dtype=X.dtype, copy=True, order='C')
             self._validate_center_shape(X, init)
 
+        # Subtract of mean of X for more accurate distance computations
         if not sp.issparse(X):
             X_mean = X.mean(axis=0)
             X -= X_mean
@@ -277,9 +285,6 @@ class BisectKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
 
         best_inertia = None
-
-        # if self.verbose:
-        #     print("Initializing Centroids for Bisection")
 
         for i in range(self.n_init):
             centers_init = self._init_two_centroids(X, x_squared_norms,
@@ -371,8 +376,10 @@ class BisectKMeans(KMeans):
             centers, labels, _,  _ = self._bisect(data_left, y, weights_left,
                                                   random_state)
 
-            # Check SSE of each of computed centroids
-            errors = self._calc_bisect_errors(X, centers, labels)
+            # Check SSE (Sum of Squared Errors) of each of computed centroids.
+            # SSE is calculated with distances between data points
+            # and assigned centroids
+            errors = self._compute_bisect_errors(X, centers, labels)
 
             lower_sse_index = 0 if \
                 errors[0].sum(axis=0) < errors[1].sum(axis=0) else 1

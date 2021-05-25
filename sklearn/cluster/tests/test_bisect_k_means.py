@@ -1,8 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
 
-from .._bisect_k_means import BisectKMeans
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+
+from sklearn.cluster import BisectKMeans
 
 # import pytest
 
