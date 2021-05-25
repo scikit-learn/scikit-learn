@@ -38,6 +38,8 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    - bash: echo $DISPLAY
+      displayName: Show display env
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
       condition: startsWith(variables['DISTRIB'], 'conda')
