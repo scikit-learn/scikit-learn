@@ -1183,7 +1183,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def path():
+    def path(X, y, **kwargs):
         """Compute path with coordinate descent."""
 
     def fit(self, X, y):
