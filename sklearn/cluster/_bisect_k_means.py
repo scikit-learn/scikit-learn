@@ -18,7 +18,6 @@ from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 
 from ..utils.validation import check_array
-from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
 
@@ -137,8 +136,8 @@ class BisectKMeans(KMeans):
         """
         Calculate the squared error of each sample and group them by label.
 
-        .. note:: That function works only if there are two labels (0,1) and may
-        be less efficient for sparse data.
+        .. note:: That function works only if there are two labels (0,1) and
+        may be less efficient for sparse data.
 
         Parameters
         ----------
@@ -365,9 +364,8 @@ class BisectKMeans(KMeans):
 
         if self.verbose:
             print("Running Bisecting K-Means with parameters:")
-            print("-> number of clusters: {}".format(self.n_clusters))
-            print("-> number of centroid initializations: {}"
-                  .format(self.n_init))
+            print(f"-> number of clusters: {self.n_clusters}")
+            print(f"-> number of centroid initializations: {self.n_init}")
             print("-> relative tolerance: {:.4e} \n".format(self.tol))
 
         for n_iter in range(self.n_clusters):
@@ -390,7 +388,7 @@ class BisectKMeans(KMeans):
             centroids.append(centers[lower_sse_index])
 
             if self.verbose:
-                print("Centroid Found: {}".format(centers[lower_sse_index]))
+                print(f"Centroid Found: {centers[lower_sse_index]}")
 
             if len(centroids) + 1 == self.n_clusters:
                 # Desired number of cluster centers is reached so centroid with
@@ -398,16 +396,14 @@ class BisectKMeans(KMeans):
                 centroids.append(centers[higher_sse_index])
 
                 if self.verbose:
-                    print("Centroid Found: {}".format(
-                        centers[higher_sse_index], ))
+                    print(f"Centroid Found: {centers[higher_sse_index]}")
                 break
 
             # Data with label that has higher SSE will be further processed
-            indexes = [x for x in range(len(labels))
-                       if labels[x] == higher_sse_index]
+            indexes_left = (labels == higher_sse_index)
 
-            data_left = data_left[indexes]
-            weights_left = weights_left[indexes]
+            data_left = data_left[indexes_left]
+            weights_left = weights_left[indexes_left]
 
         x_squared_norms = row_norms(X, squared=True)
 
@@ -421,35 +417,3 @@ class BisectKMeans(KMeans):
             _centers, n_threads=self._n_threads)
 
         return self
-
-    def predict(self, X, sample_weight=None):
-        """Predict the closest cluster each sample in X belongs to.
-        In the vector quantization literature, `cluster_centers_` is called
-        the code book and each value returned by `predict` is the index of
-        the closest code in the code book.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            New data to predict.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight.
-
-        Returns
-        -------
-        labels : ndarray of shape (n_samples,)
-            Index of the cluster each sample belongs to.
-        """
-        check_is_fitted(self)
-
-        X = self._check_test_data(X)
-        x_squared_norms = row_norms(X, squared=True)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        labels, _ = _labels_inertia_threadpool_limit(
-            X, sample_weight, x_squared_norms,
-            self.cluster_centers_, n_threads=self._n_threads)
-
-        return labels
