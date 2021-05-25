@@ -289,7 +289,7 @@ class BisectKMeans(KMeans):
             centers_init = self._init_two_centroids(X, x_squared_norms,
                                                     init, random_state)
 
-            labels, inertia, centers, n_iter_ = self._kmeans_single(
+            labels, inertia, centers, _ = self._kmeans_single(
                 X, sample_weight, centers_init, max_iter=self.max_iter,
                 verbose=self.verbose, tol=self.tol,
                 x_squared_norms=x_squared_norms, n_threads=self._n_threads
@@ -299,7 +299,6 @@ class BisectKMeans(KMeans):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
-                best_n_iter = n_iter_
 
         if not sp.issparse(X):
             if not self.copy_x:
@@ -314,7 +313,7 @@ class BisectKMeans(KMeans):
                 "in X.".format(distinct_clusters, 2),
                 ConvergenceWarning, stacklevel=2)
 
-        return best_centers, best_labels, best_inertia, best_n_iter
+        return best_centers, best_labels
 
     def fit(self, X, y=None, sample_weight=None):
         """Compute bisecting k-means clustering.
@@ -371,8 +370,8 @@ class BisectKMeans(KMeans):
         for n_iter in range(self.n_clusters):
 
             # Perform Bisection
-            centers, labels, _,  _ = self._bisect(data_left, y, weights_left,
-                                                  random_state)
+            centers, labels = self._bisect(data_left, y, weights_left,
+                                           random_state)
 
             # Check SSE (Sum of Squared Errors) of each of computed centroids.
             # SSE is calculated with distances between data points
