@@ -154,8 +154,8 @@ class BisectKMeans(KMeans):
         Returns
         -------
         errors_by_label : dict
-            dictionary containing squered error of each point by label
-            as ndarray
+            dictionary containing squared error of each point by label
+            as ndarray.
         """
         errors_by_label = {}
 
