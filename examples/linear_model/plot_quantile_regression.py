@@ -25,30 +25,29 @@ print(__doc__)
 # ------------------
 #
 # To illustrate the behaviour of quantile regression, we will generate two
-# synthetic datasets. The true generative process for this dataset will be
-# a linear relationship with a single feature `x`.
+# synthetic datasets. The true generative random processess for both datasets will be
+# composed by an expected value with a linear relationship with a single feature `x`.
 import numpy as np
 
 rng = np.random.RandomState(42)
 x = np.linspace(start=0, stop=10, num=100)
 X = x[:, np.newaxis]
-y_true = 10 + 0.5 * x
+y_true_mean = 10 + 0.5 * x
 
 # %%
-# We will create two subsequent problems by changing the type of noise added to
-# the target:
+# We will create two subsequent problems by changing the distribution of the target `y`
+# while keeping the same expected value:
 #
 # - in the first case, a heteroscedastic Normal noise is added;
 # - in the second case, an asymmetric Pareto noise is added.
-y_noisy_normal = y_true + rng.normal(
+y_normal = y_true + rng.normal
     loc=0, scale=0.5 + 0.5 * x, size=x.shape[0]
 )
 a = 5
-y_noisy_pareto = y_true + 10 * (rng.pareto(a, size=x.shape[0]) - 1 / (a - 1))
+y_pareto = y_true + 10 * (rng.pareto(a, size=x.shape[0]) - 1 / (a - 1))
 
 # %%
-# Let's first visualize the dataset as well as the error distribution between
-# the noisy observations and the true generative process.
+# Let's first visualize the datasets as well as the distribution of the residuals `y - mean(y)`.
 import matplotlib.pyplot as plt
 
 _, axs = plt.subplots(
@@ -101,7 +100,7 @@ _ = axs[1, 1].set_xlabel("Residuals")
 #
 # In the remainder of this tutorial, we will show how
 # :class:`~sklearn.linear_model.QuantileRegressor` can be used in practice and
-# give the intuitions regarding the fitting properties of the model. Finally,
+# give the intuition into the properties of the fitted models. Finally,
 # we will compare the both :class:`~sklearn.linear_model.QuantileRegressor`
 # and :class:`~sklearn.linear_model.LinearRegression`.
 #
@@ -163,10 +162,11 @@ plt.ylabel("y")
 _ = plt.title("Quantiles of heteroscedastic Normal distributed target")
 
 # %%
-# Since the noise is still Normally distributed, the true mean and conditional
-# median estimated are close to each other. We observe the effect of having an
-# increasing noise variance on the 5% and 95% quantiles: larger is `x` wider
-# is in the quantiles interval.
+# Since the noise is still Normally distributed, in particular is symmetric, the true conditional mean
+# and the true conditional median coincide. Indeed, we see that the estimated median almost
+# hits the true mean. We observe the effect of having an
+# increasing noise variance on the 5% and 95% quantiles: the slopes of those quantiles is
+# very different and the interval between them becomes wider with increasing `x`.
 #
 # We can repeat the same experiment using the asymmetric Pareto distributed
 # target.
@@ -218,7 +218,7 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # %%
 # Due to the asymmetry distribution of the noise, we observe that the true mean
 # and estimated conditional median are different. We also observe that each
-# quantile models have different model's parameter to better fit the desired
+# quantile model has different parameters to better fit the desired
 # quantile.
 #
 # Comparing `QuantileRegressor` and `LinearRegression`
@@ -230,7 +230,7 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 #
 # Indeed, :class:`~sklearn.linear_model.LinearRegression` is a least squares
 # approach minimizing the mean squared error between the training and predicted
-# targets. In the contrary, :class:`~sklearn.linear_model.QuantileRegressor`
+# targets. In contrast, :class:`~sklearn.linear_model.QuantileRegressor`
 # with `quantile=0.5` minimizes the mean absolute error instead.
 #
 # The second part of the example shows that
@@ -241,8 +241,7 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 #
 # Let's first compute the training errors of such models in terms of mean
 # squared error and mean absolute error. We will use the asymmetric Pareto
-# distributed target since we spotted a difference between the true mean
-# the estimated conditional median.
+# distributed target to make it more interesting as mean and median are not equal.
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -267,7 +266,7 @@ print(
 # %%
 # On the training set, we see that MAE is lower for
 # :class:`~sklearn.linear_model.QuantileRegressor` than
-# :class:`~sklearn.linear_model.LinearRegressor`. In the contrary, MSE is lower
+# :class:`~sklearn.linear_model.LinearRegression`. In contrast to that, MSE is lower
 # for :class:`~sklearn.linear_model.LinearRegressor` than
 # :class:`~sklearn.linear_model.QuantileRegressor`. These results confirms that
 # MAE is the loss minimized by
@@ -304,4 +303,4 @@ print(
 )
 
 # %%
-# We can conclude similar conclusions on out-of-samples evaluation.
+# We reach similar conclusions on out-of-samples evaluation.
