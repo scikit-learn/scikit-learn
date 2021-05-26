@@ -98,9 +98,9 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # wants to use a :class:`~sklearn.linear_model.LinearRegression`: the noise is
 # expected to be normally distributed with a constant variance.
 #
-# Thus, :class:`~sklearn.linear_model.QuantileRegressor` can be used in this
-# case to estimate the conditional quantile (e.g. median) instead of the
-# conditional mean as in :class:`sklearn.linear_model.QuantileRegressor`.
+# In this case, it might be better to estimate a more robust estimator than the
+# mean. Thus, :class:`~sklearn.linear_model.QuantileRegressor` can be used
+# to estimate the conditional median.
 #
 # In the remainder of this tutorial, we will show how
 # :class:`~sklearn.linear_model.QuantileRegressor` can be used in practice and
@@ -275,12 +275,12 @@ print(
 # %%
 # On the training set, we see that MAE is lower for
 # :class:`~sklearn.linear_model.QuantileRegressor` than
-# :class:`~sklearn.linear_model.LinearRegression`. In contrast to that, MSE is lower
-# for :class:`~sklearn.linear_model.LinearRegressor` than
+# :class:`~sklearn.linear_model.LinearRegression`. In contrast to that, MSE is
+# lower for :class:`~sklearn.linear_model.LinearRegressor` than
 # :class:`~sklearn.linear_model.QuantileRegressor`. These results confirms that
-# MAE is the loss minimized by
-# :class:`~sklearn.linear_model.QuantileRegressor` while MSE is the loss
-# minimized :class:`~sklearn.linear_model.LinearRegression`.
+# MAE is the loss minimized by :class:`~sklearn.linear_model.QuantileRegressor`
+# while MSE is the loss minimized
+# :class:`~sklearn.linear_model.LinearRegression`.
 #
 # We can make a similar evaluation but looking a the test error obtained by
 # cross-validation.
