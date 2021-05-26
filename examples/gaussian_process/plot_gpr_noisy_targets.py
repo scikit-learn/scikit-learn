@@ -108,7 +108,7 @@ _ = plt.title("Gaussian process regression on noise-free dataset")
 # fitted model.
 #
 # We define the noise standard deviation and add it to the original training
-# target
+# target.
 dy = 0.5 + 1.0 * rng.random(y_train.shape)
 y_train_noisy = y_train + rng.normal(0, dy)
 
