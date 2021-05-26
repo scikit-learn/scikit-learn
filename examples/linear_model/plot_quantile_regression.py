@@ -115,8 +115,8 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # a low and high quantiles fixed at 5% and 95%, respectively. Thus, we will get
 # three linear models, one for each quantile.
 #
-# We will use the quantile at 5% and 95% to find the training samples that
-# are outside of this interval.
+# We will use the quantile at 5% and 95% to find the outliers in the training
+# sample beyond the central 90% interval.
 from sklearn.linear_model import QuantileRegressor
 
 quantiles = [0.05, 0.5, 0.95]
@@ -138,7 +138,8 @@ for quantile in quantiles:
 
 # %%
 # Now, we can plot the three linear models and the distinguished samples that
-# are within the 5%-95% quantiles from samples that are outside these bounds.
+# are within the central 90% interval from samples that are outside this
+# interval.
 plt.plot(X, y_true_mean, color="black", linestyle="dashed", label="True mean")
 
 for quantile, y_pred in predictions.items():
@@ -172,6 +173,11 @@ _ = plt.title("Quantiles of heteroscedastic Normal distributed target")
 # effect of having an increasing noise variance on the 5% and 95% quantiles:
 # the slopes of those quantiles is very different and the interval between them
 # becomes wider with increasing `x`.
+#
+# To get an additional intuitions regarding the meaning of the 5% and 95%
+# quantiles estimators, one can count the number of samples above and below the
+# predicted quantiles (represented by a cross on the above plot), considering
+# that we have a total of 100 samples.
 #
 # We can repeat the same experiment using the asymmetric Pareto distributed
 # target.
@@ -223,8 +229,10 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # %%
 # Due to the asymmetry distribution of the noise, we observe that the true mean
 # and estimated conditional median are different. We also observe that each
-# quantile model has different parameters to better fit the desired
-# quantile.
+# quantile model has different parameters to better fit the desired quantile.
+# Note that ideally, all quantiles would be parallel in this case, which would
+# become more visible with more data points or less extreme quantiles, e.g. 10%
+# and 90%.
 #
 # Comparing `QuantileRegressor` and `LinearRegression`
 # ----------------------------------------------------
@@ -234,15 +242,10 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # :class:`~sklearn.linear_model.LinearRegression` are minimizing.
 #
 # Indeed, :class:`~sklearn.linear_model.LinearRegression` is a least squares
-# approach minimizing the mean squared error between the training and predicted
-# targets. In contrast, :class:`~sklearn.linear_model.QuantileRegressor`
-# with `quantile=0.5` minimizes the mean absolute error instead.
-#
-# The second part of the example shows that
-# :class:`~sklearn.linear_model.LinearRegression` minimizes the mean squared
-# error (MSE) in order to predict the mean, while
+# approach minimizing the mean squared error (MSE) between the training and
+# predicted targets. In contrast,
 # :class:`~sklearn.linear_model.QuantileRegressor` with `quantile=0.5`
-# minimizes the mean absolute error (MAE) in order to predict the median.
+# minimizes the mean absolute error (MAE) instead.
 #
 # Let's first compute the training errors of such models in terms of mean
 # squared error and mean absolute error. We will use the asymmetric Pareto
