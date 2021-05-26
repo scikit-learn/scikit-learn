@@ -232,7 +232,8 @@ class BisectKMeans(KMeans):
 
         return centers
 
-    def _bisect(self, X, y=None, sample_weight=None, random_state=None):
+    def _bisect(self, X, init, sample_weight=None,
+                random_state=None):
         """ Bisection of data
         Attempts to get best bisection of data by performing regular K-Means
         for different pairs of centroids
@@ -249,8 +250,9 @@ class BisectKMeans(KMeans):
                 which will cause a memory copy
                 if the given data is not C-contiguous.
 
-        y : Ignored
-            Not used, present here for API consistency by convention.
+        init : {'k-means++', 'random'}, callable or ndarray of shape \
+                (n_clusters, n_features)
+            Method for initialization.
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
@@ -261,25 +263,6 @@ class BisectKMeans(KMeans):
         self
             Fitted estimator.
         """
-        X = self._validate_data(X, accept_sparse='csr',
-                                dtype=[np.float64, np.float32],
-                                order='C', copy=self.copy_x,
-                                accept_large_sparse=False)
-
-        # Validate init array
-        init = self.init
-
-        if hasattr(init, '__array__'):
-            init = check_array(init, dtype=X.dtype, copy=True, order='C')
-            self._validate_center_shape(X, init)
-
-        # Subtract of mean of X for more accurate distance computations
-        if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
-            X -= X_mean
-
-            if hasattr(init, '__array__'):
-                init -= X_mean
 
         x_squared_norms = row_norms(X, squared=True)
 
@@ -299,11 +282,6 @@ class BisectKMeans(KMeans):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
-
-        if not sp.issparse(X):
-            if not self.copy_x:
-                X += X_mean
-            best_centers += X_mean
 
         distinct_clusters = len(set(best_labels))
         if distinct_clusters != 2:
@@ -350,6 +328,21 @@ class BisectKMeans(KMeans):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
 
+        # Validate init array
+        init = self.init
+
+        if hasattr(init, '__array__'):
+            init = check_array(init, dtype=X.dtype, copy=True, order='C')
+            self._validate_center_shape(X, init)
+
+        # Subtract of mean of X for more accurate distance computations
+        if not sp.issparse(X):
+            X_mean = X.mean(axis=0)
+            X -= X_mean
+
+            if hasattr(init, '__array__'):
+                init -= X_mean
+
         if self._algorithm == "full":
             self._kmeans_single = _kmeans_single_lloyd
             self._check_mkl_vcomp(X, X.shape[0])
@@ -370,13 +363,16 @@ class BisectKMeans(KMeans):
         for n_iter in range(self.n_clusters):
 
             # Perform Bisection
-            centers, labels = self._bisect(data_left, y, weights_left,
+            centers, labels = self._bisect(data_left, init, weights_left,
                                            random_state)
 
             # Check SSE (Sum of Squared Errors) of each of computed centroids.
             # SSE is calculated with distances between data points
             # and assigned centroids
             errors = self._compute_bisect_errors(X, centers, labels)
+
+            if not sp.issparse(X):
+                centers += X_mean
 
             lower_sse_index = 0 if \
                 errors[0].sum(axis=0) < errors[1].sum(axis=0) else 1
@@ -407,6 +403,11 @@ class BisectKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
 
         _centers = np.asarray(centroids)
+
+        # Restore X if not copied
+        if not sp.issparse(X):
+            if not self.copy_x:
+                X += X_mean
 
         self.cluster_centers_, self.n_iter_ = _centers, n_iter + 1
 
