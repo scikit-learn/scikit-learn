@@ -75,9 +75,9 @@ gaussian_process.fit(X_train, y_train)
 gaussian_process.kernel_
 
 # %%
-# After fitting our model, we see that the hyperparemeters' kernel have been
-# optimized. Now, we will use our kernel to compute the mean prediction of the
-# full dataset and plot the 95% confidence interval.
+# After fitting our model, we see that the hyperparameters of the kernel have
+# been optimized. Now, we will use our kernel to compute the mean prediction
+# of the full dataset and plot the 95% confidence interval.
 mean_prediction, std_prediction = gaussian_process.predict(X, return_std=True)
 
 plt.plot(X, y, label=r"$f(x) = x \sin(x)$", linestyle="dotted")
