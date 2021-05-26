@@ -428,10 +428,9 @@ class BisectKMeans(KMeans):
 
         _centers = np.asarray(centroids)
 
-        # Restore X if not copied
+        # Restore X
         if not sp.issparse(X):
-            if not self.copy_x:
-                X += X_mean
+            X += X_mean
 
         self.cluster_centers_, self.n_iter_ = _centers, n_iter + 1
 

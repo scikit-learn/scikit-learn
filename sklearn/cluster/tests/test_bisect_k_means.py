@@ -22,6 +22,7 @@ def test_three_clusters():
     expected_centers = [[1, 2], [10, 8], [10, 2]]
     assert_array_equal(expected_centers, bisect_means.cluster_centers_)
     assert_array_equal(bisect_means.predict([[0, 0], [12, 3]]), [0, 2])
+    assert_array_equal(bisect_means.labels_, [0, 0, 0, 2, 2, 2, 1, 1, 1])
 
 
 def test_sparse():
