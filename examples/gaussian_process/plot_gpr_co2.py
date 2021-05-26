@@ -96,8 +96,8 @@ y = co2_data["co2"].to_numpy()
 #
 # First, the long term rising trend could be fitted using a radial basis
 # function (RBF) kernel with a large length-scale parameter. The RBF kernel
-# with a large length-scale enforces this component to be smooth; it is not
-# enforced that the trend is rising which leaves this choice to our model. The
+# with a large length-scale enforces this component to be smooth. An trending
+# increase is not enforced as to give a degree of freedom to our model. The
 # specific length-scale and the amplitude are free hyperparameters.
 from sklearn.gaussian_process.kernels import RBF
 
