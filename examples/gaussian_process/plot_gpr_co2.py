@@ -161,10 +161,10 @@ co2_kernel
 #
 # Now, we are ready to use a Gaussian process regressor and fit the available
 # data. To follow the example from the literature, we will subtract the mean
-# from the target. We could have use `normalize_y=True`. However, doing so
-# would have also scale the target (dividing `y` by its standard deviation).
-# Thus, the hyperparameters of the different kernel would have different
-# meaning since they would not be express in ppm units.
+# from the target. We could have used `normalize_y=True`. However, doing so
+# would have also scaled the target (dividing `y` by its standard deviation).
+# Thus, the hyperparameters of the different kernel would have had different
+# meaning since they would not have been expressed in ppm.
 from sklearn.gaussian_process import GaussianProcessRegressor
 
 y_mean = y.mean()
