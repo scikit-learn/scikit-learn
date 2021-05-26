@@ -26,7 +26,7 @@ print(__doc__)
 #
 # To illustrate the behaviour of quantile regression, we will generate two
 # synthetic datasets. The true generative random processess for both datasets
-# will be composed by an expected value with a linear relationship with a
+# will be composed by the same expected value with a linear relationship with a
 # single feature `x`.
 import numpy as np
 
@@ -94,9 +94,11 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # With the asymmetric Pareto distributed target, we observe that the positive
 # residuals are bounded.
 #
-# These types of noisy targets violate one of the key assumption made when one
-# wants to use a :class:`~sklearn.linear_model.LinearRegression`: the noise is
-# expected to be normally distributed with a constant variance.
+# These types of noisy targets make the estimation via :class:`~sklearn.linear_model.LinearRegression`
+# less efficient, i.e. we need more data to get stable results and, in addition, large outliers can have a huge
+# impact on the fitted coeffients.
+# (Stated otherwise: in a setting with constant variance, ordinary least squares estimators converge much faster
+# to the *true* coefficients with increasing sample size.)
 #
 # In this asymmetric setting, the median or different quantiles give additional
 # insights. On top of that, median estimation is much more robust to outliers
@@ -114,10 +116,10 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # -----------------------------
 #
 # In this section, we want to estimate the conditional median as well as
-# a low and high quantiles fixed at 5% and 95%, respectively. Thus, we will get
+# a low and high quantile fixed at 5% and 95%, respectively. Thus, we will get
 # three linear models, one for each quantile.
 #
-# We will use the quantile at 5% and 95% to find the outliers in the training
+# We will use the quantiles at 5% and 95% to find the outliers in the training
 # sample beyond the central 90% interval.
 from sklearn.linear_model import QuantileRegressor
 
@@ -173,10 +175,10 @@ _ = plt.title("Quantiles of heteroscedastic Normal distributed target")
 # the true conditional mean and the true conditional median coincide. Indeed,
 # we see that the estimated median almost hits the true mean. We observe the
 # effect of having an increasing noise variance on the 5% and 95% quantiles:
-# the slopes of those quantiles is very different and the interval between them
+# the slopes of those quantiles are very different and the interval between them
 # becomes wider with increasing `x`.
 #
-# To get an additional intuitions regarding the meaning of the 5% and 95%
+# To get an additional intuition regarding the meaning of the 5% and 95%
 # quantiles estimators, one can count the number of samples above and below the
 # predicted quantiles (represented by a cross on the above plot), considering
 # that we have a total of 100 samples.
@@ -229,7 +231,7 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 
 
 # %%
-# Due to the asymmetry distribution of the noise, we observe that the true mean
+# Due to the asymmetry of the distribution of the noise, we observe that the true mean
 # and estimated conditional median are different. We also observe that each
 # quantile model has different parameters to better fit the desired quantile.
 # Note that ideally, all quantiles would be parallel in this case, which would
@@ -278,7 +280,7 @@ print(
 # On the training set, we see that MAE is lower for
 # :class:`~sklearn.linear_model.QuantileRegressor` than
 # :class:`~sklearn.linear_model.LinearRegression`. In contrast to that, MSE is
-# lower for :class:`~sklearn.linear_model.LinearRegressor` than
+# lower for :class:`~sklearn.linear_model.LinearRegression` than
 # :class:`~sklearn.linear_model.QuantileRegressor`. These results confirms that
 # MAE is the loss minimized by :class:`~sklearn.linear_model.QuantileRegressor`
 # while MSE is the loss minimized
@@ -314,4 +316,4 @@ print(
 )
 
 # %%
-# We reach similar conclusions on out-of-samples evaluation.
+# We reach similar conclusions on the out-of-sample evaluation.
