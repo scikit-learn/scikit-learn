@@ -161,8 +161,9 @@ kernel_ridge.kernel
 # %%
 # Our kernel has two parameters: the length-scale and the periodicity. For our
 # dataset, we use `sin(x)` as the generative process. It means that we have
-# a periodicity of :math:`2 \pi`. The default value of the parameter being 1,
-# it explains the high frequency observed in the predictions of our model.
+# a periodicity of :math:`2 \pi`. The default value of the parameter being
+# :math:`1`, it explains the high frequency observed in the predictions of
+# our model.
 # Similar conclusions could be drawn with the length-scale parameter. Thus, it
 # tell us that the kernel parameters need to be tuned. We will use a randomized
 # search to tune the different parameters the kernel ridge model: the `alpha`
