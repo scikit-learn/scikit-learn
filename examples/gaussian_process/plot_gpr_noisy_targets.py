@@ -97,8 +97,8 @@ _ = plt.title("Gaussian process regression on noise-free dataset")
 
 # %%
 # We see that for a prediction close to a training sample, the 95% confidence
-# interval is small. Whenever a prediction is done far from training data, our
-# model become interval and the confidence interval is large.
+# interval is small. Whenever a sample is falls far from training data, our
+# model's prediction is less accurate and its confidence interval is larger.
 #
 # Example with noisy targets
 # --------------------------
