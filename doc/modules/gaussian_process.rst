@@ -52,7 +52,7 @@ standard deviation as output when predicting.
 The prior mean is assumed to be constant and zero (for `normalize_y=False`) or
 the training data's mean (for `normalize_y=True`). The prior's covariance is
 specified by passing a :ref:`kernel <gp_kernels>` object. The hyperparameters
-of the kernel are optimized during fitting of :class:`GaussianProcessRegressor`
+of the kernel are optimized when fitting the :class:`GaussianProcessRegressor`
 by maximizing the log-marginal-likelihood (LML) based on the passed
 `optimizer`. As the LML may have multiple local optima, the optimizer can be
 started repeatedly by specifying `n_restarts_optimizer`. The first run is
@@ -77,7 +77,7 @@ the parameter `alpha`.
    :align: center
 
 The implementation is based on Algorithm 2.1 of [RW2006]_. In addition to
-the API of standard scikit-learn estimators, GaussianProcessRegressor:
+the API of standard scikit-learn estimators, :class:`GaussianProcessRegressor`:
 
 * allows prediction without prior fitting (based on the GP prior)
 
