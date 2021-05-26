@@ -94,11 +94,12 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # With the asymmetric Pareto distributed target, we observe that the positive
 # residuals are bounded.
 #
-# These types of noisy targets make the estimation via :class:`~sklearn.linear_model.LinearRegression`
-# less efficient, i.e. we need more data to get stable results and, in addition, large outliers can have a huge
-# impact on the fitted coeffients.
-# (Stated otherwise: in a setting with constant variance, ordinary least squares estimators converge much faster
-# to the *true* coefficients with increasing sample size.)
+# These types of noisy targets make the estimation via
+# :class:`~sklearn.linear_model.LinearRegression` less efficient, i.e. we need
+# more data to get stable results and, in addition, large outliers can have a
+# huge impact on the fitted coefficients. (Stated otherwise: in a setting with
+# constant variance, ordinary least squares estimators converge much faster to
+# the *true* coefficients with increasing sample size.)
 #
 # In this asymmetric setting, the median or different quantiles give additional
 # insights. On top of that, median estimation is much more robust to outliers
@@ -175,8 +176,8 @@ _ = plt.title("Quantiles of heteroscedastic Normal distributed target")
 # the true conditional mean and the true conditional median coincide. Indeed,
 # we see that the estimated median almost hits the true mean. We observe the
 # effect of having an increasing noise variance on the 5% and 95% quantiles:
-# the slopes of those quantiles are very different and the interval between them
-# becomes wider with increasing `x`.
+# the slopes of those quantiles are very different and the interval between
+# them becomes wider with increasing `x`.
 #
 # To get an additional intuition regarding the meaning of the 5% and 95%
 # quantiles estimators, one can count the number of samples above and below the
@@ -231,12 +232,12 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 
 
 # %%
-# Due to the asymmetry of the distribution of the noise, we observe that the true mean
-# and estimated conditional median are different. We also observe that each
-# quantile model has different parameters to better fit the desired quantile.
-# Note that ideally, all quantiles would be parallel in this case, which would
-# become more visible with more data points or less extreme quantiles, e.g. 10%
-# and 90%.
+# Due to the asymmetry of the distribution of the noise, we observe that the
+# true mean and estimated conditional median are different. We also observe
+# that each quantile model has different parameters to better fit the desired
+# quantile. Note that ideally, all quantiles would be parallel in this case,
+# which would become more visible with more data points or less extreme
+# quantiles, e.g. 10% and 90%.
 #
 # Comparing `QuantileRegressor` and `LinearRegression`
 # ----------------------------------------------------
