@@ -41,6 +41,23 @@ class BisectKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
+    init : {'k-means++', 'random'}, callable or array-like of shape \
+            (n_clusters, n_features), default='k-means++'
+        Method for initialization:
+
+        'k-means++' : selects initial cluster centers for k-mean
+        clustering in a smart way to speed up convergence. See section
+        Notes in k_init for more details.
+
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
+
+        If an array is passed, it should be of shape (n_clusters, n_features)
+        and gives the initial centers.
+
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
+
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds in each bisection.
@@ -123,14 +140,14 @@ class BisectKMeans(KMeans):
            [10.,  8.],
            [10.,  2.]])
     """
-    def __init__(self,  n_clusters=8, n_init=10,
+    def __init__(self,  n_clusters=8, init='k-means++', n_init=10,
                  random_state=None, max_iter=30, verbose=0,
                  tol=1e-4, copy_x=True, algorithm='auto'):
 
         super().__init__(
-            n_clusters=n_clusters, max_iter=max_iter, verbose=verbose,
-            random_state=random_state, tol=tol, n_init=n_init,
-            copy_x=copy_x, algorithm=algorithm)
+            n_clusters=n_clusters, init=init, max_iter=max_iter,
+            verbose=verbose, random_state=random_state, tol=tol,
+            n_init=n_init, copy_x=copy_x, algorithm=algorithm)
 
     def _compute_bisect_errors(self, X, centers, labels):
         """
@@ -360,7 +377,14 @@ class BisectKMeans(KMeans):
             print(f"-> number of centroid initializations: {self.n_init}")
             print("-> relative tolerance: {:.4e} \n".format(self.tol))
 
+        init_org = init
+
         for n_iter in range(self.n_clusters):
+
+            # If init array is provided -
+            # Take only part of init that is dedicated for that part of bisect
+            if hasattr(init, '__array__'):
+                init = init_org[n_iter: n_iter + 2].copy()
 
             # Perform Bisection
             centers, labels = self._bisect(data_left, init, weights_left,
