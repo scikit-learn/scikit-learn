@@ -13,6 +13,7 @@ import re
 import pkgutil
 from inspect import isgenerator
 from functools import partial
+from itertools import product
 
 import pytest
 
@@ -212,7 +213,7 @@ def test_class_support_removed():
 
 
 def _generate_search_cv_instances():
-    for SearchCV, (Estimator, param_grid) in zip(
+    for SearchCV, (Estimator, param_grid) in product(
         [GridSearchCV, RandomizedSearchCV],
         [
             (Ridge, {"alpha": [0.1, 1.0]}),
@@ -221,7 +222,7 @@ def _generate_search_cv_instances():
     ):
         yield SearchCV(Estimator(), param_grid)
 
-    for SearchCV, (Estimator, param_grid) in zip(
+    for SearchCV, (Estimator, param_grid) in product(
         [GridSearchCV, RandomizedSearchCV],
         [
             (Ridge, {"ridge__alpha": [0.1, 1.0]}),
