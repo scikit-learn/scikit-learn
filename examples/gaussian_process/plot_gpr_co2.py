@@ -123,7 +123,7 @@ seasonal_kernel = (
 
 # %%
 # The small irregularities are to be explained by a rational quadratic kernel
-# component, whose length-scale and alpha parameter, which determines the
+# component, whose length-scale and alpha parameter, which quantifies the
 # diffuseness of the length-scales, are to be determined. A rational quadratic
 # kernel is equivalent to an RBF kernel with several length-scale and will
 # better accommodate the different irregularities.
