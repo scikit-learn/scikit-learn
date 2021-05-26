@@ -19,7 +19,7 @@ print(__doc__)
 # ---------------
 #
 # We will work in a setting where `X` will be a single feature. We create a
-# function that will generate a the target to be predicted. We will add an
+# function that will generate the target to be predicted. We will add an
 # option to add some noise to the generated target.
 import numpy as np
 
@@ -103,15 +103,19 @@ plt.xlabel("X")
 plt.ylabel("y")
 _ = plt.title(
     f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
-    f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}"
+    f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}",
+    fontsize=8
 )
 # %%
 # We see that the optimum kernel found still have a high noise level and
-# and an even larger length scale. However, we see that the model does not
-# provide satisfactory predictions.
+# an even larger length scale. Furthermore, we observe that the
+# model does not provide faithful predictions.
 #
-# Now, we will initialize the hyperparameter with a lower noise level and
-# length scale.
+# Now, we will initialize the
+# :class:`~sklearn.gaussian_process.kernels.RBF` with a
+# larger length_scale and the
+# :class:`~sklearn.gaussian_process.kernels.WhiteKernel`
+# with a smaller noise level lower bound.
 kernel = (
     1.0 * RBF(length_scale=1e-1, length_scale_bounds=(1e-2, 1e3)) +
     WhiteKernel(noise_level=1e-2, noise_level_bounds=(1e-10, 1e1))
@@ -131,19 +135,20 @@ plt.xlabel("X")
 plt.ylabel("y")
 _ = plt.title(
     f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
-    f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}"
+    f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}",
+    fontsize=8
 )
 
 # %%
-# First, we see that the model is more satisfactory than the previous one
-# regarding the predictions. It is able to estimate the noise-free functional
+# First, we see that the model's predictions are precise than the previous 
+# model's. This new model is able to estimate the noise-free functional
 # relationship.
 #
 # Looking at the kernel hyperparameters, we see that the best combination found
-# as a smaller noise level and shorter length scale than the first model.
+# has a smaller noise level and shorter length scale than the first model.
 #
 # We can have a look at the Log-Marginal-Likelihood (LML) of GPR for different
-# hyperparameters to have an idea of the minima.
+# hyperparameters to get a sense of the local minima.
 from matplotlib.colors import LogNorm
 
 length_scale = np.logspace(-2, 4, num=50)
@@ -178,7 +183,7 @@ plt.show()
 
 # %%
 # We see that there are two local minima that correspond to the combination
-# of hyperparameters previously found. Depending on the initial value for the
+# of hyperparameters previously found. Depending on the initial values for the
 # hyperparameters, the gradient-based optimization might converge whether or
 # not to the best model. It is thus important to repeat the optimization
 # several times for different initializations.
