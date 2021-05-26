@@ -105,18 +105,18 @@ _ = plt.title("Limitation of a linear model such as ridge")
 # ............
 #
 # We can make the previous linear model more expressive by using a so-called
-# kernel. A kernel is used to make a model more expressive; for simplicity, it
-# would be equivalent to project our original data into an more complex feature
-# space. This new space is defined by the choice of kernel.
+# kernel. A kernel is an embedding from the original feature space to another one.
+# Simply put, it is used to map our original data into a newer and more complex
+# feature space. This new space is explicitly defined by the choice of kernel.
 #
 # In our case, we know that the true generative process is a periodic function.
-# We can use a :class:`~sklearn.gaussian_process.kernels.ExpSineSquared`. This
-# kernel allows to fit such periodicity. The class
+# We can use a :class:`~sklearn.gaussian_process.kernels.ExpSineSquared` kernel
+# which allows recovering the periodicity. The class
 # :class:`~sklearn.kernel_ridge.KernelRidge` will accept such a kernel.
 #
-# Using this model together with a kernel is equivalent to project the data
+# Using this model together with a kernel is equivalent to embed the data
 # using the mapping function of the kernel and then apply a ridge regression.
-# In practice, the data are not mapped explicitely; instead the dot product
+# In practice, the data are not mapped explicitly; instead the dot product
 # between samples in the higher dimensional feature space is computed using the
 # "kernel trick".
 #
