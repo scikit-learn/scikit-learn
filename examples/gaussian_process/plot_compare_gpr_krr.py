@@ -96,7 +96,7 @@ plt.ylabel("target")
 _ = plt.title("Limitation of a linear model such as ridge")
 
 # %%
-# Such a ridge regressor underfits since it is not enough expressive.
+# Such a ridge regressor underfits data since it is not expressive enough.
 #
 # Kernel methods: kernel ridge and Gaussian process
 # -------------------------------------------------
