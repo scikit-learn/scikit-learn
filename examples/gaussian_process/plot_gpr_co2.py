@@ -89,7 +89,7 @@ y = co2_data["co2"].to_numpy()
 # ------------------------
 #
 # To design the kernel to use with our Gaussian process, we can make some
-# assumption regarding the data at hand. We observe that have several
+# assumption regarding the data at hand. We observe that they have several
 # characteristics: we see a long term rising trend, a pronounced seasonal
 # variation and some smaller irregularities. We can use different appropriate
 # kernel that would capture these features.
