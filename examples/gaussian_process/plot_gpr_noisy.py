@@ -5,7 +5,7 @@ Gaussian process regression (GPR) with noise-level estimation
 
 This example shows the ability of the
 :class:`~sklearn.gaussian_process.kernels.WhiteKernel` to estimate the noise
-level in the data. However, we show the importance of kernel hyperparameters
+level in the data. Moreover, we show the importance of kernel hyperparameters
 initialization.
 """
 print(__doc__)
