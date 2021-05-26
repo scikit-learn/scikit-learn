@@ -152,6 +152,4 @@ _ = plt.title("Gaussian process regression on a noisy dataset")
 # %%
 # The noise affect the predictions close to the training samples: now, the
 # confidence interval close to the training samples is larger because we
-# indicated the amount of noise for each training samples. As a result, the
-# confidence interval is larger on this noisy dataset than on the previous
-# example.
+# indicated the amount of noise for each training samples.
