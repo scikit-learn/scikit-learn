@@ -98,9 +98,11 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # wants to use a :class:`~sklearn.linear_model.LinearRegression`: the noise is
 # expected to be normally distributed with a constant variance.
 #
-# In this case, it might be better to estimate a more robust estimator than the
-# mean. Thus, :class:`~sklearn.linear_model.QuantileRegressor` can be used
-# to estimate the conditional median.
+# In this asymmetric setting, the median or different quantiles give additional
+# insights. On top of that, median estimation is much more robust to outliers
+# and heavy tailed distributions. But note that extreme quantiles are estimated
+# by very view data points. 95% quantile are more or less estimated by the 5%
+# largest values and thus also a bit sensitive outliers.
 #
 # In the remainder of this tutorial, we will show how
 # :class:`~sklearn.linear_model.QuantileRegressor` can be used in practice and
