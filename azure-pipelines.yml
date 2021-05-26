@@ -11,7 +11,7 @@ jobs:
 - job: git_commit
   displayName: Get Git Commit
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
   steps:
     - bash: |
         set -ex
@@ -38,7 +38,7 @@ jobs:
     )
   displayName: Linting
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
   steps:
     - task: UsePythonVersion@0
       inputs:
@@ -57,7 +57,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Nightly
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
     dependsOn: [git_commit, linting]
     condition: |
       and(
@@ -83,7 +83,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Nightly_ICC
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
     dependsOn: [git_commit, linting]
     condition: |
       and(
@@ -105,7 +105,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Runs
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
     dependsOn: [git_commit]
     condition: |
       and(
@@ -119,10 +119,30 @@ jobs:
         BLAS: 'mkl'
         COVERAGE: 'true'
 
+# Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Ubuntu_Bionic
+    vmImage: ubuntu-18.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
+    matrix:
+      py37_conda:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '3.7'
+        BLAS: 'openblas'
+        COVERAGE: 'false'
+        BUILD_WITH_ICC: 'false'
+
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
     dependsOn: [linting, git_commit]
     condition: |
       and(
@@ -132,32 +152,23 @@ jobs:
       )
     matrix:
       # Linux environment to test that scikit-learn can be built against
-      # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
-      # i.e. numpy 1.13.3 and scipy 0.19
-      py36_ubuntu_atlas:
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu Focal 20.04
+      # i.e. numpy 1.17.4 and scipy 1.3.3
+      ubuntu_atlas:
         DISTRIB: 'ubuntu'
-        PYTHON_VERSION: '3.6'
         JOBLIB_VERSION: 'min'
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
-        PYTEST_VERSION: 'min'
-        PYTEST_XDIST_VERSION: 'none'
         COVERAGE: 'false'
-      # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
-      py36_conda_openblas:
+      # Linux + Python 3.7 build with OpenBLAS and without SITE_JOBLIB
+      py37_conda_openblas:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '3.6'
+        PYTHON_VERSION: '3.7'
         BLAS: 'openblas'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
-        # latest version of joblib available in conda for Python 3.6
-        JOBLIB_VERSION: '0.13.2'
         THREADPOOLCTL_VERSION: '2.0.0'
-        # temporary pin pytest due to unknown failure with pytest 5.4 and
-        # python 3.6
-        PYTEST_VERSION: 'min'
-        PYTEST_XDIST_VERSION: 'none'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
@@ -171,7 +182,7 @@ jobs:
 - template: build_tools/azure/posix-32.yml
   parameters:
     name: Linux32
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
     dependsOn: [linting, git_commit]
     condition: |
       and(
@@ -180,14 +191,11 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py36_ubuntu_atlas_32bit:
-        DISTRIB: 'ubuntu-32'
-        PYTHON_VERSION: '3.6'
+      debian_atlas_32bit:
+        DISTRIB: 'debian-32'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
-        # temporary pin pytest due to unknown failure with pytest 5.4 and
-        # python 3.6
         PYTEST_VERSION: 'min'
         THREADPOOLCTL_VERSION: 'min'
 
@@ -231,6 +239,6 @@ jobs:
         PYTHON_ARCH: '64'
         PYTEST_VERSION: '*'
         COVERAGE: 'true'
-      py36_pip_openblas_32bit:
-        PYTHON_VERSION: '3.6'
+      py37_pip_openblas_32bit:
+        PYTHON_VERSION: '3.7'
         PYTHON_ARCH: '32'
