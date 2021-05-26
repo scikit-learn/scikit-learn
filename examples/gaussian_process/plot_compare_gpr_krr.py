@@ -154,7 +154,7 @@ _ = plt.title("Kernel ridge regression with an exponential sine squared\n "
               "kernel using default hyperparameters")
 
 # %%
-# Our fitted model does not work. Indeed, we did not set the parameters of the
+# This fitted model is not accurate. Indeed, we did not set the parameters of the
 # kernel and instead used the default ones. We can have a look at them.
 kernel_ridge.kernel
 
@@ -314,7 +314,7 @@ _ = plt.title("Comparison between kernel ridge and gaussian process regressor")
 # We observe that the results of the kernel ridge and the Gaussian process
 # regressor are close. However, the Gaussian process regressor also provide
 # an uncertainty information that is not available with a kernel ridge.
-# Due to the probabilistic formulation regarding the target function, the
+# Due to the probabilistic formulation of the target functions, the
 # Gaussian process can output the standard deviation (or the covariance)
 # together with the mean predictions of the target functions.
 #
@@ -325,7 +325,7 @@ _ = plt.title("Comparison between kernel ridge and gaussian process regressor")
 # ----------------
 #
 # We can give a final word regarding the possibility of the two models to
-# extrapolate. Indeed, we provided only the beginning of the signal as a
+# extrapolate. Indeed, we only provided the beginning of the signal as a
 # training set. Using a periodic kernel forces our model to repeat the pattern
 # found on the training set. Using this kernel information together with the
 # capacity of the both models to extrapolate, we observe that the models will
@@ -333,7 +333,7 @@ _ = plt.title("Comparison between kernel ridge and gaussian process regressor")
 #
 # Gaussian process allows to combine kernels together. Thus, we could associate
 # the exponential sine squared kernel together with a radial basis function
-# kernel
+# kernel.
 from sklearn.gaussian_process.kernels import RBF
 
 kernel = 1.0 * ExpSineSquared(
@@ -383,7 +383,8 @@ plt.ylabel("target")
 _ = plt.title("Effect of using a radial basis function kernel")
 
 # %%
-# The effect of using an radial basis function kernel will attenuate the
+# The effect of using a radial basis function kernel will attenuate the
 # periodicity effect once that no sample are available in the training.
-# The predictions is converging towards the mean of the probability and the
-# standard deviation increases.
+# As testing samples get further away from the training ones, predictions
+# are converging towards their mean and their standard deviation
+# also increases.
