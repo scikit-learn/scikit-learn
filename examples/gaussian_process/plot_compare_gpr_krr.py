@@ -155,8 +155,7 @@ _ = plt.title("Kernel ridge regression with an exponential sine squared\n "
 
 # %%
 # Our fitted model does not work. Indeed, we did not set the parameters of the
-# kernel and instead used the default hyperparameters. We can have a look at
-# them.
+# kernel and instead used the default ones. We can have a look at them.
 kernel_ridge.kernel
 
 # %%
