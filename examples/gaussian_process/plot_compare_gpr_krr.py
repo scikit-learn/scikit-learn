@@ -20,8 +20,8 @@ functions is defined based on the Bayes' theorem, Thus prior probabilities on
 target functions are being combined with a likelihood function defined by the
 observed training data to provide estimates of the posterior distributions.
 
-We will illustrate with an example these differences and we will also focus on
-the tuning of the kernel hyperparameters.
+We will illustrate these differences with an example and we will also focus on
+tuning the kernel hyperparameters.
 """
 print(__doc__)
 
