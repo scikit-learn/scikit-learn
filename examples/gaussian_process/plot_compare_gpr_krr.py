@@ -7,7 +7,7 @@ This example illustrates differences between a kernel ridge regression and a
 Gaussian process regression.
 
 Both kernel ridge regression and Gaussian process regression are using a
-so-called "kernel trick" to make their models expressive enough to not underfit
+so-called "kernel trick" to make their models expressive enough to fit
 the training data. However, the machine learning problems solved by the two
 methods are drastically different.
 
