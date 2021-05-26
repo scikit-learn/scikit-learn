@@ -76,7 +76,7 @@ _ = plt.title(
 
 # %%
 # The idea in this example will be to predict the CO2 concentration in function
-# of the date. We are as well interesting in extrapolating for upcoming year
+# of the date. We are as well interested in extrapolating for upcoming year
 # after 2001.
 #
 # As a first step, we will divide the data and the target to estimate. The data
