@@ -111,12 +111,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
     """
-    def __init__(self, estimator, *, n_features_to_select=None, censored_rate=None,
+    def __init__(self, estimator, *, n_features_to_select=None, aborted_rate=None,
                  direction='forward', scoring=None, cv=5, n_jobs=None):
 
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
-        self.censored_rate = censored_rate
+        self.aborted_rate = aborted_rate
         self.direction = direction
         self.scoring = scoring
         self.cv = cv
@@ -182,7 +182,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             else n_features - self.n_features_to_select_
         )
 
-        if self.censored_rate is None:
+        if self.aborted_rate is None:
             for _ in range(n_iterations):
                 new_feature_idx, new_score = self._get_best_new_feature_score(cloned_estimator, X,
                                                              y, current_mask)
