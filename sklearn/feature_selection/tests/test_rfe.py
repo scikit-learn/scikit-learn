@@ -5,7 +5,8 @@ Testing Recursive feature elimination
 from operator import attrgetter
 import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import (assert_array_almost_equal,
+                           assert_array_equal, assert_allclose)
 from scipy import sparse
 
 from sklearn.feature_selection import RFE, RFECV
@@ -173,7 +174,9 @@ def test_rfecv():
     with pytest.warns(FutureWarning, match=msg):
         assert len(rfecv.grid_scores_) == X.shape[1]
 
-    assert (len(rfecv.cv_results_) - 2) == X.shape[1]
+    for key in rfecv.cv_results_.keys():
+        assert len(rfecv.cv_results_[key]) == X.shape[1]
+
     assert len(rfecv.ranking_) == X.shape[1]
     X_r = rfecv.transform(X)
 
@@ -210,13 +213,7 @@ def test_rfecv():
     # TODO: Remove in v1.1 when grid_scores_ is removed
     with pytest.warns(FutureWarning, match=msg):
         assert_array_equal(rfecv.grid_scores_,
-                           np.ones(len(rfecv.grid_scores_)))
-
-    for key in rfecv.cv_results_.keys():
-        if key == 'std_score':
-            assert (rfecv.cv_results_[key] == 0)
-        else:
-            assert (rfecv.cv_results_[key] == 1)
+                           np.ones(rfecv.grid_scores_.shape))
 
     # In the event of cross validation score ties, the expected behavior of
     # RFECV is to return the FEWEST features that maximize the CV score.
@@ -232,7 +229,9 @@ def test_rfecv():
     with pytest.warns(FutureWarning, match=msg):
         assert len(rfecv.grid_scores_) == 6
 
-    assert (len(rfecv.cv_results_) - 2) == 6
+    for key in rfecv.cv_results_.keys():
+        assert len(rfecv.cv_results_[key]) == 6
+
     assert len(rfecv.ranking_) == X.shape[1]
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
@@ -267,7 +266,9 @@ def test_rfecv_mockclassifier():
     # TODO: Remove in v1.1 when grid_scores_ is removed
     assert len(rfecv.grid_scores_) == X.shape[1]
 
-    assert len(rfecv.cv_results_) - 2 == X.shape[1]
+    for key in rfecv.cv_results_.keys():
+        assert len(rfecv.cv_results_[key]) == X.shape[1]
+
     assert len(rfecv.ranking_) == X.shape[1]
 
 
@@ -311,7 +312,9 @@ def test_rfecv_cv_results_size():
         # TODO: Remove in v1.1 when grid_scores_ is removed
         assert len(rfecv.grid_scores_) == score_len
 
-        assert len(rfecv.cv_results_) - 2 == score_len
+        for key in rfecv.cv_results_.keys():
+            assert len(rfecv.cv_results_[key]) == score_len
+
         assert len(rfecv.ranking_) == X.shape[1]
         assert rfecv.n_features_ >= min_features_to_select
 
@@ -386,7 +389,7 @@ def test_number_of_subsets_of_features():
 
     # In RFECV, 'fit' calls 'RFE._fit'
     # 'number_of_subsets_of_features' of RFE
-    # = the size of 'cv_results_' - 2 (for std and mean) of RFECV
+    # = the size of each score in 'cv_results_' of RFECV
     # = the number of iterations of the for loop before optimization #4534
 
     # RFECV, n_features_to_select = 1
@@ -409,10 +412,11 @@ def test_number_of_subsets_of_features():
         assert (len(rfecv.grid_scores_) ==
                 formula2(n_features, n_features_to_select, step))
 
-        assert (len(rfecv.cv_results_) - 2 ==
-                formula1(n_features, n_features_to_select, step))
-        assert (len(rfecv.cv_results_) - 2 ==
-                formula2(n_features, n_features_to_select, step))
+        for key in rfecv.cv_results_.keys():
+            assert (len(rfecv.cv_results_[key]) ==
+                    formula1(n_features, n_features_to_select, step))
+            assert (len(rfecv.cv_results_[key]) ==
+                    formula2(n_features, n_features_to_select, step))
 
 
 # TODO: Remove in v1.1 when grid_scores_ is removed
@@ -534,7 +538,7 @@ def test_w_pipeline_2d_coef_():
     assert sfm.transform(data).shape[1] == 2
 
 
-def test_std_and_mean():
+def test_rfecv_std_and_mean():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
@@ -542,12 +546,15 @@ def test_std_and_mean():
 
     rfecv = RFECV(estimator=SVC(kernel='linear'))
     rfecv.fit(X, y)
-    results_size = len(rfecv.cv_results_)
-    values = np.asarray(
-            [rfecv.cv_results_["split{}_score".format(i)]
-                for i in range(results_size - 2)]).T
-    assert rfecv.cv_results_["mean_score"] == np.mean(values)
-    assert rfecv.cv_results_["std_score"] == np.std(values)
+    n_split_keys = len(rfecv.cv_results_) - 2
+    split_keys = ['split{}_score'.format(i) for i in range(n_split_keys)]
+
+    cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
+    expected_mean = np.mean(cv_scores, axis=0)
+    expected_std = np.std(cv_scores, axis=0)
+
+    assert_allclose(rfecv.cv_results_["mean_score"], expected_mean)
+    assert_allclose(rfecv.cv_results_["std_score"], expected_std)
 
 
 @pytest.mark.parametrize('ClsRFE', [
