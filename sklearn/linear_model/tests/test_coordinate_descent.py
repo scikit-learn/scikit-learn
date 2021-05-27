@@ -8,6 +8,7 @@ from scipy import interpolate, sparse
 from copy import deepcopy
 import contextlib
 import joblib
+import warnings
 
 from sklearn.base import is_classifier
 from sklearn.datasets import load_diabetes
@@ -114,7 +115,7 @@ def test_lasso_zero():
     y = [0, 0, 0]
     # _cd_fast.pyx tests for gap < tol, but here we get 0.0 < 0.0
     # should probably be changed to gap <= tol ?
-    with pytest.warns(ConvergenceWarning):
+    with ignore_warnings(category=ConvergenceWarning):
         clf = Lasso(alpha=0.1).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
@@ -390,26 +391,40 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
     _scale_alpha_inplace(pipeline[1], X_train.shape[0])
 
-    # in these two cases we get ConvergenceWarnings, but the tests
-    # do still succeed, so supress the warnings
-    if (
-        LinearModel in (ElasticNet, MultiTaskElasticNet) and
-        params["l1_ratio"] == 0
-    ):
-        ctxmgr = pytest.warns(ConvergenceWarning)
-    else:
-        # contextlib.suppress(ARG) suppresses specific exception ARG
-        # when called without any argument it provides an empty
-        # context manager that does nothing specific. Python 3.7 provides
-        # nullcontext for this, but this is not available in 3.6.
-        ctxmgr = contextlib.suppress()
-
-    with ctxmgr:
+    # The following fit calls might produce two different warnings:
+    # - UserWarning:Coordinate descent with l1_reg=0 may lead
+    #               to unexpected results and is discouraged.
+    # - ConvergenceWarning
+    # To catch both, we cannot use ignore_warnings or pytest.warns
+    # because both only work with one type of warning.
+    # Catch all warnings and filter out those which are harmless
+    # This includes also the FutureWarning about normalize set above
+    # via @pytest.mark.filterwarnings
+    with pytest.warns(None) as warn_records:
         model_normalize.fit(X_train, y_train)
-        y_pred_normalize = model_normalize.predict(X_test)
-
         pipeline.fit(X_train, y_train)
-        y_pred_standardize = pipeline.predict(X_test)
+
+    not_ignored_warnings = []
+    for wr in warn_records:
+        if (
+            (
+                wr.category == FutureWarning and
+                str(wr.message).startswith("'normalize' was deprecated")
+            ) or (
+                wr.category == UserWarning and
+                LinearModel.__name__ == "MultiTaskElasticNet"
+            ) or (
+                wr.category == ConvergenceWarning and
+                LinearModel.__name__ in ['ElasticNet', 'MultiTaskElasticNet']
+            )
+        ):
+            continue
+        not_ignored_warnings.append(wr)
+    for wr in not_ignored_warnings:
+        warnings.warn(wr.message, wr.category)
+
+    y_pred_normalize = model_normalize.predict(X_test)
+    y_pred_standardize = pipeline.predict(X_test)
 
     assert_allclose(
         model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
@@ -479,9 +494,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
                                    **params)
 
     if model_name in ['Lasso', 'ElasticNet']:
-        ctxmgr = pytest.warns(ConvergenceWarning)
+        ctxmgr = ignore_warnings(category=ConvergenceWarning)
     else:
-        ctxmgr = contextlib.suppress()
+        ctxmgr = contextlib.nullcontext()
 
     with ctxmgr:
         reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
@@ -501,9 +516,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     # Strange enough, here the warnings do not disappear - whatever I do.
     if (model_name == 'ElasticNet' and params["l1_ratio"] == 0):
-        ctxmgr = pytest.warns(ConvergenceWarning)
+        ctxmgr = ignore_warnings(category=ConvergenceWarning)
     else:
-        ctxmgr = contextlib.suppress()
+        ctxmgr = contextlib.nullcontext()
 
     with ctxmgr:
         reg_with_scaler.fit(X_train, y_train, **fit_params)
@@ -569,12 +584,12 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
         y = np.sign(y)
 
     if (
-        (LinearModel is ElasticNet and params["l1_ratio"] == 0) or
-        LinearModel is LassoCV
+        (LinearModel.__name__ == "ElasticNet" and params["l1_ratio"] == 0) or
+        LinearModel.__name__ == "LassoCV"
     ):
-        ctxmgr = pytest.warns(ConvergenceWarning)
+        ctxmgr = ignore_warnings(category=ConvergenceWarning)
     else:
-        ctxmgr = contextlib.suppress()
+        ctxmgr = contextlib.nullcontext()
     with ctxmgr:
         model_dense.fit(X, y)
         model_sparse.fit(X_sparse, y)
@@ -765,7 +780,7 @@ def test_uniform_targets():
     for model in models_single_task:
         for y_values in (0, 5):
             y1.fill(y_values)
-            with pytest.warns(ConvergenceWarning):
+            with ignore_warnings(category=ConvergenceWarning):
                 pred = model.fit(X_train, y1).predict(X_test)
             assert_array_equal(pred, y1)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
@@ -774,7 +789,7 @@ def test_uniform_targets():
         for y_values in (0, 5):
             y2[:, 0].fill(y_values)
             y2[:, 1].fill(2 * y_values)
-            with pytest.warns(ConvergenceWarning):
+            with ignore_warnings(category=ConvergenceWarning):
                 pred = model.fit(X_train, y2).predict(X_test)
             assert_array_equal(pred, y2)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
@@ -1104,7 +1119,7 @@ def test_check_input_false():
     # dtype is still cast in _preprocess_data to X's dtype. So the test should
     # pass anyway
     X = check_array(X, order='F', dtype='float32')
-    with pytest.warns(ConvergenceWarning):
+    with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
