@@ -193,62 +193,6 @@ class BisectKMeans(KMeans):
                           "- Use Normal KMeans from sklearn.cluster instead",
                           EfficiencyWarning)
 
-    def _init_two_centroids(self, X, x_squared_norms, init, random_state,
-                            init_size=None):
-        """Compute two centroids for bisecting
-
-        Parameters
-        ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            The input samples.
-
-        x_squared_norms : ndarray of shape (n_samples,)
-            Squared euclidean norm of each data point. Pass it if you have it
-            at hands already to avoid it being recomputed here.
-
-        init : {'k-means++', 'random'}, callable or ndarray of shape \
-                (n_clusters, n_features)
-            Method for initialization.
-
-        random_state : RandomState instance
-            Determines random number generation for centroid initialization.
-            See :term:`Glossary <random_state>`.
-
-        init_size : int, default=None
-            Number of samples to randomly sample for speeding up the
-            initialization (sometimes at the expense of accuracy).
-        Returns
-        -------
-        centers : ndarray of shape (n_clusters = 2, n_features)
-        """
-        n_samples = X.shape[0]
-        n_clusters = 2
-
-        if init_size is not None and init_size < n_samples:
-            init_indices = random_state.randint(0, n_samples, init_size)
-            X = X[init_indices]
-            x_squared_norms = x_squared_norms[init_indices]
-            n_samples = X.shape[0]
-
-        if isinstance(init, str) and init == 'k-means++':
-            centers, _ = _kmeans_plusplus(X, n_clusters,
-                                          x_squared_norms, random_state)
-        elif isinstance(init, str) and init == 'random':
-            seeds = random_state.permutation(n_samples)[:n_clusters]
-            centers = X[seeds]
-        elif hasattr(init, '__array__'):
-            centers = init
-        elif callable(init):
-            centers = init(X, n_clusters, random_state=random_state)
-            centers = check_array(centers,
-                                  dtype=X.dtype, copy=False, order='C')
-            self._validate_center_shape(X, centers)
-
-        if sp.issparse(centers):
-            centers = centers.toarray()
-
-        return centers
-
     def _bisect(self, X, init, sample_weight=None,
                 random_state=None):
         """ Bisection of data
@@ -286,8 +230,8 @@ class BisectKMeans(KMeans):
         best_inertia = None
 
         for i in range(self.n_init):
-            centers_init = self._init_two_centroids(X, x_squared_norms,
-                                                    init, random_state)
+            centers_init = self._init_centroids(X, x_squared_norms, init,
+                                                random_state, n_centroids=2)
 
             labels, inertia, centers, _ = self._kmeans_single(
                 X, sample_weight, centers_init, max_iter=self.max_iter,
