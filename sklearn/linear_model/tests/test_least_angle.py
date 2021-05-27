@@ -236,15 +236,12 @@ def test_rank_deficient_design():
         lars = linear_model.LassoLars(.1, normalize=False)
         coef_lars_ = lars.fit(X, y).coef_
         obj_lars = (1. / (2. * 3.)
-                    * linalg.norm(y - np.dot(X, coef_lars_),
-                                  check_finite=False) ** 2
-                    + .1 * linalg.norm(coef_lars_, 1,
-                                       check_finite=False))
+                    * linalg.norm(y - np.dot(X, coef_lars_)) ** 2
+                    + .1 * linalg.norm(coef_lars_, 1))
         coord_descent = linear_model.Lasso(.1, tol=1e-6, normalize=False)
         coef_cd_ = coord_descent.fit(X, y).coef_
-        obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_),
-                                                 check_finite=False) ** 2
-                  + .1 * linalg.norm(coef_cd_, 1, check_finite=False))
+        obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
+                  + .1 * linalg.norm(coef_cd_, 1))
         assert obj_lars < obj_cd * (1. + 1e-8)
 
 
@@ -268,7 +265,7 @@ def test_lasso_lars_vs_lasso_cd():
         clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
         clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
                                   normalize=False).fit(X, y)
-        err = linalg.norm(clf1.coef_ - clf2.coef_, check_finite=False)
+        err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
 
     # same test, with normalized data
