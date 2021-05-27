@@ -6,7 +6,7 @@ import scipy.sparse as sp
 import os
 import shutil
 from tempfile import NamedTemporaryFile
-from importlib.resources import files as impfiles # type: ignore
+from importlib.resources import files as impfiles  # type: ignore
 
 import pytest
 

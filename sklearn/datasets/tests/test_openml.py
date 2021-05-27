@@ -6,7 +6,7 @@ import json
 import os
 import re
 from io import BytesIO
-from importlib.resources import files as impfiles # type: ignore
+from importlib.resources import files as impfiles  # type: ignore
 
 import numpy as np
 import scipy.sparse
