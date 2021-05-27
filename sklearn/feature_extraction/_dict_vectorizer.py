@@ -12,7 +12,6 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
-from ..utils.validation import _deprecate_positional_args
 
 
 def _tosequence(X):
@@ -96,7 +95,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
         features encoded as columns of arbitrary data types.
     """
-    @_deprecate_positional_args
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True,
                  sort=True):
         self.dtype = dtype
