@@ -19,7 +19,6 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils import shuffle
@@ -123,7 +122,8 @@ def test_precomputed():
     # same as before, but using a callable function instead of the kernel
     # matrix. kernel is just a linear kernel
 
-    kfunc = lambda x, y: np.dot(x, y.T)
+    def kfunc(x, y):
+        return np.dot(x, y.T)
     clf = svm.SVC(kernel=kfunc)
     clf.fit(np.array(X), Y)
     pred = clf.predict(T)
@@ -739,13 +739,16 @@ def test_linear_svx_uppercase_loss_penality_raises_error():
 
     X, y = [[0.0], [1.0]], [0, 1]
 
-    assert_raise_message(ValueError, "loss='SQuared_hinge' is not supported",
-                         svm.LinearSVC(loss="SQuared_hinge").fit, X, y)
+    msg = "loss='SQuared_hinge' is not supported"
+    with pytest.raises(ValueError, match=msg):
+        svm.LinearSVC(loss="SQuared_hinge").fit(X, y)
 
-    assert_raise_message(ValueError,
-                         ("The combination of penalty='L2'"
-                          " and loss='squared_hinge' is not supported"),
-                         svm.LinearSVC(penalty="L2").fit, X, y)
+    msg = (
+        "The combination of penalty='L2'"
+        " and loss='squared_hinge' is not supported"
+    )
+    with pytest.raises(ValueError, match=msg):
+        svm.LinearSVC(penalty="L2").fit(X, y)
 
 
 def test_linearsvc():
@@ -1043,10 +1046,12 @@ def test_linear_svc_intercept_scaling():
 
     for i in [-1, 0]:
         lsvc = svm.LinearSVC(intercept_scaling=i)
+
         msg = ('Intercept scaling is %r but needs to be greater than 0.'
                ' To disable fitting an intercept,'
                ' set fit_intercept=False.' % lsvc.intercept_scaling)
-        assert_raise_message(ValueError, msg, lsvc.fit, X, Y)
+        with pytest.raises(ValueError, match=msg):
+            lsvc.fit(X, Y)
 
 
 def test_lsvc_intercept_scaling_zero():
@@ -1076,7 +1081,9 @@ def test_hasattr_predict_proba():
     G.probability = True
     assert hasattr(G, 'predict_proba')
     msg = "predict_proba is not available when fitted with probability=False"
-    assert_raise_message(NotFittedError, msg, G.predict_proba, iris.data)
+
+    with pytest.raises(NotFittedError, match=msg):
+        G.predict_proba(iris.data)
 
 
 def test_decision_function_shape_two_class():

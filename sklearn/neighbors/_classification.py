@@ -152,7 +152,7 @@ class KNeighborsClassifier(KNeighborsMixin,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params,
             n_jobs=n_jobs)
-        self.weights = _check_weights(weights)
+        self.weights = weights
 
     def fit(self, X, y):
         """Fit the k-nearest neighbors classifier from the training dataset.
@@ -172,6 +172,8 @@ class KNeighborsClassifier(KNeighborsMixin,
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
+        self.weights = _check_weights(self.weights)
+
         return self._fit(X, y)
 
     def predict(self, X):
@@ -412,7 +414,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
               leaf_size=leaf_size,
               metric=metric, p=p, metric_params=metric_params,
               n_jobs=n_jobs)
-        self.weights = _check_weights(weights)
+        self.weights = weights
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
@@ -433,6 +435,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
+        self.weights = _check_weights(self.weights)
+
         self._fit(X, y)
 
         classes_ = self.classes_
