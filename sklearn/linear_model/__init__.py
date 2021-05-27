@@ -18,7 +18,7 @@ from ._glm import (PoissonRegressor,
                    GammaRegressor, TweedieRegressor)
 from ._huber import HuberRegressor
 from ._sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
-from ._stochastic_gradient import SGDClassifier, SGDRegressor
+from ._stochastic_gradient import SGDClassifier, SGDRegressor, SGDOneClassSVM
 from ._ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
                      ridge_regression)
 from ._logistic import LogisticRegression, LogisticRegressionCV
@@ -28,6 +28,7 @@ from ._passive_aggressive import PassiveAggressiveClassifier
 from ._passive_aggressive import PassiveAggressiveRegressor
 from ._perceptron import Perceptron
 
+from ._quantile import QuantileRegressor
 from ._ransac import RANSACRegressor
 from ._theil_sen import TheilSenRegressor
 
@@ -59,12 +60,14 @@ __all__ = ['ARDRegression',
            'PassiveAggressiveClassifier',
            'PassiveAggressiveRegressor',
            'Perceptron',
+           'QuantileRegressor',
            'Ridge',
            'RidgeCV',
            'RidgeClassifier',
            'RidgeClassifierCV',
            'SGDClassifier',
            'SGDRegressor',
+           'SGDOneClassSVM',
            'SquaredLoss',
            'TheilSenRegressor',
            'enet_path',

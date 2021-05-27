@@ -94,7 +94,7 @@ plt.xlabel("malic_acid")
 
 plt.show()
 
-##############################################################################
+# %%
 # Second example
 # --------------
 # The second example shows the ability of the Minimum Covariance Determinant

@@ -27,6 +27,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute._base import _most_frequent
 
 
 def _check_statistics(X, X_true,
@@ -1069,6 +1070,32 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
 
 
 @pytest.mark.parametrize(
+    "rs_imputer",
+    [None, 1, np.random.RandomState(seed=1)]
+)
+@pytest.mark.parametrize(
+    "rs_estimator",
+    [None, 1, np.random.RandomState(seed=1)]
+)
+def test_iterative_imputer_dont_set_random_state(rs_imputer, rs_estimator):
+    class ZeroEstimator:
+        def __init__(self, random_state):
+            self.random_state = random_state
+
+        def fit(self, *args, **kgards):
+            return self
+
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+    estimator = ZeroEstimator(random_state=rs_estimator)
+    imputer = IterativeImputer(random_state=rs_imputer)
+    X_train = np.zeros((10, 3))
+    imputer.fit(X_train)
+    assert estimator.random_state == rs_estimator
+
+
+@pytest.mark.parametrize(
     "X_fit, X_trans, params, msg_err",
     [(np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, -1]]),
       {'features': 'missing-only', 'sparse': 'auto'},
@@ -1343,6 +1370,25 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
 
 
 @pytest.mark.parametrize(
+    'strategy, expected',
+    [('most_frequent', 'b'), ('constant', 'missing_value')]
+)
+def test_simple_imputation_string_list(strategy, expected):
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', expected]
+    ], dtype=object)
+
+    imputer = SimpleImputer(strategy=strategy)
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize(
     "order, idx_order",
     [
         ("ascending", [3, 4, 2, 0, 1]),
@@ -1364,3 +1410,93 @@ def test_imputation_order(order, idx_order):
                                random_state=0).fit(X)
         idx = [x.feat_idx for x in trs.imputation_sequence_]
         assert idx == idx_order
+
+
+@pytest.mark.parametrize("missing_value", [-1, np.nan])
+def test_simple_imputation_inverse_transform(missing_value):
+    # Test inverse_transform feature for np.nan
+    X_1 = np.array([
+        [9, missing_value, 3, -1],
+        [4, -1, 5, 4],
+        [6, 7, missing_value, -1],
+        [8, 9, 0, missing_value]
+    ])
+
+    X_2 = np.array([
+        [5, 4, 2, 1],
+        [2, 1, missing_value, 3],
+        [9, missing_value, 7, 1],
+        [6, 4, 2, missing_value]
+    ])
+
+    X_3 = np.array([
+        [1, missing_value, 5, 9],
+        [missing_value, 4, missing_value, missing_value],
+        [2, missing_value, 7, missing_value],
+        [missing_value, 3, missing_value, 8]
+    ])
+
+    X_4 = np.array([
+        [1, 1, 1, 3],
+        [missing_value, 2, missing_value, 1],
+        [2, 3, 3, 4],
+        [missing_value, 4, missing_value, 2]
+    ])
+
+    imputer = SimpleImputer(missing_values=missing_value, strategy='mean',
+                            add_indicator=True)
+
+    X_1_trans = imputer.fit_transform(X_1)
+    X_1_inv_trans = imputer.inverse_transform(X_1_trans)
+
+    X_2_trans = imputer.transform(X_2)  # test on new data
+    X_2_inv_trans = imputer.inverse_transform(X_2_trans)
+
+    assert_array_equal(X_1_inv_trans, X_1)
+    assert_array_equal(X_2_inv_trans, X_2)
+
+    for X in [X_3, X_4]:
+        X_trans = imputer.fit_transform(X)
+        X_inv_trans = imputer.inverse_transform(X_trans)
+        assert_array_equal(X_inv_trans, X)
+
+
+@pytest.mark.parametrize("missing_value", [-1, np.nan])
+def test_simple_imputation_inverse_transform_exceptions(missing_value):
+    X_1 = np.array([
+        [9, missing_value, 3, -1],
+        [4, -1, 5, 4],
+        [6, 7, missing_value, -1],
+        [8, 9, 0, missing_value]
+    ])
+
+    imputer = SimpleImputer(missing_values=missing_value, strategy="mean")
+    X_1_trans = imputer.fit_transform(X_1)
+    with pytest.raises(ValueError,
+                       match=f"Got 'add_indicator={imputer.add_indicator}'"):
+        imputer.inverse_transform(X_1_trans)
+
+
+@pytest.mark.parametrize(
+    "expected,array,dtype,extra_value,n_repeat",
+    [
+        # array of object dtype
+        ("extra_value", ['a', 'b', 'c'], object, "extra_value", 2),
+        (
+            "most_frequent_value",
+            ['most_frequent_value', 'most_frequent_value', 'value'],
+            object, "extra_value", 1
+        ),
+        ("a", ['min_value', 'min_value' 'value'], object, "a", 2),
+        ("min_value", ['min_value', 'min_value', 'value'], object, "z", 2),
+        # array of numeric dtype
+        (10, [1, 2, 3], int, 10, 2),
+        (1, [1, 1, 2], int, 10, 1),
+        (10, [20, 20, 1], int, 10, 2),
+        (1, [1, 1, 20], int, 10, 2),
+    ]
+)
+def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
+    assert expected == _most_frequent(
+        np.array(array, dtype=dtype), extra_value, n_repeat
+    )

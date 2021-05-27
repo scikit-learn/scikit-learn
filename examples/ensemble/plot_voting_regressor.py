@@ -32,7 +32,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import VotingRegressor
 
-##############################################################################
+# %%
 # Training classifiers
 # --------------------------------
 #
@@ -54,7 +54,7 @@ reg3.fit(X, y)
 ereg = VotingRegressor([('gb', reg1), ('rf', reg2), ('lr', reg3)])
 ereg.fit(X, y)
 
-##############################################################################
+# %%
 # Making predictions
 # --------------------------------
 #
@@ -67,7 +67,7 @@ pred2 = reg2.predict(xt)
 pred3 = reg3.predict(xt)
 pred4 = ereg.predict(xt)
 
-##############################################################################
+# %%
 # Plot the results
 # --------------------------------
 #

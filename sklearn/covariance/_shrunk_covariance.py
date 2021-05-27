@@ -18,7 +18,6 @@ import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils import check_array
-from ..utils.validation import _deprecate_positional_args
 
 
 # ShrunkCovariance estimator
@@ -118,7 +117,6 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     where mu = trace(cov) / n_features
     """
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
         super().__init__(store_precision=store_precision,
@@ -135,8 +133,8 @@ class ShrunkCovariance(EmpiricalCovariance):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y: Ignored
-            not used, present for API consistence purpose.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -176,7 +174,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         If False, data will be centered before computation.
 
     block_size : int, default=1000
-        Size of the blocks into which the covariance matrix will be split.
+        Size of blocks into which the covariance matrix will be split.
 
     Returns
     -------
@@ -253,7 +251,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-@_deprecate_positional_args
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
@@ -271,7 +268,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
         If False, data will be centered before computation.
 
     block_size : int, default=1000
-        Size of the blocks into which the covariance matrix will be split.
+        Size of blocks into which the covariance matrix will be split.
         This is purely a memory optimization and does not affect results.
 
     Returns
@@ -339,7 +336,7 @@ class LedoitWolf(EmpiricalCovariance):
         If False (default), data will be centered before computation.
 
     block_size : int, default=1000
-        Size of the blocks into which the covariance matrix will be split
+        Size of blocks into which the covariance matrix will be split
         during its Ledoit-Wolf estimation. This is purely a memory
         optimization and does not affect results.
 
@@ -391,7 +388,6 @@ class LedoitWolf(EmpiricalCovariance):
     Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
     February 2004, pages 365-411.
     """
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  block_size=1000):
         super().__init__(store_precision=store_precision,
@@ -408,7 +404,7 @@ class LedoitWolf(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         y : Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -431,7 +427,6 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-@_deprecate_positional_args
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
@@ -584,7 +579,7 @@ class OAS(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         y : Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
