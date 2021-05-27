@@ -4,7 +4,6 @@ from .. import auc
 from .. import roc_curve
 
 from ...utils import check_matplotlib_support
-from ...utils.validation import _deprecate_positional_args
 
 
 class RocCurveDisplay:
@@ -67,7 +66,6 @@ class RocCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
-    @_deprecate_positional_args
     def __init__(self, *, fpr, tpr,
                  roc_auc=None, estimator_name=None, pos_label=None):
         self.estimator_name = estimator_name
@@ -76,7 +74,6 @@ class RocCurveDisplay:
         self.roc_auc = roc_auc
         self.pos_label = pos_label
 
-    @_deprecate_positional_args
     def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization
 
@@ -132,7 +129,6 @@ class RocCurveDisplay:
         return self
 
 
-@_deprecate_positional_args
 def plot_roc_curve(estimator, X, y, *, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
                    name=None, ax=None, pos_label=None, **kwargs):

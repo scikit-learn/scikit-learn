@@ -36,7 +36,6 @@ from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
-from .utils.validation import _deprecate_positional_args
 
 
 class CalibratedClassifierCV(ClassifierMixin,
@@ -215,7 +214,6 @@ class CalibratedClassifierCV(ClassifierMixin,
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, method='sigmoid',
                  cv=None, n_jobs=None, ensemble=True):
         self.base_estimator = base_estimator
@@ -788,7 +786,6 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-@_deprecate_positional_args
 def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
                       strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.

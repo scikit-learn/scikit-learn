@@ -813,7 +813,7 @@ samples that are part of the validation set, and to -1 for all other samples.
 Using cross-validation iterators to split train and test
 --------------------------------------------------------
 
-The above group cross-validation functions may also be useful for spitting a
+The above group cross-validation functions may also be useful for splitting a
 dataset into training and testing subsets. Note that the convenience
 function :func:`train_test_split` is a wrapper around :func:`ShuffleSplit`
 and thus only allows for stratified splitting (using the class labels)

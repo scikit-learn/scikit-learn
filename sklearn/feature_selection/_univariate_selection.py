@@ -17,7 +17,6 @@ from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ._base import SelectorMixin
 
 
@@ -51,15 +50,15 @@ def f_oneway(*args):
 
     Parameters
     ----------
-    *args : array-like, sparse matrices
+    *args : {array-like, sparse matrix}
         sample1, sample2... The sample measurements should be given as
         arguments.
 
     Returns
     -------
-    F-value : float
+    f_statistic : float
         The computed F-value of the test.
-    p-value : float
+    p_value : float
         The associated p-value from the F-distribution.
 
     Notes
@@ -127,19 +126,19 @@ def f_classif(X, y):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix} shape = [n_samples, n_features]
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The set of regressors that will be tested sequentially.
 
-    y : array of shape(n_samples)
-        The data matrix.
+    y : ndarray of shape (n_samples,)
+        The target vector.
 
     Returns
     -------
-    F : array, shape = [n_features,]
-        The set of F values.
+    f_statistic : ndarray of shape (n_features,)
+        F-statistic for each feature.
 
-    pval : array, shape = [n_features,]
-        The set of p-values.
+    p_values : ndarray of shape (n_features,)
+        P-values associated with the F-statistic.
 
     See Also
     --------
@@ -195,10 +194,11 @@ def chi2(X, y):
 
     Returns
     -------
-    chi2 : array, shape = (n_features,)
-        chi2 statistics of each feature.
-    pval : array, shape = (n_features,)
-        p-values of each feature.
+    chi2 : ndarray of shape (n_features,)
+        Chi2 statistics for each feature.
+
+    p_values : ndarray of shape (n_features,)
+        P-values for each feature.
 
     Notes
     -----
@@ -229,60 +229,53 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-@_deprecate_positional_args
-def f_regression(X, y, *, center=True):
-    """Univariate linear regression tests.
+def r_regression(X, y, *, center=True):
+    """Compute Pearson's r for each features and the target.
+
+    Pearson's r is also known as the Pearson correlation coefficient.
+
+    .. versionadded:: 1.0
 
     Linear model for testing the individual effect of each of many regressors.
     This is a scoring function to be used in a feature selection procedure, not
     a free standing feature selection procedure.
 
-    This is done in 2 steps:
-
-    1. The correlation between each regressor and the target is computed,
-       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
-       std(y)).
-    2. It is converted to an F score then to a p-value.
+    The cross correlation between each regressor and the target is computed
+    as ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) * std(y)).
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}  shape = (n_samples, n_features)
-        The set of regressors that will be tested sequentially.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The data matrix.
 
-    y : array of shape(n_samples).
-        The data matrix
+    y : array-like of shape (n_samples,)
+        The target vector.
 
     center : bool, default=True
-        If true, X and y will be centered.
+        Whether or not to center the data matrix `X` and the target vector `y`.
+        By default, `X` and `y` will be centered.
 
     Returns
     -------
-    F : array, shape=(n_features,)
-        F values of features.
-
-    pval : array, shape=(n_features,)
-        p-values of F-scores.
+    correlation_coefficient : ndarray of shape (n_features,)
+        Pearson's R correlation coefficients of features.
 
     See Also
     --------
-    mutual_info_regression : Mutual information for a continuous target.
-    f_classif : ANOVA F-value between label/feature for classification tasks.
-    chi2 : Chi-squared stats of non-negative features for classification tasks.
-    SelectKBest : Select features based on the k highest scores.
-    SelectFpr : Select features based on a false positive rate test.
-    SelectFdr : Select features based on an estimated false discovery rate.
-    SelectFwe : Select features based on family-wise error rate.
-    SelectPercentile : Select features based on percentile of the highest
-        scores.
+    f_regression: Univariate linear regression tests returning f-statistic
+        and p-values
+    mutual_info_regression: Mutual information for a continuous target.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
     """
     X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                      dtype=np.float64)
     n_samples = X.shape[0]
 
-    # compute centered values
-    # note that E[(x - mean(x))*(y - mean(y))] = E[x*(y - mean(y))], so we
+    # Compute centered values
+    # Note that E[(x - mean(x))*(y - mean(y))] = E[x*(y - mean(y))], so we
     # need not center X
     if center:
         y = y - np.mean(y)
@@ -290,22 +283,85 @@ def f_regression(X, y, *, center=True):
             X_means = X.mean(axis=0).getA1()
         else:
             X_means = X.mean(axis=0)
-        # compute the scaled standard deviations via moments
+        # Compute the scaled standard deviations via moments
         X_norms = np.sqrt(row_norms(X.T, squared=True) -
                           n_samples * X_means ** 2)
     else:
         X_norms = row_norms(X.T)
 
-    # compute the correlation
-    corr = safe_sparse_dot(y, X)
-    corr /= X_norms
-    corr /= np.linalg.norm(y)
+    correlation_coefficient = safe_sparse_dot(y, X)
+    correlation_coefficient /= X_norms
+    correlation_coefficient /= np.linalg.norm(y)
+    return correlation_coefficient
 
-    # convert to p-value
-    degrees_of_freedom = y.size - (2 if center else 1)
-    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
-    pv = stats.f.sf(F, 1, degrees_of_freedom)
-    return F, pv
+
+def f_regression(X, y, *, center=True):
+    """Univariate linear regression tests returning F-statistic and p-values.
+
+    Quick linear model for testing the effect of a single regressor,
+    sequentially for many regressors.
+
+    This is done in 2 steps:
+
+    1. The cross correlation between each regressor and the target is computed,
+       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
+       std(y)) using r_regression function.
+    2. It is converted to an F score and then to a p-value.
+
+    :func:`f_regression` is derived from :func:`r_regression` and will rank
+    features in the same order if all the features are positively correlated
+    with the target.
+
+    Note however that contrary to :func:`f_regression`, :func:`r_regression`
+    values lie in [-1, 1] and can thus be negative. :func:`f_regression` is
+    therefore recommended as a feature selection criterion to identify
+    potentially predictive feature for a downstream classifier, irrespective of
+    the sign of the association with the target variable.
+
+    Furthermore :func:`f_regression` returns p-values while
+    :func:`r_regression` does not.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The data matrix.
+
+    y : array-like of shape (n_samples,)
+        The target vector.
+
+    center : bool, default=True
+        Whether or not to center the data matrix `X` and the target vector `y`.
+        By default, `X` and `y` will be centered.
+
+    Returns
+    -------
+    f_statistic : ndarray of shape (n_features,)
+        F-statistic for each feature.
+
+    p_values : ndarray of shape (n_features,)
+        P-values associated with the F-statistic.
+
+    See Also
+    --------
+    r_regression: Pearson's R between label/feature for regression tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
+    """
+    correlation_coefficient = r_regression(X, y, center=center)
+    deg_of_freedom = y.size - (2 if center else 1)
+
+    corr_coef_squared = correlation_coefficient ** 2
+    f_statistic = corr_coef_squared / (1 - corr_coef_squared) * deg_of_freedom
+    p_values = stats.f.sf(f_statistic, 1, deg_of_freedom)
+    return f_statistic, p_values
 
 
 ######################################################################
@@ -427,7 +483,6 @@ class SelectPercentile(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, percentile=10):
         super().__init__(score_func=score_func)
         self.percentile = percentile
@@ -502,12 +557,12 @@ class SelectKBest(_BaseFilter):
 
     See Also
     --------
-    f_classif : ANOVA F-value between label/feature for classification tasks.
-    mutual_info_classif : Mutual information for a discrete target.
-    chi2 : Chi-squared stats of non-negative features for classification tasks.
-    f_regression : F-value between label/feature for regression tasks.
-    mutual_info_regression : Mutual information for a continuous target.
-    SelectPercentile : Select features based on percentile of the highest
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
+    mutual_info_regression: Mutual information for a continuous target.
+    SelectPercentile: Select features based on percentile of the highest
         scores.
     SelectFpr : Select features based on a false positive rate test.
     SelectFdr : Select features based on an estimated false discovery rate.
@@ -515,7 +570,6 @@ class SelectKBest(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, k=10):
         super().__init__(score_func=score_func)
         self.k = k
@@ -596,7 +650,6 @@ class SelectFpr(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -664,7 +717,6 @@ class SelectFdr(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -729,7 +781,6 @@ class SelectFwe(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -799,13 +850,12 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     """
 
-    _selection_modes = {'percentile': SelectPercentile,
-                        'k_best': SelectKBest,
-                        'fpr': SelectFpr,
-                        'fdr': SelectFdr,
-                        'fwe': SelectFwe}
+    _selection_modes: dict = {'percentile': SelectPercentile,
+                              'k_best': SelectKBest,
+                              'fpr': SelectFpr,
+                              'fdr': SelectFdr,
+                              'fwe': SelectFwe}
 
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, mode='percentile', param=1e-5):
         super().__init__(score_func=score_func)
         self.mode = mode
