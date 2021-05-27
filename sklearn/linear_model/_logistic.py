@@ -1052,7 +1052,7 @@ class LogisticRegression(LinearClassifierMixin,
             https://scikit-learn.org/stable/modules/linear_model.html#elastic-net
 
         .. warning::
-           Some penalties may not work with specific solver. See parameter
+           Some penalties may not work with some solvers. See the parameter
            `solver` below, to know the compatibility between the penalty and
            solver.
 
@@ -1112,31 +1112,33 @@ class LogisticRegression(LinearClassifierMixin,
 
         Algorithm to use in the optimization problem.
 
-        .. note:: Tips
-            - For small datasets, 'liblinear' is a good choice,
-            whereas 'sag' and 'saga' are faster for large ones.
-            - For multiclass problems,
-            only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-            handle multinomial loss;
-            'liblinear' is limited to one-versus-rest schemes.
-
-        .. warning:: Those algorithms may not work with specific penalty.
-            Supported penalties by solver:
+        .. warning::
+           The choice of the algorithm depends on the penalty chosen:
+           Supported penalties by solver:
             - 'newton-cg'   -   ['l2', 'none']
             - 'lbfgs'       -   ['l2', 'none']
             - 'liblinear'   -   ['l1', 'l2']
             - 'sag'         -   ['l2', 'none']
             - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
 
-        .. note:: 'sag' and 'saga' fast convergence is only guaranteed on
-            features with approximately the same scale. You can
-            preprocess the data with a scaler from sklearn.preprocessing.
+        .. note:: Tips
+           - For small datasets, 'liblinear' is a good choice,
+             whereas 'sag' and 'saga' are faster for large ones.
+           - For multiclass problems,
+             only 'newton-cg', 'sag', 'saga' and 'lbfgs'
+             handle multinomial loss;
+           - 'liblinear' is limited to one-versus-rest schemes.
 
-        .. seealso:: More information about Logistic Regression
-            and Table summaring penalties supported by each solver
-            at this link_ in '1.1.11. Logistic-reggresion' Section
+        .. note::
+           'sag' and 'saga' fast convergence is only guaranteed on
+           features with approximately the same scale. You can
+           preprocess the data with a scaler from :mod:`sklearn.preprocessing`.
 
-        .. _link: scikit-learn.org/stable/modules/linear_model.html
+        .. seealso::
+           Refer to the User Guide for more information regarding
+           :class:`LogisticRegression` and more specifically the
+           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_
+           summarazing solver-penalty supports.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -1581,7 +1583,7 @@ class LogisticRegressionCV(LogisticRegression,
             https://scikit-learn.org/stable/modules/linear_model.html#elastic-net
 
         .. warning::
-           Some penalties may not work with specific solver. See parameter
+           Some penalties may not work with some solvers. See the parameter
            `solver` below, to know the compatibility between the penalty and
            solver.
 
@@ -1596,10 +1598,10 @@ class LogisticRegressionCV(LogisticRegression,
             default='lbfgs'
 
         Algorithm to use in the optimization problem.
-        By default 'lbfgs' is used
+        By default 'lbfgs' is used.
 
-        .. warning:: Those algorithms may not work with specific penalty.
-            Supported penalties by solver:
+        .. warning::
+           The choice of the algorithm depends on the penalty chosen:
             - 'newton-cg'   -   ['l2']
             - 'lbfgs'       -   ['l2']
             - 'liblinear'   -   ['l1', 'l2']
@@ -1607,19 +1609,19 @@ class LogisticRegressionCV(LogisticRegression,
             - 'saga'        -   ['elasticnet', 'l1', 'l2']
 
         .. note::
-            - For small datasets, 'liblinear' is a good choice,
-                whereas 'sag' and 'saga' are faster for large ones.
-            - For multiclass problems,
-                only 'newton-cg', 'sag', 'saga' and 'lbfgs' handle
-                multinomial loss;
-                'liblinear' is limited to one-versus-rest schemes.
-            - 'liblinear' might be slower in LogisticRegressionCV
-                because it does not handle warm-starting.
+           - For small datasets, 'liblinear' is a good choice,
+             whereas 'sag' and 'saga' are faster for large ones.
+           - For multiclass problems,
+             only 'newton-cg', 'sag', 'saga' and 'lbfgs' handle multinomial
+             loss;
+           - 'liblinear' might be slower in :class:`LogisticRegressionCV`
+             because it does not handle warm-starting. 'liblinear' is
+             limited to one-versus-rest schemes.
 
-        .. note:: 'sag' and 'saga' fast convergence is only guaranteed on
-            features with approximately the same scale.
-            You can preprocess the data with a scaler
-            from sklearn.preprocessing.
+        .. note::
+           'sag' and 'saga' fast convergence is only guaranteed on features
+           with approximately the same scale. You can preprocess the data with
+           a scaler from :mod:`sklearn.preprocessing`.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
