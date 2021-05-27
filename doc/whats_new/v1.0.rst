@@ -150,8 +150,9 @@ Changelog
 - |Efficiency| :class:`cluster.MiniBatchKMeans` is now faster in multicore
   settings. :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| :class:`cluster.AffinityPropagation` now supports sparse
-  data type as well for input data.
+- |Enhancement| The `predict` and `fit_predict` methods of
+  :class:`cluster.AffinityPropagation` now accept sparse data type for input
+  data.
   :pr:`20117` by :user:`Venkatachalam Natchiappan <venkyyuvy>`
 
 - |Fix| Fixed a bug in :class:`cluster.MiniBatchKMeans` where the sample
