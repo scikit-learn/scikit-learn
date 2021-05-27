@@ -670,7 +670,8 @@ def test_n_components():
     connectivity = np.eye(5)
 
     for linkage_func in _TREE_BUILDERS.values():
-        assert ignore_warnings(linkage_func)(X, connectivity)[1] == 5
+        assert ignore_warnings(linkage_func)(
+            X, connectivity=connectivity)[1] == 5
 
 
 def test_agg_n_clusters():

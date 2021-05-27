@@ -21,7 +21,7 @@ from ..neighbors._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
-from ..utils.validation import _deprecate_positional_args, check_memory
+from ..utils.validation import check_memory
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
 from ._feature_agglomeration import AgglomerationTransform
@@ -134,7 +134,6 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 ###############################################################################
 # Hierarchical tree building functions
 
-@_deprecate_positional_args
 def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.
 
@@ -800,7 +799,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     array([1, 1, 1, 0, 0, 0])
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
@@ -1068,7 +1066,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> X_reduced.shape
     (1797, 32)
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',

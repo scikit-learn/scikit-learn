@@ -19,7 +19,6 @@ from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
@@ -77,7 +76,6 @@ def alpha_max(emp_cov):
 
 
 # The g-lasso algorithm
-@_deprecate_positional_args
 def graphical_lasso(emp_cov, alpha, *, cov_init=None, mode='cd', tol=1e-4,
                     enet_tol=1e-4, max_iter=100, verbose=False,
                     return_costs=False, eps=np.finfo(np.float64).eps,
@@ -366,7 +364,6 @@ class GraphicalLasso(EmpiricalCovariance):
     --------
     graphical_lasso, GraphicalLassoCV
     """
-    @_deprecate_positional_args
     def __init__(self, alpha=.01, *, mode='cd', tol=1e-4, enet_tol=1e-4,
                  max_iter=100, verbose=False, assume_centered=False):
         super().__init__(assume_centered=assume_centered)
@@ -675,7 +672,6 @@ class GraphicalLassoCV(GraphicalLasso):
     values of alpha then come out as missing values, but the optimum may
     be close to these missing values.
     """
-    @_deprecate_positional_args
     def __init__(self, *, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):

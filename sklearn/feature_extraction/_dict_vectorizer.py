@@ -12,7 +12,6 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
-from ..utils.validation import _deprecate_positional_args
 
 
 def _tosequence(X):
@@ -96,7 +95,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
         features encoded as columns of arbitrary data types.
     """
-    @_deprecate_positional_args
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True,
                  sort=True):
         self.dtype = dtype
@@ -347,26 +345,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        if self.sparse:
-            return self._transform(X, fitting=False)
-
-        else:
-            dtype = self.dtype
-            vocab = self.vocabulary_
-            X = _tosequence(X)
-            Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
-
-            for i, x in enumerate(X):
-                for f, v in x.items():
-                    if isinstance(v, str):
-                        f = "%s%s%s" % (f, self.separator, v)
-                        v = 1
-                    try:
-                        Xa[i, vocab[f]] = dtype(v)
-                    except KeyError:
-                        pass
-
-            return Xa
+        return self._transform(X, fitting=False)
 
     def get_feature_names(self):
         """Returns a list of feature names, ordered by their indices.

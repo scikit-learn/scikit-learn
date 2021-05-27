@@ -13,8 +13,7 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.fixes import linspace
-from ..utils.validation import (check_is_fitted, FLOAT_DTYPES,
-                                _deprecate_positional_args)
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
@@ -30,6 +29,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     of the features with degree less than or equal to the specified degree.
     For example, if an input sample is two dimensional and of the form
     [a, b], the degree-2 polynomial features are [1, a, b, a^2, ab, b^2].
+
+    Read more in the :ref:`User Guide <polynomial_features>`.
 
     Parameters
     ----------
@@ -99,7 +100,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-    @_deprecate_positional_args
     def __init__(self, degree=2, *, interaction_only=False, include_bias=True,
                  order='C'):
         self.degree = degree

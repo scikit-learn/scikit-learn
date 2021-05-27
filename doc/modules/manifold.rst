@@ -602,7 +602,7 @@ be well separated by non linear methods that focus on the local structure (e.g.
 an SVM with a Gaussian RBF kernel). However, failing to visualize well
 separated homogeneously labeled groups with t-SNE in 2D does not necessarily
 imply that the data cannot be correctly classified by a supervised model. It
-might be the case that 2 dimensions are not low enough to accurately represents
+might be the case that 2 dimensions are not high enough to accurately represent
 the internal structure of the data.
 
 

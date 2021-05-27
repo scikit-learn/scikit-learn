@@ -7,6 +7,7 @@ import warnings
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import check_skip_network
+from sklearn.utils.fixes import parse_version
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
@@ -80,6 +81,10 @@ def setup_grid_search():
 def setup_preprocessing():
     try:
         import pandas  # noqa
+        if parse_version(pandas.__version__) < parse_version('1.1.0'):
+            raise SkipTest(
+                "Skipping preprocessing.rst, pandas version < 1.1.0"
+                )
     except ImportError:
         raise SkipTest("Skipping preprocessing.rst, pandas not installed")
 
