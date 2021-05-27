@@ -778,13 +778,19 @@ def test_copy_X_with_auto_gram():
     # X did not change
     assert_allclose(X, X_before)
 
-def test_lars_dtype_match():
-    rng = np.random.RandomState(0)
-    X = rng.rand(6, 6).astype(np.float32)
-    Y = rng.rand(6).astype(np.float32)
 
-    model = Lars(n_nonzero_coefs=1)
-    model.fit(X,Y)
-    assert model.coef_.dtype == np.float32
-    assert model.coef_path_.dtype == np.float32
-    assert model.intercept_.dtype == np.float32
+@pytest.mark.parametrize("x_data_type, y_data_type, expected_type", (
+    (np.float32, np.float32, np.float32),
+    (np.float64, np.float64, np.float64)))
+def test_lars_dtype_match(x_data_type, y_data_type, expected_type):
+    rng = np.random.RandomState(0)
+    X = rng.rand(6, 6).astype(x_data_type)
+    y = rng.rand(6).astype(y_data_type)
+
+    model = Lars()
+    model.fit(X, y)
+    assert model.coef_.dtype == expected_type
+    # coef_path_ can be list of array
+    for coef in model.coef_path_:
+        assert coef.dtype == expected_type
+    assert model.intercept_.dtype == expected_type
