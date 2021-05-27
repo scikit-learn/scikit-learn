@@ -952,7 +952,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         n_iter = n_i + 1
         return W, H, n_iter
     else:
-        n_iter = (np.ceil((n_i + 1) / n_batches)).astype('int')
+        n_iter = int(np.ceil((n_i + 1) / n_batches))
         iter_offset = n_i - (n_iter * n_batches)
         return W, H, n_iter, iter_offset, A, B
 
