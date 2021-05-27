@@ -112,6 +112,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
     """
+
     def __init__(self, estimator, *, n_features_to_select=None, tol=None,
                  direction='forward', scoring=None, cv=5, n_jobs=None):
 
@@ -185,8 +186,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
         if self.tol is None:
             for _ in range(n_iterations):
-                new_feature_idx, new_score = self._get_best_new_feature_score(cloned_estimator, X,
-                                                             y, current_mask)
+                new_feature_idx, new_score = self._get_best_new_feature_score(
+                    cloned_estimator, X, y, current_mask)
                 current_mask[new_feature_idx] = True
 
             if self.direction == 'backward':
@@ -194,8 +195,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         else:
             old_score = 0
             for _ in range(n_iterations):
-                new_feature_idx, new_score = self._get_best_new_feature_score(cloned_estimator, X,
-                                                             y, current_mask)
+                new_feature_idx, new_score = self._get_best_new_feature_score(
+                    cloned_estimator, X, y, current_mask)
                 if new_score - self.tol < old_score:
                     break
 
@@ -225,7 +226,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
                 estimator, X_new, y, cv=self.cv, scoring=self.scoring,
                 n_jobs=self.n_jobs).mean()
 
-        new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])
+        new_feature_idx = max(
+            scores, key=lambda feature_idx: scores[feature_idx])
         return new_feature_idx, scores[new_feature_idx]
 
     def _get_support_mask(self):
