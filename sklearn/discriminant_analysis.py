@@ -812,8 +812,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
                     f"The covariance matrix of class {ind} is not full rank. "
                     "Increasing the value of parameter `reg_param` might help"
                     " reducing the collinearity.",
-                    # TODO: Switch to LinAlgWarning when min SciPy>=1.1.0
-                    RuntimeWarning
+                    linalg.LinAlgWarning
                 )
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
