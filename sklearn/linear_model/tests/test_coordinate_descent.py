@@ -398,6 +398,10 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     ):
         ctxmgr = pytest.warns(ConvergenceWarning)
     else:
+        # contextlib.suppress(ARG) suppresses specific exception ARG
+        # when called without any argument it provides an empty
+        # context manager that does nothing specific. Python 3.7 provides
+        # nullcontext for this, but this is not available in 3.6.
         ctxmgr = contextlib.suppress()
 
     with ctxmgr:
@@ -762,7 +766,8 @@ def test_uniform_targets():
         for y_values in (0, 5):
             y1.fill(y_values)
             with pytest.warns(ConvergenceWarning):
-                assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
+                pred = model.fit(X_train, y1).predict(X_test)
+            assert_array_equal(pred, y1)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
 
     for model in models_multi_task:
@@ -770,7 +775,8 @@ def test_uniform_targets():
             y2[:, 0].fill(y_values)
             y2[:, 1].fill(2 * y_values)
             with pytest.warns(ConvergenceWarning):
-                assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
+                pred = model.fit(X_train, y2).predict(X_test)
+            assert_array_equal(pred, y2)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
 
 
