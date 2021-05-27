@@ -16,6 +16,7 @@ from ..utils.metaestimators import _safe_split
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
+from ..utils.deprecation import deprecated
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -23,7 +24,6 @@ from ..base import is_classifier
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics import check_scoring
-from ..utils.deprecation import deprecated
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 
@@ -475,7 +475,8 @@ class RFECV(RFE):
 
         .. deprecated:: 0.24
             The `grid_scores_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_` and will be removed in version 0.25
+            of `cv_results_` and will be removed in version
+            1.1 (renaming of 0.26).
 
     cv_results_ : dict of floats
         A dict with keys:
@@ -655,10 +656,11 @@ class RFECV(RFE):
         self.cv_results_["std_score"] = np.std(grid_scores, axis=0)
         return self
 
+    # TODO: Remove in v1.1 when grid_scores_ is removed
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The grid_scores_ attribute is deprecated in version 0.24 in favor "
-        "of cv_results_ and will be removed in version 0.25"
+        "of cv_results_ and will be removed in version 1.1 (renaming of 0.26)."
     )
     @property
     def grid_scores_(self):
