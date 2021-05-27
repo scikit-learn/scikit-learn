@@ -392,8 +392,10 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
     # in these two cases we get ConvergenceWarnings, but the tests
     # do still succeed, so supress the warnings
-    if (LinearModel in (ElasticNet, MultiTaskElasticNet)
-            and params["l1_ratio"] == 0):
+    if (
+        LinearModel in (ElasticNet, MultiTaskElasticNet) and
+        params["l1_ratio"] == 0
+    ):
         ctxmgr = pytest.warns(ConvergenceWarning)
     else:
         ctxmgr = contextlib.suppress()
@@ -562,8 +564,10 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     if is_classifier(model_dense):
         y = np.sign(y)
 
-    if ((LinearModel is ElasticNet and params["l1_ratio"] == 0)
-            or LinearModel is LassoCV):
+    if (
+        (LinearModel is ElasticNet and params["l1_ratio"] == 0) or
+        LinearModel is LassoCV
+    ):
         ctxmgr = pytest.warns(ConvergenceWarning)
     else:
         ctxmgr = contextlib.suppress()
