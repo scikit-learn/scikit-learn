@@ -577,11 +577,9 @@ def _set_checking_parameters(estimator):
         if estimator.__class__.__name__ in ['LinearSVR', 'LinearSVC']:
             estimator.set_params(max_iter=20)
         # NMF and MiniBatchNMF
-        if estimator.__class__.__name__ == 'NMF':
+        if estimator.__class__.__name__ in ['NMF', 'MiniBatchNMF']:
             # FIXME : init should be removed in 1.1
             estimator.set_params(max_iter=500, init='nndsvda')
-        if estimator.__class__.__name__ == 'MiniBatchNMF':
-            estimator.set_params(max_iter=1000, init='nndsvda')
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
             estimator.set_params(max_iter=100)

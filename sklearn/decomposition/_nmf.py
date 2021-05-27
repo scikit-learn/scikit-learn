@@ -897,7 +897,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
-    n_batches = n_samples // batch_size + 1
+    n_batches = int(np.ceil(n_samples / batch_size))
     n_steps = max_iter * n_batches
     for n_i, batch in zip(range(n_steps), batches):
         # update W
@@ -949,10 +949,10 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
               (n_i, end_time - start_time))
 
     if forget_factor is None:
-        n_iter = n_i
+        n_iter = n_i + 1
         return W, H, n_iter
     else:
-        n_iter = n_i // n_batches + 1
+        n_iter = (np.ceil((n_i + 1) / n_batches)).astype('int')
         iter_offset = n_i - (n_iter * n_batches)
         return W, H, n_iter, iter_offset, A, B
 
@@ -1469,6 +1469,11 @@ class NMF(TransformerMixin, BaseEstimator):
         with config_context(assume_finite=True):
             W, H, n_iter = self._fit_transform(X, W=W, H=H)
 
+        if n_iter == self.max_iter and self.tol > 0:
+            warnings.warn("Maximum number of iterations %d reached. Increase "
+                          "it to improve convergence." % self.max_iter,
+                          ConvergenceWarning)
+
         self.reconstruction_err_ = _beta_divergence(X, W, H, self._beta_loss,
                                                     square_root=True)
 
@@ -1542,11 +1547,6 @@ class NMF(TransformerMixin, BaseEstimator):
                 update_H, self.verbose, None)
         else:
             raise ValueError("Invalid solver parameter '%s'." % self.solver)
-
-        if n_iter == self.max_iter and self.tol > 0:
-            warnings.warn("Maximum number of iterations %d reached. Increase "
-                          "it to improve convergence." % self.max_iter,
-                          ConvergenceWarning)
 
         return W, H, n_iter
 
@@ -1696,7 +1696,8 @@ class MiniBatchNMF(NMF):
         Tolerance of the stopping condition.
 
     max_iter : integer, default: 200
-        Maximum number of iterations before timing out.
+        Maximum number of iterations over the complete dataset before
+        timing out.
 
     random_state : int, RandomState instance, default=None
         Used for initialisation (when ``init`` == 'nndsvdar' or
@@ -1826,16 +1827,21 @@ class MiniBatchNMF(NMF):
                                 dtype=[np.float64, np.float32])
 
         with config_context(assume_finite=True):
-            W, H, n_iter_, iter_offset_, A, B = self._fit_transform(X, W=W,
+            W, H, n_iter, iter_offset, A, B = self._fit_transform(X, W=W,
                                                                     H=H)
+
+        if n_iter == self.max_iter and self.tol > 0:
+            warnings.warn("Maximum number of iterations %d reached. Increase "
+                          "it to improve convergence." % self.max_iter,
+                          ConvergenceWarning)
 
         self.reconstruction_err_ = _beta_divergence(X, W, H, self._beta_loss,
                                                     square_root=True)
 
         self.n_components_ = H.shape[0]
         self.components_ = H
-        self.n_iter_ = n_iter_
-        self.iter_offset_ = iter_offset_
+        self.n_iter_ = n_iter
+        self.iter_offset_ = iter_offset
         self._components_numerator = A
         self._components_denominator = B
 
@@ -1915,17 +1921,12 @@ class MiniBatchNMF(NMF):
         else:
             raise ValueError("Invalid solver parameter '%s'." % self.solver)
 
-        if n_iter == self.max_iter and self.tol > 0:
-            warnings.warn("Maximum number of iterations %d reached. Increase "
-                          "it to improve convergence." % self.max_iter,
-                          ConvergenceWarning)
-
         return W, H, n_iter, iter_offset, A, B
 
     def partial_fit(self, X, y=None, **params):
-        is_first_call_to_partial_fit = not hasattr(self, 'components_')
+        has_components = not hasattr(self, 'components_')
 
-        if not is_first_call_to_partial_fit:
+        if not has_components:
             with config_context(assume_finite=True):
                 X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                         dtype=[np.float64, np.float32],
