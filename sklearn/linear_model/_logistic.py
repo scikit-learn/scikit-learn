@@ -1048,9 +1048,6 @@ class LogisticRegression(LinearClassifierMixin,
         - `'l1'`: add a L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
 
-        .. seealso:: Read about Elastic-Net:
-            https://scikit-learn.org/stable/modules/linear_model.html#elastic-net
-
         .. warning::
            Some penalties may not work with some solvers. See the parameter
            `solver` below, to know the compatibility between the penalty and
@@ -1137,7 +1134,7 @@ class LogisticRegression(LinearClassifierMixin,
         .. seealso::
            Refer to the User Guide for more information regarding
            :class:`LogisticRegression` and more specifically the
-           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_
+           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_  # noqa
            summarazing solver-penalty supports.
 
         .. versionadded:: 0.17
@@ -1578,9 +1575,6 @@ class LogisticRegressionCV(LogisticRegression,
         - `'l2'`: add a L2 penalty term (used by default);
         - `'l1'`: add a L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
-
-        .. seealso:: Read about Elastic-Net:
-            https://scikit-learn.org/stable/modules/linear_model.html#elastic-net
 
         .. warning::
            Some penalties may not work with some solvers. See the parameter
