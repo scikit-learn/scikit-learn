@@ -106,11 +106,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
     """
-    def __init__(self, estimator, *, n_features_to_select=None,
+    def __init__(self, estimator, *, n_features_to_select=None, censored_rate=None,
                  direction='forward', scoring=None, cv=5, n_jobs=None):
 
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
+        self.censored_rate = censored_rate
         self.direction = direction
         self.scoring = scoring
         self.cv = cv
@@ -175,18 +176,34 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             self.n_features_to_select_ if self.direction == 'forward'
             else n_features - self.n_features_to_select_
         )
-        for _ in range(n_iterations):
-            new_feature_idx = self._get_best_new_feature(cloned_estimator, X,
-                                                         y, current_mask)
-            current_mask[new_feature_idx] = True
 
-        if self.direction == 'backward':
-            current_mask = ~current_mask
+        if self.censored_rate is None:
+            for _ in range(n_iterations):
+                new_feature_idx, new_score = self._get_best_new_feature_score(cloned_estimator, X,
+                                                             y, current_mask)
+                current_mask[new_feature_idx] = True
+
+            if self.direction == 'backward':
+                current_mask = ~current_mask
+        else:
+            old_score = 0
+            for _ in range(n_iterations):
+                new_feature_idx, new_score = self._get_best_new_feature_score(cloned_estimator, X,
+                                                             y, current_mask)
+                if new_score < old_score*(1+self.censored_rate):
+                    break
+
+                old_score = new_score
+                current_mask[new_feature_idx] = True
+
+            if self.direction == 'backward':
+                current_mask = ~current_mask
+
         self.support_ = current_mask
 
         return self
 
-    def _get_best_new_feature(self, estimator, X, y, current_mask):
+    def _get_best_new_feature_score(self, estimator, X, y, current_mask):
         # Return the best new feature to add to the current_mask, i.e. return
         # the best new feature to add (resp. remove) when doing forward
         # selection (resp. backward selection)
@@ -201,7 +218,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             scores[feature_idx] = cross_val_score(
                 estimator, X_new, y, cv=self.cv, scoring=self.scoring,
                 n_jobs=self.n_jobs).mean()
-        return max(scores, key=lambda feature_idx: scores[feature_idx])
+
+        new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])
+        return new_feature_idx, scores[new_feature_idx]
 
     def _get_support_mask(self):
         check_is_fitted(self)
