@@ -195,7 +195,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             for _ in range(n_iterations):
                 new_feature_idx, new_score = self._get_best_new_feature_score(cloned_estimator, X,
                                                              y, current_mask)
-                if new_score < old_score*(1+self.censored_rate):
+                if new_score - self.aborted_rate < old_score:
                     break
 
                 old_score = new_score
