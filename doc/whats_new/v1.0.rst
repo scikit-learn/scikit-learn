@@ -12,6 +12,12 @@ Version 1.0.0
 
 .. include:: changelog_legend.inc
 
+Minimal dependencies
+--------------------
+
+Version 1.0.0 of scikit-learn requires python 3.7+, numpy 1.14.5+ and
+scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.2+.
+
 Enforcing keyword-only arguments
 --------------------------------
 
@@ -276,6 +282,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Feature| Added :class:`linear_model.QuantileRegressor` which implements
+  linear quantile regression with L1 penalty.
+  :pr:`9978` by :user:`David Dale <avidale>` and
+  :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
@@ -371,6 +382,15 @@ Changelog
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
+:mod:`sklearn.mixture`
+..............................
+
+- |Fix| Ensure that the best parameters are set appropriately
+  in the case of divergency for :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`.
+  :pr:`20030` by :user:`Tingshan Liu <tliu68>` and
+  :user:`Benjamin Pedigo <bdpedigo>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -408,6 +428,12 @@ Changelog
 
 - |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
+- |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
+  and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
+  `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
+  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.pipeline`
 .......................
