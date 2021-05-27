@@ -17,7 +17,6 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..base import is_classifier
 
 from . import _criterion
@@ -76,7 +75,6 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
-@_deprecate_positional_args
 def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False, impurity=True,
               node_ids=False, proportion=False, rounded=False, precision=3,
@@ -648,7 +646,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
-@_deprecate_positional_args
 def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
@@ -804,7 +801,6 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
-@_deprecate_positional_args
 def export_text(decision_tree, *, feature_names=None, max_depth=10,
                 spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.

@@ -22,7 +22,6 @@ from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
@@ -203,7 +202,6 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     return averaged_predictions, predictions
 
 
-@_deprecate_positional_args
 def partial_dependence(estimator, X, features, *, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
                        method='auto', kind='legacy'):

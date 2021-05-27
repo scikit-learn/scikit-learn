@@ -246,13 +246,13 @@ def test_precision_recall_f_binary_single_class():
     assert 1. == precision_score([1, 1], [1, 1])
     assert 1. == recall_score([1, 1], [1, 1])
     assert 1. == f1_score([1, 1], [1, 1])
-    assert 1. == fbeta_score([1, 1], [1, 1], 0)
+    assert 1. == fbeta_score([1, 1], [1, 1], beta=0)
 
     assert 0. == precision_score([-1, -1], [-1, -1])
     assert 0. == recall_score([-1, -1], [-1, -1])
     assert 0. == f1_score([-1, -1], [-1, -1])
-    assert 0. == fbeta_score([-1, -1], [-1, -1], float('inf'))
-    assert fbeta_score([-1, -1], [-1, -1], float('inf')) == pytest.approx(
+    assert 0. == fbeta_score([-1, -1], [-1, -1], beta=float('inf'))
+    assert fbeta_score([-1, -1], [-1, -1], beta=float('inf')) == pytest.approx(
         fbeta_score([-1, -1], [-1, -1], beta=1e5))
 
 

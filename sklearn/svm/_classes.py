@@ -5,7 +5,6 @@ from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 
 
@@ -178,7 +177,6 @@ class LinearSVC(LinearClassifierMixin,
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-    @_deprecate_positional_args
     def __init__(self, penalty='l2', loss='squared_hinge', *, dual=True,
                  tol=1e-4, C=1.0, multi_class='ovr', fit_intercept=True,
                  intercept_scaling=1, class_weight=None, verbose=0,
@@ -373,7 +371,6 @@ class LinearSVR(RegressorMixin, LinearModel):
         various loss functions and regularization regimes.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, epsilon=0.0, tol=1e-4, C=1.0,
                  loss='epsilon_insensitive', fit_intercept=True,
                  intercept_scaling=1., dual=True, verbose=0,
@@ -645,7 +642,6 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    @_deprecate_positional_args
     def __init__(self, *, C=1.0, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
@@ -866,7 +862,6 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    @_deprecate_positional_args
     def __init__(self, *, nu=0.5, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
@@ -1033,7 +1028,6 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = 'epsilon_svr'
 
-    @_deprecate_positional_args
     def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
@@ -1186,7 +1180,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = 'nu_svr'
 
-    @_deprecate_positional_args
     def __init__(self, *, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma='scale', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
@@ -1325,7 +1318,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     _impl = 'one_class'
 
-    @_deprecate_positional_args
     def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
