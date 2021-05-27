@@ -6,6 +6,7 @@ import json
 import os
 import re
 from io import BytesIO
+from importlib.resources import files as impfiles # type: ignore
 
 import numpy as np
 import scipy.sparse
@@ -33,7 +34,7 @@ from functools import partial
 from sklearn.utils._testing import fails_if_pypy
 
 
-currdir = os.path.dirname(os.path.abspath(__file__))
+currdir = impfiles('sklearn.datasets.tests').as_posix()
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
 

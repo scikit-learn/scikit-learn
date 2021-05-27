@@ -13,7 +13,7 @@ import numbers
 import platform
 import struct
 import timeit
-from pathlib import Path
+from importlib import resources
 
 import warnings
 import numpy as np
@@ -1132,7 +1132,7 @@ def all_estimators(type_filter=None):
 
     all_classes = []
     modules_to_ignore = {"tests", "externals", "setup", "conftest"}
-    root = str(Path(__file__).parent.parent)  # sklearn package
+    root = resources.files('sklearn')  # sklearn package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with ignore_warnings(category=FutureWarning):

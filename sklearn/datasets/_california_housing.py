@@ -21,9 +21,10 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists, join
 from os import makedirs, remove
 import tarfile
+from importlib import resources
 
 import numpy as np
 import logging
@@ -165,7 +166,7 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
     # target in units of 100,000
     target = target / 100000.0
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'california_housing.rst')) as dfile:
         descr = dfile.read()
 

@@ -16,8 +16,9 @@ Courtesy of Jock A. Blackard and Colorado State University.
 
 from gzip import GzipFile
 import logging
-from os.path import dirname, exists, join
+from os.path import exists, join
 from os import remove, makedirs
+from importlib import resources
 
 import numpy as np
 import joblib
@@ -172,7 +173,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         X = X[ind]
         y = y[ind]
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
         fdescr = rst_file.read()
 

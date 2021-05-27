@@ -2,6 +2,7 @@
 compile scikit-learn properly.
 """
 import os
+from importlib import resources
 
 INPLACE_MSG = """
 It appears that you are importing a local scikit-learn source tree. For
@@ -16,7 +17,7 @@ Python version, your operating system and your platform."""
 def raise_build_error(e):
     # Raise a comprehensible error and list the contents of the
     # directory to help debugging on the mailing list.
-    local_dir = os.path.split(__file__)[0]
+    local_dir = resources.files('sklearn.__check_build')
     msg = STANDARD_MSG
     if local_dir == "sklearn/__check_build":
         # Picking up the local install: this will work only if the

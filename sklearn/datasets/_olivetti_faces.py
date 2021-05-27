@@ -13,12 +13,13 @@ web page of Sam Roweis:
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists, join
 from os import makedirs, remove
 
 import numpy as np
 from scipy.io.matlab import loadmat
 import joblib
+from importlib import resources
 
 from . import get_data_home
 from ._base import _fetch_remote
@@ -134,7 +135,7 @@ def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
         target = target[order]
     faces_vectorized = faces.reshape(len(faces), -1)
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
         fdescr = rst_file.read()
 

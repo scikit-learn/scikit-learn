@@ -25,13 +25,14 @@ uncompressed the train set is 52 MB and the test set is 34 MB.
 # License: BSD 3 clause
 
 import os
-from os.path import dirname, join
+from os.path import join
 import logging
 import tarfile
 import pickle
 import shutil
 import re
 import codecs
+from importlib import resources
 
 import numpy as np
 import scipy.sparse as sp
@@ -280,7 +281,7 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
         raise ValueError(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
         fdescr = rst_file.read()
 
@@ -491,7 +492,7 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         raise ValueError("%r is not a valid subset: should be one of "
                          "['train', 'test', 'all']" % subset)
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
         fdescr = rst_file.read()
 

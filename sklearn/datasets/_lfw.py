@@ -9,13 +9,14 @@ over the internet, all details are available on the official website:
 # License: BSD 3 clause
 
 from os import listdir, makedirs, remove
-from os.path import dirname, join, exists, isdir
+from os.path import join, exists, isdir
 
 import logging
 
 import numpy as np
 import joblib
 from joblib import Memory
+from importlib import resources
 
 from ._base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
@@ -318,7 +319,7 @@ def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
 
     X = faces.reshape(len(faces), -1)
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
         fdescr = rst_file.read()
 
@@ -500,7 +501,7 @@ def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
         index_file_path, data_folder_path, resize=resize, color=color,
         slice_=slice_)
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
         fdescr = rst_file.read()
 

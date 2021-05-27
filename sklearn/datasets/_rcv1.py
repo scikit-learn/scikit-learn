@@ -11,8 +11,9 @@ The dataset page is available at
 import logging
 
 from os import remove, makedirs
-from os.path import dirname, exists, join
+from os.path import exists, join
 from gzip import GzipFile
+from importlib import resources
 
 import numpy as np
 import scipy.sparse as sp
@@ -262,7 +263,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'rcv1.rst')) as rst_file:
         fdescr = rst_file.read()
 

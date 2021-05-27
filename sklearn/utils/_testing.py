@@ -22,6 +22,7 @@ from subprocess import TimeoutExpired
 import re
 import contextlib
 from collections.abc import Iterable
+from importlib import resources
 
 import scipy as sp
 from functools import wraps
@@ -47,7 +48,6 @@ from numpy.testing import assert_array_less
 import numpy as np
 import joblib
 
-import sklearn
 from sklearn.utils import IS_PYPY, _IS_32BIT
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -726,7 +726,7 @@ def assert_run_python_script(source_code, timeout=60):
         with open(source_file, 'wb') as f:
             f.write(source_code.encode('utf-8'))
         cmd = [sys.executable, source_file]
-        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
+        cwd = resources.files('sklearn').parent
         env = os.environ.copy()
         try:
             env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])

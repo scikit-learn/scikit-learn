@@ -12,7 +12,8 @@ import errno
 from gzip import GzipFile
 import logging
 import os
-from os.path import dirname, exists, join
+from os.path import exists, join
+from importlib import resources
 
 import numpy as np
 import joblib
@@ -195,7 +196,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
-    module_path = dirname(__file__)
+    module_path = resources.files('sklearn.datasets')
     with open(join(module_path, 'descr', 'kddcup99.rst')) as rst_file:
         fdescr = rst_file.read()
 
