@@ -927,7 +927,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         header_physiological = f.readline().split()
 
     with open(resources.files('sklearn.datasets').as_posix() +
-                    '/descr/linnerud.rst') as f:
+              '/descr/linnerud.rst') as f:
         descr = f.read()
 
     frame = None
@@ -1076,7 +1076,7 @@ def load_sample_images():
     from ..externals._pilutil import imread
 
     module_path = join(resources.files('sklearn.datasets').as_posix(),
-    "images")
+                       "images")
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
