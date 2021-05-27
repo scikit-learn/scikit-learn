@@ -85,7 +85,7 @@ for i in range(NUM_TRIALS):
     non_nested_scores[i] = clf.best_score_
 
     # Nested CV with parameter optimization
-    clf.set_params(cv=inner_cv)
+    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv)
     nested_score = cross_val_score(clf, X=X_iris, y=y_iris, cv=outer_cv)
     nested_scores[i] = nested_score.mean()
 
