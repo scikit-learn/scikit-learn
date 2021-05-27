@@ -209,7 +209,7 @@ def test_spca_n_components_(SPCA, n_components):
     (np.float64, np.float64),
     (np.int32, np.float64),
     (np.int64, np.float64)))
-def test_lda_dtype_match(SPCA, data_type, expected_type):
+def test_sparse_pca_dtype_match(SPCA, data_type, expected_type):
     n_samples, n_features, n_components = 12, 10, 3
     rng = np.random.RandomState(0)
     input_array = rng.randn(n_samples, n_features).astype(data_type)
