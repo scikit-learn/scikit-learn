@@ -17,7 +17,6 @@ from os.path import dirname, expanduser, isdir, join, splitext
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
-from ..utils.validation import _deprecate_positional_args
 
 import numpy as np
 
@@ -88,7 +87,6 @@ def _convert_data_dataframe(caller_name, data, target,
     return combined_df, X, y
 
 
-@_deprecate_positional_args
 def load_files(container_path, *, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
                decode_error='strict', random_state=0):
@@ -276,7 +274,6 @@ def load_data(module_path, data_file_name):
     return data, target, target_names
 
 
-@_deprecate_positional_args
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
@@ -391,7 +388,6 @@ def load_wine(*, return_X_y=False, as_frame=False):
                  feature_names=feature_names)
 
 
-@_deprecate_positional_args
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -506,7 +502,6 @@ def load_iris(*, return_X_y=False, as_frame=False):
                  filename=iris_csv_filename)
 
 
-@_deprecate_positional_args
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
@@ -631,7 +626,6 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
                  filename=csv_filename)
 
 
-@_deprecate_positional_args
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
@@ -755,7 +749,6 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
                  DESCR=descr)
 
 
-@_deprecate_positional_args
 def load_diabetes(*, return_X_y=False, as_frame=False):
     """Load and return the diabetes dataset (regression).
 
@@ -854,7 +847,6 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-@_deprecate_positional_args
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical excercise linnerud dataset.
 
@@ -958,7 +950,6 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-@_deprecate_positional_args
 def load_boston(*, return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 

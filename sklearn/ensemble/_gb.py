@@ -54,7 +54,6 @@ from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
-from ..utils.validation import _deprecate_positional_args
 
 
 class VerboseReporter:
@@ -1098,7 +1097,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    @_deprecate_positional_args
     def __init__(self, *, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
@@ -1629,7 +1627,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     _SUPPORTED_LOSS = ("squared_error", 'ls', "absolute_error", 'lad', 'huber',
                        'quantile')
 
-    @_deprecate_positional_args
     def __init__(self, *, loss="squared_error", learning_rate=0.1,
                  n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
