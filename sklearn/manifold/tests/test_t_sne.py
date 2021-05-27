@@ -247,6 +247,8 @@ def test_trustworthiness():
     assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
 
 
+# TODO: Remove filterwarning in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize("method", ['exact', 'barnes_hut'])
 @pytest.mark.parametrize("init", ('random', 'pca'))
 def test_preserve_trustworthiness_approximately(method, init):
@@ -261,6 +263,8 @@ def test_preserve_trustworthiness_approximately(method, init):
     assert t > 0.85
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_optimization_minimizes_kl_divergence():
     """t-SNE should give a lower KL divergence with more iterations."""
     random_state = check_random_state(0)
@@ -275,6 +279,8 @@ def test_optimization_minimizes_kl_divergence():
     assert kl_divergences[2] <= kl_divergences[1]
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 def test_fit_csr_matrix(method):
     # X can be a sparse matrix.
@@ -289,6 +295,8 @@ def test_fit_csr_matrix(method):
                     1.0, rtol=1.1e-1)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
@@ -298,7 +306,7 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
         tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                     early_exaggeration=2.0, metric="precomputed",
                     random_state=i, verbose=0, n_iter=500,
-                    square_distances=True)
+                    square_distances=True, init='random')
         X_embedded = tsne.fit_transform(D)
         t = trustworthiness(D, X_embedded, n_neighbors=1, metric="precomputed")
         assert t > .95
@@ -314,6 +322,8 @@ def test_trustworthiness_not_euclidean_metric():
                             metric='precomputed'))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_early_exaggeration_too_small():
     # Early exaggeration factor must be >= 1.
     tsne = TSNE(early_exaggeration=0.99)
@@ -321,6 +331,8 @@ def test_early_exaggeration_too_small():
         tsne.fit_transform(np.array([[0.0], [0.0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_too_few_iterations():
     # Number of gradient descent iterations must be at least 200.
     tsne = TSNE(n_iter=199)
@@ -328,6 +340,8 @@ def test_too_few_iterations():
         tsne.fit_transform(np.array([[0.0], [0.0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize('method, retype', [
     ('exact', np.asarray),
     ('barnes_hut', np.asarray),
@@ -339,27 +353,35 @@ def test_too_few_iterations():
 ])
 def test_bad_precomputed_distances(method, D, retype, message_regex):
     tsne = TSNE(metric="precomputed", method=method,
-                square_distances=True)
+                square_distances=True, init='random', random_state=42)
     with pytest.raises(ValueError, match=message_regex):
         tsne.fit_transform(retype(D))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_exact_no_precomputed_sparse():
-    tsne = TSNE(metric='precomputed', method='exact', square_distances=True)
+    tsne = TSNE(metric='precomputed', method='exact', square_distances=True,
+                init='random', random_state=42)
     with pytest.raises(TypeError, match='sparse'):
         tsne.fit_transform(sp.csr_matrix([[0, 5], [5, 0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_high_perplexity_precomputed_sparse_distances():
     # Perplexity should be less than 50
     dist = np.array([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.]])
     bad_dist = sp.csr_matrix(dist)
-    tsne = TSNE(metric="precomputed", square_distances=True)
+    tsne = TSNE(metric="precomputed", square_distances=True,
+                init='random', random_state=42)
     msg = "3 neighbors per samples are required, but some samples have only 1"
     with pytest.raises(ValueError, match=msg):
         tsne.fit_transform(bad_dist)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @ignore_warnings(category=EfficiencyWarning)
 def test_sparse_precomputed_distance():
     """Make sure that TSNE works identically for sparse and dense matrix"""
@@ -372,7 +394,8 @@ def test_sparse_precomputed_distance():
     assert sp.issparse(D_sparse)
     assert_almost_equal(D_sparse.A, D)
 
-    tsne = TSNE(metric="precomputed", random_state=0, square_distances=True)
+    tsne = TSNE(metric="precomputed", random_state=0, square_distances=True,
+                init='random')
     Xt_dense = tsne.fit_transform(D)
 
     for fmt in ['csr', 'lil']:
@@ -380,6 +403,8 @@ def test_sparse_precomputed_distance():
         assert_almost_equal(Xt_dense, Xt_sparse)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_non_positive_computed_distances():
     # Computed distance matrices must be positive.
     def metric(x, y):
@@ -392,6 +417,8 @@ def test_non_positive_computed_distances():
         tsne.fit_transform(X)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_init_not_available():
     # 'init' must be 'pca', 'random', or numpy array.
     tsne = TSNE(init="not available")
@@ -400,6 +427,8 @@ def test_init_not_available():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_init_ndarray():
     # Initialize TSNE with ndarray and test fit
     tsne = TSNE(init=np.zeros((100, 2)))
@@ -411,10 +440,12 @@ def test_init_ndarray_precomputed():
     # Initialize TSNE with ndarray and metric 'precomputed'
     # Make sure no FutureWarning is thrown from _fit
     tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed",
-                square_distances=True)
+                square_distances=True, learning_rate=50.0)
     tsne.fit(np.zeros((100, 100)))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_distance_not_available():
     # 'metric' must be valid.
     tsne = TSNE(metric="not available", method='exact', square_distances=True)
@@ -427,6 +458,8 @@ def test_distance_not_available():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_method_not_available():
     # 'nethod' must be 'barnes_hut' or 'exact'
     tsne = TSNE(method='not available')
@@ -434,6 +467,8 @@ def test_method_not_available():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_square_distances_not_available():
     # square_distances must be True or 'legacy'.
     tsne = TSNE(square_distances="not_available")
@@ -441,6 +476,8 @@ def test_square_distances_not_available():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_angle_out_of_range_checks():
     # check the angle parameter range
     for angle in [-1, -1e-6, 1 + 1e-6, 2]:
@@ -450,8 +487,10 @@ def test_angle_out_of_range_checks():
             tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
-    # Precomputed distance matrices must be square matrices.
+    # Precomputed distance matrices cannot use PCA initialization.
     tsne = TSNE(metric="precomputed", init="pca", square_distances=True)
     with pytest.raises(ValueError, match="The parameter init=\"pca\" cannot"
                                          " be used with"
@@ -459,6 +498,15 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
+def test_pca_initialization_not_compatible_with_sparse_input():
+    # Sparse input matrices cannot use PCA initialization.
+    tsne = TSNE(init="pca", learning_rate=100.0)
+    with pytest.raises(TypeError, match="PCA initialization.*"):
+        tsne.fit_transform(sp.csr_matrix([[0, 5], [5, 0]]))
+
+
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_n_components_range():
     # barnes_hut method should only be used with n_components <= 3
     tsne = TSNE(n_components=4, method="barnes_hut")
@@ -466,6 +514,8 @@ def test_n_components_range():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_early_exaggeration_used():
     # check that the ``early_exaggeration`` parameter has an effect
     random_state = check_random_state(0)
@@ -585,6 +635,8 @@ def _run_answer_test(pos_input, pos_output, neighbors, grad_output,
     assert_array_almost_equal(grad_bh, grad_output, decimal=4)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_verbose():
     # Verbose options write to stdout.
     random_state = check_random_state(0)
@@ -607,6 +659,8 @@ def test_verbose():
     assert("early exaggeration" in out)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_chebyshev_metric():
     # t-SNE should allow metrics that cannot be squared (issue #3526).
     random_state = check_random_state(0)
@@ -615,6 +669,8 @@ def test_chebyshev_metric():
     tsne.fit_transform(X)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_reduction_to_one_component():
     # t-SNE should allow reduction to one component (issue #4154).
     random_state = check_random_state(0)
@@ -624,6 +680,8 @@ def test_reduction_to_one_component():
     assert(np.all(np.isfinite(X_embedded)))
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
 @pytest.mark.parametrize('dt', [np.float32, np.float64])
 def test_64bit(method, dt):
@@ -642,6 +700,8 @@ def test_64bit(method, dt):
     assert effective_type == np.float32
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
 def test_kl_divergence_not_nan(method):
     # Ensure kl_divergence_ is computed at last iteration
@@ -713,6 +773,8 @@ def test_n_iter_without_progress():
                 "last -1 episodes. Finished." in out)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_min_grad_norm():
     # Make sure that the parameter min_grad_norm is used correctly
     random_state = check_random_state(0)
@@ -756,6 +818,8 @@ def test_min_grad_norm():
     assert n_smaller_gradient_norms <= 1
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_accessible_kl_divergence():
     # Ensures that the accessible kl_divergence matches the computed value
     random_state = check_random_state(0)
@@ -784,6 +848,8 @@ def test_accessible_kl_divergence():
     assert_almost_equal(tsne.kl_divergence_, float(error), decimal=5)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
 def test_uniform_grid(method):
     """Make sure that TSNE can approximately recover a uniform 2D grid
@@ -885,6 +951,8 @@ def test_gradient_bh_multithread_match_sequential():
         assert_allclose(grad_multithread, grad_multithread)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_tsne_with_different_distance_metrics():
     """Make sure that TSNE works for different distance metrics"""
     random_state = check_random_state(0)
@@ -896,10 +964,11 @@ def test_tsne_with_different_distance_metrics():
     for metric, dist_func in zip(metrics, dist_funcs):
         X_transformed_tsne = TSNE(
             metric=metric, n_components=n_components_embedding,
-            random_state=0, n_iter=300, square_distances=True).fit_transform(X)
+            random_state=0, n_iter=300, square_distances=True,
+            init='random').fit_transform(X)
         X_transformed_tsne_precomputed = TSNE(
             metric='precomputed', n_components=n_components_embedding,
-            random_state=0, n_iter=300,
+            random_state=0, n_iter=300, init='random',
             square_distances=True).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
@@ -926,11 +995,11 @@ def test_tsne_different_square_distances(method, metric, square_distances):
     X_transformed_tsne = TSNE(
         metric=metric, n_components=n_components_embedding,
         square_distances=square_distances, method=method,
-        random_state=0).fit_transform(X)
+        random_state=0, init='random').fit_transform(X)
     X_transformed_tsne_precomputed = TSNE(
         metric='precomputed', n_components=n_components_embedding,
         square_distances=square_distances, method=method,
-        random_state=0).fit_transform(X_precomputed)
+        random_state=0, init='random').fit_transform(X_precomputed)
 
     assert_allclose(X_transformed_tsne, X_transformed_tsne_precomputed)
 
@@ -943,7 +1012,8 @@ def test_tsne_square_distances_futurewarning(metric, square_distances):
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
-    tsne = TSNE(metric=metric, square_distances=square_distances)
+    tsne = TSNE(metric=metric, square_distances=square_distances,
+                learning_rate=200.0, init="random")
 
     if metric != 'euclidean' and square_distances is not True:
         with pytest.warns(FutureWarning, match="'square_distances'.*"):
@@ -954,6 +1024,61 @@ def test_tsne_square_distances_futurewarning(metric, square_distances):
         assert not record
 
 
+# TODO: Remove in 1.2
+@pytest.mark.parametrize('init', [None, 'random', 'pca'])
+def test_tsne_init_futurewarning(init):
+    """Make sure that a FutureWarning is only raised when the
+    init is not specified or is 'pca'."""
+    random_state = check_random_state(0)
+
+    X = random_state.randn(5, 2)
+    kwargs = dict(learning_rate=200.0, init=init)
+    tsne = TSNE(**{k: v for k, v in kwargs.items() if v is not None})
+
+    if init is None:
+        with pytest.warns(FutureWarning, match="The default initialization.*"):
+            tsne.fit_transform(X)
+    elif init == 'pca':
+        with pytest.warns(FutureWarning, match="The PCA initialization.*"):
+            tsne.fit_transform(X)
+    else:
+        with pytest.warns(None) as record:
+            tsne.fit_transform(X)
+        assert not record
+
+
+# TODO: Remove in 1.2
+@pytest.mark.parametrize('learning_rate', [None, 200.0])
+def test_tsne_learning_rate_futurewarning(learning_rate):
+    """Make sure that a FutureWarning is only raised when the learning rate
+    is not specified"""
+    random_state = check_random_state(0)
+
+    X = random_state.randn(5, 2)
+    kwargs = dict(learning_rate=learning_rate, init='random')
+    tsne = TSNE(**{k: v for k, v in kwargs.items() if v is not None})
+
+    if learning_rate is None:
+        with pytest.warns(FutureWarning, match="The default learning rate.*"):
+            tsne.fit_transform(X)
+    else:
+        with pytest.warns(None) as record:
+            tsne.fit_transform(X)
+        assert not record
+
+
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
+def test_tsne_negative_learning_rate():
+    """Make sure that negative learning rate results in a ValueError"""
+    random_state = check_random_state(0)
+    X = random_state.randn(5, 2)
+    with pytest.raises(ValueError, match="'learning_rate' must be.*"):
+        TSNE(learning_rate=-50.0).fit_transform(X)
+
+
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 def test_tsne_n_jobs(method):
     """Make sure that the n_jobs parameter doesn't impact the output"""

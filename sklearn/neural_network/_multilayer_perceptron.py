@@ -25,7 +25,7 @@ from ..utils import _safe_indexing
 from ..utils import column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -825,6 +825,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         validation score is not improving by at least tol for
         ``n_iter_no_change`` consecutive epochs. The split is stratified,
         except in a multilabel setting.
+        If early stopping is False, then the training stops when the training
+        loss does not improve by more than tol for n_iter_no_change consecutive
+        passes over the training set.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, default=0.1
@@ -884,7 +887,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         layer i + 1.
 
     n_iter_ : int
-        The number of iterations the solver has ran.
+        The number of iterations the solver has run.
 
     n_layers_ : int
         Number of layers.
@@ -940,7 +943,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    @_deprecate_positional_args
     def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
@@ -1292,10 +1294,13 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         The minimum loss reached by the solver throughout fitting.
 
     loss_curve_ : list of shape (`n_iter_`,)
+        Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
+        Mathematically equals `n_iters * X.shape[0]`, it means
+        `time_step` and it is used by optimizer's learning rate scheduler.
 
     coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
@@ -1306,7 +1311,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         layer i + 1.
 
     n_iter_ : int
-        The number of iterations the solver has ran.
+        The number of iterations the solver has run.
 
     n_layers_ : int
         Number of layers.
@@ -1316,13 +1321,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     out_activation_ : str
         Name of the output activation function.
-
-    loss_curve_ : list of shape (n_iters,)
-        Loss value evaluated at the end of each training step.
-
-    t_ : int
-        Mathematically equals `n_iters * X.shape[0]`, it means
-        `time_step` and it is used by optimizer's learning rate scheduler.
 
     Examples
     --------
@@ -1367,7 +1365,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    @_deprecate_positional_args
     def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
