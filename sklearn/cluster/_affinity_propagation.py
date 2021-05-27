@@ -12,7 +12,7 @@ from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_random_state
 from ..utils.deprecation import deprecated
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
 from .._config import config_context
@@ -32,7 +32,6 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
-@_deprecate_positional_args
 def affinity_propagation(S, *, preference=None, convergence_iter=15,
                          max_iter=200, damping=0.5, copy=True, verbose=False,
                          return_n_iter=False, random_state=None):
@@ -352,7 +351,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     array([[1, 2],
            [4, 2]])
     """
-    @_deprecate_positional_args
     def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
                  verbose=False, random_state=None):

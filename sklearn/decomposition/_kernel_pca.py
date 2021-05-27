@@ -16,7 +16,6 @@ from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
-from ..utils.validation import _deprecate_positional_args
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
@@ -192,7 +191,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         A randomized algorithm for the decomposition of matrices
         Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',

@@ -7,7 +7,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..utils import IS_PYPY
-from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
@@ -89,7 +88,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     DictVectorizer : Vectorizes string-valued features using a hash table.
     sklearn.preprocessing.OneHotEncoder : Handles nominal/categorical features.
     """
-    @_deprecate_positional_args
     def __init__(self, n_features=(2 ** 20), *, input_type="dict",
                  dtype=np.float64, alternate_sign=True):
         self._validate_params(n_features, input_type)

@@ -19,7 +19,7 @@ from ..utils import deprecated
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
@@ -193,7 +193,6 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
 
 # XXX : could be moved to the linear_model module
-@_deprecate_positional_args
 def sparse_encode(X, dictionary, *, gram=None, cov=None,
                   algorithm='lasso_lars', n_nonzero_coefs=None, alpha=None,
                   copy_cov=True, init=None, max_iter=1000, n_jobs=None,
@@ -427,7 +426,6 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
         print(f"{n_unused} unused atoms resampled.")
 
 
-@_deprecate_positional_args
 def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=None, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
@@ -626,7 +624,6 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         return code, dictionary, errors
 
 
-@_deprecate_positional_args
 def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True,
@@ -1063,7 +1060,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     """
     _required_parameters = ["dictionary"]
 
-    @_deprecate_positional_args
     def __init__(self, dictionary, *, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
@@ -1299,7 +1295,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     SparsePCA
     MiniBatchSparsePCA
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1537,7 +1532,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     MiniBatchSparsePCA
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=None, batch_size=3, shuffle=True,
                  dict_init=None, transform_algorithm='omp',

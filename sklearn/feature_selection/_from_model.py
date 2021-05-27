@@ -12,7 +12,6 @@ from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.validation import _deprecate_positional_args
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -165,7 +164,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     SequentialFeatureSelector : Sequential cross-validation based feature
         selection. Does not rely on importance weights.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, threshold=None, prefit=False,
                  norm_order=1, max_features=None,
                  importance_getter='auto'):
