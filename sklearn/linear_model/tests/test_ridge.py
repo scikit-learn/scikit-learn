@@ -201,7 +201,6 @@ def test_ridge_sample_weights():
             W = np.diag(sample_weight)
             if intercept is False:
                 X_aug = X
-<<<<<<< HEAD
                 D = np.eye(n_features)
             else:
                 dummy_column = np.ones(shape=(n_samples, 1))
@@ -211,19 +210,6 @@ def test_ridge_sample_weights():
 
             cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * D,
                                     X_aug.T.dot(W).dot(y), check_finite=False)
-=======
-                I_features = np.eye(n_features)
-            else:
-                dummy_column = np.ones(shape=(n_samples, 1))
-                X_aug = np.concatenate((dummy_column, X), axis=1)
-                I_features = np.eye(n_features + 1)
-                I_features[0, 0] = 0
-
-            cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug)
-                                    + alpha * I_features,
-                                    X_aug.T.dot(W).dot(y),
-                                    check_finite=False)
->>>>>>> 809e1aaf2 (remove all warnings, errors, using autopep8 and flake8 for circleci built)
 
             if intercept is False:
                 assert_array_almost_equal(coefs, cf_coefs)
@@ -641,13 +627,9 @@ def _test_ridge_loo(filter_):
     assert ridge_gcv2.alpha_ == pytest.approx(alpha_)
 
     # check that we get same best alpha with custom score_func
-<<<<<<< HEAD
     def func(x, y):
         return -mean_squared_error(x, y)
 
-=======
-    def func(x, y): return -mean_squared_error(x, y)
->>>>>>> 809e1aaf2 (remove all warnings, errors, using autopep8 and flake8 for circleci built)
     scoring = make_scorer(func)
     ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
