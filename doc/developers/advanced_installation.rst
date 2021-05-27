@@ -7,7 +7,7 @@
 Installing the development version of scikit-learn
 ==================================================
 
-This section introduces how to install the **master branch** of scikit-learn.
+This section introduces how to install the **main branch** of scikit-learn.
 This can be done by either installing a nightly build or building from source.
 
 .. _install_nightly_builds:
@@ -22,7 +22,7 @@ basis.
 Installing a nightly build is the quickest way to:
 
 - try a new feature that will be shipped in the next release (that is, a
-  feature from a pull-request that was recently merged to the master branch);
+  feature from a pull-request that was recently merged to the main branch);
 
 - check whether a bug you encountered has been fixed since the last release.
 
@@ -479,9 +479,9 @@ repository:
 
 .. prompt:: bash $
 
-    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
 
 Then, add the oneAPI repository to your APT repositories:
 
@@ -490,11 +490,12 @@ Then, add the oneAPI repository to your APT repositories:
     sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
     sudo apt-get update
 
-Install ICC, packaged under the name ``intel-oneapi-icc``:
+Install ICC, packaged under the name
+``intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic``:
 
 .. prompt:: bash $
 
-    sudo apt-get install intel-oneapi-icc
+    sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
 
 Before using ICC, you need to set up environment variables:
 

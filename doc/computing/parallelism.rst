@@ -212,4 +212,5 @@ These environment variables should be set before importing scikit-learn.
 :SKLEARN_SKIP_NETWORK_TESTS:
 
     When this environment variable is set to a non zero value, the tests
-    that need network access are skipped.
+    that need network access are skipped. When this environment variable is
+    not set then network tests are skipped.
