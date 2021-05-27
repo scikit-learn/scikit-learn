@@ -779,11 +779,14 @@ def test_copy_X_with_auto_gram():
     assert_allclose(X, X_before)
 
 
-@pytest.mark.parametrize("LARS", (Lars, LassoLars, LassoLarsIC))
+@pytest.mark.parametrize("LARS, has_coef_path", ((Lars, True),
+                                                 (LassoLars, True),
+                                                 (LassoLarsIC, False)))
 @pytest.mark.parametrize("x_data_type, y_data_type, expected_type", (
     (np.float32, np.float32, np.float32),
     (np.float64, np.float64, np.float64)))
-def test_lars_dtype_match(LARS, x_data_type, y_data_type, expected_type):
+def test_lars_dtype_match(LARS, has_coef_path,
+                          x_data_type, y_data_type, expected_type):
     rng = np.random.RandomState(0)
     X = rng.rand(6, 6).astype(x_data_type)
     y = rng.rand(6).astype(y_data_type)
@@ -791,15 +794,15 @@ def test_lars_dtype_match(LARS, x_data_type, y_data_type, expected_type):
     model = LARS()
     model.fit(X, y)
     assert model.coef_.dtype == expected_type
-    if hasattr(model, "coef_path_"):
-        # coef_path_ can be list of array
-        for coef in model.coef_path_:
-            assert coef.dtype == expected_type
+    if has_coef_path:
+        assert model.coef_path_.dtype == expected_type
     assert model.intercept_.dtype == expected_type
 
 
-@pytest.mark.parametrize("LARS", (Lars, LassoLars, LassoLarsIC))
-def test_lars_numeric_consistency(LARS):
+@pytest.mark.parametrize("LARS, has_coef_path", ((Lars, True),
+                                                 (LassoLars, True),
+                                                 (LassoLarsIC, False)))
+def test_lars_numeric_consistency(LARS, has_coef_path):
     rng = np.random.RandomState(0)
     X_64 = rng.rand(6, 6)
     y_64 = rng.rand(6)
@@ -808,6 +811,6 @@ def test_lars_numeric_consistency(LARS):
     model_32 = LARS().fit(X_64.astype(np.float32), y_64.astype(np.float32))
 
     assert_array_almost_equal(model_64.coef_, model_32.coef_)
-    if hasattr(model_64, "coef_path_"):
+    if has_coef_path:
         assert_array_almost_equal(model_64.coef_path_, model_32.coef_path_)
     assert_array_almost_equal(model_64.intercept_, model_32.intercept_)
