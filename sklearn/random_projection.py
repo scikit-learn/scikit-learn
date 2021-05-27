@@ -39,7 +39,6 @@ from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_is_fitted
-from .utils.validation import _deprecate_positional_args
 from .exceptions import DataDimensionalityWarning
 
 
@@ -48,7 +47,6 @@ __all__ = ["SparseRandomProjection",
            "johnson_lindenstrauss_min_dim"]
 
 
-@_deprecate_positional_args
 def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to.
 
@@ -477,7 +475,6 @@ class GaussianRandomProjection(BaseRandomProjection):
     SparseRandomProjection
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_components='auto', *, eps=0.1, random_state=None):
         super().__init__(
             n_components=n_components,
@@ -618,7 +615,6 @@ class SparseRandomProjection(BaseRandomProjection):
            https://users.soe.ucsc.edu/~optas/papers/jl.pdf
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_components='auto', *, density='auto', eps=0.1,
                  dense_output=False, random_state=None):
         super().__init__(

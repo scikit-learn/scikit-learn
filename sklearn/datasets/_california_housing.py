@@ -36,7 +36,6 @@ from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 
 
 # The original data can be found at:
@@ -50,7 +49,6 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-@_deprecate_positional_args
 def fetch_california_housing(*, data_home=None, download_if_missing=True,
                              return_X_y=False, as_frame=False):
     """Load the California housing dataset (regression).
