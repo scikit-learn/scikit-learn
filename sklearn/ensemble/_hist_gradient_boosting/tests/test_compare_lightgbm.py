@@ -34,7 +34,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     #   and max_leaf_nodes is low enough.
     # - To ignore  discrepancies caused by small differences the binning
     #   strategy, data is pre-binned if n_samples > 255.
-    # - We don't check the least_absolute_deviation loss here. This is because
+    # - We don't check the absolute_error loss here. This is because
     #   LightGBM's computation of the median (used for the initial value of
     #   raw_prediction) is a bit off (they'll e.g. return midpoints when there
     #   is no need to.). Since these tests only run 1 iteration, the

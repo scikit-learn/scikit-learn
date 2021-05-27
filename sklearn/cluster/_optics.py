@@ -17,7 +17,6 @@ import numpy as np
 from ..exceptions import DataConversionWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..utils import gen_batches, get_chunk_n_rows
-from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
@@ -204,7 +203,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
     """
-    @_deprecate_positional_args
     def __init__(self, *, min_samples=5, max_eps=np.inf, metric='minkowski',
                  p=2, metric_params=None, cluster_method='xi', eps=None,
                  xi=0.05, predecessor_correction=True, min_cluster_size=None,
@@ -348,7 +346,6 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     return core_distances
 
 
-@_deprecate_positional_args
 def compute_optics_graph(X, *, min_samples, max_eps, metric, p, metric_params,
                          algorithm, leaf_size, n_jobs):
     """Computes the OPTICS reachability graph.
@@ -552,7 +549,6 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
     predecessor_[unproc[improved]] = point_index
 
 
-@_deprecate_positional_args
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     """Performs DBSCAN extraction for an arbitrary epsilon.
 

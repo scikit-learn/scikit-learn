@@ -32,7 +32,6 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 
 
@@ -397,7 +396,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
 
     """
-    @_deprecate_positional_args
     def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, passthrough=False,
                  verbose=0):
@@ -647,7 +645,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     0.3...
 
     """
-    @_deprecate_positional_args
     def __init__(self, estimators, final_estimator=None, *, cv=None,
                  n_jobs=None, passthrough=False, verbose=0):
         super().__init__(

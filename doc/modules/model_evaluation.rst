@@ -1095,7 +1095,7 @@ with a svm classifier in a multiclass problem::
   LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
-  >>> hinge_loss(y_true, pred_decision, labels)
+  >>> hinge_loss(y_true, pred_decision, labels=labels)
   0.56...
 
 .. _log_loss:

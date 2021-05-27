@@ -10,7 +10,6 @@ import numpy as np
 import pytest
 
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet
@@ -43,15 +42,17 @@ def test_mcd():
 
 def test_fast_mcd_on_invalid_input():
     X = np.arange(100)
-    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
-                         fast_mcd, X)
+    msg = 'Expected 2D array, got 1D array instead'
+    with pytest.raises(ValueError, match=msg):
+        fast_mcd(X)
 
 
 def test_mcd_class_on_invalid_input():
     X = np.arange(100)
     mcd = MinCovDet()
-    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
-                         mcd.fit, X)
+    msg = 'Expected 2D array, got 1D array instead'
+    with pytest.raises(ValueError, match=msg):
+        mcd.fit(X)
 
 
 def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
@@ -133,7 +134,8 @@ def test_mcd_support_covariance_is_zero():
     msg = ('The covariance matrix of the support data is equal to 0, try to '
            'increase support_fraction')
     for X in [X_1, X_2]:
-        assert_raise_message(ValueError, msg, MinCovDet().fit, X)
+        with pytest.raises(ValueError, match=msg):
+            MinCovDet().fit(X)
 
 
 def test_mcd_increasing_det_warning():
