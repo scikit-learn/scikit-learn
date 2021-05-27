@@ -796,3 +796,18 @@ def test_lars_dtype_match(LARS, x_data_type, y_data_type, expected_type):
         for coef in model.coef_path_:
             assert coef.dtype == expected_type
     assert model.intercept_.dtype == expected_type
+
+
+@pytest.mark.parametrize("LARS", (Lars, LassoLars, LassoLarsIC))
+def test_lars_numeric_consistency(LARS):
+    rng = np.random.RandomState(0)
+    X_64 = rng.rand(6, 6)
+    y_64 = rng.rand(6)
+
+    model_64 = LARS().fit(X_64, y_64)
+    model_32 = LARS().fit(X_64.astype(np.float32), y_64.astype(np.float32))
+
+    assert_array_almost_equal(model_64.coef_, model_32.coef_)
+    if hasattr(model_64, "coef_path_"):
+        assert_array_almost_equal(model_64.coef_path_, model_32.coef_path_)
+    assert_array_almost_equal(model_64.intercept_, model_32.intercept_)
