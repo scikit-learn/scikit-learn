@@ -207,7 +207,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
+    .. [2] http://cecas.clemson.edu/~stb/ece847/internal/classic_vision_papers/fischler_ransac_1981.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """  # noqa: E501
     def __init__(self, base_estimator=None, *, min_samples=None,
