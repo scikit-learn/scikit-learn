@@ -37,9 +37,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         select.
 
     aborted_rate : float, default=None
-	If the score is not increasing above ths rate, stop adding new features
-	even if n_features_to_select has not been reached. If None (default)
-	all n_features_to_select will be selected.
+        If the score is not increasing above ths rate, stop adding new features
+        even if n_features_to_select has not been reached. If None (default)
+        all n_features_to_select will be selected.
 
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
