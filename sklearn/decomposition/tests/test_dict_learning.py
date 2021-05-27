@@ -603,9 +603,23 @@ def test_update_dict():
     assert_allclose(newd_batch, newd_online)
 
 
-@pytest.mark.parametrize("Estimator", [DictionaryLearning,
-                                       MiniBatchDictionaryLearning])
+@pytest.mark.parametrize("Estimator", (DictionaryLearning,
+                                       MiniBatchDictionaryLearning))
 def test_warning_default_transform_alpha(Estimator):
     dl = Estimator(alpha=0.1)
     with pytest.warns(FutureWarning, match="default transform_alpha"):
         dl.fit_transform(X)
+
+@pytest.mark.parametrize("learning_func", (dict_learning, dict_learning_online))
+@pytest.mark.parametrize("data_type, expected_type", (
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int32, np.float64),
+    (np.int64, np.float64)))
+def test_dictionary_learning_dtype_match(learning_func, data_type, expected_type):
+    rng = np.random.RandomState(0)
+    n_components = 8
+    code, dictionary = dict_learning_online(X.astype(data_type), n_components=n_components,
+                                            alpha=1, random_state=rng)
+    assert code.dtype == expected_type
+    assert dictionary.dtype == expected_type
