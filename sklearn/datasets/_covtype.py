@@ -173,7 +173,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         X = X[ind]
         y = y[ind]
 
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
         fdescr = rst_file.read()
 

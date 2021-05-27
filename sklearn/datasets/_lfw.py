@@ -319,7 +319,7 @@ def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
 
     X = faces.reshape(len(faces), -1)
 
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
         fdescr = rst_file.read()
 
@@ -501,7 +501,7 @@ def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
         index_file_path, data_folder_path, resize=resize, color=color,
         slice_=slice_)
 
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
         fdescr = rst_file.read()
 

@@ -166,7 +166,7 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
     # target in units of 100,000
     target = target / 100000.0
 
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     with open(join(module_path, 'descr', 'california_housing.rst')) as dfile:
         descr = dfile.read()
 

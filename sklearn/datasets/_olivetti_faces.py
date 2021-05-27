@@ -135,7 +135,7 @@ def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
         target = target[order]
     faces_vectorized = faces.reshape(len(faces), -1)
 
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
         fdescr = rst_file.read()
 

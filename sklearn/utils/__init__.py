@@ -1132,7 +1132,7 @@ def all_estimators(type_filter=None):
 
     all_classes = []
     modules_to_ignore = {"tests", "externals", "setup", "conftest"}
-    root = resources.files('sklearn')  # sklearn package
+    root = resources.files('sklearn').as_posix()  # sklearn package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with ignore_warnings(category=FutureWarning):

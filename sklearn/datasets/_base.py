@@ -352,7 +352,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['class_0', 'class_1', 'class_2']
     """
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     data, target, target_names = load_data(module_path, 'wine_data.csv')
 
     with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
@@ -476,7 +476,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
     """
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     data, target, target_names = load_data(module_path, 'iris.csv')
     iris_csv_filename = join(module_path, 'data', 'iris.csv')
 
@@ -588,7 +588,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['malignant', 'benign']
     """
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     data, target, target_names = load_data(module_path, 'breast_cancer.csv')
     csv_filename = join(module_path, 'data', 'breast_cancer.csv')
 
@@ -716,7 +716,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         >>> plt.matshow(digits.images[0]) #doctest: +SKIP
         >>> plt.show() #doctest: +SKIP
     """
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
@@ -821,7 +821,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
     """
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
     base_dir = join(module_path, 'data')
     data_filename = join(base_dir, 'diabetes_data.csv.gz')
     data = np.loadtxt(data_filename)
@@ -920,7 +920,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
     """
-    base_dir = join(resources.files('sklearn.datasets'), 'data/')
+    base_dir = join(resources.files('sklearn.datasets').as_posix(), 'data/')
     data_filename = join(base_dir, 'linnerud_exercise.csv')
     target_filename = join(base_dir, 'linnerud_physiological.csv')
 
@@ -934,7 +934,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     with open(target_filename) as f:
         header_physiological = f.readline().split()
 
-    with open(resources.files('sklearn.datasets') + '/descr/linnerud.rst') as f:
+    with open(resources.files('sklearn.datasets').as_posix() + '/descr/linnerud.rst') as f:
         descr = f.read()
 
     frame = None
@@ -1015,7 +1015,7 @@ def load_boston(*, return_X_y=False):
     >>> print(X.shape)
     (506, 13)
     """
-    module_path = resources.files('sklearn.datasets')
+    module_path = resources.files('sklearn.datasets').as_posix()
 
     fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
     with open(fdescr_name) as f:
@@ -1083,7 +1083,7 @@ def load_sample_images():
     # import PIL only when needed
     from ..externals._pilutil import imread
 
-    module_path = join(resources.files('sklearn.datasets'), "images")
+    module_path = join(resources.files('sklearn.datasets').as_posix(), "images")
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
