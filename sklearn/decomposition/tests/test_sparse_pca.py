@@ -189,7 +189,7 @@ def test_pca_vs_spca():
     assert_allclose(results_test_pca, results_test_spca)
 
 
-@pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
+@pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
 @pytest.mark.parametrize("n_components", [None, 3])
 def test_spca_n_components_(SPCA, n_components):
     rng = np.random.RandomState(0)
@@ -202,3 +202,16 @@ def test_spca_n_components_(SPCA, n_components):
         assert model.n_components_ == n_components
     else:
         assert model.n_components_ == n_features
+
+@pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
+@pytest.mark.parametrize("data_type, expected_type", (
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int32, np.float64),
+    (np.int64, np.float64)))
+def test_lda_dtype_match(SPCA, data_type, expected_type):
+    n_samples, n_features, n_components = 12, 10, 3
+    rng = np.random.RandomState(0)
+    input_array = rng.randn(n_samples, n_features).astype(data_type)
+    transformed = SPCA(n_components=n_components).fit_transform(input_array)
+    assert transformed.dtype == expected_type
