@@ -189,7 +189,7 @@ def test_poisson_vs_mse():
     rng = np.random.RandomState(42)
     n_train, n_test, n_features = 500, 500, 10
     X = datasets.make_low_rank_matrix(n_samples=n_train + n_test,
-                                  n_features=n_features, random_state=rng)
+                                      n_features=n_features, random_state=rng)
     X = np.abs(X)
     X /= np.max(np.abs(X), axis=0)
     # We create a log-linear Poisson model
