@@ -420,7 +420,7 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
-<<<<<<< HEAD
+
 :mod:`sklearn.neighbors`
 ..........................
 
@@ -447,8 +447,6 @@ Changelog
   the final estimator.
   :pr:`19790` by :user:`Christopher Flynn <crflynn>`.
 
-=======
->>>>>>> 08fa187752f1f558e32899fa8216f973047f4fa2
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -503,22 +501,9 @@ Changelog
   :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
-<<<<<<< HEAD
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-=======
-- |Fix| Avoid NaN during label propagation in
-  :class:`~sklearn.semi_supervised.LabelPropagation`.
-  :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
-
-:mod:`sklearn.metrics`
-......................
-
-- |Enhancement| :func:`metrics.roc_auc_score` now supports ``average=None``
-  in the multiclass case when ``multiclass='ovr'`` which will return the score
-  per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
->>>>>>> 08fa187752f1f558e32899fa8216f973047f4fa2
 
 Code and Documentation Contributors
 -----------------------------------
