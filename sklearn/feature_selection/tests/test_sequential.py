@@ -29,8 +29,8 @@ def test_bad_direction():
 
 @pytest.mark.parametrize('direction', ('forward', 'backward'))
 @pytest.mark.parametrize('n_features_to_select', (1, 5, 9, None))
-@pytest.mark.parametrize('aborted_rate', (None, 0., 0.5, 1.0))
-def test_n_features_to_select(direction, n_features_to_select, aborted_rate):
+@pytest.mark.parametrize('tol', (None, 0., 0.5, 1.0))
+def test_n_features_to_select(direction, n_features_to_select, tol):
     # Make sure n_features_to_select is respected
 
     X, y = make_regression(n_features=10)
@@ -41,7 +41,7 @@ def test_n_features_to_select(direction, n_features_to_select, aborted_rate):
     if n_features_to_select is None:
         n_features_to_select = 5  # n_features // 2
 
-    if aborted_rate is None:
+    if tol is None:
         assert sfs.get_support(indices=True).shape[0] == n_features_to_select
         assert sfs.n_features_to_select_ == n_features_to_select
         assert sfs.transform(X).shape[1] == n_features_to_select

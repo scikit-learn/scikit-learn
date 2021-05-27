@@ -36,7 +36,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         to select. If float between 0 and 1, it is the fraction of features to
         select.
 
-    aborted_rate : float, default=None
+    tol : float, default=None
         If the score is not increasing above ths rate, stop adding new features
         even if n_features_to_select has not been reached. If None (default)
         all n_features_to_select will be selected.
@@ -111,12 +111,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
     """
-    def __init__(self, estimator, *, n_features_to_select=None, aborted_rate=None,
+    def __init__(self, estimator, *, n_features_to_select=None, tol=None,
                  direction='forward', scoring=None, cv=5, n_jobs=None):
 
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
-        self.aborted_rate = aborted_rate
+        self.tol = tol
         self.direction = direction
         self.scoring = scoring
         self.cv = cv
@@ -182,7 +182,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             else n_features - self.n_features_to_select_
         )
 
-        if self.aborted_rate is None:
+        if self.tol is None:
             for _ in range(n_iterations):
                 new_feature_idx, new_score = self._get_best_new_feature_score(cloned_estimator, X,
                                                              y, current_mask)
@@ -195,7 +195,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             for _ in range(n_iterations):
                 new_feature_idx, new_score = self._get_best_new_feature_score(cloned_estimator, X,
                                                              y, current_mask)
-                if new_score - self.aborted_rate < old_score:
+                if new_score - self.tol < old_score:
                     break
 
                 old_score = new_score
