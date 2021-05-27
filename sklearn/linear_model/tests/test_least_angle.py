@@ -777,3 +777,14 @@ def test_copy_X_with_auto_gram():
     linear_model.lars_path(X, y, Gram='auto', copy_X=True, method='lasso')
     # X did not change
     assert_allclose(X, X_before)
+
+def test_lars_dtype_match():
+    rng = np.random.RandomState(0)
+    X = rng.rand(6, 6).astype(np.float32)
+    Y = rng.rand(6).astype(np.float32)
+
+    model = Lars(n_nonzero_coefs=1)
+    model.fit(X,Y)
+    assert model.coef_.dtype == np.float32
+    assert model.coef_path_.dtype == np.float32
+    assert model.intercept_.dtype == np.float32
