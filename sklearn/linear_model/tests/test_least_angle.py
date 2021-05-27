@@ -778,6 +778,7 @@ def test_copy_X_with_auto_gram():
     # X did not change
     assert_allclose(X, X_before)
 
+
 @pytest.mark.parametrize("LARS", (Lars, LassoLars, LassoLarsIC))
 @pytest.mark.parametrize("x_data_type, y_data_type, expected_type", (
     (np.float32, np.float32, np.float32),
