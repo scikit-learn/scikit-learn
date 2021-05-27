@@ -623,9 +623,10 @@ class RFECV(RFE):
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups))
 
-        scores = np.sum(scores, axis=0)
-        scores_rev = scores[::-1]
-        argmax_idx = len(scores) - np.argmax(scores_rev) - 1
+        scores = np.array(scores)
+        scores_sum = np.sum(scores, axis=0)
+        scores_sum_rev = scores_sum[::-1]
+        argmax_idx = len(scores_sum) - np.argmax(scores_sum_rev) - 1
         n_features_to_select = max(
             n_features - (argmax_idx * step),
             self.min_features_to_select)
@@ -645,15 +646,15 @@ class RFECV(RFE):
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(self.transform(X), y)
 
-        # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
-        # here, the scores are normalized by get_n_splits(X, y)
-        grid_scores = scores[::-1] / cv.get_n_splits(X, y, groups)
+        # reverse to stay consistent with before
+        scores_rev = scores[:, ::-1]
         self.cv_results_ = {}
-        for i in range(grid_scores.shape[0]):
-            key = "split%d_score" % i
-            self.cv_results_[key] = grid_scores[i]
-        self.cv_results_["mean_score"] = np.mean(grid_scores, axis=0)
-        self.cv_results_["std_score"] = np.std(grid_scores, axis=0)
+        self.cv_results_["mean_score"] = np.mean(scores_rev, axis=0)
+        self.cv_results_["std_score"] = np.std(scores_rev, axis=0)
+
+        for i in range(scores.shape[0]):
+            self.cv_results_[f"split{i}_score"] = scores_rev[i]
+
         return self
 
     # TODO: Remove in v1.1 when grid_scores_ is removed
@@ -668,4 +669,4 @@ class RFECV(RFE):
         grid_size = len(self.cv_results_) - 2
         return np.asarray(
             [self.cv_results_["split{}_score".format(i)]
-                for i in range(grid_size)]).T
+             for i in range(grid_size)]).T
