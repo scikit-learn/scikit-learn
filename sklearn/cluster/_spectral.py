@@ -185,8 +185,8 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
           - symmetric k-nearest neighbours connectivity matrix of the samples.
 
         .. note::
-            ``numpy.matrix`` is not supported as not recommended by numpy. See 
-            https://numpy.org/doc/stable/reference/generated/numpy.matrix.html 
+            ``numpy.matrix`` is not supported as not recommended by numpy. See
+            https://numpy.org/doc/stable/reference/generated/numpy.matrix.html
             for details.
 
     n_clusters : int, default=None
