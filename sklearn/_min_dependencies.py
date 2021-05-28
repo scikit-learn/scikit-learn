@@ -7,7 +7,7 @@ import argparse
 if platform.python_implementation() == 'PyPy':
     NUMPY_MIN_VERSION = '1.19.0'
 else:
-    NUMPY_MIN_VERSION = '1.14.5'
+    NUMPY_MIN_VERSION = '1.14.6'
 
 SCIPY_MIN_VERSION = '1.1.0'
 JOBLIB_MIN_VERSION = '0.11'
