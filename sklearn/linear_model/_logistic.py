@@ -1107,7 +1107,14 @@ class LogisticRegression(LinearClassifierMixin,
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
             default='lbfgs'
 
-        Algorithm to use in the optimization problem.
+        Algorithm to use in the optimization problem. Default is 'lbfgs'.
+        To choose a solver, you might want to consider the following aspects:
+
+            - For small datasets, 'liblinear' is a good choice, whereas 'sag'
+              and 'saga' are faster for large ones.
+            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
+              'lbfgs' handle multinomial loss;
+            - 'liblinear' is limited to one-versus-rest schemes.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen:
@@ -1119,14 +1126,6 @@ class LogisticRegression(LinearClassifierMixin,
            - 'sag'         -   ['l2', 'none']
            - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
 
-        .. note:: Tips
-           - For small datasets, 'liblinear' is a good choice,
-             whereas 'sag' and 'saga' are faster for large ones.
-           - For multiclass problems,
-             only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-             handle multinomial loss;
-           - 'liblinear' is limited to one-versus-rest schemes.
-
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on
            features with approximately the same scale. You can
@@ -1135,8 +1134,11 @@ class LogisticRegression(LinearClassifierMixin,
         .. seealso::
            Refer to the User Guide for more information regarding
            :class:`LogisticRegression` and more specifically the
-           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_  # noqa
-           summarazing solver-penalty supports.
+           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_
+           summarazing solver/penalty supports.
+           <!--
+           # noqa: E501
+           -->
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -1592,8 +1594,15 @@ class LogisticRegressionCV(LogisticRegression,
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
             default='lbfgs'
 
-        Algorithm to use in the optimization problem.
-        By default 'lbfgs' is used.
+        Algorithm to use in the optimization problem. Default is 'lbfgs'.
+        To choose a solver, you might want to consider the following aspects:
+            - For small datasets, 'liblinear' is a good choice, whereas 'sag'
+              and 'saga' are faster for large ones.
+            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
+             'lbfgs' handle multinomial loss;
+            - 'liblinear' might be slower in :class:`LogisticRegressionCV`
+              because it does not handle warm-starting. 'liblinear' is
+              limited to one-versus-rest schemes.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen:
@@ -1603,16 +1612,6 @@ class LogisticRegressionCV(LogisticRegression,
            - 'liblinear'   -   ['l1', 'l2']
            - 'sag'         -   ['l2']
            - 'saga'        -   ['elasticnet', 'l1', 'l2']
-
-        .. note::
-           - For small datasets, 'liblinear' is a good choice,
-             whereas 'sag' and 'saga' are faster for large ones.
-           - For multiclass problems,
-             only 'newton-cg', 'sag', 'saga' and 'lbfgs' handle multinomial
-             loss;
-           - 'liblinear' might be slower in :class:`LogisticRegressionCV`
-             because it does not handle warm-starting. 'liblinear' is
-             limited to one-versus-rest schemes.
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on features
