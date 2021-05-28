@@ -811,6 +811,8 @@ def test_lars_dtype_match(LARS, has_coef_path, args,
                           # max_iter=5 is for avoiding ConvergenceWarning
                           (LassoLarsCV, True, {"max_iter": 5})))
 def test_lars_numeric_consistency(LARS, has_coef_path, args):
+    atol = 1e-6
+
     rng = np.random.RandomState(0)
     X_64 = rng.rand(6, 6)
     y_64 = rng.rand(6)
@@ -819,7 +821,7 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     model_32 = LARS(**args).fit(X_64.astype(np.float32),
                                 y_64.astype(np.float32))
 
-    assert_array_almost_equal(model_64.coef_, model_32.coef_)
+    assert_allclose(model_64.coef_, model_32.coef_, atol=atol)
     if has_coef_path:
-        assert_array_almost_equal(model_64.coef_path_, model_32.coef_path_)
-    assert_array_almost_equal(model_64.intercept_, model_32.intercept_)
+        assert_allclose(model_64.coef_path_, model_32.coef_path_, atol=atol)
+    assert_allclose(model_64.intercept_, model_32.intercept_, atol=atol)
