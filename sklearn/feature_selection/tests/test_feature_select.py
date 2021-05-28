@@ -619,7 +619,7 @@ def test_f_classif_constant_feature():
     X, y = make_classification(n_samples=10, n_features=5)
     X[:, 0] = 2.0
     with pytest.warns(UserWarning,
-                      match="Features [0] are constant."):
+                      match="Feature [0] are constant."):
         f_classif(X, y)
 
 
