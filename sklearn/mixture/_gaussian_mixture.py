@@ -11,7 +11,6 @@ from scipy import linalg
 from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.extmath import row_norms
-from ..utils.validation import _deprecate_positional_args
 
 
 ###############################################################################
@@ -582,6 +581,11 @@ class GaussianMixture(BaseMixture):
         Lower bound value on the log-likelihood (of the training data with
         respect to the model) of the best fit of EM.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -599,7 +603,6 @@ class GaussianMixture(BaseMixture):
     BayesianGaussianMixture : Gaussian mixture model fit with a variational
         inference.
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=1, *, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  weights_init=None, means_init=None, precisions_init=None,

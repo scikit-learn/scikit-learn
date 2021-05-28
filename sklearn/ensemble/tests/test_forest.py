@@ -25,6 +25,7 @@ from scipy.special import comb
 import pytest
 
 import joblib
+from numpy.testing import assert_allclose
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -175,7 +176,9 @@ def check_regression_criterion(name, criterion):
 
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
-@pytest.mark.parametrize('criterion', ("mse", "mae", "friedman_mse"))
+@pytest.mark.parametrize('criterion', (
+    "squared_error", "absolute_error", "friedman_mse"
+))
 def test_regression(name, criterion):
     check_regression_criterion(name, criterion)
 
@@ -260,10 +263,14 @@ def check_importances(name, criterion, dtype, tolerance):
         itertools.chain(product(FOREST_CLASSIFIERS,
                                 ["gini", "entropy"]),
                         product(FOREST_REGRESSORS,
-                                ["mse", "friedman_mse", "mae"])))
+                                [
+                                 "squared_error",
+                                 "friedman_mse",
+                                 "absolute_error"
+                                 ])))
 def test_importances(dtype, name, criterion):
     tolerance = 0.01
-    if name in FOREST_REGRESSORS and criterion == "mae":
+    if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
     check_importances(name, criterion, dtype, tolerance)
 
@@ -1494,6 +1501,23 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
         est.n_features_
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("old_criterion, new_criterion", [
+    ("mse", "squared_error"),
+    ("mae", "absolute_error"),
+])
+def test_criterion_deprecated(old_criterion, new_criterion):
+    est1 = RandomForestRegressor(criterion=old_criterion, random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match=f"Criterion '{old_criterion}' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = RandomForestRegressor(criterion=new_criterion, random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))
 
 
 @pytest.mark.parametrize('Forest', FOREST_REGRESSORS)

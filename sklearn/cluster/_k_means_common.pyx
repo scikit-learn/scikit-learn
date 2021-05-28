@@ -14,17 +14,14 @@
 
 import numpy as np
 cimport numpy as np
-cimport cython
 from cython cimport floating
+from cython.parallel cimport prange
 from libc.math cimport sqrt
 
 from ..utils.extmath import row_norms
 
 
 np.import_array()
-
-ctypedef np.float64_t DOUBLE
-ctypedef np.int32_t INT
 
 
 # Number of samples per data chunk defined as a global constant.
@@ -103,7 +100,8 @@ cpdef floating _inertia_dense(
         np.ndarray[floating, ndim=2, mode='c'] X,  # IN
         floating[::1] sample_weight,               # IN
         floating[:, ::1] centers,                  # IN
-        int[::1] labels):                          # IN
+        int[::1] labels,                           # IN
+        int n_threads):
     """Compute inertia for dense input data
 
     Sum of squared distance between each sample and its assigned center.
@@ -116,7 +114,8 @@ cpdef floating _inertia_dense(
         floating sq_dist = 0.0
         floating inertia = 0.0
 
-    for i in range(n_samples):
+    for i in prange(n_samples, nogil=True, num_threads=n_threads,
+                    schedule='static'):
         j = labels[i]
         sq_dist = _euclidean_dense_dense(&X[i, 0], &centers[j, 0],
                                          n_features, True)
@@ -129,7 +128,8 @@ cpdef floating _inertia_sparse(
         X,                            # IN
         floating[::1] sample_weight,  # IN
         floating[:, ::1] centers,     # IN
-        int[::1] labels):             # IN
+        int[::1] labels,              # IN
+        int n_threads):
     """Compute inertia for sparse input data
 
     Sum of squared distance between each sample and its assigned center.
@@ -148,7 +148,8 @@ cpdef floating _inertia_sparse(
 
         floating[::1] centers_squared_norms = row_norms(centers, squared=True)
 
-    for i in range(n_samples):
+    for i in prange(n_samples, nogil=True, num_threads=n_threads,
+                    schedule='static'):
         j = labels[i]
         sq_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
@@ -286,104 +287,3 @@ cdef void _center_shift(
     for j in range(n_clusters):
         center_shift[j] = _euclidean_dense_dense(
             &centers_new[j, 0], &centers_old[j, 0], n_features, False)
-
-
-def _mini_batch_update_csr(X, np.ndarray[floating, ndim=1] sample_weight,
-                           np.ndarray[floating, ndim=1] x_squared_norms,
-                           np.ndarray[floating, ndim=2] centers,
-                           np.ndarray[floating, ndim=1] weight_sums,
-                           np.ndarray[INT, ndim=1] nearest_center,
-                           np.ndarray[floating, ndim=1] old_center,
-                           int compute_squared_diff):
-    """Incremental update of the centers for sparse MiniBatchKMeans.
-
-    Parameters
-    ----------
-
-    X : CSR matrix, dtype float
-        The complete (pre allocated) training set as a CSR matrix.
-
-    centers : array, shape (n_clusters, n_features)
-        The cluster centers
-
-    counts : array, shape (n_clusters,)
-         The vector in which we keep track of the numbers of elements in a
-         cluster
-
-    Returns
-    -------
-    inertia : float
-        The inertia of the batch prior to centers update, i.e. the sum
-        of squared distances to the closest center for each sample. This
-        is the objective function being minimized by the k-means algorithm.
-
-    squared_diff : float
-        The sum of squared update (squared norm of the centers position
-        change). If compute_squared_diff is 0, this computation is skipped and
-        0.0 is returned instead.
-
-    Both squared diff and inertia are commonly used to monitor the convergence
-    of the algorithm.
-    """
-    cdef:
-        np.ndarray[floating, ndim=1] X_data = X.data
-        np.ndarray[int, ndim=1] X_indices = X.indices
-        np.ndarray[int, ndim=1] X_indptr = X.indptr
-        unsigned int n_samples = X.shape[0]
-        unsigned int n_clusters = centers.shape[0]
-        unsigned int n_features = centers.shape[1]
-
-        unsigned int sample_idx, center_idx, feature_idx
-        unsigned int k
-        DOUBLE old_weight_sum, new_weight_sum
-        DOUBLE center_diff
-        DOUBLE squared_diff = 0.0
-
-    # move centers to the mean of both old and newly assigned samples
-    for center_idx in range(n_clusters):
-        old_weight_sum = weight_sums[center_idx]
-        new_weight_sum = old_weight_sum
-
-        # count the number of samples assigned to this center
-        for sample_idx in range(n_samples):
-            if nearest_center[sample_idx] == center_idx:
-                new_weight_sum += sample_weight[sample_idx]
-
-        if new_weight_sum == old_weight_sum:
-            # no new sample: leave this center as it stands
-            continue
-
-        # rescale the old center to reflect it previous accumulated weight
-        # with regards to the new data that will be incrementally contributed
-        if compute_squared_diff:
-            old_center[:] = centers[center_idx]
-        centers[center_idx] *= old_weight_sum
-
-        # iterate of over samples assigned to this cluster to move the center
-        # location by inplace summation
-        for sample_idx in range(n_samples):
-            if nearest_center[sample_idx] != center_idx:
-                continue
-
-            # inplace sum with new samples that are members of this cluster
-            # and update of the incremental squared difference update of the
-            # center position
-            for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                centers[center_idx, X_indices[k]] += X_data[k]
-
-        # inplace rescale center with updated count
-        if new_weight_sum > old_weight_sum:
-            # update the count statistics for this center
-            weight_sums[center_idx] = new_weight_sum
-
-            # re-scale the updated center with the total new counts
-            centers[center_idx] /= new_weight_sum
-
-            # update the incremental computation of the squared total
-            # centers position change
-            if compute_squared_diff:
-                for feature_idx in range(n_features):
-                    squared_diff += (old_center[feature_idx]
-                                     - centers[center_idx, feature_idx]) ** 2
-
-    return squared_diff
