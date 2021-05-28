@@ -1330,6 +1330,7 @@ class RandomForestRegressor(ForestRegressor):
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion, and "absolute_error"
         for the mean absolute error.
+        Training using the "mae" criterion is significantly slower than "mse".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
