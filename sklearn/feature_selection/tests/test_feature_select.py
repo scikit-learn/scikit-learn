@@ -618,7 +618,7 @@ def test_f_classif_constant_feature():
 
     X, y = make_classification(n_samples=10, n_features=5)
     X[:, 0] = 2.0
-    with ignore_warnings(category=UserWarning):
+    with pytest.warns(UserWarning):
         f_classif(X, y)
 
 
