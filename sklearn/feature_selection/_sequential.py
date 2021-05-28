@@ -193,7 +193,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             if self.direction == 'backward':
                 current_mask = ~current_mask
         else:
-            old_score = 0
+            old_score = -np.inf
             for _ in range(n_iterations):
                 new_feature_idx, new_score = self._get_best_new_feature_score(
                     cloned_estimator, X, y, current_mask)
