@@ -1112,11 +1112,12 @@ class LogisticRegression(LinearClassifierMixin,
         .. warning::
            The choice of the algorithm depends on the penalty chosen:
            Supported penalties by solver:
-            - 'newton-cg'   -   ['l2', 'none']
-            - 'lbfgs'       -   ['l2', 'none']
-            - 'liblinear'   -   ['l1', 'l2']
-            - 'sag'         -   ['l2', 'none']
-            - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
+
+           - 'newton-cg'   -   ['l2', 'none']
+           - 'lbfgs'       -   ['l2', 'none']
+           - 'liblinear'   -   ['l1', 'l2']
+           - 'sag'         -   ['l2', 'none']
+           - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
 
         .. note:: Tips
            - For small datasets, 'liblinear' is a good choice,
@@ -1596,11 +1597,12 @@ class LogisticRegressionCV(LogisticRegression,
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen:
-            - 'newton-cg'   -   ['l2']
-            - 'lbfgs'       -   ['l2']
-            - 'liblinear'   -   ['l1', 'l2']
-            - 'sag'         -   ['l2']
-            - 'saga'        -   ['elasticnet', 'l1', 'l2']
+
+           - 'newton-cg'   -   ['l2']
+           - 'lbfgs'       -   ['l2']
+           - 'liblinear'   -   ['l1', 'l2']
+           - 'sag'         -   ['l2']
+           - 'saga'        -   ['elasticnet', 'l1', 'l2']
 
         .. note::
            - For small datasets, 'liblinear' is a good choice,
