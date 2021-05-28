@@ -184,27 +184,18 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             else n_features - self.n_features_to_select_
         )
 
-        if self.tol is None:
-            for _ in range(n_iterations):
-                new_feature_idx, new_score = self._get_best_new_feature_score(
-                    cloned_estimator, X, y, current_mask)
-                current_mask[new_feature_idx] = True
+        old_score = -np.inf
+        for _ in range(n_iterations):
+            new_feature_idx, new_score = self._get_best_new_feature_score(
+                cloned_estimator, X, y, current_mask)
+            if self.tol is not None and (new_score - old_score) < self.tol:
+                break
 
-            if self.direction == 'backward':
-                current_mask = ~current_mask
-        else:
-            old_score = -np.inf
-            for _ in range(n_iterations):
-                new_feature_idx, new_score = self._get_best_new_feature_score(
-                    cloned_estimator, X, y, current_mask)
-                if new_score - self.tol < old_score:
-                    break
+            old_score = new_score
+            current_mask[new_feature_idx] = True
 
-                old_score = new_score
-                current_mask[new_feature_idx] = True
-
-            if self.direction == 'backward':
-                current_mask = ~current_mask
+        if self.direction == 'backward':
+            current_mask = ~current_mask
 
         self.support_ = current_mask
 
