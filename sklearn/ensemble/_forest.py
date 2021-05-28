@@ -105,8 +105,8 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples < 1):
-            msg = "`max_samples` must be in range (0, 1) but got value {}"
+        if not (0 < max_samples <= 1):
+            msg = "`max_samples` must be in range (0, 1] but got value {}"
             raise ValueError(msg.format(max_samples))
         return round(n_samples * max_samples)
 
