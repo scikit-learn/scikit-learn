@@ -9,6 +9,7 @@ from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.model_selection import cross_val_score
 
 
 @pytest.mark.parametrize('n_features_to_select', (0, 5, 0., -1, 1.1))
@@ -29,8 +30,7 @@ def test_bad_direction():
 
 @pytest.mark.parametrize('direction', ('forward', 'backward'))
 @pytest.mark.parametrize('n_features_to_select', (1, 5, 9, None))
-@pytest.mark.parametrize('tol', (None, 0., 0.5, 1.0))
-def test_n_features_to_select(direction, n_features_to_select, tol):
+def test_n_features_to_select(direction, n_features_to_select):
     # Make sure n_features_to_select is respected
 
     X, y = make_regression(n_features=10)
@@ -41,10 +41,41 @@ def test_n_features_to_select(direction, n_features_to_select, tol):
     if n_features_to_select is None:
         n_features_to_select = 5  # n_features // 2
 
-    if tol is None:
-        assert sfs.get_support(indices=True).shape[0] == n_features_to_select
-        assert sfs.n_features_to_select_ == n_features_to_select
-        assert sfs.transform(X).shape[1] == n_features_to_select
+    assert sfs.get_support(indices=True).shape[0] == n_features_to_select
+    assert sfs.n_features_to_select_ == n_features_to_select
+    assert sfs.transform(X).shape[1] == n_features_to_select
+
+
+@pytest.mark.parametrize('direction', ('forward', 'backward'))
+def test_stopping_criterion(direction):
+    # Make sure n_features_to_select is respected
+
+    X, y = make_regression(n_features=10)
+
+    tol = 1e-3
+    n_features_to_select = X.shape[1] - 1
+
+    sfs = SequentialFeatureSelector(LinearRegression(),
+                                    n_features_to_select=n_features_to_select,
+                                    tol=tol,
+                                    direction='forward', cv=2)
+    sfs.fit(X, y)
+
+    assert sfs.get_support(indices=True).shape[0] <= n_features_to_select
+    assert sfs.n_features_to_select_ <= n_features_to_select
+    assert sfs.transform(X).shape[1] <= n_features_to_select
+
+    sfs_cv_score = cross_val_score(
+        LinearRegression(),
+        sfs.transform(X),
+        y,
+        cv=2).mean()
+    def_cv_score = cross_val_score(LinearRegression(), X, y, cv=2).mean()
+
+    if direction == 'forward':
+        assert (sfs_cv_score - def_cv_score) <= tol
+    else:
+        assert (def_cv_score - sfs_cv_score) <= tol
 
 
 @pytest.mark.parametrize('direction', ('forward', 'backward'))
