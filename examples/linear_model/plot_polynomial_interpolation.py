@@ -138,7 +138,7 @@ plt.show()
 
 # %%
 # In the left plot, we recognize the lines corresponding to simple monomials
-# from ``x**0`` to ``x**3``. In the right figure, we see the four B-spline
+# from ``x**0`` to ``x**3``. In the right figure, we see the six B-spline
 # basis functions of ``degree=3`` and also the four knot positions that were
 # chosen during ``fit``. Note that there are ``degree`` number of additional
 # knots each to the left and to the right of the fitted interval. These are
