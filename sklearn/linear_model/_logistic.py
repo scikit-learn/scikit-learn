@@ -1111,7 +1111,7 @@ class LogisticRegression(LinearClassifierMixin,
         To choose a solver, you might want to consider the following aspects:
 
             - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-              and 'saga' are faster for large ones.
+              and 'saga' are faster for large ones;
             - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
               'lbfgs' handle multinomial loss;
             - 'liblinear' is limited to one-versus-rest schemes.
@@ -1596,8 +1596,9 @@ class LogisticRegressionCV(LogisticRegression,
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
+
             - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-              and 'saga' are faster for large ones.
+              and 'saga' are faster for large ones;
             - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
              'lbfgs' handle multinomial loss;
             - 'liblinear' might be slower in :class:`LogisticRegressionCV`
