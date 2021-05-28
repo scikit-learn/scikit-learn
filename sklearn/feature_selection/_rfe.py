@@ -473,10 +473,9 @@ class RFECV(RFE):
         ``grid_scores_[i]`` corresponds to
         the CV score of the i-th subset of features.
 
-        .. deprecated:: 0.24
-            The `grid_scores_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_` and will be removed in version
-            1.1 (renaming of 0.26).
+        .. deprecated:: 1.0
+            The `grid_scores_` attribute is deprecated in version 1.0 in favor
+            of `cv_results_` and will be removed in version 1.2.
 
     cv_results_ : dict of ndarrays
         A dict with keys:
@@ -490,7 +489,7 @@ class RFECV(RFE):
         std_score : ndarray of shape (n_features,)
             Standard deviation of scores over the folds.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
     n_features_ : int
         The number of selected features with cross-validation.
@@ -657,11 +656,11 @@ class RFECV(RFE):
 
         return self
 
-    # TODO: Remove in v1.1 when grid_scores_ is removed
+    # TODO: Remove in v1.2 when grid_scores_ is removed
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "The grid_scores_ attribute is deprecated in version 0.24 in favor "
-        "of cv_results_ and will be removed in version 1.1 (renaming of 0.26)."
+        "The grid_scores_ attribute is deprecated in version 1.0 in favor "
+        "of cv_results_ and will be removed in version 1.2."
     )
     @property
     def grid_scores_(self):
