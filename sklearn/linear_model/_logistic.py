@@ -1600,7 +1600,7 @@ class LogisticRegressionCV(LogisticRegression,
             - For small datasets, 'liblinear' is a good choice, whereas 'sag'
               and 'saga' are faster for large ones;
             - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
-             'lbfgs' handle multinomial loss;
+              'lbfgs' handle multinomial loss;
             - 'liblinear' might be slower in :class:`LogisticRegressionCV`
               because it does not handle warm-starting. 'liblinear' is
               limited to one-versus-rest schemes.
