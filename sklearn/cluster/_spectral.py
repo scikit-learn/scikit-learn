@@ -185,8 +185,9 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
           - symmetric k-nearest neighbours connectivity matrix of the samples.
 
         .. note::
-            ``numpy.matrix`` is not supported as not recommended by numpy. See
-            https://numpy.org/doc/stable/reference/generated/numpy.matrix.html
+            ``numpy.matrix`` is not supported as not recommended by numpy.
+            See `numpy matrix documentation
+            <https://numpy.org/doc/stable/reference/generated/numpy.matrix.html>`_
             for details.
 
     n_clusters : int, default=None
@@ -471,7 +472,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
       Stella X. Yu, Jianbo Shi
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
-
     def __init__(self, n_clusters=8, *, eigen_solver=None, n_components=None,
                  random_state=None, n_init=10, gamma=1., affinity='rbf',
                  n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
