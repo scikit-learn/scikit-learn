@@ -28,7 +28,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 _check_sample_weight,
-                                FLOAT_DTYPES, _deprecate_positional_args)
+                                FLOAT_DTYPES)
 
 from ._encoders import OneHotEncoder
 
@@ -55,6 +55,22 @@ __all__ = [
     'quantile_transform',
     'power_transform',
 ]
+
+
+def _is_constant_feature(var, mean, n_samples):
+    """Detect if a feature is indistinguishable from a constant feature.
+
+    The detection is based on its computed variance and on the theoretical
+    error bounds of the '2 pass algorithm' for variance computation.
+
+    See "Algorithms for computing the sample variance: analysis and
+    recommendations", by Chan, Golub, and LeVeque.
+    """
+    # In scikit-learn, variance is always computed using float64 accumulators.
+    eps = np.finfo(np.float64).eps
+
+    upper_bound = n_samples * eps * var + (n_samples * mean * eps)**2
+    return var <= upper_bound
 
 
 def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
@@ -90,7 +106,6 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         return scale
 
 
-@_deprecate_positional_args
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
@@ -328,7 +343,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
         self.copy = copy
@@ -476,7 +490,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
 
@@ -691,7 +704,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
 
-    @_deprecate_positional_args
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -863,7 +875,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         if self.with_std:
             # Extract the list of near constant features on the raw variances,
             # before taking the square root.
-            constant_mask = self.var_ < 10 * np.finfo(X.dtype).eps
+            constant_mask = _is_constant_feature(
+                self.var_, self.mean_, self.n_samples_seen_)
             self.scale_ = _handle_zeros_in_scale(
                 np.sqrt(self.var_), copy=False, constant_mask=constant_mask)
         else:
@@ -1009,7 +1022,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, copy=True):
         self.copy = copy
 
@@ -1144,7 +1156,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
@@ -1320,7 +1331,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     https://en.wikipedia.org/wiki/Median
     https://en.wikipedia.org/wiki/Interquartile_range
     """
-    @_deprecate_positional_args
     def __init__(self, *, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
         self.with_centering = with_centering
@@ -1454,7 +1464,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
     """Standardize a dataset along any axis
@@ -1562,7 +1571,6 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
     return X
 
 
-@_deprecate_positional_args
 def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
@@ -1721,7 +1729,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
     normalize : Equivalent function without the estimator API.
     """
 
-    @_deprecate_positional_args
     def __init__(self, norm='l2', *, copy=True):
         self.norm = norm
         self.copy = copy
@@ -1773,7 +1780,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
         return {'stateless': True}
 
 
-@_deprecate_positional_args
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
 
@@ -1877,7 +1883,6 @@ class Binarizer(TransformerMixin, BaseEstimator):
     binarize : Equivalent function without the estimator API.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold
         self.copy = copy
@@ -1934,23 +1939,45 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
 
 class KernelCenterer(TransformerMixin, BaseEstimator):
-    """Center a kernel matrix.
+    r"""Center an arbitrary kernel matrix :math:`K`.
 
-    Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
-    function mapping x to a Hilbert space. KernelCenterer centers (i.e.,
-    normalize to have zero mean) the data without explicitly computing phi(x).
-    It is equivalent to centering phi(x) with
-    sklearn.preprocessing.StandardScaler(with_std=False).
+    Let define a kernel :math:`K` such that:
+
+    .. math::
+        K(X, Y) = \phi(X) . \phi(Y)^{T}
+
+    :math:`\phi(X)` is a function mapping of rows of :math:`X` to a
+    Hilbert space and :math:`K` is of shape `(n_samples, n_samples)`.
+
+    This class allows to compute :math:`\tilde{K}(X, Y)` such that:
+
+    .. math::
+        \tilde{K(X, Y)} = \tilde{\phi}(X) . \tilde{\phi}(Y)^{T}
+
+    :math:`\tilde{\phi}(X)` is the centered mapped data in the Hilbert
+    space.
+
+    `KernelCenterer` centers the features without explicitly computing the
+    mapping :math:`\phi(\cdot)`. Working with centered kernels is sometime
+    expected when dealing with algebra computation such as eigendecomposition
+    for :class:`~sklearn.decomposition.KernelPCA` for instance.
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
     Attributes
     ----------
-    K_fit_rows_ : array of shape (n_samples,)
+    K_fit_rows_ : ndarray of shape (n_samples,)
         Average of each column of kernel matrix.
 
     K_fit_all_ : float
         Average of kernel matrix.
+
+    References
+    ----------
+    .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       "Nonlinear component analysis as a kernel eigenvalue problem."
+       Neural computation 10.5 (1998): 1299-1319.
+       <https://www.mlpack.org/papers/kpca.pdf>`_
 
     Examples
     --------
@@ -2202,7 +2229,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
                  random_state=None, copy=True):
@@ -2521,7 +2547,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def quantile_transform(X, *, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
                        ignore_implicit_zeros=False,
@@ -2740,7 +2765,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
     """
-    @_deprecate_positional_args
     def __init__(self, method='yeo-johnson', *, standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
@@ -3018,7 +3042,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
     """
     Power transforms are a family of parametric, monotonic transformations

@@ -28,13 +28,12 @@ from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import clone, is_classifier
+from sklearn.base import is_classifier
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 
-from sklearn.model_selection import fit_grid_point
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
@@ -128,6 +127,7 @@ y = np.array([1, 1, 2, 2])
 
 def assert_grid_iter_equals_getitem(grid):
     assert list(grid) == [grid[i] for i in range(len(grid))]
+
 
 @pytest.mark.parametrize("klass", [ParameterGrid,
                                    partial(ParameterSampler, n_iter=10)])
@@ -1269,54 +1269,6 @@ def test_grid_search_correct_score_results():
                     dec = clf.decision_function(X[test])
                     correct_score = roc_auc_score(y[test], dec)
                 assert_almost_equal(correct_score, cv_scores[i])
-
-
-# FIXME remove test_fit_grid_point as the function will be removed on 1.0
-@ignore_warnings(category=FutureWarning)
-def test_fit_grid_point():
-    X, y = make_classification(random_state=0)
-    cv = StratifiedKFold()
-    svc = LinearSVC(random_state=0)
-    scorer = make_scorer(accuracy_score)
-
-    for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
-        for train, test in cv.split(X, y):
-            this_scores, this_params, n_test_samples = fit_grid_point(
-                X, y, clone(svc), params, train, test,
-                scorer, verbose=False)
-
-            est = clone(svc).set_params(**params)
-            est.fit(X[train], y[train])
-            expected_score = scorer(est, X[test], y[test])
-
-            # Test the return values of fit_grid_point
-            assert_almost_equal(this_scores, expected_score)
-            assert params == this_params
-            assert n_test_samples == test.size
-
-    # Should raise an error upon multimetric scorer
-    error_msg = ("For evaluating multiple scores, use "
-                 "sklearn.model_selection.cross_validate instead.")
-    with pytest.raises(ValueError, match=error_msg):
-        fit_grid_point(
-            X, y, svc, params, train, test, {'score': scorer},
-            verbose=True
-        )
-
-
-# FIXME remove test_fit_grid_point_deprecated as
-# fit_grid_point will be removed on 1.0
-def test_fit_grid_point_deprecated():
-    X, y = make_classification(random_state=0)
-    svc = LinearSVC(random_state=0)
-    scorer = make_scorer(accuracy_score)
-    msg = ("fit_grid_point is deprecated in version 0.23 "
-           "and will be removed in version 1.0")
-    params = {'C': 0.1}
-    train, test = next(StratifiedKFold().split(X, y))
-
-    with pytest.warns(FutureWarning, match=msg):
-        fit_grid_point(X, y, svc, params, train, test, scorer, verbose=False)
 
 
 def test_pickle():

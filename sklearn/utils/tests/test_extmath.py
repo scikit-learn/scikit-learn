@@ -8,11 +8,12 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
+from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
 import pytest
 from sklearn.utils import gen_batches
-
+from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
@@ -23,7 +24,7 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
-from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
@@ -34,7 +35,7 @@ from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.datasets import make_low_rank_matrix
+from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 
 
 def test_density():
@@ -159,6 +160,128 @@ def check_randomized_svd_low_rank(dtype):
                          (np.int32, np.int64, np.float32, np.float64))
 def test_randomized_svd_low_rank_all_dtypes(dtype):
     check_randomized_svd_low_rank(dtype)
+
+
+@pytest.mark.parametrize('dtype',
+                         (np.int32, np.int64, np.float32, np.float64))
+def test_randomized_eigsh(dtype):
+    """Test that `_randomized_eigsh` returns the appropriate components"""
+
+    rng = np.random.RandomState(42)
+    X = np.diag(np.array([1., -2., 0., 3.], dtype=dtype))
+    # random rotation that preserves the eigenvalues of X
+    rand_rot = np.linalg.qr(rng.normal(size=X.shape))[0]
+    X = rand_rot @ X @ rand_rot.T
+
+    # with 'module' selection method, the negative eigenvalue shows up
+    eigvals, eigvecs = _randomized_eigsh(X, n_components=2, selection='module')
+    # eigenvalues
+    assert eigvals.shape == (2,)
+    assert_array_almost_equal(eigvals, [3., -2.])  # negative eigenvalue here
+    # eigenvectors
+    assert eigvecs.shape == (4, 2)
+
+    # with 'value' selection method, the negative eigenvalue does not show up
+    with pytest.raises(NotImplementedError):
+        _randomized_eigsh(X, n_components=2, selection='value')
+
+
+@pytest.mark.parametrize('k', (10, 50, 100, 199, 200))
+def test_randomized_eigsh_compared_to_others(k):
+    """Check that `_randomized_eigsh` is similar to other `eigsh`
+
+    Tests that for a random PSD matrix, `_randomized_eigsh` provides results
+    comparable to LAPACK (scipy.linalg.eigh) and ARPACK
+    (scipy.sparse.linalg.eigsh).
+
+    Note: some versions of ARPACK do not support k=n_features.
+    """
+
+    # make a random PSD matrix
+    n_features = 200
+    X = make_sparse_spd_matrix(n_features, random_state=0)
+
+    # compare two versions of randomized
+    # rough and fast
+    eigvals, eigvecs = _randomized_eigsh(X, n_components=k, selection='module',
+                                         n_iter=25, random_state=0)
+    # more accurate but slow (TODO find realistic settings here)
+    eigvals_qr, eigvecs_qr = _randomized_eigsh(
+        X, n_components=k, n_iter=25, n_oversamples=20, random_state=0,
+        power_iteration_normalizer="QR", selection='module'
+    )
+
+    # with LAPACK
+    eigvals_lapack, eigvecs_lapack = linalg.eigh(X, eigvals=(n_features - k,
+                                                             n_features - 1))
+    indices = eigvals_lapack.argsort()[::-1]
+    eigvals_lapack = eigvals_lapack[indices]
+    eigvecs_lapack = eigvecs_lapack[:, indices]
+
+    # -- eigenvalues comparison
+    assert eigvals_lapack.shape == (k,)
+    # comparison precision
+    assert_array_almost_equal(eigvals, eigvals_lapack, decimal=6)
+    assert_array_almost_equal(eigvals_qr, eigvals_lapack, decimal=6)
+
+    # -- eigenvectors comparison
+    assert eigvecs_lapack.shape == (n_features, k)
+    # flip eigenvectors' sign to enforce deterministic output
+    dummy_vecs = np.zeros_like(eigvecs).T
+    eigvecs, _ = svd_flip(eigvecs, dummy_vecs)
+    eigvecs_qr, _ = svd_flip(eigvecs_qr, dummy_vecs)
+    eigvecs_lapack, _ = svd_flip(eigvecs_lapack, dummy_vecs)
+    assert_array_almost_equal(eigvecs, eigvecs_lapack, decimal=4)
+    assert_array_almost_equal(eigvecs_qr, eigvecs_lapack, decimal=6)
+
+    # comparison ARPACK ~ LAPACK (some ARPACK implems do not support k=n)
+    if k < n_features:
+        v0 = _init_arpack_v0(n_features, random_state=0)
+        # "LA" largest algebraic <=> selection="value" in randomized_eigsh
+        eigvals_arpack, eigvecs_arpack = eigsh(X, k, which="LA", tol=0,
+                                               maxiter=None, v0=v0)
+        indices = eigvals_arpack.argsort()[::-1]
+        # eigenvalues
+        eigvals_arpack = eigvals_arpack[indices]
+        assert_array_almost_equal(eigvals_lapack, eigvals_arpack, decimal=10)
+        # eigenvectors
+        eigvecs_arpack = eigvecs_arpack[:, indices]
+        eigvecs_arpack, _ = svd_flip(eigvecs_arpack, dummy_vecs)
+        assert_array_almost_equal(eigvecs_arpack, eigvecs_lapack, decimal=8)
+
+
+@pytest.mark.parametrize("n,rank", [
+    (10, 7),
+    (100, 10),
+    (100, 80),
+    (500, 10),
+    (500, 250),
+    (500, 400),
+])
+def test_randomized_eigsh_reconst_low_rank(n, rank):
+    """Check that randomized_eigsh is able to reconstruct a low rank psd matrix
+
+    Tests that the decomposition provided by `_randomized_eigsh` leads to
+    orthonormal eigenvectors, and that a low rank PSD matrix can be effectively
+    reconstructed with good accuracy using it.
+    """
+    assert rank < n
+
+    # create a low rank PSD
+    rng = np.random.RandomState(69)
+    X = rng.randn(n, rank)
+    A = X @ X.T
+
+    # approximate A with the "right" number of components
+    S, V = _randomized_eigsh(A, n_components=rank, random_state=rng)
+    # orthonormality checks
+    assert_array_almost_equal(np.linalg.norm(V, axis=0), np.ones(S.shape))
+    assert_array_almost_equal(V.T @ V, np.diag(np.ones(S.shape)))
+    # reconstruction
+    A_reconstruct = V @ np.diag(S) @ V.T
+
+    # test that the approximation is good
+    assert_array_almost_equal(A_reconstruct, A, decimal=6)
 
 
 @pytest.mark.parametrize('dtype',

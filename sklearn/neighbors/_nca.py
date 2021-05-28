@@ -23,7 +23,6 @@ from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
 from ..utils.validation import check_is_fitted, check_array, check_scalar
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
@@ -162,7 +161,6 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, init='auto', warm_start=False,
                  max_iter=50, tol=1e-5, callback=None, verbose=0,
                  random_state=None):
