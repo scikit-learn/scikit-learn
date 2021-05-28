@@ -15,7 +15,7 @@ Version 1.0.0
 Minimal dependencies
 --------------------
 
-Version 1.0.0 of scikit-learn requires python 3.7+, numpy 1.14.5+ and
+Version 1.0.0 of scikit-learn requires python 3.7+, numpy 1.14.6+ and
 scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.2+.
 
 Enforcing keyword-only arguments
