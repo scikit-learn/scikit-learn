@@ -478,17 +478,17 @@ class RFECV(RFE):
             of `cv_results_` and will be removed in version
             1.1 (renaming of 0.26).
 
-    cv_results_ : dict of floats
+    cv_results_ : dict of ndarrays
         A dict with keys:
 
-        split(i)_score : float
-            corresponds to the CV score of the i-th subset of features
+        split(k)_score : ndarray of shape (n_features,)
+            The cross-validation scores across (k)th fold.
 
-        mean_score : float
-            mean of split(i)_score values in dict
+        mean_score : ndarray of shape (n_features,)
+            Mean of scores over the folds.
 
-        std_score : float
-            std of split(i)_score values in dict
+        std_score : ndarray of shape (n_features,)
+            Standard deviation of scores over the folds.
 
         .. versionadded:: 0.24
 
