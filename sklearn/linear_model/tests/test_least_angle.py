@@ -791,6 +791,7 @@ def test_copy_X_with_auto_gram():
     (np.float64, np.float64, np.float64)))
 def test_lars_dtype_match(LARS, has_coef_path, args,
                           x_data_type, y_data_type, expected_type):
+    # The test ensures that the fit method preserves input dtype
     rng = np.random.RandomState(0)
     X = rng.rand(6, 6).astype(x_data_type)
     y = rng.rand(6).astype(y_data_type)
@@ -811,6 +812,8 @@ def test_lars_dtype_match(LARS, has_coef_path, args,
                           # max_iter=5 is for avoiding ConvergenceWarning
                           (LassoLarsCV, True, {"max_iter": 5})))
 def test_lars_numeric_consistency(LARS, has_coef_path, args):
+    # The test ensures numerical consistency between trained coefficients
+    # of float32 and float64.
     rtol = 1e-5
     atol = 1e-5
 
