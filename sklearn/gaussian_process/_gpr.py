@@ -8,15 +8,15 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve_triangular
+from scipy.linalg import cholesky, cho_solve
 import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
+from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
-from ..utils.validation import _deprecate_positional_args
 
 
 class GaussianProcessRegressor(MultiOutputMixin,
@@ -30,9 +30,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
     GaussianProcessRegressor:
 
        * allows prediction without prior fitting (based on the GP prior)
-       * provides an additional method sample_y(X), which evaluates samples
+       * provides an additional method `sample_y(X)`, which evaluates samples
          drawn from the GPR (prior or posterior) at given inputs
-       * exposes a method log_marginal_likelihood(theta), which can be used
+       * exposes a method `log_marginal_likelihood(theta)`, which can be used
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
 
@@ -68,8 +68,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
         must have the signature::
 
             def optimizer(obj_func, initial_theta, bounds):
-                # * 'obj_func' is the objective function to be minimized, which
-                #   takes the hyperparameters theta as parameter and an
+                # * 'obj_func': the objective function to be minimized, which
+                #   takes the hyperparameters theta as a parameter and an
                 #   optional flag eval_gradient, which determines if the
                 #   gradient is returned additionally to the function value
                 # * 'initial_theta': the initial value for theta, which can be
@@ -80,7 +80,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'L-BGFS-B' algorithm from scipy.optimize.minimize
+        Per default, the 'L-BFGS-B' algorithm from scipy.optimize.minimize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
@@ -113,7 +113,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -152,7 +152,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
-    @_deprecate_positional_args
     def __init__(self, kernel=None, *, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None):
@@ -197,7 +196,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
         # Normalize target value
         if self.normalize_y:
             self._y_train_mean = np.mean(y, axis=0)
-            self._y_train_std = np.std(y, axis=0)
+            self._y_train_std = _handle_zeros_in_scale(
+                np.std(y, axis=0), copy=False
+            )
 
             # Remove mean and make unit variance
             y = (y - self._y_train_mean) / self._y_train_std
@@ -211,8 +212,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             if self.alpha.shape[0] == 1:
                 self.alpha = self.alpha[0]
             else:
-                raise ValueError("alpha must be a scalar or an array"
-                                 " with same number of entries as y.(%d != %d)"
+                raise ValueError("alpha must be a scalar or an array "
+                                 "with same number of entries as y. (%d != %d)"
                                  % (self.alpha.shape[0], y.shape[0]))
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
@@ -267,8 +268,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
         K[np.diag_indices_from(K)] += self.alpha
         try:
             self.L_ = cholesky(K, lower=True)  # Line 2
-            # self.L_ changed, self._K_inv needs to be recomputed
-            self._K_inv = None
         except np.linalg.LinAlgError as exc:
             exc.args = ("The kernel, %s, is not returning a "
                         "positive definite matrix. Try gradually "
@@ -283,9 +282,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
         """Predict using the Gaussian process regression model
 
         We can also predict based on an unfitted model by using the GP prior.
-        In addition to the mean of the predictive distribution, also its
-        standard deviation (return_std=True) or covariance (return_cov=True).
-        Note that at most one of the two can be requested.
+        In addition to the mean of the predictive distribution, optionally also
+        returns its standard deviation (`return_std=True`) or covariance
+        (`return_cov=True`). Note that at most one of the two can be requested.
 
         Parameters
         ----------
@@ -302,7 +301,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Returns
         -------
-        y_mean : ndarray of shape (n_samples, [n_output_dims])
+        y_mean : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Mean of predictive distribution a query points.
 
         y_std : ndarray of shape (n_samples,), optional
@@ -315,8 +314,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         """
         if return_std and return_cov:
             raise RuntimeError(
-                "Not returning standard deviation of predictions when "
-                "returning full covariance.")
+                "At most one of return_std or return_cov can be requested.")
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X = self._validate_data(X, ensure_2d=True, dtype="numeric",
@@ -343,31 +341,27 @@ class GaussianProcessRegressor(MultiOutputMixin,
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
             if return_cov:
-                v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
+                # Solve K @ V = K_trans.T
+                V = cho_solve((self.L_, True), K_trans.T)  # Line 5
+                y_cov = self.kernel_(X) - K_trans.dot(V)  # Line 6
 
                 # undo normalisation
                 y_cov = y_cov * self._y_train_std**2
 
                 return y_mean, y_cov
             elif return_std:
-                # cache result of K_inv computation
-                if self._K_inv is None:
-                    # compute inverse K_inv of K based on its Cholesky
-                    # decomposition L and its inverse L_inv
-                    L_inv = solve_triangular(self.L_.T,
-                                             np.eye(self.L_.shape[0]))
-                    self._K_inv = L_inv.dot(L_inv.T)
+                # Solve K @ V = K_trans.T
+                V = cho_solve((self.L_, True), K_trans.T)  # Line 5
 
                 # Compute variance of predictive distribution
+                # Use einsum to avoid explicitly forming the large matrix
+                # K_trans @ V just to extract its diagonal afterward.
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ij->i",
-                                   np.dot(K_trans, self._K_inv), K_trans)
+                y_var -= np.einsum("ij,ji->i", K_trans, V)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
@@ -389,21 +383,22 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features) or list of object
+        X : array-like of shape (n_samples_X, n_features) or list of object
             Query points where the GP is evaluated.
 
         n_samples : int, default=1
-            The number of samples drawn from the Gaussian process
+            Number of samples drawn from the Gaussian process per query point
 
         random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
             Pass an int for reproducible results across multiple function
             calls.
-            See :term: `Glossary <random_state>`.
+            See :term:`Glossary <random_state>`.
 
         Returns
         -------
-        y_samples : ndarray of shape (n_samples_X, [n_output_dims], n_samples)
+        y_samples : ndarray of shape (n_samples_X, n_samples), or \
+            (n_samples_X, n_targets, n_samples)
             Values of n_samples samples drawn from Gaussian process and
             evaluated at query points.
         """

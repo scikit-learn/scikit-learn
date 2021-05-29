@@ -37,14 +37,13 @@ from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
-from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
 from ..utils import deprecated
 
-__all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
+__all__ = ['GridSearchCV', 'ParameterGrid',
            'ParameterSampler', 'RandomizedSearchCV']
 
 
@@ -239,7 +238,6 @@ class ParameterSampler:
     ...                  {'b': 1.038159, 'a': 2}]
     True
     """
-    @_deprecate_positional_args
     def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError('Parameter distribution is not a dict or '
@@ -314,78 +312,6 @@ class ParameterSampler:
             return self.n_iter
 
 
-# FIXME Remove fit_grid_point in 1.0
-@deprecated(
-    "fit_grid_point is deprecated in version 0.23 "
-    "and will be removed in version 1.0 (renaming of 0.25)"
-)
-def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score=np.nan, **fit_params):
-    """Run fit on one set of parameters.
-
-    Parameters
-    ----------
-    X : array-like, sparse matrix or list
-        Input data.
-
-    y : array-like or None
-        Targets for input data.
-
-    estimator : estimator object
-        A object of that type is instantiated for each grid point.
-        This is assumed to implement the scikit-learn estimator interface.
-        Either estimator needs to provide a ``score`` function,
-        or ``scoring`` must be passed.
-
-    parameters : dict
-        Parameters to be set on estimator for this grid point.
-
-    train : ndarray, dtype int or bool
-        Boolean mask or indices for training set.
-
-    test : ndarray, dtype int or bool
-        Boolean mask or indices for test set.
-
-    scorer : callable or None
-        The scorer callable object / function must have its signature as
-        ``scorer(estimator, X, y)``.
-
-        If ``None`` the estimator's score method is used.
-
-    verbose : int
-        Verbosity level.
-
-    **fit_params : kwargs
-        Additional parameter passed to the fit function of the estimator.
-
-    error_score : 'raise' or numeric, default=np.nan
-        Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
-
-    Returns
-    -------
-    score : float
-         Score of this parameter setting on given test split.
-
-    parameters : dict
-        The parameters that have been evaluated.
-
-    n_samples_test : int
-        Number of test samples in this split.
-    """
-    # NOTE we are not using the return value as the scorer by itself should be
-    # validated before. We use check_scoring only to reject multimetric scorer
-    check_scoring(estimator, scorer)
-    results = _fit_and_score(estimator, X, y, scorer, train,
-                             test, verbose, parameters,
-                             fit_params=fit_params,
-                             return_n_test_samples=True,
-                             error_score=error_score)
-    return results["test_scores"], parameters, results["n_test_samples"]
-
-
 def _check_param_grid(param_grid):
     if hasattr(param_grid, 'items'):
         param_grid = [param_grid]
@@ -412,7 +338,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    @_deprecate_positional_args
     def __init__(self, estimator, *, scoring=None, n_jobs=None,
                  refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score=np.nan,
@@ -720,7 +645,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 and not callable(self.refit)):
             raise ValueError(multimetric_refit_msg)
 
-    @_deprecate_positional_args
     def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -897,6 +821,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         out = _aggregate_score_dicts(out)
 
         results = dict(more_results or {})
+        for key, val in results.items():
+            # each value is a list (as per evaluate_candidate's convention)
+            # we convert it to an array for consistency with the other keys
+            results[key] = np.asarray(val)
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
@@ -1065,7 +993,8 @@ class GridSearchCV(BaseSearchCV):
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1273,7 +1202,6 @@ class GridSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_grid"]
 
-    @_deprecate_positional_args
     def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
@@ -1407,7 +1335,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1607,7 +1536,6 @@ class RandomizedSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_distributions"]
 
-    @_deprecate_positional_args
     def __init__(self, estimator, param_distributions, *, n_iter=10,
                  scoring=None, n_jobs=None, refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',

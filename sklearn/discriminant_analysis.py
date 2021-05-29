@@ -22,7 +22,6 @@ from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .preprocessing import StandardScaler
-from .utils.validation import _deprecate_positional_args
 
 
 __all__ = ['LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis']
@@ -476,8 +475,12 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
         # (n_classes) centers
         _, S, Vt = linalg.svd(X, full_matrices=0)
 
-        self.explained_variance_ratio_ = (S**2 / np.sum(
-            S**2))[:self._max_components]
+        if self._max_components == 0:
+            self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
+        else:
+            self.explained_variance_ratio_ = (S**2 / np.sum(
+                S**2))[:self._max_components]
+
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
@@ -745,7 +748,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     --------
     LinearDiscriminantAnalysis : Linear Discriminant Analysis.
     """
-    @_deprecate_positional_args
     def __init__(self, *, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None

@@ -19,7 +19,7 @@ import warnings
 from joblib import Parallel
 
 from collections import defaultdict
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
@@ -28,7 +28,6 @@ from ..metrics.pairwise import pairwise_distances_argmin
 from .._config import config_context
 
 
-@_deprecate_positional_args
 def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0,
                        n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
@@ -109,7 +108,6 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
-@_deprecate_positional_args
 def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
                n_jobs=None):
@@ -352,7 +350,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Machine Intelligence. 2002. pp. 603-619.
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, bandwidth=None, seeds=None, bin_seeding=False,
                  min_bin_freq=1, cluster_all=True, n_jobs=None, max_iter=300):
         self.bandwidth = bandwidth

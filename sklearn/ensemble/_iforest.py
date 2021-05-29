@@ -16,7 +16,6 @@ from ..utils import (
 )
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..base import OutlierMixin
 
 from ._bagging import BaseBagging
@@ -181,7 +180,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> clf.predict([[0.1], [0], [90]])
     array([ 1,  1, -1])
     """
-    @_deprecate_positional_args
     def __init__(self, *,
                  n_estimators=100,
                  max_samples="auto",
@@ -450,11 +448,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 + _average_path_length(n_samples_leaf)
                 - 1.0
             )
-
+        denominator = (
+            len(self.estimators_) * _average_path_length([self.max_samples_])
+        )
         scores = 2 ** (
-            -depths
-            / (len(self.estimators_)
-               * _average_path_length([self.max_samples_]))
+            # For a single training sample, denominator and depth are 0.
+            # Therefore, we set the score manually to 1.
+            -np.divide(depths, denominator, out=np.ones_like(depths),
+                       where=denominator != 0)
         )
         return scores
 
