@@ -12,6 +12,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
@@ -886,14 +887,14 @@ def test_check_alpha():
     msg2 = ('alpha too small will result in numeric errors, '
             'setting alpha = %.1e' % _ALPHA_MIN)
     b = BernoulliNB(alpha=0, force_alpha=True)
-    with pytest.warns(UserWarning, match=msg1):
-        assert b._check_alpha() == 0
+    assert_warns_message(UserWarning, msg1, b._check_alpha)
+    assert b._check_alpha() == 0
     b = BernoulliNB(alpha=0, force_alpha=False)
-    with pytest.warns(UserWarning, match=msg2):
-        assert b._check_alpha() == _ALPHA_MIN
+    assert_warns_message(UserWarning, msg2, b._check_alpha)
+    assert b._check_alpha() == _ALPHA_MIN
     b = BernoulliNB(alpha=0)
-    with pytest.warns(UserWarning, match=msg2):
-        assert b._check_alpha() == _ALPHA_MIN
+    assert_warns_message(UserWarning, msg2, b._check_alpha)
+    assert b._check_alpha() == _ALPHA_MIN
 
 
 def test_alpha_vector():
