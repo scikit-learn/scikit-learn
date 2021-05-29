@@ -1145,7 +1145,6 @@ class CategoricalNB(_BaseDiscreteNB):
         and proceed with alpha unchanged.
 
         .. versionadded:: 1.0
-        and proceed with alpha unchanged.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
