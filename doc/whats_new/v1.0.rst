@@ -154,6 +154,11 @@ Changelog
 - |Efficiency| :class:`cluster.MiniBatchKMeans` is now faster in multicore
   settings. :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Enhancement| The `predict` and `fit_predict` methods of
+  :class:`cluster.AffinityPropagation` now accept sparse data type for input
+  data.
+  :pr:`20117` by :user:`Venkatachalam Natchiappan <venkyyuvy>`
+
 - |Fix| Fixed a bug in :class:`cluster.MiniBatchKMeans` where the sample
   weights were partially ignored when the input is sparse. :pr:`17622` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
@@ -286,6 +291,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Feature| Added :class:`linear_model.QuantileRegressor` which implements
+  linear quantile regression with L1 penalty.
+  :pr:`9978` by :user:`David Dale <avidale>` and
+  :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
@@ -380,6 +390,15 @@ Changelog
   and :func:`metrics.roc_curve`.
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
+:mod:`sklearn.mixture`
+..............................
+
+- |Fix| Ensure that the best parameters are set appropriately
+  in the case of divergency for :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`.
+  :pr:`20030` by :user:`Tingshan Liu <tliu68>` and
+  :user:`Benjamin Pedigo <bdpedigo>`.
 
 :mod:`sklearn.model_selection`
 ..............................

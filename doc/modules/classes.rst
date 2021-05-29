@@ -839,6 +839,7 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    :template: class.rst
 
    linear_model.HuberRegressor
+   linear_model.QuantileRegressor
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
