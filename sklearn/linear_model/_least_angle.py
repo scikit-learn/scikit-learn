@@ -476,12 +476,15 @@ def _lars_path_solver(
 
     max_features = min(max_iter, n_features)
 
-    return_dtype = np.float64
-    for input_array in (X, y, Xy, Gram):
-        if input_array is not None:
-            return_dtype = input_array.dtype
-            break
+    dtypes = set(a.dtype for a in (X, y, Xy, Gram) if a is not None)
+    if len(dtypes) == 1:
+        # use the precision level of input data if it is consistent
+        return_dtype = next(iter(dtypes))
+    else:
+        # fallback to double precision otherwise
+        return_dtype = np.float64
 
+    print(dtypes, return_dtype)
     if return_path:
         coefs = np.zeros((max_features + 1, n_features), dtype=return_dtype)
         alphas = np.zeros(max_features + 1, dtype=return_dtype)
