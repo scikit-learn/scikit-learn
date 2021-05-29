@@ -342,16 +342,6 @@ METRICS_WITH_POS_LABEL = {
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "samples_average_precision_score",
-
-    # pos_label support deprecated; to be removed in 0.18:
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score", "weighted_recall_score",
-
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
-    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
-    "macro_precision_score", "macro_recall_score",
 }
 
 # Metrics with a "labels" argument
@@ -831,7 +821,7 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809
-    [([np.nan, 1, 2], [1, 2, 3])]
+    [([np.nan, 1, 2], [1, 2, 3])]  # type: ignore
 )
 def test_classification_inf_nan_input(metric, y_true, y_score):
     """check that classification metrics raise a message mentioning the

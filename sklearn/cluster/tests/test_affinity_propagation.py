@@ -209,14 +209,6 @@ def test_affinity_propagation_random_state():
     assert np.mean((centers0 - centers76) ** 2) > 1
 
 
-# FIXME: to be removed in 1.0
-def test_affinity_propagation_random_state_warning():
-    # test that a warning is raised when random_state is not defined.
-    X = np.array([[0, 0], [1, 1], [-2, -2]])
-    match = "'random_state' has been introduced in 0.23."
-    with pytest.warns(FutureWarning, match=match):
-        AffinityPropagation().fit(X)
-
 @pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
                                      np.zeros((1, 10))])
 def test_affinity_propagation_convergence_warning_dense_sparse(centers):
@@ -244,6 +236,25 @@ def test_affinity_propagation_float32():
                               random_state=0).fit(X)
     expected = np.array([0, 1, 1, 2])
     assert_array_equal(afp.labels_, expected)
+
+
+def test_sparse_input_for_predict():
+    # Test to make sure sparse inputs are accepted for predict
+    # (non-regression test for issue #20049)
+    af = AffinityPropagation(affinity="euclidean", random_state=42)
+    af.fit(X)
+    labels = af.predict(csr_matrix((2, 2)))
+    assert_array_equal(labels, (2, 2))
+
+
+def test_sparse_input_for_fit_predict():
+    # Test to make sure sparse inputs are accepted for fit_predict
+    # (non-regression test for issue #20049)
+    af = AffinityPropagation(affinity="euclidean", random_state=42)
+    rng = np.random.RandomState(42)
+    X = csr_matrix(rng.randint(0, 2, size=(5, 5)))
+    labels = af.fit_predict(X)
+    assert_array_equal(labels, (0, 1, 1, 2, 3))
 
 
 # TODO: Remove in 1.1
