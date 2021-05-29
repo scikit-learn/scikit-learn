@@ -24,7 +24,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import (
     _check_sample_weight,
-    _deprecate_positional_args,
     check_consistent_length,
     check_is_fitted,
     column_or_1d,
@@ -173,7 +172,6 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                        num=n_alphas)[::-1]
 
 
-@_deprecate_positional_args
 def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
@@ -318,7 +316,6 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
                      positive=positive, return_n_iter=return_n_iter, **params)
 
 
-@_deprecate_positional_args
 def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
@@ -704,7 +701,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     path = staticmethod(enet_path)
 
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
@@ -1052,7 +1048,6 @@ class Lasso(ElasticNet):
     """
     path = staticmethod(enet_path)
 
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
@@ -1604,7 +1599,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(lasso_path)
 
-    @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
@@ -1818,7 +1812,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(enet_path)
 
-    @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
@@ -1976,7 +1969,6 @@ class MultiTaskElasticNet(Lasso):
     To avoid unnecessary memory duplication the X and y arguments of the fit
     method should be directly passed as Fortran-contiguous numpy arrays.
     """
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
                  warm_start=False, random_state=None, selection='cyclic'):
@@ -2177,7 +2169,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
     To avoid unnecessary memory duplication the X and y arguments of the fit
     method should be directly passed as Fortran-contiguous numpy arrays.
     """
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
                  random_state=None, selection='cyclic'):
@@ -2364,7 +2355,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(enet_path)
 
-    @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
@@ -2570,7 +2560,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(lasso_path)
 
-    @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,

@@ -17,7 +17,6 @@ from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
 
 
-@_deprecate_positional_args
 def plot_partial_dependence(
     estimator,
     X,
@@ -539,7 +538,6 @@ class PartialDependenceDisplay:
     partial_dependence : Compute Partial Dependence values.
     plot_partial_dependence : Plot Partial Dependence.
     """
-    @_deprecate_positional_args
     def __init__(
         self,
         pd_results,

@@ -12,6 +12,24 @@ Version 1.0.0
 
 .. include:: changelog_legend.inc
 
+Minimal dependencies
+--------------------
+
+Version 1.0.0 of scikit-learn requires python 3.7+, numpy 1.14.5+ and
+scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.2+.
+
+Enforcing keyword-only arguments
+--------------------------------
+
+In an effort to promote clear and non-ambiguous use of the library, most
+constructor and function parameters must now be passed as keyword arguments
+(i.e. using the `param=value` syntax) instead of positional. If a keyword-only
+parameter is used as positional, a `TypeError` is now raised.
+:issue:`15005` :pr:`20002` by `Joel Nothman`_, `Adrin Jalali`_, `Thomas Fan`_,
+`Nicolas Hug`_, and `Tom Dupre la Tour`_. See `SLEP009
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
+for more details.
+
 Put the changes in their relevant module.
 
 Changed models
@@ -76,6 +94,35 @@ Changelog
   - For :class:`tree.ExtraTreeRegressor`, `criterion="mse"` is deprecated,
     use `"squared_error"` instead which is now the default.
 
+- |API| The option for using the absolute error via ``loss`` and
+  ``criterion`` parameters was made more consistent. The preferred way is by
+  setting the value to `"absolute_error"`. Old option names are still valid,
+  produce the same models, but are deprecated and will be removed in version
+  1.2.
+  :pr:`19733` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`ensemble.ExtraTreesRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.GradientBoostingRegressor`, `loss="lad"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.RandomForestRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`ensemble.HistGradientBoostingRegressor`,
+    `loss="least_absolute_deviation"` is deprecated, use `"absolute_error"`
+    instead.
+
+  - For :class:`linear_model.RANSACRegressor`, `loss="absolute_loss"` is
+    deprecated, use `"absolute_error"` instead which is now the default.
+
+  - For :class:`tree.DecisionTreeRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
+  - For :class:`tree.ExtraTreeRegressor`, `criterion="mae"` is deprecated,
+    use `"absolute_error"` instead.
+
 :mod:`sklearn.base`
 ...................
 
@@ -102,6 +149,11 @@ Changelog
 
 - |Efficiency| :class:`cluster.MiniBatchKMeans` is now faster in multicore
   settings. :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Enhancement| The `predict` and `fit_predict` methods of
+  :class:`cluster.AffinityPropagation` now accept sparse data type for input
+  data.
+  :pr:`20117` by :user:`Venkatachalam Natchiappan <venkyyuvy>`
 
 - |Fix| Fixed a bug in :class:`cluster.MiniBatchKMeans` where the sample
   weights were partially ignored when the input is sparse. :pr:`17622` by
@@ -235,6 +287,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Feature| Added :class:`linear_model.QuantileRegressor` which implements
+  linear quantile regression with L1 penalty.
+  :pr:`9978` by :user:`David Dale <avidale>` and
+  :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
@@ -336,6 +393,15 @@ Changelog
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
+:mod:`sklearn.mixture`
+..............................
+
+- |Fix| Ensure that the best parameters are set appropriately
+  in the case of divergency for :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`.
+  :pr:`20030` by :user:`Tingshan Liu <tliu68>` and
+  :user:`Benjamin Pedigo <bdpedigo>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -373,6 +439,12 @@ Changelog
 
 - |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
   memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+
+- |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
+  and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
+  `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
+  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.pipeline`
 .......................
