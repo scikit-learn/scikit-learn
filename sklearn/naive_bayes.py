@@ -27,12 +27,11 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, deprecated
+from .utils import deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
+from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
-from .utils.validation import _deprecate_positional_args
 
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
@@ -55,7 +54,10 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
     @abstractmethod
     def _check_X(self, X):
-        """To be overridden in subclasses with the actual checks."""
+        """To be overridden in subclasses with the actual checks.
+
+        Only used in predict* methods.
+        """
 
     def predict(self, X):
         """
@@ -186,7 +188,6 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
@@ -214,12 +215,12 @@ class GaussianNB(_BaseNB):
         self : object
         """
         X, y = self._validate_data(X, y)
-        y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
 
     def _check_X(self, X):
-        return check_array(X)
+        """Validate X, used only in predict* methods."""
+        return self._validate_data(X, reset=False)
 
     @staticmethod
     def _update_mean_variance(n_past, mu, var, X, sample_weight=None):
@@ -367,7 +368,11 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
+        if _refit:
+            self.classes_ = None
+
+        first_call = _check_partial_fit_first_call(self, classes)
+        X, y = self._validate_data(X, y, reset=first_call)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -377,10 +382,7 @@ class GaussianNB(_BaseNB):
         # deviation of the largest dimension.
         self.epsilon_ = self.var_smoothing * np.var(X, axis=0).max()
 
-        if _refit:
-            self.classes_ = None
-
-        if _check_partial_fit_first_call(self, classes):
+        if first_call:
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
@@ -488,10 +490,12 @@ class _BaseDiscreteNB(_BaseNB):
     """
 
     def _check_X(self, X):
-        return check_array(X, accept_sparse='csr')
+        """Validate X, used only in predict* methods."""
+        return self._validate_data(X, accept_sparse='csr', reset=False)
 
-    def _check_X_y(self, X, y):
-        return self._validate_data(X, y, accept_sparse='csr')
+    def _check_X_y(self, X, y, reset=True):
+        """Validate X and y in fit methods."""
+        return self._validate_data(X, y, accept_sparse='csr', reset=reset)
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
@@ -518,7 +522,7 @@ class _BaseDiscreteNB(_BaseNB):
             raise ValueError('Smoothing parameter alpha = %.1e. '
                              'alpha should be > 0.' % np.min(self.alpha))
         if isinstance(self.alpha, np.ndarray):
-            if not self.alpha.shape[0] == self.n_features_:
+            if not self.alpha.shape[0] == self.n_features_in_:
                 raise ValueError("alpha should be a scalar or a numpy array "
                                  "with shape [n_features]")
         if np.min(self.alpha) < _ALPHA_MIN:
@@ -563,7 +567,8 @@ class _BaseDiscreteNB(_BaseNB):
         -------
         self : object
         """
-        X, y = self._check_X_y(X, y)
+        first_call = not hasattr(self, "classes_")
+        X, y = self._check_X_y(X, y, reset=first_call)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -571,10 +576,6 @@ class _BaseDiscreteNB(_BaseNB):
             # initialize various cumulative counters
             n_classes = len(classes)
             self._init_counters(n_classes, n_features)
-            self.n_features_ = n_features
-        elif n_features != self.n_features_:
-            msg = "Number of features %d does not match previous data %d."
-            raise ValueError(msg % (n_features, self.n_features_))
 
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
@@ -631,7 +632,6 @@ class _BaseDiscreteNB(_BaseNB):
         """
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
-        self.n_features_ = n_features
 
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
@@ -686,6 +686,16 @@ class _BaseDiscreteNB(_BaseNB):
 
     def _more_tags(self):
         return {'poor_score': True}
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use 'n_features_in_' instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 class MultinomialNB(_BaseDiscreteNB):
@@ -753,6 +763,10 @@ class MultinomialNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     Examples
     --------
     >>> import numpy as np
@@ -779,7 +793,6 @@ class MultinomialNB(_BaseDiscreteNB):
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
@@ -879,6 +892,10 @@ class ComplementNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     Examples
     --------
     >>> import numpy as np
@@ -900,7 +917,6 @@ class ComplementNB(_BaseDiscreteNB):
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
                  norm=False):
         self.alpha = alpha
@@ -996,6 +1012,10 @@ class BernoulliNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     Examples
     --------
     >>> import numpy as np
@@ -1023,7 +1043,6 @@ class BernoulliNB(_BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, alpha=1.0, binarize=.0, fit_prior=True,
                  class_prior=None):
         self.alpha = alpha
@@ -1032,13 +1051,14 @@ class BernoulliNB(_BaseDiscreteNB):
         self.class_prior = class_prior
 
     def _check_X(self, X):
+        """Validate X, used only in predict* methods."""
         X = super()._check_X(X)
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
         return X
 
-    def _check_X_y(self, X, y):
-        X, y = super()._check_X_y(X, y)
+    def _check_X_y(self, X, y, reset=True):
+        X, y = super()._check_X_y(X, y, reset=reset)
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
         return X, y
@@ -1133,6 +1153,10 @@ class CategoricalNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     n_categories_ : ndarray of shape (n_features,), dtype=np.int64
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
@@ -1153,7 +1177,6 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
                  min_categories=None):
         self.alpha = alpha
@@ -1235,14 +1258,15 @@ class CategoricalNB(_BaseDiscreteNB):
         return {'requires_positive_X': True}
 
     def _check_X(self, X):
-        X = check_array(X, dtype='int', accept_sparse=False,
-                        force_all_finite=True)
+        """Validate X, used only in predict* methods."""
+        X = self._validate_data(X, dtype='int', accept_sparse=False,
+                                force_all_finite=True, reset=False)
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
-    def _check_X_y(self, X, y):
+    def _check_X_y(self, X, y, reset=True):
         X, y = self._validate_data(X, y, dtype='int', accept_sparse=False,
-                                   force_all_finite=True)
+                                   force_all_finite=True, reset=reset)
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
@@ -1297,7 +1321,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self.class_count_ += Y.sum(axis=0)
         self.n_categories_ = self._validate_n_categories(
             X, self.min_categories)
-        for i in range(self.n_features_):
+        for i in range(self.n_features_in_):
             X_feature = X[:, i]
             self.category_count_[i] = _update_cat_count_dims(
                 self.category_count_[i], self.n_categories_[i] - 1)
@@ -1307,7 +1331,7 @@ class CategoricalNB(_BaseDiscreteNB):
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = []
-        for i in range(self.n_features_):
+        for i in range(self.n_features_in_):
             smoothed_cat_count = self.category_count_[i] + alpha
             smoothed_class_count = smoothed_cat_count.sum(axis=1)
             feature_log_prob.append(
@@ -1316,11 +1340,9 @@ class CategoricalNB(_BaseDiscreteNB):
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
-        if not X.shape[1] == self.n_features_:
-            raise ValueError("Expected input with %d features, got %d instead"
-                             % (self.n_features_, X.shape[1]))
+        self._check_n_features(X, reset=False)
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
-        for i in range(self.n_features_):
+        for i in range(self.n_features_in_):
             indices = X[:, i]
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_

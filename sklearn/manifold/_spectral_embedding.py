@@ -25,7 +25,6 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
 
 
@@ -141,7 +140,6 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
-@_deprecate_positional_args
 def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True):
@@ -180,10 +178,18 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         used.
 
     random_state : int, RandomState instance or None, default=None
-        Determines the random number generator used for the initialization of
-        the lobpcg eigenvectors decomposition when ``solver`` == 'amg'. Pass
-        an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     eigen_tol : float, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
@@ -335,7 +341,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
             # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
-            _, diffusion_map = eigh(laplacian)
+            _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 embedding = embedding / dd
@@ -398,10 +404,18 @@ class SpectralEmbedding(BaseEstimator):
         1/n_features.
 
     random_state : int, RandomState instance or None, default=None
-        Determines the random number generator used for the initialization of
-        the lobpcg eigenvectors when ``solver`` == 'amg'.  Pass an int for
-        reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
@@ -456,7 +470,6 @@ class SpectralEmbedding(BaseEstimator):
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
                  n_neighbors=None, n_jobs=None):

@@ -6,6 +6,7 @@ neighbors.
 """
 
 import numpy as np
+import pytest
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.cluster.tests.common import generate_clustered_data
@@ -111,6 +112,8 @@ def test_isomap():
     assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
+# TODO: Remove filterwarning in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_tsne():
     # Test chaining KNeighborsTransformer and TSNE
     n_iter = 250
