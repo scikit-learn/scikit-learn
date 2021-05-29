@@ -484,7 +484,6 @@ def _lars_path_solver(
         # fallback to double precision otherwise
         return_dtype = np.float64
 
-    print(dtypes, return_dtype)
     if return_path:
         coefs = np.zeros((max_features + 1, n_features), dtype=return_dtype)
         alphas = np.zeros(max_features + 1, dtype=return_dtype)
