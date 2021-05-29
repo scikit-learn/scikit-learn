@@ -299,11 +299,9 @@ Changelog
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
-- |Feature| Add `sample_weight` parameter to
+- |Feature| Added `sample_weight` parameter to
   :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV`.
-  This is accompanied by the new parameter `use_weights_in_cv` that allows
-  fine-control over the use of sample weights for averaging scores over
-  cv-folds. :pr:`16449` by :user:`Christian Lorentzen <lorentzenchr>`.
+  :pr:`16449` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
   has been optimised for dense matrices when using `solver='newton-cg'` and
