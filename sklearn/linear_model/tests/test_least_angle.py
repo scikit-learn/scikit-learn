@@ -786,15 +786,15 @@ def test_copy_X_with_auto_gram():
                           (LarsCV, True, {}),
                           # max_iter=5 is for avoiding ConvergenceWarning
                           (LassoLarsCV, True, {"max_iter": 5})))
-@pytest.mark.parametrize("x_data_type, y_data_type, expected_type", (
-    (np.float32, np.float32, np.float32),
-    (np.float64, np.float64, np.float64)))
+@pytest.mark.parametrize("data_type, expected_type", (
+    (np.float32, np.float32),
+    (np.float64, np.float64)))
 def test_lars_dtype_match(LARS, has_coef_path, args,
-                          x_data_type, y_data_type, expected_type):
+                          data_type, expected_type):
     # The test ensures that the fit method preserves input dtype
     rng = np.random.RandomState(0)
-    X = rng.rand(6, 6).astype(x_data_type)
-    y = rng.rand(6).astype(y_data_type)
+    X = rng.rand(6, 6).astype(data_type)
+    y = rng.rand(6).astype(data_type)
 
     model = LARS(**args)
     model.fit(X, y)
