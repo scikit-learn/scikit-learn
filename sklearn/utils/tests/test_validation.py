@@ -57,6 +57,9 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
+# TODO: Remove np.matrix usage in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_as_float_array():
@@ -115,6 +118,9 @@ def test_as_float_array_nan(X):
     assert_allclose_dense_sparse(X_converted, X)
 
 
+# TODO: Remove np.matrix usage in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_np_matrix():
@@ -1379,3 +1385,16 @@ def test_num_features_errors_scalars(X):
     )
     with pytest.raises(TypeError, match=msg):
         _num_features(X)
+
+
+# TODO: Remove in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
+def test_check_array_deprecated_matrix():
+    """Test that matrix support is deprecated in 1.0."""
+
+    X = np.matrix(np.arange(5))
+    msg = ("np.matrix usage is deprecated in 1.0 and will raise a TypeError "
+           "in 1.2. Please convert to a numpy array with np.asarray.")
+    with pytest.warns(FutureWarning, match=msg):
+        check_array(X)
