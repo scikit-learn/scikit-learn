@@ -216,7 +216,7 @@ class SimpleImputer(_BaseImputer):
 
     """
     def __init__(self, *, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose=None, copy=True,
+                 fill_value=None, verbose="deprecated", copy=True,
                  add_indicator=False):
         super().__init__(
             missing_values=missing_values,
@@ -289,7 +289,7 @@ class SimpleImputer(_BaseImputer):
         -------
         self : SimpleImputer
         """
-        if self.verbose is not None:
+        if self.verbose != "deprecated":
             warnings.warn("The 'verbose' parameter was deprecated in version "
                           "1.0 and will be removed in 1.2. A warning will "
                           "always be raised upon the removal of empty columns "
@@ -468,7 +468,7 @@ class SimpleImputer(_BaseImputer):
 
             if invalid_mask.any():
                 missing = np.arange(X.shape[1])[invalid_mask]
-                if self.verbose:
+                if self.verbose != "deprecated" and self.verbose:
                     warnings.warn("Deleting features without "
                                   "observed values: %s" % missing)
                 X = X[:, valid_statistics_indexes]
