@@ -66,7 +66,7 @@ fraction_of_positives, mean_predicted_value, fraction_of_positives_std = \
 
 def plot_calibration_curve(fraction_of_positives, mean_predicted_value,
                            fig_index, with_ci=False):
-    fig = plt.figure(fig_index, figsize=(10, 10))
+    _ = plt.figure(fig_index, figsize=(10, 10))
     ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((3, 1), (2, 0))
 
