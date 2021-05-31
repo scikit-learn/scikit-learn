@@ -421,14 +421,13 @@ def test_calibration_curve():
     assert_almost_equal(prob_true_quantile, [0, 2 / 3])
     assert_almost_equal(prob_pred_quantile, [0.1, 0.8])
 
-    # test that estimated standard deviations are correct
+    # test that bin sizes are correct
     y_true3 = np.array([0, 0, 1, 0, 1, 1])
     y_pred3 = np.array([0., 0.1, 0.2, 0.8, 0.9, 1.])
-    _, _, prob_true_std = \
-        calibration_curve(y_true3, y_pred3, n_bins=2, return_std=True)
-    correct_std = np.sqrt((1/3 * 2/3) / 3)
-    assert len(prob_true_std) == 2
-    assert_almost_equal(prob_true_std, [correct_std, correct_std])
+    _, _, bin_size = \
+        calibration_curve(y_true3, y_pred3, n_bins=2, return_bin_size=True)
+    assert len(bin_size) == 2
+    assert_array_equal(bin_size, [3, 3])
 
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
