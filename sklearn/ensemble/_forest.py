@@ -1253,7 +1253,6 @@ class RandomForestClassifier(ForestClassifier):
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-
     def __init__(self,
                  n_estimators=100, *,
                  criterion="gini",
