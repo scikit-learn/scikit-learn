@@ -93,6 +93,7 @@ def plot_calibration_curve(fraction_of_positives, mean_predicted_value,
 
     plt.tight_layout()
 
+
 # Plot calibration curve without 95% CIs
 plot_calibration_curve(fraction_of_positives, mean_predicted_value, 1)
 
