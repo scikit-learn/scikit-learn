@@ -12,8 +12,8 @@ to find a projection of the data that makes them linearly separable while it is
 not the case with
 :class:`~sklearn.decomposition.PCA`.
 
-On the other hand, we show the limitation of inverting this this projection
-that is only an approximation with :class:`~sklearn.decomposition.KernelPCA`
+On the other hand, we show that inverting this projection is an
+approximation with  :class:`~sklearn.decomposition.KernelPCA`,
 while being exact with :class:`~sklearn.decomposition.PCA`.
 
 Finally, we show that this limitation can be useful in some applications such
@@ -66,7 +66,7 @@ _ = axs[1].set_title("Testing data")
 # kernel.
 from sklearn.decomposition import PCA, KernelPCA
 
-pca = PCA(n_components=None)
+pca = PCA(n_components=2)
 kernel_pca = KernelPCA(
     n_components=None, kernel="rbf", gamma=10, fit_inverse_transform=True,
     alpha=0.1)
@@ -108,7 +108,7 @@ fig.subplots_adjust(hspace=0.4)
 # the data being two concentric circles centered in zero, the variance of the
 # original data was already maximized. However, we can see that the data have
 # been rotated. As a conclusion, we see that such a projection would not help
-# if define a linear classifier to distinguish samples from both classes.
+# define a linear classifier to distinguish samples from both classes.
 #
 # Using a kernel allows to make a non-linear projection. Here, by using an RBF
 # kernel, we expect that the projection to unfold the dataset but keeping that
@@ -177,10 +177,12 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 X, y = fetch_openml(data_id=41082, as_frame=False, return_X_y=True)
-X = MinMaxScaler().fit_transform(X)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, random_state=0, train_size=1_000, test_size=100
 )
+min_max_scaler = MinMaxScaler()
+X_train = min_max_scaler.fit_transform(X_train)
+X_test = min_max_scaler.transform(X_test)
 
 rng = np.random.RandomState(0)
 noise = rng.normal(scale=0.25, size=X_test.shape)
