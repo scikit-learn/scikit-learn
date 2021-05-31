@@ -456,7 +456,7 @@ def test_check_array_pandas_dtype_casting():
     # check that we handle pandas dtypes in a semi-reasonable way
     # this is actually tricky because we can't really know that this
     # should be integer ahead of converting it.
-    cat_df = pd.DataFrame([pd.Categorical([1, 2, 3])])
+    cat_df = pd.DataFrame({"cat_col": pd.Categorical([1, 2, 3])})
     assert (check_array(cat_df).dtype == np.int64)
     assert (check_array(cat_df, dtype=FLOAT_DTYPES).dtype
             == np.float64)
