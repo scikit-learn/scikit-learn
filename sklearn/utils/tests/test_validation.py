@@ -24,7 +24,7 @@ from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
-from sklearn.utils.fixes import np_version, parse_version
+from sklearn.utils.fixes import parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
@@ -49,7 +49,6 @@ from sklearn.utils.validation import (
     _num_features,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
-from sklearn.utils.fixes import parse_version
 
 import sklearn
 
@@ -345,7 +344,7 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 1.1 when implicit conversation is removed
+# TODO: Check for error in 1.1 when implicit conversion is removed
 @pytest.mark.parametrize("X", [
    [['1', '2'], ['3', '4']],
    np.array([['1', '2'], ['3', '4']], dtype='U'),
@@ -368,14 +367,10 @@ def test_check_array_numeric_warns(X):
    [['11', '12'], ['13', 'xx']],
    np.array([['11', '12'], ['13', 'xx']], dtype='U'),
    np.array([['11', '12'], ['13', 'xx']], dtype='S'),
-   [[b'a', b'b'], [b'c', b'd']],
-   np.array([[b'a', b'b'], [b'c', b'd']], dtype='V1')
+   [[b'a', b'b'], [b'c', b'd']]
 ])
 def test_check_array_dtype_numeric_errors(X):
     """Error when string-ike array can not be converted"""
-    if (np_version < parse_version("1.14")
-            and hasattr(X, "dtype") and X.dtype.kind == "V"):
-        pytest.skip("old numpy would convert V dtype into float silently")
     expected_warn_msg = "Unable to convert array of bytes/strings"
     with pytest.raises(ValueError, match=expected_warn_msg):
         check_array(X, dtype="numeric")
@@ -461,7 +456,7 @@ def test_check_array_pandas_dtype_casting():
     # check that we handle pandas dtypes in a semi-reasonable way
     # this is actually tricky because we can't really know that this
     # should be integer ahead of converting it.
-    cat_df = pd.DataFrame([pd.Categorical([1, 2, 3])])
+    cat_df = pd.DataFrame({"cat_col": pd.Categorical([1, 2, 3])})
     assert (check_array(cat_df).dtype == np.int64)
     assert (check_array(cat_df, dtype=FLOAT_DTYPES).dtype
             == np.float64)

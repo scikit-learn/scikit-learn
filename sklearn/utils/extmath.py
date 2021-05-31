@@ -21,7 +21,6 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from .fixes import np_version, parse_version
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from .validation import _deprecate_positional_args
 
 
 def squared_norm(x):
@@ -116,7 +115,6 @@ def density(w, **kwargs):
     return d
 
 
-@_deprecate_positional_args
 def safe_sparse_dot(a, b, *, dense_output=False):
     """Dot product that handle the sparse matrix case correctly.
 
@@ -158,7 +156,6 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     return ret
 
 
-@_deprecate_positional_args
 def randomized_range_finder(A, *, size, n_iter,
                             power_iteration_normalizer='auto',
                             random_state=None):
@@ -243,7 +240,6 @@ def randomized_range_finder(A, *, size, n_iter,
     return Q
 
 
-@_deprecate_positional_args
 def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state='warn'):
@@ -409,7 +405,6 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 
 
-@_deprecate_positional_args
 def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
                       power_iteration_normalizer='auto',
                       selection='module', random_state=None):
@@ -555,7 +550,6 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
     return eigvals, eigvecs
 
 
-@_deprecate_positional_args
 def weighted_mode(a, w, *, axis=0):
     """Returns an array of the weighted modal (most common) value in a.
 
