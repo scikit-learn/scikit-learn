@@ -1923,9 +1923,9 @@ class MiniBatchNMF(NMF):
         return W, H, n_iter, iter_offset, A, B
 
     def partial_fit(self, X, y=None, **params):
-        has_components = not hasattr(self, 'components_')
+        has_components = hasattr(self, 'components_')
 
-        if not has_components:
+        if has_components:
             with config_context(assume_finite=True):
                 X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                         dtype=[np.float64, np.float32],
