@@ -1458,7 +1458,7 @@ def test_max_samples_boundary_regressors(name):
     ms_1_ms = mean_squared_error(ms_1_predict, y_test)
     ms_None_ms = mean_squared_error(ms_None_predict, y_test)
 
-    assert np.all(ms_1_ms == ms_None_ms)
+    assert ms_1_ms == ms_None_ms
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
