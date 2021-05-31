@@ -171,7 +171,7 @@ General Concepts
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `categorical-encoding
-        <https://contrib.scikit-learn.org/categorical-encoding>`_
+        <https://github.com/scikit-learn-contrib/category_encoders>`_
         package for tools related to encoding categorical features.
 
     clone
