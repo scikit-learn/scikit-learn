@@ -21,14 +21,14 @@ The tomography projection operation is a linear transformation. In
 addition to the data-fidelity term corresponding to a linear regression,
 we penalize the L1 norm of the image to account for its sparsity. The
 resulting optimization problem is called the :ref:`lasso`. We use the
-class :class:`sklearn.linear_model.Lasso`, that uses the coordinate descent
+class :class:`~sklearn.linear_model.Lasso`, that uses the coordinate descent
 algorithm. Importantly, this implementation is more computationally efficient
 on a sparse matrix, than the projection operator used here.
 
 The reconstruction with L1 penalization gives a result with zero error
 (all pixels are successfully labeled with 0 or 1), even if noise was
 added to the projections. In comparison, an L2 penalization
-(:class:`sklearn.linear_model.Ridge`) produces a large number of labeling
+(:class:`~sklearn.linear_model.Ridge`) produces a large number of labeling
 errors for the pixels. Important artifacts are observed on the
 reconstructed image, contrary to the L1 penalization. Note in particular
 the circular artifact separating the pixels in the corners, that have
@@ -104,7 +104,7 @@ def generate_synthetic_data():
     mask_outer = (x - l / 2.) ** 2 + (y - l / 2.) ** 2 < (l / 2.) ** 2
     mask = np.zeros((l, l))
     points = l * rs.rand(2, n_pts)
-    mask[(points[0]).astype(np.int), (points[1]).astype(np.int)] = 1
+    mask[(points[0]).astype(int), (points[1]).astype(int)] = 1
     mask = ndimage.gaussian_filter(mask, sigma=l / n_pts)
     res = np.logical_and(mask > mask.mean(), mask_outer)
     return np.logical_xor(res, ndimage.binary_erosion(res))
@@ -114,7 +114,7 @@ def generate_synthetic_data():
 l = 128
 proj_operator = build_projection_operator(l, l // 7)
 data = generate_synthetic_data()
-proj = proj_operator * data.ravel()[:, np.newaxis]
+proj = proj_operator @ data.ravel()[:, np.newaxis]
 proj += 0.15 * np.random.randn(*proj.shape)
 
 # Reconstruction with L2 (Ridge) penalization

@@ -61,6 +61,19 @@ example, when data are collected without an experimental design.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
+Non-Negative Least Squares
+--------------------------
+
+It is possible to constrain all the coefficients to be non-negative, which may
+be useful when they represent some physical or naturally non-negative
+quantities (e.g., frequency counts or prices of goods).
+:class:`LinearRegression` accepts a boolean ``positive``
+parameter: when set to `True` `Non Negative Least Squares
+<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
+
+.. topic:: Examples:
+
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`
 
 Ordinary Least Squares Complexity
 ---------------------------------
@@ -160,13 +173,12 @@ This method has the same order of complexity as
 .. between these
 
 
-Setting the regularization parameter: generalized Cross-Validation
-------------------------------------------------------------------
+Setting the regularization parameter: leave-one-out Cross-Validation
+--------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Generalized Cross-Validation
-(GCV), an efficient form of leave-one-out cross-validation::
+as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -179,7 +191,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
-example `cv=10` for 10-fold cross-validation, rather than Generalized
+example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
 .. topic:: References
@@ -355,7 +367,7 @@ Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2`-norm for regularization.
 The objective function to minimize is:
 
-.. math::  \min_{w} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
+.. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
 
 where :math:`\text{Fro}` indicates the Frobenius norm
 
@@ -997,8 +1009,8 @@ Examples of use cases include:
 * Risk modeling / insurance policy pricing:  number of claim events /
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
-* Predictive maintenance: number of production interruption events per year:
-  Poisson, duration of interruption: Gamma, total interruption time per year
+* Predictive maintenance: number of production interruption events per year
+  (Poisson), duration of interruption (Gamma), total interruption time per year
   (Tweedie / Compound Poisson Gamma).
 
 
@@ -1410,6 +1422,83 @@ Note that this estimator is different from the R implementation of Robust Regres
 (http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least
 squares implementation with weights given to each sample on the basis of how much the residual is
 greater than a certain threshold.
+
+.. _quantile_regression:
+
+Quantile Regression
+===================
+
+Quantile regression estimates the median or other quantiles of :math:`y`
+conditional on :math:`X`, while ordinary least squares (OLS) estimates the
+conditional mean.
+
+As a linear model, the :class:`QuantileRegressor` gives linear predictions
+:math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile, :math:`q \in (0, 1)`.
+The weights or coefficients :math:`w` are then found by the following
+minimization problem:
+
+.. math::
+    \min_{w} {\frac{1}{n_{\text{samples}}}
+    \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}.
+
+This consists of the pinball loss (also known as linear loss),
+see also :class:`~sklearn.metrics.mean_pinball_loss`,
+
+.. math::
+    PB_q(t) = q \max(t, 0) + (1 - q) \max(-t, 0) =
+    \begin{cases}
+        q t, & t > 0, \\
+        0,    & t = 0, \\
+        (1-q) t, & t < 0
+    \end{cases}
+
+and the L1 penalty controlled by parameter ``alpha``, similar to
+:class:`Lasso`.
+
+As the pinball loss is only linear in the residuals, quantile regression is
+much more robust to outliers than squared error based estimation of the mean.
+Somewhat in between is the :class:`HuberRegressor`.
+
+Quantile regression may be useful if one is interested in predicting an
+interval instead of point prediction. Sometimes, prediction intervals are
+calculated based on the assumption that prediction error is distributed
+normally with zero mean and constant variance. Quantile regression provides
+sensible prediction intervals even for errors with non-constant (but
+predictable) variance or non-normal distribution.
+
+.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_002.png
+   :target: ../auto_examples/linear_model/plot_quantile_regression.html
+   :align: center
+   :scale: 50%
+
+Based on minimizing the pinball loss, conditional quantiles can also be
+estimated by models other than linear models. For example,
+:class:`~sklearn.ensemble.GradientBoostingRegressor` can predict conditional
+quantiles if its parameter ``loss`` is set to ``"quantile"`` and parameter
+``alpha`` is set to the quantile that should be predicted. See the example in
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`.
+
+Most implementations of quantile regression are based on linear programming
+problem. The current implementation is based on
+:func:`scipy.optimize.linprog`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_quantile_regression.py`
+
+.. topic:: References:
+
+  * Koenker, R., & Bassett Jr, G. (1978). `Regression quantiles.
+    <https://gib.people.uic.edu/RQ.pdf>`_
+    Econometrica: journal of the Econometric Society, 33-50.
+
+  * Portnoy, S., & Koenker, R. (1997). The Gaussian hare and the Laplacian
+    tortoise: computability of squared-error versus absolute-error estimators.
+    Statistical Science, 12, 279-300. https://doi.org/10.1214/ss/1030037960
+
+  * Koenker, R. (2005). Quantile Regression.
+    Cambridge University Press. https://doi.org/10.1017/CBO9780511754098
+
 
 .. _polynomial_regression:
 

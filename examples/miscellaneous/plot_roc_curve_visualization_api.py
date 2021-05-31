@@ -9,7 +9,7 @@ how to use the visualization API by comparing ROC curves.
 """
 print(__doc__)
 
-##############################################################################
+# %%
 # Load Data and Train a SVC
 # -------------------------
 # First, we load the wine dataset and convert it to a binary classification
@@ -28,7 +28,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 svc = SVC(random_state=42)
 svc.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Plotting the ROC Curve
 # ----------------------
 # Next, we plot the ROC curve with a single call to
@@ -38,7 +38,7 @@ svc.fit(X_train, y_train)
 svc_disp = plot_roc_curve(svc, X_test, y_test)
 plt.show()
 
-##############################################################################
+# %%
 # Training a Random Forest and Plotting the ROC Curve
 # --------------------------------------------------------
 # We train a random forest classifier and create a plot comparing it to the SVC
