@@ -787,7 +787,7 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
 
 def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
-                      strategy='uniform'):
+                      strategy='uniform', return_std=False):
     """Compute true and predicted probabilities for a calibration curve.
 
     The method assumes the inputs come from a binary classifier, and
@@ -824,6 +824,12 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
         quantile
             The bins have the same number of samples and depend on `y_prob`.
 
+    return_std : bool, default=False
+        Whether or not to return the standard deviation of the estimated
+        proportion of samples whose class is the positive class, in each bin.
+        These estimates can be used to create confidence intervals, which may
+        be important when some bins contain few samples (say, < 100).
+
     Returns
     -------
     prob_true : ndarray of shape (n_bins,) or smaller
@@ -832,6 +838,10 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
 
     prob_pred : ndarray of shape (n_bins,) or smaller
         The mean predicted probability in each bin.
+
+    prob_true_std : ndarray of shape (n_bins,) or smaller
+        The standard deviation of the estimated proportion of positives in each
+        bin. Only returned when `return_std` is True.
 
     References
     ----------
@@ -888,4 +898,9 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
     prob_true = bin_true[nonzero] / bin_total[nonzero]
     prob_pred = bin_sums[nonzero] / bin_total[nonzero]
 
-    return prob_true, prob_pred
+    if return_std:
+        prob_true_var = prob_true*(1 - prob_true) / bin_total[nonzero]
+        prob_true_std = np.sqrt(prob_true_var)
+        return prob_true, prob_pred, prob_true_std
+    else:
+        return prob_true, prob_pred

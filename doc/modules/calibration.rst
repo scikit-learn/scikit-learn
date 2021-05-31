@@ -84,6 +84,16 @@ typical for maximum-margin methods (compare Niculescu-Mizil and Caruana [1]_),
 which focus on difficult to classify samples that are close to the decision
 boundary (the support vectors).
 
+Confidence intervals for the fraction of positives in each bin can be drawn
+using standard deviation estimates by setting `return_std=True` in
+:func:`calibration_curve`. The standard deviation of the fraction of positives
+for each bin is estimated with the formula below, where :math:`\hat{p}` is the
+fraction of positives in the bin, and :math:`n` is the number of samples in the
+bin:
+
+.. math::
+       \sqrt{ \frac{ \hat{p} (1 - \hat{p}) }{ n } }
+
 Calibrating a classifier
 ------------------------
 
@@ -227,6 +237,7 @@ one, a postprocessing is performed to normalize them.
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
+   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve_with_ci.py`
    * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
    * :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
    * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
