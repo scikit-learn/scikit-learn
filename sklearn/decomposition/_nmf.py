@@ -1827,8 +1827,7 @@ class MiniBatchNMF(NMF):
                                 dtype=[np.float64, np.float32])
 
         with config_context(assume_finite=True):
-            W, H, n_iter, iter_offset, A, B = self._fit_transform(X, W=W,
-                                                                    H=H)
+            W, H, n_iter, iter_offset, A, B = self._fit_transform(X, W=W, H=H)
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn("Maximum number of iterations %d reached. Increase "
