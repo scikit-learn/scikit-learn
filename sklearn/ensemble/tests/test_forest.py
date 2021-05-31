@@ -50,6 +50,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 
+from sklearn.metrics import mean_squared_error
+
 from sklearn.tree._classes import SPARSE_SPLITTERS
 
 
@@ -1439,6 +1441,42 @@ def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
     with pytest.raises(exc_type, match=exc_msg):
         est.fit(X, y)
+
+
+@pytest.mark.parametrize('name', FOREST_REGRESSORS)
+def test_max_samples_boundary_regressors(name):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_reg, y_reg, train_size=0.7, test_size=0.3, random_state=0)
+
+    ms_1_predict = FOREST_REGRESSORS[name](
+        max_samples=1.0, random_state=0).fit(
+        X_train, y_train).predict(X_test)
+    ms_None_predict = FOREST_REGRESSORS[name](
+        max_samples=None, random_state=0).fit(
+        X_train, y_train).predict(X_test)
+
+    ms_1_ms = mean_squared_error(ms_1_predict, y_test)
+    ms_None_ms = mean_squared_error(ms_None_predict, y_test)
+
+    assert np.all(ms_1_ms == ms_None_ms)
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_max_samples_boundary_classifiers(name):
+    rng = np.random.RandomState(1)
+
+    X_train = rng.randn(10000, 2)
+    y_train = rng.randn(10000) > 0
+    X_test = rng.randn(1000, 2)
+
+    ms_1_proba = FOREST_CLASSIFIERS[name](
+        max_samples=1.0, random_state=0).fit(
+        X_train, y_train).predict_proba(X_test)
+    ms_None_proba = FOREST_CLASSIFIERS[name](
+        max_samples=None, random_state=0).fit(
+        X_train, y_train).predict_proba(X_test)
+
+    assert np.all(ms_1_proba == ms_None_proba)
 
 
 def test_forest_y_sparse():
