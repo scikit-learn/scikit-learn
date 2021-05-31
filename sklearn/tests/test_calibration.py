@@ -428,7 +428,7 @@ def test_calibration_curve():
         calibration_curve(y_true3, y_pred3, n_bins=2, return_std=True)
     correct_std = np.sqrt((1/3 * 2/3) / 3)
     assert len(prob_true_std) == 2
-    assert_allclose(prob_true_std, [correct_std, correct_std])
+    assert_almost_equal(prob_true_std, [correct_std, correct_std])
 
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
