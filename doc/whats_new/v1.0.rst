@@ -344,6 +344,10 @@ Changelog
   is now faster. This is especially noticeable on large sparse input.
   :pr:`19734` by :user:`Fred Robinson <frrad>`.
 
+- |Enhancement| `fit` method preserves dtype for numpy.float32 in
+  :class:`Lars`, :class:`LassoLars`, :class:`LassoLars`, :class:`LarsCV` and
+  :class:`LassoLarsCV`. :pr:`20155` by :user:`Takeshi Oura <takoika>`.
+
 :mod:`sklearn.manifold`
 .......................
 
