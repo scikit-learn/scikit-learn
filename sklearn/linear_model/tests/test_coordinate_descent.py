@@ -392,8 +392,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     _scale_alpha_inplace(pipeline[1], X_train.shape[0])
 
     # The following fit calls might produce two different warnings:
-    # - UserWarning:Coordinate descent with l1_reg=0 may lead
-    #               to unexpected results and is discouraged.
+    # - UserWarning: Coordinate descent with l1_reg=0 may lead
+    #   to unexpected results and is discouraged.
     # - ConvergenceWarning
     # To catch both, we cannot use ignore_warnings or pytest.warns
     # because both only work with one type of warning.
@@ -1286,7 +1286,6 @@ def test_warm_start_multitask_lasso():
 @pytest.mark.parametrize('klass, n_classes, kwargs',
                          [(Lasso, 1, dict(precompute=True)),
                           (Lasso, 1, dict(precompute=False)),
-                          (MultiTaskLasso, 2, dict()),
                           (MultiTaskLasso, 2, dict())])
 def test_enet_coordinate_descent(klass, n_classes, kwargs):
     """Test that a warning is issued if model does not converge"""
