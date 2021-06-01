@@ -20,15 +20,12 @@ from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
-                   MetaEstimatorMixin, is_classifier)
-
-from .metrics._plot.base import _check_classifier_response_method
+                   MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
     column_or_1d,
     deprecated,
     indexable,
-    check_matplotlib_support,
 )
 
 from .utils.multiclass import check_classification_targets
