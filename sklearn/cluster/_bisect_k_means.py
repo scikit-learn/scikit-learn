@@ -12,7 +12,6 @@ from ._kmeans import KMeans
 from ._kmeans import _kmeans_single_elkan
 from ._kmeans import _kmeans_single_lloyd
 from ._kmeans import _labels_inertia_threadpool_limit
-from ._kmeans import _kmeans_plusplus
 
 from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
@@ -100,6 +99,19 @@ class BisectKMeans(KMeans):
         For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
         might change in the future for a better heuristic.
 
+    bisect_strategy : {"biggest_sse", "child_biggest_sse"},
+        default="biggest_sse"
+        Defines how should bisection by performed.
+        - "biggest_sse" means that Bisect K-Means will always check
+        all calculated cluster for cluster with biggest SSE
+        (Sum of squared errors) and bisect it. That way calculated clusters
+        will be more balanced
+        - "child_biggest_sse" means that Bisect K-Means will always check
+        SSE of only clusters obtained from previous iteration for bisection.
+        Calculated clusters will be less balanced - consecutive clusters
+        will be usually smaller than previous
+
+
     Attributes
     ----------
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
@@ -142,12 +154,15 @@ class BisectKMeans(KMeans):
     """
     def __init__(self,  n_clusters=8, init='k-means++', n_init=10,
                  random_state=None, max_iter=30, verbose=0,
-                 tol=1e-4, copy_x=True, algorithm='auto'):
+                 tol=1e-4, copy_x=True, algorithm='auto',
+                 bisect_strategy='biggest_sse'):
 
         super().__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
             verbose=verbose, random_state=random_state, tol=tol,
             n_init=n_init, copy_x=copy_x, algorithm=algorithm)
+
+        self.bisect_strategy = bisect_strategy
 
     def _compute_bisect_errors(self, X, centers, labels):
         """
@@ -187,6 +202,15 @@ class BisectKMeans(KMeans):
     def _check_params(self, X):
         super()._check_params(X)
 
+        # bisect_strategy
+        if self.bisect_strategy not in \
+                ["biggest_sse", "child_biggest_sse"]:
+            raise ValueError(f"Bisect Strategy must be 'biggest_sse' or "
+                             f"'child_biggest_sse' got "
+                             f"{self.bisect_strategy} instead")
+
+        # Regular K-Means should do less computations when there are only
+        # less than 3 clusters
         if self.n_clusters < 3:
             warnings.warn("BisectKMeans might be inefficient for n_cluster "
                           "smaller than 3  "
@@ -296,6 +320,68 @@ class BisectKMeans(KMeans):
             init = check_array(init, dtype=X.dtype, copy=True, order='C')
             self._validate_center_shape(X, init)
 
+        if self._algorithm == "full":
+            self._kmeans_single = _kmeans_single_lloyd
+            self._check_mkl_vcomp(X, X.shape[0])
+        else:
+            self._kmeans_single = _kmeans_single_elkan
+
+        if self.bisect_strategy == "child_biggest_sse":
+            _bisect_kmeans = self._bisect_by_biggest_child_sse
+        else:
+            # "biggest_sse"
+            _bisect_kmeans = self._bisect_by_biggest_sse
+
+
+        if self.verbose:
+            print("Running Bisecting K-Means with parameters:")
+            print(f"-> number of clusters: {self.n_clusters}")
+            print(f"-> number of centroid initializations: {self.n_init}")
+            print("-> relative tolerance: {:.4e} \n".format(self.tol))
+            print(f"-> bisect strategy: {self.bisect_strategy}")
+
+        x_squared_norms = row_norms(X, squared=True)
+
+        self.cluster_centers_ = _bisect_kmeans(X, init, random_state,
+                                               sample_weight)
+
+        # Since all clusters are calculated - label each data to valid center
+        self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
+            X, sample_weight, x_squared_norms,
+            self.cluster_centers_, n_threads=self._n_threads)
+
+        return self
+
+    def _bisect_by_biggest_child_sse(self, X, init,
+                                     random_state, sample_weight):
+        """ Performs Bisecting K-Means which splits always cluster with
+         biggest SSE only from recent two clusters obtained
+         from previous split.
+
+            .. note:: All of passed parameters must be pre-calculated
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training instances to cluster.
+
+        init : {'k-means++', 'random'}, callable or ndarray of shape \
+                (n_clusters, n_features)
+                Method for initialization.
+
+        random_state : int, RandomState instance or None, default=None
+            Determines random number generation for centroid initialization.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X.
+
+
+        Returns
+        -------
+        centers : ndarray of shape (n_clusters, n_features)
+            The cluster centers.
+        """
+
         # Subtract of mean of X for more accurate distance computations
         if not sp.issparse(X):
             X_mean = X.mean(axis=0)
@@ -304,22 +390,10 @@ class BisectKMeans(KMeans):
             if hasattr(init, '__array__'):
                 init -= X_mean
 
-        if self._algorithm == "full":
-            self._kmeans_single = _kmeans_single_lloyd
-            self._check_mkl_vcomp(X, X.shape[0])
-        else:
-            self._kmeans_single = _kmeans_single_elkan
-
         data_left = X
         weights_left = sample_weight
 
         centroids = []
-
-        if self.verbose:
-            print("Running Bisecting K-Means with parameters:")
-            print(f"-> number of clusters: {self.n_clusters}")
-            print(f"-> number of centroid initializations: {self.n_init}")
-            print("-> relative tolerance: {:.4e} \n".format(self.tol))
 
         init_org = init
 
@@ -354,8 +428,8 @@ class BisectKMeans(KMeans):
                 print(f"Centroid Found: {centers[lower_sse_index]}")
 
             if len(centroids) + 1 == self.n_clusters:
-                # Desired number of cluster centers is reached so centroid with
-                # higher SSE would not be split further
+                # Desired number of cluster centers is reached so centroid
+                # with higher SSE would not be split further
                 centroids.append(centers[higher_sse_index])
 
                 if self.verbose:
@@ -368,19 +442,125 @@ class BisectKMeans(KMeans):
             data_left = data_left[indexes_left]
             weights_left = weights_left[indexes_left]
 
-        x_squared_norms = row_norms(X, squared=True)
-
-        _centers = np.asarray(centroids)
+        centers = np.asarray(centroids)
 
         # Restore X
         if not sp.issparse(X):
             X += X_mean
 
-        self.cluster_centers_, self.n_iter_ = _centers, n_iter + 1
+        self.n_iter_ = n_iter + 1
 
-        # Since all clusters are calculated - label each data to valid center
-        self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
-            X, sample_weight, x_squared_norms,
-            _centers, n_threads=self._n_threads)
+        return centers
 
-        return self
+    def _bisect_by_biggest_sse(self, X, init, random_state, sample_weight):
+        """ Performs Bisecting K-Means, which splits always cluster with
+         biggest SSE from all calculated
+
+            .. note:: All of passed parameters must be pre-calculated
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training instances to cluster.
+
+        init : {'k-means++', 'random'}, callable or ndarray of shape \
+                (n_clusters, n_features)
+                Method for initialization.
+
+        random_state : int, RandomState instance or None, default=None
+            Determines random number generation for centroid initialization.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X.
+
+
+        Returns
+        -------
+        centers : ndarray of shape (n_clusters, n_features)
+            The cluster centers.
+        """
+        # Subtract of mean of X for more accurate distance computations
+        if not sp.issparse(X):
+            X_mean = X.mean(axis=0)
+            X -= X_mean
+
+            if hasattr(init, '__array__'):
+                init -= X_mean
+
+        centers_dict = {
+            0: {'data': X, 'weights': sample_weight, 'sse': None,
+                'centroid': None}
+        }
+
+        init_org = init
+        last_center_id = 0
+
+        for n_iter in range(self.n_clusters - 1):
+
+            biggest, _ = max(centers_dict.items(), key=lambda x: x[1]['sse'])
+
+            # If init array is provided -
+            # Take only part of init that is dedicated for that part of bisect
+            if hasattr(init, '__array__'):
+                init = init_org[n_iter: n_iter + 2].copy()
+                # ^ Not sure if that assigning of init points is
+                # here a good idea?
+
+            # Perform Bisection
+            centers, labels = self._bisect(centers_dict[biggest]['data'],
+                                           init,
+                                           centers_dict[biggest]['weights'],
+                                           random_state)
+
+            # Check SSE (Sum of Squared Errors) of each of computed centroids.
+            # SSE is calculated with distances between data points
+            # and assigned centroids
+            errors = self._compute_bisect_errors(X, centers, labels)
+
+            for key, error in errors.items():
+                errors[key] = error.sum(axis=0)
+
+            lower_sse_index = 0 if errors[0] < errors[1] else 1
+            higher_sse_index = 1 if lower_sse_index == 0 else 0
+
+            higher_labels = (labels == higher_sse_index)
+            lower_labels = (labels == lower_sse_index)
+
+            # Add both centroids to dict
+            centers_dict[last_center_id + 1] = {
+                'data': centers_dict[biggest]['data'][lower_labels],
+                'weights': centers_dict[biggest]['weights'][lower_labels],
+                'sse': errors[lower_sse_index],
+                'centroid': centers[lower_sse_index]
+            }
+
+            centers_dict[last_center_id + 2] = {
+                'data': centers_dict[biggest]['data'][higher_labels],
+                'weights': centers_dict[biggest]['weights'][higher_labels],
+                'sse': errors[higher_sse_index],
+                'centroid': centers[higher_sse_index]
+            }
+
+            if self.verbose:
+                print(f"Centroid Found: {centers[lower_sse_index]}")
+                print(f"Centroid Found: {centers[higher_sse_index]}")
+
+            last_center_id += 2
+
+            # Delete split cluster from dict
+            del centers_dict[biggest]
+
+        # Extract calculated centroids to array
+        centers = [center[1]['centroid'] for center in centers_dict.items()]
+
+        centers = np.asarray(centers)
+
+        # Restore Original Data
+        if not sp.issparse(X):
+            X += X_mean
+            centers += X_mean
+
+        self.n_iter_ = n_iter + 1
+
+        return centers
+
