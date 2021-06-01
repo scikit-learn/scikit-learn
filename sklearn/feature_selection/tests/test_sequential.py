@@ -68,8 +68,10 @@ def test_stopping_criterion(direction):
     selected_X = sfs.transform(X)
     candidate_features = list(
         set(range(X.shape[1])) - set(sfs.get_support(indices=True)))
-    added_X = np.hstack(
-        [selected_X, (X[:, np.random.choice(candidate_features)])[:, np.newaxis]])
+    added_X = np.hstack([
+        selected_X,
+        (X[:, np.random.choice(candidate_features)])[:, np.newaxis],
+    ])
 
     sfs_cv_score = cross_val_score(
         LinearRegression(), selected_X, y, cv=2).mean()
