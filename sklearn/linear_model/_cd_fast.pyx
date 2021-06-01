@@ -636,7 +636,7 @@ def enet_coordinate_descent_multi_task(
         np.ndarray[floating, ndim=2, mode='fortran'] Y,  # hopefully with skl 1.0
         int max_iter, floating tol, object rng, bint random=0):
     """Cython version of the coordinate descent algorithm
-        for Elastic-Net mult-task regression
+        for Elastic-Net multi-task regression
 
         We minimize
 
@@ -819,7 +819,7 @@ def enet_coordinate_descent_multi_task(
                 gap += l1_reg * l21_norm - const * ry_sum + \
                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
         else:
