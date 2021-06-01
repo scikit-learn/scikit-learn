@@ -476,12 +476,23 @@ def _lars_path_solver(
 
     max_features = min(max_iter, n_features)
 
-    if return_path:
-        coefs = np.zeros((max_features + 1, n_features))
-        alphas = np.zeros(max_features + 1)
+    dtypes = set(a.dtype for a in (X, y, Xy, Gram) if a is not None)
+    if len(dtypes) == 1:
+        # use the precision level of input data if it is consistent
+        return_dtype = next(iter(dtypes))
     else:
-        coef, prev_coef = np.zeros(n_features), np.zeros(n_features)
-        alpha, prev_alpha = np.array([0.]), np.array([0.])  # better ideas?
+        # fallback to double precision otherwise
+        return_dtype = np.float64
+
+    if return_path:
+        coefs = np.zeros((max_features + 1, n_features), dtype=return_dtype)
+        alphas = np.zeros(max_features + 1, dtype=return_dtype)
+    else:
+        coef, prev_coef = (np.zeros(n_features, dtype=return_dtype),
+                           np.zeros(n_features, dtype=return_dtype))
+        alpha, prev_alpha = (np.array([0.], dtype=return_dtype),
+                             np.array([0.], dtype=return_dtype))
+        # above better ideas?
 
     n_iter, n_active = 0, 0
     active, indices = list(), np.arange(n_features)
@@ -948,7 +959,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
         self.alphas_ = []
         self.n_iter_ = []
-        self.coef_ = np.empty((n_targets, n_features))
+        self.coef_ = np.empty((n_targets, n_features), dtype=X.dtype)
 
         if fit_path:
             self.active_ = []
