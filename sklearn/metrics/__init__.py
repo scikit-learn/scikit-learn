@@ -91,7 +91,6 @@ from ._plot.precision_recall_curve import PrecisionRecallDisplay
 from ._plot.confusion_matrix import plot_confusion_matrix
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
 
-from ._plot.calibration_plot import CalibrationDisplay
 
 __all__ = [
     'accuracy_score',
@@ -100,7 +99,6 @@ __all__ = [
     'auc',
     'average_precision_score',
     'balanced_accuracy_score',
-    'CalibrationDisplay',
     'calinski_harabasz_score',
     'check_scoring',
     'classification_report',
