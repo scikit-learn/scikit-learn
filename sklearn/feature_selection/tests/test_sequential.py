@@ -70,7 +70,7 @@ def test_stopping_criterion(direction):
         sfs.transform(X),
         y,
         cv=2).mean()
-    def_cv_score = cross_val_score(LinearRegression(), X, y, cv=2).mean()
+    all_features_cv_score = cross_val_score(LinearRegression(), X, y, cv=2).mean()
 
     if direction == 'forward':
         assert (sfs_cv_score - def_cv_score) <= tol
