@@ -27,7 +27,7 @@
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
 .. |PythonMinVersion| replace:: 3.7
-.. |NumPyMinVersion| replace:: 1.14.5
+.. |NumPyMinVersion| replace:: 1.14.6
 .. |SciPyMinVersion| replace:: 1.1.0
 .. |JoblibMinVersion| replace:: 0.11
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
