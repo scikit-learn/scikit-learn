@@ -123,6 +123,9 @@ Changelog
   - For :class:`tree.ExtraTreeRegressor`, `criterion="mae"` is deprecated,
     use `"absolute_error"` instead.
 
+- |API| `np.matrix` usage is deprecated in 1.0 and will raise a `TypeError` in
+  1.2. :pr:`20165` by `Thomas Fan`_.
+
 :mod:`sklearn.base`
 ...................
 
@@ -511,6 +514,13 @@ Changelog
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.validation`
+.........................
+
+- |Fix| Support for `np.matrix` is deprecated in
+  :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
+  1.2. :pr:`20165` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
