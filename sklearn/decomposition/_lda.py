@@ -187,7 +187,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         called tau_0.
 
     max_iter : int, default=10
-        The maximum number of iterations.
+        The maximum number of passes over the training data (aka epochs).
+        It only impacts the behavior in the :meth:`fit` method, and not the
+        :meth:`partial_fit` method.
 
     batch_size : int, default=128
         Number of documents to use in each EM iteration. Only used in online
