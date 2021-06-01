@@ -1385,6 +1385,11 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         if  ``use_idf`` is True.
 
         .. versionadded:: 0.20
+    
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
