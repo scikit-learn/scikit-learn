@@ -81,7 +81,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     transformer_ : object
         Transformer used in ``fit`` and ``predict``.
-    
+
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying regressor exposes such an attribute when fit.
@@ -243,7 +243,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         return pred_trans
 
     def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+        return {'poor_score': True}#, 'no_validation': True}
 
     @property
     def n_features_in_(self):
