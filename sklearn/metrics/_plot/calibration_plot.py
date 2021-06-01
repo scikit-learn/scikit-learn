@@ -1,7 +1,7 @@
 from ...base import is_classifier
 from ...calibration import calibration_curve
 from ...utils import check_matplotlib_support
-from base import _check_classifier_response_method
+from .base import _check_classifier_response_method
 
 
 class CalibrationDisplay:
