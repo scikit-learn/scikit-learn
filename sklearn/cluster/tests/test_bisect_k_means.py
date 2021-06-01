@@ -67,5 +67,3 @@ def test_bisect_strategy():
     bisect_means.fit(X)
     expected_centers = [[1, 2], [10, 8], [10, 2]]
     assert_array_equal(expected_centers, bisect_means.cluster_centers_)
-
-

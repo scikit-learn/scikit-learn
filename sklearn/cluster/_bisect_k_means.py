@@ -332,7 +332,6 @@ class BisectKMeans(KMeans):
             # "biggest_sse"
             _bisect_kmeans = self._bisect_by_biggest_sse
 
-
         if self.verbose:
             print("Running Bisecting K-Means with parameters:")
             print(f"-> number of clusters: {self.n_clusters}")
@@ -563,4 +562,3 @@ class BisectKMeans(KMeans):
         self.n_iter_ = n_iter + 1
 
         return centers
-
