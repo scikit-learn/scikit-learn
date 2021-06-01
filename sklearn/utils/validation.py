@@ -546,7 +546,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     if isinstance(array, np.matrix):
         warnings.warn(
             "np.matrix usage is deprecated in 1.0 and will raise a TypeError "
-            "in 1.2. Please convert to a numpy array with np.asarray.",
+            "in 1.2. Please convert to a numpy array with np.asarray. For "
+            "more information see: "
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
             FutureWarning)
 
     # store reference to original array to check if copy is needed when
