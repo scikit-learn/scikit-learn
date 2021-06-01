@@ -230,11 +230,11 @@ problem solved is a PCA problem (dictionary learning) with an
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_{\text{F}}^2+\alpha||V||_{1,1} \\
+                ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
                 \text{subject to } & ||U_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{components}
 
-:math:`||.||_{\text{F}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
+:math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
 stands for the entry-wise matrix norm which is the sum of the absolute values
 of all the entries in the matrix.
 The sparsity-inducing :math:`||.||_{1,1}` matrix norm also prevents learning
@@ -512,7 +512,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_{\text{F}}^2+\alpha||U||_{1,1} \\
+                ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
                 \text{subject to } & ||V_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
@@ -527,7 +527,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. centered:: |pca_img2| |dict_img2|
 
-:math:`||.||_{\text{F}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
+:math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
 stands for the entry-wise matrix norm which is the sum of the absolute values
 of all the entries in the matrix.
 After using such a procedure to fit the dictionary, the transform is simply a
