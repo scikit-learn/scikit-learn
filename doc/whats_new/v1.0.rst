@@ -164,7 +164,8 @@ Changelog
   :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
-  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+  memory-mapped datasets.
+  :pr:`19883` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
@@ -274,8 +275,8 @@ Changelog
 
 - |Feature| :func:`feature_selection.r_regression` computes Pearson's R
   correlation coefficients between the features and the target.
-  :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
-  and `Julien Jerphanion <jjerphan>`.
+  :pr:`17169` by :user:`Dmytro Lituiev <DSLituiev>`
+  and :user:`Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -407,8 +408,8 @@ Changelog
   :class:`model_selection.StratifiedKFold` and `model_selection.GroupKFold`,
   providing an ability to split data preserving the distribution of classes in
   each split while keeping each group within a single split.
-  :pr:`18649` by `Leandro Hermida <hermidalc>` and
-  `Rodion Martynov <marrodion>`.
+  :pr:`18649` by :user:`Leandro Hermida <hermidalc>` and
+  :user:`Rodion Martynov <marrodion>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -436,7 +437,7 @@ Changelog
   :user:`Julien Jerphanion <jjerphan>`.
 
 - |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
-  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+  memory-mapped datasets. :pr:`19883` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
