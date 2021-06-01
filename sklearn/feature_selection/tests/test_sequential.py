@@ -50,7 +50,7 @@ def test_n_features_to_select(direction, n_features_to_select):
 def test_stopping_criterion(direction):
     # Make sure n_features_to_select is respected
 
-    X, y = make_regression(n_features=50, n_infomative=10, random_state=0)
+    X, y = make_regression(n_features=50, n_informative=10, random_state=0)
 
     tol = 1e-3
     n_features_to_select = X.shape[1] - 1
