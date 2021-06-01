@@ -65,17 +65,22 @@ def test_stopping_criterion(direction):
     assert sfs.n_features_to_select_ <= n_features_to_select
     assert sfs.transform(X).shape[1] <= n_features_to_select
 
+    selected_X = sfs.transform(X)
+    candidate_features = list(
+        set(range(X.shape[1])) - set(sfs.get_support(indices=True)))
+    added_X = np.hstack(
+        [selected_X, (X[:, np.random.choice(candidate_features)])[:, np.newaxis]])
+
     sfs_cv_score = cross_val_score(
-        LinearRegression(),
-        sfs.transform(X),
-        y,
-        cv=2).mean()
-    all_features_cv_score = cross_val_score(LinearRegression(), X, y, cv=2).mean()
+        LinearRegression(), selected_X, y, cv=2).mean()
+    added_cv_score = cross_val_score(
+        LinearRegression(), added_X, y, cv=2).mean()
 
     if direction == 'forward':
-        assert (sfs_cv_score - all_features_cv_score) <= tol
+        assert (sfs_cv_score - added_cv_score) <= tol
+
     else:
-        assert (all_features_cv_score - sfs_cv_score) <= tol
+        assert (added_cv_score - sfs_cv_score) <= tol
 
 
 @pytest.mark.parametrize('direction', ('forward', 'backward'))
