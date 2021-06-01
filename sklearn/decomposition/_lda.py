@@ -29,7 +29,7 @@ EPS = np.finfo(float).eps
 
 
 def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
-                             max_iters,
+                             max_doc_update_iter,
                              mean_change_tol, cal_sstats, random_state):
     """E-step: update document-topic distribution.
 
@@ -45,7 +45,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     doc_topic_prior : float
         Prior of document topic distribution `theta`.
 
-    max_iters : int
+    max_doc_update_iter : int
         Max number of iterations for updating document topic distribution in
         the E-step.
 
@@ -105,7 +105,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
-        for _ in range(0, max_iters):
+        for _ in range(0, max_doc_update_iter):
             last_d = doc_topic_d
 
             # The optimal phi_{dwk} is proportional to
@@ -187,7 +187,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         called tau_0.
 
     max_iter : int, default=10
-        The maximum number of iterations.
+        The maximum number of passes over the training data (aka epochs).
+        It only impacts the behavior in the :meth:`fit` method, and not the
+        :meth:`partial_fit` method.
 
     batch_size : int, default=128
         Number of documents to use in each EM iteration. Only used in online
