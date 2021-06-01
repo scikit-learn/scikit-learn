@@ -1457,7 +1457,7 @@ def test_max_samples_boundary_regressors(name):
     ms_1_ms = mean_squared_error(ms_1_predict, y_test)
     ms_None_ms = mean_squared_error(ms_None_predict, y_test)
 
-    assert ms_1_ms == ms_None_ms
+    assert ms_1_ms == pytest.approx(ms_None_ms)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
@@ -1474,7 +1474,7 @@ def test_max_samples_boundary_classifiers(name):
     ms_None_model = FOREST_CLASSIFIERS[name](max_samples=None, random_state=0)
     ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
 
-    assert np.all(ms_1_proba == ms_None_proba)
+    assert np.testing.assert_allclose(ms_1_proba, ms_None_proba)
 
 
 def test_forest_y_sparse():
