@@ -258,7 +258,9 @@ Changelog
   :pr:`19564` by `Thomas Fan`_.
 
 - |Fix| Fixed the range of the argument max_samples to be (0.0, 1.0]
-  in :class:`ensemble.BaseForest` and the class that inherits it.
+  in :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor` and all other
+  random forest based estimators.
   :pr:`20159` by :user:`murata-yu`.
 
 :mod:`sklearn.feature_extraction`
