@@ -58,7 +58,7 @@ def test_stopping_criterion(direction):
     sfs = SequentialFeatureSelector(LinearRegression(),
                                     n_features_to_select=n_features_to_select,
                                     tol=tol,
-                                    direction='forward', cv=2)
+                                    direction=direction, cv=2)
     sfs.fit(X, y)
 
     assert sfs.get_support(indices=True).shape[0] <= n_features_to_select
@@ -73,9 +73,9 @@ def test_stopping_criterion(direction):
     all_features_cv_score = cross_val_score(LinearRegression(), X, y, cv=2).mean()
 
     if direction == 'forward':
-        assert (sfs_cv_score - def_cv_score) <= tol
+        assert (sfs_cv_score - all_features_cv_score) <= tol
     else:
-        assert (def_cv_score - sfs_cv_score) <= tol
+        assert (all_features_cv_score - sfs_cv_score) <= tol
 
 
 @pytest.mark.parametrize('direction', ('forward', 'backward'))
