@@ -3122,7 +3122,7 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     tags = _safe_tags(estimator_orig)
 
     if ("2darray" not in tags["X_types"] and "sparse" not in tags["X_types"] or
-        tags["no_validation"]):
+            tags["no_validation"]):
         return
 
     rng = np.random.RandomState(0)
