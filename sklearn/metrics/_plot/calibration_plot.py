@@ -43,21 +43,13 @@ class CalibrationDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
 
-    See Also
-    --------
-    calibration_curve : Compute true and predicted probabilities for a
-        calibration curve.
-    CalibrationDisplay.from_predictions : Plot calibration curve using true
-        and predicted labels.
-    CalibrationDisplay.from_estimator : Plot calibration curve using an
-        estimator and data.
-
     Examples
     --------
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.linear_model import LogisticRegression
-    >>> from sklearn.calibration import calibration_curve, CalibrationDisplay
+    >>> from sklearn.calibration import calibration_curve
+    >>> from sklearn.metrics import CalibrationDisplay
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=0)
@@ -194,13 +186,8 @@ class CalibrationDisplay:
 
         Returns
         -------
-        display : :class:`~sklearn.calibration.CalibrationDisplay`.
+        display : :class:`~sklearn.metrics.CalibrationDisplay`.
             Object that stores computed values.
-
-        See Also
-        --------
-        CalibrationDisplay.from_predictions : Plot calibration curve using true
-            and predicted labels.
 
         Examples
         --------
@@ -208,7 +195,7 @@ class CalibrationDisplay:
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.model_selection import train_test_split
         >>> from sklearn.linear_model import LogisticRegression
-        >>> from sklearn.calibration import CalibrationDisplay
+        >>> from sklearn.metrics import CalibrationDisplay
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
@@ -302,13 +289,8 @@ class CalibrationDisplay:
 
         Returns
         -------
-        display : :class:`~sklearn.calibration.CalibrationDisplay`.
+        display : :class:`~sklearn.metrics.CalibrationDisplay`.
             Object that stores computed values.
-
-        See Also
-        --------
-        CalibrationDisplay.from_estimator : Plot calibration curve using an
-            estimator and data.
 
         Examples
         --------
@@ -316,7 +298,7 @@ class CalibrationDisplay:
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.model_selection import train_test_split
         >>> from sklearn.linear_model import LogisticRegression
-        >>> from sklearn.calibration import CalibrationDisplay
+        >>> from sklearn.metrics import CalibrationDisplay
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
