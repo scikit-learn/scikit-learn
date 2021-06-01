@@ -1,5 +1,4 @@
 from ...base import is_classifier
-from ...calibration import calibration_curve
 from ...utils import check_matplotlib_support
 from .base import _check_classifier_response_method
 
@@ -311,7 +310,7 @@ class CalibrationDisplay:
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
-
+        from ...calibration import calibration_curve
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy
         )
