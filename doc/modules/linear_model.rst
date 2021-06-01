@@ -1466,7 +1466,7 @@ normally with zero mean and constant variance. Quantile regression provides
 sensible prediction intervals even for errors with non-constant (but
 predictable) variance or non-normal distribution.
 
-.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_001.png
+.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_002.png
    :target: ../auto_examples/linear_model/plot_quantile_regression.html
    :align: center
    :scale: 50%
