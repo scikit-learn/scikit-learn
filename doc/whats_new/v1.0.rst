@@ -405,9 +405,10 @@ Changelog
 ..............................
 
 - |Feature| added :class:`model_selection.StratifiedGroupKFold`, that combines
-  :class:`model_selection.StratifiedKFold` and `model_selection.GroupKFold`,
-  providing an ability to split data preserving the distribution of classes in
-  each split while keeping each group within a single split.
+  :class:`model_selection.StratifiedKFold` and
+  :class:`model_selection.GroupKFold`, providing an ability to split data
+  preserving the distribution of classes in each split while keeping each
+  group within a single split.
   :pr:`18649` by :user:`Leandro Hermida <hermidalc>` and
   :user:`Rodion Martynov <marrodion>`.
 
