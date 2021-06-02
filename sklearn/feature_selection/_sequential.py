@@ -5,6 +5,8 @@ import numbers
 
 import numpy as np
 
+import warnings
+
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils._tags import _safe_tags
@@ -30,17 +32,29 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     estimator : estimator instance
         An unfitted estimator.
 
-    n_features_to_select : int or float, default='auto'
-        The number of features to select. If `'auto'`, features are selected
-        until score improvement does not exceed `tol`. If integer, the
-        parameter is the absolute number of features to select. If float
-        between 0 and 1, it is the fraction of features to select.
+    n_features_to_select : int or float, default='warn'
+        If 'auto', the behaviour depends on the `tol` parameter:
+
+        - if `tol` is not None, then features are selected until the score
+          improvement does not exceed `tol`.
+        - otherwise, half of the features are selected.
+
+        If integer, the parameter is the absolute number of features to select.
+        If float between 0 and 1, it is the fraction of features to select.
+
+        .. versionadded:: 1.0
+            The default changed from None to 'warn' in 1.0 and will become
+            'auto' in 1.2. To keep the same behaviour as with `None`, you
+            should manually set `n_features_to_select='auto'` and
+            set `tol=None`
 
     tol : float, default=0.0
         If the score is not incremented by at least `tol` between two
         consecutive feature addition or removal, stop adding or removing even
         if `n_features_to_select` has not been reached. `tol` is enabled only
         when `n_features_to_select` is `'auto'`.
+
+        .. versionadded:: 1.0
 
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
@@ -112,7 +126,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
     """
-    def __init__(self, estimator, *, n_features_to_select='auto', tol=0.0,
+    def __init__(self, estimator, *, n_features_to_select='warn', tol=None,
                  direction='forward', scoring=None, cv=5, n_jobs=None):
 
         self.estimator = estimator
@@ -153,12 +167,22 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
                      "representing a percentage of features to "
                      f"select. Got {self.n_features_to_select}")
 
-        if self.n_features_to_select is None:
+        if self.n_features_to_select == 'warn':
             # for backwards compability
+            warnings.warn("Leaving n_features_to_select to "
+                "None is deprecated in 1.0 and will become 'auto' "
+                "in 1.2. To keep the same behaviour as with None "
+                "(i.e. select half of the features) and avoid "
+                "this warning, you should manually set "
+                "n_features_to_select='auto' and set tol=None.",
+                PendingDeprecationWarning)
             self.n_features_to_select = 'auto'
 
         if self.n_features_to_select == 'auto':
-            self.n_features_to_select_ = n_features - 1
+            if self.tol is not None:
+                self.n_features_to_select_ = n_features - 1
+            else:
+                self.n_features_to_select_ = n_features // 2
         elif isinstance(self.n_features_to_select, numbers.Integral):
             if not 0 < self.n_features_to_select < n_features:
                 raise ValueError(error_msg)
@@ -194,8 +218,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, current_mask)
-            if self.n_features_to_select == 'auto' and (
-                    new_score - old_score) < self.tol:
+            if (self.tol is not None) and (self.n_features_to_select == 'auto') and ((
+                    new_score - old_score) < self.tol):
                 break
 
             old_score = new_score
