@@ -113,7 +113,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     (150, 3)
     """
 
-    def __init__(self, estimator, *, n_features_to_select=None, tol=None,
+    def __init__(self, estimator, *, n_features_to_select='auto', tol=0.0,
                  direction='forward', scoring=None, cv=5, n_jobs=None):
 
         self.estimator = estimator
@@ -153,8 +153,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
                      "number of features, or a float in (0, 1] "
                      "representing a percentage of features to "
                      f"select. Got {self.n_features_to_select}")
-        if self.n_features_to_select is None:
-            self.n_features_to_select_ = n_features // 2
+        if self.n_features_to_select is 'auto':
+            self.n_features_to_select_ = n_features - 1
         elif isinstance(self.n_features_to_select, numbers.Integral):
             if not 0 < self.n_features_to_select < n_features:
                 raise ValueError(error_msg)
@@ -181,7 +181,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         current_mask = np.zeros(shape=n_features, dtype=bool)
         n_iterations = (
             self.n_features_to_select_
-            if self.tol is not None or self.direction == 'forward'
+            if self.n_features_to_select == 'auto' or self.direction == 'forward'
             else n_features - self.n_features_to_select_
         )
 
@@ -189,7 +189,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, current_mask)
-            if self.tol is not None and (new_score - old_score) < self.tol:
+            if self.n_features_to_select == 'auto' and (
+                    new_score - old_score) < self.tol:
                 break
 
             old_score = new_score
