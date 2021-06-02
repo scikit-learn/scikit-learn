@@ -153,6 +153,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
                      "number of features, or a float in (0, 1] "
                      "representing a percentage of features to "
                      f"select. Got {self.n_features_to_select}")
+
+        if self.n_features_to_select is None:
+            # for backwards compability
+            self.n_features_to_select = 'auto'
+
         if self.n_features_to_select == 'auto':
             self.n_features_to_select_ = n_features - 1
         elif isinstance(self.n_features_to_select, numbers.Integral):
