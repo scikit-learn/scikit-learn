@@ -104,7 +104,6 @@ def test_stopping_criterion(direction):
     (.1, 1),
     (1., 10),
     (.5, 5),
-    (None, 5),  # just to make sure .5 is equivalent to passing None
 ))
 def test_n_features_to_select_float(direction, n_features_to_select, expected):
     # Test passing a float as n_features_to_select
