@@ -191,11 +191,17 @@ class BisectKMeans(KMeans):
         errors_by_label = {}
 
         if sp.issparse(X):
-            X = X.toarray()
+            for value in range(2):
+                # CSR Matrix after subtracting numpy array
+                # becomes numpy matrix
+                error = sp.csr_matrix(X[labels == value] - centers[value])
+                errors_by_label[value] = error.power(2).sum()
 
-        for value in range(2):
-            errors_by_label[value] = ((X[np.where(labels == value)]
-                                       - centers[value]) ** 2).sum(axis=1)
+        else:
+            for value in range(2):
+                errors_by_label[value] = ((X[np.where(labels == value)]
+                                           - centers[value]) ** 2).sum(axis=1)
+                errors_by_label[value] = errors_by_label[value].sum(axis=0)
 
         return errors_by_label
 
@@ -217,13 +223,13 @@ class BisectKMeans(KMeans):
                           "- Use Normal KMeans from sklearn.cluster instead",
                           EfficiencyWarning)
 
-        if self.n_clusters < 2:
-            raise ValueError("Bisecting K-Means cannot perform bisection "
-                             "when number of clusters is less than 2")
-
         if X.shape[0] <= 1:
             raise ValueError("Bisecting K-Means needs more than one sample "
                              "to perform bisection")
+
+        if self.n_clusters < 2:
+            raise ValueError("Bisecting K-Means cannot perform bisection "
+                             "when number of clusters is less than 2")
 
     def _bisect(self, X, init, sample_weight=None,
                 random_state=None):
@@ -423,8 +429,7 @@ class BisectKMeans(KMeans):
             if not sp.issparse(X):
                 centers += X_mean
 
-            lower_sse_index = 0 if \
-                errors[0].sum(axis=0) < errors[1].sum(axis=0) else 1
+            lower_sse_index = 0 if errors[0] < errors[1] else 1
 
             higher_sse_index = 1 if lower_sse_index == 0 else 0
 
@@ -522,10 +527,8 @@ class BisectKMeans(KMeans):
             # Check SSE (Sum of Squared Errors) of each of computed centroids.
             # SSE is calculated with distances between data points
             # and assigned centroids
-            errors = self._compute_bisect_errors(X, centers, labels)
-
-            for key, error in errors.items():
-                errors[key] = error.sum(axis=0)
+            errors = self._compute_bisect_errors(centers_dict[biggest]['data'],
+                                                 centers, labels)
 
             lower_sse_index = 0 if errors[0] < errors[1] else 1
             higher_sse_index = 1 if lower_sse_index == 0 else 0
