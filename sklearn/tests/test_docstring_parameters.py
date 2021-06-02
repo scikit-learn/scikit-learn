@@ -193,7 +193,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'linear_model',
     'manifold',
     'model_selection',
-    'multiclass',
     'multioutput',
     'naive_bayes',
     'neighbors',
@@ -220,8 +219,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
                'GaussianRandomProjection',
                'MultiOutputClassifier', 'MultiOutputRegressor',
-               'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
+               'NoSampleWeightWrapper', 'Pipeline', 'RFE', 'RFECV',
                'RegressorChain', 'SelectFromModel',
                'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
@@ -276,6 +274,8 @@ def test_fit_docstring_attributes(name, Estimator):
         skipped_attributes.add("n_features_in_")
 
     for attr in attributes:
+        print(attr.name)
+
         if attr.name in skipped_attributes:
             continue
         desc = ' '.join(attr.desc).lower()

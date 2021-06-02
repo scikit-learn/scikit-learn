@@ -263,14 +263,14 @@ def test_search_cv(estimator, check, request):
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'compose',
     'model_selection',
-    'multiclass',
+    # 'multiclass',
     'multioutput',
     'pipeline',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
-    est for est in _tested_estimators() if est.__module__.split('.')[1] not in
-    N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE
+    est for est in _tested_estimators() if est.__module__.split('.')[1] == "multiclass" #not in
+    #N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE
 ]
 
 
