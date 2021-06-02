@@ -79,12 +79,16 @@ def test_stopping_criterion(direction):
         list(range(sfs.n_features_to_select_)))
     removed_X = np.delete(selected_X, removed_candidate, axis=1)
 
+    plain_cv_score = cross_val_score(
+        LinearRegression(), X, y, cv=2).mean()
     sfs_cv_score = cross_val_score(
         LinearRegression(), selected_X, y, cv=2).mean()
     added_cv_score = cross_val_score(
         LinearRegression(), added_X, y, cv=2).mean()
     removed_cv_score = cross_val_score(
         LinearRegression(), removed_X, y, cv=2).mean()
+
+    assert sfs_cv_score >= plain_cv_score
 
     if direction == 'forward':
         assert (sfs_cv_score - added_cv_score) <= tol
