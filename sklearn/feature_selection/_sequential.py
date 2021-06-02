@@ -181,7 +181,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         current_mask = np.zeros(shape=n_features, dtype=bool)
         n_iterations = (
             self.n_features_to_select_
-            if self.n_features_to_select == 'auto' or self.direction == 'forward'
+            if (self.n_features_to_select == 'auto') or (
+                     self.direction == 'forward')
             else n_features - self.n_features_to_select_
         )
 
