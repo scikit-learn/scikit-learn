@@ -59,7 +59,7 @@ def test_stopping_criterion(direction):
 
     X, y = make_regression(n_features=50, n_informative=10, random_state=0)
 
-    tol = 1e-2
+    tol = 1e-3
 
     sfs = SequentialFeatureSelector(LinearRegression(),
                                     n_features_to_select='auto',
