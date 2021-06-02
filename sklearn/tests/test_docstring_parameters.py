@@ -231,10 +231,10 @@ def test_fit_docstring_attributes(name, Estimator):
 
     # TODO remove in 1.1 or 1.2 when the deprecated attributes are
     # removed
-    HAS_DEPRECATED_ATTRS = {'Birch', 'CCA', 'CategoricalNB', 'GridSearchCV',
-                            'MiniBatchKMeans', 'PLSCanonical', 'PLSRegression',
-                            'PLSSVD', 'RandomizedSearchCV',
+    HAS_DEPRECATED_ATTRS = {'Birch', 'CCA', 'CategoricalNB', 'MiniBatchKMeans',
+                            'PLSCanonical', 'PLSRegression', 'PLSSVD',
                             'SpectralCoclustering'}
+
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
