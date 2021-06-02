@@ -48,9 +48,8 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
-from .utils.validation import _num_samples, _num_features
+from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
-from .utils.validation import check_X_y, check_array
 from .utils.validation import column_or_1d
 from .utils.validation import _assert_all_finite
 from .utils.multiclass import (_check_partial_fit_first_call,
@@ -58,7 +57,6 @@ from .utils.multiclass import (_check_partial_fit_first_call,
                                _ovr_decision_function)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
 from .utils.fixes import delayed
-from .exceptions import NotFittedError
 
 from joblib import Parallel
 
@@ -653,6 +651,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.estimators_ = estimators_indices[0]
 
+        if hasattr(self.estimators_[0], "n_features_in_"):
+            self.n_features_in_ = self.estimators_[0].n_features_in_
+
         pairwise = _is_pairwise(self)
         self.pairwise_indices_ = (
             estimators_indices[1] if pairwise else None)
@@ -845,6 +846,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     code_book_ : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
