@@ -322,7 +322,7 @@ plt.subplots_adjust(left=.3)
 #
 # This confounding of effects becomes problematic when thinking about some
 # form of intervention e.g. government subsidies of university degrees or
-# promotional material encouaring individuals to take up higher education.
+# promotional material encouraging individuals to take up higher education.
 # The usefulness of these measures could end up being overstated, especially if
 # the degree of confounding is strong. Our model predicts a :math:`0.054699`
 # increase in hourly wage for each year of education. The actual causal effect
