@@ -197,7 +197,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'naive_bayes',
     'neighbors',
     'neural_network',
-    'pipeline',
     'preprocessing',
     'random_projection',
     'semi_supervised',
@@ -216,11 +215,11 @@ def test_fit_docstring_attributes(name, Estimator):
     attributes = doc['Attributes']
 
     IGNORED = {'ClassifierChain', 'ColumnTransformer',
-               'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
+               'CountVectorizer', 'DictVectorizer',
                'GaussianRandomProjection',
                'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
+               'OutputCodeClassifier', 'RFE', 'RFECV',
                'RegressorChain', 'SelectFromModel',
                'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
