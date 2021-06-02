@@ -272,6 +272,11 @@ Changelog
   :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
   and `Julien Jerphanion <jjerphan>`.
 
+- |Feature| Added auto mode to :class:`feature_selection.SequentialFeatureSelection`.
+  If the argument `n_features_to_select` is `'auto'`, select features until
+  the score improvement does not exceed the argument `tol`.
+  :pr:`20145` by :user:`murata-yu`.
+
 :mod:`sklearn.inspection`
 .........................
 
