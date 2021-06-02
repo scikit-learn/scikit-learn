@@ -112,7 +112,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
     """
-
     def __init__(self, estimator, *, n_features_to_select='auto', tol=0.0,
                  direction='forward', scoring=None, cv=5, n_jobs=None):
 
