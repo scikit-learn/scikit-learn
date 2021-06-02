@@ -227,10 +227,6 @@ class BisectKMeans(KMeans):
             raise ValueError("Bisecting K-Means needs more than one sample "
                              "to perform bisection")
 
-        if self.n_clusters < 2:
-            raise ValueError("Bisecting K-Means cannot perform bisection "
-                             "when number of clusters is less than 2")
-
     def _bisect(self, X, init, sample_weight=None,
                 random_state=None):
         """ Bisection of data
@@ -355,8 +351,16 @@ class BisectKMeans(KMeans):
 
         x_squared_norms = row_norms(X, squared=True)
 
-        self.cluster_centers_ = _bisect_kmeans(X, init, random_state,
-                                               sample_weight)
+        # Only assign to created centroid when n_clusters == 1
+        if self.n_clusters == 1:
+            self.cluster_centers_ = self._init_centroids(X, x_squared_norms,
+                                                         init, random_state,
+                                                         n_centroids=1)
+            warnings.warn("Bisection won't be performed - "
+                          "needs at least two clusters to run")
+        else:
+            self.cluster_centers_ = _bisect_kmeans(X, init, random_state,
+                                                   sample_weight)
 
         # Since all clusters are calculated - label each data to valid center
         self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
