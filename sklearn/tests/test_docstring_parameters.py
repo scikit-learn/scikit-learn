@@ -274,8 +274,6 @@ def test_fit_docstring_attributes(name, Estimator):
         skipped_attributes.add("n_features_in_")
 
     for attr in attributes:
-        print(attr.name)
-
         if attr.name in skipped_attributes:
             continue
         desc = ' '.join(attr.desc).lower()
