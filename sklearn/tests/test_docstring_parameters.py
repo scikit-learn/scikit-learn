@@ -183,7 +183,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'discriminant_analysis',
     'dummy',
     'ensemble',
-    'feature_extraction',
     'feature_selection',
     'gaussian_process',
     'impute',
