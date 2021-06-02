@@ -120,22 +120,22 @@ class _ConstantPredictor(BaseEstimator):
 
     def predict(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=False)
+        self._check_n_features(X, reset=True)
 
-        return np.repeat(self.y_, X.shape[0])
+        return np.repeat(self.y_, _num_samples(X))
 
     def decision_function(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=False)
+        self._check_n_features(X, reset=True)
 
-        return np.repeat(self.y_, X.shape[0])
+        return np.repeat(self.y_, _num_samples(X))
 
     def predict_proba(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=False)
+        self._check_n_features(X, reset=True)
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
-                         X.shape[0], axis=0)
+                         _num_samples(X), axis=0)
 
 
 class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
@@ -635,8 +635,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        y = column_or_1d(y, warn=True)
-        _assert_all_finite(y)
+        # We need to validate the data because we do a safe_indexing later.
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   force_all_finite=False)
         check_classification_targets(y)
 
         self.classes_ = np.unique(y)
@@ -698,8 +699,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                              "must be subset of {1}".format(np.unique(y),
                                                             self.classes_))
 
-        y = column_or_1d(y, warn=True)
-        _assert_all_finite(y)
+        X, y = self._validate_data(
+            X, y, accept_sparse=['csr', 'csc'], force_all_finite=False,
+            reset=_check_partial_fit_first_call(self, classes))
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
         self.estimators_ = Parallel(
@@ -920,6 +922,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
+        if n_classes == 0:
+            raise ValueError("OutputCodeClassifier can not be fit when no "
+                             "class is present.")
         code_size_ = int(n_classes * self.code_size)
 
         # FIXME: there are more elaborate methods than generating the codebook
@@ -935,7 +940,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         classes_index = {c: i for i, c in enumerate(self.classes_)}
 
         Y = np.array([self.code_book_[classes_index[y[i]]]
-                      for i in range(_num_samples(X))], dtype=int)
+                      for i in range(_num_samples(y))], dtype=int)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary)(self.estimator, X, Y[:, i])
