@@ -217,6 +217,14 @@ class BisectKMeans(KMeans):
                           "- Use Normal KMeans from sklearn.cluster instead",
                           EfficiencyWarning)
 
+        if self.n_clusters < 2:
+            raise ValueError("Bisecting K-Means cannot perform bisection "
+                             "when number of clusters is less than 2")
+
+        if X.shape[0] <= 1:
+            raise ValueError("Bisecting K-Means needs more than one sample "
+                             "to perform bisection")
+
     def _bisect(self, X, init, sample_weight=None,
                 random_state=None):
         """ Bisection of data
