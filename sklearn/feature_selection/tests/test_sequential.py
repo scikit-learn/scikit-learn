@@ -59,32 +59,40 @@ def test_stopping_criterion(direction):
 
     X, y = make_regression(n_features=50, n_informative=10, random_state=0)
 
-    tol = 1e-3
+    tol = 1e-2
 
     sfs = SequentialFeatureSelector(LinearRegression(),
                                     n_features_to_select='auto',
                                     tol=tol,
                                     direction=direction, cv=2)
     sfs.fit(X, y)
-
     selected_X = sfs.transform(X)
-    candidate_features = list(
+
+    added_candidates = list(
         set(range(X.shape[1])) - set(sfs.get_support(indices=True)))
     added_X = np.hstack([
         selected_X,
-        (X[:, np.random.choice(candidate_features)])[:, np.newaxis],
+        (X[:, np.random.choice(added_candidates)])[:, np.newaxis],
     ])
+
+    removed_candidate = np.random.choice(
+        list(range(sfs.n_features_to_select_)))
+    removed_X = np.delete(selected_X, removed_candidate, axis=1)
 
     sfs_cv_score = cross_val_score(
         LinearRegression(), selected_X, y, cv=2).mean()
     added_cv_score = cross_val_score(
         LinearRegression(), added_X, y, cv=2).mean()
+    removed_cv_score = cross_val_score(
+        LinearRegression(), removed_X, y, cv=2).mean()
 
     if direction == 'forward':
         assert (sfs_cv_score - added_cv_score) <= tol
+        assert (sfs_cv_score - removed_cv_score) >= tol
 
     else:
         assert (added_cv_score - sfs_cv_score) <= tol
+        assert (removed_cv_score - sfs_cv_score) <= tol
 
 
 @pytest.mark.parametrize('direction', ('forward', 'backward'))
