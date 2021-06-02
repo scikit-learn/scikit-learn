@@ -38,7 +38,7 @@ def test_n_features_to_select(direction, n_features_to_select):
                                     n_features_to_select=n_features_to_select,
                                     direction=direction, cv=2)
     sfs.fit(X, y)
-    if n_features_to_select is 'auto':
+    if n_features_to_select == 'auto':
         n_features_to_select = 9  # n_features - 1
 
         assert sfs.get_support(indices=True).shape[0] <= n_features_to_select
