@@ -58,17 +58,12 @@ def test_stopping_criterion(direction):
     X, y = make_regression(n_features=50, n_informative=10, random_state=0)
 
     tol = 1e-3
-    n_features_to_select = X.shape[1] - 1
 
     sfs = SequentialFeatureSelector(LinearRegression(),
-                                    n_features_to_select=n_features_to_select,
+                                    n_features_to_select='auto',
                                     tol=tol,
                                     direction=direction, cv=2)
     sfs.fit(X, y)
-
-    assert sfs.get_support(indices=True).shape[0] <= n_features_to_select
-    assert sfs.n_features_to_select_ <= n_features_to_select
-    assert sfs.transform(X).shape[1] <= n_features_to_select
 
     selected_X = sfs.transform(X)
     candidate_features = list(
