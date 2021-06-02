@@ -200,6 +200,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             current_mask = ~current_mask
 
         self.support_ = current_mask
+        self.n_features_to_select_ = self.support_.sum()
 
         return self
 

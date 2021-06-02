@@ -44,6 +44,8 @@ def test_n_features_to_select(direction, n_features_to_select):
         assert sfs.get_support(indices=True).shape[0] <= n_features_to_select
         assert sfs.n_features_to_select_ <= n_features_to_select
         assert sfs.transform(X).shape[1] <= n_features_to_select
+        assert sfs.get_support(
+            indices=True).shape[0] == sfs.n_features_to_select_
 
     else:
         assert sfs.get_support(indices=True).shape[0] == n_features_to_select
