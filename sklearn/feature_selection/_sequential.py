@@ -30,17 +30,17 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     estimator : estimator instance
         An unfitted estimator.
 
-    n_features_to_select : int or float, default=None
-        The number of features to select. If `None`, half of the features are
-        selected. If integer, the parameter is the absolute number of features
-        to select. If float between 0 and 1, it is the fraction of features to
-        select.
+    n_features_to_select : int or float, default='auto'
+        The number of features to select. If `'auto'`, features are selected
+        untill score improvement does not exceed tol. If integer, the parameter
+        is the absolute number of features to select. If float between 0 and 1,
+        it is the fraction of features to select.
 
-    tol : float, default=None
+    tol : float, default=0.0
         If the score is not incremented by at least tol between two consecutive
         feature addition or removal, stop adding or removing even if
-        n_features_to_select has not been reached. If None (default)
-        all n_features_to_select will be selected.
+        n_features_to_select has not been reached. tol is enabled only when
+        `n_features_to_select` is `'auto'`
 
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
