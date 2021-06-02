@@ -546,15 +546,16 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ):
             raise ValueError("degree must be a non-negative integer.")
 
-        if not (
-            isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2
-        ):
-            raise ValueError("n_knots must be a positive integer >= 2.")
-
         if isinstance(self.knots, str) and self.knots in [
             "uniform",
             "quantile",
         ]:
+            if not (
+                isinstance(self.n_knots, numbers.Integral)
+                and self.n_knots >= 2
+            ):
+                raise ValueError("n_knots must be a positive integer >= 2.")
+
             base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots
             )
