@@ -66,10 +66,11 @@ def test_n_features_to_auto_select(direction, tol):
             indices=True).shape[0] == sfs.n_features_to_select_
 
     else:
-        n_features_to_select = 5 # n_features // 2
+        n_features_to_select = 5  # n_features // 2
         assert sfs.get_support(indices=True).shape[0] == n_features_to_select
         assert sfs.n_features_to_select_ == n_features_to_select
         assert sfs.transform(X).shape[1] == n_features_to_select
+
 
 @pytest.mark.parametrize('direction', ('forward', 'backward'))
 def test_stopping_criterion(direction):
