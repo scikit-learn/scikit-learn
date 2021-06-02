@@ -228,8 +228,18 @@ def test_fit_docstring_attributes(name, Estimator):
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
                'VotingRegressor', 'SequentialFeatureSelector',
                'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
+
+    # TODO remove in 1.1 or 1.2 when the deprecated attributes are
+    # removed
+    HAS_DEPRECATED_ATTRS = {'Birch', 'CCA', 'CategoricalNB', 'GridSearchCV',
+                            'MiniBatchKMeans', 'PLSCanonical', 'PLSRegression',
+                            'PLSSVD', 'RandomizedSearchCV',
+                            'SpectralCoclustering'}
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
+
+    if Estimator.__name__ in HAS_DEPRECATED_ATTRS:
+        pytest.skip("Estimator has undocumented deprecated attributes")
 
     if Estimator.__name__ in ("RandomizedSearchCV", "GridSearchCV"):
         est = _construct_searchcv_instance(Estimator)
@@ -288,10 +298,23 @@ def test_fit_docstring_attributes(name, Estimator):
         with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
-                and not k.startswith('_')]
+    fit_attr = _get_all_fitted_attributes(est)
     fit_attr_names = [attr.name for attr in attributes]
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
     undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
     assert not undocumented_attrs,\
         "Undocumented attributes: {}".format(undocumented_attrs)
+
+
+def _get_all_fitted_attributes(estimator):
+    "Get all the fitted attributes of an estimator including properties"
+    # attributes
+    fit_attr = list(estimator.__dict__.keys())
+
+    # properties
+    for name in dir(estimator.__class__):
+        obj = getattr(estimator.__class__, name)
+        if isinstance(obj, property):
+            fit_attr.append(name)
+
+    return [k for k in fit_attr if k.endswith('_') and not k.startswith('_')]
