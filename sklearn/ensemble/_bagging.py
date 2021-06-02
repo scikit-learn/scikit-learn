@@ -22,7 +22,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, \
-    _check_sample_weight, _deprecate_positional_args
+    _check_sample_weight
 from ..utils.fixes import delayed
 
 
@@ -593,7 +593,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
-    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None,
                  n_estimators=10, *,
@@ -979,7 +978,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
-    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None,
                  n_estimators=10, *,

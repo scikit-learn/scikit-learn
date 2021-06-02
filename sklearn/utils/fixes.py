@@ -11,7 +11,6 @@ at which the fixe is no longer needed.
 # License: BSD 3 clause
 
 from functools import update_wrapper
-from distutils.version import LooseVersion
 import functools
 
 import numpy as np
@@ -19,16 +18,8 @@ import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 1.0
 from .._config import config_context, get_config
-
-from .deprecation import deprecated
-
-try:
-    from pkg_resources import parse_version  # type: ignore
-except ImportError:
-    # setuptools not installed
-    parse_version = LooseVersion  # type: ignore
+from ..externals._packaging.version import parse as parse_version
 
 
 np_version = parse_version(np.__version__)
@@ -155,14 +146,6 @@ class loguniform(scipy.stats.reciprocal):
     >>> rvs.max()  # doctest: +SKIP
     9.97403052786026
     """
-
-
-@deprecated(
-    'MaskedArray is deprecated in version 0.23 and will be removed in version '
-    '1.0 (renaming of 0.25). Use numpy.ma.MaskedArray instead.'
-)
-class MaskedArray(_MaskedArray):
-    pass  # TODO: remove in 1.0
 
 
 def _take_along_axis(arr, indices, axis):
