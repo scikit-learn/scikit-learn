@@ -30,7 +30,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     estimator : estimator instance
         An unfitted estimator.
 
-    n_features_to_select : int or float, default='auto'
+    n_features_to_select : int or float, default='warn'
         The number of features to select. If `'auto'`, features are selected
         until score improvement does not exceed `tol`. If integer, the
         parameter is the absolute number of features to select. If float
