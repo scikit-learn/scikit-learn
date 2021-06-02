@@ -32,9 +32,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
     n_features_to_select : int or float, default='auto'
         The number of features to select. If `'auto'`, features are selected
-        until score improvement does not exceed `tol`. If integer, the parameter
-        is the absolute number of features to select. If float between 0 and 1,
-        it is the fraction of features to select.
+        until score improvement does not exceed `tol`. If integer, the
+        parameter is the absolute number of features to select. If float
+        between 0 and 1, it is the fraction of features to select.
 
     tol : float, default=0.0
         If the score is not incremented by at least `tol` between two
