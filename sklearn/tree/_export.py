@@ -611,7 +611,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
         import matplotlib.pyplot as plt
         kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
-                      zorder=100 - 10 * depth, xycoords='axes pixels',
+                      zorder=100 - 10 * depth, xycoords='axes points',
                       arrowprops=self.arrow_args.copy())
         kwargs['arrowprops']['edgecolor'] = plt.rcParams['text.color']
 
