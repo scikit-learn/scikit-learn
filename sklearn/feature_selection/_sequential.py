@@ -170,12 +170,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         if self.n_features_to_select == 'warn':
             # for backwards compability
             warnings.warn("Leaving n_features_to_select to "
-                "None is deprecated in 1.0 and will become 'auto' "
-                "in 1.2. To keep the same behaviour as with None "
-                "(i.e. select half of the features) and avoid "
-                "this warning, you should manually set "
-                "n_features_to_select='auto' and set tol=None.",
-                PendingDeprecationWarning)
+                          "None is deprecated in 1.0 and will become 'auto' "
+                          "in 1.2. To keep the same behaviour as with None "
+                          "(i.e. select half of the features) and avoid "
+                          "this warning, you should manually set "
+                          "n_features_to_select='auto' and set tol=None.",
+                          PendingDeprecationWarning)
             self.n_features_to_select = 'auto'
 
         if self.n_features_to_select == 'auto':
@@ -218,8 +218,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, current_mask)
-            if (self.tol is not None) and (self.n_features_to_select == 'auto') and ((
-                    new_score - old_score) < self.tol):
+
+            is_auto_select = (self.tol is not None and
+                              self.n_features_to_select == 'auto')
+            if is_auto_select and ((new_score - old_score) < self.tol):
                 break
 
             old_score = new_score
