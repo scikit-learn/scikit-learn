@@ -1057,7 +1057,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 x_squared_norms=x_squared_norms, n_threads=self._n_threads)
 
             # determine if these results are the best so far
-            if best_inertia is None or inertia < best_inertia:
+            # allow small tolerance on the inertia to accomodate for rounding
+            # errors.
+            if best_inertia is None or inertia < best_inertia - 1e-7:
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
