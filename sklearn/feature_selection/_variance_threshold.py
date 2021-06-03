@@ -1,6 +1,7 @@
 # Author: Lars Buitinck
 # License: 3-clause BSD
 
+import warnings
 import numpy as np
 from ..base import BaseEstimator
 from ._base import SelectorMixin
@@ -47,6 +48,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     """
 
     def __init__(self, threshold=0.):
+        if threshold < 0:
+            warnings.warn("Threshold must be non-negative.")
         self.threshold = threshold
 
     def fit(self, X, y=None):
