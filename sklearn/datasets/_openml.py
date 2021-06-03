@@ -840,7 +840,7 @@ def fetch_openml(
             raise ValueError(
                 "Dataset data_id={} and version={} passed, but you can only "
                 "specify a numeric data_id or a version, not "
-                "both.".format(data_id, name))
+                "both.".format(data_id, version))
     else:
         raise ValueError(
             "Neither name nor data_id are provided. Please provide name or "
