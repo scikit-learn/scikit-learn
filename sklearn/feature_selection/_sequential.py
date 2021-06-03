@@ -137,6 +137,16 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         self.cv = cv
         self.n_jobs = n_jobs
 
+        if self.n_features_to_select == 'warn':
+            # for backwards compability
+            warnings.warn("Leaving n_features_to_select to "
+                          "None is deprecated in 1.0 and will become 'auto' "
+                          "in 1.2. To keep the same behaviour as with None "
+                          "(i.e. select half of the features) and avoid "
+                          "this warning, you should manually set "
+                          "n_features_to_select='auto' and set tol=None.",
+                          PendingDeprecationWarning)
+
     def fit(self, X, y):
         """Learn the features to select.
 
@@ -167,18 +177,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
                      "representing a percentage of features to "
                      f"select. Got {self.n_features_to_select}")
 
-        if self.n_features_to_select == 'warn':
-            # for backwards compability
-            warnings.warn("Leaving n_features_to_select to "
-                          "None is deprecated in 1.0 and will become 'auto' "
-                          "in 1.2. To keep the same behaviour as with None "
-                          "(i.e. select half of the features) and avoid "
-                          "this warning, you should manually set "
-                          "n_features_to_select='auto' and set tol=None.",
-                          PendingDeprecationWarning)
-            self.n_features_to_select = 'auto'
-
-        if self.n_features_to_select == 'auto':
+        if self.n_features_to_select in ['auto', 'warn']:
             if self.tol is not None:
                 self.n_features_to_select_ = n_features - 1
             else:
