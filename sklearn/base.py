@@ -376,15 +376,18 @@ class BaseEstimator:
                 f"X has {n_features} features, but {self.__class__.__name__} "
                 f"is expecting {self.n_features_in_} features as input.")
 
-    def _validate_data(self, X, y='no_validation', reset=True,
+    def _validate_data(self, X='no_validation', y='no_validation', reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
-                (n_samples, n_features)
+                (n_samples, n_features), default='no validation'
             The input samples.
+
+            - If `'no_validation'`, no validation is performed on X.
+
         y : array-like of shape (n_samples,), default='no_validation'
             The targets.
 
@@ -418,18 +421,33 @@ class BaseEstimator:
         out : {ndarray, sparse matrix} or tuple of these
             The validated input. A tuple is returned if `y` is not None.
         """
+        if y is None and self._get_tags()['requires_y']:
+            raise ValueError(
+                f"This {self.__class__.__name__} estimator "
+                f"requires y to be passed, but the target y is None."
+            )
 
-        if y is None:
-            if self._get_tags()['requires_y']:
-                raise ValueError(
-                    f"This {self.__class__.__name__} estimator "
-                    f"requires y to be passed, but the target y is None."
-                )
+        if y is None or isinstance(y, str) and y == 'no_validation':
+            validate_y = False
+        else:
+            validate_y = True
+        
+        if isinstance(X, str) and X == 'no_validation':
+            validate_X = False
+        else:
+            validate_X = True
+
+        if not validate_X and not validate_y:
+            return
+        elif validate_X and not validate_y:
             X = check_array(X, **check_params)
             out = X
-        elif isinstance(y, str) and y == 'no_validation':
-            X = check_array(X, **check_params)
-            out = X
+        elif not validate_X and validate_y:
+            y = check_y()
+
+        elif( not (y is None or isinstance(y, str) and y == 'no_validation')
+                and not (isinstance(X, str) and X == 'no_validation')):
+
         else:
             if validate_separately:
                 # We need this because some estimators validate X and y
