@@ -350,7 +350,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     ----------
     n_knots : int, default=5
         Number of knots of the splines if `knots` equals one of
-        {'uniform', 'quantile'}. Must be larger or equal 2.
+        {'uniform', 'quantile'}. Must be larger or equal 2. Ignored if `knots`
+        is array-like.
 
     degree : int, default=3
         The polynomial degree of the spline basis. Must be a non-negative
