@@ -3,21 +3,18 @@ import warnings
 import numpy as np
 import pytest
 from scipy import linalg
-
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
 from sklearn.linear_model._least_angle import _lars_path_residues
 from sklearn.linear_model import LassoLarsIC, lars_path
-from sklearn.linear_model import Lars, LassoLars
+from sklearn.linear_model import Lars, LassoLars, LarsCV, LassoLarsCV
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -97,8 +94,8 @@ def test_lars_path_gram_equivalent(method, return_path):
 def test_x_none_gram_none_raises_value_error():
     # Test that lars_path with no X and Gram raises exception
     Xy = np.dot(X.T, y)
-    assert_raises(ValueError, linear_model.lars_path, None, y, Gram=None,
-                  Xy=Xy)
+    with pytest.raises(ValueError):
+        linear_model.lars_path(None, y, Gram=None, Xy=Xy)
 
 
 def test_all_precomputed():
@@ -372,7 +369,11 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
                 + alpha * linalg.norm(coef, 1))
 
     lars = linear_model.LassoLars(alpha=alpha, normalize=False)
-    assert_warns(ConvergenceWarning, lars.fit, X, y)
+    warning_message = (
+        "Regressors in active set degenerate."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        lars.fit(X, y)
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
@@ -486,7 +487,9 @@ def test_lasso_lars_ic():
 
     # test error on unknown IC
     lars_broken = linear_model.LassoLarsIC('<unknown>')
-    assert_raises(ValueError, lars_broken.fit, X, y)
+
+    with pytest.raises(ValueError):
+        lars_broken.fit(X, y)
 
 
 def test_lars_path_readonly_data():
@@ -774,3 +777,54 @@ def test_copy_X_with_auto_gram():
     linear_model.lars_path(X, y, Gram='auto', copy_X=True, method='lasso')
     # X did not change
     assert_allclose(X, X_before)
+
+
+@pytest.mark.parametrize("LARS, has_coef_path, args",
+                         ((Lars, True, {}),
+                          (LassoLars, True, {}),
+                          (LassoLarsIC, False, {}),
+                          (LarsCV, True, {}),
+                          # max_iter=5 is for avoiding ConvergenceWarning
+                          (LassoLarsCV, True, {"max_iter": 5})))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_lars_dtype_match(LARS, has_coef_path, args, dtype):
+    # The test ensures that the fit method preserves input dtype
+    rng = np.random.RandomState(0)
+    X = rng.rand(6, 6).astype(dtype)
+    y = rng.rand(6).astype(dtype)
+
+    model = LARS(**args)
+    model.fit(X, y)
+    assert model.coef_.dtype == dtype
+    if has_coef_path:
+        assert model.coef_path_.dtype == dtype
+    assert model.intercept_.dtype == dtype
+
+
+@pytest.mark.parametrize("LARS, has_coef_path, args",
+                         ((Lars, True, {}),
+                          (LassoLars, True, {}),
+                          (LassoLarsIC, False, {}),
+                          (LarsCV, True, {}),
+                          # max_iter=5 is for avoiding ConvergenceWarning
+                          (LassoLarsCV, True, {"max_iter": 5})))
+def test_lars_numeric_consistency(LARS, has_coef_path, args):
+    # The test ensures numerical consistency between trained coefficients
+    # of float32 and float64.
+    rtol = 1e-5
+    atol = 1e-5
+
+    rng = np.random.RandomState(0)
+    X_64 = rng.rand(6, 6)
+    y_64 = rng.rand(6)
+
+    model_64 = LARS(**args).fit(X_64, y_64)
+    model_32 = LARS(**args).fit(X_64.astype(np.float32),
+                                y_64.astype(np.float32))
+
+    assert_allclose(model_64.coef_, model_32.coef_, rtol=rtol, atol=atol)
+    if has_coef_path:
+        assert_allclose(model_64.coef_path_, model_32.coef_path_,
+                        rtol=rtol, atol=atol)
+    assert_allclose(model_64.intercept_, model_32.intercept_,
+                    rtol=rtol, atol=atol)

@@ -2,6 +2,7 @@
 
 import warnings
 import os
+import re
 
 from tempfile import NamedTemporaryFile
 from itertools import product
@@ -18,11 +19,12 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _convert_container
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
-from sklearn.utils.fixes import np_version, parse_version
+from sklearn.utils.fixes import parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
@@ -44,9 +46,9 @@ from sklearn.utils.validation import (
     _deprecate_positional_args,
     _check_sample_weight,
     _allclose_dense_sparse,
+    _num_features,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
-from sklearn.utils.fixes import parse_version
 
 import sklearn
 
@@ -55,6 +57,9 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
+# TODO: Remove np.matrix usage in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_as_float_array():
@@ -113,6 +118,9 @@ def test_as_float_array_nan(X):
     assert_allclose_dense_sparse(X_converted, X)
 
 
+# TODO: Remove np.matrix usage in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_np_matrix():
@@ -342,7 +350,7 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 1.1 when implicit conversation is removed
+# TODO: Check for error in 1.1 when implicit conversion is removed
 @pytest.mark.parametrize("X", [
    [['1', '2'], ['3', '4']],
    np.array([['1', '2'], ['3', '4']], dtype='U'),
@@ -365,14 +373,10 @@ def test_check_array_numeric_warns(X):
    [['11', '12'], ['13', 'xx']],
    np.array([['11', '12'], ['13', 'xx']], dtype='U'),
    np.array([['11', '12'], ['13', 'xx']], dtype='S'),
-   [[b'a', b'b'], [b'c', b'd']],
-   np.array([[b'a', b'b'], [b'c', b'd']], dtype='V1')
+   [[b'a', b'b'], [b'c', b'd']]
 ])
 def test_check_array_dtype_numeric_errors(X):
     """Error when string-ike array can not be converted"""
-    if (np_version < parse_version("1.14")
-            and hasattr(X, "dtype") and X.dtype.kind == "V"):
-        pytest.skip("old numpy would convert V dtype into float silently")
     expected_warn_msg = "Unable to convert array of bytes/strings"
     with pytest.raises(ValueError, match=expected_warn_msg):
         check_array(X, dtype="numeric")
@@ -458,7 +462,7 @@ def test_check_array_pandas_dtype_casting():
     # check that we handle pandas dtypes in a semi-reasonable way
     # this is actually tricky because we can't really know that this
     # should be integer ahead of converting it.
-    cat_df = pd.DataFrame([pd.Categorical([1, 2, 3])])
+    cat_df = pd.DataFrame({"cat_col": pd.Categorical([1, 2, 3])})
     assert (check_array(cat_df).dtype == np.int64)
     assert (check_array(cat_df, dtype=FLOAT_DTYPES).dtype
             == np.float64)
@@ -1324,3 +1328,73 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
                                                      dtype=ntype2)})
     arr = check_array(df, accept_sparse=['csr', 'csc'])
     assert np.issubdtype(arr.dtype, expected_subtype)
+
+
+@pytest.mark.parametrize("constructor_name", [
+    "list", "tuple", "array", "dataframe", "sparse_csr", "sparse_csc"
+])
+def test_num_features(constructor_name):
+    """Check _num_features for array-likes."""
+    X = [[1, 2, 3], [4, 5, 6]]
+    X = _convert_container(X, constructor_name)
+    assert _num_features(X) == 3
+
+
+@pytest.mark.parametrize(
+    "X",
+    [
+        [1, 2, 3],
+        ["a", "b", "c"],
+        [False, True, False],
+        [1.0, 3.4, 4.0],
+        [{"a": 1}, {"b": 2}, {"c": 3}],
+    ],
+    ids=["int", "str", "bool", "float", "dict"]
+)
+@pytest.mark.parametrize("constructor_name", [
+    "list", "tuple", "array", "series"
+])
+def test_num_features_errors_1d_containers(X, constructor_name):
+    X = _convert_container(X, constructor_name)
+    if constructor_name == "array":
+        expected_type_name = "numpy.ndarray"
+    elif constructor_name == "series":
+        expected_type_name = "pandas.core.series.Series"
+    else:
+        expected_type_name = constructor_name
+    message = (
+        "Unable to find the number of features from X of type "
+        f"{expected_type_name}"
+    )
+    if hasattr(X, "shape"):
+        message += " with shape (3,)"
+    elif isinstance(X[0], str):
+        message += " where the samples are of type str"
+    elif isinstance(X[0], dict):
+        message += " where the samples are of type dict"
+    with pytest.raises(TypeError, match=re.escape(message)):
+        _num_features(X)
+
+
+@pytest.mark.parametrize("X", [1, 'b', False, 3.0],
+                         ids=["int", "str", "bool", "float"])
+def test_num_features_errors_scalars(X):
+    msg = (
+        "Unable to find the number of features from X of type "
+        f"{type(X).__qualname__}"
+    )
+    with pytest.raises(TypeError, match=msg):
+        _num_features(X)
+
+
+# TODO: Remove in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
+def test_check_array_deprecated_matrix():
+    """Test that matrix support is deprecated in 1.0."""
+
+    X = np.matrix(np.arange(5))
+    msg = ("np.matrix usage is deprecated in 1.0 and will raise a TypeError "
+           "in 1.2. Please convert to a numpy array with np.asarray.")
+    with pytest.warns(FutureWarning, match=msg):
+        check_array(X)

@@ -29,8 +29,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import (assert_almost_equal,
-                                    assert_warns_message, assert_raise_message,
-                                    assert_no_warnings,
                                     fails_if_pypy,
                                     assert_allclose_dense_sparse,
                                     skip_if_32bit)
@@ -378,6 +376,18 @@ def test_countvectorizer_custom_token_pattern_with_several_group():
         vectorizer.fit(corpus)
 
 
+def test_countvectorizer_uppercase_in_vocab():
+    vocabulary = ['Sample', 'Upper', 'Case' 'Vocabulary']
+    message = ("Upper case characters found in"
+               " vocabulary while 'lowercase'"
+               " is True. These entries will not"
+               " be matched with any documents")
+
+    vectorizer = CountVectorizer(lowercase=True, vocabulary=vocabulary)
+    with pytest.warns(UserWarning, match=message):
+        vectorizer.fit_transform(vocabulary)
+
+
 def test_tf_idf_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],
@@ -417,8 +427,8 @@ def test_tfidf_no_smoothing():
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
     in_warning_message = 'divide by zero'
-    assert_warns_message(RuntimeWarning, in_warning_message,
-                         tr.fit_transform, X).toarray()
+    with pytest.warns(RuntimeWarning, match=in_warning_message):
+        tr.fit_transform(X).toarray()
 
 
 def test_sublinear_tf():
@@ -493,15 +503,6 @@ def test_vectorizer():
     t3 = TfidfTransformer(use_idf=True)
     with pytest.raises(ValueError):
         t3.transform(counts_train)
-
-    # test idf transform with incompatible n_features
-    X = [[1, 1, 5],
-         [1, 1, 0]]
-    t3.fit(X)
-    X_incompt = [[1, 3],
-                 [1, 3]]
-    with pytest.raises(ValueError):
-        t3.transform(X_incompt)
 
     # L1-normalized term frequencies sum to one
     assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)
@@ -1082,7 +1083,8 @@ def test_hashingvectorizer_nan_in_docs():
         hv = HashingVectorizer()
         hv.fit_transform(['hello world', np.nan, 'hello hello'])
 
-    assert_raise_message(exception, message, func)
+    with pytest.raises(exception, match=message):
+        func()
 
 
 def test_tfidfvectorizer_binary():
@@ -1116,11 +1118,16 @@ def test_vectorizer_string_object_as_input(Vectorizer):
     message = ("Iterable over raw text documents expected, "
                "string object received.")
     vec = Vectorizer()
-    assert_raise_message(
-            ValueError, message, vec.fit_transform, "hello world!")
-    assert_raise_message(ValueError, message, vec.fit, "hello world!")
+
+    with pytest.raises(ValueError, match=message):
+        vec.fit_transform("hello world!")
+
+    with pytest.raises(ValueError, match=message):
+        vec.fit("hello world!")
     vec.fit(["some text", "some other text"])
-    assert_raise_message(ValueError, message, vec.transform, "hello world!")
+
+    with pytest.raises(ValueError, match=message):
+        vec.transform("hello world!")
 
 
 @pytest.mark.parametrize("X_dtype", [np.float32, np.float64])
@@ -1175,20 +1182,22 @@ def test_vectorizers_invalid_ngram_range(vec):
     # vectorizers could be initialized with invalid ngram range
     # test for raising error message
     invalid_range = vec.ngram_range
-    message = ("Invalid value for ngram_range=%s "
-               "lower boundary larger than the upper boundary."
-               % str(invalid_range))
+    message = re.escape(
+        f"Invalid value for ngram_range={invalid_range} "
+        "lower boundary larger than the upper boundary."
+    )
     if isinstance(vec, HashingVectorizer) and IS_PYPY:
         pytest.xfail(reason='HashingVectorizer is not supported on PyPy')
 
-    assert_raise_message(
-        ValueError, message, vec.fit, ["good news everyone"])
-    assert_raise_message(
-        ValueError, message, vec.fit_transform, ["good news everyone"])
+    with pytest.raises(ValueError, match=message):
+        vec.fit(['good news everyone'])
+
+    with pytest.raises(ValueError, match=message):
+        vec.fit_transform(['good news everyone'])
 
     if isinstance(vec, HashingVectorizer):
-        assert_raise_message(
-            ValueError, message, vec.transform, ["good news everyone"])
+        with pytest.raises(ValueError, match=message):
+            vec.transform(['good news everyone'])
 
 
 def _check_stop_words_consistency(estimator):
@@ -1201,27 +1210,29 @@ def _check_stop_words_consistency(estimator):
 
 @fails_if_pypy
 def test_vectorizer_stop_words_inconsistent():
-    lstr = "['and', 'll', 've']"
+    lstr = r"\['and', 'll', 've'\]"
     message = ('Your stop_words may be inconsistent with your '
                'preprocessing. Tokenizing the stop words generated '
                'tokens %s not in stop_words.' % lstr)
     for vec in [CountVectorizer(),
                 TfidfVectorizer(), HashingVectorizer()]:
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
-        assert_warns_message(UserWarning, message, vec.fit_transform,
-                             ['hello world'])
+        with pytest.warns(UserWarning, match=message):
+            vec.fit_transform(['hello world'])
         # reset stop word validation
         del vec._stop_words_id
         assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
-    assert_no_warnings(vec.fit_transform, ['hello world'])
+    with pytest.warns(None) as record:
+        vec.fit_transform(['hello world'])
+    assert not len(record)
     assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment
     vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
-    assert_warns_message(UserWarning, message, vec.fit_transform,
-                         ['hello world'])
+    with pytest.warns(UserWarning, match=message):
+        vec.fit_transform(['hello world'])
 
 
 @skip_if_32bit

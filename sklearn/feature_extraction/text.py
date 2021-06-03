@@ -33,7 +33,6 @@ from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
-from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ['HashingVectorizer',
@@ -679,7 +678,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     CountVectorizer, TfidfVectorizer
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -1004,7 +1002,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """
-    @_deprecate_positional_args
     def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -1106,6 +1103,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         analyze = self.build_analyzer()
         j_indices = []
         indptr = []
+
+        if self.lowercase:
+            for vocab in vocabulary:
+                if any(map(str.isupper, vocab)):
+                    warnings.warn("Upper case characters found in"
+                                  " vocabulary while 'lowercase'"
+                                  " is True. These entries will not"
+                                  " be matched with any documents")
+                    break
 
         values = _make_int_array()
         indptr.append(0)
@@ -1380,6 +1386,11 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.20
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -1415,7 +1426,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
     """
-    @_deprecate_positional_args
     def __init__(self, *, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
         self.norm = norm
@@ -1431,7 +1441,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         X : sparse matrix of shape n_samples, n_features)
             A matrix of term/token counts.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'))
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'))
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
         dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
@@ -1471,7 +1481,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=FLOAT_DTYPES, copy=copy, reset=False)
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
 
@@ -1488,11 +1499,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             check_is_fitted(self, attributes=["idf_"],
                             msg='idf vector is not fitted')
 
-            expected_n_features = self._idf_diag.shape[0]
-            if n_features != expected_n_features:
-                raise ValueError("Input has n_features=%d while the model"
-                                 " has been trained with n_features=%d" % (
-                                     n_features, expected_n_features))
             # *= doesn't work
             X = X * self._idf_diag
 
@@ -1724,7 +1730,6 @@ class TfidfVectorizer(CountVectorizer):
     >>> print(X.shape)
     (4, 9)
     """
-    @_deprecate_positional_args
     def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',

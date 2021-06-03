@@ -173,7 +173,7 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     LinearRegression()
-    >>> print(regr.coef_)
+    >>> print(regr.coef_) # doctest: +SKIP
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 

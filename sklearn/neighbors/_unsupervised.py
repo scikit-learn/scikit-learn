@@ -2,7 +2,6 @@
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
-from ..utils.validation import _deprecate_positional_args
 
 
 class NearestNeighbors(KNeighborsMixin,
@@ -108,10 +107,9 @@ class NearestNeighbors(KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
                  p=2, metric_params=None, n_jobs=None):

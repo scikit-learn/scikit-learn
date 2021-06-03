@@ -181,7 +181,7 @@ common kernel functions on various benchmark datasets in section 2.1 of Platt
 1999 [3]_ but does not necessarily hold in general. Additionally, the
 logistic model works best if the calibration error is symmetrical, meaning
 the classifier output for each binary class is normally distributed with
-the same variance [6]_. This is can be a problem for highly imbalanced
+the same variance [6]_. This can be a problem for highly imbalanced
 classification problems, where outputs do not have equal variance.
 
 In general this method is most effective when the un-calibrated model is
