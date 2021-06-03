@@ -17,7 +17,8 @@ Python version, your operating system and your platform."""
 def raise_build_error(e):
     # Raise a comprehensible error and list the contents of the
     # directory to help debugging on the mailing list.
-    local_dir = resources.files('sklearn.__check_build').as_posix()
+    with resources.path('sklearn', '.') as f:
+        local_dir = f.as_posix()
     msg = STANDARD_MSG
     if local_dir == "sklearn/__check_build":
         # Picking up the local install: this will work only if the

@@ -702,7 +702,8 @@ def assert_run_python_script(source_code, timeout=60):
         with open(source_file, 'wb') as f:
             f.write(source_code.encode('utf-8'))
         cmd = [sys.executable, source_file]
-        cwd = resources.files('sklearn').parent.as_posix()
+        with resources.path('sklearn', '.') as f:
+            cwd = f.parent.as_posix()
         env = os.environ.copy()
         try:
             env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
