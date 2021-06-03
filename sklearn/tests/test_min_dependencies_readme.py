@@ -37,9 +37,11 @@ def test_min_dependencies_readme():
                 continue
 
             package, version = matched.group(2), matched.group(5)
+            package = package.lower()
 
             if package in dependent_packages:
                 version = parse_version(version)
                 min_version = parse_version(dependent_packages[package][0])
 
-                assert version == min_version
+                assert version == min_version, (f"{package} has a mismatched "
+                                                "version")

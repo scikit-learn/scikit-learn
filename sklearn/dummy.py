@@ -17,7 +17,6 @@ from .utils.validation import check_is_fitted, _check_sample_weight
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
-from .utils.validation import _deprecate_positional_args
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
@@ -94,7 +93,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     >>> dummy_clf.score(X, y)
     0.75
     """
-    @_deprecate_positional_args
     def __init__(self, *, strategy="prior", random_state=None,
                  constant=None):
         self.strategy = strategy
@@ -444,7 +442,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> dummy_regr.score(X, y)
     0.0
     """
-    @_deprecate_positional_args
     def __init__(self, *, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
         self.constant = constant

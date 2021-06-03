@@ -36,7 +36,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         to select. If float between 0 and 1, it is the fraction of features to
         select.
 
-    direction: {'forward', 'backward'}, default='forward'
+    direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
 
     scoring : str, callable, list/tuple or dict, default=None
@@ -60,7 +60,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

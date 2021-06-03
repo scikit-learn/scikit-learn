@@ -14,7 +14,7 @@ from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils.extmath import row_norms
 from ..utils import deprecated
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
 from .._config import config_context
@@ -333,7 +333,7 @@ class _CFSubcluster:
 
 
 class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
-    """Implements the Birch clustering algorithm.
+    """Implements the BIRCH clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
     alternative to :class:`MiniBatchKMeans`. It constructs a tree
@@ -440,7 +440,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
     """
-    @_deprecate_positional_args
     def __init__(self, *, threshold=0.5, branching_factor=50, n_clusters=3,
                  compute_labels=True, copy=True):
         self.threshold = threshold
@@ -674,7 +673,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             self.subcluster_labels_ = np.arange(len(centroids))
             if not_enough_centroids:
                 warnings.warn(
-                    "Number of subclusters found (%d) by Birch is less "
+                    "Number of subclusters found (%d) by BIRCH is less "
                     "than (%d). Decrease the threshold."
                     % (len(centroids), self.n_clusters), ConvergenceWarning)
         else:

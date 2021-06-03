@@ -54,7 +54,6 @@ from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
-from ..utils.validation import _deprecate_positional_args
 
 
 class VerboseReporter:
@@ -240,6 +239,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 or self.loss not in _gb_losses.LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
+        # TODO: Remove in v1.2
+        if self.loss == "ls":
+            warnings.warn("The loss 'ls' was deprecated in v1.0 and "
+                          "will be removed in version 1.2. Use 'squared_error'"
+                          " which is equivalent.",
+                          FutureWarning)
+        elif self.loss == "lad":
+            warnings.warn("The loss 'lad' was deprecated in v1.0 and "
+                          "will be removed in version 1.2. Use "
+                          "'absolute_error' which is equivalent.",
+                          FutureWarning)
+
         if self.loss == 'deviance':
             loss_class = (_gb_losses.MultinomialDeviance
                           if len(self.classes_) > 2
@@ -275,25 +286,25 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 if is_classifier(self):
-                    max_features = max(1, int(np.sqrt(self.n_features_)))
+                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
                 else:
-                    max_features = self.n_features_
+                    max_features = self.n_features_in_
             elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self.n_features_)))
+                max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
-                max_features = max(1, int(np.log2(self.n_features_)))
+                max_features = max(1, int(np.log2(self.n_features_in_)))
             else:
                 raise ValueError("Invalid value for max_features: %r. "
                                  "Allowed string values are 'auto', 'sqrt' "
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
-            max_features = self.n_features_
+            max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
                 max_features = max(int(self.max_features *
-                                       self.n_features_), 1)
+                                       self.n_features_in_), 1)
             else:
                 raise ValueError("max_features must be in (0, n_features]")
 
@@ -399,9 +410,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
-        if self.criterion == 'mae':
+        if self.criterion in ('absolute_error', 'mae'):
             # TODO: This should raise an error from 1.1
             self._warn_mae_for_criterion()
+
+        if self.criterion == 'mse':
+            # TODO: Remove in v1.2. By then it should raise an error.
+            warnings.warn(
+                "Criterion 'mse' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use `criterion='squared_error'` "
+                "which is equivalent.",
+                FutureWarning
+            )
 
         # if not warmstart - clear the estimator state
         if not self.warm_start:
@@ -413,7 +433,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    dtype=DTYPE, multi_output=True)
-        n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
 
@@ -610,9 +629,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check input and compute raw predictions of the init estimator."""
         self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
-        if X.shape[1] != self.n_features_:
-            raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
-                self.n_features_, X.shape[1]))
         if self.init_ == 'zero':
             raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                        dtype=np.float64)
@@ -649,7 +665,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, order="C", accept_sparse='csr',
+                                reset=False)
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate,
@@ -683,7 +700,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                           if tree.tree_.node_count > 1]
         if not relevant_trees:
             # degenerate case where all trees have only one node
-            return np.zeros(shape=self.n_features_, dtype=np.float64)
+            return np.zeros(shape=self.n_features_in_, dtype=np.float64)
 
         relevant_feature_importances = [
             tree.tree_.compute_feature_importances(normalize=False)
@@ -766,6 +783,16 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return leaves
 
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use 'n_features_in_' instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
+
 
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
@@ -803,20 +830,26 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : {'friedman_mse', 'mse', 'mae'}, default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error', 'mse', 'mae'}, \
+            default='friedman_mse'
         The function to measure the quality of a split. Supported criteria
         are 'friedman_mse' for the mean squared error with improvement
-        score by Friedman, 'mse' for mean squared error, and 'mae' for
-        the mean absolute error. The default value of 'friedman_mse' is
-        generally the best as it can provide a better approximation in
-        some cases.
+        score by Friedman, 'squared_error' for mean squared error, and 'mae'
+        for the mean absolute error. The default value of 'friedman_mse' is
+        generally the best as it can provide a better approximation in some
+        cases.
 
         .. versionadded:: 0.18
+
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
-            1.1 (renaming of 0.26). Use `criterion='friedman_mse'` or `'mse'`
-            instead, as trees should use a least-square criterion in
-            Gradient Boosting.
+            1.1 (renaming of 0.26). Use `criterion='friedman_mse'` or
+            `'squared_error'` instead, as trees should use a squared error
+            criterion in Gradient Boosting.
+
+        .. deprecated:: 1.0
+            Criterion 'mse' was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1012,7 +1045,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Set via the ``init`` argument or ``loss.init_estimator``.
 
     estimators_ : ndarray of DecisionTreeRegressor of \
-shape (n_estimators, ``loss_.K``)
+            shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
@@ -1021,6 +1054,10 @@ shape (n_estimators, ``loss_.K``)
 
     n_features_ : int
         The number of data features.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
 
     n_classes_ : int
         The number of classes.
@@ -1081,7 +1118,6 @@ shape (n_estimators, ``loss_.K``)
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    @_deprecate_positional_args
     def __init__(self, *, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
@@ -1125,9 +1161,9 @@ shape (n_estimators, ``loss_.K``)
         # TODO: This should raise an error from 1.1
         warnings.warn("criterion='mae' was deprecated in version 0.24 and "
                       "will be removed in version 1.1 (renaming of 0.26). Use "
-                      "criterion='friedman_mse' or 'mse' instead, as trees "
-                      "should use a least-square criterion in Gradient "
-                      "Boosting.", FutureWarning)
+                      "criterion='friedman_mse' or 'squared_error' instead, as"
+                      " trees should use a squared error criterion in Gradient"
+                      " Boosting.", FutureWarning)
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
@@ -1148,7 +1184,8 @@ shape (n_estimators, ``loss_.K``)
             :term:`classes_`. Regression and binary classification produce an
             array of shape (n_samples,).
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, order="C", accept_sparse='csr',
+                                reset=False)
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
             return raw_predictions.ravel()
@@ -1315,12 +1352,21 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'ls', 'lad', 'huber', 'quantile'}, default='ls'
-        Loss function to be optimized. 'ls' refers to least squares
-        regression. 'lad' (least absolute deviation) is a highly robust
-        loss function solely based on order information of the input
-        variables. 'huber' is a combination of the two. 'quantile'
-        allows quantile regression (use `alpha` to specify the quantile).
+    loss : {'squared_error', 'ls', 'absolute_error', 'lad', 'huber', \
+            'quantile'}, default='squared_error'
+        Loss function to be optimized. 'squared_error' refers to the squared
+        error for regression. 'absolute_error' refers to the absolute error of
+        regression and is a robust loss function. 'huber' is a
+        combination of the two. 'quantile' allows quantile regression (use
+        `alpha` to specify the quantile).
+
+        .. deprecated:: 1.0
+            The loss 'ls' was deprecated in v1.0 and will be removed in
+            version 1.2. Use `loss='squared_error'` which is equivalent.
+
+        .. deprecated:: 1.0
+            The loss 'lad' was deprecated in v1.0 and will be removed in
+            version 1.2. Use `loss='absolute_error'` which is equivalent.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -1338,19 +1384,25 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : {'friedman_mse', 'mse', 'mae'}, default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error', 'mse', 'mae'}, \
+            default='friedman_mse'
         The function to measure the quality of a split. Supported criteria
         are "friedman_mse" for the mean squared error with improvement
-        score by Friedman, "mse" for mean squared error, and "mae" for
-        the mean absolute error. The default value of "friedman_mse" is
-        generally the best as it can provide a better approximation in
-        some cases.
+        score by Friedman, "squared_error" for mean squared error, and "mae"
+        for the mean absolute error. The default value of "friedman_mse" is
+        generally the best as it can provide a better approximation in some
+        cases.
 
         .. versionadded:: 0.18
+
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
             1.1 (renaming of 0.26). The correct way of minimizing the absolute
-            error is to use `loss='lad'` instead.
+            error is to use `loss='absolute_error'` instead.
+
+        .. deprecated:: 1.0
+            Criterion 'mse' was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1423,7 +1475,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         ``init`` has to provide :term:`fit` and :term:`predict`. If 'zero', the
         initial raw predictions are set to zero. By default a
         ``DummyEstimator`` is used, predicting either the average target value
-        (for loss='ls'), or a quantile for the other losses.
+        (for loss='squared_error'), or a quantile for the other losses.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given to each Tree estimator at each
@@ -1561,6 +1613,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     n_features_ : int
         The number of data features.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
     max_features_ : int
         The inferred value of max_features.
 
@@ -1569,7 +1625,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     HistGradientBoostingRegressor : Histogram-based Gradient Boosting
         Classification Tree.
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
-    sklearn.tree.RandomForestRegressor : A random forest regressor.
+    sklearn.ensemble.RandomForestRegressor : A random forest regressor.
 
     Notes
     -----
@@ -1607,10 +1663,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
+    # TODO: remove "ls" in verion 1.2
+    _SUPPORTED_LOSS = ("squared_error", 'ls', "absolute_error", 'lad', 'huber',
+                       'quantile')
 
-    @_deprecate_positional_args
-    def __init__(self, *, loss='ls', learning_rate=0.1, n_estimators=100,
+    def __init__(self, *, loss="squared_error", learning_rate=0.1,
+                 n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
@@ -1645,7 +1703,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         warnings.warn("criterion='mae' was deprecated in version 0.24 and "
                       "will be removed in version 1.1 (renaming of 0.26). The "
                       "correct way of minimizing the absolute error is to use "
-                      " loss='lad' instead.", FutureWarning)
+                      " loss='absolute_error' instead.", FutureWarning)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1662,7 +1720,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         y : ndarray of shape (n_samples,)
             The predicted values.
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = self._validate_data(X, dtype=DTYPE, order="C", accept_sparse='csr',
+                                reset=False)
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
 
