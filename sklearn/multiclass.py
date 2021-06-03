@@ -114,25 +114,25 @@ def _check_estimator(estimator):
 class _ConstantPredictor(BaseEstimator):
 
     def fit(self, X, y):
-        self._check_n_features(X, reset=True)
+        self._validate_data(X, force_all_finite=False, dtype=None)
         self.y_ = y
         return self
 
     def predict(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._validate_data(X, force_all_finite=False, dtype=None, reset=False)
 
         return np.repeat(self.y_, _num_samples(X))
 
     def decision_function(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._validate_data(X, force_all_finite=False, dtype=None, reset=False)
 
         return np.repeat(self.y_, _num_samples(X))
 
     def predict_proba(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._validate_data(X, force_all_finite=False, dtype=None, reset=False)
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
                          _num_samples(X), axis=0)

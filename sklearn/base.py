@@ -20,6 +20,7 @@ from .utils._tags import (
     _safe_tags,
 )
 from .utils.validation import check_X_y
+from .utils.validation import check_y
 from .utils.validation import check_array
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
@@ -431,23 +432,22 @@ class BaseEstimator:
             validate_y = False
         else:
             validate_y = True
-        
+
         if isinstance(X, str) and X == 'no_validation':
             validate_X = False
         else:
             validate_X = True
 
         if not validate_X and not validate_y:
-            return
+            out = None
         elif validate_X and not validate_y:
             X = check_array(X, **check_params)
             out = X
         elif not validate_X and validate_y:
-            y = check_y()
-
-        elif( not (y is None or isinstance(y, str) and y == 'no_validation')
-                and not (isinstance(X, str) and X == 'no_validation')):
-
+            multi_output = check_params.get('multi_output', False)
+            y_numeric = check_params.get('y_numeric', False)
+            y = check_y(y, multi_output, y_numeric)
+            out = y
         else:
             if validate_separately:
                 # We need this because some estimators validate X and y
@@ -461,7 +461,7 @@ class BaseEstimator:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
 
-        if check_params.get('ensure_2d', True):
+        if validate_X and check_params.get('ensure_2d', True):
             self._check_n_features(X, reset=reset)
 
         return out
