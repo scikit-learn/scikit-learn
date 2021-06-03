@@ -219,8 +219,7 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
         "IterativeImputer",
         "MultiOutputClassifier",
         "MultiOutputRegressor",
-        "OneVsOneClassifier",
-        "OutputCodeClassifier",
+        "OneVsOneClassifier",  # input validation can't be avoided
         "RANSACRegressor",
         "RFE",
         "RFECV",
