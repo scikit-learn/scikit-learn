@@ -169,7 +169,7 @@ def _generate_meta_estimator_instances_with_pipeline():
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
-        if "estimator" in sig or "base_estimator" in sig:
+        if "estimator" in sig or "base_estimator" in sig or "regressor" in sig:
             if is_regressor(Estimator):
                 estimator = make_pipeline(TfidfVectorizer(), Ridge())
                 param_grid = {"ridge__alpha": [0.1, 1.0]}
