@@ -86,7 +86,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     max_samples : int or float
         The maximum number of samples to draw from the total available:
             - if float, this indicates a fraction of the total and should be
-              the interval `(0, 1]`;
+              the interval `(0.0, 1.0]`;
             - if int, this indicates the exact number of samples;
             - if None, this indicates the total number of samples.
 
