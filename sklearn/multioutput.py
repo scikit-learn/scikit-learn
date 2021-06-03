@@ -102,8 +102,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         self : object
         """
         first_time = not hasattr(self, 'estimators_')
-        y = check_array(y, accept_sparse='csr', force_all_finite=True,
-                        ensure_2d=False, dtype=None)
+        y = self._validate_data(X='no_validation', y=y, multi_output=True)
 
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
@@ -160,8 +159,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        y = check_array(y, accept_sparse='csr', force_all_finite=True,
-                        ensure_2d=False, dtype=None)
+        y = self._validate_data(X='no_validation', y=y, multi_output=True)
 
         if is_classifier(self):
             check_classification_targets(y)
