@@ -194,7 +194,8 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
-    module_path = resources.files('sklearn.datasets').as_posix()
+    with resources.path('sklearn', 'datasets') as f:
+        module_path = f.as_posix()
     with open(join(module_path, 'descr', 'kddcup99.rst')) as rst_file:
         fdescr = rst_file.read()
 

@@ -6,7 +6,7 @@ import scipy.sparse as sp
 import os
 import shutil
 from tempfile import NamedTemporaryFile
-from importlib.resources import files as impfiles  # type: ignore
+from importlib import resources  # type: ignore
 
 import pytest
 
@@ -18,7 +18,8 @@ import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
                               dump_svmlight_file)
 
-currdir = impfiles('sklearn.datasets.tests').as_posix()
+with resources.path('sklearn.datasets', 'tests') as f:
+    currdir = f.as_posix()
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
 multifile = os.path.join(currdir, "data", "svmlight_multilabel.txt")
 invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")

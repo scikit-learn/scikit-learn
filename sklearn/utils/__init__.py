@@ -3,7 +3,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 import pkgutil
 import inspect
-from importlib import import_module
+from importlib import import_module, resources
 from operator import itemgetter
 from collections.abc import Sequence
 from contextlib import contextmanager
@@ -13,7 +13,6 @@ import numbers
 import platform
 import struct
 import timeit
-from importlib import resources
 
 import warnings
 import numpy as np
@@ -1127,7 +1126,8 @@ def all_estimators(type_filter=None):
 
     all_classes = []
     modules_to_ignore = {"tests", "externals", "setup", "conftest"}
-    root = resources.files('sklearn').as_posix()  # sklearn package
+    with resources.path('sklearn', '.') as f:
+        root = f.as_posix()  # sklearn package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with ignore_warnings(category=FutureWarning):

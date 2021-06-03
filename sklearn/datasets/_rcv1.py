@@ -261,7 +261,8 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
 
-    module_path = resources.files('sklearn.datasets').as_posix()
+    with resources.path('sklearn', 'datasets') as f:
+        module_path = f.as_posix()
     with open(join(module_path, 'descr', 'rcv1.rst')) as rst_file:
         fdescr = rst_file.read()
 
