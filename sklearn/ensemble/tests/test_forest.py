@@ -1462,11 +1462,8 @@ def test_max_samples_boundary_regressors(name):
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_max_samples_boundary_classifiers(name):
-    rng = np.random.RandomState(1)
-
-    X_train = rng.randn(10000, 2)
-    y_train = rng.randn(10000) > 0
-    X_test = rng.randn(1000, 2)
+    X_train, X_test, y_train, _ = train_test_split(
+        X_large, y_large, random_state=0, stratify=y_large)
 
     ms_1_model = FOREST_CLASSIFIERS[name](max_samples=1.0, random_state=0)
     ms_1_proba = ms_1_model.fit(X_train, y_train).predict_proba(X_test)
