@@ -228,7 +228,12 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    if Estimator.__name__ in ("RandomizedSearchCV", "GridSearchCV"):
+    if Estimator.__name__ in (
+        "HalvingRandomSearchCV",
+        "RandomizedSearchCV",
+        "HalvingGridSearchCV",
+        "GridSearchCV",
+    ):
         est = _construct_searchcv_instance(Estimator)
     else:
         est = _construct_instance(Estimator)
