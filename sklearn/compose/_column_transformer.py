@@ -141,6 +141,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 1.0
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying transformers expose such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
