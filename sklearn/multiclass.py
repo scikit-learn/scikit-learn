@@ -120,19 +120,19 @@ class _ConstantPredictor(BaseEstimator):
 
     def predict(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._check_n_features(X, reset=False)
 
         return np.repeat(self.y_, _num_samples(X))
 
     def decision_function(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._check_n_features(X, reset=False)
 
         return np.repeat(self.y_, _num_samples(X))
 
     def predict_proba(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._check_n_features(X, reset=False)
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
                          _num_samples(X), axis=0)
