@@ -217,8 +217,7 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
         "BaggingRegressor",
         "ClassifierChain",  # data validation is necessary
         "IterativeImputer",
-        "OneVsOneClassifier",
-        "OutputCodeClassifier",
+        "OneVsOneClassifier",  # input validation can't be avoided
         "RANSACRegressor",
         "RFE",
         "RFECV",

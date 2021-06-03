@@ -192,7 +192,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'linear_model',
     'manifold',
     'model_selection',
-    'multiclass',
     'naive_bayes',
     'neighbors',
     'neural_network',
