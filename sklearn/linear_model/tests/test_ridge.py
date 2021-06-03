@@ -5,6 +5,7 @@ from itertools import product
 
 import pytest
 
+from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
@@ -1279,7 +1280,8 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
     y += true_intercept
     X_testing = arr_type(X)
 
-    alpha, atol, tol = 1e-3, 1e-4, 1e-6
+    alpha, tol = 1e-3, 1e-6
+    atol = 1e-3 if _IS_32BIT else 1e-4
 
     if solver not in ['sag', 'auto'] and return_intercept:
         with pytest.raises(ValueError, match="In Ridge, only 'sag' solver"):

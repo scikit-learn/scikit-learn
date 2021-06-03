@@ -28,6 +28,7 @@ from ._passive_aggressive import PassiveAggressiveClassifier
 from ._passive_aggressive import PassiveAggressiveRegressor
 from ._perceptron import Perceptron
 
+from ._quantile import QuantileRegressor
 from ._ransac import RANSACRegressor
 from ._theil_sen import TheilSenRegressor
 
@@ -59,6 +60,7 @@ __all__ = ['ARDRegression',
            'PassiveAggressiveClassifier',
            'PassiveAggressiveRegressor',
            'Perceptron',
+           'QuantileRegressor',
            'Ridge',
            'RidgeCV',
            'RidgeClassifier',
