@@ -191,7 +191,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'kernel_ridge',
     'linear_model',
     'manifold',
-    'model_selection',
     'multiclass',
     'multioutput',
     'naive_bayes',
@@ -225,8 +224,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor', 'SequentialFeatureSelector',
-               'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
+               'VotingRegressor', 'SequentialFeatureSelector'}
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
