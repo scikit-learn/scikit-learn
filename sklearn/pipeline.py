@@ -83,6 +83,12 @@ class Pipeline(_BaseComposition):
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying the first estimator in `steps` exposes such an attribute
+        when fit.
+        .. versionadded:: 0.24
+
     See Also
     --------
     make_pipeline : Convenience function for simplified pipeline construction.
@@ -825,6 +831,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
+
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying the first trasnsformer in `transformer_list` exposes such an
+        attribute when fit.
+        .. versionadded:: 0.24
 
     See Also
     --------
