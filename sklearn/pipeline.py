@@ -85,7 +85,7 @@ class Pipeline(_BaseComposition):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying the first estimator in `steps` exposes such an attribute
+        underlying first estimator in `steps` exposes such an attribute
         when fit.
 
         .. versionadded:: 0.24
