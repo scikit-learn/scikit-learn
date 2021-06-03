@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator, signature
+from inspect import isgenerator
 from itertools import product
 from functools import partial
 
@@ -228,11 +228,7 @@ def _generate_search_cv_instances():
             (LogisticRegression, {"C": [0.1, 1.0]}),
         ],
     ):
-        sig = set(signature(SearchCV).parameters)
-        extra_params = {"n_iter": 2} if "n_iter" in sig else {}
-        yield SearchCV(
-            Estimator(), param_grid, refit=True, **extra_params
-        )
+        yield SearchCV(Estimator(), param_grid)
 
     for SearchCV, (Estimator, param_grid) in product(
         [
@@ -246,11 +242,8 @@ def _generate_search_cv_instances():
             (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
         ],
     ):
-        sig = set(signature(SearchCV).parameters)
-        extra_params = {"n_iter": 2} if "n_iter" in sig else {}
         yield SearchCV(
-            make_pipeline(
-                PCA(), Estimator()), param_grid, refit=True, **extra_params,
+            make_pipeline(PCA(), Estimator()), param_grid
         ).set_params(error_score="raise")
 
 

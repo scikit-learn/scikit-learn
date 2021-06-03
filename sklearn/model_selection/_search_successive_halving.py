@@ -72,8 +72,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                  error_score=np.nan, return_train_score=True,
                  max_resources='auto', min_resources='exhaust',
                  resource='n_samples', factor=3, aggressive_elimination=False):
-
-        refit = _refit_callable if refit else False
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, cv=cv,
                          verbose=verbose,
@@ -176,6 +174,21 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 f'min_resources_={self.min_resources_} is greater '
                 f'than max_resources_={self.max_resources_}.'
             )
+
+    @staticmethod
+    def _select_best_index(refit, refit_metric, results):
+        """Custom refit callable to return the index of the best candidate.
+
+        We want the best candidate out of the last iteration. By default
+        BaseSearchCV would return the best candidate out of all iterations.
+
+        Currently, we only support for a single metric thus `refit` and
+        `refit_metric` are not required.
+        """
+        last_iter = np.max(results['iter'])
+        last_iter_indices = np.flatnonzero(results['iter'] == last_iter)
+        best_idx = np.argmax(results['mean_test_score'][last_iter_indices])
+        return last_iter_indices[best_idx]
 
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
