@@ -15,6 +15,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy import sparse
+from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
@@ -228,6 +229,21 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
+def _solve_trf(X, y, alpha, positive=False):
+    sqrt_alpha = np.sqrt(alpha)
+    def mv(b):
+        return np.hstack([X.dot(b), sqrt_alpha * b])
+
+    shape = (sum(X.shape), X.shape[0])
+    ridge_X = sp_linalg.LinearOperator(shape=shape, matvec=mv)
+
+    bounds = (0, np.inf) if positive else (-np.inf, np.inf)
+    result = optimize.lsq_linear(X, y, bounds=bounds, method="trf")
+    if not result["success"]:
+        raise ValueError("Failed fitting using trf solver")
+    return result["x"]
+
+
 def _get_valid_accept_sparse(is_X_sparse, solver):
     if is_X_sparse and solver in ['auto', 'sag', 'saga']:
         return 'csr'
@@ -269,7 +285,7 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
 
         .. versionadded:: 0.17
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'trf'}, \
         default='auto'
         Solver to use in the computational routines:
 
@@ -299,8 +315,10 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
+        - 'trf' uses Trust Region Reflective algorithm adapted for a linear
+          least-squares problem implemented in `scipy.optimize.lsq_linear`.
 
-        All last five solvers support both dense and sparse data. However, only
+        All last six solvers support both dense and sparse data. However, only
         'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
         True.
 
@@ -321,6 +339,10 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
     verbose : int, default=0
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
+
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive.
+        Only 'trf' solver is supported.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -368,6 +390,7 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
                              max_iter=max_iter,
                              tol=tol,
                              verbose=verbose,
+                             positive=False,
                              random_state=random_state,
                              return_n_iter=return_n_iter,
                              return_intercept=return_intercept,
@@ -377,8 +400,8 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
 
 
 def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
-                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
-                      return_n_iter=False, return_intercept=False,
+                      max_iter=None, tol=1e-3, verbose=0, positive=False,
+                      random_state=None, return_n_iter=False, return_intercept=False,
                       X_scale=None, X_offset=None, check_input=True):
 
     has_sw = sample_weight is not None
@@ -387,19 +410,25 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         if return_intercept:
             # only sag supports fitting intercept directly
             solver = "sag"
+        elif positive:
+            solver = "trf"
         elif not sparse.issparse(X):
             solver = "cholesky"
         else:
             solver = "sparse_cg"
 
-    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga', 'trf'):
         raise ValueError("Known solvers are 'sparse_cg', 'cholesky', 'svd'"
-                         " 'lsqr', 'sag' or 'saga'. Got %s." % solver)
+                         " 'lsqr', 'sag', 'saga' or 'trf'. Got %s." % solver)
 
     if return_intercept and solver != 'sag':
         raise ValueError("In Ridge, only 'sag' solver can directly fit the "
                          "intercept. Please change solver to 'sag' or set "
                          "return_intercept=False.")
+
+    if positive and solver != "trf":
+        raise ValueError("When positive=True, only 'trf' solver can fit. "
+                         "Please change solver to 'trf' or set positive=False.")
 
     if check_input:
         _dtype = [np.float64, np.float32]
@@ -496,6 +525,9 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         if intercept.shape[0] == 1:
             intercept = intercept[0]
         coef = np.asarray(coef)
+
+    elif solver == "trf":
+        coef = _solve_trf(X, y, positive=positive)
 
     if solver == 'svd':
         if sparse.issparse(X):
@@ -657,7 +689,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     tol : float, default=1e-3
         Precision of the solution.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'trf'}, \
         default='auto'
         Solver to use in the computational routines:
 
@@ -686,7 +718,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
-        All last five solvers support both dense and sparse data. However, only
+        - 'trf' uses Trust Region Reflective algorithm adapted for a linear
+          least-squares problem implemented in `scipy.optimize.lsq_linear`.
+
+        All last six solvers support both dense and sparse data. However, only
         'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
         True.
 
@@ -694,6 +729,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
+
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive.
+        Only 'trf' solver is supported.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -738,12 +777,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     """
     def __init__(self, alpha=1.0, *, fit_intercept=True,
                  normalize='deprecated', copy_X=True, max_iter=None, tol=1e-3,
-                 solver="auto", random_state=None):
+                 solver="auto", positive=False, random_state=None):
         super().__init__(
             alpha=alpha, fit_intercept=fit_intercept,
             normalize=normalize, copy_X=copy_X,
             max_iter=max_iter, tol=tol, solver=solver,
-            random_state=random_state)
+            positive=positive, random_state=random_state)
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.
@@ -821,7 +860,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'trf'}, \
         default='auto'
         Solver to use in the computational routines:
 
@@ -854,6 +893,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
              Stochastic Average Gradient descent solver.
           .. versionadded:: 0.19
            SAGA solver.
+
+        - 'trf' uses Trust Region Reflective algorithm adapted for a linear
+          least-squares problem implemented in `scipy.optimize.lsq_linear`.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -900,11 +942,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     def __init__(self, alpha=1.0, *, fit_intercept=True,
                  normalize='deprecated', copy_X=True, max_iter=None,
                  tol=1e-3, class_weight=None, solver="auto",
-                 random_state=None):
+                 positive=False, random_state=None):
         super().__init__(
             alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
-            random_state=random_state)
+            positive=positive, random_state=random_state)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
