@@ -87,6 +87,7 @@ class Pipeline(_BaseComposition):
         Number of features seen during :term:`fit`. Only defined if the
         underlying the first estimator in `steps` exposes such an attribute
         when fit.
+
         .. versionadded:: 0.24
 
     See Also
@@ -838,6 +839,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         Number of features seen during :term:`fit`. Only defined if the
         underlying the first transformer in `transformer_list` exposes such an
         attribute when fit.
+
         .. versionadded:: 0.24
 
     See Also
