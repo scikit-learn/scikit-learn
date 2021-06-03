@@ -193,7 +193,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'manifold',
     'model_selection',
     'multiclass',
-    'multioutput',
     'naive_bayes',
     'neighbors',
     'neural_network',
@@ -215,14 +214,11 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer',
-               'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
-               'GaussianRandomProjection',
-               'MultiOutputClassifier', 'MultiOutputRegressor',
+    IGNORED = {'ColumnTransformer', 'CountVectorizer', 'DictVectorizer',
+               'FeatureUnion', 'GaussianRandomProjection',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
                'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
-               'RegressorChain', 'SelectFromModel',
-               'SparseCoder', 'SparseRandomProjection',
+               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
                'VotingRegressor', 'SequentialFeatureSelector',
