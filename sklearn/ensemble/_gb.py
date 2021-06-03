@@ -1612,7 +1612,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     HistGradientBoostingRegressor : Histogram-based Gradient Boosting
         Classification Tree.
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
-    sklearn.tree.RandomForestRegressor : A random forest regressor.
+    sklearn.ensemble.RandomForestRegressor : A random forest regressor.
 
     Notes
     -----
