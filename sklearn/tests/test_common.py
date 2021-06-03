@@ -228,7 +228,11 @@ def _generate_search_cv_instances():
             (LogisticRegression, {"C": [0.1, 1.0]}),
         ],
     ):
-        yield SearchCV(Estimator(), param_grid)
+        sig = set(signature(SearchCV).parameters)
+        extra_params = {"n_iter": 2} if "n_iter" in sig else {}
+        yield SearchCV(
+            Estimator(), param_grid, refit=True, **extra_params
+        )
 
     for SearchCV, (Estimator, param_grid) in product(
         [
@@ -245,7 +249,8 @@ def _generate_search_cv_instances():
         sig = set(signature(SearchCV).parameters)
         extra_params = {"n_iter": 2} if "n_iter" in sig else {}
         yield SearchCV(
-            make_pipeline(PCA(), Estimator()), param_grid, **extra_params
+            make_pipeline(
+                PCA(), Estimator()), param_grid, refit=True, **extra_params,
         ).set_params(error_score="raise")
 
 
