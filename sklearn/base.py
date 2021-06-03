@@ -387,7 +387,9 @@ class BaseEstimator:
                 (n_samples, n_features), default='no validation'
             The input samples.
 
-            - If `'no_validation'`, no validation is performed on X.
+            - If `'no_validation'`, no validation is performed on X. This is
+              useful for meta-estimator which can delegate input validation to
+              their underlying estimator(s).
 
         y : array-like of shape (n_samples,), default='no_validation'
             The targets.
