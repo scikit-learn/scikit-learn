@@ -398,7 +398,7 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
                              max_iter=max_iter,
                              tol=tol,
                              verbose=verbose,
-                             positive=False,
+                             positive=positive,
                              random_state=random_state,
                              return_n_iter=return_n_iter,
                              return_intercept=return_intercept,
@@ -561,7 +561,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, alpha=1.0, *, fit_intercept=True,
                  normalize='deprecated', copy_X=True, max_iter=None, tol=1e-3,
-                 solver="auto", random_state=None):
+                 solver="auto", positive=False, random_state=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -569,6 +569,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.tol = tol
         self.solver = solver
+        self.positive = positive
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
@@ -603,6 +604,12 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 solver = 'sag'
             else:
                 solver = 'sparse_cg'
+        elif self.positive and self.solver not in ['auto', 'trf']:
+            raise ValueError(
+                "solver='{}' does not support positive fitting."
+                " Please set the solver to 'auto' or 'trf',"
+                " or set `positive=False`"
+                .format(self.solver))
         else:
             solver = self.solver
 
