@@ -138,6 +138,10 @@ Changelog
   :class:`calibration.CalibratedClassifierCV` can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
+- |Fix| Fixed an error when using a ::class:`ensemble.VotingClassifier`
+  as `base_estimator` in ::class:`calibration.CalibratedClassifierCV`.
+  :pr:`20087` by :user:`Clément Fauchereau <clement-f>`.
+
 :mod:`sklearn.cluster`
 ......................
 
