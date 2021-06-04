@@ -138,6 +138,10 @@ Changelog
   :class:`calibration.CalibratedClassifierCV` can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
+- |Fix| Fixed an error when using a ::class:`ensemble.VotingClassifier`
+  as `base_estimator` in ::class:`calibration.CalibratedClassifierCV`.
+  :pr:`20087` by :user:`Clément Fauchereau <clement-f>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -265,6 +269,12 @@ Changelog
 - |Enhancement| Improve the HTML rendering of the
   :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
   :pr:`19564` by `Thomas Fan`_.
+
+- |Fix| Fixed the range of the argument max_samples to be (0.0, 1.0]
+  in :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, where `max_samples=1.0` is
+  interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
+  :user:`murata-yu`.
 
 :mod:`sklearn.feature_extraction`
 .................................

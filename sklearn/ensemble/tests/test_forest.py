@@ -50,6 +50,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 
+from sklearn.metrics import mean_squared_error
+
 from sklearn.tree._classes import SPARSE_SPLITTERS
 
 
@@ -1419,16 +1421,14 @@ def test_forest_degenerate_feature_importances():
     'max_samples, exc_type, exc_msg',
     [(int(1e9), ValueError,
       "`max_samples` must be in range 1 to 6 but got value 1000000000"),
-     (1.0, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value 1.0"),
      (2.0, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value 2.0"),
+      r"`max_samples` must be in range \(0.0, 1.0\] but got value 2.0"),
      (0.0, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value 0.0"),
+      r"`max_samples` must be in range \(0.0, 1.0\] but got value 0.0"),
      (np.nan, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value nan"),
+      r"`max_samples` must be in range \(0.0, 1.0\] but got value nan"),
      (np.inf, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value inf"),
+      r"`max_samples` must be in range \(0.0, 1.0\] but got value inf"),
      ('str max_samples?!', TypeError,
       r"`max_samples` should be int or float, but got "
       r"type '\<class 'str'\>'"),
@@ -1441,6 +1441,37 @@ def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
     with pytest.raises(exc_type, match=exc_msg):
         est.fit(X, y)
+
+
+@pytest.mark.parametrize('name', FOREST_REGRESSORS)
+def test_max_samples_boundary_regressors(name):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_reg, y_reg, train_size=0.7, test_size=0.3, random_state=0)
+
+    ms_1_model = FOREST_REGRESSORS[name](max_samples=1.0, random_state=0)
+    ms_1_predict = ms_1_model.fit(X_train, y_train).predict(X_test)
+
+    ms_None_model = FOREST_REGRESSORS[name](max_samples=None, random_state=0)
+    ms_None_predict = ms_None_model.fit(X_train, y_train).predict(X_test)
+
+    ms_1_ms = mean_squared_error(ms_1_predict, y_test)
+    ms_None_ms = mean_squared_error(ms_None_predict, y_test)
+
+    assert ms_1_ms == pytest.approx(ms_None_ms)
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_max_samples_boundary_classifiers(name):
+    X_train, X_test, y_train, _ = train_test_split(
+        X_large, y_large, random_state=0, stratify=y_large)
+
+    ms_1_model = FOREST_CLASSIFIERS[name](max_samples=1.0, random_state=0)
+    ms_1_proba = ms_1_model.fit(X_train, y_train).predict_proba(X_test)
+
+    ms_None_model = FOREST_CLASSIFIERS[name](max_samples=None, random_state=0)
+    ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
+
+    np.testing.assert_allclose(ms_1_proba, ms_None_proba)
 
 
 def test_forest_y_sparse():
