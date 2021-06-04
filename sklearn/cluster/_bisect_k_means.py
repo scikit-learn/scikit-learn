@@ -99,7 +99,7 @@ class BisectKMeans(KMeans):
         For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
         might change in the future for a better heuristic.
 
-    bisect_strategy : {"biggest_sse", "child_biggest_sse"},
+    bisect_strategy : {"biggest_sse", "child_biggest_sse", "largest_cluster"},
         default="biggest_sse"
         Defines how should bisection by performed.
         - "biggest_sse" means that Bisect K-Means will always check
@@ -110,6 +110,10 @@ class BisectKMeans(KMeans):
         SSE of only clusters obtained from previous iteration for bisection.
         Calculated clusters will be less balanced - consecutive clusters
         will be usually smaller than previous
+        - "largest_cluster" - Bisect K-Means will always split cluster with
+        largest amount of points assigned to it from all clusters
+        previously calculated. That should work faster than picking by SSE
+        ('biggest_sse') and may produce similar results in most cases
 
 
     Attributes
@@ -210,10 +214,10 @@ class BisectKMeans(KMeans):
 
         # bisect_strategy
         if self.bisect_strategy not in \
-                ["biggest_sse", "child_biggest_sse"]:
-            raise ValueError(f"Bisect Strategy must be 'biggest_sse' or "
-                             f"'child_biggest_sse' got "
-                             f"{self.bisect_strategy} instead")
+                ["biggest_sse", "child_biggest_sse", "largest_cluster"]:
+            raise ValueError(f"Bisect Strategy must be 'biggest_sse', "
+                             f"'child_biggest_sse' or 'largest_cluster' "
+                             f"got {self.bisect_strategy} instead")
 
         # Regular K-Means should do less computations when there are only
         # less than 3 clusters
@@ -338,6 +342,9 @@ class BisectKMeans(KMeans):
 
         if self.bisect_strategy == "child_biggest_sse":
             _bisect_kmeans = self._bisect_by_biggest_child_sse
+
+        elif self.bisect_strategy == "largest_cluster":
+            _bisect_kmeans = self._bisect_largest_cluster
         else:
             # "biggest_sse"
             _bisect_kmeans = self._bisect_by_biggest_sse
@@ -346,8 +353,8 @@ class BisectKMeans(KMeans):
             print("Running Bisecting K-Means with parameters:")
             print(f"-> number of clusters: {self.n_clusters}")
             print(f"-> number of centroid initializations: {self.n_init}")
-            print("-> relative tolerance: {:.4e} \n".format(self.tol))
-            print(f"-> bisect strategy: {self.bisect_strategy}")
+            print("-> relative tolerance: {:.4e}".format(self.tol))
+            print(f"-> bisect strategy: {self.bisect_strategy} \n")
 
         x_squared_norms = row_norms(X, squared=True)
 
@@ -558,6 +565,107 @@ class BisectKMeans(KMeans):
             if self.verbose:
                 print(f"Centroid Found: {centers[lower_sse_index]}")
                 print(f"Centroid Found: {centers[higher_sse_index]}")
+
+            last_center_id += 2
+
+            # Delete split cluster from dict
+            del centers_dict[biggest]
+
+        # Extract calculated centroids to array
+        centers = [center[1]['centroid'] for center in centers_dict.items()]
+
+        centers = np.asarray(centers)
+
+        # Restore Original Data
+        if not sp.issparse(X):
+            X += X_mean
+            centers += X_mean
+
+        self.n_iter_ = n_iter + 1
+
+        return centers
+
+    def _bisect_largest_cluster(self, X, init,
+                                random_state, sample_weight):
+        """ Performs Bisecting K-Means, which splits always cluster with
+         largest number of points assigned from all calculated.
+         That method will perform faster than picking by SSE methods, while
+         producing similar results
+
+            .. note:: All of passed parameters must be pre-calculated
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training instances to cluster.
+
+        init : {'k-means++', 'random'}, callable or ndarray of shape \
+                (n_clusters, n_features)
+                Method for initialization.
+
+        random_state : int, RandomState instance or None, default=None
+            Determines random number generation for centroid initialization.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X.
+
+
+        Returns
+        -------
+        centers : ndarray of shape (n_clusters, n_features)
+            The cluster centers.
+        """
+        # Subtract of mean of X for more accurate distance computations
+        if not sp.issparse(X):
+            X_mean = X.mean(axis=0)
+            X -= X_mean
+
+            if hasattr(init, '__array__'):
+                init -= X_mean
+
+        centers_dict = {
+            0: {'data': X, 'weights': sample_weight, 'centroid': None}
+        }
+
+        init_org = init
+        last_center_id = 0
+
+        for n_iter in range(self.n_clusters - 1):
+
+            # Pick largest cluster by amount of assigned points
+            biggest, _ = max(centers_dict.items(),
+                             key=lambda x: x[1]['data'].shape[0])
+
+            # If init array is provided -
+            # Take only part of init that is dedicated for that part of bisect
+            if hasattr(init, '__array__'):
+                init = init_org[n_iter: n_iter + 2].copy()
+
+            # Perform Bisection
+            centers, labels = self._bisect(centers_dict[biggest]['data'],
+                                           init,
+                                           centers_dict[biggest]['weights'],
+                                           random_state)
+
+            center_one_labels = (labels == 0)
+            center_two_labels = (labels == 1)
+
+            # Add both centroids to dict
+            centers_dict[last_center_id + 1] = {
+                'data': centers_dict[biggest]['data'][center_one_labels],
+                'weights': centers_dict[biggest]['weights'][center_one_labels],
+                'centroid': centers[0]
+            }
+
+            centers_dict[last_center_id + 2] = {
+                'data': centers_dict[biggest]['data'][center_two_labels],
+                'weights': centers_dict[biggest]['weights'][center_two_labels],
+                'centroid': centers[1]
+            }
+
+            if self.verbose:
+                print(f"Centroid Found: {centers[0]}")
+                print(f"Centroid Found: {centers[1]}")
 
             last_center_id += 2
 

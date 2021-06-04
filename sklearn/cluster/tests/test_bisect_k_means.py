@@ -9,7 +9,8 @@ import pytest
 
 
 @pytest.mark.parametrize("bisect_strategy", ["biggest_sse",
-                                             "child_biggest_sse"])
+                                             "child_biggest_sse",
+                                             "largest_cluster"])
 def test_three_clusters(bisect_strategy):
     """ Tries to perform bisect k-means for three clusters to check
         if splitting data is performed correctly
@@ -22,10 +23,21 @@ def test_three_clusters(bisect_strategy):
                                 bisect_strategy=bisect_strategy)
     bisect_means.fit(X)
 
-    expected_centers = [[1, 2], [10, 8], [10, 2]]
+    # "largest_cluster" should produce same results
+    # but with different ordering
+    if bisect_strategy == "largest_cluster":
+        expected_centers = [[1, 2], [10, 2], [10, 8]]
+        expected_predict = [0, 1]
+        expected_labels = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+    else:
+        expected_centers = [[1, 2], [10, 8], [10, 2]]
+        expected_predict = [0, 2]
+        expected_labels = [0, 0, 0, 2, 2, 2, 1, 1, 1]
+
     assert_array_equal(expected_centers, bisect_means.cluster_centers_)
-    assert_array_equal(bisect_means.predict([[0, 0], [12, 3]]), [0, 2])
-    assert_array_equal(bisect_means.labels_, [0, 0, 0, 2, 2, 2, 1, 1, 1])
+    assert_array_equal(bisect_means.predict([[0, 0], [12, 3]]),
+                       expected_predict)
+    assert_array_equal(bisect_means.labels_, expected_labels)
 
 
 def test_sparse():
