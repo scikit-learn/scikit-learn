@@ -1,3 +1,4 @@
+from copy import deepcopy
 from math import ceil, floor, log
 from abc import abstractmethod
 from numbers import Integral
@@ -343,6 +344,17 @@ class BaseSuccessiveHalving(BaseSearchCV):
     @abstractmethod
     def _generate_candidate_params(self):
         pass
+
+    def _more_tags(self):
+        tags = deepcopy(super()._more_tags())
+        tags["_xfail_checks"].update(
+            {
+                "check_fit2d_1sample":
+                "Fail during parameter check since min/max resources requires"
+                " more samples",
+            }
+        )
+        return tags
 
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
