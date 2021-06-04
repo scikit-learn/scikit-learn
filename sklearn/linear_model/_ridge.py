@@ -230,18 +230,26 @@ def _solve_svd(X, y, alpha):
 
 
 def _solve_trf(X, y, alpha, positive=False):
-    sqrt_alpha = np.sqrt(alpha)
-    def mv(b):
-        return np.hstack([X.dot(b), sqrt_alpha * b])
+    n_samples, n_features = X.shape
+    coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
-    shape = (sum(X.shape), X.shape[0])
-    ridge_X = sp_linalg.LinearOperator(shape=shape, matvec=mv)
-
+    Xa_shape = (n_samples + n_features, n_features)
     bounds = (0, np.inf) if positive else (-np.inf, np.inf)
-    result = optimize.lsq_linear(X, y, bounds=bounds, method="trf")
-    if not result["success"]:
-        raise ValueError("Failed fitting using trf solver")
-    return result["x"]
+    sqrt_alpha = np.sqrt(alpha)
+
+    for i in range(y.shape[1]):
+        def mv(b):
+            return np.hstack([X.dot(b), sqrt_alpha[i] * b])
+        Xa = sp_linalg.LinearOperator(shape=Xa_shape, matvec=mv)
+        y_zeros = np.zeros(n_features, dtype=X.dtype)
+        y_column = np.hstack([y[:, i], y_zeros])
+        result = optimize.lsq_linear(Xa, y_column,
+                                     bounds=bounds, method="trf")
+        if not result["success"]:
+            raise ValueError("Failed fitting using trf solver")
+        coefs[i] = result["x"]
+
+    return coefs
 
 
 def _get_valid_accept_sparse(is_X_sparse, solver):
