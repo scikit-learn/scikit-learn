@@ -277,6 +277,10 @@ Changelog
   :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
   and `Julien Jerphanion <jjerphan>`.
 
+- |API| Deprecates `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`feature_selection.RFECV`. `grid_scores_` will be removed in version 1.2.
+  :pr:`20161` by :user:`Shuhei Kayawari <wowry>` and :user:`arka204`.
+
 :mod:`sklearn.inspection`
 .........................
 
