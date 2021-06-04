@@ -270,6 +270,12 @@ Changelog
   :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
   :pr:`19564` by `Thomas Fan`_.
 
+- |Fix| Fixed the range of the argument max_samples to be (0.0, 1.0]
+  in :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, where `max_samples=1.0` is
+  interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
+  :user:`murata-yu`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
