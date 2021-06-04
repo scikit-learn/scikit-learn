@@ -229,17 +229,28 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
-def _solve_trf(X, y, alpha, positive=False):
+def _solve_trf(X, y, alpha, positive=False, return_intercept=False):
     n_samples, n_features = X.shape
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
+    if return_intercept:
+        intercepts = np.empty(y.shape[1], dtype=X.dtype)
+    else:
+        intercepts = None
 
-    Xa_shape = (n_samples + n_features, n_features)
+    Xa_shape = (n_samples + n_features,
+                n_features + int(return_intercept))
     bounds = (0, np.inf) if positive else (-np.inf, np.inf)
     sqrt_alpha = np.sqrt(alpha)
 
     for i in range(y.shape[1]):
-        def mv(b):
-            return np.hstack([X.dot(b), sqrt_alpha[i] * b])
+        if return_intercept:
+            def mv(b):
+                return np.hstack([X.dot(b[:-1]) + b[-1],
+                                  sqrt_alpha[i] * b[:-1]])
+        else:
+            def mv(b):
+                return np.hstack([X.dot(b),
+                                  sqrt_alpha[i] * b])
         Xa = sp_linalg.LinearOperator(shape=Xa_shape, matvec=mv)
         y_zeros = np.zeros(n_features, dtype=X.dtype)
         y_column = np.hstack([y[:, i], y_zeros])
@@ -247,9 +258,13 @@ def _solve_trf(X, y, alpha, positive=False):
                                      bounds=bounds, method="trf")
         if not result["success"]:
             raise ValueError("Failed fitting using trf solver")
-        coefs[i] = result["x"]
+        if return_intercept:
+            coefs[i] = result["x"][:-1]
+            intercepts[i] = result["x"][-1]
+        else:
+            coefs[i] = result["x"]
 
-    return coefs
+    return coefs, intercepts
 
 
 def _get_valid_accept_sparse(is_X_sparse, solver):
@@ -415,11 +430,11 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     has_sw = sample_weight is not None
 
     if solver == 'auto':
-        if return_intercept:
-            # only sag supports fitting intercept directly
-            solver = "sag"
-        elif positive:
+        if positive:
             solver = "trf"
+        elif return_intercept:
+            # sag supports fitting intercept directly
+            solver = "sag"
         elif not sparse.issparse(X):
             solver = "cholesky"
         else:
@@ -429,14 +444,14 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError("Known solvers are 'sparse_cg', 'cholesky', 'svd'"
                          " 'lsqr', 'sag', 'saga' or 'trf'. Got %s." % solver)
 
-    if return_intercept and solver != 'sag':
-        raise ValueError("In Ridge, only 'sag' solver can directly fit the "
-                         "intercept. Please change solver to 'sag' or set "
-                         "return_intercept=False.")
-
     if positive and solver != "trf":
         raise ValueError("When positive=True, only 'trf' solver can fit. "
                          "Please change solver to 'trf' or set positive=False.")
+
+    if return_intercept and solver not in ['sag', 'trf']:
+        raise ValueError("In Ridge, only 'sag' and 'trf' solver can directly fit the "
+                         "intercept. Please change solver to 'sag', 'trf' or set "
+                         "return_intercept=False.")
 
     if check_input:
         _dtype = [np.float64, np.float32]
@@ -535,7 +550,9 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         coef = np.asarray(coef)
 
     elif solver == "trf":
-        coef = _solve_trf(X, y, positive=positive)
+        coef, intercept = _solve_trf(X, y, alpha,
+                                     positive=positive,
+                                     return_intercept=return_intercept)
 
     if solver == 'svd':
         if sparse.issparse(X):
@@ -586,7 +603,17 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                                    accept_sparse=_accept_sparse,
                                    dtype=_dtype,
                                    multi_output=True, y_numeric=True)
-        if sparse.issparse(X) and self.fit_intercept:
+
+        if self.positive:
+            if self.solver not in ['auto', 'trf']:
+                raise ValueError(
+                    "solver='{}' does not support positive fitting."
+                    " Please set the solver to 'auto' or 'trf',"
+                    " or set `positive=False`"
+                    .format(self.solver))
+            else:
+                solver = 'trf'
+        elif sparse.issparse(X) and self.fit_intercept:
             if self.solver not in ['auto', 'sparse_cg', 'sag']:
                 raise ValueError(
                     "solver='{}' does not support fitting the intercept "
@@ -604,12 +631,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 solver = 'sag'
             else:
                 solver = 'sparse_cg'
-        elif self.positive and self.solver not in ['auto', 'trf']:
-            raise ValueError(
-                "solver='{}' does not support positive fitting."
-                " Please set the solver to 'auto' or 'trf',"
-                " or set `positive=False`"
-                .format(self.solver))
         else:
             solver = self.solver
 
