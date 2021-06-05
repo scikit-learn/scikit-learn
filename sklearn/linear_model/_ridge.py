@@ -229,7 +229,14 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
-def _solve_trf(X, y, alpha, positive=False, return_intercept=False):
+def _solve_trf(X, y, alpha,
+               positive=False, return_intercept=False,
+               max_iter=None, tol=1e-3):
+    lsq_config = {
+        'method': 'trf',
+        'max_iter': max_iter,
+        'tol': tol,
+    }
     n_samples, n_features = X.shape
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
     if return_intercept:
@@ -239,7 +246,14 @@ def _solve_trf(X, y, alpha, positive=False, return_intercept=False):
 
     Xa_shape = (n_samples + n_features,
                 n_features + int(return_intercept))
-    bounds = (0, np.inf) if positive else (-np.inf, np.inf)
+    if positive:
+        bounds = [[0] * n_features,
+                  [np.inf] * n_features]
+        if return_intercept:
+            bounds[0].append(-np.inf)
+            bounds[1].append(np.inf)
+    else:
+        bounds = (-np.inf, np.inf)
     sqrt_alpha = np.sqrt(alpha)
 
     for i in range(y.shape[1]):
@@ -247,15 +261,26 @@ def _solve_trf(X, y, alpha, positive=False, return_intercept=False):
             def mv(b):
                 return np.hstack([X.dot(b[:-1]) + b[-1],
                                   sqrt_alpha[i] * b[:-1]])
+            def rmv(b):
+                return np.hstack([
+                    X.T.dot(b[:n_samples])
+                        + sqrt_alpha[i] * b[n_samples:],
+                    [sum(b[:n_samples])]])
         else:
             def mv(b):
                 return np.hstack([X.dot(b),
                                   sqrt_alpha[i] * b])
-        Xa = sp_linalg.LinearOperator(shape=Xa_shape, matvec=mv)
+            def rmv(b):
+                return X.T.dot(b[:n_samples]) \
+                    + sqrt_alpha[i] * b[n_samples:]
+
+        Xa = sp_linalg.LinearOperator(shape=Xa_shape,
+                                      matvec=mv, rmatvec=rmv)
         y_zeros = np.zeros(n_features, dtype=X.dtype)
         y_column = np.hstack([y[:, i], y_zeros])
         result = optimize.lsq_linear(Xa, y_column,
-                                     bounds=bounds, method="trf")
+                                     bounds=bounds, **lsq_config)
+
         if not result["success"]:
             raise ValueError("Failed fitting using trf solver")
         if return_intercept:
@@ -552,7 +577,8 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     elif solver == "trf":
         coef, intercept = _solve_trf(X, y, alpha,
                                      positive=positive,
-                                     return_intercept=return_intercept)
+                                     return_intercept=return_intercept,
+                                     tol=tol, max_iter=max_iter)
 
     if solver == 'svd':
         if sparse.issparse(X):
@@ -614,13 +640,15 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             else:
                 solver = 'trf'
         elif sparse.issparse(X) and self.fit_intercept:
-            if self.solver not in ['auto', 'sparse_cg', 'sag']:
+            if self.solver not in ['auto', 'sparse_cg', 'sag', 'trf']:
                 raise ValueError(
                     "solver='{}' does not support fitting the intercept "
                     "on sparse data. Please set the solver to 'auto' or "
-                    "'sparse_cg', 'sag', or set `fit_intercept=False`"
+                    "'sparse_cg', 'sag', 'trf', or set `fit_intercept=False`"
                     .format(self.solver))
-            if (self.solver == 'sag' and self.max_iter is None and
+            if self.solver == 'trf':
+                solver = 'trf'
+            elif (self.solver == 'sag' and self.max_iter is None and
                     self.tol > 1e-4):
                 warnings.warn(
                     '"sag" solver requires many iterations to fit '
