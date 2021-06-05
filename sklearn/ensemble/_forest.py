@@ -1332,13 +1332,13 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "mae", "poisson"}, \
+    criterion : {"squared_error", "mse", "absolute_error", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion, "poisson" which
-        uses reduction in Poisson deviance to find splits, and "mae" for
-        the mean absolute error.
+        uses reduction in Poisson deviance to find splits, and "absolute_error"
+        for the mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
