@@ -36,30 +36,26 @@ from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
 
 
+def _get_rescaled_operator(X, X_offset, X_scale):
+    X_offset_scale = X_offset / X_scale
+    def matvec(b):
+        return X.dot(b) - b.dot(X_offset_scale)
+    def rmatvec(b):
+        return X.T.dot(b) - X_offset_scale * np.sum(b)
+    X1 = sparse.linalg.LinearOperator(shape=X.shape,
+                                      matvec=matvec,
+                                      rmatvec=rmatvec)
+    return X1
+
+
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
                      X_offset=None, X_scale=None):
-
-    def _get_rescaled_operator(X):
-
-        X_offset_scale = X_offset / X_scale
-
-        def matvec(b):
-            return X.dot(b) - b.dot(X_offset_scale)
-
-        def rmatvec(b):
-            return X.T.dot(b) - X_offset_scale * np.sum(b)
-
-        X1 = sparse.linalg.LinearOperator(shape=X.shape,
-                                          matvec=matvec,
-                                          rmatvec=rmatvec)
-        return X1
-
     n_samples, n_features = X.shape
 
     if X_offset is None or X_scale is None:
         X1 = sp_linalg.aslinearoperator(X)
     else:
-        X1 = _get_rescaled_operator(X)
+        X1 = _get_rescaled_operator(X, X_offset, X_scale)
 
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
@@ -231,13 +227,20 @@ def _solve_svd(X, y, alpha):
 
 def _solve_trf(X, y, alpha,
                positive=False, return_intercept=False,
-               max_iter=None, tol=1e-3):
+               max_iter=None, tol=1e-3,
+               X_offset=None, X_scale=None):
     lsq_config = {
         'method': 'trf',
         'max_iter': max_iter,
         'tol': tol,
     }
     n_samples, n_features = X.shape
+
+    if X_offset is None or X_scale is None:
+        X1 = sp_linalg.aslinearoperator(X)
+    else:
+        X1 = _get_rescaled_operator(X, X_offset, X_scale)
+
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
     if return_intercept:
         intercepts = np.empty(y.shape[1], dtype=X.dtype)
@@ -259,19 +262,19 @@ def _solve_trf(X, y, alpha,
     for i in range(y.shape[1]):
         if return_intercept:
             def mv(b):
-                return np.hstack([X.dot(b[:-1]) + b[-1],
+                return np.hstack([X1.dot(b[:-1]) + b[-1],
                                   sqrt_alpha[i] * b[:-1]])
             def rmv(b):
                 return np.hstack([
-                    X.T.dot(b[:n_samples])
+                    X1.T.dot(b[:n_samples])
                         + sqrt_alpha[i] * b[n_samples:],
                     [sum(b[:n_samples])]])
         else:
             def mv(b):
-                return np.hstack([X.dot(b),
+                return np.hstack([X1.dot(b),
                                   sqrt_alpha[i] * b])
             def rmv(b):
-                return X.T.dot(b[:n_samples]) \
+                return X1.T.dot(b[:n_samples]) \
                     + sqrt_alpha[i] * b[n_samples:]
 
         Xa = sp_linalg.LinearOperator(shape=Xa_shape,
@@ -578,7 +581,8 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         coef, intercept = _solve_trf(X, y, alpha,
                                      positive=positive,
                                      return_intercept=return_intercept,
-                                     tol=tol, max_iter=max_iter)
+                                     tol=tol, max_iter=max_iter,
+                                     X_offset=X_offset, X_scale=X_scale)
 
     if solver == 'svd':
         if sparse.issparse(X):
