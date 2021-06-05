@@ -679,8 +679,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver='sag',
-                random_state=self.random_state, return_n_iter=True,
-                return_intercept=True, check_input=False)
+                positive=self.positive, random_state=self.random_state,
+                return_n_iter=True, return_intercept=False,
+                check_input=False)
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
 
@@ -695,8 +696,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             self.coef_, self.n_iter_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=solver,
-                random_state=self.random_state, return_n_iter=True,
-                return_intercept=False, check_input=False, **params)
+                positive=self.positive, random_state=self.random_state,
+                return_n_iter=True, return_intercept=False,
+                check_input=False, **params)
             self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
