@@ -197,11 +197,18 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
         used.
 
     random_state : int, RandomState instance, default=None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg' and by
-        the K-Means initialization. Use an int to make the randomness
-        deterministic.
-        See :term:`Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigenvectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -322,11 +329,18 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Number of eigenvectors to use for the spectral embedding
 
     random_state : int, RandomState instance, default=None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when ``eigen_solver='amg'`` and by
-        the K-Means initialization. Use an int to make the randomness
-        deterministic.
-        See :term:`Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigenvectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
