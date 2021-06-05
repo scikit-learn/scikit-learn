@@ -370,8 +370,8 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
           least-squares problem implemented in `scipy.optimize.lsq_linear`.
 
         All last six solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
-        True.
+        'sag', 'sparse_cg', and 'trf' support sparse input when `fit_intercept`
+        is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -382,7 +382,7 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
         Maximum number of iterations for conjugate gradient solver.
         For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
-        1000.
+        1000. For 'trf' solver, the default value is 100.
 
     tol : float, default=1e-3
         Precision of the solution.
@@ -406,10 +406,11 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
         .. versionadded:: 0.17
 
     return_intercept : bool, default=False
-        If True and if X is sparse, the method also returns the intercept,
-        and the solver is automatically changed to 'sag'. This is only a
-        temporary fix for fitting the intercept with sparse data. For dense
-        data, use sklearn.linear_model._preprocess_data before your regression.
+        If True and if X is sparse and if positive is False, the method also
+        returns the intercept, and the solver is automatically changed to 'sag'.
+        This is only a temporary fix for fitting the intercept with sparse data.
+        For dense data, use sklearn.linear_model._preprocess_data
+        before your regression.
 
         .. versionadded:: 0.17
 
@@ -755,6 +756,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         For 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
+        For 'trf' solver, the default value is 100.
 
     tol : float, default=1e-3
         Precision of the solution.
@@ -792,8 +794,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           least-squares problem implemented in `scipy.optimize.lsq_linear`.
 
         All last six solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
-        True.
+        'sag', 'sparse_cg', and 'trf' support sparse input when `fit_intercept`
+        is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
