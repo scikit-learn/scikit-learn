@@ -296,8 +296,10 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
     """
     if check_input:
         if algorithm == 'lasso_cd':
-            dictionary = check_array(dictionary, order='C', dtype='float64')
-            X = check_array(X, order='C', dtype='float64')
+            dictionary = check_array(dictionary, order='C',
+                                     dtype=[np.float64,
+                                            np.float32])
+            X = check_array(X, order='C', dtype=[np.float64, np.float32])
         else:
             dictionary = check_array(dictionary)
             X = check_array(X)
@@ -795,11 +797,12 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
 
     # Fortran-order dict better suited for the sparse coding which is the
     # bottleneck of this algorithm.
-    dictionary = check_array(dictionary, order='F', dtype=np.float64,
-                             copy=False)
+    dictionary = check_array(dictionary, order='F',
+                             dtype=[np.float64, np.float32], copy=False)
     dictionary = np.require(dictionary, requirements='W')
 
-    X_train = check_array(X_train, order='C', dtype=np.float64, copy=False)
+    X_train = check_array(X_train, order='C',
+                          dtype=[np.float64, np.float32], copy=False)
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
