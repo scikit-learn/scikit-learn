@@ -610,16 +610,30 @@ def test_warning_default_transform_alpha(Estimator):
     with pytest.warns(FutureWarning, match="default transform_alpha"):
         dl.fit_transform(X)
 
-@pytest.mark.parametrize("learning_func", (dict_learning, dict_learning_online))
+@pytest.mark.parametrize("method", ("lars", "cd"))
 @pytest.mark.parametrize("data_type, expected_type", (
     (np.float32, np.float32),
     (np.float64, np.float64),
     (np.int32, np.float64),
     (np.int64, np.float64)))
-def test_dictionary_learning_dtype_match(learning_func, data_type, expected_type):
+def test_dict_learning_dtype_match(data_type, expected_type, method):
+    rng = np.random.RandomState(0)
+    n_components = 8
+    code, dictionary,_ = dict_learning(X.astype(data_type), n_components=n_components,
+                                            alpha=1, random_state=rng, method=method)
+    assert code.dtype == expected_type
+    assert dictionary.dtype == expected_type
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+@pytest.mark.parametrize("data_type, expected_type", (
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int32, np.float64),
+    (np.int64, np.float64)))
+def test_dict_learning_online_dtype_match(data_type, expected_type, method):
     rng = np.random.RandomState(0)
     n_components = 8
     code, dictionary = dict_learning_online(X.astype(data_type), n_components=n_components,
-                                            alpha=1, random_state=rng)
+                                            alpha=1, random_state=rng, method=method)
     assert code.dtype == expected_type
     assert dictionary.dtype == expected_type
