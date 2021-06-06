@@ -226,8 +226,7 @@ def _solve_svd(X, y, alpha):
 
 
 def _solve_trf(X, y, alpha,
-               positive=False, return_intercept=False,
-               max_iter=None, tol=1e-3,
+               positive=False, max_iter=None, tol=1e-3,
                X_offset=None, X_scale=None):
     lsq_config = {
         'method': 'trf',
@@ -242,40 +241,21 @@ def _solve_trf(X, y, alpha,
         X1 = _get_rescaled_operator(X, X_offset, X_scale)
 
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
-    if return_intercept:
-        intercepts = np.empty(y.shape[1], dtype=X.dtype)
-    else:
-        intercepts = None
-
-    Xa_shape = (n_samples + n_features,
-                n_features + int(return_intercept))
+    Xa_shape = (n_samples + n_features, n_features)
     if positive:
         bounds = [[0] * n_features,
                   [np.inf] * n_features]
-        if return_intercept:
-            bounds[0].append(-np.inf)
-            bounds[1].append(np.inf)
     else:
         bounds = (-np.inf, np.inf)
     sqrt_alpha = np.sqrt(alpha)
 
     for i in range(y.shape[1]):
-        if return_intercept:
-            def mv(b):
-                return np.hstack([X1.dot(b[:-1]) + b[-1],
-                                  sqrt_alpha[i] * b[:-1]])
-            def rmv(b):
-                return np.hstack([
-                    X1.T.dot(b[:n_samples])
-                        + sqrt_alpha[i] * b[n_samples:],
-                    [sum(b[:n_samples])]])
-        else:
-            def mv(b):
-                return np.hstack([X1.dot(b),
-                                  sqrt_alpha[i] * b])
-            def rmv(b):
-                return X1.T.dot(b[:n_samples]) \
-                    + sqrt_alpha[i] * b[n_samples:]
+        def mv(b):
+            return np.hstack([X1.dot(b),
+                              sqrt_alpha[i] * b])
+        def rmv(b):
+            return X1.T.dot(b[:n_samples]) \
+                + sqrt_alpha[i] * b[n_samples:]
 
         Xa = sp_linalg.LinearOperator(shape=Xa_shape,
                                       matvec=mv, rmatvec=rmv)
@@ -286,13 +266,9 @@ def _solve_trf(X, y, alpha,
 
         if not result["success"]:
             raise ValueError("Failed fitting using trf solver")
-        if return_intercept:
-            coefs[i] = result["x"][:-1]
-            intercepts[i] = result["x"][-1]
-        else:
-            coefs[i] = result["x"]
+        coefs[i] = result["x"]
 
-    return coefs, intercepts
+    return coefs
 
 
 def _get_valid_accept_sparse(is_X_sparse, solver):
@@ -477,9 +453,9 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError("When positive=True, only 'trf' solver can fit. "
                          "Please change solver to 'trf' or set positive=False.")
 
-    if return_intercept and solver not in ['sag', 'trf']:
-        raise ValueError("In Ridge, only 'sag' and 'trf' solver can directly fit the "
-                         "intercept. Please change solver to 'sag', 'trf' or set "
+    if return_intercept and solver not in ['sag']:
+        raise ValueError("In Ridge, only 'sag' solver can directly fit the "
+                         "intercept. Please change solver to 'sag' or set "
                          "return_intercept=False.")
 
     if check_input:
@@ -579,11 +555,9 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         coef = np.asarray(coef)
 
     elif solver == "trf":
-        coef, intercept = _solve_trf(X, y, alpha,
-                                     positive=positive,
-                                     return_intercept=return_intercept,
-                                     tol=tol, max_iter=max_iter,
-                                     X_offset=X_offset, X_scale=X_scale)
+        coef = _solve_trf(X, y, alpha,
+                          positive=positive, tol=tol, max_iter=max_iter,
+                          X_offset=X_offset, X_scale=X_scale)
 
     if solver == 'svd':
         if sparse.issparse(X):
@@ -681,7 +655,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver='sag',
                 positive=self.positive, random_state=self.random_state,
-                return_n_iter=True, return_intercept=False,
+                return_n_iter=True, return_intercept=True,
                 check_input=False)
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
