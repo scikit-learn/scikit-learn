@@ -1338,7 +1338,7 @@ class RandomForestRegressor(ForestRegressor):
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion, "absolute_error"
         for the mean absolute error, and "poisson" which uses reduction in
-        Poisson deviance to find splits
+        Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
