@@ -165,10 +165,13 @@ def test_fastica_convergence_fail():
     m = np.dot(mixing, s)
 
     # Do fastICA with tolerance 0. to ensure failing convergence
-    warn_msg = "FastICA did not converge. Consider increasing tolerance or the maximum number of iterations."
+    warn_msg = (
+        "FastICA did not converge. Consider increasing tolerance "
+        "or the maximum number of iterations."
+    )
     with pytest.warns(ConvergenceWarning, match=warn_msg):
         ica = FastICA(algorithm="parallel", n_components=2, random_state=rng,
-                    max_iter=2, tol=0.)
+                      max_iter=2, tol=0.)
         ica.fit(m.T)
 
 
