@@ -74,7 +74,7 @@ def _mean_squared_error_callable(y_test, y_pred):
 
 
 @pytest.mark.parametrize('solver',
-                         ("svd", "sparse_cg", "cholesky", "lsqr", "sag"))
+                         ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "trf"))
 def test_ridge(solver):
     # Ridge regression convergence test using score
     # TODO: for this test to be robust, we should use a dataset instead
@@ -179,7 +179,7 @@ def test_ridge_sample_weights():
 
     rng = np.random.RandomState(0)
     param_grid = product((1.0, 1e-2), (True, False),
-                         ('svd', 'cholesky', 'lsqr', 'sparse_cg'))
+                         ('svd', 'cholesky', 'lsqr', 'sparse_cg', 'trf'))
 
     for n_samples, n_features in ((6, 5), (5, 10)):
 
@@ -320,7 +320,7 @@ def test_ridge_individual_penalties():
 
     coefs_indiv_pen = [
         Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
-        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag', 'saga']]
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag', 'saga', 'trf']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
@@ -416,7 +416,7 @@ def _make_sparse_offset_regression(
     'solver, sparse_X',
     ((solver, sparse_X) for
      (solver, sparse_X) in product(
-         ['cholesky', 'sag', 'sparse_cg', 'lsqr', 'saga', 'ridgecv'],
+         ['cholesky', 'sag', 'sparse_cg', 'lsqr', 'saga', 'trf', 'ridgecv'],
          [False, True])
      if not (sparse_X and solver not in ['sparse_cg', 'ridgecv'])))
 @pytest.mark.parametrize(
