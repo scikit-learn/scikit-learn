@@ -1414,3 +1414,20 @@ def test_ridge_sag_with_X_fortran():
     X = X[::2, :]
     y = y[::2]
     Ridge(solver='sag').fit(X, y)
+
+
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('alpha', [1e-3, 1e-2, 0.1, 1.])
+def test_ridge_positive_regression_test(fit_intercept, alpha):
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    b = np.array([1, -10])
+    if fit_intercept:
+        intercept = 20
+        y = X.dot(b) + intercept
+    else:
+        y = X.dot(b)
+
+    model = Ridge(alpha=alpha, positive=True,
+                  fit_intercept=fit_intercept)
+    model.fit(X, y)
+    assert(np.all(model.coef_ >= 0))
