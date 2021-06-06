@@ -303,9 +303,9 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
 
 
 def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
-                     max_iter=None, tol=1e-3, verbose=0, random_state=None,
-                     return_n_iter=False, return_intercept=False,
-                     check_input=True):
+                     max_iter=None, tol=1e-3, verbose=0, positive=False,
+                     random_state=None, return_n_iter=False,
+                     return_intercept=False, check_input=True):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
