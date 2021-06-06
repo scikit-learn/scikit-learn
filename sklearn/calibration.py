@@ -1106,7 +1106,7 @@ class CalibrationDisplay:
         >>> clf.fit(X_train, y_train)
         LogisticRegression(random_state=0)
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
-        >>> plt.show()
+        >>> plt.show()  # doctest: +SKIP
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
@@ -1215,7 +1215,7 @@ class CalibrationDisplay:
         LogisticRegression(random_state=0)
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
-        >>> plt.show()
+        >>> plt.show()  # doctest: +SKIP
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
