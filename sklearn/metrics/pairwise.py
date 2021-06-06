@@ -1468,25 +1468,17 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         if X is Y:
             V = np.var(X, axis=0, ddof=1, dtype=dtype)
         else:
-            warnings.warn(
-                "from version 1.0 (renaming of 0.25), pairwise_distances for "
-                "metric='seuclidean' will require V to be specified if Y is "
-                "passed.",
-                FutureWarning
-            )
-            V = np.var(np.vstack([X, Y]), axis=0, ddof=1, dtype=dtype)
+            raise ValueError(
+                  "The 'V' parameter is required for the seuclidean metric "
+                  "when Y is passed.")
         return {'V': V}
     if metric == "mahalanobis" and 'VI' not in kwds:
         if X is Y:
             VI = np.linalg.inv(np.cov(X.T)).T
         else:
-            warnings.warn(
-                "from version 1.0 (renaming of 0.25), pairwise_distances for "
-                "metric='mahalanobis' will require VI to be specified if Y "
-                "is passed.",
-                FutureWarning
-            )
-            VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
+            raise ValueError(
+                  "The 'VI' parameter is required for the mahalanobis metric "
+                  "when Y is passed.")
         return {'VI': VI}
     return {}
 
