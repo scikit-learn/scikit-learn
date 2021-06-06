@@ -26,7 +26,6 @@ from .utils import (
 from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
-from .utils.validation import _deprecate_positional_args
 from .utils.fixes import delayed
 
 from .utils.metaestimators import _BaseComposition
@@ -110,7 +109,6 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
     _required_parameters = ['steps']
 
-    @_deprecate_positional_args
     def __init__(self, steps, *, memory=None, verbose=False):
         self.steps = steps
         self.memory = memory
@@ -416,7 +414,7 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt, **predict_params)
+        return self.steps[-1][1].predict(Xt, **predict_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def fit_predict(self, X, y=None, **fit_params):
@@ -451,12 +449,12 @@ class Pipeline(_BaseComposition):
         fit_params_last_step = fit_params_steps[self.steps[-1][0]]
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):
-            y_pred = self.steps[-1][-1].fit_predict(Xt, y,
+            y_pred = self.steps[-1][1].fit_predict(Xt, y,
                                                     **fit_params_last_step)
         return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_proba(self, X):
+    def predict_proba(self, X, **predict_proba_params):
         """Apply transforms, and predict_proba of the final estimator
 
         Parameters
@@ -465,6 +463,10 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
+        **predict_proba_params : dict of string -> object
+            Parameters to the ``predict_proba`` called at the end of all
+            transformations in the pipeline.
+
         Returns
         -------
         y_proba : array-like of shape (n_samples, n_classes)
@@ -472,7 +474,7 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt)
+        return self.steps[-1][1].predict_proba(Xt, **predict_proba_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
@@ -491,7 +493,7 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].decision_function(Xt)
+        return self.steps[-1][1].decision_function(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def score_samples(self, X):
@@ -510,10 +512,10 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, _, transformer in self._iter(with_final=False):
             Xt = transformer.transform(Xt)
-        return self.steps[-1][-1].score_samples(Xt)
+        return self.steps[-1][1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **predict_log_proba_params):
         """Apply transforms, and predict_log_proba of the final estimator
 
         Parameters
@@ -522,6 +524,10 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
+        **predict_log_proba_params : dict of string -> object
+            Parameters to the ``predict_log_proba`` called at the end of all
+            transformations in the pipeline.
+
         Returns
         -------
         y_score : array-like of shape (n_samples, n_classes)
@@ -529,7 +535,9 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt)
+        return self.steps[-1][1].predict_log_proba(
+            Xt, **predict_log_proba_params
+        )
 
     @property
     def transform(self):
@@ -619,11 +627,11 @@ class Pipeline(_BaseComposition):
         score_params = {}
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
-        return self.steps[-1][-1].score(Xt, y, **score_params)
+        return self.steps[-1][1].score(Xt, y, **score_params)
 
     @property
     def classes_(self):
-        return self.steps[-1][-1].classes_
+        return self.steps[-1][1].classes_
 
     def _more_tags(self):
         # check if first estimator expects pairwise input
@@ -836,7 +844,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     """
     _required_parameters = ["transformer_list"]
 
-    @_deprecate_positional_args
     def __init__(self, transformer_list, *, n_jobs=None,
                  transformer_weights=None, verbose=False):
         self.transformer_list = transformer_list

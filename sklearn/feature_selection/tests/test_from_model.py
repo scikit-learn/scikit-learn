@@ -10,7 +10,6 @@ from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import (RandomForestClassifier,
                               HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier

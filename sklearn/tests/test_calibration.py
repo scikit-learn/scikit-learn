@@ -20,7 +20,8 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import (RandomForestClassifier, RandomForestRegressor,
+                              VotingClassifier)
 from sklearn.svm import LinearSVC
 from sklearn.isotonic import IsotonicRegression
 from sklearn.feature_extraction import DictVectorizer
@@ -607,3 +608,20 @@ def test_calibrated_classifier_cv_deprecation(data):
         calibrators, calib_clf.calibrated_classifiers_[0].calibrators
     ):
         assert clf1 is clf2
+
+
+def test_calibration_votingclassifier():
+    # Check that `CalibratedClassifier` works with `VotingClassifier`.
+    # The method `predict_proba` from `VotingClassifier` is dynamically
+    # defined via a property that only works when voting="soft".
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=2, random_state=7)
+    vote = VotingClassifier(
+        estimators=[('dummy'+str(i), DummyClassifier()) for i in range(3)],
+        voting="soft"
+    )
+    vote.fit(X, y)
+
+    calib_clf = CalibratedClassifierCV(base_estimator=vote, cv="prefit")
+    # smoke test: should not raise an error
+    calib_clf.fit(X, y)

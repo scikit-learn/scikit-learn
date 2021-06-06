@@ -12,8 +12,7 @@ from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
 from ...utils import check_random_state, resample
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length,
-                                 _check_sample_weight,
-                                 _deprecate_positional_args)
+                                 _check_sample_weight)
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -887,25 +886,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
-    .. note::
-
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-        >>> # now you can import normally from ensemble
-        >>> from sklearn.ensemble import HistGradientBoostingRegressor
-
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
     .. versionadded:: 0.21
 
     Parameters
     ----------
-    loss : {'squared_error', 'least_squares', 'least_absolute_deviation', \
-            'poisson'}, default='squared_error'
+    loss : {'squared_error', 'least_squares', 'absolute_error', \
+            'least_absolute_deviation', 'poisson'}, default='squared_error'
         The loss function to use in the boosting process. Note that the
         "least squares" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
@@ -918,6 +906,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. deprecated:: 1.0
             The loss 'least_squares' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
+
+        .. deprecated:: 1.0
+            The loss 'least_absolute_deviation' was deprecated in v1.0 and will
+            be removed in version 1.2. Use `loss='absolute_error'` which is
+            equivalent.
 
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
@@ -1040,8 +1033,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Examples
     --------
-    >>> # To use this experimental feature, we need to explicitly ask for it:
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_diabetes
     >>> X, y = load_diabetes(return_X_y=True)
@@ -1050,10 +1041,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
-    _VALID_LOSSES = ('squared_error', 'least_squares',
+    _VALID_LOSSES = ('squared_error', 'least_squares', 'absolute_error',
                      'least_absolute_deviation', 'poisson')
 
-    @_deprecate_positional_args
     def __init__(self, loss='squared_error', *, learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
@@ -1126,6 +1116,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return y
 
     def _get_loss(self, sample_weight):
+        # TODO: Remove in v1.2
         if self.loss == "least_squares":
             warnings.warn(
                 "The loss 'least_squares' was deprecated in v1.0 and will be "
@@ -1133,6 +1124,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 "equivalent.",
                 FutureWarning)
             return _LOSSES["squared_error"](sample_weight=sample_weight)
+        elif self.loss == "least_absolute_deviation":
+            warnings.warn(
+                "The loss 'least_absolute_deviation' was deprecated in v1.0 "
+                " and will be removed in version 1.2. Use 'absolute_error' "
+                "which is equivalent.",
+                FutureWarning)
+            return _LOSSES["absolute_error"](sample_weight=sample_weight)
 
         return _LOSSES[self.loss](sample_weight=sample_weight)
 
@@ -1155,17 +1153,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
-
-    .. note::
-
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-        >>> # now you can import normally from ensemble
-        >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
@@ -1304,8 +1291,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
 
     Examples
     --------
-    >>> # To use this experimental feature, we need to explicitly ask for it:
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingClassifier
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
@@ -1317,7 +1302,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
                      'auto')
 
-    @_deprecate_positional_args
     def __init__(self, loss='auto', *, learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255,
