@@ -270,6 +270,10 @@ Changelog
   :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
   :pr:`19564` by `Thomas Fan`_.
 
+- |Enhancement| Documented and tested support of the Poisson criterion for
+  :class:`ensemble.RandomForestRegressor`. :pr:`19836` by
+  :user:`Brian Sun <bsun94>`.
+
 - |Fix| Fixed the range of the argument max_samples to be (0.0, 1.0]
   in :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, where `max_samples=1.0` is
