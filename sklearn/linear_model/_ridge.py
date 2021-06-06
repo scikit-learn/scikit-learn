@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy import sparse
-from scipy import optimize
+from scipy import optimize as sp_optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
@@ -261,8 +261,8 @@ def _solve_trf(X, y, alpha,
                                       matvec=mv, rmatvec=rmv)
         y_zeros = np.zeros(n_features, dtype=X.dtype)
         y_column = np.hstack([y[:, i], y_zeros])
-        result = optimize.lsq_linear(Xa, y_column,
-                                     bounds=bounds, **lsq_config)
+        result = sp_optimize.lsq_linear(Xa, y_column,
+                                        bounds=bounds, **lsq_config)
 
         if not result["success"]:
             raise ValueError("Failed fitting using trf solver")
