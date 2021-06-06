@@ -10,7 +10,6 @@ from scipy import stats
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition._fastica import _gs_decorrelation
@@ -141,7 +140,9 @@ def test_fastica_nowhiten():
 
     # test for issue #697
     ica = FastICA(n_components=1, whiten=False, random_state=0)
-    assert_warns(UserWarning, ica.fit, m)
+    warn_msg = "Ignoring n_components with whiten=False."
+    with pytest.warns(UserWarning, match=warn_msg):
+        ica.fit(m)
     assert hasattr(ica, 'mixing_')
 
 
@@ -164,9 +165,14 @@ def test_fastica_convergence_fail():
     m = np.dot(mixing, s)
 
     # Do fastICA with tolerance 0. to ensure failing convergence
-    ica = FastICA(algorithm="parallel", n_components=2, random_state=rng,
-                  max_iter=2, tol=0.)
-    assert_warns(ConvergenceWarning, ica.fit, m.T)
+    warn_msg = (
+        "FastICA did not converge. Consider increasing tolerance "
+        "or the maximum number of iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warn_msg):
+        ica = FastICA(algorithm="parallel", n_components=2, random_state=rng,
+                      max_iter=2, tol=0.)
+        ica.fit(m.T)
 
 
 @pytest.mark.parametrize('add_noise', [True, False])
