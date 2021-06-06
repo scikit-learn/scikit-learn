@@ -1201,13 +1201,13 @@ def test_n_iter():
         assert reg.n_iter_ is None
 
 
-@pytest.mark.parametrize('solver', ['sparse_cg', 'auto'])
+@pytest.mark.parametrize('solver', ['sparse_cg', 'trf', 'auto'])
 def test_ridge_fit_intercept_sparse(solver):
     X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
 
-    # for now only sparse_cg can correctly fit an intercept with sparse X with
-    # default tol and max_iter.
+    # for now only sparse_cg  and trf can correctly fit an intercept
+    # with sparse X with default tol and max_iter.
     # sag is tested separately in test_ridge_fit_intercept_sparse_sag
     # because it requires more iterations and should raise a warning if default
     # max_iter is used.
@@ -1218,8 +1218,8 @@ def test_ridge_fit_intercept_sparse(solver):
     # so the reference we use for both ("auto" and "sparse_cg") is
     # Ridge(solver="sparse_cg"), fitted using the dense representation (note
     # that "sparse_cg" can fit sparse or dense data)
-    dense_ridge = Ridge(solver='sparse_cg')
-    sparse_ridge = Ridge(solver=solver)
+    dense_ridge = Ridge(solver='sparse_cg', tol=1e-12)
+    sparse_ridge = Ridge(solver=solver, tol=1e-12)
     dense_ridge.fit(X, y)
     with pytest.warns(None) as record:
         sparse_ridge.fit(X_csr, y)
@@ -1262,7 +1262,7 @@ def test_ridge_fit_intercept_sparse_sag():
 @pytest.mark.parametrize('sample_weight', [None, np.ones(1000)])
 @pytest.mark.parametrize('arr_type', [np.array, sp.csr_matrix])
 @pytest.mark.parametrize('solver', ['auto', 'sparse_cg', 'cholesky', 'lsqr',
-                                    'sag', 'saga'])
+                                    'sag', 'saga', 'trf'])
 def test_ridge_regression_check_arguments_validity(return_intercept,
                                                    sample_weight, arr_type,
                                                    solver):
@@ -1315,7 +1315,7 @@ def test_ridge_classifier_no_support_multilabel():
 
 
 @pytest.mark.parametrize(
-    "solver", ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga"])
+    "solver", ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga", "trf"])
 def test_dtype_match(solver):
     rng = np.random.RandomState(0)
     alpha = 1.0
@@ -1376,7 +1376,7 @@ def test_dtype_match_cholesky():
 
 
 @pytest.mark.parametrize(
-    'solver', ['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'])
+    'solver', ['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'trf'])
 @pytest.mark.parametrize('seed', range(1))
 def test_ridge_regression_dtype_stability(solver, seed):
     random_state = np.random.RandomState(seed)
