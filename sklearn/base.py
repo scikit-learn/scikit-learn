@@ -376,15 +376,20 @@ class BaseEstimator:
                 f"X has {n_features} features, but {self.__class__.__name__} "
                 f"is expecting {self.n_features_in_} features as input.")
 
-    def _validate_data(self, X, y='no_validation', reset=True,
+    def _validate_data(self, X='no_validation', y='no_validation', reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
-                (n_samples, n_features)
+                (n_samples, n_features), default='no validation'
             The input samples.
+
+            - If `'no_validation'`, no validation is performed on X. This is
+              useful for meta-estimator which can delegate input validation to
+              their underlying estimator(s).
+
         y : array-like of shape (n_samples,), default='no_validation'
             The targets.
 
@@ -418,18 +423,25 @@ class BaseEstimator:
         out : {ndarray, sparse matrix} or tuple of these
             The validated input. A tuple is returned if `y` is not None.
         """
+        if y is None and self._get_tags()['requires_y']:
+            raise ValueError(
+                f"This {self.__class__.__name__} estimator "
+                f"requires y to be passed, but the target y is None."
+            )
 
-        if y is None:
-            if self._get_tags()['requires_y']:
-                raise ValueError(
-                    f"This {self.__class__.__name__} estimator "
-                    f"requires y to be passed, but the target y is None."
-                )
+        validate_X = isinstance(X, str) and X == 'no_validation'
+        validate_y = y is None or isinstance(y, str) and y == 'no_validation'
+
+        if not validate_X and not validate_y:
+            out = None
+        elif validate_X and not validate_y:
             X = check_array(X, **check_params)
             out = X
-        elif isinstance(y, str) and y == 'no_validation':
-            X = check_array(X, **check_params)
-            out = X
+        elif not validate_X and validate_y:
+            multi_output = check_params.get('multi_output', False)
+            y_numeric = check_params.get('y_numeric', False)
+            y = check_y(y, multi_output, y_numeric)
+            out = y
         else:
             if validate_separately:
                 # We need this because some estimators validate X and y
@@ -443,7 +455,7 @@ class BaseEstimator:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
 
-        if check_params.get('ensure_2d', True):
+        if validate_X and check_params.get('ensure_2d', True):
             self._check_n_features(X, reset=reset)
 
         return out
