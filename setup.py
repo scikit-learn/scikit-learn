@@ -265,7 +265,8 @@ def setup_package():
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
-    commands = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
+    commands = [arg for arg in sys.argv[1:] if not arg.startswith('-') and
+                not arg.startswith('/')]
     if all(command in ('egg_info', 'dist_info', 'clean', 'check')
            for command in commands):
         # These actions are required to succeed without Numpy for example when
