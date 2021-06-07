@@ -556,7 +556,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 and self.n_knots >= 2
             ):
                 raise ValueError("n_knots must be a positive integer >= 2, "
-                                 f"got: {n_knots}")
+                                 f"got: {self.n_knots}")
 
             base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots
