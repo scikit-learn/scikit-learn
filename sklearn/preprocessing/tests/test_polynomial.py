@@ -96,9 +96,9 @@ def test_spline_transformer_manual_knot_input():
     """
     X = np.arange(20).reshape(10, 2)
     knots = [[0.5, 1], [1.5, 2], [5, 10]]
-    st1 = SplineTransformer(degree=3, knots=knots).fit(X)
+    st1 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
     knots = np.asarray(knots)
-    st2 = SplineTransformer(degree=3, knots=knots).fit(X)
+    st2 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
     for i in range(X.shape[1]):
         assert_allclose(st1.bsplines_[i].t, st2.bsplines_[i].t)
 
@@ -216,7 +216,7 @@ def test_spline_transformer_linear_regression(bias, intercept):
     ("uniform", 12, 8),
     (
         [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
-        100,  # this gets ignored.
+        None,
         3
     )
 ])
