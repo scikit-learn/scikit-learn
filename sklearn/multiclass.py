@@ -54,7 +54,8 @@ from .utils.validation import column_or_1d
 from .utils.validation import _assert_all_finite
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
-                               _ovr_decision_function)
+                               _ovr_decision_function,
+                               check_array)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
 from .utils.fixes import delayed
 
@@ -114,14 +115,17 @@ def _check_estimator(estimator):
 class _ConstantPredictor(BaseEstimator):
 
     def fit(self, X, y):
-        self._validate_data(X, y, force_all_finite=False, dtype=None,
-                            ensure_2d=False, reset=True)
+        check_params = dict(force_all_finite=False, dtype=None,
+                            ensure_2d=False, accept_sparse=True)
+        self._validate_data(X, y, reset=True,
+                            validate_separately=(check_params, check_params))
         self.y_ = y
         return self
 
     def predict(self, X):
         check_is_fitted(self)
         self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
                             ensure_2d=False, reset=False)
 
         return np.repeat(self.y_, _num_samples(X))
@@ -129,6 +133,7 @@ class _ConstantPredictor(BaseEstimator):
     def decision_function(self, X):
         check_is_fitted(self)
         self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
                             ensure_2d=False, reset=False)
 
         return np.repeat(self.y_, _num_samples(X))
@@ -136,6 +141,7 @@ class _ConstantPredictor(BaseEstimator):
     def predict_proba(self, X):
         check_is_fitted(self)
         self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
                             ensure_2d=False, reset=False)
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
