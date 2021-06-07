@@ -6,11 +6,9 @@ import numpy as np
 
 from ..preprocessing import LabelBinarizer
 from ..utils.validation import check_consistent_length, check_array
-from ..utils.validation import _deprecate_positional_args
 from ..utils.extmath import safe_sparse_dot
 
 
-@_deprecate_positional_args
 def l1_min_c(X, y, *, loss='squared_hinge', fit_intercept=True,
              intercept_scaling=1.0):
     """

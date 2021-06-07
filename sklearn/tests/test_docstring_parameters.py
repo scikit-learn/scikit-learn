@@ -183,7 +183,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'discriminant_analysis',
     'dummy',
     'ensemble',
-    'feature_extraction',
     'feature_selection',
     'gaussian_process',
     'impute',
@@ -193,7 +192,6 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'linear_model',
     'manifold',
     'model_selection',
-    'multiclass',
     'multioutput',
     'naive_bayes',
     'neighbors',
@@ -220,8 +218,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
                'GaussianRandomProjection',
                'MultiOutputClassifier', 'MultiOutputRegressor',
-               'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
+               'NoSampleWeightWrapper', 'Pipeline', 'RFE', 'RFECV',
                'RegressorChain', 'SelectFromModel',
                'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
@@ -245,13 +242,14 @@ def test_fit_docstring_attributes(name, Estimator):
     if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
         est.n_components = 1  # default = 2 is invalid for single target.
 
-    # FIXME: TO BE REMOVED for 1.0 (avoid FutureWarning)
-    if Estimator.__name__ == 'AffinityPropagation':
-        est.random_state = 63
-
     # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
         est.init = 'nndsvda'
+
+    # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
+    if Estimator.__name__ == 'TSNE':
+        est.learning_rate = 200.0
+        est.init = 'random'
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
@@ -286,13 +284,6 @@ def test_fit_docstring_attributes(name, Estimator):
         # ignore deprecation warnings
         with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
-
-    IGNORED = {'Birch', 'LarsCV', 'Lasso',
-               'OrthogonalMatchingPursuit'}
-
-    if Estimator.__name__ in IGNORED:
-        pytest.xfail(
-            reason="Estimator has too many undocumented attributes.")
 
     fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
                 and not k.startswith('_')]
