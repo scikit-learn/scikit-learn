@@ -387,9 +387,9 @@ def test_colormap_max(pyplot):
 
     from matplotlib import cm
     gray = cm.get_cmap('gray', 1024)
-    cm = np.array([[1.0, 0.0], [0.0, 1.0]])
+    confusion_matrix = np.array([[1.0, 0.0], [0.0, 1.0]])
 
-    disp = ConfusionMatrixDisplay(cm)
+    disp = ConfusionMatrixDisplay(confusion_matrix)
     disp.plot(cmap=gray)
 
     color = disp.text_[1, 0].get_color()
