@@ -229,17 +229,8 @@ def test_fit_docstring_attributes(name, Estimator):
                'VotingRegressor', 'SequentialFeatureSelector',
                'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
 
-    # TODO remove in 1.1 or 1.2 when the deprecated attributes are
-    # removed
-    HAS_DEPRECATED_ATTRS = {'Birch', 'CCA', 'CategoricalNB', 'MiniBatchKMeans',
-                            'PLSCanonical', 'PLSRegression', 'PLSSVD',
-                            'SpectralCoclustering'}
-
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
-
-    if Estimator.__name__ in HAS_DEPRECATED_ATTRS:
-        pytest.skip("Estimator has undocumented deprecated attributes")
 
     if Estimator.__name__ in ("RandomizedSearchCV", "GridSearchCV"):
         est = _construct_searchcv_instance(Estimator)
@@ -312,9 +303,20 @@ def _get_all_fitted_attributes(estimator):
     fit_attr = list(estimator.__dict__.keys())
 
     # properties
-    for name in dir(estimator.__class__):
-        obj = getattr(estimator.__class__, name)
-        if isinstance(obj, property):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=FutureWarning)
+
+        for name in dir(estimator.__class__):
+            obj = getattr(estimator.__class__, name)
+            if not isinstance(obj, property):
+                continue
+
+            # ignore properties that raises an AttributeError and deprecated
+            # properties
+            try:
+                getattr(estimator, name)
+            except (AttributeError, FutureWarning):
+                continue
             fit_attr.append(name)
 
     return [k for k in fit_attr if k.endswith('_') and not k.startswith('_')]
