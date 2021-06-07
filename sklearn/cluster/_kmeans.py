@@ -1059,7 +1059,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             # determine if these results are the best so far
             # allow small tolerance on the inertia to accomodate for rounding
             # errors.
-            if best_inertia is None or inertia < best_inertia - 1e-7:
+            if best_inertia is None or inertia < best_inertia * (1 - 1e-7):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
