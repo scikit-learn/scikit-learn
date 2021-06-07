@@ -430,15 +430,8 @@ class BaseEstimator:
                 f"requires y to be passed, but the target y is None."
             )
 
-        if y is None or isinstance(y, str) and y == 'no_validation':
-            validate_y = False
-        else:
-            validate_y = True
-
-        if isinstance(X, str) and X == 'no_validation':
-            validate_X = False
-        else:
-            validate_X = True
+        validate_X = isinstance(X, str) and X == 'no_validation'
+        validate_y = y is None or isinstance(y, str) and y == 'no_validation'
 
         if not validate_X and not validate_y:
             out = None
