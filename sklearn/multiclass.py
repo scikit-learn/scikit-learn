@@ -909,8 +909,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        y = column_or_1d(y, warn=True)
-        _assert_all_finite(y)
+        y = self._validate_data(X='no_validation', y=y)
 
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {0}"
