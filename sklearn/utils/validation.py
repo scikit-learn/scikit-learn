@@ -881,7 +881,8 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
                     ensure_min_features=ensure_min_features,
                     estimator=estimator)
 
-    y = check_y(y, multi_output, y_numeric)
+    y = check_y(y, multi_output=multi_output, y_numeric=y_numeric)
+
     check_consistent_length(X, y)
 
     return X, y

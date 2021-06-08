@@ -21,6 +21,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 
 
 class DelegatorData:
@@ -184,6 +185,19 @@ def _generate_meta_estimator_instances_with_pipeline():
                 yield Estimator(estimator, param_grid, **extra_params)
             else:
                 yield Estimator(estimator)
+
+        elif "transformer_list" in sig:
+            # FeatureUnion
+            transformer_list = [
+                ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
+                (
+                    "trans2",
+                    make_pipeline(
+                        TfidfVectorizer(), StandardScaler(with_mean=False)
+                    ),
+                ),
+            ]
+            yield Estimator(transformer_list)
 
         elif "estimators" in sig:
             # stacking, voting
