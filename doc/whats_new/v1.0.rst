@@ -403,6 +403,9 @@ Changelog
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
+- |Fix| :meth:`metrics.ConfusionMatrixDisplay.plot` uses the correct max
+  for colormap. :pr:`19784` by `Thomas Fan`_.
+
 - |Fix| Samples with zero `sample_weight` values do not affect the results
   from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
   and :func:`metrics.roc_curve`.
