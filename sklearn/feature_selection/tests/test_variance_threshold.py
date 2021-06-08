@@ -37,9 +37,8 @@ def test_variance_threshold():
 def test_variance_negative():
     # Test VarianceThreshold with negative variance.
     for X in [data, csr_matrix(data)]:
-        X_neg = VarianceThreshold(threshold=-1.).fit_transform(X)
-        X_zero = VarianceThreshold(threshold=0.).fit_transform(X)
-        assert X_neg.shape == X_zero.shape
+        with pytest.raises(ValueError):
+            VarianceThreshold(threshold=-1.).fit(X)
 
 
 @pytest.mark.skipif(np.var(data2) == 0,
