@@ -951,6 +951,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         - 'trf' uses Trust Region Reflective algorithm adapted for a linear
           least-squares problem implemented in `scipy.optimize.lsq_linear`.
 
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive.
+        Only 'trf' solver is supported.
+
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
         See :term:`Glossary <random_state>` for details.
