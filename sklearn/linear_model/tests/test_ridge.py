@@ -74,7 +74,8 @@ def _mean_squared_error_callable(y_test, y_pred):
 
 
 @pytest.mark.parametrize('solver',
-                         ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "trf"))
+                         ("svd", "sparse_cg", "cholesky",
+                          "lsqr", "sag", "trf"))
 def test_ridge(solver):
     # Ridge regression convergence test using score
     # TODO: for this test to be robust, we should use a dataset instead
@@ -320,7 +321,8 @@ def test_ridge_individual_penalties():
 
     coefs_indiv_pen = [
         Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
-        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag', 'saga', 'trf']]
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky',
+                       'sag', 'saga', 'trf']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 

@@ -38,10 +38,13 @@ from ..utils.sparsefuncs import mean_variance_axis
 
 def _get_rescaled_operator(X, X_offset, X_scale):
     X_offset_scale = X_offset / X_scale
+
     def matvec(b):
         return X.dot(b) - b.dot(X_offset_scale)
+
     def rmatvec(b):
         return X.T.dot(b) - X_offset_scale * np.sum(b)
+
     X1 = sparse.linalg.LinearOperator(shape=X.shape,
                                       matvec=matvec,
                                       rmatvec=rmatvec)
@@ -253,6 +256,7 @@ def _solve_trf(X, y, alpha,
         def mv(b):
             return np.hstack([X1.dot(b),
                               sqrt_alpha[i] * b])
+
         def rmv(b):
             return X1.T.dot(b[:n_samples]) \
                 + sqrt_alpha[i] * b[n_samples:]
@@ -312,8 +316,8 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
 
         .. versionadded:: 0.17
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'trf'}, \
-        default='auto'
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
+            'sag', 'saga', 'trf'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -382,9 +386,10 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
         .. versionadded:: 0.17
 
     return_intercept : bool, default=False
-        If True and if X is sparse and if positive is False, the method also
-        returns the intercept, and the solver is automatically changed to 'sag'.
-        This is only a temporary fix for fitting the intercept with sparse data.
+        If True and if X is sparse and if positive is False,
+        the method also returns the intercept, and the solver is
+        automatically changed to 'sag'. This is only a temporary fix
+        for fitting the intercept with sparse data.
         For dense data, use sklearn.linear_model._preprocess_data
         before your regression.
 
@@ -429,8 +434,9 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
 
 def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                       max_iter=None, tol=1e-3, verbose=0, positive=False,
-                      random_state=None, return_n_iter=False, return_intercept=False,
-                      X_scale=None, X_offset=None, check_input=True):
+                      random_state=None, return_n_iter=False,
+                      return_intercept=False, X_scale=None, X_offset=None,
+                      check_input=True):
 
     has_sw = sample_weight is not None
 
@@ -445,13 +451,15 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         else:
             solver = "sparse_cg"
 
-    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga', 'trf'):
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr',
+                      'sag', 'saga', 'trf'):
         raise ValueError("Known solvers are 'sparse_cg', 'cholesky', 'svd'"
                          " 'lsqr', 'sag', 'saga' or 'trf'. Got %s." % solver)
 
     if positive and solver != "trf":
         raise ValueError("When positive=True, only 'trf' solver can fit. "
-                         "Please change solver to 'trf' or set positive=False.")
+                         "Please change solver to 'trf' "
+                         "or set positive=False.")
 
     if return_intercept and solver not in ['sag']:
         raise ValueError("In Ridge, only 'sag' solver can directly fit the "
@@ -735,8 +743,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     tol : float, default=1e-3
         Precision of the solution.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'trf'}, \
-        default='auto'
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
+            'sag', 'saga', 'trf'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -906,8 +914,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'trf'}, \
-        default='auto'
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
+            'sag', 'saga', 'trf'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
