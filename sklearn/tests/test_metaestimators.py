@@ -21,6 +21,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 
 
 class DelegatorData:
@@ -185,6 +186,19 @@ def _generate_meta_estimator_instances_with_pipeline():
             else:
                 yield Estimator(estimator)
 
+        elif "transformer_list" in sig:
+            # FeatureUnion
+            transformer_list = [
+                ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
+                (
+                    "trans2",
+                    make_pipeline(
+                        TfidfVectorizer(), StandardScaler(with_mean=False)
+                    ),
+                ),
+            ]
+            yield Estimator(transformer_list)
+
         elif "estimators" in sig:
             # stacking, voting
             if is_regressor(Estimator):
@@ -211,21 +225,21 @@ def _generate_meta_estimator_instances_with_pipeline():
 # They should be able to work on any data and delegate data validation to
 # their inner estimator(s).
 DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
-        "AdaBoostClassifier",
-        "AdaBoostRegressor",
-        "BaggingClassifier",
-        "BaggingRegressor",
-        "ClassifierChain",
-        "IterativeImputer",
-        "MultiOutputClassifier",
-        "MultiOutputRegressor",
-        "OneVsOneClassifier",  # input validation can't be avoided
-        "RANSACRegressor",
-        "RFE",
-        "RFECV",
-        "RegressorChain",
-        "SelfTrainingClassifier",
-        "SequentialFeatureSelector"  # not applicable (2D data mandatory)
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "ClassifierChain",
+    "IterativeImputer",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
+    "OneVsOneClassifier",  # input validation can't be avoided
+    "RANSACRegressor",
+    "RFE",
+    "RFECV",
+    "RegressorChain",
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector",  # not applicable (2D data mandatory)
 ]
 
 DATA_VALIDATION_META_ESTIMATORS = [

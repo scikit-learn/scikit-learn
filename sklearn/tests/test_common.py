@@ -263,7 +263,6 @@ def test_search_cv(estimator, check, request):
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'model_selection',
     'multioutput',
-    'pipeline',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
