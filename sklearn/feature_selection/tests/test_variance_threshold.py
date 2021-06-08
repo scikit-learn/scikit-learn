@@ -13,6 +13,7 @@ data = [[0, 1, 2, 3, 4],
 
 data2 = [[-0.13725701]] * 10
 
+
 def test_zero_variance():
     # Test VarianceThreshold with default setting, zero variance.
 
