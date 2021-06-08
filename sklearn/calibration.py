@@ -257,9 +257,10 @@ class CalibratedClassifierCV(ClassifierMixin,
             check_is_fitted(self.base_estimator, attributes=["classes_"])
             self.classes_ = self.base_estimator.classes_
 
-            pred_method = _get_prediction_method(base_estimator)
+            pred_method, method_name = _get_prediction_method(base_estimator)
             n_classes = len(self.classes_)
-            predictions = _compute_predictions(pred_method, X, n_classes)
+            predictions = _compute_predictions(pred_method, method_name, X,
+                                               n_classes)
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator, predictions, y, self.classes_, self.method,
@@ -310,12 +311,13 @@ class CalibratedClassifierCV(ClassifierMixin,
                 )
             else:
                 this_estimator = clone(base_estimator)
-                method_name = _get_prediction_method(this_estimator).__name__
+                _, method_name = _get_prediction_method(this_estimator)
                 pred_method = partial(
                     cross_val_predict, estimator=this_estimator, X=X, y=y,
                     cv=cv, method=method_name, n_jobs=self.n_jobs
                 )
-                predictions = _compute_predictions(pred_method, X, n_classes)
+                predictions = _compute_predictions(pred_method, method_name, X,
+                                                   n_classes)
 
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
@@ -441,8 +443,9 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
         estimator.fit(X_train, y_train)
 
     n_classes = len(classes)
-    pred_method = _get_prediction_method(estimator)
-    predictions = _compute_predictions(pred_method, X_test, n_classes)
+    pred_method, method_name = _get_prediction_method(estimator)
+    predictions = _compute_predictions(pred_method, method_name, X_test,
+                                       n_classes)
 
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
@@ -465,18 +468,21 @@ def _get_prediction_method(clf):
     -------
     prediction_method : callable
         The prediction method.
+    method_name : str
+        The name of the prediction method.
     """
     if hasattr(clf, 'decision_function'):
         method = getattr(clf, 'decision_function')
+        return method, 'decision_function'
     elif hasattr(clf, 'predict_proba'):
         method = getattr(clf, 'predict_proba')
+        return method, 'predict_proba'
     else:
         raise RuntimeError("'base_estimator' has no 'decision_function' or "
                            "'predict_proba' method.")
-    return method
 
 
-def _compute_predictions(pred_method, X, n_classes):
+def _compute_predictions(pred_method, method_name, X, n_classes):
     """Return predictions for `X` and reshape binary outputs to shape
     (n_samples, 1).
 
@@ -484,6 +490,9 @@ def _compute_predictions(pred_method, X, n_classes):
     ----------
     pred_method : callable
         Prediction method.
+
+    method_name: str
+        Name of the prediction method
 
     X : array-like or None
         Data used to obtain predictions.
@@ -498,10 +507,6 @@ def _compute_predictions(pred_method, X, n_classes):
         (X.shape[0], 1).
     """
     predictions = pred_method(X=X)
-    if hasattr(pred_method, '__name__'):
-        method_name = pred_method.__name__
-    else:
-        method_name = signature(pred_method).parameters['method'].default
 
     if method_name == 'decision_function':
         if predictions.ndim == 1:
@@ -634,8 +639,9 @@ class _CalibratedClassifier:
             The predicted probabilities. Can be exact zeros.
         """
         n_classes = len(self.classes)
-        pred_method = _get_prediction_method(self.base_estimator)
-        predictions = _compute_predictions(pred_method, X, n_classes)
+        pred_method, method_name = _get_prediction_method(self.base_estimator)
+        predictions = _compute_predictions(pred_method, method_name, X,
+                                           n_classes)
 
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(

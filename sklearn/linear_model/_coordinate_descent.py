@@ -1221,6 +1221,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def _is_multitask(self):
         """Bool indicating if class is meant for multidimensional target."""
 
+    @staticmethod
+    @abstractmethod
+    def path(X, y, **kwargs):
+        """Compute path with coordinate descent."""
+
     def fit(self, X, y, sample_weight=None):
         """Fit linear model with coordinate descent.
 
