@@ -20,6 +20,9 @@ from ..utils.validation import check_array
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
 
+from ._k_means_common import _inertia_dense
+from ._k_means_common import _inertia_sparse
+
 
 class BisectKMeans(KMeans):
     """ Bisecting K-Means clustering
@@ -168,7 +171,7 @@ class BisectKMeans(KMeans):
 
         self.bisect_strategy = bisect_strategy
 
-    def _compute_bisect_errors(self, X, centers, labels):
+    def _compute_bisect_errors(self, X, centers, labels, sample_weight):
         """
         Calculate the squared error of each sample and group them by label.
 
@@ -186,6 +189,9 @@ class BisectKMeans(KMeans):
         labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X.
+
         Returns
         -------
         errors_by_label : dict
@@ -194,18 +200,18 @@ class BisectKMeans(KMeans):
         """
         errors_by_label = {}
 
-        if sp.issparse(X):
-            for value in range(2):
-                # CSR Matrix after subtracting numpy array
-                # becomes numpy matrix
-                error = sp.csr_matrix(X[labels == value] - centers[value])
-                errors_by_label[value] = error.power(2).sum()
+        _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
 
-        else:
-            for value in range(2):
-                errors_by_label[value] = ((X[np.where(labels == value)]
-                                           - centers[value]) ** 2).sum(axis=1)
-                errors_by_label[value] = errors_by_label[value].sum(axis=0)
+        for value in range(2):
+            indexes = (labels == value)
+
+            data = X[indexes]
+            weights = sample_weight[indexes]
+            center = centers[value][np.newaxis, :]
+            label = np.zeros(data.shape[0], dtype=np.intc)
+
+            errors_by_label[value] = _inertia(data, weights, center,
+                                              label, self._n_threads)
 
         return errors_by_label
 
@@ -435,7 +441,8 @@ class BisectKMeans(KMeans):
             # Check SSE (Sum of Squared Errors) of each of computed centroids.
             # SSE is calculated with distances between data points
             # and assigned centroids
-            errors = self._compute_bisect_errors(X, centers, labels)
+            errors = self._compute_bisect_errors(data_left, centers, labels,
+                                                 weights_left)
 
             if not sp.issparse(X):
                 centers += X_mean
@@ -538,8 +545,10 @@ class BisectKMeans(KMeans):
             # Check SSE (Sum of Squared Errors) of each of computed centroids.
             # SSE is calculated with distances between data points
             # and assigned centroids
-            errors = self._compute_bisect_errors(centers_dict[biggest]['data'],
-                                                 centers, labels)
+            errors = self._compute_bisect_errors(
+                centers_dict[biggest]['data'],
+                centers, labels,
+                centers_dict[biggest]['weights'])
 
             lower_sse_index = 0 if errors[0] < errors[1] else 1
             higher_sse_index = 1 if lower_sse_index == 0 else 0
