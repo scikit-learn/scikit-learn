@@ -604,3 +604,19 @@ def test_groups_support(Est):
         gs = Est(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "SearchCV", [HalvingRandomSearchCV, HalvingGridSearchCV]
+)
+def test_min_resources_null(SearchCV):
+    """Check that we raise an error if the minimum resources is set to 0."""
+    base_estimator = FastClassifier()
+    param_grid = {'a': [1]}
+    X = np.empty(0).reshape(0, 3)
+
+    search = SearchCV(base_estimator, param_grid, min_resources="smallest")
+
+    err_msg = "min_resources_=0: you might have passed an empty dataset X."
+    with pytest.raises(ValueError, match=err_msg):
+        search.fit(X, [])

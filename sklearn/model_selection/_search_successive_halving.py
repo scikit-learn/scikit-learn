@@ -176,6 +176,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 f'than max_resources_={self.max_resources_}.'
             )
 
+        if self.min_resources_ == 0:
+            raise ValueError(
+                f"min_resources_={self.min_resources_}: you might have passed "
+                f"an empty dataset X."
+            )
+
     @staticmethod
     def _select_best_index(refit, refit_metric, results):
         """Custom refit callable to return the index of the best candidate.
