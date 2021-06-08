@@ -20,6 +20,7 @@ from .utils._tags import (
     _safe_tags,
 )
 from .utils.validation import check_X_y
+from .utils.validation import check_y
 from .utils.validation import check_array
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
@@ -429,15 +430,15 @@ class BaseEstimator:
                 f"requires y to be passed, but the target y is None."
             )
 
-        validate_X = isinstance(X, str) and X == 'no_validation'
-        validate_y = y is None or isinstance(y, str) and y == 'no_validation'
+        no_val_X = isinstance(X, str) and X == 'no_validation'
+        no_val_y = y is None or isinstance(y, str) and y == 'no_validation'
 
-        if not validate_X and not validate_y:
+        if no_val_X and no_val_y:
             out = None
-        elif validate_X and not validate_y:
+        elif not no_val_X and no_val_y:
             X = check_array(X, **check_params)
             out = X
-        elif not validate_X and validate_y:
+        elif no_val_X and not no_val_y:
             multi_output = check_params.get('multi_output', False)
             y_numeric = check_params.get('y_numeric', False)
             y = check_y(y, multi_output, y_numeric)
@@ -455,7 +456,7 @@ class BaseEstimator:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
 
-        if validate_X and check_params.get('ensure_2d', True):
+        if not no_val_X and check_params.get('ensure_2d', True):
             self._check_n_features(X, reset=reset)
 
         return out

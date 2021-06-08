@@ -880,6 +880,15 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
                     ensure_min_samples=ensure_min_samples,
                     ensure_min_features=ensure_min_features,
                     estimator=estimator)
+
+    y = check_y(y, multi_output=multi_output, y_numeric=y_numeric)
+
+    check_consistent_length(X, y)
+
+    return X, y
+
+
+def check_y(y, multi_output, y_numeric):
     if multi_output:
         y = check_array(y, accept_sparse='csr', force_all_finite=True,
                         ensure_2d=False, dtype=None)
@@ -889,9 +898,7 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
     if y_numeric and y.dtype.kind == 'O':
         y = y.astype(np.float64)
 
-    check_consistent_length(X, y)
-
-    return X, y
+    return y
 
 
 def column_or_1d(y, *, warn=False):
