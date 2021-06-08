@@ -56,8 +56,6 @@ if __name__ == "__main__":
     print(f"X_test.dtype = {X_test.dtype}")
     print(f"y_test {y_test.shape}")
     print()
-    
-    
     print("Classifier Training")
     print("===================")
     accuracy, train_time, test_time = {}, {}, {}
