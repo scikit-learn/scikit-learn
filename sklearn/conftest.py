@@ -106,7 +106,6 @@ def pyplot():
     -------
     pyplot : module
         The ``matplotlib.pyplot`` module.
-
     """
     pyplot = pytest.importorskip('matplotlib.pyplot')
     pyplot.close('all')
