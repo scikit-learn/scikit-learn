@@ -254,11 +254,11 @@ def _solve_trf(X, y, alpha,
 
     for i in range(y.shape[1]):
         def mv(b):
-            return np.hstack([X1.dot(b),
+            return np.hstack([X1.matvec(b),
                               sqrt_alpha[i] * b])
 
         def rmv(b):
-            return X1.T.dot(b[:n_samples]) \
+            return X1.rmatvec(b[:n_samples]) \
                 + sqrt_alpha[i] * b[n_samples:]
 
         Xa = sp_linalg.LinearOperator(shape=Xa_shape,
