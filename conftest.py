@@ -85,6 +85,13 @@ def pytest_configure(config):
         "network: mark a test for execution if network available."
     )
 
+    # Use matplotlib agg backend during the tests
+    try:
+        import matplotlib
+        matplotlib.use('agg')
+    except ImportError:
+        pass
+
 
 def pytest_unconfigure(config):
     import sys

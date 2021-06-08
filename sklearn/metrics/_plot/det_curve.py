@@ -49,7 +49,7 @@ class DetCurveDisplay:
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn import metrics
     >>> y = np.array([0, 0, 1, 1])
@@ -58,8 +58,9 @@ class DetCurveDisplay:
     >>> display = metrics.DetCurveDisplay(
     ...     fpr=fpr, fnr=fnr, estimator_name='example estimator'
     ... )
-    >>> display.plot()  # doctest: +SKIP
-    >>> plt.show()      # doctest: +SKIP
+    >>> display.plot()
+    <...>
+    >>> plt.show()
     """
     def __init__(self, *, fpr, fnr, estimator_name=None, pos_label=None):
         self.fpr = fpr
