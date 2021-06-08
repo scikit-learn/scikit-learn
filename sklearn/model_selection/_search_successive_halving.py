@@ -162,7 +162,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
-                    check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
             else:
@@ -230,6 +229,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)
         _ensure_no_complex_data(y)
+        if is_classifier(self.estimator):
+            check_classification_targets(y)
 
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator))
