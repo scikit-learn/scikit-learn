@@ -418,6 +418,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     labels_ : ndarray of shape (n_samples,)
         Labels of each point
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralClustering
