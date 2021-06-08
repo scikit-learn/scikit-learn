@@ -1,7 +1,6 @@
 # Author: Lars Buitinck
 # License: 3-clause BSD
 
-import warnings
 import numpy as np
 from ..base import BaseEstimator
 from ._base import SelectorMixin
@@ -48,12 +47,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     """
 
     def __init__(self, threshold=0.):
-        if threshold < 0.:
-            warnings.warn("Threshold should be non-negative."
-                          "Automatically set as zero.")
-            self.threshold = 0.
-        else:
-            self.threshold = threshold
+        self.threshold = threshold
 
     def fit(self, X, y=None):
         """Learn empirical variances from X.
@@ -90,6 +84,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
             # for constant features
             compare_arr = np.array([self.variances_, peak_to_peaks])
             self.variances_ = np.nanmin(compare_arr, axis=0)
+        elif self.threshold < 0.:
+            raise ValueError("Threshold must be non-negative.")
 
         if np.all(~np.isfinite(self.variances_) |
                   (self.variances_ <= self.threshold)):
