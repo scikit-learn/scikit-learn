@@ -44,17 +44,6 @@ class _SubsampleMetaSplitter:
             yield train_idx, test_idx
 
 
-def _refit_callable(results):
-    # Custom refit callable to return the index of the best candidate. We want
-    # the best candidate out of the last iteration. By default BaseSearchCV
-    # would return the best candidate out of all iterations.
-
-    last_iter = np.max(results['iter'])
-    last_iter_indices = np.flatnonzero(results['iter'] == last_iter)
-    best_idx = np.argmax(results['mean_test_score'][last_iter_indices])
-    return last_iter_indices[best_idx]
-
-
 def _top_k(results, k, itr):
     # Return the best candidates of a given iteration
     iteration, mean_test_score, params = (
@@ -435,11 +424,15 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         iteration.
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
+
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
                problem
+
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
                classification problem
+
             - ``1`` when ``resource != 'n_samples'``
+
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
           highest value smaller than ``max_resources`` that is a multiple of
@@ -723,11 +716,15 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         iteration.
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
+
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
                problem
+
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
                classification problem
+
             - ``1`` when ``resource != 'n_samples'``
+
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
           highest value smaller than ``max_resources`` that is a multiple of

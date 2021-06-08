@@ -230,7 +230,7 @@ def _generate_search_cv_instances():
     ):
         init_params = signature(SearchCV).parameters
         extra_params = (
-            {"min_resources": "smallest", "factor": 2}
+            {"min_resources": "smallest"}
             if "min_resources" in init_params
             else {}
         )
@@ -250,7 +250,7 @@ def _generate_search_cv_instances():
     ):
         init_params = signature(SearchCV).parameters
         extra_params = (
-            {"min_resources": "smallest", "factor": 2}
+            {"min_resources": "smallest"}
             if "min_resources" in init_params
             else {}
         )
