@@ -213,14 +213,13 @@ def test_fit_docstring_attributes(name, Estimator):
     attributes = doc['Attributes']
 
     IGNORED = {'ColumnTransformer', 'CountVectorizer', 'DictVectorizer',
-               'FeatureUnion', 'GaussianRandomProjection',
-               'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
-               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
-               'SpectralBiclustering', 'StackingClassifier',
-               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor', 'SequentialFeatureSelector',
-               'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
+               'GaussianRandomProjection', 'NoSampleWeightWrapper', 'RFE',
+               'RFECV', 'SelectFromModel', 'SparseCoder',
+               'SparseRandomProjection', 'SpectralBiclustering',
+               'StackingClassifier', 'StackingRegressor', 'TfidfVectorizer',
+               'VotingClassifier', 'VotingRegressor',
+               'SequentialFeatureSelector', 'HalvingGridSearchCV',
+               'HalvingRandomSearchCV'}
 
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
