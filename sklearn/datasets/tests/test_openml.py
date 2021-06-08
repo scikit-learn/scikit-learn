@@ -1216,15 +1216,16 @@ def test_fetch_openml_raises_missing_values_target(monkeypatch, gzip_response):
 
 
 def test_fetch_openml_raises_illegal_argument():
-    msg = 'Dataset data_id='
-    with pytest.raises(ValueError, match=msg):
-        fetch_openml(data_id=-1, name="name")
-
+    msg = 'Dataset data_id=-1 and version=version passed, but you can only'
     with pytest.raises(ValueError, match=msg):
         fetch_openml(data_id=-1, name=None, version="version")
 
+    msg = "Dataset data_id=-1 and name=name passed, but you can only"
     with pytest.raises(ValueError, match=msg):
-        fetch_openml(data_id=-1, name="name", version="version")
+        fetch_openml(data_id=-1, name="nAmE")
+
+    with pytest.raises(ValueError, match=msg):
+        fetch_openml(data_id=-1, name="nAmE", version="version")
 
     msg = (
         "Neither name nor data_id are provided. "

@@ -86,7 +86,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     max_samples : int or float
         The maximum number of samples to draw from the total available:
             - if float, this indicates a fraction of the total and should be
-              the interval `(0, 1)`;
+              the interval `(0.0, 1.0]`;
             - if int, this indicates the exact number of samples;
             - if None, this indicates the total number of samples.
 
@@ -105,8 +105,8 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples < 1):
-            msg = "`max_samples` must be in range (0, 1) but got value {}"
+        if not (0 < max_samples <= 1):
+            msg = "`max_samples` must be in range (0.0, 1.0] but got value {}"
             raise ValueError(msg.format(max_samples))
         return round(n_samples * max_samples)
 
@@ -322,6 +322,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # reshape is necessary to preserve the data contiguity against vs
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
+
+        if self.criterion == "poisson":
+            if np.any(y < 0):
+                raise ValueError("Some value(s) of y are negative which is "
+                                 "not allowed for Poisson regression.")
+            if np.sum(y) <= 0:
+                raise ValueError("Sum of y is not strictly positive which "
+                                 "is necessary for Poisson regression.")
 
         self.n_outputs_ = y.shape[1]
 
@@ -1163,7 +1171,7 @@ class RandomForestClassifier(ForestClassifier):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1324,15 +1332,19 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
+    criterion : {"squared_error", "mse", "absolute_error", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, and "absolute_error"
-        for the mean absolute error.
+        variance reduction as feature selection criterion, "absolute_error"
+        for the mean absolute error, and "poisson" which uses reduction in
+        Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 1.0
+           Poisson criterion.
 
         .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
@@ -1473,7 +1485,7 @@ class RandomForestRegressor(ForestRegressor):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1557,6 +1569,7 @@ class RandomForestRegressor(ForestRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
     """
+
     def __init__(self,
                  n_estimators=100, *,
                  criterion="squared_error",
@@ -1789,7 +1802,7 @@ class ExtraTreesClassifier(ForestClassifier):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1873,6 +1886,7 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     """
+
     def __init__(self,
                  n_estimators=100, *,
                  criterion="gini",
@@ -2095,7 +2109,7 @@ class ExtraTreesRegressor(ForestRegressor):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -2168,6 +2182,7 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg.score(X_test, y_test)
     0.2708...
     """
+
     def __init__(self,
                  n_estimators=100, *,
                  criterion="squared_error",
