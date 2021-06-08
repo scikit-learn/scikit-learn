@@ -20,8 +20,8 @@ from .utils._tags import (
     _safe_tags,
 )
 from .utils.validation import check_X_y
-from .utils.validation import check_y
 from .utils.validation import check_array
+from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
 
@@ -441,7 +441,7 @@ class BaseEstimator:
         elif no_val_X and not no_val_y:
             multi_output = check_params.get('multi_output', False)
             y_numeric = check_params.get('y_numeric', False)
-            y = check_y(y, multi_output, y_numeric)
+            y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric)
             out = y
         else:
             if validate_separately:
