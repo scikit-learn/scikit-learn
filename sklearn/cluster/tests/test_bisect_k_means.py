@@ -61,11 +61,15 @@ def test_sparse():
 
 @pytest.mark.filterwarnings("ignore:Explicit initial center*:RuntimeWarning")
 def test_init_array():
-    """ Test Bisecting K-Means with init array"""
+    """ Test Bisecting K-Means with init array
+    Note that it would work only for bisect_strategy= 'child_biggest_sse'
+    Other strategies doesn't support init as array
+    """
 
     X = np.array([[1, 2], [1, 4], [1, 0],
                   [10, 2], [10, 4], [10, 0],
                   [10, 6], [10, 8], [10, 10]])
     init = np.array([[1, 1], [5, 6], [10, 2]])
-    bisect_means = BisectKMeans(n_clusters=3, random_state=0, init=init)
+    bisect_means = BisectKMeans(n_clusters=3, random_state=0, init=init,
+                                bisect_strategy="child_biggest_sse")
     bisect_means.fit(X)

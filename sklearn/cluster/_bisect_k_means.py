@@ -237,6 +237,13 @@ class BisectKMeans(KMeans):
             raise ValueError("Bisecting K-Means needs more than one sample "
                              "to perform bisection")
 
+        if hasattr(self.init, '__array__') \
+                and self.bisect_strategy != "child_biggest_sse":
+            raise ValueError("Only 'child_biggest_sse' supports init arrays -"
+                             " Combining centroids with init array may "
+                             "produce unexpected behavior in "
+                             f"'{self.bisect_strategy}' strategy")
+
     def _bisect(self, X, init, sample_weight=None,
                 random_state=None):
         """ Bisection of data
@@ -372,8 +379,22 @@ class BisectKMeans(KMeans):
             warnings.warn("Bisection won't be performed - "
                           "needs at least two clusters to run")
         else:
-            self.cluster_centers_ = _bisect_kmeans(X, init, random_state,
-                                                   sample_weight)
+            # Subtract of mean of X for more accurate distance computations
+            if not sp.issparse(X):
+                X_mean = X.mean(axis=0)
+                X -= X_mean
+
+                if hasattr(init, '__array__'):
+                    init -= X_mean
+
+            _clusters = _bisect_kmeans(X, init, random_state, sample_weight)
+
+            # Restore Original Data
+            if not sp.issparse(X):
+                X += X_mean
+                _clusters += X_mean
+
+            self.cluster_centers_ = _clusters
 
         # Since all clusters are calculated - label each data to valid center
         self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
@@ -413,12 +434,6 @@ class BisectKMeans(KMeans):
         """
 
         # Subtract of mean of X for more accurate distance computations
-        if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
-            X -= X_mean
-
-            if hasattr(init, '__array__'):
-                init -= X_mean
 
         data_left = X
         weights_left = sample_weight
@@ -443,9 +458,6 @@ class BisectKMeans(KMeans):
             # and assigned centroids
             errors = self._compute_bisect_errors(data_left, centers, labels,
                                                  weights_left)
-
-            if not sp.issparse(X):
-                centers += X_mean
 
             lower_sse_index = 0 if errors[0] < errors[1] else 1
 
@@ -473,10 +485,6 @@ class BisectKMeans(KMeans):
             weights_left = weights_left[indexes_left]
 
         centers = np.asarray(centroids)
-
-        # Restore X
-        if not sp.issparse(X):
-            X += X_mean
 
         self.n_iter_ = n_iter + 1
 
@@ -509,32 +517,17 @@ class BisectKMeans(KMeans):
         centers : ndarray of shape (n_clusters, n_features)
             The cluster centers.
         """
-        # Subtract of mean of X for more accurate distance computations
-        if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
-            X -= X_mean
-
-            if hasattr(init, '__array__'):
-                init -= X_mean
 
         centers_dict = {
             0: {'data': X, 'weights': sample_weight, 'sse': None,
                 'centroid': None}
         }
 
-        init_org = init
         last_center_id = 0
 
         for n_iter in range(self.n_clusters - 1):
 
             biggest, _ = max(centers_dict.items(), key=lambda x: x[1]['sse'])
-
-            # If init array is provided -
-            # Take only part of init that is dedicated for that part of bisect
-            if hasattr(init, '__array__'):
-                init = init_org[n_iter: n_iter + 2].copy()
-                # ^ Not sure if that assigning of init points is
-                # here a good idea?
 
             # Perform Bisection
             centers, labels = self._bisect(centers_dict[biggest]['data'],
@@ -585,11 +578,6 @@ class BisectKMeans(KMeans):
 
         centers = np.asarray(centers)
 
-        # Restore Original Data
-        if not sp.issparse(X):
-            X += X_mean
-            centers += X_mean
-
         self.n_iter_ = n_iter + 1
 
         return centers
@@ -624,19 +612,11 @@ class BisectKMeans(KMeans):
         centers : ndarray of shape (n_clusters, n_features)
             The cluster centers.
         """
-        # Subtract of mean of X for more accurate distance computations
-        if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
-            X -= X_mean
-
-            if hasattr(init, '__array__'):
-                init -= X_mean
 
         centers_dict = {
             0: {'data': X, 'weights': sample_weight, 'centroid': None}
         }
 
-        init_org = init
         last_center_id = 0
 
         for n_iter in range(self.n_clusters - 1):
@@ -644,11 +624,6 @@ class BisectKMeans(KMeans):
             # Pick largest cluster by amount of assigned points
             biggest, _ = max(centers_dict.items(),
                              key=lambda x: x[1]['data'].shape[0])
-
-            # If init array is provided -
-            # Take only part of init that is dedicated for that part of bisect
-            if hasattr(init, '__array__'):
-                init = init_org[n_iter: n_iter + 2].copy()
 
             # Perform Bisection
             centers, labels = self._bisect(centers_dict[biggest]['data'],
@@ -685,11 +660,6 @@ class BisectKMeans(KMeans):
         centers = [center[1]['centroid'] for center in centers_dict.items()]
 
         centers = np.asarray(centers)
-
-        # Restore Original Data
-        if not sp.issparse(X):
-            X += X_mean
-            centers += X_mean
 
         self.n_iter_ = n_iter + 1
 
