@@ -7,10 +7,16 @@ import numpy as np
 from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
-from ..utils.validation import _num_samples
 from ..base import is_classifier
 from ._split import check_cv, _yields_constant_splits
 from ..utils import resample
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import (
+    column_or_1d,
+    _assert_all_finite,
+    _ensure_no_complex_data,
+    _num_samples,
+)
 
 
 __all__ = ['HalvingGridSearchCV', 'HalvingRandomSearchCV']
@@ -156,6 +162,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
+                    check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
             else:
@@ -219,6 +226,11 @@ class BaseSuccessiveHalving(BaseSearchCV):
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
+        # y needs to be validated for the parameters validation later on
+        y = column_or_1d(y, warn=True)
+        _assert_all_finite(y)
+        _ensure_no_complex_data(y)
+
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator))
 
