@@ -9,7 +9,6 @@ from scipy import sparse
 import pytest
 
 from numpy.testing import assert_allclose
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
@@ -540,14 +539,17 @@ def test_column_transformer_error_msg_1D():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
 
     col_trans = ColumnTransformer([('trans', StandardScaler(), 0)])
-    assert_raise_message(ValueError, "1D data passed to a transformer",
-                         col_trans.fit, X_array)
-    assert_raise_message(ValueError, "1D data passed to a transformer",
-                         col_trans.fit_transform, X_array)
+    msg = '1D data passed to a transformer'
+    with pytest.raises(ValueError, match=msg):
+        col_trans.fit(X_array)
+
+    with pytest.raises(ValueError, match=msg):
+        col_trans.fit_transform(X_array)
 
     col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
     for func in [col_trans.fit, col_trans.fit_transform]:
-        assert_raise_message(ValueError, "specific message", func, X_array)
+        with pytest.raises(ValueError, match="specific message"):
+            func(X_array)
 
 
 def test_2D_transformer_output():
@@ -556,11 +558,13 @@ def test_2D_transformer_output():
     # if one transformer is dropped, test that name is still correct
     ct = ColumnTransformer([('trans1', 'drop', 0),
                             ('trans2', TransNo2D(), 1)])
-    assert_raise_message(ValueError, "the 'trans2' transformer should be 2D",
-                         ct.fit_transform, X_array)
+
+    msg = "the 'trans2' transformer should be 2D"
+    with pytest.raises(ValueError, match=msg):
+        ct.fit_transform(X_array)
     # because fit is also doing transform, this raises already on fit
-    assert_raise_message(ValueError, "the 'trans2' transformer should be 2D",
-                         ct.fit, X_array)
+    with pytest.raises(ValueError, match=msg):
+        ct.fit(X_array)
 
 
 def test_2D_transformer_output_pandas():
@@ -571,11 +575,12 @@ def test_2D_transformer_output_pandas():
 
     # if one transformer is dropped, test that name is still correct
     ct = ColumnTransformer([('trans1', TransNo2D(), 'col1')])
-    assert_raise_message(ValueError, "the 'trans1' transformer should be 2D",
-                         ct.fit_transform, X_df)
+    msg = "the 'trans1' transformer should be 2D"
+    with pytest.raises(ValueError, match=msg):
+        ct.fit_transform(X_df)
     # because fit is also doing transform, this raises already on fit
-    assert_raise_message(ValueError, "the 'trans1' transformer should be 2D",
-                         ct.fit, X_df)
+    with pytest.raises(ValueError, match=msg):
+        ct.fit(X_df)
 
 
 @pytest.mark.parametrize("remainder", ['drop', 'passthrough'])
@@ -585,14 +590,14 @@ def test_column_transformer_invalid_columns(remainder):
     # general invalid
     for col in [1.5, ['string', 1], slice(1, 's'), np.array([1.])]:
         ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
-        assert_raise_message(ValueError, "No valid specification",
-                             ct.fit, X_array)
+        with pytest.raises(ValueError, match="No valid specification"):
+            ct.fit(X_array)
 
     # invalid for arrays
     for col in ['string', ['string', 'other'], slice('a', 'b')]:
         ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
-        assert_raise_message(ValueError, "Specifying the columns",
-                             ct.fit, X_array)
+        with pytest.raises(ValueError, match="Specifying the columns"):
+            ct.fit(X_array)
 
     # transformed n_features does not match fitted n_features
     col = [0, 1]
@@ -621,9 +626,9 @@ def test_column_transformer_invalid_transformer():
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     ct = ColumnTransformer([('trans', NoTrans(), [0])])
-    assert_raise_message(TypeError,
-                         "All estimators should implement fit and transform",
-                         ct.fit, X_array)
+    msg = "All estimators should implement fit and transform"
+    with pytest.raises(TypeError, match=msg):
+        ct.fit(X_array)
 
 
 def test_make_column_transformer():
@@ -659,13 +664,13 @@ def test_make_column_transformer_kwargs():
     assert ct.remainder == 'drop'
     assert ct.sparse_threshold == 0.5
     # invalid keyword parameters should raise an error message
-    assert_raise_message(
-        TypeError,
+    msg = re.escape(
         "make_column_transformer() got an unexpected "
-        "keyword argument 'transformer_weights'",
-        make_column_transformer, (scaler, 'first'), (norm, ['second']),
-        transformer_weights={'pca': 10, 'Transf': 1}
+        "keyword argument 'transformer_weights'"
     )
+    with pytest.raises(TypeError, match=msg):
+        make_column_transformer((scaler, 'first'), (norm, ['second']),
+                                transformer_weights={'pca': 10, 'Transf': 1})
 
 
 def test_make_column_transformer_remainder_transformer():
@@ -893,10 +898,11 @@ def test_column_transformer_special_strings():
     for val in [None, 'other']:
         ct = ColumnTransformer(
             [('trans1', Trans(), [0]), ('trans2', None, [1])])
-        assert_raise_message(TypeError, "All estimators should implement",
-                             ct.fit_transform, X_array)
-        assert_raise_message(TypeError, "All estimators should implement",
-                             ct.fit, X_array)
+        msg = "All estimators should implement"
+        with pytest.raises(TypeError, match=msg):
+            ct.fit_transform(X_array)
+        with pytest.raises(TypeError, match=msg):
+            ct.fit(X_array)
 
 
 def test_column_transformer_remainder():
@@ -946,14 +952,15 @@ def test_column_transformer_remainder():
 
     # error on invalid arg
     ct = ColumnTransformer([('trans1', Trans(), [0])], remainder=1)
-    assert_raise_message(
-        ValueError,
+    msg = (
         "remainder keyword needs to be one of \'drop\', \'passthrough\', "
-        "or estimator.", ct.fit, X_array)
-    assert_raise_message(
-        ValueError,
-        "remainder keyword needs to be one of \'drop\', \'passthrough\', "
-        "or estimator.", ct.fit_transform, X_array)
+        "or estimator."
+    )
+    with pytest.raises(ValueError, match=msg):
+        ct.fit(X_array)
+
+    with pytest.raises(ValueError, match=msg):
+        ct.fit_transform(X_array)
 
     # check default for make_column_transformer
     ct = make_column_transformer((Trans(), [0]))

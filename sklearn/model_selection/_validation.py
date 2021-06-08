@@ -24,7 +24,6 @@ from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
@@ -38,7 +37,6 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-@_deprecate_positional_args
 def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
@@ -317,7 +315,6 @@ def _normalize_score_results(scores, scaler_score_key='score'):
     return {scaler_score_key: scores}
 
 
-@_deprecate_positional_args
 def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
                     cv=None, n_jobs=None, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs', error_score=np.nan):
@@ -722,7 +719,6 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     return scores
 
 
-@_deprecate_positional_args
 def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
                       n_jobs=None, verbose=0, fit_params=None,
                       pre_dispatch='2*n_jobs', method='predict'):
@@ -1059,7 +1055,6 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
-@_deprecate_positional_args
 def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None, fit_params=None):
@@ -1224,7 +1219,6 @@ def _shuffle(y, groups, random_state):
     return _safe_indexing(y, indices)
 
 
-@_deprecate_positional_args
 def learning_curve(estimator, X, y, *, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
@@ -1534,7 +1528,6 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array(ret).T
 
 
-@_deprecate_positional_args
 def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
                      verbose=0, error_score=np.nan, fit_params=None):

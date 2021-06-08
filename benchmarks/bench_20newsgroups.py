@@ -46,18 +46,16 @@ if __name__ == "__main__":
 
     print("20 newsgroups")
     print("=============")
-    print("X_train.shape = {0}".format(X_train.shape))
-    print("X_train.format = {0}".format(X_train.format))
-    print("X_train.dtype = {0}".format(X_train.dtype))
-    print("X_train density = {0}"
-          "".format(X_train.nnz / np.product(X_train.shape)))
-    print("y_train {0}".format(y_train.shape))
-    print("X_test {0}".format(X_test.shape))
-    print("X_test.format = {0}".format(X_test.format))
-    print("X_test.dtype = {0}".format(X_test.dtype))
-    print("y_test {0}".format(y_test.shape))
+    print(f"X_train.shape = {X_train.shape}")
+    print(f"X_train.format = {X_train.format}")
+    print(f"X_train.dtype = {X_train.dtype}")
+    print(f"X_train density = {X_train.nnz / np.product(X_train.shape)}")
+    print(f"y_train {y_train.shape}")
+    print(f"X_test {X_test.shape}")
+    print(f"X_test.format = {X_test.format}")
+    print(f"X_test.dtype = {X_test.dtype}")
+    print(f"y_test {y_test.shape}")
     print()
-
     print("Classifier Training")
     print("===================")
     accuracy, train_time, test_time = {}, {}, {}

@@ -16,7 +16,6 @@ from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from ..utils.deprecation import deprecated
 
@@ -588,7 +587,6 @@ class PLSRegression(_PLS):
     #     - "plspm " with function plsreg2(X, Y)
     #     - "pls" with function oscorespls.fit(X, Y)
 
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
@@ -705,7 +703,6 @@ class PLSCanonical(_PLS):
     # exactly implement the Wold algorithm since it does not normalize
     # y_weights to one.
 
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
@@ -807,7 +804,6 @@ class CCA(_PLS):
     PLSSVD
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(n_components=n_components, scale=scale,
@@ -893,7 +889,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     PLSCanonical
     CCA
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale

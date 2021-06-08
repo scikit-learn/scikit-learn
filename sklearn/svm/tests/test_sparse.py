@@ -9,8 +9,7 @@ from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils._testing import (assert_raise_message, ignore_warnings,
-                                    skip_if_32bit)
+from sklearn.utils._testing import ignore_warnings, skip_if_32bit
 
 
 # test sample 1
@@ -69,7 +68,8 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
                                   sparse_svm.predict_proba(X_test), 4)
         msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.isspmatrix(X_test):
-        assert_raise_message(ValueError, msg, dense_svm.predict, X_test)
+        with pytest.raises(ValueError, match=msg):
+            dense_svm.predict(X_test)
 
 
 @skip_if_32bit
@@ -148,7 +148,7 @@ def test_svc_iris():
     for k in ('linear', 'poly', 'rbf'):
         sp_clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         clf = svm.SVC(kernel=k).fit(iris.data.toarray(),
-                                                   iris.target)
+                                    iris.target)
 
         assert_array_almost_equal(clf.support_vectors_,
                                   sp_clf.support_vectors_.toarray())

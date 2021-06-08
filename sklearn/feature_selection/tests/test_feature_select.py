@@ -12,9 +12,7 @@ import pytest
 from sklearn.utils._testing import assert_almost_equal, _convert_container
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils import safe_mask
 
 from sklearn.datasets import make_classification, make_regression
@@ -271,8 +269,8 @@ def test_select_kbest_zero():
     support = univariate_filter.get_support()
     gtruth = np.zeros(10, dtype=bool)
     assert_array_equal(support, gtruth)
-    X_selected = assert_warns_message(UserWarning, 'No features were selected',
-                                      univariate_filter.transform, X)
+    with pytest.warns(UserWarning, match="No features were selected"):
+        X_selected = univariate_filter.transform(X)
     assert X_selected.shape == (20, 0)
 
 
@@ -620,7 +618,8 @@ def test_f_classif_constant_feature():
 
     X, y = make_classification(n_samples=10, n_features=5)
     X[:, 0] = 2.0
-    assert_warns(UserWarning, f_classif, X, y)
+    with pytest.warns(UserWarning):
+        f_classif(X, y)
 
 
 def test_no_feature_selected():
@@ -639,8 +638,8 @@ def test_no_feature_selected():
     ]
     for selector in strict_selectors:
         assert_array_equal(selector.get_support(), np.zeros(10))
-        X_selected = assert_warns_message(
-            UserWarning, 'No features were selected', selector.transform, X)
+        with pytest.warns(UserWarning, match="No features were selected"):
+            X_selected = selector.transform(X)
         assert X_selected.shape == (40, 0)
 
 

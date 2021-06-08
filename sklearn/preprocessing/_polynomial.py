@@ -13,8 +13,7 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.fixes import linspace
-from ..utils.validation import (check_is_fitted, FLOAT_DTYPES,
-                                _deprecate_positional_args)
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
@@ -30,6 +29,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     of the features with degree less than or equal to the specified degree.
     For example, if an input sample is two dimensional and of the form
     [a, b], the degree-2 polynomial features are [1, a, b, a^2, ab, b^2].
+
+    Read more in the :ref:`User Guide <polynomial_features>`.
 
     Parameters
     ----------
@@ -99,7 +100,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-    @_deprecate_positional_args
     def __init__(self, degree=2, *, interaction_only=False, include_bias=True,
                  order='C'):
         self.degree = degree
@@ -350,7 +350,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     ----------
     n_knots : int, default=5
         Number of knots of the splines if `knots` equals one of
-        {'uniform', 'quantile'}. Must be larger or equal 2.
+        {'uniform', 'quantile'}. Must be larger or equal 2. Ignored if `knots`
+        is array-like.
 
     degree : int, default=3
         The polynomial degree of the spline basis. Must be a non-negative
@@ -546,15 +547,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ):
             raise ValueError("degree must be a non-negative integer.")
 
-        if not (
-            isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2
-        ):
-            raise ValueError("n_knots must be a positive integer >= 2.")
-
         if isinstance(self.knots, str) and self.knots in [
             "uniform",
             "quantile",
         ]:
+            if not (
+                isinstance(self.n_knots, numbers.Integral)
+                and self.n_knots >= 2
+            ):
+                raise ValueError("n_knots must be a positive integer >= 2, "
+                                 f"got: {self.n_knots}")
+
             base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots
             )

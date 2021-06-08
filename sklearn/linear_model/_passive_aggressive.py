@@ -1,7 +1,6 @@
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD 3 clause
 
-from ..utils.validation import _deprecate_positional_args
 from ._stochastic_gradient import BaseSGDClassifier
 from ._stochastic_gradient import BaseSGDRegressor
 from ._stochastic_gradient import DEFAULT_EPSILON
@@ -164,7 +163,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
@@ -391,7 +389,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0,
