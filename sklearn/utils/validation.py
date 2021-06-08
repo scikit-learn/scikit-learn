@@ -881,14 +881,15 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
                     ensure_min_features=ensure_min_features,
                     estimator=estimator)
 
-    y = check_y(y, multi_output=multi_output, y_numeric=y_numeric)
+    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric)
 
     check_consistent_length(X, y)
 
     return X, y
 
 
-def check_y(y, multi_output, y_numeric):
+def _check_y(y, multi_output=False, y_numeric=False):
+    """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
         y = check_array(y, accept_sparse='csr', force_all_finite=True,
                         ensure_2d=False, dtype=None)
