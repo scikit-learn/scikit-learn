@@ -225,19 +225,19 @@ def _generate_meta_estimator_instances_with_pipeline():
 # They should be able to work on any data and delegate data validation to
 # their inner estimator(s).
 DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
-        "AdaBoostClassifier",
-        "AdaBoostRegressor",
-        "BaggingClassifier",
-        "BaggingRegressor",
-        "ClassifierChain",  # data validation is necessary
-        "IterativeImputer",
-        "OneVsOneClassifier",  # input validation can't be avoided
-        "RANSACRegressor",
-        "RFE",
-        "RFECV",
-        "RegressorChain",  # data validation is necessary
-        "SelfTrainingClassifier",
-        "SequentialFeatureSelector"  # not applicable (2D data mandatory)
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "ClassifierChain",  # data validation is necessary
+    "IterativeImputer",
+    "OneVsOneClassifier",  # input validation can't be avoided
+    "RANSACRegressor",
+    "RFE",
+    "RFECV",
+    "RegressorChain",  # data validation is necessary
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector"  # not applicable (2D data mandatory)
 ]
 
 DATA_VALIDATION_META_ESTIMATORS = [
