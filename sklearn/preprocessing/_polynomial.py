@@ -350,7 +350,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     ----------
     n_knots : int, default=5
         Number of knots of the splines if `knots` equals one of
-        {'uniform', 'quantile'}. Must be larger or equal 2.
+        {'uniform', 'quantile'}. Must be larger or equal 2. Ignored if `knots`
+        is array-like.
 
     degree : int, default=3
         The polynomial degree of the spline basis. Must be a non-negative
@@ -546,15 +547,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ):
             raise ValueError("degree must be a non-negative integer.")
 
-        if not (
-            isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2
-        ):
-            raise ValueError("n_knots must be a positive integer >= 2.")
-
         if isinstance(self.knots, str) and self.knots in [
             "uniform",
             "quantile",
         ]:
+            if not (
+                isinstance(self.n_knots, numbers.Integral)
+                and self.n_knots >= 2
+            ):
+                raise ValueError("n_knots must be a positive integer >= 2, "
+                                 f"got: {self.n_knots}")
+
             base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots
             )
