@@ -140,6 +140,8 @@ Changelog
 
 :mod:`sklearn.cluster`
 ......................
+- |Feature| :class:`BisectKMeans` introducing Bisecting K-Means Algorithm
+  :pr:`20031` by :user:`Michal Krawczyk <michalkrawczyk>`.
 
 - |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
   :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
