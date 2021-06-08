@@ -27,6 +27,8 @@ import pytest
 import joblib
 from numpy.testing import assert_allclose
 
+from sklearn.dummy import DummyRegressor
+from sklearn.metrics import mean_poisson_deviance
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -183,6 +185,76 @@ def check_regression_criterion(name, criterion):
 ))
 def test_regression(name, criterion):
     check_regression_criterion(name, criterion)
+
+
+def test_poisson_vs_mse():
+    """Test that random forest with poisson criterion performs better than
+    mse for a poisson target."""
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 500, 10
+    X = datasets.make_low_rank_matrix(n_samples=n_train + n_test,
+                                      n_features=n_features, random_state=rng)
+    X = np.abs(X)
+    X /= np.max(np.abs(X), axis=0)
+    # We create a log-linear Poisson model
+    coef = rng.uniform(low=-4, high=1, size=n_features)
+    y = rng.poisson(lam=np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
+                                                        random_state=rng)
+
+    forest_poi = RandomForestRegressor(
+        criterion="poisson",
+        min_samples_leaf=10,
+        max_features="sqrt",
+        random_state=rng)
+    forest_mse = RandomForestRegressor(
+        criterion="squared_error",
+        min_samples_leaf=10,
+        max_features="sqrt",
+        random_state=rng)
+
+    forest_poi.fit(X_train, y_train)
+    forest_mse.fit(X_train, y_train)
+    dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
+
+    for X, y, val in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
+        metric_poi = mean_poisson_deviance(y, forest_poi.predict(X))
+        # squared_error forest might produce non-positive predictions => clip
+        # If y = 0 for those, the poisson deviance gets too good.
+        # If we drew more samples, we would eventually get y > 0 and the
+        # poisson deviance would explode, i.e. be undefined. Therefore, we do
+        # not clip to a tiny value like 1e-15, but to 0.1. This acts like a
+        # mild penalty to the non-positive predictions.
+        metric_mse = mean_poisson_deviance(
+            y,
+            np.clip(forest_mse.predict(X), 1e-6, None))
+        metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
+        # As squared_error might correctly predict 0 in train set, its train
+        # score can be better than Poisson. This is no longer the case for the
+        # test set. But keep the above comment for clipping in mind.
+        if val == "test":
+            assert metric_poi < metric_mse
+        assert metric_poi < metric_dummy
+
+
+@pytest.mark.parametrize('criterion', ('poisson', 'squared_error'))
+def test_balance_property_random_forest(criterion):
+    """"Test that sum(y_pred)==sum(y_true) on the training set."""
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 500, 10
+    X = datasets.make_low_rank_matrix(n_samples=n_train + n_test,
+                                      n_features=n_features, random_state=rng)
+
+    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
+    y = rng.poisson(lam=np.exp(X @ coef))
+
+    reg = RandomForestRegressor(criterion=criterion,
+                                n_estimators=10,
+                                bootstrap=False,
+                                random_state=rng)
+    reg.fit(X, y)
+
+    assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
 
 
 def check_regressor_attributes(name):
@@ -1365,6 +1437,23 @@ def test_min_impurity_decrease():
             # Simply check if the parameter is passed on correctly. Tree tests
             # will suffice for the actual working of this param
             assert tree.min_impurity_decrease == 0.1
+
+
+def test_poisson_y_positive_check():
+    est = RandomForestRegressor(criterion="poisson")
+    X = np.zeros((3, 3))
+
+    y = [-1, 1, 3]
+    err_msg = (r"Some value\(s\) of y are negative which is "
+               r"not allowed for Poisson regression.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y)
+
+    y = [0, 0, 0]
+    err_msg = (r"Sum of y is not strictly positive which "
+               r"is necessary for Poisson regression.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y)
 
 
 # mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
