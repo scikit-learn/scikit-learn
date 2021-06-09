@@ -28,6 +28,11 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     variances_ : array, shape (n_features,)
         Variances of individual features.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     Allows NaN in the input.
