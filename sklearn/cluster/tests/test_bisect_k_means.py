@@ -16,8 +16,14 @@ def test_three_clusters(bisect_strategy):
         if splitting data is performed correctly
     """
 
-    X = np.array([[1, 2], [1, 4], [1, 0],
-                  [10, 2], [10, 4], [10, 0],
+    # X = np.array([[1, 2], [1, 4], [1, 0],
+    #               [10, 2], [10, 4], [10, 0],
+    #               [10, 6], [10, 8], [10, 10]])
+
+    # X[0][1] swapped with X[1][1] intentionally for checking labeling
+
+    X = np.array([[1, 2], [10, 4], [1, 0],
+                  [10, 2], [1, 4], [10, 0],
                   [10, 6], [10, 8], [10, 10]])
     bisect_means = BisectKMeans(n_clusters=3, random_state=0,
                                 bisect_strategy=bisect_strategy)
@@ -28,11 +34,11 @@ def test_three_clusters(bisect_strategy):
     if bisect_strategy == "largest_cluster":
         expected_centers = [[1, 2], [10, 2], [10, 8]]
         expected_predict = [0, 1]
-        expected_labels = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+        expected_labels = [0, 1, 0, 1, 0, 1, 2, 2, 2]
     else:
         expected_centers = [[1, 2], [10, 8], [10, 2]]
         expected_predict = [0, 2]
-        expected_labels = [0, 0, 0, 2, 2, 2, 1, 1, 1]
+        expected_labels = [0, 2, 0, 2, 0, 2, 1, 1, 1]
 
     assert_array_equal(expected_centers, bisect_means.cluster_centers_)
     assert_array_equal(bisect_means.predict([[0, 0], [12, 3]]),
