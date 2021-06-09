@@ -176,7 +176,6 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'compose',
     'covariance',
     'decomposition',
     'discriminant_analysis',
@@ -212,7 +211,7 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer',
+    IGNORED = {'ClassifierChain',
                'CountVectorizer', 'DictVectorizer',
                'GaussianRandomProjection',
                'MultiOutputClassifier', 'MultiOutputRegressor',
