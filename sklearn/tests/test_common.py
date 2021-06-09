@@ -37,7 +37,10 @@ from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import (
+    SkipTest,
+    set_random_state,
+)
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -234,7 +237,9 @@ def _generate_search_cv_instances():
             if "min_resources" in init_params
             else {}
         )
-        yield SearchCV(Estimator(), param_grid, cv=2, **extra_params)
+        search_cv = SearchCV(Estimator(), param_grid, cv=2, **extra_params)
+        set_random_state(search_cv)
+        yield search_cv
 
     for SearchCV, (Estimator, param_grid) in product(
         [
@@ -254,9 +259,11 @@ def _generate_search_cv_instances():
             if "min_resources" in init_params
             else {}
         )
-        yield SearchCV(
+        search_cv = SearchCV(
             make_pipeline(PCA(), Estimator()), param_grid, cv=2, **extra_params
         ).set_params(error_score="raise")
+        set_random_state(search_cv)
+        yield search_cv
 
 
 @parametrize_with_checks(list(_generate_search_cv_instances()))
