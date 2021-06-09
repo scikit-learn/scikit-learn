@@ -63,8 +63,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         The total number of input features.
 
         .. deprecated:: 1.0
-        This attribute is deprecated in 1.0 and will be removed in 1.2. Refer
-        to `n_features_in_` instead.
+            This attribute is deprecated in 1.0 and will be removed in 1.2.
+            Refer to `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
