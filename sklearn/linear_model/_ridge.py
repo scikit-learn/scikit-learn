@@ -625,7 +625,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                     " or set `positive=False`"
                     .format(self.solver))
             else:
-                solver = 'trf'
+                solver = self.solver
         elif sparse.issparse(X) and self.fit_intercept:
             if self.solver not in ['auto', 'sparse_cg', 'sag', 'trf']:
                 raise ValueError(

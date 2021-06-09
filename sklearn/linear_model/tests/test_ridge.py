@@ -1418,9 +1418,10 @@ def test_ridge_sag_with_X_fortran():
     Ridge(solver='sag').fit(X, y)
 
 
+@pytest.mark.parametrize('solver', ['auto', 'trf'])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('alpha', [1e-3, 1e-2, 0.1, 1.])
-def test_ridge_positive_regression_test(fit_intercept, alpha):
+def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     b = np.array([1, -10])
     if fit_intercept:
@@ -1429,7 +1430,38 @@ def test_ridge_positive_regression_test(fit_intercept, alpha):
     else:
         y = X.dot(b)
 
-    model = Ridge(alpha=alpha, positive=True,
+    model = Ridge(alpha=alpha, positive=True, solver=solver,
                   fit_intercept=fit_intercept)
     model.fit(X, y)
     assert(np.all(model.coef_ >= 0))
+
+
+@pytest.mark.parametrize(
+    'solver', ['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'])
+def test_ridge_positive_error_test(solver):
+    alpha = 0.1
+    X = np.array([[1, 2], [3, 4]])
+    b = np.array([1, -1])
+    y = X.dot(b)
+
+    model = Ridge(alpha=alpha, positive=True, solver=solver,
+                  fit_intercept=False)
+    with pytest.raises(ValueError,
+                       match="does not support positive"):
+        model.fit(X, y)
+
+    with pytest.raises(ValueError,
+                       match="only 'trf' solver can fit"):
+        _, _ = ridge_regression(X, y, alpha, positive=True,
+                                solver=solver, return_intercept=False)
+
+
+def test_trf_solver_error():
+    X = np.array([[1, 1], [1, 1]])
+    y = np.array([-1e10, -1e10])
+
+    model = Ridge(alpha=0.01, positive=True, solver="trf",
+                  fit_intercept=False, tol=1e-12, max_iter=1)
+    with pytest.raises(ValueError,
+                       match="Failed fitting using trf solver"):
+        model.fit(X, y)
