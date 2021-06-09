@@ -81,6 +81,10 @@ plt.show()
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 corr = spearmanr(X).correlation
 
+# Ensure the correlation matrix is symmetric
+corr = (corr + corr.T)/2
+np.fill_diagonal(corr, 1)
+
 # We convert the correlation matrix to a distance matrix before performing
 # hierarchical clustering using Ward's linkage.
 distance_matrix = 1 - np.abs(corr)
