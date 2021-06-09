@@ -300,6 +300,7 @@ def test_random_search_discrete_distributions(param_distributions,
      "min_resources_=15 is greater than max_resources_=14"),
     ({'cv': KFold(shuffle=True)}, "must yield consistent folds"),
     ({'cv': ShuffleSplit()}, "must yield consistent folds"),
+    ({"refit": "whatever"}, "refit is expected to be a boolean"),
 ])
 def test_input_errors(Est, params, expected_error_message):
     base_estimator = FastClassifier()

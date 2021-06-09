@@ -177,6 +177,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 f"an empty dataset X."
             )
 
+        if not isinstance(self.refit, bool):
+            raise ValueError(
+                f"refit is expected to be a boolean. Got {type(self.refit)} "
+                f"instead."
+            )
+
     @staticmethod
     def _select_best_index(refit, refit_metric, results):
         """Custom refit callable to return the index of the best candidate.
