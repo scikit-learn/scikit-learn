@@ -178,6 +178,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
         ``X[ordering_][start:end + 1]`` form a cluster.
         Only available when ``cluster_method='xi'``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     See Also
     --------
     DBSCAN : A similar clustering for a specified neighborhood radius (eps).
