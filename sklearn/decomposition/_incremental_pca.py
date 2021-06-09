@@ -107,6 +107,11 @@ class IncrementalPCA(_BasePCA):
     batch_size_ : int
         Inferred batch size from ``batch_size``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits

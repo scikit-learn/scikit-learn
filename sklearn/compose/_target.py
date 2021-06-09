@@ -82,6 +82,12 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     transformer_ : object
         Transformer used in ``fit`` and ``predict``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying regressor exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np

@@ -339,6 +339,11 @@ class GraphicalLasso(EmpiricalCovariance):
     n_iter_ : int
         Number of iterations run.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -634,6 +639,11 @@ class GraphicalLassoCV(GraphicalLasso):
 
     n_iter_ : int
         Number of iterations run for the optimal alpha.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
