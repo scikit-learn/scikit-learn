@@ -176,7 +176,6 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'gaussian_process',
     'impute',
     'isotonic',
     'kernel_approximation',
