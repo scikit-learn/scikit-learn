@@ -176,7 +176,6 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'manifold',
     'model_selection',
     'multioutput',
     'naive_bayes',
