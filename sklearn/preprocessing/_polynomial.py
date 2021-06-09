@@ -53,26 +53,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.21
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import PolynomialFeatures
-    >>> X = np.arange(6).reshape(3, 2)
-    >>> X
-    array([[0, 1],
-           [2, 3],
-           [4, 5]])
-    >>> poly = PolynomialFeatures(2)
-    >>> poly.fit_transform(X)
-    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
-           [ 1.,  2.,  3.,  4.,  6.,  9.],
-           [ 1.,  4.,  5., 16., 20., 25.]])
-    >>> poly = PolynomialFeatures(interaction_only=True)
-    >>> poly.fit_transform(X)
-    array([[ 1.,  0.,  1.,  0.],
-           [ 1.,  2.,  3.,  6.],
-           [ 1.,  4.,  5., 20.]])
-
     Attributes
     ----------
     powers_ : ndarray of shape (n_output_features, n_input_features)
@@ -80,6 +60,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     n_input_features_ : int
         The total number of input features.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_output_features_ : int
         The total number of polynomial output features. The number of output
@@ -99,6 +84,26 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(2)
+    >>> poly.fit_transform(X)
+    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
+           [ 1.,  2.,  3.,  4.,  6.,  9.],
+           [ 1.,  4.,  5., 16., 20., 25.]])
+    >>> poly = PolynomialFeatures(interaction_only=True)
+    >>> poly.fit_transform(X)
+    array([[ 1.,  0.,  1.,  0.],
+           [ 1.,  2.,  3.,  6.],
+           [ 1.,  4.,  5., 20.]])
     """
     def __init__(self, degree=2, *, interaction_only=False, include_bias=True,
                  order='C'):

@@ -178,7 +178,6 @@ def _construct_searchcv_instance(SearchCV):
 N_FEATURES_MODULES_TO_IGNORE = {
     'model_selection',
     'multioutput',
-    'preprocessing',
     'random_projection',
     'semi_supervised',
     'svm',
