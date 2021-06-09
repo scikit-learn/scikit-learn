@@ -11,7 +11,9 @@ from ..exceptions import EfficiencyWarning
 from ._kmeans import KMeans
 from ._kmeans import _kmeans_single_elkan
 from ._kmeans import _kmeans_single_lloyd
-from ._kmeans import _labels_inertia_threadpool_limit
+
+from ._k_means_common import _inertia_dense
+from ._k_means_common import _inertia_sparse
 
 from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
@@ -19,9 +21,6 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_array
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
-
-from ._k_means_common import _inertia_dense
-from ._k_means_common import _inertia_sparse
 
 
 class BisectKMeans(KMeans):
@@ -383,7 +382,7 @@ class BisectKMeans(KMeans):
 
         # Only assign to created centroid when n_clusters == 1
         if self.n_clusters == 1:
-            _clusters = self._init_centroids(X, x_squared_norms,init,
+            _clusters = self._init_centroids(X, x_squared_norms, init,
                                              random_state, n_centroids=1)
             warnings.warn("Bisection won't be performed - "
                           "needs at least two clusters to run")
@@ -402,7 +401,11 @@ class BisectKMeans(KMeans):
         self.cluster_centers_ = _clusters
 
         self.inertia_ = _inertia(X, sample_weight, self.cluster_centers_,
-                                self.labels_, self._n_threads)
+                                 self.labels_, self._n_threads)
+
+        # number of iterations will always be equal to
+        # (number of clusters - 1)
+        self.n_iter_ = self.n_clusters - 1
 
         return self
 
@@ -457,7 +460,7 @@ class BisectKMeans(KMeans):
 
             # Perform Bisection
             centers, _labels = self._bisect(data_left, init, weights_left,
-                                           random_state)
+                                            random_state)
 
             # Check SSE (Sum of Squared Errors) of each of computed centroids.
             # SSE is calculated with distances between data points
@@ -498,7 +501,6 @@ class BisectKMeans(KMeans):
 
         centers = np.asarray(centroids)
 
-        self.n_iter_ = n_iter + 1
         self.labels_ = labels
 
         return centers
@@ -596,8 +598,6 @@ class BisectKMeans(KMeans):
         self.labels_, centers = self._extract_labels_and_centers(X.shape[0],
                                                                  centers_dict)
 
-        self.n_iter_ = n_iter + 1
-
         return centers
 
     def _bisect_largest_cluster(self, X, init,
@@ -684,8 +684,6 @@ class BisectKMeans(KMeans):
         # Extract calculated centroids and labels to arrays
         self.labels_, centers = self._extract_labels_and_centers(X.shape[0],
                                                                  centers_dict)
-
-        self.n_iter_ = n_iter + 1
 
         return centers
 
