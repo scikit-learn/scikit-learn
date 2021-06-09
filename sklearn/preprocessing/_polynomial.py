@@ -56,7 +56,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    powers_ : ndarray of shape (n_output_features, n_input_features)
+    powers_ : ndarray of shape (n_output_features, n_features_in_)
         powers_[i, j] is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
@@ -151,10 +151,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     def powers_(self):
         check_is_fitted(self)
 
-        combinations = self._combinations(self.n_input_features_, self.degree,
+        combinations = self._combinations(self.n_features_in_, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        return np.vstack([np.bincount(c, minlength=self.n_input_features_)
+        return np.vstack([np.bincount(c, minlength=self.n_features_in_)
                           for c in combinations])
 
     def get_feature_names(self, input_features=None):
