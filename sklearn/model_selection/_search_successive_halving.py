@@ -434,11 +434,9 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-               problem
-
+              problem
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-               classification problem
-
+              classification problem
             - ``1`` when ``resource != 'n_samples'``
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
@@ -726,11 +724,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-               problem
-
+              problem
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-               classification problem
-
+              classification problem
             - ``1`` when ``resource != 'n_samples'``
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
