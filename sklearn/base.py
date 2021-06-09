@@ -421,7 +421,8 @@ class BaseEstimator:
         Returns
         -------
         out : {ndarray, sparse matrix} or tuple of these
-            The validated input. A tuple is returned if `y` is not None.
+            The validated input. A tuple is returned if both `X` and `y` are
+            validated.
         """
         if y is None and self._get_tags()['requires_y']:
             raise ValueError(
@@ -433,7 +434,7 @@ class BaseEstimator:
         no_val_y = y is None or isinstance(y, str) and y == 'no_validation'
 
         if no_val_X and no_val_y:
-            out = None
+            raise ValueError("Validation should be done on X, y or both.")
         elif not no_val_X and no_val_y:
             X = check_array(X, **check_params)
             out = X
