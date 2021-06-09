@@ -176,7 +176,6 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'decomposition',
     'discriminant_analysis',
     'dummy',
     'ensemble',
