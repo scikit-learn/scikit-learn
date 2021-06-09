@@ -1477,10 +1477,9 @@ def test_enet_cv_grid_search(sample_weight):
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
-@pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("precompute", [False, True])
 def test_enet_cv_sample_weight_consistency(
-        fit_intercept, l1_ratio, normalize, precompute):
+        fit_intercept, l1_ratio, precompute):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
