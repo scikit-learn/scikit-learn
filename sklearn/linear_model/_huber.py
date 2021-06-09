@@ -179,6 +179,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     scale_ : float
         The value by which ``|y - X'w - c|`` is scaled down.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` has run for.

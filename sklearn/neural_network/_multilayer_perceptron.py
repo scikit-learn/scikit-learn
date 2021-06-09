@@ -886,6 +886,11 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         The number of iterations the solver has run.
 
@@ -1309,6 +1314,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     intercepts_ : list of shape (n_layers - 1,)
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         The number of iterations the solver has run.

@@ -582,6 +582,11 @@ class MinCovDet(EmpiricalCovariance):
         Mahalanobis distances of the training set (on which :meth:`fit` is
         called) observations.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np

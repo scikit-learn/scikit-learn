@@ -576,6 +576,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     n_classes_ : int
         The number of classes in the training data
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris

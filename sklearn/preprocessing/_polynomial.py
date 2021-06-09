@@ -66,10 +66,29 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         This attribute is deprecated in 1.0 and will be removed in 1.2. Refer
         to `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_output_features_ : int
         The total number of polynomial output features. The number of output
         features is computed by iterating over all suitably sized combinations
         of input features.
+
+    See Also
+    --------
+    SplineTransformer : Transformer that generates univariate B-spline bases
+        for features
+
+    Notes
+    -----
+    Be aware that the number of features in the output array scales
+    polynomially in the number of features of the input array, and
+    exponentially in the degree. High degrees can cause overfitting.
+
+    See :ref:`examples/linear_model/plot_polynomial_interpolation.py
+    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
 
     Examples
     --------
@@ -90,20 +109,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     array([[ 1.,  0.,  1.,  0.],
            [ 1.,  2.,  3.,  6.],
            [ 1.,  4.,  5., 20.]])
-
-    See Also
-    --------
-    SplineTransformer : Transformer that generates univariate B-spline bases
-        for features
-
-    Notes
-    -----
-    Be aware that the number of features in the output array scales
-    polynomially in the number of features of the input array, and
-    exponentially in the degree. High degrees can cause overfitting.
-
-    See :ref:`examples/linear_model/plot_polynomial_interpolation.py
-    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
     def __init__(self, degree=2, *, interaction_only=False, include_bias=True,
                  order='C'):

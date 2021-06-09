@@ -899,6 +899,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         The number of iterations taken by lars_path to find the
         grid of alphas for each target.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1156,6 +1161,11 @@ class LassoLars(Lars):
     n_iter_ : array-like or int
         The number of iterations taken by lars_path to find the
         grid of alphas for each target.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1420,6 +1430,11 @@ class LarsCV(Lars):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import LarsCV
@@ -1654,6 +1669,11 @@ class LassoLarsCV(LarsCV):
     active_ : list of int
         Indices of active variables at the end of the path.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoLarsCV
@@ -1799,6 +1819,10 @@ class LassoLarsIC(LassoLars):
         chosen. This value is larger by a factor of ``n_samples`` compared to
         Eqns. 2.15 and 2.16 in (Zou et al, 2007).
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

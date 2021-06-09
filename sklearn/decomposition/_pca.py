@@ -264,6 +264,11 @@ class PCA(_BasePCA):
         Equal to the average of (min(n_features, n_samples) - n_components)
         smallest eigenvalues of the covariance matrix of X.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     KernelPCA : Kernel Principal Component Analysis.

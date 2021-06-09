@@ -176,30 +176,8 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'compose',
-    'covariance',
-    'decomposition',
-    'discriminant_analysis',
-    'dummy',
-    'ensemble',
-    'feature_selection',
-    'gaussian_process',
-    'impute',
-    'isotonic',
-    'kernel_approximation',
-    'kernel_ridge',
-    'linear_model',
-    'manifold',
     'model_selection',
     'multioutput',
-    'naive_bayes',
-    'neighbors',
-    'neural_network',
-    'preprocessing',
-    'random_projection',
-    'semi_supervised',
-    'svm',
-    'tree'
 }
 
 
@@ -212,22 +190,28 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer',
-               'CountVectorizer', 'DictVectorizer',
-               'GaussianRandomProjection',
-               'MultiOutputClassifier', 'MultiOutputRegressor',
-               'NoSampleWeightWrapper', 'RFE', 'RFECV',
-               'RegressorChain', 'SelectFromModel',
-               'SparseCoder', 'SparseRandomProjection',
-               'SpectralBiclustering', 'StackingClassifier',
-               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor', 'SequentialFeatureSelector',
-               'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
+    IGNORED = {
+        'ClassifierChain',
+        'CountVectorizer', 'DictVectorizer',
+        'GaussianRandomProjection',
+        'MultiOutputClassifier', 'MultiOutputRegressor',
+        'NoSampleWeightWrapper', 'RFE', 'RFECV',
+        'RegressorChain', 'SelectFromModel',
+        'SparseCoder', 'SparseRandomProjection',
+        'SpectralBiclustering', 'StackingClassifier',
+        'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
+        'VotingRegressor', 'SequentialFeatureSelector',
+    }
 
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    if Estimator.__name__ in ("RandomizedSearchCV", "GridSearchCV"):
+    if Estimator.__name__ in (
+        "HalvingRandomSearchCV",
+        "RandomizedSearchCV",
+        "HalvingGridSearchCV",
+        "GridSearchCV",
+    ):
         est = _construct_searchcv_instance(Estimator)
     else:
         est = _construct_instance(Estimator)

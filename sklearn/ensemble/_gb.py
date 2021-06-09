@@ -1052,6 +1052,11 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_classes_ : int
         The number of classes.
 
@@ -1603,6 +1608,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     max_features_ : int
         The inferred value of max_features.

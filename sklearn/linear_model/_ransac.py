@@ -192,6 +192,11 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         .. versionadded:: 0.19
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import RANSACRegressor

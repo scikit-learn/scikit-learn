@@ -1259,6 +1259,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     error_ : array
         vector of errors at each iteration
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of iterations run.
 
@@ -1491,6 +1496,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         end user.
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         Number of iterations run.
