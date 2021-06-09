@@ -529,7 +529,7 @@ class _BaseDiscreteNB(_BaseNB):
             if self.force_alpha:
                 warnings.warn('alpha too small will result in numeric errors. '
                               'Proceeding with alpha = %.1e, as '
-                              'force_alpha was set to True.' % alpha)
+                              'force_alpha was set to True.' % self.alpha)
             else:
                 warnings.warn('alpha too small will result in numeric errors, '
                               'setting alpha = %.1e' % _ALPHA_MIN)
