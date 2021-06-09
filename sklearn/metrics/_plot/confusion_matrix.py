@@ -257,7 +257,7 @@ class ConfusionMatrixDisplay:
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.metrics import ConfusionMatrixDisplay
         >>> from sklearn.model_selection import train_test_split
@@ -269,8 +269,9 @@ class ConfusionMatrixDisplay:
         >>> clf.fit(X_train, y_train)
         SVC(random_state=0)
         >>> ConfusionMatrixDisplay.from_estimator(
-        ...     clf, X_test, y_test)  # doctest: +SKIP
-        >>> plt.show()  # doctest: +SKIP
+        ...     clf, X_test, y_test)
+        <...>
+        >>> plt.show()
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
@@ -382,7 +383,7 @@ class ConfusionMatrixDisplay:
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.metrics import ConfusionMatrixDisplay
         >>> from sklearn.model_selection import train_test_split
@@ -395,8 +396,9 @@ class ConfusionMatrixDisplay:
         SVC(random_state=0)
         >>> y_pred = clf.predict(X_test)
         >>> ConfusionMatrixDisplay.from_predictions(
-        ...    y_test, y_pred)  # doctest: +SKIP
-        >>> plt.show()  # doctest: +SKIP
+        ...    y_test, y_pred)
+        <...>
+        >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
@@ -519,7 +521,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.metrics import plot_confusion_matrix
     >>> from sklearn.model_selection import train_test_split
@@ -530,8 +532,9 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     >>> clf = SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
     SVC(random_state=0)
-    >>> plot_confusion_matrix(clf, X_test, y_test)  # doctest: +SKIP
-    >>> plt.show()  # doctest: +SKIP
+    >>> plot_confusion_matrix(clf, X_test, y_test)
+    <...>
+    >>> plt.show()
     """
     check_matplotlib_support("plot_confusion_matrix")
 

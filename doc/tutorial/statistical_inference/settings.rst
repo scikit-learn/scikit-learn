@@ -37,9 +37,9 @@ needs to be preprocessed in order to be used by scikit-learn.
         >>> digits = datasets.load_digits()
         >>> digits.images.shape
         (1797, 8, 8)
-        >>> import matplotlib.pyplot as plt #doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
         >>> plt.imshow(digits.images[-1],
-        ...            cmap=plt.cm.gray_r) #doctest: +SKIP
+        ...            cmap=plt.cm.gray_r)
         <matplotlib.image.AxesImage object at ...>
     
     .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png

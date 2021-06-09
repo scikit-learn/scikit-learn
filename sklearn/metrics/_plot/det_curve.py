@@ -197,7 +197,7 @@ def plot_det_curve(
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn import datasets, metrics, model_selection, svm
     >>> X, y = datasets.make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = model_selection.train_test_split(
@@ -205,8 +205,9 @@ def plot_det_curve(
     >>> clf = svm.SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
     SVC(random_state=0)
-    >>> metrics.plot_det_curve(clf, X_test, y_test)  # doctest: +SKIP
-    >>> plt.show()                                   # doctest: +SKIP
+    >>> metrics.plot_det_curve(clf, X_test, y_test)
+    <...>
+    >>> plt.show()
     """
     check_matplotlib_support('plot_det_curve')
 
