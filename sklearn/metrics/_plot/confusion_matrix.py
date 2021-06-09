@@ -69,7 +69,8 @@ class ConfusionMatrixDisplay:
     >>> cm = confusion_matrix(y_test, predictions, labels=clf.classes_)
     >>> disp = ConfusionMatrixDisplay(confusion_matrix=cm,
     ...                               display_labels=clf.classes_)
-    >>> disp.plot() # doctest: +SKIP
+    >>> disp.plot()
+    <...>
     """
     def __init__(self, confusion_matrix, *, display_labels=None):
         self.confusion_matrix = confusion_matrix
