@@ -603,6 +603,11 @@ class LocallyLinearEmbedding(TransformerMixin,
     reconstruction_error_ : float
         Reconstruction error associated with `embedding_`
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.

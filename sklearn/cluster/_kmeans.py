@@ -769,6 +769,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+        .. versionadded:: 0.24
+
     See Also
     --------
     MiniBatchKMeans : Alternative online implementation that does incremental
@@ -1470,6 +1472,8 @@ class MiniBatchKMeans(KMeans):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     See Also
     --------

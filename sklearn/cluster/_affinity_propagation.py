@@ -312,6 +312,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+        .. versionadded:: 0.24
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py

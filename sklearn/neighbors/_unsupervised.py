@@ -72,6 +72,11 @@ class NearestNeighbors(KNeighborsMixin,
     effective_metric_params_ : dict
         Parameters for the metric used to compute distances to neighbors.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 

@@ -453,6 +453,11 @@ class SelectPercentile(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -539,6 +544,11 @@ class SelectKBest(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -624,6 +634,11 @@ class SelectFpr(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -698,6 +713,11 @@ class SelectFdr(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     References
     ----------
     https://en.wikipedia.org/wiki/False_discovery_rate
@@ -768,6 +788,11 @@ class SelectFwe(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -822,6 +847,11 @@ class GenericUnivariateSelect(_BaseFilter):
 
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned scores only.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

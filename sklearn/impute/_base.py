@@ -187,6 +187,11 @@ class SimpleImputer(_BaseImputer):
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     IterativeImputer : Multivariate imputation of missing values.
@@ -603,6 +608,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         The features indices which will be returned when calling ``transform``.
         They are computed during ``fit``. For ``features='all'``, it is
         to ``range(n_features)``.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
