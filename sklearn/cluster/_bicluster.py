@@ -255,6 +255,9 @@ class SpectralCoclustering(BaseSpectral):
     column_labels_ : array-like of shape (n_cols,)
         The bicluster label of each column.
 
+    biclusters_ : tuple of two ndarrays
+        The tuple contains the `rows_` and `columns_` arrays.
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralCoclustering

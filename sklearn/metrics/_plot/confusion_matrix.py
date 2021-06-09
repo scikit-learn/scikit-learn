@@ -119,7 +119,7 @@ class ConfusionMatrixDisplay:
         n_classes = cm.shape[0]
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
-        cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(256)
+        cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(1.0)
 
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)

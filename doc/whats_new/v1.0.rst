@@ -15,7 +15,7 @@ Version 1.0.0
 Minimal dependencies
 --------------------
 
-Version 1.0.0 of scikit-learn requires python 3.7+, numpy 1.14.5+ and
+Version 1.0.0 of scikit-learn requires python 3.7+, numpy 1.14.6+ and
 scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.2+.
 
 Enforcing keyword-only arguments
@@ -123,6 +123,9 @@ Changelog
   - For :class:`tree.ExtraTreeRegressor`, `criterion="mae"` is deprecated,
     use `"absolute_error"` instead.
 
+- |API| `np.matrix` usage is deprecated in 1.0 and will raise a `TypeError` in
+  1.2. :pr:`20165` by `Thomas Fan`_.
+
 :mod:`sklearn.base`
 ...................
 
@@ -134,6 +137,10 @@ Changelog
 - |Fix| The predict and predict_proba methods of
   :class:`calibration.CalibratedClassifierCV` can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
+- |Fix| Fixed an error when using a ::class:`ensemble.VotingClassifier`
+  as `base_estimator` in ::class:`calibration.CalibratedClassifierCV`.
+  :pr:`20087` by :user:`Clément Fauchereau <clement-f>`.
 
 :mod:`sklearn.cluster`
 ......................
@@ -164,7 +171,8 @@ Changelog
   :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |FIX| :class:`cluster.AgglomerativeClustering` now supports readonly
-  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+  memory-mapped datasets.
+  :pr:`19883` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |API| :class:`cluster.Birch` attributes, `fit_` and `partial_fit_`, are
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
@@ -262,6 +270,16 @@ Changelog
   :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
   :pr:`19564` by `Thomas Fan`_.
 
+- |Enhancement| Documented and tested support of the Poisson criterion for
+  :class:`ensemble.RandomForestRegressor`. :pr:`19836` by
+  :user:`Brian Sun <bsun94>`.
+
+- |Fix| Fixed the range of the argument max_samples to be (0.0, 1.0]
+  in :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, where `max_samples=1.0` is
+  interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
+  :user:`murata-yu`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -274,8 +292,8 @@ Changelog
 
 - |Feature| :func:`feature_selection.r_regression` computes Pearson's R
   correlation coefficients between the features and the target.
-  :pr:`17169` by `Dmytro Lituiev <DSLituiev>`
-  and `Julien Jerphanion <jjerphan>`.
+  :pr:`17169` by :user:`Dmytro Lituiev <DSLituiev>`
+  and :user:`Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -344,6 +362,10 @@ Changelog
   is now faster. This is especially noticeable on large sparse input.
   :pr:`19734` by :user:`Fred Robinson <frrad>`.
 
+- |Enhancement| `fit` method preserves dtype for numpy.float32 in
+  :class:`Lars`, :class:`LassoLars`, :class:`LassoLars`, :class:`LarsCV` and
+  :class:`LassoLarsCV`. :pr:`20155` by :user:`Takeshi Oura <takoika>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -381,6 +403,9 @@ Changelog
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
 
+- |Fix| :meth:`metrics.ConfusionMatrixDisplay.plot` uses the correct max
+  for colormap. :pr:`19784` by `Thomas Fan`_.
+
 - |Fix| Samples with zero `sample_weight` values do not affect the results
   from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
   and :func:`metrics.roc_curve`.
@@ -400,11 +425,12 @@ Changelog
 ..............................
 
 - |Feature| added :class:`model_selection.StratifiedGroupKFold`, that combines
-  :class:`model_selection.StratifiedKFold` and `model_selection.GroupKFold`,
-  providing an ability to split data preserving the distribution of classes in
-  each split while keeping each group within a single split.
-  :pr:`18649` by `Leandro Hermida <hermidalc>` and
-  `Rodion Martynov <marrodion>`.
+  :class:`model_selection.StratifiedKFold` and
+  :class:`model_selection.GroupKFold`, providing an ability to split data
+  preserving the distribution of classes in each split while keeping each
+  group within a single split.
+  :pr:`18649` by :user:`Leandro Hermida <hermidalc>` and
+  :user:`Rodion Martynov <marrodion>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -437,7 +463,7 @@ Changelog
   :user:`Julien Jerphanion <jjerphan>`.
 
 - |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
-  memory-mapped datasets. :pr:`19883` by `Julien Jerphanion <jjerphan>`.
+  memory-mapped datasets. :pr:`19883` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
@@ -510,6 +536,13 @@ Changelog
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.validation`
+.........................
+
+- |Fix| Support for `np.matrix` is deprecated in
+  :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
+  1.2. :pr:`20165` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
