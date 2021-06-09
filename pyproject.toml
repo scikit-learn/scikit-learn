@@ -16,3 +16,6 @@ requires = [
 
     "scipy>=1.1.0",
 ]
+
+[tool.black]
+line-length = 79
