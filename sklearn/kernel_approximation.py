@@ -77,6 +77,11 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Array with random entries in {+1, -1}, used to represent
         the 2-wise independent hash functions for Count Sketch computation.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import PolynomialCountSketch
@@ -228,6 +233,10 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Random projection directions drawn from the Fourier transform
         of the RBF kernel.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -339,6 +348,11 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     random_offset_ : ndarray of shape (n_features, n_components)
         Bias term, which will be added to the data. It is uniformly distributed
         between 0 and 2*pi.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -461,6 +475,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     sample_interval_ : float
         Stored sampling interval. Specified as a parameter if sample_steps not
         in {1,2,3}.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -689,6 +708,11 @@ class Nystroem(TransformerMixin, BaseEstimator):
     normalization_ : ndarray of shape (n_components, n_components)
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

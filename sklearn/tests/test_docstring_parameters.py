@@ -176,8 +176,6 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'isotonic',
-    'kernel_approximation',
     'kernel_ridge',
     'linear_model',
     'manifold',
