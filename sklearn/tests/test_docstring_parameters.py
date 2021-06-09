@@ -176,7 +176,6 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'covariance',
     'decomposition',
     'discriminant_analysis',
     'dummy',
@@ -198,7 +197,7 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'random_projection',
     'semi_supervised',
     'svm',
-    'tree'
+    'tree',
 }
 
 
