@@ -527,9 +527,9 @@ class _BaseDiscreteNB(_BaseNB):
                                  "with shape [n_features]")
         if np.min(self.alpha) < _ALPHA_MIN:
             if self.force_alpha:
-                warnings.warn('alpha too small will result in numeric errors, '
-                              'force_alpha was set to True, '
-                              'proceeding without changing alpha.')
+                warnings.warn('alpha too small will result in numeric errors. '
+                              'Proceeding with alpha = %.1e, as '
+                              'force_alpha was set to True.' % alpha)
             else:
                 warnings.warn('alpha too small will result in numeric errors, '
                               'setting alpha = %.1e' % _ALPHA_MIN)
