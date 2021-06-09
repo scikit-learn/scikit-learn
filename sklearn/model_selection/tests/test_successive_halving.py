@@ -18,7 +18,9 @@ from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.model_selection import KFold, ShuffleSplit
 from sklearn.svm import LinearSVC
 from sklearn.model_selection._search_successive_halving import (
-    _SubsampleMetaSplitter, _top_k, _refit_callable)
+    _SubsampleMetaSplitter,
+    _top_k,
+)
 
 
 class FastClassifier(DummyClassifier):
@@ -408,16 +410,6 @@ def test_top_k(k, itr, expected):
     }
     got = _top_k(results, k=k, itr=itr)
     assert np.all(got == expected)
-
-
-def test_refit_callable():
-
-    results = {  # this isn't a 'real world' result dict
-        'iter': np.array([0, 0, 0, 0, 1, 1, 2, 2, 2]),
-        'mean_test_score': np.array([4, 3, 5, 1, 11, 10, 5, 6, 9]),
-        'params': np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']),
-    }
-    assert _refit_callable(results) == 8  # index of 'i'
 
 
 @pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))

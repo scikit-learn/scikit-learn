@@ -215,10 +215,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
             Parameters passed to the ``fit`` method of the estimator
         """
         # y needs to be validated for the parameters validation later on
-        y = column_or_1d(y, warn=True)
-        _assert_all_finite(y)
-        _ensure_no_complex_data(y)
         if is_classifier(self.estimator):
+            # during input parameter checks, `y` is expected to be validated
+            # to compute the available classes
+            y = column_or_1d(y, warn=True)
+            _assert_all_finite(y)
+            _ensure_no_complex_data(y)
             check_classification_targets(y)
 
         self._checked_cv_orig = check_cv(
