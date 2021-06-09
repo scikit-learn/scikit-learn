@@ -513,8 +513,9 @@ Changelog
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
 - |API| The `n_input_features_` attribute of
-  :class:`preprocessing.PolynomialFeatures` is deprecated and will be removed
-  in 1.2. :pr:`20240` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  :class:`preprocessing.PolynomialFeatures` is deprecated in favor of
+  `n_features_in_` and will be removed in 1.2. :pr:`20240` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.tree`
 ...................
