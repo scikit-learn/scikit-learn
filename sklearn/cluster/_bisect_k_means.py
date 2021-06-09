@@ -368,8 +368,6 @@ class BisectKMeans(KMeans):
             print("-> relative tolerance: {:.4e}".format(self.tol))
             print(f"-> bisect strategy: {self.bisect_strategy} \n")
 
-        x_squared_norms = row_norms(X, squared=True)
-
         _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
 
         # Subtract of mean of X for more accurate distance computations
@@ -380,25 +378,27 @@ class BisectKMeans(KMeans):
             if hasattr(init, '__array__'):
                 init -= X_mean
 
+        x_squared_norms = row_norms(X, squared=True)
+
         # Only assign to created centroid when n_clusters == 1
         if self.n_clusters == 1:
-            _clusters = self._init_centroids(X, x_squared_norms, init,
-                                             random_state, n_centroids=1)
+            self.cluster_centers_ = self._init_centroids(X, x_squared_norms,
+                                                         init, random_state,
+                                                         n_centroids=1)
             warnings.warn("Bisection won't be performed - "
                           "needs at least two clusters to run")
 
             self.labels_ = np.zeros(X.shape[0], dtype=np.intc)
 
         else:
-
-            _clusters = _bisect_kmeans(X, init, random_state, sample_weight)
+            # Run proper bisection to gather
+            # self.cluster_centers_ and self.labels_
+            _bisect_kmeans(X, init, random_state, sample_weight)
 
         # Restore Original Data
         if not sp.issparse(X):
             X += X_mean
-            _clusters += X_mean
-
-        self.cluster_centers_ = _clusters
+            self.cluster_centers_ += X_mean
 
         self.inertia_ = _inertia(X, sample_weight, self.cluster_centers_,
                                  self.labels_, self._n_threads)
@@ -444,8 +444,8 @@ class BisectKMeans(KMeans):
         data_left = X
         weights_left = sample_weight
         labels = np.zeros(X.shape[0], dtype=np.intc)
-        label_indexes = np.arange(X.shape[0])
-        labels_left = label_indexes
+
+        labels_left = np.arange(X.shape[0])
 
         centroids = []
 
@@ -499,11 +499,8 @@ class BisectKMeans(KMeans):
             weights_left = weights_left[indexes_left]
             labels_left = labels_left[indexes_left]
 
-        centers = np.asarray(centroids)
-
         self.labels_ = labels
-
-        return centers
+        self.cluster_centers_ = np.asarray(centroids)
 
     def _bisect_by_biggest_sse(self, X, init, random_state, sample_weight):
         """ Performs Bisecting K-Means, which splits always cluster with
@@ -595,10 +592,8 @@ class BisectKMeans(KMeans):
             del centers_dict[biggest]
 
         # Extract calculated centroids to array
-        self.labels_, centers = self._extract_labels_and_centers(X.shape[0],
-                                                                 centers_dict)
-
-        return centers
+        # Also save them in self.cluster_centers and self.labels_
+        self._save_labels_and_centers(X.shape[0], centers_dict)
 
     def _bisect_largest_cluster(self, X, init,
                                 random_state, sample_weight):
@@ -681,15 +676,13 @@ class BisectKMeans(KMeans):
             # Delete split cluster from dict
             del centers_dict[biggest]
 
-        # Extract calculated centroids and labels to arrays
-        self.labels_, centers = self._extract_labels_and_centers(X.shape[0],
-                                                                 centers_dict)
+        # Extract calculated centroids to array
+        # Also save them in self.cluster_centers and self.labels_
+        self._save_labels_and_centers(X.shape[0], centers_dict)
 
-        return centers
-
-    def _extract_labels_and_centers(self, x_len, centers_dict):
+    def _save_labels_and_centers(self, x_len, centers_dict):
         """ Extract labels and centers from dictionary with results and
-        converts them to numpy arrays
+        saves them as self.labels_ and self.cluster_centers_
 
         ..note:: Used for dicts from 'biggest_sse' and 'largest_cluster'
 
@@ -703,15 +696,6 @@ class BisectKMeans(KMeans):
             Calculated centroids
             - ['label_indexes'] : ndarray of shape (n_samples,)
             Indexes of assigned values to center
-
-
-        Returns
-        -------
-        centers : ndarray of shape (n_clusters, n_features)
-            The cluster centers.
-
-        labels : ndarray of shape (n_samples,)
-            Index of the cluster each sample belongs to.
         """
         labels = np.zeros(x_len, dtype=np.intc)
         centers = []
@@ -720,6 +704,5 @@ class BisectKMeans(KMeans):
             labels[item['label_indexes']] = idx
             centers.append(item['centroid'])
 
-        centers = np.asarray(centers)
-
-        return labels, centers
+        self.labels_ = labels
+        self.cluster_centers_ = np.asarray(centers)
