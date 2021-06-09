@@ -766,6 +766,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     See Also
     --------
     MiniBatchKMeans : Alternative online implementation that does incremental
@@ -1464,6 +1467,9 @@ class MiniBatchKMeans(KMeans):
         .. deprecated:: 0.24
            This attribute is deprecated in 0.24 and will be removed in
            1.1 (renaming of 0.26).
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     See Also
     --------

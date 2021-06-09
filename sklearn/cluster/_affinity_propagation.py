@@ -309,6 +309,9 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations taken to converge.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
