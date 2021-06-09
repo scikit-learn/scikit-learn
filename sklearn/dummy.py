@@ -75,6 +75,11 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     n_outputs_ : int
         Number of outputs.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     sparse_output_ : bool
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
@@ -424,6 +429,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     constant_ : ndarray of shape (1, n_outputs)
         Mean or median or quantile of the training targets or constant value
         given by the user.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         Number of outputs.
