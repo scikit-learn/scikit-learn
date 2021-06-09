@@ -27,11 +27,11 @@ from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
+from ..utils.validation import _check_sample_weight
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -106,7 +106,6 @@ def auc(x, y):
     return area
 
 
-@_deprecate_positional_args
 def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores.
@@ -291,13 +290,13 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    if len(np.unique(y_true)) != 2:
-        raise ValueError("Only one class present in y_true. Detection error "
-                         "tradeoff curve is not defined in that case.")
-
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
+
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("Only one class present in y_true. Detection error "
+                         "tradeoff curve is not defined in that case.")
 
     fns = tps[-1] - tps
     p_count = tps[-1]
@@ -349,7 +348,6 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
-@_deprecate_positional_args
 def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
                   max_fpr=None, multi_class="raise", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
@@ -696,8 +694,14 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     assert_all_finite(y_true)
     assert_all_finite(y_score)
 
+    # Filter out zero-weighted samples, as they should not impact the result
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, y_true)
+        nonzero_weight_mask = sample_weight != 0
+        y_true = y_true[nonzero_weight_mask]
+        y_score = y_score[nonzero_weight_mask]
+        sample_weight = sample_weight[nonzero_weight_mask]
 
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
@@ -730,7 +734,6 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
-@_deprecate_positional_args
 def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
                            sample_weight=None):
     """Compute precision-recall pairs for different probability thresholds.
@@ -759,7 +762,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
         pos_label should be explicitly given.
 
     probas_pred : ndarray of shape (n_samples,)
-        Estimated probabilities or output of a decision function.
+        Target scores, can either be probability estimates of the positive
+        class, or non-thresholded measure of decisions (as returned by
+        `decision_function` on some classifiers).
 
     pos_label : int or str, default=None
         The label of the positive class.
@@ -823,7 +828,6 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
     return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
 
 
-@_deprecate_positional_args
 def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
               drop_intermediate=True):
     """Compute Receiver operating characteristic (ROC).
@@ -956,7 +960,6 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     return fpr, tpr, thresholds
 
 
-@_deprecate_positional_args
 def label_ranking_average_precision_score(y_true, y_score, *,
                                           sample_weight=None):
     """Compute ranking-based average precision.
@@ -1046,7 +1049,6 @@ def label_ranking_average_precision_score(y_true, y_score, *,
     return out
 
 
-@_deprecate_positional_args
 def coverage_error(y_true, y_score, *, sample_weight=None):
     """Coverage error measure.
 
@@ -1106,7 +1108,6 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     return np.average(coverage, weights=sample_weight)
 
 
-@_deprecate_positional_args
 def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     """Compute Ranking loss measure.
 
@@ -1309,7 +1310,6 @@ def _check_dcg_target_type(y_true):
                 supported_fmt, y_type))
 
 
-@_deprecate_positional_args
 def dcg_score(y_true, y_score, *, k=None,
               log_base=2, sample_weight=None, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
@@ -1466,7 +1466,6 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     return gain
 
 
-@_deprecate_positional_args
 def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
                ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
@@ -1589,7 +1588,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
         non-thresholded decision values (as returned by
         :term:`decision_function` on some classifiers). The binary case expects
         scores with shape (n_samples,) while the multiclass case expects scores
-        with shape (n_samples, n_classes). In the nulticlass case, the order of
+        with shape (n_samples, n_classes). In the multiclass case, the order of
         the class scores must correspond to the order of ``labels``, if
         provided, or else to the numerical or lexicographical order of the
         labels in ``y_true``.
@@ -1646,6 +1645,8 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
     y_type = type_of_target(y_true)
+    if y_type == "binary" and labels is not None and len(labels) > 2:
+        y_type = "multiclass"
     y_score = check_array(y_score, ensure_2d=False)
     y_score = column_or_1d(y_score) if y_type == 'binary' else y_score
     check_consistent_length(y_true, y_score, sample_weight)

@@ -294,26 +294,24 @@ def test_set_params_updates_valid_params():
     assert gscv.estimator.C == 42.0
 
 
-def test_score_sample_weight():
-
+@pytest.mark.parametrize("tree,dataset", [
+    (DecisionTreeClassifier(max_depth=2, random_state=0),
+     datasets.make_classification(random_state=0)),
+    (DecisionTreeRegressor(max_depth=2, random_state=0),
+     datasets.make_regression(random_state=0)),
+])
+def test_score_sample_weight(tree, dataset):
     rng = np.random.RandomState(0)
+    # check that the score with and without sample weights are different
+    X, y = dataset
 
-    # test both ClassifierMixin and RegressorMixin
-    estimators = [DecisionTreeClassifier(max_depth=2),
-                  DecisionTreeRegressor(max_depth=2)]
-    sets = [datasets.load_iris(),
-            datasets.load_boston()]
-
-    for est, ds in zip(estimators, sets):
-        est.fit(ds.data, ds.target)
-        # generate random sample weights
-        sample_weight = rng.randint(1, 10, size=len(ds.target))
-        # check that the score with and without sample weights are different
-        assert (est.score(ds.data, ds.target) !=
-                est.score(ds.data, ds.target,
-                          sample_weight=sample_weight)), (
-                              "Unweighted and weighted scores "
-                              "are unexpectedly equal")
+    tree.fit(X, y)
+    # generate random sample weights
+    sample_weight = rng.randint(1, 10, size=len(y))
+    score_unweighted = tree.score(X, y)
+    score_weighted = tree.score(X, y, sample_weight=sample_weight)
+    msg = "Unweighted and weighted scores are unexpectedly equal"
+    assert score_unweighted != score_weighted, msg
 
 
 def test_clone_pandas_dataframe():
@@ -581,3 +579,29 @@ def test_is_pairwise():
     with pytest.warns(None) as record:
         assert not _is_pairwise(est)
     assert not record
+
+
+def test_n_features_in_validation():
+    """Check that `_check_n_features` validates data when reset=False"""
+    est = MyEstimator()
+    X_train = [[1, 2, 3], [4, 5, 6]]
+    est._check_n_features(X_train, reset=True)
+
+    assert est.n_features_in_ == 3
+
+    msg = ("X does not contain any features, but MyEstimator is expecting "
+           "3 features")
+    with pytest.raises(ValueError, match=msg):
+        est._check_n_features("invalid X", reset=False)
+
+
+def test_n_features_in_no_validation():
+    """Check that `_check_n_features` does not validate data when
+    n_features_in_ is not defined."""
+    est = MyEstimator()
+    est._check_n_features("invalid X", reset=True)
+
+    assert not hasattr(est, "n_features_in_")
+
+    # does not raise
+    est._check_n_features("invalid X", reset=False)
