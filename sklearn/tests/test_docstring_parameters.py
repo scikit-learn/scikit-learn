@@ -187,6 +187,15 @@ def _construct_compose_pipeline_instance(Estimator):
         ])
 
 
+def _construct_exotic(Estimator):
+    if Estimator.__name__ == "SparseCoder":
+        dictionary = np.array(
+            [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
+            dtype=np.float64,
+        )
+    return Estimator(dictionary=dictionary)
+
+
 N_FEATURES_MODULES_TO_IGNORE = {
     'model_selection',
     'multioutput',
@@ -203,10 +212,12 @@ def test_fit_docstring_attributes(name, Estimator):
     attributes = doc['Attributes']
 
     IGNORED = {
-        'CountVectorizer', 'DictVectorizer', 'TfidfVectorizer',
-        'GaussianRandomProjection', 'SparseCoder', 'SparseRandomProjection',
-        'SpectralBiclustering',
-        'NoSampleWeightWrapper',
+        "CountVectorizer",
+        "DictVectorizer",
+        "TfidfVectorizer",
+        "GaussianRandomProjection",
+        "SparseRandomProjection",
+        "SpectralBiclustering",
     }
 
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
@@ -225,6 +236,10 @@ def test_fit_docstring_attributes(name, Estimator):
         "FeatureUnion",
     ):
         est = _construct_compose_pipeline_instance(Estimator)
+    elif Estimator.__name__ in (
+        "SparseCoder",
+    ):
+        est = _construct_exotic(Estimator)
     else:
         est = _construct_instance(Estimator)
 
