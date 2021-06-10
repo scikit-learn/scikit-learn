@@ -203,7 +203,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Transformer used to encode the label during fit and decode during
         prediction.
 
-    classes_ : array-like of shape (n_predictions,)
+    classes_ : array-like of shape (n_classes,)
         The classes labels.
 
     n_features_in_ : int

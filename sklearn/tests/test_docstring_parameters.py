@@ -203,14 +203,12 @@ def test_fit_docstring_attributes(name, Estimator):
     attributes = doc['Attributes']
 
     IGNORED = {
-        'ClassifierChain',
-        'CountVectorizer', 'DictVectorizer',
-        'GaussianRandomProjection',
-        'MultiOutputClassifier', 'MultiOutputRegressor',
-        'NoSampleWeightWrapper', 'RFE', 'RFECV',
-        'RegressorChain', 'SelectFromModel',
-        'SparseCoder', 'SparseRandomProjection',
-        'SpectralBiclustering', 'TfidfVectorizer', 'SequentialFeatureSelector',
+        'CountVectorizer', 'DictVectorizer', 'TfidfVectorizer',
+        'RFECV', 'SelectFromModel',
+        'GaussianRandomProjection', 'SparseCoder', 'SparseRandomProjection',
+        'SpectralBiclustering',
+        'SequentialFeatureSelector',
+        'NoSampleWeightWrapper',
     }
 
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
