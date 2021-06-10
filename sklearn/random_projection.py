@@ -459,6 +459,11 @@ class GaussianRandomProjection(BaseRandomProjection):
     components_ : ndarray of shape (n_components, n_features)
         Random matrix used for the projection.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np

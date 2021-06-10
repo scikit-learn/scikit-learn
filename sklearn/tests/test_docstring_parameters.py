@@ -193,7 +193,9 @@ def _construct_exotic(Estimator):
             [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
             dtype=np.float64,
         )
-    return Estimator(dictionary=dictionary)
+        return Estimator(dictionary=dictionary)
+    elif Estimator.__name__ == "GaussianRandomProjection":
+        return Estimator(n_components=2)
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
@@ -215,7 +217,6 @@ def test_fit_docstring_attributes(name, Estimator):
         "CountVectorizer",
         "DictVectorizer",
         "TfidfVectorizer",
-        "GaussianRandomProjection",
         "SparseRandomProjection",
         "SpectralBiclustering",
     }
@@ -238,6 +239,7 @@ def test_fit_docstring_attributes(name, Estimator):
         est = _construct_compose_pipeline_instance(Estimator)
     elif Estimator.__name__ in (
         "SparseCoder",
+        "GaussianRandomProjection",
     ):
         est = _construct_exotic(Estimator)
     else:
