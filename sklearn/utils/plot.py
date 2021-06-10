@@ -3,7 +3,6 @@ from itertools import product
 import numpy as np
 
 from ..utils import check_matplotlib_support
-from ..utils.validation import _deprecate_positional_args
 
 
 def plot_heatmap(
