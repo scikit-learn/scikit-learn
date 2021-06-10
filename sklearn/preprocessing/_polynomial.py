@@ -343,10 +343,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 include_bias=self.include_bias
             )
             columns = []
-            for comb in combinations:
-                if comb:
+            for combi in combinations:
+                if combi:
                     out_col = 1
-                    for col_idx in comb:
+                    for col_idx in combi:
                         out_col = X[:, col_idx].multiply(out_col)
                     columns.append(out_col)
                 else:
@@ -356,8 +356,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         else:
             # Do as if _min_degree = 0 and cut down array after the
             # computation, i.e. use _n_out_full instead of n_output_features_.
-            XP = np.empty((n_samples, self._n_out_full),
-                            dtype=X.dtype, order=self.order)
+            XP = np.empty(
+                shape=(n_samples, self._n_out_full),
+                dtype=X.dtype, order=self.order
+            )
 
             # What follows is a faster implementation of:
             # for i, comb in enumerate(combinations):
@@ -393,8 +395,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     start = index[feature_idx]
                     new_index.append(current_col)
                     if self.interaction_only:
-                        start += (index[feature_idx + 1] -
-                                    index[feature_idx])
+                        start += (index[feature_idx + 1] - index[feature_idx])
                     next_col = current_col + end - start
                     if next_col <= current_col:
                         break

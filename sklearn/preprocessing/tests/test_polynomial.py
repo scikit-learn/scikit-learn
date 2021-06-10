@@ -454,11 +454,11 @@ def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
     [
         ({"degree": -1}, "degree must be a non-negative integer"),
         ({"degree": 2.5}, "degree must be a non-negative int or tuple"),
-        ({"degree": "12"}, "degree=\(min_degree, max_degree\) must"),
+        ({"degree": "12"}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": "string"}, "degree must be a non-negative int or tuple"),
-        ({"degree": (-1, 2)}, "degree=\(min_degree, max_degree\) must"),
-        ({"degree": (0, 1.5)}, "degree=\(min_degree, max_degree\) must"),
-        ({"degree": (3, 2)}, "degree=\(min_degree, max_degree\) must"),
+        ({"degree": (-1, 2)}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": (0, 1.5)}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": (3, 2)}, r"degree=\(min_degree, max_degree\) must"),
     ],
 )
 def test_polynomial_features_input_validation(params, err_msg):
@@ -623,10 +623,17 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
 
 
 @pytest.mark.parametrize("n_features", [1, 4, 5])
-@pytest.mark.parametrize("min_degree, max_degree", [(0, 1), (0, 2), (1, 3), (0, 4), (3, 4)])
+@pytest.mark.parametrize(
+    "min_degree, max_degree", [(0, 1), (0, 2), (1, 3), (0, 4), (3, 4)])
 @pytest.mark.parametrize("interaction_only", [True, False])
 @pytest.mark.parametrize("include_bias", [True, False])
-def test_num_combinations(n_features, min_degree, max_degree, interaction_only, include_bias):
+def test_num_combinations(
+    n_features,
+    min_degree,
+    max_degree,
+    interaction_only,
+    include_bias,
+):
     """
     Test that n_output_features_ is calculated correctly.
     """
