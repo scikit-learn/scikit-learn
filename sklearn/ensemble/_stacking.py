@@ -353,8 +353,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying first transformer in `transformer_list` exposes such an
-        attribute when fit.
+        underlying classifier exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
@@ -620,8 +619,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying first transformer in `transformer_list` exposes such an
-        attribute when fit.
+        underlying regressor exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 

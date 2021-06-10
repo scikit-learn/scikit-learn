@@ -210,8 +210,7 @@ def test_fit_docstring_attributes(name, Estimator):
         'NoSampleWeightWrapper', 'RFE', 'RFECV',
         'RegressorChain', 'SelectFromModel',
         'SparseCoder', 'SparseRandomProjection',
-        'SpectralBiclustering', 'TfidfVectorizer', 'VotingClassifier',
-        'VotingRegressor', 'SequentialFeatureSelector',
+        'SpectralBiclustering', 'TfidfVectorizer', 'SequentialFeatureSelector',
     }
 
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
