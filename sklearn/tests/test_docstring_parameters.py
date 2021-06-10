@@ -187,7 +187,7 @@ def _construct_compose_pipeline_instance(Estimator):
         ])
 
 
-def _construct_exotic(Estimator):
+def _construct_projection(Estimator):
     if Estimator.__name__ == "SparseCoder":
         dictionary = np.array(
             [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
@@ -216,14 +216,8 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {
-        "CountVectorizer",
-        "DictVectorizer",
-        "TfidfVectorizer",
-    }
-
-    if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
-        pytest.skip("Estimator cannot be fit easily to test fit attributes")
+    if Estimator.__name__.startswith("_"):
+        pytest.skip("Do not test private estimators")
 
     if Estimator.__name__ in (
         "HalvingRandomSearchCV",
@@ -243,7 +237,7 @@ def test_fit_docstring_attributes(name, Estimator):
         "GaussianRandomProjection",
         "SparseRandomProjection",
     ):
-        est = _construct_exotic(Estimator)
+        est = _construct_projection(Estimator)
     else:
         est = _construct_instance(Estimator)
 
@@ -265,12 +259,39 @@ def test_fit_docstring_attributes(name, Estimator):
         est.learning_rate = 200.0
         est.init = 'random'
 
-    X, y = make_classification(n_samples=20, n_features=3,
-                               n_redundant=0, n_classes=2,
-                               random_state=2)
+    skipped_attributes = {
+        "x_scores_",  # For PLS, TODO remove in 1.1
+        "y_scores_",
+    }  # For PLS, TODO remove in 1.1
 
-    y = _enforce_estimator_tags_y(est, y)
-    X = _enforce_estimator_tags_x(est, X)
+    if Estimator.__name__.endswith("Vectorizer"):
+        # Vectorizer require some specific input data
+        if Estimator.__name__ in (
+            "CountVectorizer",
+            "HashingVectorizer",
+            "TfidfVectorizer",
+        ):
+            X = [
+                "This is the first document.",
+                "This document is the second document.",
+                "And this is the third one.",
+                "Is this the first document?",
+            ]
+        elif Estimator.__name__ == "DictVectorizer":
+            X = [{"foo": 1, "bar": 2}, {"foo": 3, "baz": 1}]
+        y = None
+        skipped_attributes.add("n_features_in_")
+    else:
+        X, y = make_classification(
+            n_samples=20,
+            n_features=3,
+            n_redundant=0,
+            n_classes=2,
+            random_state=2,
+        )
+
+        y = _enforce_estimator_tags_y(est, y)
+        X = _enforce_estimator_tags_x(est, X)
 
     if '1dlabels' in est._get_tags()['X_types']:
         est.fit(y)
@@ -278,9 +299,6 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(np.c_[y, y])
     else:
         est.fit(X, y)
-
-    skipped_attributes = {'x_scores_',  # For PLS, TODO remove in 1.1
-                          'y_scores_'}  # For PLS, TODO remove in 1.1
 
     module = est.__module__.split(".")[1]
     if module in N_FEATURES_MODULES_TO_IGNORE:
