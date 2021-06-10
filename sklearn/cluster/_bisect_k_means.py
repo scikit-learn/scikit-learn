@@ -378,10 +378,10 @@ class BisectKMeans(KMeans):
             if hasattr(init, '__array__'):
                 init -= X_mean
 
-        x_squared_norms = row_norms(X, squared=True)
-
         # Only assign to created centroid when n_clusters == 1
         if self.n_clusters == 1:
+            x_squared_norms = row_norms(X, squared=True)
+
             self.cluster_centers_ = self._init_centroids(X, x_squared_norms,
                                                          init, random_state,
                                                          n_centroids=1)
@@ -426,17 +426,11 @@ class BisectKMeans(KMeans):
                 (n_clusters, n_features)
                 Method for initialization.
 
-        random_state : int, RandomState instance or None, default=None
+        random_state : int, RandomState
             Determines random number generation for centroid initialization.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X.
-
-
-        Returns
-        -------
-        centers : ndarray of shape (n_clusters, n_features)
-            The cluster centers.
         """
 
         # Subtract of mean of X for more accurate distance computations
@@ -517,17 +511,11 @@ class BisectKMeans(KMeans):
                 (n_clusters, n_features)
                 Method for initialization.
 
-        random_state : int, RandomState instance or None, default=None
+        random_state : int, RandomState instance
             Determines random number generation for centroid initialization.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X.
-
-
-        Returns
-        -------
-        centers : ndarray of shape (n_clusters, n_features)
-            The cluster centers.
         """
 
         label_indexes = np.arange(X.shape[0])
@@ -541,6 +529,8 @@ class BisectKMeans(KMeans):
 
         for n_iter in range(self.n_clusters - 1):
 
+            # pick index of cluster with biggest SSE
+            # This cluster will be bisected into two new clusters
             biggest, _ = max(centers_dict.items(), key=lambda x: x[1]['sse'])
 
             # Perform Bisection
@@ -613,17 +603,11 @@ class BisectKMeans(KMeans):
                 (n_clusters, n_features)
                 Method for initialization.
 
-        random_state : int, RandomState instance or None, default=None
+        random_state : int, RandomState instance
             Determines random number generation for centroid initialization.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X.
-
-
-        Returns
-        -------
-        centers : ndarray of shape (n_clusters, n_features)
-            The cluster centers.
         """
 
         label_indexes = np.arange(X.shape[0])
@@ -637,7 +621,8 @@ class BisectKMeans(KMeans):
 
         for n_iter in range(self.n_clusters - 1):
 
-            # Pick largest cluster by amount of assigned points
+            # Pick index of largest cluster by amount of assigned points
+            # This cluster will be bisected into two new clusters
             biggest, _ = max(centers_dict.items(),
                              key=lambda x: x[1]['data'].shape[0])
 
@@ -700,9 +685,9 @@ class BisectKMeans(KMeans):
         labels = np.zeros(x_len, dtype=np.intc)
         centers = []
 
-        for idx, (_, item) in enumerate(centers_dict.items()):
-            labels[item['label_indexes']] = idx
-            centers.append(item['centroid'])
+        for idx, value in enumerate(centers_dict.values()):
+            labels[value['label_indexes']] = idx
+            centers.append(value['centroid'])
 
         self.labels_ = labels
         self.cluster_centers_ = np.asarray(centers)
