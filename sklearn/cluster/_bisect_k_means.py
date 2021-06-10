@@ -376,7 +376,7 @@ class BisectKMeans(KMeans):
             # self.cluster_centers_ and self.labels_
             self._run_bisect_kmeans(X, init, random_state, sample_weight)
 
-        # Restore Original Data
+        # Restore original data
         if not sp.issparse(X):
             X += X_mean
             self.cluster_centers_ += X_mean
