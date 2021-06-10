@@ -56,7 +56,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    powers_ : ndarray of shape (n_output_features, n_features_in_)
+    powers_ : ndarray of shape (`n_output_features_`, `n_features_in_`)
         powers_[i, j] is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
@@ -64,7 +64,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         .. deprecated:: 1.0
             This attribute is deprecated in 1.0 and will be removed in 1.2.
-            Refer to n_features_in_ instead.
+            Refer to `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
