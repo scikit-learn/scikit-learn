@@ -345,12 +345,6 @@ class BisectKMeans(KMeans):
         else:
             self._kmeans_single = _kmeans_single_elkan
 
-        if self.bisect_strategy == "child_biggest_sse":
-            _bisect_kmeans = self._bisect_by_biggest_child_sse
-        else:
-            # "biggest_sse" and "largest_cluster"
-            _bisect_kmeans = self._bisect_largest
-
         if self.verbose:
             print("Running Bisecting K-Means with parameters:")
             print(f"-> number of clusters: {self.n_clusters}")
@@ -380,7 +374,7 @@ class BisectKMeans(KMeans):
         else:
             # Run proper bisection to gather
             # self.cluster_centers_ and self.labels_
-            _bisect_kmeans(X, init, random_state, sample_weight)
+            self._run_bisect_kmeans(X, init, random_state, sample_weight)
 
         # Restore Original Data
         if not sp.issparse(X):
@@ -396,95 +390,22 @@ class BisectKMeans(KMeans):
 
         return self
 
-    def _bisect_by_biggest_child_sse(self, X, init,
-                                     random_state, sample_weight):
-        """ Performs Bisecting K-Means which splits always cluster with
-         biggest SSE only from recent two clusters obtained
-         from previous split.
-
-            .. note:: All of passed parameters must be pre-calculated
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training instances to cluster.
-
-        init : {'k-means++', 'random'} or callable (n_clusters, n_features)
-                Method for initialization.
-
-        random_state : int, RandomState
-            Determines random number generation for centroid initialization.
-
-        sample_weight : array-like of shape (n_samples,)
-            The weights for each observation in X.
-        """
-
-        # Subtract of mean of X for more accurate distance computations
-
-        labels = np.zeros(X.shape[0], dtype=np.intc)
-
-        labels_left = np.arange(X.shape[0])
-
-        centroids = []
-
-        for n_iter in range(self.n_clusters):
-
-            # Pick left data to bisect
-            data_left = X[labels_left]
-            weights_left = sample_weight[labels_left]
-
-            # Perform Bisection
-            centers, _labels = self._bisect(data_left, init, weights_left,
-                                            random_state)
-
-            # Check SSE (Sum of Squared Errors) of each of computed centroids.
-            # SSE is calculated with distances between data points
-            # and assigned centroids
-            errors = self._compute_bisect_errors(data_left, centers, _labels,
-                                                 weights_left)
-
-            lower_sse_index = 0 if errors[0] < errors[1] else 1
-
-            higher_sse_index = 1 if lower_sse_index == 0 else 0
-
-            # Centroid with lower SSE is added to result centroids.
-            centroids.append(centers[lower_sse_index])
-
-            # Label data with lower SSE
-            labels[labels_left[(_labels == lower_sse_index)]] = n_iter
-
-            # Data with label that has higher SSE will be further processed
-            indexes_left = (_labels == higher_sse_index)
-
-            if self.verbose:
-                print(f"Centroid Found: {centers[lower_sse_index]}")
-
-            if len(centroids) + 1 == self.n_clusters:
-                # Desired number of cluster centers is reached so centroid
-                # with higher SSE would not be split further
-                centroids.append(centers[higher_sse_index])
-                labels[labels_left[indexes_left]] = n_iter + 1
-
-                if self.verbose:
-                    print(f"Centroid Found: {centers[higher_sse_index]}")
-                break
-
-            # Pass for further bisection indexes to bisect
-            labels_left = labels_left[indexes_left]
-
-        self.labels_ = labels
-        self.cluster_centers_ = np.asarray(centroids)
-
-    def _bisect_largest(self, X, init, random_state,
-                        sample_weight):
+    def _run_bisect_kmeans(self, X, init, random_state,
+                           sample_weight):
         """ Performs Bisecting K-Means, which splits always cluster depending
         on 'bisect_strategy' attribute:
 
         - "biggest sse": Picks cluster with biggest SSE (Sum of Squared Errors)
          from all calculated
+
         - "largest_cluster": Picks always cluster with largest number of
          points assigned from all calculated. That method will perform faster
           than picking by SSE methods, while producing similar results
+
+        - "child_biggest_sse": Picks always cluster with higher SSE from two
+        clusters received from previous iteration. That method produce
+        less balanced split in most cases - consecutive clusters will
+        be usually smaller than previous.
 
         .. note:: All of passed parameters must be pre-calculated
 
@@ -518,11 +439,17 @@ class BisectKMeans(KMeans):
                 # Pick index of cluster with biggest SSE
                 biggest, _ = max(centers_dict.items(),
                                  key=lambda x: x[1]['sse'])
-            else:
-                # "largest cluster"
+            elif strategy == "largest cluster":
                 # Pick index of largest cluster by amount of assigned points
                 biggest, _ = max(centers_dict.items(),
                                  key=lambda x: x[1]['label_indexes'].shape[0])
+            else:
+                # "child_biggest_sse"
+
+                # Pick index of cluster with biggest SSE from latest received
+                # cluster with lower SSE is added first so last cluster
+                # in centers_dict will have higher SSE and be further split
+                biggest = last_center_id
 
             # Pick data to bisect from selected biggest cluster
             data_left = X[centers_dict[biggest]['label_indexes']]
@@ -533,7 +460,7 @@ class BisectKMeans(KMeans):
             centers, labels = self._bisect(data_left, init,
                                            weights_left, random_state)
 
-            if strategy == "biggest_sse":
+            if strategy in ["biggest_sse", "child_biggest_sse"]:
                 # Check SSE (Sum of Squared Errors) of each computed centroids.
                 # SSE is calculated with distances between data points
                 # and assigned centroids
