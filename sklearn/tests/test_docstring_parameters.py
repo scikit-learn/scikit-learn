@@ -206,7 +206,6 @@ def test_fit_docstring_attributes(name, Estimator):
         'CountVectorizer', 'DictVectorizer', 'TfidfVectorizer',
         'GaussianRandomProjection', 'SparseCoder', 'SparseRandomProjection',
         'SpectralBiclustering',
-        'SequentialFeatureSelector',
         'NoSampleWeightWrapper',
     }
 
