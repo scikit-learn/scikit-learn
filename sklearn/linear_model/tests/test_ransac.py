@@ -6,7 +6,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression, RANSACRegressor
@@ -159,7 +158,8 @@ def test_ransac_resid_thresh_no_inliers():
                                        random_state=0, max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 5
     assert ransac_estimator.n_skips_invalid_data_ == 0
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -175,7 +175,8 @@ def test_ransac_no_valid_data():
                                        max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 5
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -191,7 +192,8 @@ def test_ransac_no_valid_model():
                                        max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 0
     assert ransac_estimator.n_skips_invalid_model_ == 5
@@ -208,7 +210,8 @@ def test_ransac_exceed_max_skips():
                                        max_skips=3)
 
     msg = ("RANSAC skipped more iterations than `max_skips`")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 4
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -552,13 +555,17 @@ def test_perfect_horizontal_line():
 
 
 # TODO: Remove in v1.2
-def test_loss_squared_loss_deprecated():
-    est1 = RANSACRegressor(loss="squared_loss", random_state=0)
+@pytest.mark.parametrize("old_loss, new_loss", [
+    ("absolute_loss", "squared_error"),
+    ("squared_loss", "absolute_error"),
+])
+def test_loss_deprecated(old_loss, new_loss):
+    est1 = RANSACRegressor(loss=old_loss, random_state=0)
 
     with pytest.warns(FutureWarning,
-                      match="The loss 'squared_loss' was deprecated"):
+                      match=f"The loss '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
-    est2 = RANSACRegressor(loss="squared_error", random_state=0)
+    est2 = RANSACRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))

@@ -25,7 +25,6 @@ from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -265,6 +264,11 @@ class PCA(_BasePCA):
         Equal to the average of (min(n_features, n_samples) - n_components)
         smallest eigenvalues of the covariance matrix of X.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     KernelPCA : Kernel Principal Component Analysis.
@@ -328,7 +332,6 @@ class PCA(_BasePCA):
     >>> print(pca.singular_values_)
     [6.30061...]
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, copy=True, whiten=False,
                  svd_solver='auto', tol=0.0, iterated_power='auto',
                  random_state=None):

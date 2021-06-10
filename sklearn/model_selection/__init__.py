@@ -30,7 +30,6 @@ from ._search import GridSearchCV
 from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
-from ._search import fit_grid_point
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
@@ -64,7 +63,6 @@ __all__ = ['BaseCrossValidator',
            'cross_val_predict',
            'cross_val_score',
            'cross_validate',
-           'fit_grid_point',
            'learning_curve',
            'permutation_test_score',
            'train_test_split',

@@ -20,7 +20,6 @@ from joblib import Parallel, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 
@@ -273,6 +272,11 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Number of combinations taken into account from 'n choose k', where n is
         the number of samples and k is the number of subsamples.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import TheilSenRegressor
@@ -291,7 +295,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
-    @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, copy_X=True,
                  max_subpopulation=1e4, n_subsamples=None, max_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=None, verbose=False):

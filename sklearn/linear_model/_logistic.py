@@ -29,7 +29,6 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.fixes import delayed
@@ -1042,10 +1041,17 @@ class LogisticRegression(LinearClassifierMixin,
     Parameters
     ----------
     penalty : {'l1', 'l2', 'elasticnet', 'none'}, default='l2'
-        Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
-        only supported by the 'saga' solver. If 'none' (not supported by the
-        liblinear solver), no regularization is applied.
+        Specify the norm of the penalty:
+
+        - `'none'`: no penalty is added;
+        - `'l2'`: add a L2 penalty term and it is the default choice;
+        - `'l1'`: add a L1 penalty term;
+        - `'elasticnet'`: both L1 and L2 penalty terms are added.
+
+        .. warning::
+           Some penalties may not work with some solvers. See the parameter
+           `solver` below, to know the compatibility between the penalty and
+           solver.
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
@@ -1101,21 +1107,38 @@ class LogisticRegression(LinearClassifierMixin,
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
             default='lbfgs'
 
-        Algorithm to use in the optimization problem.
+        Algorithm to use in the optimization problem. Default is 'lbfgs'.
+        To choose a solver, you might want to consider the following aspects:
 
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-          'saga' are faster for large ones.
-        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-          handle multinomial loss; 'liblinear' is limited to one-versus-rest
-          schemes.
-        - 'newton-cg', 'lbfgs', 'sag' and 'saga' handle L2 or no penalty
-        - 'liblinear' and 'saga' also handle L1 penalty
-        - 'saga' also supports 'elasticnet' penalty
-        - 'liblinear' does not support setting ``penalty='none'``
+            - For small datasets, 'liblinear' is a good choice, whereas 'sag'
+              and 'saga' are faster for large ones;
+            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
+              'lbfgs' handle multinomial loss;
+            - 'liblinear' is limited to one-versus-rest schemes.
 
-        Note that 'sag' and 'saga' fast convergence is only guaranteed on
-        features with approximately the same scale. You can
-        preprocess the data with a scaler from sklearn.preprocessing.
+        .. warning::
+           The choice of the algorithm depends on the penalty chosen:
+           Supported penalties by solver:
+
+           - 'newton-cg'   -   ['l2', 'none']
+           - 'lbfgs'       -   ['l2', 'none']
+           - 'liblinear'   -   ['l1', 'l2']
+           - 'sag'         -   ['l2', 'none']
+           - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
+
+        .. note::
+           'sag' and 'saga' fast convergence is only guaranteed on
+           features with approximately the same scale. You can
+           preprocess the data with a scaler from :mod:`sklearn.preprocessing`.
+
+        .. seealso::
+           Refer to the User Guide for more information regarding
+           :class:`LogisticRegression` and more specifically the
+           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_
+           summarazing solver/penalty supports.
+           <!--
+           # noqa: E501
+           -->
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -1189,6 +1212,11 @@ class LogisticRegression(LinearClassifierMixin,
         corresponds to outcome 1 (True) and `-intercept_` corresponds to
         outcome 0 (False).
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : ndarray of shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
         it returns only 1 element. For liblinear solver, only the maximum
@@ -1254,7 +1282,6 @@ class LogisticRegression(LinearClassifierMixin,
     >>> clf.score(X, y)
     0.97...
     """
-    @_deprecate_positional_args
     def __init__(self, penalty='l2', *, dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='lbfgs', max_iter=100,
@@ -1551,9 +1578,16 @@ class LogisticRegressionCV(LogisticRegression,
         n_samples > n_features.
 
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
-        Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
-        only supported by the 'saga' solver.
+        Specify the norm of the penalty:
+
+        - `'l2'`: add a L2 penalty term (used by default);
+        - `'l1'`: add a L1 penalty term;
+        - `'elasticnet'`: both L1 and L2 penalty terms are added.
+
+        .. warning::
+           Some penalties may not work with some solvers. See the parameter
+           `solver` below, to know the compatibility between the penalty and
+           solver.
 
     scoring : str or callable, default=None
         A string (see model evaluation documentation) or
@@ -1565,21 +1599,30 @@ class LogisticRegressionCV(LogisticRegression,
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
             default='lbfgs'
 
-        Algorithm to use in the optimization problem.
+        Algorithm to use in the optimization problem. Default is 'lbfgs'.
+        To choose a solver, you might want to consider the following aspects:
 
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-          'saga' are faster for large ones.
-        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-          handle multinomial loss; 'liblinear' is limited to one-versus-rest
-          schemes.
-        - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
-          'liblinear' and 'saga' handle L1 penalty.
-        - 'liblinear' might be slower in LogisticRegressionCV because it does
-          not handle warm-starting.
+            - For small datasets, 'liblinear' is a good choice, whereas 'sag'
+              and 'saga' are faster for large ones;
+            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
+              'lbfgs' handle multinomial loss;
+            - 'liblinear' might be slower in :class:`LogisticRegressionCV`
+              because it does not handle warm-starting. 'liblinear' is
+              limited to one-versus-rest schemes.
 
-        Note that 'sag' and 'saga' fast convergence is only guaranteed on
-        features with approximately the same scale. You can preprocess the data
-        with a scaler from sklearn.preprocessing.
+        .. warning::
+           The choice of the algorithm depends on the penalty chosen:
+
+           - 'newton-cg'   -   ['l2']
+           - 'lbfgs'       -   ['l2']
+           - 'liblinear'   -   ['l1', 'l2']
+           - 'sag'         -   ['l2']
+           - 'saga'        -   ['elasticnet', 'l1', 'l2']
+
+        .. note::
+           'sag' and 'saga' fast convergence is only guaranteed on features
+           with approximately the same scale. You can preprocess the data with
+           a scaler from :mod:`sklearn.preprocessing`.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -1726,6 +1769,10 @@ class LogisticRegressionCV(LogisticRegression,
         If ``penalty='elasticnet'``, the shape is ``(n_classes, n_folds,
         n_cs, n_l1_ratios)`` or ``(1, n_folds, n_cs, n_l1_ratios)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1745,7 +1792,6 @@ class LogisticRegressionCV(LogisticRegression,
     LogisticRegression
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, Cs=10, fit_intercept=True, cv=None, dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,

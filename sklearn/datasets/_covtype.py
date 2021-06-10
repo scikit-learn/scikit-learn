@@ -29,7 +29,6 @@ from ._base import RemoteFileMetadata
 from ..utils import Bunch
 from ._base import _pkl_filepath
 from ..utils import check_random_state
-from ..utils.validation import _deprecate_positional_args
 
 
 # The original data can be found in:
@@ -59,7 +58,6 @@ FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
 TARGET_NAMES = ["Cover_Type"]
 
 
-@_deprecate_positional_args
 def fetch_covtype(*, data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False, return_X_y=False,
                   as_frame=False):
