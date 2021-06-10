@@ -187,18 +187,12 @@ def _construct_compose_pipeline_instance(Estimator):
         ])
 
 
-def _construct_projection(Estimator):
-    if Estimator.__name__ == "SparseCoder":
-        dictionary = np.array(
-            [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
-            dtype=np.float64,
-        )
-        return Estimator(dictionary=dictionary)
-    elif Estimator.__name__ in (
-        "GaussianRandomProjection",
-        "SparseRandomProjection",
-    ):
-        return Estimator(n_components=2)
+def _construct_sparse_coder(Estimator):
+    dictionary = np.array(
+        [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
+        dtype=np.float64,
+    )
+    return Estimator(dictionary=dictionary)
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
@@ -216,9 +210,6 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    if Estimator.__name__.startswith("_"):
-        pytest.skip("Do not test private estimators")
-
     if Estimator.__name__ in (
         "HalvingRandomSearchCV",
         "RandomizedSearchCV",
@@ -232,37 +223,35 @@ def test_fit_docstring_attributes(name, Estimator):
         "FeatureUnion",
     ):
         est = _construct_compose_pipeline_instance(Estimator)
-    elif Estimator.__name__ in (
-        "SparseCoder",
-        "GaussianRandomProjection",
-        "SparseRandomProjection",
-    ):
-        est = _construct_projection(Estimator)
+    elif Estimator.__name__ == "SparseCoder":
+        est = _construct_sparse_coder(Estimator)
     else:
         est = _construct_instance(Estimator)
 
     if Estimator.__name__ == 'SelectKBest':
-        est.k = 2
-
-    if Estimator.__name__ == 'DummyClassifier':
-        est.strategy = "stratified"
-
-    if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
-        est.n_components = 1  # default = 2 is invalid for single target.
+        est.set_params(k=2)
+    elif Estimator.__name__ == 'DummyClassifier':
+        est.set_params(strategy="stratified")
+    elif Estimator.__name__ in ('CCA', 'PLS'):
+        # default = 2 is invalid for single target.
+        est.set_params(n_components=1)
+    elif Estimator.__name__ in (
+        "GaussianRandomProjection",
+        "SparseRandomProjection",
+    ):
+        # default="auto" raises an error with the shape of `X`
+        est.set_params(n_components=2)
 
     # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
-        est.init = 'nndsvda'
+        est.set_params(init='nndsvda')
 
     # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
     if Estimator.__name__ == 'TSNE':
-        est.learning_rate = 200.0
-        est.init = 'random'
+        est.set_params(learning_rate=200.0, init='random')
 
-    skipped_attributes = {
-        "x_scores_",  # For PLS, TODO remove in 1.1
-        "y_scores_",
-    }  # For PLS, TODO remove in 1.1
+    # For PLS, TODO remove in 1.1
+    skipped_attributes = {"x_scores_", "y_scores_"}
 
     if Estimator.__name__.endswith("Vectorizer"):
         # Vectorizer require some specific input data
@@ -280,7 +269,6 @@ def test_fit_docstring_attributes(name, Estimator):
         elif Estimator.__name__ == "DictVectorizer":
             X = [{"foo": 1, "bar": 2}, {"foo": 3, "baz": 1}]
         y = None
-        skipped_attributes.add("n_features_in_")
     else:
         X, y = make_classification(
             n_samples=20,
