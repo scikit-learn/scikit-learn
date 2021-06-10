@@ -347,12 +347,9 @@ class BisectKMeans(KMeans):
 
         if self.bisect_strategy == "child_biggest_sse":
             _bisect_kmeans = self._bisect_by_biggest_child_sse
-
-        elif self.bisect_strategy == "largest_cluster":
-            _bisect_kmeans = self._bisect_largest_cluster
         else:
-            # "biggest_sse"
-            _bisect_kmeans = self._bisect_by_biggest_sse
+            # "biggest_sse" and "largest_cluster"
+            _bisect_kmeans = self._bisect_largest
 
         if self.verbose:
             print("Running Bisecting K-Means with parameters:")
@@ -478,11 +475,18 @@ class BisectKMeans(KMeans):
         self.labels_ = labels
         self.cluster_centers_ = np.asarray(centroids)
 
-    def _bisect_by_biggest_sse(self, X, init, random_state, sample_weight):
-        """ Performs Bisecting K-Means, which splits always cluster with
-         biggest SSE from all calculated
+    def _bisect_largest(self, X, init, random_state,
+                        sample_weight):
+        """ Performs Bisecting K-Means, which splits always cluster depending
+        on 'bisect_strategy' attribute:
 
-            .. note:: All of passed parameters must be pre-calculated
+        - "biggest sse": Picks cluster with biggest SSE (Sum of Squared Errors)
+         from all calculated
+        - "largest_cluster": Picks always cluster with largest number of
+         points assigned from all calculated. That method will perform faster
+          than picking by SSE methods, while producing similar results
+
+        .. note:: All of passed parameters must be pre-calculated
 
         Parameters
         ----------
@@ -498,7 +502,7 @@ class BisectKMeans(KMeans):
         sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X.
         """
-
+        strategy = self.bisect_strategy
         label_indexes = np.arange(X.shape[0])
 
         centers_dict = {
@@ -509,9 +513,16 @@ class BisectKMeans(KMeans):
 
         for n_iter in range(self.n_clusters - 1):
 
-            # pick index of cluster with biggest SSE
-            # This cluster will be bisected into two new clusters
-            biggest, _ = max(centers_dict.items(), key=lambda x: x[1]['sse'])
+            # Pick cluster to bisect into two new clusters
+            if strategy == "biggest_sse":
+                # Pick index of cluster with biggest SSE
+                biggest, _ = max(centers_dict.items(),
+                                 key=lambda x: x[1]['sse'])
+            else:
+                # "largest cluster"
+                # Pick index of largest cluster by amount of assigned points
+                biggest, _ = max(centers_dict.items(),
+                                 key=lambda x: x[1]['label_indexes'].shape[0])
 
             # Pick data to bisect from selected biggest cluster
             data_left = X[centers_dict[biggest]['label_indexes']]
@@ -522,113 +533,45 @@ class BisectKMeans(KMeans):
             centers, labels = self._bisect(data_left, init,
                                            weights_left, random_state)
 
-            # Check SSE (Sum of Squared Errors) of each of computed centroids.
-            # SSE is calculated with distances between data points
-            # and assigned centroids
-            errors = self._compute_bisect_errors(
-                data_left, centers, labels, weights_left)
+            if strategy == "biggest_sse":
+                # Check SSE (Sum of Squared Errors) of each computed centroids.
+                # SSE is calculated with distances between data points
+                # and assigned centroids
+                errors = self._compute_bisect_errors(
+                    data_left, centers, labels, weights_left)
 
-            lower_sse_index = 0 if errors[0] < errors[1] else 1
-            higher_sse_index = 1 if lower_sse_index == 0 else 0
+                lower_index = 0 if errors[0] < errors[1] else 1
+                higher_index = 1 if lower_index == 0 else 0
+            else:
+                # "largest_cluster"
+                # SSE of each centroid is not needed here
+                # and won't be calculated
+                errors = None, None
 
-            higher_labels = (labels == higher_sse_index)
-            lower_labels = (labels == lower_sse_index)
+                # Order of labels doesn't matter here
+                lower_index, higher_index = 0, 1
+
+            lower_labels = (labels == lower_index)
+            higher_labels = (labels == higher_index)
 
             # Add both centroids to dict
             centers_dict[last_center_id + 1] = {
-                'sse': errors[lower_sse_index],
-                'centroid': centers[lower_sse_index],
+                'sse': errors[lower_index],
+                'centroid': centers[lower_index],
                 'label_indexes':
                     centers_dict[biggest]['label_indexes'][lower_labels]
             }
 
             centers_dict[last_center_id + 2] = {
-                'sse': errors[higher_sse_index],
-                'centroid': centers[higher_sse_index],
+                'sse': errors[higher_index],
+                'centroid': centers[higher_index],
                 'label_indexes':
                     centers_dict[biggest]['label_indexes'][higher_labels]
             }
 
             if self.verbose:
-                print(f"Centroid Found: {centers[lower_sse_index]}")
-                print(f"Centroid Found: {centers[higher_sse_index]}")
-
-            last_center_id += 2
-
-            # Delete split cluster from dict
-            del centers_dict[biggest]
-
-        # Extract calculated centroids to array
-        # Also save them in self.cluster_centers and self.labels_
-        self._save_labels_and_centers(X.shape[0], centers_dict)
-
-    def _bisect_largest_cluster(self, X, init,
-                                random_state, sample_weight):
-        """ Performs Bisecting K-Means, which splits always cluster with
-         largest number of points assigned from all calculated.
-         That method will perform faster than picking by SSE methods, while
-         producing similar results
-
-            .. note:: All of passed parameters must be pre-calculated
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training instances to cluster.
-
-        init : {'k-means++', 'random'} or callable (n_clusters, n_features)
-                Method for initialization.
-
-        random_state : int, RandomState instance
-            Determines random number generation for centroid initialization.
-
-        sample_weight : array-like of shape (n_samples,)
-            The weights for each observation in X.
-        """
-
-        label_indexes = np.arange(X.shape[0])
-
-        centers_dict = {
-            0: {'centroid': None, 'label_indexes': label_indexes}
-        }
-
-        last_center_id = 0
-
-        for n_iter in range(self.n_clusters - 1):
-
-            # Pick index of largest cluster by amount of assigned points
-            # This cluster will be bisected into two new clusters
-            biggest, _ = max(centers_dict.items(),
-                             key=lambda x: x[1]['label_indexes'].shape[0])
-
-            # Pick data to bisect from selected biggest cluster
-            data_left = X[centers_dict[biggest]['label_indexes']]
-            weights_left = sample_weight[
-                centers_dict[biggest]['label_indexes']]
-
-            # Perform Bisection
-            centers, labels = self._bisect(data_left, init,
-                                           weights_left, random_state)
-
-            center_one_labels = (labels == 0)
-            center_two_labels = (labels == 1)
-
-            # Add both centroids to dict
-            centers_dict[last_center_id + 1] = {
-                'centroid': centers[0],
-                'label_indexes':
-                    centers_dict[biggest]['label_indexes'][center_one_labels]
-            }
-
-            centers_dict[last_center_id + 2] = {
-                'centroid': centers[1],
-                'label_indexes':
-                    centers_dict[biggest]['label_indexes'][center_two_labels]
-            }
-
-            if self.verbose:
-                print(f"Centroid Found: {centers[0]}")
-                print(f"Centroid Found: {centers[1]}")
+                print(f"Centroid Found: {centers[lower_index]}")
+                print(f"Centroid Found: {centers[higher_index]}")
 
             last_center_id += 2
 
