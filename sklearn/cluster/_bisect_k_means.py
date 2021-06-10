@@ -424,8 +424,6 @@ class BisectKMeans(KMeans):
 
         # Subtract of mean of X for more accurate distance computations
 
-        data_left = X
-        weights_left = sample_weight
         labels = np.zeros(X.shape[0], dtype=np.intc)
 
         labels_left = np.arange(X.shape[0])
@@ -433,6 +431,10 @@ class BisectKMeans(KMeans):
         centroids = []
 
         for n_iter in range(self.n_clusters):
+
+            # Pick left data to bisect
+            data_left = X[labels_left]
+            weights_left = sample_weight[labels_left]
 
             # Perform Bisection
             centers, _labels = self._bisect(data_left, init, weights_left,
@@ -470,9 +472,7 @@ class BisectKMeans(KMeans):
                     print(f"Centroid Found: {centers[higher_sse_index]}")
                 break
 
-            # Pass for further split data, weights and labels left
-            data_left = data_left[indexes_left]
-            weights_left = weights_left[indexes_left]
+            # Pass for further bisection indexes to bisect
             labels_left = labels_left[indexes_left]
 
         self.labels_ = labels
@@ -502,8 +502,7 @@ class BisectKMeans(KMeans):
         label_indexes = np.arange(X.shape[0])
 
         centers_dict = {
-            0: {'data': X, 'weights': sample_weight, 'sse': None,
-                'centroid': None, 'label_indexes': label_indexes}
+            0: {'sse': None, 'centroid': None, 'label_indexes': label_indexes}
         }
 
         last_center_id = 0
@@ -514,19 +513,20 @@ class BisectKMeans(KMeans):
             # This cluster will be bisected into two new clusters
             biggest, _ = max(centers_dict.items(), key=lambda x: x[1]['sse'])
 
+            # Pick data to bisect from selected biggest cluster
+            data_left = X[centers_dict[biggest]['label_indexes']]
+            weights_left = sample_weight[
+                centers_dict[biggest]['label_indexes']]
+
             # Perform Bisection
-            centers, labels = self._bisect(centers_dict[biggest]['data'],
-                                           init,
-                                           centers_dict[biggest]['weights'],
-                                           random_state)
+            centers, labels = self._bisect(data_left, init,
+                                           weights_left, random_state)
 
             # Check SSE (Sum of Squared Errors) of each of computed centroids.
             # SSE is calculated with distances between data points
             # and assigned centroids
             errors = self._compute_bisect_errors(
-                centers_dict[biggest]['data'],
-                centers, labels,
-                centers_dict[biggest]['weights'])
+                data_left, centers, labels, weights_left)
 
             lower_sse_index = 0 if errors[0] < errors[1] else 1
             higher_sse_index = 1 if lower_sse_index == 0 else 0
@@ -536,8 +536,6 @@ class BisectKMeans(KMeans):
 
             # Add both centroids to dict
             centers_dict[last_center_id + 1] = {
-                'data': centers_dict[biggest]['data'][lower_labels],
-                'weights': centers_dict[biggest]['weights'][lower_labels],
                 'sse': errors[lower_sse_index],
                 'centroid': centers[lower_sse_index],
                 'label_indexes':
@@ -545,8 +543,6 @@ class BisectKMeans(KMeans):
             }
 
             centers_dict[last_center_id + 2] = {
-                'data': centers_dict[biggest]['data'][higher_labels],
-                'weights': centers_dict[biggest]['weights'][higher_labels],
                 'sse': errors[higher_sse_index],
                 'centroid': centers[higher_sse_index],
                 'label_indexes':
@@ -593,8 +589,7 @@ class BisectKMeans(KMeans):
         label_indexes = np.arange(X.shape[0])
 
         centers_dict = {
-            0: {'data': X, 'weights': sample_weight, 'centroid': None,
-                'label_indexes': label_indexes}
+            0: {'centroid': None, 'label_indexes': label_indexes}
         }
 
         last_center_id = 0
@@ -604,29 +599,28 @@ class BisectKMeans(KMeans):
             # Pick index of largest cluster by amount of assigned points
             # This cluster will be bisected into two new clusters
             biggest, _ = max(centers_dict.items(),
-                             key=lambda x: x[1]['data'].shape[0])
+                             key=lambda x: x[1]['label_indexes'].shape[0])
+
+            # Pick data to bisect from selected biggest cluster
+            data_left = X[centers_dict[biggest]['label_indexes']]
+            weights_left = sample_weight[
+                centers_dict[biggest]['label_indexes']]
 
             # Perform Bisection
-            centers, labels = self._bisect(centers_dict[biggest]['data'],
-                                           init,
-                                           centers_dict[biggest]['weights'],
-                                           random_state)
+            centers, labels = self._bisect(data_left, init,
+                                           weights_left, random_state)
 
             center_one_labels = (labels == 0)
             center_two_labels = (labels == 1)
 
             # Add both centroids to dict
             centers_dict[last_center_id + 1] = {
-                'data': centers_dict[biggest]['data'][center_one_labels],
-                'weights': centers_dict[biggest]['weights'][center_one_labels],
                 'centroid': centers[0],
                 'label_indexes':
                     centers_dict[biggest]['label_indexes'][center_one_labels]
             }
 
             centers_dict[last_center_id + 2] = {
-                'data': centers_dict[biggest]['data'][center_two_labels],
-                'weights': centers_dict[biggest]['weights'][center_two_labels],
                 'centroid': centers[1],
                 'label_indexes':
                     centers_dict[biggest]['label_indexes'][center_two_labels]

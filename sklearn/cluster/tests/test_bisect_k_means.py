@@ -63,4 +63,3 @@ def test_sparse():
     bisect_means.fit(X)
     normal_centers = bisect_means.cluster_centers_
     assert_array_almost_equal(normal_centers, sparse_centers)
-
