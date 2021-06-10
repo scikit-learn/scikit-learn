@@ -99,7 +99,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : array-like of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels. Only available when `estimator` is a classifier.
 
     estimator_ : ``Estimator`` instance
@@ -473,7 +473,7 @@ class RFECV(RFE):
 
     Attributes
     ----------
-    classes_ : array-like of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels. Only available when `estimator` is a classifier.
 
     estimator_ : ``Estimator`` instance

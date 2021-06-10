@@ -200,10 +200,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         .. versionadded:: 0.20
 
     le_ : :class:`~sklearn.preprocessing.LabelEncoder`
-        Transformer used to encode the label during fit and decode during
+        Transformer used to encode the labels during fit and decode during
         prediction.
 
-    classes_ : array-like of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     n_features_in_ : int
