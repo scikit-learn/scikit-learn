@@ -89,6 +89,11 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         kernel == "precomputed" this is instead the precomputed
         training matrix, of shape (n_samples, n_samples).
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     References
     ----------
     * Kevin P. Murphy

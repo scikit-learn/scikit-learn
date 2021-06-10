@@ -150,10 +150,15 @@ class GaussianNB(_BaseNB):
         probability of each class.
 
     classes_ : ndarray of shape (n_classes,)
-        class labels known to the classifier
+        class labels known to the classifier.
 
     epsilon_ : float
-        absolute additive value to variances
+        absolute additive value to variances.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     sigma_ : ndarray of shape (n_classes, n_features)
         Variance of each feature per class.
@@ -168,7 +173,7 @@ class GaussianNB(_BaseNB):
         .. versionadded:: 1.0
 
     theta_ : ndarray of shape (n_classes, n_features)
-        mean of each feature per class
+        mean of each feature per class.
 
     Examples
     --------
@@ -767,6 +772,11 @@ class MultinomialNB(_BaseDiscreteNB):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -896,6 +906,11 @@ class ComplementNB(_BaseDiscreteNB):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -1015,6 +1030,11 @@ class BernoulliNB(_BaseDiscreteNB):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1156,6 +1176,11 @@ class CategoricalNB(_BaseDiscreteNB):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_categories_ : ndarray of shape (n_features,), dtype=np.int64
         Number of categories for each feature. This value is

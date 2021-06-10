@@ -6,7 +6,6 @@ from ..utils import check_matplotlib_support
 from ..utils.validation import _deprecate_positional_args
 
 
-@_deprecate_positional_args
 def plot_heatmap(
     data,
     ylabel,
@@ -87,7 +86,7 @@ def plot_heatmap(
     n_classes = data.shape[0]
     im = ax.imshow(data, interpolation='nearest', cmap=cmap)
     text = None
-    cmap_min, cmap_max = im.cmap(0), im.cmap(256)
+    cmap_min, cmap_max = im.cmap(0), im.cmap(1.0)
 
     if include_values:
         text = np.empty_like(data, dtype=object)

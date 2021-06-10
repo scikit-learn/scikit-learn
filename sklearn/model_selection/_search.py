@@ -1177,6 +1177,10 @@ class GridSearchCV(BaseSearchCV):
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1498,6 +1502,10 @@ class RandomizedSearchCV(BaseSearchCV):
 
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
+
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
 
     Notes
     -----

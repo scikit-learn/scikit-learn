@@ -560,6 +560,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         Independent term in the linear model. Set to 0.0 if
         `fit_intercept = False`.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     Ridge : Ridge regression addresses some of the

@@ -85,6 +85,11 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         where batch_size in the number of examples per minibatch and
         n_components is the number of hidden units.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
 
