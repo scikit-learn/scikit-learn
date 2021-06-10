@@ -488,6 +488,11 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
+- |Fix| Fixed a bug in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor` where a node could be split whereas it
+  should not have been due to incorrect handling of rounding errors.
+  :pr:`19336` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.utils`
 ....................
 
