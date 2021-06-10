@@ -42,8 +42,8 @@ class BisectKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random'}, callable or array-like of shape \
-            (n_clusters, n_features), default='k-means++'
+    init : {'k-means++', 'random'} or callable
+        (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -52,9 +52,6 @@ class BisectKMeans(KMeans):
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
-
-        If an array is passed, it should be of shape (n_clusters, n_features)
-        and gives the initial centers.
 
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
@@ -236,12 +233,9 @@ class BisectKMeans(KMeans):
             raise ValueError("Bisecting K-Means needs more than one sample "
                              "to perform bisection")
 
-        if hasattr(self.init, '__array__') \
-                and self.bisect_strategy != "child_biggest_sse":
-            raise ValueError("Only 'child_biggest_sse' supports init arrays -"
-                             " Combining centroids with init array may "
-                             "produce unexpected behavior in "
-                             f"'{self.bisect_strategy}' strategy")
+        if hasattr(self.init, '__array__'):
+            raise ValueError("Bisecting K-Means does not support "
+                             "init as array")
 
     def _bisect(self, X, init, sample_weight=None,
                 random_state=None):
@@ -261,8 +255,7 @@ class BisectKMeans(KMeans):
                 which will cause a memory copy
                 if the given data is not C-contiguous.
 
-        init : {'k-means++', 'random'}, callable or ndarray of shape \
-                (n_clusters, n_features)
+        init : {'k-means++', 'random'} or callable (n_clusters, n_features)
             Method for initialization.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -375,9 +368,6 @@ class BisectKMeans(KMeans):
             X_mean = X.mean(axis=0)
             X -= X_mean
 
-            if hasattr(init, '__array__'):
-                init -= X_mean
-
         # Only assign to created centroid when n_clusters == 1
         if self.n_clusters == 1:
             x_squared_norms = row_norms(X, squared=True)
@@ -422,8 +412,7 @@ class BisectKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster.
 
-        init : {'k-means++', 'random'}, callable or ndarray of shape \
-                (n_clusters, n_features)
+        init : {'k-means++', 'random'} or callable (n_clusters, n_features)
                 Method for initialization.
 
         random_state : int, RandomState
@@ -443,14 +432,7 @@ class BisectKMeans(KMeans):
 
         centroids = []
 
-        init_org = init
-
         for n_iter in range(self.n_clusters):
-
-            # If init array is provided -
-            # Take only part of init that is dedicated for that part of bisect
-            if hasattr(init, '__array__'):
-                init = init_org[n_iter: n_iter + 2].copy()
 
             # Perform Bisection
             centers, _labels = self._bisect(data_left, init, weights_left,
@@ -507,8 +489,7 @@ class BisectKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster.
 
-        init : {'k-means++', 'random'}, callable or ndarray of shape \
-                (n_clusters, n_features)
+        init : {'k-means++', 'random'} or callable (n_clusters, n_features)
                 Method for initialization.
 
         random_state : int, RandomState instance
@@ -599,8 +580,7 @@ class BisectKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster.
 
-        init : {'k-means++', 'random'}, callable or ndarray of shape \
-                (n_clusters, n_features)
+        init : {'k-means++', 'random'} or callable (n_clusters, n_features)
                 Method for initialization.
 
         random_state : int, RandomState instance
