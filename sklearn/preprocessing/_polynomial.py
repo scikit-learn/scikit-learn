@@ -1,6 +1,7 @@
 """
 This file contains preprocessing tools based on polynomials.
 """
+import collections
 import numbers
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
@@ -18,6 +19,7 @@ from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
 __all__ = [
+    "PolynomialFeatures",
     "SplineTransformer",
 ]
 
@@ -34,8 +36,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    degree : int, default=2
-        The degree of the polynomial features.
+    degree : int or tuple (min_degree, max_degree), default=2
+        If a single int is given, it specifies the maximal degree of the
+        polynomial features. If a tuple ``(min_degree, max_degree)`` is
+        passed, then ``min_degree`` is the minimum and ``max_degree`` is the
+        maximum polynomial degree of the generated features. Note that
+        min_degree=0 and 1 are equivalent as outputting the degree zero term
+        is determined by ``include_bias``.
 
     interaction_only : bool, default=False
         If true, only interaction features are produced: features that are
@@ -113,14 +120,29 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self.order = order
 
     @staticmethod
-    def _combinations(n_features, degree, interaction_only, include_bias):
+    def _combinations(
+        n_features,
+        min_degree,
+        max_degree,
+        interaction_only,
+        include_bias
+    ):
         comb = (combinations if interaction_only else combinations_w_r)
-        start = int(not include_bias)
-        return chain.from_iterable(comb(range(n_features), i)
-                                   for i in range(start, degree + 1))
+        start = max(1, min_degree)
+        iter = chain.from_iterable(comb(range(n_features), i)
+                                   for i in range(start, max_degree + 1))
+        if include_bias:
+            iter = chain(comb(range(n_features), 0), iter)
+        return iter
 
     @staticmethod
-    def _num_combinations(n_features, degree, interaction_only, include_bias):
+    def _num_combinations(
+        n_features,
+        min_degree,
+        max_degree,
+        interaction_only,
+        include_bias
+    ):
         """Calculate number of terms in polynomial expansion
 
         This should be equivalent to counting the number of terms returned by
@@ -131,11 +153,18 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             combinations = sum(
                 [
                     comb(n_features, i, exact=True)
-                    for i in range(1, min(degree + 1, n_features + 1))
+                    for i in range(
+                        max(1, min_degree),
+                        min(max_degree, n_features) + 1
+                    )
                 ]
             )
         else:
-            combinations = comb(n_features + degree, degree, exact=True) - 1
+            combinations = (
+                comb(n_features + max_degree, max_degree, exact=True) - 1)
+            if min_degree > 0:
+                d = min_degree - 1
+                combinations -= comb(n_features + d, d, exact=True) - 1
 
         if include_bias:
             combinations += 1
@@ -146,9 +175,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     def powers_(self):
         check_is_fitted(self)
 
-        combinations = self._combinations(self.n_input_features_, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
+        combinations = self._combinations(
+            n_features=self.n_input_features_,
+            min_degree=self._min_degree,
+            max_degree=self._max_degree,
+            interaction_only=self.interaction_only,
+            include_bias=self.include_bias
+        )
         return np.vstack([np.bincount(c, minlength=self.n_input_features_)
                           for c in combinations])
 
@@ -201,8 +234,44 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         _, n_features = self._validate_data(X, accept_sparse=True).shape
         self.n_input_features_ = n_features
+
+        if isinstance(self.degree, numbers.Integral):
+            if self.degree < 0:
+                raise ValueError(f"degree must be a non-negative integer, "
+                                 f"got {self.degree}.")
+            self._min_degree = 0
+            self._max_degree = self.degree
+        elif (isinstance(self.degree, collections.abc.Iterable) and
+                len(self.degree) == 2):
+            self._min_degree, self._max_degree = self.degree
+            if not (isinstance(self._min_degree, numbers.Integral)
+                    and isinstance(self._max_degree, numbers.Integral)
+                    and self._min_degree >= 0
+                    and self._min_degree <= self._max_degree):
+                raise ValueError(f"degree=(min_degree, max_degree) must "
+                                 f"be non-negative integers that fulfil "
+                                 f"min_degree <= max_degree, got "
+                                 f"{self.degree}.")
+        else:
+            raise ValueError(f"degree must be a non-negative int or tuple "
+                             f"(min_degree, max_degree), got "
+                             f"{self.degree}.")
+
         self.n_output_features_ = self._num_combinations(
-            n_features, self.degree, self.interaction_only, self.include_bias
+            n_features=n_features,
+            min_degree=self._min_degree,
+            max_degree=self._max_degree,
+            interaction_only=self.interaction_only,
+            include_bias=self.include_bias,
+        )
+        # We also record the number of output features for
+        # _max_degree = 0
+        self._n_out_full = self._num_combinations(
+            n_features=n_features,
+            min_degree=0,
+            max_degree=self._max_degree,
+            interaction_only=self.interaction_only,
+            include_bias=self.include_bias,
         )
 
         return self
@@ -247,13 +316,14 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             raise ValueError("X shape does not match training shape")
 
         if sparse.isspmatrix_csr(X):
-            if self.degree > 3:
+            if self._max_degree > 3:
                 return self.transform(X.tocsc()).tocsr()
             to_stack = []
             if self.include_bias:
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
-            to_stack.append(X)
-            for deg in range(2, self.degree+1):
+            if self._min_degree <= 1:
+                to_stack.append(X)
+            for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 Xp_next = _csr_polynomial_expansion(X.data, X.indices,
                                                     X.indptr, X.shape[1],
                                                     self.interaction_only,
@@ -262,78 +332,93 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     break
                 to_stack.append(Xp_next)
             XP = sparse.hstack(to_stack, format='csr')
-        elif sparse.isspmatrix_csc(X) and self.degree < 4:
+        elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
-        else:
-            if sparse.isspmatrix(X):
-                combinations = self._combinations(n_features, self.degree,
-                                                  self.interaction_only,
-                                                  self.include_bias)
-                columns = []
-                for comb in combinations:
-                    if comb:
-                        out_col = 1
-                        for col_idx in comb:
-                            out_col = X[:, col_idx].multiply(out_col)
-                        columns.append(out_col)
-                    else:
-                        bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
-                        columns.append(bias)
-                XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
-            else:
-                XP = np.empty((n_samples, self.n_output_features_),
-                              dtype=X.dtype, order=self.order)
-
-                # What follows is a faster implementation of:
-                # for i, comb in enumerate(combinations):
-                #     XP[:, i] = X[:, comb].prod(1)
-                # This implementation uses two optimisations.
-                # First one is broadcasting,
-                # multiply ([X1, ..., Xn], X1) -> [X1 X1, ..., Xn X1]
-                # multiply ([X2, ..., Xn], X2) -> [X2 X2, ..., Xn X2]
-                # ...
-                # multiply ([X[:, start:end], X[:, start]) -> ...
-                # Second optimisation happens for degrees >= 3.
-                # Xi^3 is computed reusing previous computation:
-                # Xi^3 = Xi^2 * Xi.
-
-                if self.include_bias:
-                    XP[:, 0] = 1
-                    current_col = 1
+        elif sparse.isspmatrix(X):
+            combinations = self._combinations(
+                n_features=n_features,
+                min_degree=self._min_degree,
+                max_degree=self._max_degree,
+                interaction_only=self.interaction_only,
+                include_bias=self.include_bias
+            )
+            columns = []
+            for comb in combinations:
+                if comb:
+                    out_col = 1
+                    for col_idx in comb:
+                        out_col = X[:, col_idx].multiply(out_col)
+                    columns.append(out_col)
                 else:
-                    current_col = 0
+                    bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
+                    columns.append(bias)
+            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+        else:
+            # Do as if _min_degree = 0 and cut down array after the
+            # computation, i.e. use _n_out_full instead of n_output_features_.
+            XP = np.empty((n_samples, self._n_out_full),
+                            dtype=X.dtype, order=self.order)
 
-                # d = 0
-                XP[:, current_col:current_col + n_features] = X
-                index = list(range(current_col,
-                                   current_col + n_features))
-                current_col += n_features
-                index.append(current_col)
+            # What follows is a faster implementation of:
+            # for i, comb in enumerate(combinations):
+            #     XP[:, i] = X[:, comb].prod(1)
+            # This implementation uses two optimisations.
+            # First one is broadcasting,
+            # multiply ([X1, ..., Xn], X1) -> [X1 X1, ..., Xn X1]
+            # multiply ([X2, ..., Xn], X2) -> [X2 X2, ..., Xn X2]
+            # ...
+            # multiply ([X[:, start:end], X[:, start]) -> ...
+            # Second optimisation happens for degrees >= 3.
+            # Xi^3 is computed reusing previous computation:
+            # Xi^3 = Xi^2 * Xi.
 
-                # d >= 1
-                for _ in range(1, self.degree):
-                    new_index = []
-                    end = index[-1]
-                    for feature_idx in range(n_features):
-                        start = index[feature_idx]
-                        new_index.append(current_col)
-                        if self.interaction_only:
-                            start += (index[feature_idx + 1] -
-                                      index[feature_idx])
-                        next_col = current_col + end - start
-                        if next_col <= current_col:
-                            break
-                        # XP[:, start:end] are terms of degree d - 1
-                        # that exclude feature #feature_idx.
-                        np.multiply(XP[:, start:end],
-                                    X[:, feature_idx:feature_idx + 1],
-                                    out=XP[:, current_col:next_col],
-                                    casting='no')
-                        current_col = next_col
+            # degree 0 term
+            if self.include_bias:
+                XP[:, 0] = 1
+                current_col = 1
+            else:
+                current_col = 0
 
+            # degree 1 term
+            XP[:, current_col:current_col + n_features] = X
+            index = list(range(current_col, current_col + n_features))
+            current_col += n_features
+            index.append(current_col)
+
+            # loop over degree >= 2 terms
+            for _ in range(2, self._max_degree + 1):
+                new_index = []
+                end = index[-1]
+                for feature_idx in range(n_features):
+                    start = index[feature_idx]
                     new_index.append(current_col)
-                    index = new_index
+                    if self.interaction_only:
+                        start += (index[feature_idx + 1] -
+                                    index[feature_idx])
+                    next_col = current_col + end - start
+                    if next_col <= current_col:
+                        break
+                    # XP[:, start:end] are terms of degree d - 1
+                    # that exclude feature #feature_idx.
+                    np.multiply(XP[:, start:end],
+                                X[:, feature_idx:feature_idx + 1],
+                                out=XP[:, current_col:next_col],
+                                casting='no')
+                    current_col = next_col
 
+                new_index.append(current_col)
+                index = new_index
+
+            if self._min_degree > 1:
+                n_XP, n_Xout = self._n_out_full, self.n_output_features_
+                Xout = np.empty_like(
+                    XP, shape=(n_samples, n_Xout))
+                if self.include_bias:
+                    Xout[:, 0] = 1
+                    Xout[:, 1:] = XP[:, n_XP - n_Xout + 1:]
+                else:
+                    Xout[:, :] = XP[:, n_XP - n_Xout:]
+                XP = Xout
         return XP
 
 
@@ -550,7 +635,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if not (
             isinstance(self.degree, numbers.Integral) and self.degree >= 0
         ):
-            raise ValueError("degree must be a non-negative integer.")
+            raise ValueError(f"degree must be a non-negative integer, got "
+                             f"{self.degree}.")
 
         if isinstance(self.knots, str) and self.knots in [
             "uniform",
