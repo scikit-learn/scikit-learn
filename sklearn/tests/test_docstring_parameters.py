@@ -232,8 +232,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.set_params(k=2)
     elif Estimator.__name__ == 'DummyClassifier':
         est.set_params(strategy="stratified")
-    elif Estimator.__name__ in ('CCA', 'PLS'):
-        # default = 2 is invalid for single target.
+    elif Estimator.__name__ == 'CCA' or Estimator.__name__.startswith('PLS'):
+        # default = 2 is invalid for single target
         est.set_params(n_components=1)
     elif Estimator.__name__ in (
         "GaussianRandomProjection",
