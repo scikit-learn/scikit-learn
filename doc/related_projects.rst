@@ -281,8 +281,9 @@ Other packages useful for data analysis and machine learning.
   Models are fully compatible with scikit-learn.
   
 - `Woodwork <https://github.com/alteryx/woodwork/>`_  A library that provides 
-  a special namespace on a DataFrame, which contains the physical, logical, and semantic data types. 
-  It can be used with scikit-learn and other ML applications, where typing information is important.
+  a special namespace on a DataFrame, which contains the physical, logical, and semantic 
+  data typing information. It can be used with scikit-learn and other ML applications, 
+  where typing information is important. 
   
 Recommendation Engine packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
