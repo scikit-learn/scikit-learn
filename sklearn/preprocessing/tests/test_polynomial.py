@@ -513,12 +513,12 @@ def two_feature_degree3():
     X = np.arange(6).reshape((3, 2))
     x1 = X[:, :1]
     x2 = X[:, 1:]
-    P = np.hstack([x1 ** 0 * x2 ** 0,  # 0
-                   x1 ** 1 * x2 ** 0,  # 1
-                   x1 ** 0 * x2 ** 1,  # 2
-                   x1 ** 2 * x2 ** 0,  # 3
-                   x1 ** 1 * x2 ** 1,  # 4
-                   x1 ** 0 * x2 ** 2]) # 5
+    P = np.hstack([x1 ** 0 * x2 ** 0,   # 0
+                   x1 ** 1 * x2 ** 0,   # 1
+                   x1 ** 0 * x2 ** 1,   # 2
+                   x1 ** 2 * x2 ** 0,   # 3
+                   x1 ** 1 * x2 ** 1,   # 4
+                   x1 ** 0 * x2 ** 2])  # 5
     return X, P
 
 
@@ -639,7 +639,9 @@ def test_num_combinations(
     """
     x = sparse.csr_matrix(([1], ([0], [n_features - 1])))
     est = PolynomialFeatures(
-        max_degree, interaction_only=interaction_only, include_bias=include_bias
+        degree=max_degree,
+        interaction_only=interaction_only,
+        include_bias=include_bias,
     )
     est.fit(x)
     num_combos = est.n_output_features_
