@@ -94,8 +94,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
         By default the threshold is chosen as the MAD (median absolute
-        deviation) of the target values `y`. Residual strictly equal to the
-        threshold is considered valid.
+        deviation) of the target values `y`. Points whose residuals are
+        strictly equal to the threshold are considered as inliers.
 
     is_data_valid : callable, default=None
         This function is called with the randomly selected data before the
