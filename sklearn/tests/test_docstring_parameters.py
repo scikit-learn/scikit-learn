@@ -210,8 +210,7 @@ def test_fit_docstring_attributes(name, Estimator):
         'NoSampleWeightWrapper', 'RFE', 'RFECV',
         'RegressorChain', 'SelectFromModel',
         'SparseCoder', 'SparseRandomProjection',
-        'SpectralBiclustering', 'StackingClassifier',
-        'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
+        'SpectralBiclustering', 'TfidfVectorizer', 'VotingClassifier',
         'VotingRegressor', 'SequentialFeatureSelector',
     }
 
