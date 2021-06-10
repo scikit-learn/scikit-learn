@@ -220,7 +220,6 @@ def test_fit_docstring_attributes(name, Estimator):
         "CountVectorizer",
         "DictVectorizer",
         "TfidfVectorizer",
-        "SpectralBiclustering",
     }
 
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
