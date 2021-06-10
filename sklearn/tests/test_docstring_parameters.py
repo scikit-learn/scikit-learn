@@ -24,6 +24,7 @@ from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import FunctionTransformer
 
 import pytest
 
@@ -175,6 +176,17 @@ def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
 
+def _construct_compose_pipeline_instance(Estimator):
+    if Estimator.__name__ == "ColumnTransformer":
+        return Estimator(transformers=[("transformer", "passthrough", [0, 1])])
+    elif Estimator.__name__ == "Pipeline":
+        return Estimator(steps=[("clf", LogisticRegression())])
+    elif Estimator.__name__ == "FeatureUnion":
+        return Estimator(transformer_list=[
+            ("transformer", FunctionTransformer())
+        ])
+
+
 N_FEATURES_MODULES_TO_IGNORE = {
     'model_selection',
     'multioutput',
@@ -213,6 +225,12 @@ def test_fit_docstring_attributes(name, Estimator):
         "GridSearchCV",
     ):
         est = _construct_searchcv_instance(Estimator)
+    elif Estimator.__name__ in (
+        "ColumnTransformer",
+        "Pipeline",
+        "FeatureUnion",
+    ):
+        est = _construct_compose_pipeline_instance(Estimator)
     else:
         est = _construct_instance(Estimator)
 
