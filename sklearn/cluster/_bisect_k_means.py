@@ -517,7 +517,8 @@ class BisectKMeans(KMeans):
 
         Parameters
         ----------
-        x_len : {int} - calculated number of values in X data (X.shape[0])
+        n_samples : int
+            Number of samples in the input data X (X.shape[0]).
 
         centers_dict : {dict} - Dictionary with nested dictionary,
         containing values:
