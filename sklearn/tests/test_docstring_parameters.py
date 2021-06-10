@@ -204,7 +204,7 @@ def test_fit_docstring_attributes(name, Estimator):
 
     IGNORED = {
         'CountVectorizer', 'DictVectorizer', 'TfidfVectorizer',
-        'RFECV', 'SelectFromModel',
+        'SelectFromModel',
         'GaussianRandomProjection', 'SparseCoder', 'SparseRandomProjection',
         'SpectralBiclustering',
         'SequentialFeatureSelector',
