@@ -295,6 +295,10 @@ Changelog
   :pr:`17169` by :user:`Dmytro Lituiev <DSLituiev>`
   and :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| Fixed a bug in class:`feature_selection.VarianceThreshold`
+  when a variance threshold is negative.
+  :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
+
 :mod:`sklearn.inspection`
 .........................
 
