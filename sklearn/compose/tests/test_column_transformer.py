@@ -1548,7 +1548,7 @@ class DataFrameTransformer(TransformerMixin, BaseEstimator):
         if self.reverse_index:
             index = index[::-1]
 
-        return pd.DataFrame(X.to_numpy(), columns=columns, index=index)
+        return pd.DataFrame(X.values, columns=columns, index=index)
 
 
 def test_pandas_index_aligned_hstack():
