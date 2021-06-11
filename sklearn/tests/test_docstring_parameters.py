@@ -177,6 +177,7 @@ def _construct_searchcv_instance(SearchCV):
 
 
 def _construct_compose_pipeline_instance(Estimator):
+    # Minimal / degenerate instances: only useful to test the docstrings.
     if Estimator.__name__ == "ColumnTransformer":
         return Estimator(transformers=[("transformer", "passthrough", [0, 1])])
     elif Estimator.__name__ == "Pipeline":
@@ -188,6 +189,7 @@ def _construct_compose_pipeline_instance(Estimator):
 
 
 def _construct_sparse_coder(Estimator):
+    # XXX: hard-coded assumption that n_features=3
     dictionary = np.array(
         [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
         dtype=np.float64,
