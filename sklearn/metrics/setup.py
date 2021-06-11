@@ -18,6 +18,10 @@ def configuration(parent_package="", top_path=None):
                          sources=["_pairwise_fast.pyx"],
                          libraries=libraries)
 
+    config.add_extension("_argkmin_fast",
+                         sources=["_argkmin_fast.pyx"],
+                         libraries=libraries)
+
     config.add_subpackage('tests')
 
     return config
