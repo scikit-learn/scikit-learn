@@ -512,6 +512,10 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
+- |Feature| :class:`preprocessing.PolynomialFeatures` now supports passing
+  a tuple to `degree`, i.e. `degree=(min_degree, max_degree)`.
+  :pr:`20250` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.tree`
 ...................
 
