@@ -9,6 +9,10 @@ Logistic Regression
 #         Lars Buitinck
 #         Simon Wu <s8wu@uwaterloo.ca>
 #         Arthur Mensch <arthur.mensch@m4x.org
+from __future__ import annotations
+import typing
+if typing.TYPE_CHECKING:
+    from typing_extensions import Literal
 
 import numbers
 import warnings
@@ -33,8 +37,6 @@ from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
-from ..utils._typing import Literal
-from ..utils._typing import RandomStateType
 from ..utils.fixes import delayed
 from ..model_selection import check_cv
 from ..metrics import get_scorer
@@ -1104,7 +1106,7 @@ class LogisticRegression(LinearClassifierMixin,
         .. versionadded:: 0.17
            *class_weight='balanced'*
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. See :term:`Glossary <random_state>` for details.
 
@@ -1179,7 +1181,7 @@ class LogisticRegression(LinearClassifierMixin,
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         Number of CPU cores used when parallelizing over classes if
         multi_class='ovr'". This parameter is ignored when the ``solver`` is
         set to 'liblinear' regardless of whether 'multi_class' is specified or
@@ -1187,7 +1189,7 @@ class LogisticRegression(LinearClassifierMixin,
         context. ``-1`` means using all processors.
         See :term:`Glossary <n_jobs>` for more details.
 
-    l1_ratio : float or None, default=None
+    l1_ratio : float, default=None
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
@@ -1197,7 +1199,7 @@ class LogisticRegression(LinearClassifierMixin,
     Attributes
     ----------
 
-    classes_ : ndarray of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes, )
         A list of class labels known to the classifier.
 
     coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
@@ -1295,7 +1297,7 @@ class LogisticRegression(LinearClassifierMixin,
                  fit_intercept: bool = True,
                  intercept_scaling: float = 1,
                  class_weight: Union[dict, Literal["balanced"]] = None,
-                 random_state: RandomStateType = None,
+                 random_state: Union[int, np.random.RandomState, None] = None,
                  solver: Literal["newton-cg", "lbfgs", "liblinear", "sag",
                                  "saga"] = "lbfgs",
                  max_iter: int = 100,
@@ -1304,6 +1306,7 @@ class LogisticRegression(LinearClassifierMixin,
                  warm_start: bool = False,
                  n_jobs: Optional[int] = None,
                  l1_ratio: Optional[float] = None):
+
         self.penalty = penalty
         self.dual = dual
         self.tol = tol
