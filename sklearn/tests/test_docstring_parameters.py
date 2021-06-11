@@ -24,6 +24,7 @@ from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import FunctionTransformer
 
 import pytest
 
@@ -175,6 +176,27 @@ def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
 
+def _construct_compose_pipeline_instance(Estimator):
+    # Minimal / degenerate instances: only useful to test the docstrings.
+    if Estimator.__name__ == "ColumnTransformer":
+        return Estimator(transformers=[("transformer", "passthrough", [0, 1])])
+    elif Estimator.__name__ == "Pipeline":
+        return Estimator(steps=[("clf", LogisticRegression())])
+    elif Estimator.__name__ == "FeatureUnion":
+        return Estimator(transformer_list=[
+            ("transformer", FunctionTransformer())
+        ])
+
+
+def _construct_sparse_coder(Estimator):
+    # XXX: hard-coded assumption that n_features=3
+    dictionary = np.array(
+        [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
+        dtype=np.float64,
+    )
+    return Estimator(dictionary=dictionary)
+
+
 N_FEATURES_MODULES_TO_IGNORE = {
     'model_selection',
     'multioutput',
@@ -190,22 +212,6 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {
-        'ClassifierChain',
-        'CountVectorizer', 'DictVectorizer',
-        'GaussianRandomProjection',
-        'MultiOutputClassifier', 'MultiOutputRegressor',
-        'NoSampleWeightWrapper', 'RFE', 'RFECV',
-        'RegressorChain', 'SelectFromModel',
-        'SparseCoder', 'SparseRandomProjection',
-        'SpectralBiclustering', 'StackingClassifier',
-        'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-        'VotingRegressor', 'SequentialFeatureSelector',
-    }
-
-    if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
-        pytest.skip("Estimator cannot be fit easily to test fit attributes")
-
     if Estimator.__name__ in (
         "HalvingRandomSearchCV",
         "RandomizedSearchCV",
@@ -213,33 +219,69 @@ def test_fit_docstring_attributes(name, Estimator):
         "GridSearchCV",
     ):
         est = _construct_searchcv_instance(Estimator)
+    elif Estimator.__name__ in (
+        "ColumnTransformer",
+        "Pipeline",
+        "FeatureUnion",
+    ):
+        est = _construct_compose_pipeline_instance(Estimator)
+    elif Estimator.__name__ == "SparseCoder":
+        est = _construct_sparse_coder(Estimator)
     else:
         est = _construct_instance(Estimator)
 
     if Estimator.__name__ == 'SelectKBest':
-        est.k = 2
-
-    if Estimator.__name__ == 'DummyClassifier':
-        est.strategy = "stratified"
-
-    if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
-        est.n_components = 1  # default = 2 is invalid for single target.
+        est.set_params(k=2)
+    elif Estimator.__name__ == 'DummyClassifier':
+        est.set_params(strategy="stratified")
+    elif Estimator.__name__ == 'CCA' or Estimator.__name__.startswith('PLS'):
+        # default = 2 is invalid for single target
+        est.set_params(n_components=1)
+    elif Estimator.__name__ in (
+        "GaussianRandomProjection",
+        "SparseRandomProjection",
+    ):
+        # default="auto" raises an error with the shape of `X`
+        est.set_params(n_components=2)
 
     # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
-        est.init = 'nndsvda'
+        est.set_params(init='nndsvda')
 
     # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
     if Estimator.__name__ == 'TSNE':
-        est.learning_rate = 200.0
-        est.init = 'random'
+        est.set_params(learning_rate=200.0, init='random')
 
-    X, y = make_classification(n_samples=20, n_features=3,
-                               n_redundant=0, n_classes=2,
-                               random_state=2)
+    # For PLS, TODO remove in 1.1
+    skipped_attributes = {"x_scores_", "y_scores_"}
 
-    y = _enforce_estimator_tags_y(est, y)
-    X = _enforce_estimator_tags_x(est, X)
+    if Estimator.__name__.endswith("Vectorizer"):
+        # Vectorizer require some specific input data
+        if Estimator.__name__ in (
+            "CountVectorizer",
+            "HashingVectorizer",
+            "TfidfVectorizer",
+        ):
+            X = [
+                "This is the first document.",
+                "This document is the second document.",
+                "And this is the third one.",
+                "Is this the first document?",
+            ]
+        elif Estimator.__name__ == "DictVectorizer":
+            X = [{"foo": 1, "bar": 2}, {"foo": 3, "baz": 1}]
+        y = None
+    else:
+        X, y = make_classification(
+            n_samples=20,
+            n_features=3,
+            n_redundant=0,
+            n_classes=2,
+            random_state=2,
+        )
+
+        y = _enforce_estimator_tags_y(est, y)
+        X = _enforce_estimator_tags_x(est, X)
 
     if '1dlabels' in est._get_tags()['X_types']:
         est.fit(y)
@@ -247,9 +289,6 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(np.c_[y, y])
     else:
         est.fit(X, y)
-
-    skipped_attributes = {'x_scores_',  # For PLS, TODO remove in 1.1
-                          'y_scores_'}  # For PLS, TODO remove in 1.1
 
     module = est.__module__.split(".")[1]
     if module in N_FEATURES_MODULES_TO_IGNORE:

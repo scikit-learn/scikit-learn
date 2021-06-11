@@ -1033,6 +1033,14 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
            This attribute is deprecated in 0.24 and will be removed in
            1.1 (renaming of 0.26). Use `dictionary` instead.
 
+    n_components_ : int
+        Number of atoms.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
