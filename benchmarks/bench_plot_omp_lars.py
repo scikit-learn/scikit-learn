@@ -99,8 +99,8 @@ def compute_bench(samples_range, features_range):
 
 
 if __name__ == '__main__':
-    samples_range = np.linspace(1000, 5000, 5).astype(np.int)
-    features_range = np.linspace(1000, 5000, 5).astype(np.int)
+    samples_range = np.linspace(1000, 5000, 5).astype(int)
+    features_range = np.linspace(1000, 5000, 5).astype(int)
     results = compute_bench(samples_range, features_range)
     max_time = max(np.max(t) for t in results.values())
 

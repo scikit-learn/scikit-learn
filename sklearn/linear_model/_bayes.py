@@ -11,10 +11,10 @@ from scipy import linalg
 
 from ._base import LinearModel, _rescale_data
 from ..base import RegressorMixin
+from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 
 
 ###############################################################################
@@ -81,8 +81,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -119,6 +123,19 @@ class BayesianRidge(RegressorMixin, LinearModel):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
+    X_offset_ : float
+        If `normalize=True`, offset subtracted for centering data to a
+        zero mean.
+
+    X_scale_ : float
+        If `normalize=True`, parameter used to scale data to a unit
+        standard deviation.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -146,11 +163,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
     M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
     Journal of Machine Learning Research, Vol. 1, 2001.
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
                  lambda_init=None, compute_score=False, fit_intercept=True,
-                 normalize=False, copy_X=True, verbose=False):
+                 normalize='deprecated', copy_X=True, verbose=False):
         self.n_iter = n_iter
         self.tol = tol
         self.alpha_1 = alpha_1
@@ -185,6 +201,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
+        self._normalize = _deprecate_normalize(
+            self.normalize, default=False,
+            estimator_name=self.__class__.__name__
+        )
 
         if self.n_iter < 1:
             raise ValueError('n_iter should be greater than or equal to 1.'
@@ -197,7 +217,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
                                                  dtype=X.dtype)
 
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            X, y, self.fit_intercept, self._normalize, self.copy_X,
             sample_weight=sample_weight)
 
         if sample_weight is not None:
@@ -317,7 +337,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            if self.normalize:
+            if self._normalize:
                 X = (X - self.X_offset_) / self.X_scale_
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
@@ -333,14 +353,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
         """
 
         if n_samples > n_features:
-            coef_ = np.dot(Vh.T,
-                           Vh / (eigen_vals_ +
-                                 lambda_ / alpha_)[:, np.newaxis])
-            coef_ = np.dot(coef_, XT_y)
+            coef_ = np.linalg.multi_dot([Vh.T,
+                                         Vh / (eigen_vals_ + lambda_ /
+                                               alpha_)[:, np.newaxis],
+                                         XT_y])
         else:
-            coef_ = np.dot(X.T, np.dot(
-                U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
-            coef_ = np.dot(coef_, y)
+            coef_ = np.linalg.multi_dot([X.T,
+                                         U / (eigen_vals_ + lambda_ /
+                                              alpha_)[None, :],
+                                         U.T, y])
 
         rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
 
@@ -433,8 +454,12 @@ class ARDRegression(RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -463,6 +488,19 @@ class ARDRegression(RegressorMixin, LinearModel):
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
+    X_offset_ : float
+        If `normalize=True`, offset subtracted for centering data to a
+        zero mean.
+
+    X_scale_ : float
+        If `normalize=True`, parameter used to scale data to a unit
+        standard deviation.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -490,11 +528,10 @@ class ARDRegression(RegressorMixin, LinearModel):
     which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                 threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
-                 copy_X=True, verbose=False):
+                 threshold_lambda=1.e+4, fit_intercept=True,
+                 normalize='deprecated', copy_X=True, verbose=False):
         self.n_iter = n_iter
         self.tol = tol
         self.fit_intercept = fit_intercept
@@ -526,6 +563,11 @@ class ARDRegression(RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
+        self._normalize = _deprecate_normalize(
+            self.normalize, default=False,
+            estimator_name=self.__class__.__name__
+        )
+
         X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True,
                                    ensure_min_samples=2)
 
@@ -533,7 +575,10 @@ class ARDRegression(RegressorMixin, LinearModel):
         coef_ = np.zeros(n_features)
 
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self._normalize, self.copy_X)
+
+        self.X_offset_ = X_offset_
+        self.X_scale_ = X_scale_
 
         # Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
@@ -555,8 +600,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         coef_old_ = None
 
         def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
-            coef_[keep_lambda] = alpha_ * np.dot(
-                sigma_, np.dot(X[:, keep_lambda].T, y))
+            coef_[keep_lambda] = alpha_ * np.linalg.multi_dot([
+                sigma_, X[:, keep_lambda].T, y])
             return coef_
 
         update_sigma = (self._update_sigma if n_samples >= n_features
@@ -666,7 +711,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            if self.normalize:
+            if self._normalize:
                 X = (X - self.X_offset_) / self.X_scale_
             X = X[:, self.lambda_ < self.threshold_lambda]
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)

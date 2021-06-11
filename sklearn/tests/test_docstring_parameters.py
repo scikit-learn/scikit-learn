@@ -19,9 +19,12 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import FunctionTransformer
 
 import pytest
 
@@ -81,8 +84,9 @@ def test_docstring_parameters():
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
-        # Exclude imported classes
-        classes = [cls for cls in classes if cls[1].__module__ == name]
+        # Exclude non-scikit-learn classes
+        classes = [cls for cls in classes
+                   if cls[1].__module__.startswith('sklearn')]
         for cname, cls in classes:
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
@@ -168,6 +172,37 @@ def test_tabs():
                                     % modname)
 
 
+def _construct_searchcv_instance(SearchCV):
+    return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
+
+
+def _construct_compose_pipeline_instance(Estimator):
+    # Minimal / degenerate instances: only useful to test the docstrings.
+    if Estimator.__name__ == "ColumnTransformer":
+        return Estimator(transformers=[("transformer", "passthrough", [0, 1])])
+    elif Estimator.__name__ == "Pipeline":
+        return Estimator(steps=[("clf", LogisticRegression())])
+    elif Estimator.__name__ == "FeatureUnion":
+        return Estimator(transformer_list=[
+            ("transformer", FunctionTransformer())
+        ])
+
+
+def _construct_sparse_coder(Estimator):
+    # XXX: hard-coded assumption that n_features=3
+    dictionary = np.array(
+        [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
+        dtype=np.float64,
+    )
+    return Estimator(dictionary=dictionary)
+
+
+N_FEATURES_MODULES_TO_IGNORE = {
+    'model_selection',
+    'multioutput',
+}
+
+
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -177,37 +212,76 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
-               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
-               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
-               'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
-               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
-               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
-               'SpectralBiclustering', 'StackingClassifier',
-               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor'}
-    if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
-        pytest.skip("Estimator cannot be fit easily to test fit attributes")
-
-    est = Estimator()
+    if Estimator.__name__ in (
+        "HalvingRandomSearchCV",
+        "RandomizedSearchCV",
+        "HalvingGridSearchCV",
+        "GridSearchCV",
+    ):
+        est = _construct_searchcv_instance(Estimator)
+    elif Estimator.__name__ in (
+        "ColumnTransformer",
+        "Pipeline",
+        "FeatureUnion",
+    ):
+        est = _construct_compose_pipeline_instance(Estimator)
+    elif Estimator.__name__ == "SparseCoder":
+        est = _construct_sparse_coder(Estimator)
+    else:
+        est = _construct_instance(Estimator)
 
     if Estimator.__name__ == 'SelectKBest':
-        est.k = 2
+        est.set_params(k=2)
+    elif Estimator.__name__ == 'DummyClassifier':
+        est.set_params(strategy="stratified")
+    elif Estimator.__name__ == 'CCA' or Estimator.__name__.startswith('PLS'):
+        # default = 2 is invalid for single target
+        est.set_params(n_components=1)
+    elif Estimator.__name__ in (
+        "GaussianRandomProjection",
+        "SparseRandomProjection",
+    ):
+        # default="auto" raises an error with the shape of `X`
+        est.set_params(n_components=2)
 
-    if Estimator.__name__ == 'DummyClassifier':
-        est.strategy = "stratified"
+    # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
+    if Estimator.__name__ == 'NMF':
+        est.set_params(init='nndsvda')
 
-    # TO BE REMOVED for v0.25 (avoid FutureWarning)
-    if Estimator.__name__ == 'AffinityPropagation':
-        est.random_state = 63
+    # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
+    if Estimator.__name__ == 'TSNE':
+        est.set_params(learning_rate=200.0, init='random')
 
-    X, y = make_classification(n_samples=20, n_features=3,
-                               n_redundant=0, n_classes=2,
-                               random_state=2)
+    # For PLS, TODO remove in 1.1
+    skipped_attributes = {"x_scores_", "y_scores_"}
 
-    y = _enforce_estimator_tags_y(est, y)
-    X = _enforce_estimator_tags_x(est, X)
+    if Estimator.__name__.endswith("Vectorizer"):
+        # Vectorizer require some specific input data
+        if Estimator.__name__ in (
+            "CountVectorizer",
+            "HashingVectorizer",
+            "TfidfVectorizer",
+        ):
+            X = [
+                "This is the first document.",
+                "This document is the second document.",
+                "And this is the third one.",
+                "Is this the first document?",
+            ]
+        elif Estimator.__name__ == "DictVectorizer":
+            X = [{"foo": 1, "bar": 2}, {"foo": 3, "baz": 1}]
+        y = None
+    else:
+        X, y = make_classification(
+            n_samples=20,
+            n_features=3,
+            n_redundant=0,
+            n_classes=2,
+            random_state=2,
+        )
+
+        y = _enforce_estimator_tags_y(est, y)
+        X = _enforce_estimator_tags_x(est, X)
 
     if '1dlabels' in est._get_tags()['X_types']:
         est.fit(y)
@@ -216,7 +290,9 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    skipped_attributes = {'n_features_in_'}
+    module = est.__module__.split(".")[1]
+    if module in N_FEATURES_MODULES_TO_IGNORE:
+        skipped_attributes.add("n_features_in_")
 
     for attr in attributes:
         if attr.name in skipped_attributes:
@@ -225,34 +301,40 @@ def test_fit_docstring_attributes(name, Estimator):
         # As certain attributes are present "only" if a certain parameter is
         # provided, this checks if the word "only" is present in the attribute
         # description, and if not the attribute is required to be present.
-        if 'only ' not in desc:
+        if 'only ' in desc:
+            continue
+        # ignore deprecation warnings
+        with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV', 'GaussianProcessClassifier',
-               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor', 'IsolationForest',
-               'KNeighborsClassifier', 'KNeighborsRegressor',
-               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
-               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
-               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OneClassSVM', 'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
-               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
-               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler'}
-    if Estimator.__name__ in IGNORED:
-        pytest.xfail(
-            reason="Classifier has too many undocumented attributes.")
-
-    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
-                and not k.startswith('_')]
+    fit_attr = _get_all_fitted_attributes(est)
     fit_attr_names = [attr.name for attr in attributes]
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
     undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
     assert not undocumented_attrs,\
         "Undocumented attributes: {}".format(undocumented_attrs)
+
+
+def _get_all_fitted_attributes(estimator):
+    "Get all the fitted attributes of an estimator including properties"
+    # attributes
+    fit_attr = list(estimator.__dict__.keys())
+
+    # properties
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=FutureWarning)
+
+        for name in dir(estimator.__class__):
+            obj = getattr(estimator.__class__, name)
+            if not isinstance(obj, property):
+                continue
+
+            # ignore properties that raises an AttributeError and deprecated
+            # properties
+            try:
+                getattr(estimator, name)
+            except (AttributeError, FutureWarning):
+                continue
+            fit_attr.append(name)
+
+    return [k for k in fit_attr if k.endswith('_') and not k.startswith('_')]

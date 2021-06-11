@@ -1,6 +1,6 @@
 """
-Multiclass and multilabel classification strategies
-===================================================
+Multiclass classification strategies
+====================================
 
 This module implements multiclass learning algorithms:
     - one-vs-the-rest / one-vs-all
@@ -42,20 +42,23 @@ import itertools
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
+from .base import _is_pairwise
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils.deprecation import deprecated
+from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
-from .utils.validation import check_X_y, check_array
-from .utils.validation import _deprecate_positional_args
+from .utils.validation import column_or_1d
+from .utils.validation import _assert_all_finite
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
-from .exceptions import NotFittedError
+from .utils.fixes import delayed
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 __all__ = [
     "OneVsRestClassifier",
@@ -111,29 +114,42 @@ def _check_estimator(estimator):
 class _ConstantPredictor(BaseEstimator):
 
     def fit(self, X, y):
+        check_params = dict(force_all_finite=False, dtype=None,
+                            ensure_2d=False, accept_sparse=True)
+        self._validate_data(X, y, reset=True,
+                            validate_separately=(check_params, check_params))
         self.y_ = y
         return self
 
     def predict(self, X):
         check_is_fitted(self)
+        self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
+                            ensure_2d=False, reset=False)
 
-        return np.repeat(self.y_, X.shape[0])
+        return np.repeat(self.y_, _num_samples(X))
 
     def decision_function(self, X):
         check_is_fitted(self)
+        self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
+                            ensure_2d=False, reset=False)
 
-        return np.repeat(self.y_, X.shape[0])
+        return np.repeat(self.y_, _num_samples(X))
 
     def predict_proba(self, X):
         check_is_fitted(self)
+        self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
+                            ensure_2d=False, reset=False)
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
-                         X.shape[0], axis=0)
+                         _num_samples(X), axis=0)
 
 
 class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                           MetaEstimatorMixin, BaseEstimator):
-    """One-vs-the-rest (OvR) multiclass/multilabel strategy
+    """One-vs-the-rest (OvR) multiclass strategy.
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
     per class. For each classifier, the class is fitted against all the other
@@ -144,12 +160,13 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     corresponding classifier. This is the most commonly used strategy for
     multiclass classification and is a fair default choice.
 
-    This strategy can also be used for multilabel learning, where a classifier
-    is used to predict multiple labels for instance, by fitting on a 2-d matrix
-    in which cell [i, j] is 1 if sample i has label j and 0 otherwise.
-
-    In the multilabel learning literature, OvR is also known as the binary
-    relevance method.
+    OneVsRestClassifier can also be used for multilabel classification. To use
+    this feature, provide an indicator matrix for the target `y` when calling
+    `.fit`. In other words, the target labels should be formatted as a 2D
+    binary (0/1) matrix, where [i, j] == 1 indicates the presence of label j
+    in sample i. This estimator uses the binary relevance method to perform
+    multilabel classification, which involves training one binary classifier
+    independently for each label.
 
     Read more in the :ref:`User Guide <ovr_classification>`.
 
@@ -159,7 +176,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         An estimator object implementing :term:`fit` and one of
         :term:`decision_function` or :term:`predict_proba`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes`
         one-vs-rest problems are computed in parallel.
 
@@ -175,6 +192,33 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     estimators_ : list of `n_classes` estimators
         Estimators used for predictions.
 
+    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function. This attribute
+        exists only if the ``estimators_`` defines ``coef_``.
+
+        .. deprecated:: 0.24
+            This attribute is deprecated in 0.24 and will
+            be removed in 1.1 (renaming of 0.26). If you use this attribute
+            in :class:`~sklearn.feature_selection.RFE` or
+            :class:`~sklearn.feature_selection.SelectFromModel`,
+            you may pass a callable to the `importance_getter`
+            parameter that extracts feature the importances
+            from `estimators_`.
+
+    intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
+        If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
+        This attribute exists only if the ``estimators_`` defines
+        ``intercept_``.
+
+        .. deprecated:: 0.24
+            This attribute is deprecated in 0.24 and will
+            be removed in 1.1 (renaming of 0.26). If you use this attribute
+            in :class:`~sklearn.feature_selection.RFE` or
+            :class:`~sklearn.feature_selection.SelectFromModel`,
+            you may pass a callable to the `importance_getter`
+            parameter that extracts feature the importances
+            from `estimators_`.
+
     classes_ : array, shape = [`n_classes`]
         Class labels.
 
@@ -187,6 +231,12 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -206,8 +256,13 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     >>> clf.predict([[-19, -20], [9, 9], [-5, 5]])
     array([2, 0, 1])
 
+    See Also
+    --------
+    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
+        estimator for multilabel classification.
+    sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
+        to binary indicator matrix.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -246,6 +301,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                 self.label_binarizer_.classes_[i]])
             for i, column in enumerate(columns))
 
+        if hasattr(self.estimators_[0], "n_features_in_"):
+            self.n_features_in_ = self.estimators_[0].n_features_in_
+
         return self
 
     @if_delegate_has_method('estimator')
@@ -278,7 +336,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(("Base estimator {0}, doesn't have "
-                                 "partial_fit method").format(self.estimator))
+                                  "partial_fit method").format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
 
@@ -291,8 +349,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         if len(np.setdiff1d(y, self.classes_)):
             raise ValueError(("Mini-batch contains {0} while classes " +
-                             "must be subset of {1}").format(np.unique(y),
-                                                             self.classes_))
+                              "must be subset of {1}").format(np.unique(y),
+                                                              self.classes_))
 
         Y = self.label_binarizer_.transform(y)
         Y = Y.tocsc()
@@ -301,6 +359,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_binary)(estimator, X, column)
             for estimator, column in zip(self.estimators_, columns))
+
+        if hasattr(self.estimators_[0], "n_features_in_"):
+            self.n_features_in_ = self.estimators_[0].n_features_in_
 
         return self
 
@@ -396,7 +457,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Returns
         -------
-        T : array-like of shape (n_samples, n_classes)
+        T : array-like of shape (n_samples, n_classes) or (n_samples,) for \
+            binary classification.
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
@@ -417,6 +479,13 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     def n_classes_(self):
         return len(self.classes_)
 
+    # TODO: Remove coef_ attribute in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
+                "If you observe this warning while using RFE "
+                "or SelectFromModel, use the importance_getter "
+                "parameter instead.")
     @property
     def coef_(self):
         check_is_fitted(self)
@@ -428,6 +497,13 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             return sp.vstack(coefs)
         return np.vstack(coefs)
 
+    # TODO: Remove intercept_ attribute in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
+                "If you observe this warning while using RFE "
+                "or SelectFromModel, use the importance_getter "
+                "parameter instead.")
     @property
     def intercept_(self):
         check_is_fitted(self)
@@ -436,37 +512,32 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                 "Base estimator doesn't have an intercept_ attribute.")
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
 
+    def _more_tags(self):
+        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
+        return {'pairwise': _safe_tags(self.estimator, key="pairwise")}
+
     @property
     def _first_estimator(self):
         return self.estimators_[0]
-
-    @property
-    def n_features_in_(self):
-        # For consistency with other estimators we raise a AttributeError so
-        # that hasattr() fails if the OVR estimator isn't fitted.
-        try:
-            check_is_fitted(self)
-        except NotFittedError as nfe:
-            raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
-        return self.estimators_[0].n_features_in_
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
-    y_binary = np.empty(y.shape, np.int)
+    y_binary = np.empty(y.shape, int)
     y_binary[y == i] = 0
     y_binary[y == j] = 1
-    indcond = np.arange(X.shape[0])[cond]
+    indcond = np.arange(_num_samples(X))[cond]
     return _fit_binary(estimator,
                        _safe_split(estimator, X, None, indices=indcond)[0],
                        y_binary, classes=[i, j]), indcond
@@ -505,7 +576,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         An estimator object implementing :term:`fit` and one of
         :term:`decision_function` or :term:`predict_proba`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes * (
         n_classes - 1) / 2` OVO problems are computed in parallel.
 
@@ -526,7 +597,19 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
-        ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
+        ``None`` when ``estimator``'s `pairwise` tag is False.
+
+        .. deprecated:: 0.24
+
+            The _pairwise attribute is deprecated in 0.24. From 1.1
+            (renaming of 0.25) and onward, `pairwise_indices_` will use the
+            pairwise estimator tag instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -542,7 +625,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     >>> clf.predict(X_test[:10])
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -562,7 +644,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
+        # We need to validate the data because we do a safe_indexing later.
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   force_all_finite=False)
         check_classification_targets(y)
 
         self.classes_ = np.unique(y)
@@ -576,8 +660,13 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
         self.estimators_ = estimators_indices[0]
+
+        if hasattr(self.estimators_[0], "n_features_in_"):
+            self.n_features_in_ = self.estimators_[0].n_features_in_
+
+        pairwise = _is_pairwise(self)
         self.pairwise_indices_ = (
-            estimators_indices[1] if self._pairwise else None)
+            estimators_indices[1] if pairwise else None)
 
         return self
 
@@ -619,7 +708,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                              "must be subset of {1}".format(np.unique(y),
                                                             self.classes_))
 
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        X, y = self._validate_data(
+            X, y, accept_sparse=['csr', 'csc'], force_all_finite=False,
+            reset=_check_partial_fit_first_call(self, classes))
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
         self.estimators_ = Parallel(
@@ -630,6 +721,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                                              (combinations)))
 
         self.pairwise_indices_ = None
+
+        if hasattr(self.estimators_[0], "n_features_in_"):
+            self.n_features_in_ = self.estimators_[0].n_features_in_
 
         return self
 
@@ -652,7 +746,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         Y = self.decision_function(X)
         if self.n_classes_ == 2:
-            return self.classes_[(Y > 0).astype(np.int)]
+            return self.classes_[(Y > 0).astype(int)]
         return self.classes_[Y.argmax(axis=1)]
 
     def decision_function(self, X):
@@ -669,7 +763,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        Y : array-like of shape (n_samples, n_classes)
+        Y : array-like of shape (n_samples, n_classes) or (n_samples,) for \
+            binary classification.
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
@@ -697,10 +792,20 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def n_classes_(self):
         return len(self.classes_)
 
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
+
+    def _more_tags(self):
+        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
+        return {
+            'pairwise': _safe_tags(self.estimator, key="pairwise")
+        }
 
 
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
@@ -729,12 +834,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance, default=None
         The generator used to initialize the codebook.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation: the multiclass problems
         are computed in parallel.
 
@@ -752,6 +857,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     code_book_ : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -785,7 +896,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, code_size=1.5, random_state=None,
                  n_jobs=None):
         self.estimator = estimator
@@ -808,7 +918,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = self._validate_data(X, y, accept_sparse=True)
+        y = column_or_1d(y, warn=True)
+        _assert_all_finite(y)
+
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))
@@ -819,6 +931,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
+        if n_classes == 0:
+            raise ValueError("OutputCodeClassifier can not be fit when no "
+                             "class is present.")
         code_size_ = int(n_classes * self.code_size)
 
         # FIXME: there are more elaborate methods than generating the codebook
@@ -834,11 +949,14 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         classes_index = {c: i for i, c in enumerate(self.classes_)}
 
         Y = np.array([self.code_book_[classes_index[y[i]]]
-                      for i in range(X.shape[0])], dtype=np.int)
+                      for i in range(_num_samples(y))], dtype=int)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary)(self.estimator, X, Y[:, i])
             for i in range(Y.shape[1]))
+
+        if hasattr(self.estimators_[0], "n_features_in_"):
+            self.n_features_in_ = self.estimators_[0].n_features_in_
 
         return self
 
@@ -856,7 +974,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=True)
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]

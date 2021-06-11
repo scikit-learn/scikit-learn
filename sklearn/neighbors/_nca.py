@@ -23,7 +23,6 @@ from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
 from ..utils.validation import check_is_fitted, check_array, check_scalar
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
@@ -122,6 +121,11 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
     components_ : ndarray of shape (n_components, n_features)
         The linear transformation learned during fitting.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
 
@@ -162,7 +166,6 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, init='auto', warm_start=False,
                  max_iter=50, tol=1e-5, callback=None, verbose=0,
                  random_state=None):
@@ -263,7 +266,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         check_is_fitted(self)
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
 
         return np.dot(X, self.components_.T)
 

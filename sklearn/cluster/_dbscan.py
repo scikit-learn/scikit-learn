@@ -14,13 +14,12 @@ import warnings
 from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils.validation import _check_sample_weight, _deprecate_positional_args
+from ..utils.validation import _check_sample_weight
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
 
 
-@_deprecate_positional_args
 def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
            metric_params=None, algorithm='auto', leaf_size=30, p=2,
            sample_weight=None, n_jobs=None):
@@ -46,7 +45,7 @@ def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
 
-    metric : string, or callable
+    metric : str or callable, default='minkowski'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -97,13 +96,11 @@ def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
     labels : ndarray of shape (n_samples,)
         Cluster labels for each point.  Noisy samples are given the label -1.
 
-    See also
+    See Also
     --------
-    DBSCAN
-        An estimator interface for this clustering algorithm.
-    OPTICS
-        A similar estimator interface clustering at multiple values of eps. Our
-        implementation is optimized for memory usage.
+    DBSCAN : An estimator interface for this clustering algorithm.
+    OPTICS : A similar estimator interface clustering at multiple values of
+        eps. Our implementation is optimized for memory usage.
 
     Notes
     -----
@@ -199,7 +196,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     p : float, default=None
         The power of the Minkowski metric to be used to calculate distance
-        between points.
+        between points. If None, then ``p=2`` (equivalent to the Euclidean
+        distance).
 
     n_jobs : int, default=None
         The number of parallel jobs to run.
@@ -219,6 +217,11 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.cluster import DBSCAN
@@ -231,10 +234,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     >>> clustering
     DBSCAN(eps=3, min_samples=2)
 
-    See also
+    See Also
     --------
-    OPTICS
-        A similar clustering at multiple values of eps. Our implementation
+    OPTICS : A similar clustering at multiple values of eps. Our implementation
         is optimized for memory usage.
 
     Notes
@@ -271,7 +273,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
-    @_deprecate_positional_args
     def __init__(self, eps=0.5, *, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
                  n_jobs=None):

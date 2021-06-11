@@ -21,7 +21,7 @@ from ..neighbors._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
-from ..utils.validation import _deprecate_positional_args, check_memory
+from ..utils.validation import check_memory
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
 from ._feature_agglomeration import AgglomerationTransform
@@ -113,7 +113,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = _hierarchical._single_linkage_label(mst_array)
-    children_ = single_linkage_tree[:, :2].astype(np.int)
+    children_ = single_linkage_tree[:, :2].astype(int)
 
     # Compute parents
     parent = np.arange(n_nodes, dtype=np.intp)
@@ -134,7 +134,6 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 ###############################################################################
 # Hierarchical tree building functions
 
-@_deprecate_positional_args
 def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.
 
@@ -150,16 +149,16 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         feature matrix representing n_samples samples to be clustered
 
-    connectivity : sparse matrix (optional).
+    connectivity : sparse matrix, default=None
         connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
 
-    n_clusters : int (optional)
+    n_clusters : int, default=None
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
         not small compared to the number of samples. In this case, the
@@ -167,12 +166,12 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    return_distance : bool (optional)
+    return_distance : bool, default=None
         If True, return the distance between the clusters.
 
     Returns
     -------
-    children : 2D array, shape (n_nodes-1, 2)
+    children : ndarray of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -186,11 +185,11 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     n_leaves : int
         The number of leaves in the tree
 
-    parents : 1D array, shape (n_nodes, ) or None
+    parents : ndarray of shape (n_nodes,) or None
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
-    distances : 1D array, shape (n_nodes-1, )
+    distances : ndarray of shape (n_nodes-1,)
         Only returned if return_distance is set to True (for compatibility).
         The distances between the centers of the nodes. `distances[i]`
         corresponds to a weighted euclidean distance between
@@ -356,16 +355,16 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         feature matrix representing n_samples samples to be clustered
 
-    connectivity : sparse matrix (optional).
+    connectivity : sparse matrix, default=None
         connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
 
-    n_clusters : int (optional)
+    n_clusters : int, default=None
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
         not small compared to the number of samples. In this case, the
@@ -373,7 +372,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    linkage : {"average", "complete", "single"}, optional, default: "complete"
+    linkage : {"average", "complete", "single"}, default="complete"
         Which linkage criteria to use. The linkage criterion determines which
         distance to use between sets of observation.
             - average uses the average of the distances of each observation of
@@ -383,16 +382,16 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             - single uses the minimum of the distances between all observations
               of the two sets.
 
-    affinity : string or callable, optional, default: "euclidean".
+    affinity : str or callable, default="euclidean".
         which metric to use. Can be "euclidean", "manhattan", or any
         distance know to paired distance (see metric.pairwise)
 
-    return_distance : bool, default False
+    return_distance : bool, default=False
         whether or not to return the distances between the clusters.
 
     Returns
     -------
-    children : 2D array, shape (n_nodes-1, 2)
+    children : ndarray of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -406,19 +405,19 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     n_leaves : int
         The number of leaves in the tree.
 
-    parents : 1D array, shape (n_nodes, ) or None
+    parents : ndarray of shape (n_nodes, ) or None
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
-    distances : ndarray, shape (n_nodes-1,)
+    distances : ndarray of shape (n_nodes-1,)
         Returned when return_distance is set to True.
 
         distances[i] refers to the distance between children[i][0] and
         children[i][1] when they are merged.
 
-    See also
+    See Also
     --------
-    ward_tree : hierarchical clustering with ward linkage
+    ward_tree : Hierarchical clustering with ward linkage.
     """
     X = np.asarray(X)
     if X.ndim == 1:
@@ -430,10 +429,11 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
                        'single': None}  # Single linkage is handled differently
     try:
         join_func = linkage_choices[linkage]
-    except KeyError:
+    except KeyError as e:
         raise ValueError(
             'Unknown linkage option, linkage should be one '
-            'of %s, but %s was given' % (linkage_choices.keys(), linkage))
+            'of %s, but %s was given' % (linkage_choices.keys(), linkage)
+        ) from e
 
     if affinity == 'cosine' and np.any(~np.any(X, axis=1)):
         raise ValueError(
@@ -490,7 +490,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             out = _hierarchical.single_linkage_label(mst)
         else:
             out = hierarchy.linkage(X, method=linkage, metric=affinity)
-        children_ = out[:, :2].astype(np.int, copy=False)
+        children_ = out[:, :2].astype(int, copy=False)
 
         if return_distance:
             distances = out[:, 2]
@@ -636,7 +636,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_clusters : int or ndarray
         The number of clusters to form.
 
-    children : 2D array, shape (n_nodes-1, 2)
+    children : ndarray of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -747,6 +747,13 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.21
 
+    compute_distances : bool, default=False
+        Computes distances between clusters even if `distance_threshold` is not
+        used. This can be used to make dendrogram visualization, but introduces
+        a computational and memory overhead.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     n_clusters_ : int
@@ -766,6 +773,11 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         .. versionadded:: 0.21
             ``n_connected_components_`` was added to replace ``n_components_``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     children_ : array-like of shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
@@ -773,6 +785,11 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         node and has children `children_[i - n_samples]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
+
+    distances_ : array-like of shape (n_nodes-1,)
+        Distances between nodes in the corresponding place in `children_`.
+        Only computed if `distance_threshold` is used or `compute_distances`
+        is set to `True`.
 
     Examples
     --------
@@ -787,11 +804,11 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     array([1, 1, 1, 0, 0, 0])
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', distance_threshold=None):
+                 linkage='ward', distance_threshold=None,
+                 compute_distances=False):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
         self.memory = memory
@@ -799,6 +816,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
+        self.compute_distances = compute_distances
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
@@ -875,7 +893,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         distance_threshold = self.distance_threshold
 
-        return_distance = distance_threshold is not None
+        return_distance = (
+            (distance_threshold is not None) or self.compute_distances
+        )
+
         out = memory.cache(tree_builder)(X, connectivity=connectivity,
                                          n_clusters=n_clusters,
                                          return_distance=return_distance,
@@ -887,9 +908,11 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if return_distance:
             self.distances_ = out[-1]
+
+        if self.distance_threshold is not None:  # distance_threshold is used
             self.n_clusters_ = np.count_nonzero(
                 self.distances_ >= distance_threshold) + 1
-        else:
+        else:  # n_clusters is used
             self.n_clusters_ = self.n_clusters
 
         # Cut the tree
@@ -910,7 +933,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
+        X : array-like of shape (n_samples, n_features) or \
+                (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
             ``affinity='precomputed'``.
 
@@ -919,7 +943,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels.
         """
         return super().fit_predict(X, y)
@@ -957,7 +981,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
 
-    compute_full_tree : 'auto' or bool, optional, default='auto'
+    compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at n_clusters. This is useful
         to decrease computation time if the number of clusters is not small
         compared to the number of features. This option is useful only when
@@ -979,7 +1003,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
           the two sets.
         - complete or maximum linkage uses the maximum distances between
           all features of the two sets.
-        - single uses the minimum of the distances between all observations
+        - single uses the minimum of the distances between all features
           of the two sets.
 
     pooling_func : callable, default=np.mean
@@ -993,6 +1017,13 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         ``compute_full_tree`` must be ``True``.
 
         .. versionadded:: 0.21
+
+    compute_distances : bool, default=False
+        Computes distances between clusters even if `distance_threshold` is not
+        used. This can be used to make dendrogram visualization, but introduces
+        a computational and memory overhead.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -1013,6 +1044,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         .. versionadded:: 0.21
             ``n_connected_components_`` was added to replace ``n_components_``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     children_ : array-like of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`
         correspond to leaves of the tree which are the original samples.
@@ -1023,7 +1059,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     distances_ : array-like of shape (n_nodes-1,)
         Distances between nodes in the corresponding place in `children_`.
-        Only computed if distance_threshold is not None.
+        Only computed if `distance_threshold` is used or `compute_distances`
+        is set to `True`.
 
     Examples
     --------
@@ -1039,16 +1076,16 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> X_reduced.shape
     (1797, 32)
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean,
-                 distance_threshold=None):
+                 distance_threshold=None, compute_distances=False):
         super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
-            affinity=affinity, distance_threshold=distance_threshold)
+            affinity=affinity, distance_threshold=distance_threshold,
+            compute_distances=compute_distances)
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):

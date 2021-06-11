@@ -86,7 +86,7 @@ def test_checking_classifier(iris, input_type):
     assert clf.n_features_in_ == 4
 
     y_pred = clf.predict(X)
-    assert_array_equal(y_pred, np.zeros(y_pred.size, dtype=np.int))
+    assert_array_equal(y_pred, np.zeros(y_pred.size, dtype=int))
 
     assert clf.score(X) == pytest.approx(0)
     clf.set_params(foo_param=10)

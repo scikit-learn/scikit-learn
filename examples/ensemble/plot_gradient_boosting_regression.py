@@ -11,7 +11,7 @@ tackle a diabetes regression task. We will obtain the results from
 and 500 regression trees of depth 4.
 
 Note: For larger datasets (n_samples >= 10000), please refer to
-:class:`sklearn.ensemble.HistGradientBoostingRegressor`.
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
 """
 print(__doc__)
 
@@ -28,7 +28,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
-##############################################################################
+# %%
 # Load the data
 # -------------------------------------
 #
@@ -37,7 +37,7 @@ from sklearn.model_selection import train_test_split
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 
-##############################################################################
+# %%
 # Data preprocessing
 # -------------------------------------
 #
@@ -67,9 +67,9 @@ params = {'n_estimators': 500,
           'max_depth': 4,
           'min_samples_split': 5,
           'learning_rate': 0.01,
-          'loss': 'ls'}
+          'loss': 'squared_error'}
 
-##############################################################################
+# %%
 # Fit regression model
 # -------------------------------------
 #
@@ -82,7 +82,7 @@ reg.fit(X_train, y_train)
 mse = mean_squared_error(y_test, reg.predict(X_test))
 print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
 
-##############################################################################
+# %%
 # Plot training deviance
 # -------------------------------------
 #
@@ -106,7 +106,7 @@ plt.ylabel('Deviance')
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Plot feature importance
 # -------------------------------------
 #

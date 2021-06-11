@@ -7,18 +7,17 @@ import warnings
 
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
-from ._base import UnsupervisedMixin
 from ..base import OutlierMixin
 
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 
 __all__ = ["LocalOutlierFactor"]
 
 
-class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
-                         OutlierMixin, NeighborsBase):
+class LocalOutlierFactor(KNeighborsMixin,
+                         OutlierMixin,
+                         NeighborsBase):
     """Unsupervised Outlier Detection using Local Outlier Factor (LOF)
 
     The anomaly score of each sample is called Local Outlier Factor.
@@ -104,7 +103,7 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
 
         - if 'auto', the threshold is determined as in the
           original paper,
-        - if a float, the contamination should be in the range [0, 0.5].
+        - if a float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -114,7 +113,7 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         By default, LocalOutlierFactor is only meant to be used for outlier
         detection (novelty=False). Set novelty to True if you want to use
         LocalOutlierFactor for novelty detection. In this case be aware that
-        that you should only use predict, decision_function and score_samples
+        you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
 
         .. versionadded:: 0.20
@@ -152,6 +151,20 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
 
         .. versionadded:: 0.20
 
+    effective_metric_ : str
+        The effective metric used for the distance computation.
+
+    effective_metric_params_ : dict
+        The effective additional keyword arguments for the metric function.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    n_samples_fit_ : int
+        It is the number of samples in the fitted data.
+
     Examples
     --------
     >>> import numpy as np
@@ -168,7 +181,6 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
            LOF: identifying density-based local outliers. In ACM sigmod record.
     """
-    @_deprecate_positional_args
     def __init__(self, n_neighbors=20, *, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
                  contamination="auto", novelty=False, n_jobs=None):
@@ -184,7 +196,7 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
     def fit_predict(self):
         """Fits the model to the training set X and returns the labels.
 
-        **Only available for novelty detection (when novelty is set to True).**
+        **Not available for novelty detection (when novelty is set to True).**
         Label is 1 for an inlier and -1 for an outlier according to the LOF
         score and the contamination parameter.
 
@@ -237,28 +249,28 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         return self.fit(X)._predict()
 
     def fit(self, X, y=None):
-        """Fit the model using X as training data.
+        """Fit the local outlier factor detector from the training dataset.
 
         Parameters
         ----------
-        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
-                (n_samples, n_features) or (n_samples, n_samples)
-            Training data. If array or matrix, the shape is (n_samples,
-            n_features), or (n_samples, n_samples) if metric='precomputed'.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
 
         y : Ignored
             Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : object
+        self : LocalOutlierFactor
+            The fitted local outlier factor detector.
         """
+        self._fit(X)
+
         if self.contamination != 'auto':
             if not(0. < self.contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self.contamination)
-
-        super().fit(X)
 
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:

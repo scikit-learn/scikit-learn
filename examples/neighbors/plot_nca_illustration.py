@@ -20,7 +20,7 @@ from scipy.special import logsumexp
 
 print(__doc__)
 
-##############################################################################
+# %%
 # Original points
 # ---------------
 # First we create a data set of 9 samples from 3 classes, and plot the points
@@ -71,7 +71,7 @@ i = 3
 relate_point(X, i, ax)
 plt.show()
 
-##############################################################################
+# %%
 # Learning an embedding
 # ---------------------
 # We use :class:`~sklearn.neighbors.NeighborhoodComponentsAnalysis` to learn an
