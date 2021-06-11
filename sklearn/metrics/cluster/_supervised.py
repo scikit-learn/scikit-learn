@@ -725,10 +725,10 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching :math:`U` (i.e 
-    ``label_true``) with :math:`V` (i.e. ``label_pred``) will return the 
-    same score value. This can be useful to measure the agreement of two 
-    independent label assignments strategies on the same dataset when the 
+    This metric is furthermore symmetric: switching :math:`U` (i.e
+    ``label_true``) with :math:`V` (i.e. ``label_pred``) will return the
+    same score value. This can be useful to measure the agreement of two
+    independent label assignments strategies on the same dataset when the
     real ground truth is not known.
 
     Read more in the :ref:`User Guide <mutual_info_score>`.
@@ -736,11 +736,11 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        A clustering of the data into disjoint subsets, called :math:`U` in 
+        A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets, called :math:`V` in 
+        A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
     contingency : {ndarray, sparse matrix} of shape \
@@ -814,9 +814,9 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching :math:`U` (``label_true``) 
-    with :math:`V` (``labels_pred``) will return the same score value. This can 
-    be useful to measure the agreement of two independent label assignments 
+    This metric is furthermore symmetric: switching :math:`U` (``label_true``)
+    with :math:`V` (``labels_pred``) will return the same score value. This can
+    be useful to measure the agreement of two independent label assignments
     strategies on the same dataset when the real ground truth is not known.
 
     Be mindful that this function is an order of magnitude slower than other
@@ -827,11 +827,11 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        A clustering of the data into disjoint subsets, called :math:`U` in 
+        A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets, called :math:`V` in 
+        A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
     average_method : str, default='arithmetic'
