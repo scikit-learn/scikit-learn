@@ -101,13 +101,8 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
         If ``None``, nothing is adjusted.
 
     sparse : bool, default=False
-<<<<<<< HEAD
-        If True, return a sparse CSR continency matrix. If ``eps is not None``,
-        and ``sparse is True``, will throw ValueError.
-=======
         If `True`, return a sparse CSR continency matrix. If `eps` is not
         `None` and `sparse` is `True` will raise ValueError.
->>>>>>> 038c5cd04558e572b6a4dea7383a515ff10090e5
 
         .. versionadded:: 0.18
 
@@ -745,14 +740,8 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-<<<<<<< HEAD
-    contingency : {ndarray, sparse matrix} of \
-                  shape (n_classes_true, n_classes_pred), \
-                  default=None
-=======
     contingency : {ndarray, sparse matrix} of shape \
             (n_classes_true, n_classes_pred), default=None
->>>>>>> 038c5cd04558e572b6a4dea7383a515ff10090e5
         A contingency matrix given by the :func:`contingency_matrix` function.
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
