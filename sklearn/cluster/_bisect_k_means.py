@@ -236,8 +236,7 @@ class BisectKMeans(KMeans):
             raise ValueError("BisectKMeans does not support "
                              "init as array.")
 
-    def _bisect(self, X, init, sample_weight=None,
-                random_state=None):
+    def _bisect(self, X, sample_weight, random_state):
         """ Bisection of data
         Attempts to get best bisection of data by performing regular K-Means
         for different pairs of centroids
@@ -254,19 +253,19 @@ class BisectKMeans(KMeans):
                 which will cause a memory copy
                 if the given data is not C-contiguous.
 
-        init : {'k-means++', 'random'} or callable
-            Method for initialization.
-
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X. If None, all observations
             are assigned equal weight.
+
+        random_state : int, RandomState instance
+            Determines random number generation for centroid initialization.
 
         Returns
         -------
         self
             Fitted estimator.
         """
-
+        init = self.init
         x_squared_norms = row_norms(X, squared=True)
 
         best_inertia = None
@@ -373,7 +372,7 @@ class BisectKMeans(KMeans):
         else:
             # Run proper bisection to gather
             # self.cluster_centers_ and self.labels_
-            self._run_bisect_kmeans(X, init, random_state, sample_weight)
+            self._run_bisect_kmeans(X, sample_weight, random_state)
 
         # Restore original data
         if not sp.issparse(X):
@@ -389,8 +388,7 @@ class BisectKMeans(KMeans):
 
         return self
 
-    def _run_bisect_kmeans(self, X, init, random_state,
-                           sample_weight):
+    def _run_bisect_kmeans(self, X, sample_weight, random_state):
         """ Performs Bisecting K-Means, which splits always cluster depending
         on 'bisect_strategy' attribute:
 
@@ -413,14 +411,11 @@ class BisectKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster.
 
-        init : {'k-means++', 'random'} or callable
-                Method for initialization.
+        sample_weight : array-like of shape (n_samples,)
+            The weights for each observation in X.
 
         random_state : int, RandomState instance
             Determines random number generation for centroid initialization.
-
-        sample_weight : array-like of shape (n_samples,)
-            The weights for each observation in X.
         """
         strategy = self.bisect_strategy
         label_indexes = np.arange(X.shape[0])
@@ -460,8 +455,8 @@ class BisectKMeans(KMeans):
             weights_left = sample_weight[label_indexes]
 
             # Perform Bisection
-            centers, labels = self._bisect(data_left, init,
-                                           weights_left, random_state)
+            centers, labels = self._bisect(data_left, weights_left,
+                                           random_state)
 
             if strategy in ["biggest_sse", "child_biggest_sse"]:
                 # Check SSE (Sum of Squared Errors) of each computed centroids.
