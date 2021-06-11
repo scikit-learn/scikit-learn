@@ -42,8 +42,7 @@ class BisectKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random'} or callable
-        (n_clusters, n_features), default='k-means++'
+    init : {'k-means++', 'random'} or callable, default='k-means++'
         Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -100,19 +99,19 @@ class BisectKMeans(KMeans):
 
     bisect_strategy : {"biggest_sse", "child_biggest_sse", "largest_cluster"},
         default="biggest_sse"
-        Defines how should bisection by performed.
+        Defines how should bisection by performed:
         - "biggest_sse" means that Bisect K-Means will always check
         all calculated cluster for cluster with biggest SSE
         (Sum of squared errors) and bisect it. That way calculated clusters
-        will be more balanced
+        will be more balanced.
         - "child_biggest_sse" means that Bisect K-Means will always check
         SSE of only clusters obtained from previous iteration for bisection.
         Calculated clusters will be less balanced - consecutive clusters
-        will be usually smaller than previous
+        will be usually smaller than previous.
         - "largest_cluster" - Bisect K-Means will always split cluster with
         largest amount of points assigned to it from all clusters
         previously calculated. That should work faster than picking by SSE
-        ('biggest_sse') and may produce similar results in most cases
+        ('biggest_sse') and may produce similar results in most cases.
 
 
     Attributes
@@ -123,7 +122,7 @@ class BisectKMeans(KMeans):
         consistent with ``labels_``.
 
     labels_ : ndarray of shape (n_samples,)
-        Labels of each point
+        Labels of each point.
 
     inertia_ : float
         Sum of squared distances of samples to their closest cluster center,
@@ -219,23 +218,23 @@ class BisectKMeans(KMeans):
                 ["biggest_sse", "child_biggest_sse", "largest_cluster"]:
             raise ValueError(f"Bisect Strategy must be 'biggest_sse', "
                              f"'child_biggest_sse' or 'largest_cluster' "
-                             f"got {self.bisect_strategy} instead")
+                             f"got {self.bisect_strategy} instead.")
 
         # Regular K-Means should do less computations when there are only
         # less than 3 clusters
         if self.n_clusters < 3:
             warnings.warn("BisectKMeans might be inefficient for n_cluster "
                           "smaller than 3  "
-                          "- Use Normal KMeans from sklearn.cluster instead",
+                          "- Use Normal KMeans from sklearn.cluster instead.",
                           EfficiencyWarning)
 
         if X.shape[0] <= 1:
-            raise ValueError("Bisecting K-Means needs more than one sample "
-                             "to perform bisection")
+            raise ValueError("BisectKMeans needs more than one sample "
+                             "to perform bisection.")
 
         if hasattr(self.init, '__array__'):
-            raise ValueError("Bisecting K-Means does not support "
-                             "init as array")
+            raise ValueError("BisectKMeans does not support "
+                             "init as array.")
 
     def _bisect(self, X, init, sample_weight=None,
                 random_state=None):
@@ -255,7 +254,7 @@ class BisectKMeans(KMeans):
                 which will cause a memory copy
                 if the given data is not C-contiguous.
 
-        init : {'k-means++', 'random'} or callable (n_clusters, n_features)
+        init : {'k-means++', 'random'} or callable
             Method for initialization.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -367,7 +366,7 @@ class BisectKMeans(KMeans):
                                                          init, random_state,
                                                          n_centroids=1)
             warnings.warn("Bisection won't be performed - "
-                          "needs at least two clusters to run")
+                          "needs at least two clusters to run.")
 
             self.labels_ = np.zeros(X.shape[0], dtype=np.intc)
 
@@ -396,11 +395,11 @@ class BisectKMeans(KMeans):
         on 'bisect_strategy' attribute:
 
         - "biggest sse": Picks cluster with biggest SSE (Sum of Squared Errors)
-         from all calculated
+         from all calculated.
 
         - "largest_cluster": Picks always cluster with largest number of
          points assigned from all calculated. That method will perform faster
-          than picking by SSE methods, while producing similar results
+          than picking by SSE methods, while producing similar results.
 
         - "child_biggest_sse": Picks always cluster with higher SSE from two
         clusters received from previous iteration. That method produce
@@ -414,7 +413,7 @@ class BisectKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster.
 
-        init : {'k-means++', 'random'} or callable (n_clusters, n_features)
+        init : {'k-means++', 'random'} or callable
                 Method for initialization.
 
         random_state : int, RandomState instance
@@ -426,6 +425,10 @@ class BisectKMeans(KMeans):
         strategy = self.bisect_strategy
         label_indexes = np.arange(X.shape[0])
 
+        # Initialize Dictionary that hold data of each computed centroid.
+        # It contains calculated centroid point, indexes of data points
+        # assigned to it and its SSE error.
+        # Note: SSE will be not calculated for "largest_cluster".
         centers_dict = {
             0: {'sse': None, 'centroid': None, 'label_indexes': label_indexes}
         }
@@ -446,15 +449,15 @@ class BisectKMeans(KMeans):
             else:
                 # "child_biggest_sse"
 
-                # Pick index of cluster with biggest SSE from latest received
-                # cluster with lower SSE is added first so last cluster
+                # Pick index of cluster with biggest SSE from latest received.
+                # Cluster with lower SSE is added first, so last cluster
                 # in centers_dict will have higher SSE and be further split
                 biggest = last_center_id
 
             # Pick data to bisect from selected biggest cluster
-            data_left = X[centers_dict[biggest]['label_indexes']]
-            weights_left = sample_weight[
-                centers_dict[biggest]['label_indexes']]
+            label_indexes = centers_dict[biggest]['label_indexes']
+            data_left = X[label_indexes]
+            weights_left = sample_weight[label_indexes]
 
             # Perform Bisection
             centers, labels = self._bisect(data_left, init,
@@ -485,15 +488,13 @@ class BisectKMeans(KMeans):
             centers_dict[last_center_id + 1] = {
                 'sse': errors[lower_index],
                 'centroid': centers[lower_index],
-                'label_indexes':
-                    centers_dict[biggest]['label_indexes'][lower_labels]
+                'label_indexes': label_indexes[lower_labels]
             }
 
             centers_dict[last_center_id + 2] = {
                 'sse': errors[higher_index],
                 'centroid': centers[higher_index],
-                'label_indexes':
-                    centers_dict[biggest]['label_indexes'][higher_labels]
+                'label_indexes': label_indexes[higher_labels]
             }
 
             if self.verbose:
@@ -511,9 +512,7 @@ class BisectKMeans(KMeans):
 
     def _save_labels_and_centers(self, x_len, centers_dict):
         """ Extract labels and centers from dictionary with results and
-        saves them as self.labels_ and self.cluster_centers_
-
-        ..note:: Used for dicts from 'biggest_sse' and 'largest_cluster'
+        saves them as self.labels_ and self.cluster_centers_.
 
         Parameters
         ----------
@@ -523,9 +522,9 @@ class BisectKMeans(KMeans):
         centers_dict : {dict} - Dictionary with nested dictionary,
         containing values:
             - ['centroid'] : ndarray of shape (n_clusters, n_features)
-            Calculated centroids
+            Calculated centroids.
             - ['label_indexes'] : ndarray of shape (n_samples,)
-            Indexes of assigned values to center
+            Indexes of assigned values to center.
         """
         labels = np.zeros(x_len, dtype=np.intc)
         centers = []
