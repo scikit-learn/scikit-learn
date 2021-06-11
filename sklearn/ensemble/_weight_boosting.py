@@ -359,6 +359,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     AdaBoostRegressor : An AdaBoost regressor that begins by fitting a
@@ -934,6 +939,11 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

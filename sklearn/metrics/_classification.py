@@ -871,12 +871,11 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
     cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
-    mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
-    if np.isnan(mcc):
+    if cov_ypyp * cov_ytyt == 0:
         return 0.
     else:
-        return mcc
+        return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
 
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):

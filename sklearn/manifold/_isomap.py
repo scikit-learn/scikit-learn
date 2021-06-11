@@ -104,6 +104,11 @@ class Isomap(TransformerMixin, BaseEstimator):
     dist_matrix_ : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits

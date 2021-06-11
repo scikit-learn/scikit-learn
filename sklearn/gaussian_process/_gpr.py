@@ -137,6 +137,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import make_friedman2

@@ -309,6 +309,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations taken to converge.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
@@ -436,7 +441,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self._validate_data(X, reset=False, accept_sparse='csr')
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")

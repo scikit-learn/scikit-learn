@@ -311,6 +311,11 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.22
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.cluster import MeanShift

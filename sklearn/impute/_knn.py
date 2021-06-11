@@ -76,6 +76,11 @@ class KNNImputer(_BaseImputer):
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     References
     ----------
     * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor

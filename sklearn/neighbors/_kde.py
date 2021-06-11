@@ -71,6 +71,11 @@ class KernelDensity(BaseEstimator):
 
     Attributes
     ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
 

@@ -1323,44 +1323,31 @@ def test_check_preserve_type():
 @pytest.mark.parametrize("metric", ["seuclidean", "mahalanobis"])
 @pytest.mark.parametrize("dist_function",
                          [pairwise_distances, pairwise_distances_chunked])
-@pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
-def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
-                                                y_is_x):
+def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function):
     # check that pairwise_distances give the same result in sequential and
     # parallel, when metric has data-derived parameters.
     with config_context(working_memory=0.1):  # to have more than 1 chunk
         rng = np.random.RandomState(0)
         X = rng.random_sample((100, 10))
 
-        if y_is_x:
-            Y = X
-            expected_dist_default_params = squareform(pdist(X, metric=metric))
-            if metric == "seuclidean":
-                params = {'V': np.var(X, axis=0, ddof=1)}
-            else:
-                params = {'VI': np.linalg.inv(np.cov(X.T)).T}
-        else:
-            Y = rng.random_sample((100, 10))
-            expected_dist_default_params = cdist(X, Y, metric=metric)
-            if metric == "seuclidean":
-                params = {'V': np.var(np.vstack([X, Y]), axis=0, ddof=1)}
-            else:
-                params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
+        expected_dist = squareform(pdist(X, metric=metric))
+        dist = np.vstack(tuple(dist_function(X, metric=metric, n_jobs=n_jobs)))
 
-        expected_dist_explicit_params = cdist(X, Y, metric=metric, **params)
-        # TODO: Remove warn_checker in 1.0
-        if y_is_x:
-            warn_checker = pytest.warns(None)
-        else:
-            warn_checker = pytest.warns(FutureWarning,
-                                        match="to be specified if Y is passed")
-        with warn_checker:
-            dist = np.vstack(tuple(dist_function(X, Y,
-                                                 metric=metric,
-                                                 n_jobs=n_jobs)))
+        assert_allclose(dist, expected_dist)
 
-        assert_allclose(dist, expected_dist_explicit_params)
-        assert_allclose(dist, expected_dist_default_params)
+
+@pytest.mark.parametrize("metric", ["seuclidean", "mahalanobis"])
+def test_pairwise_distances_data_derived_params_error(metric):
+    # check that pairwise_distances raises an error when Y is passed but
+    # metric has data-derived params that are not provided by the user.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    Y = rng.random_sample((100, 10))
+
+    with pytest.raises(ValueError,
+                       match=fr"The '(V|VI)' parameter is required for the "
+                             fr"{metric} metric"):
+        pairwise_distances(X, Y, metric=metric)
 
 
 @pytest.mark.parametrize(
