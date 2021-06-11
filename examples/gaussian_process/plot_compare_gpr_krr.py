@@ -15,10 +15,11 @@ Kernel ridge regression will find the target function that minimizes a loss
 function (the mean squared error).
 
 Instead of finding a single target function, the Gaussian process regression
-employs a probabilistic approach : a Gaussian posterior distribution over target
-functions is defined based on the Bayes' theorem, Thus prior probabilities on
-target functions are being combined with a likelihood function defined by the
-observed training data to provide estimates of the posterior distributions.
+employs a probabilistic approach : a Gaussian posterior distribution over
+target functions is defined based on the Bayes' theorem, Thus prior
+probabilities on target functions are being combined with a likelihood function
+defined by the observed training data to provide estimates of the posterior
+distributions.
 
 We will illustrate these differences with an example and we will also focus on
 tuning the kernel hyperparameters.
@@ -105,9 +106,10 @@ _ = plt.title("Limitation of a linear model such as ridge")
 # ............
 #
 # We can make the previous linear model more expressive by using a so-called
-# kernel. A kernel is an embedding from the original feature space to another one.
-# Simply put, it is used to map our original data into a newer and more complex
-# feature space. This new space is explicitly defined by the choice of kernel.
+# kernel. A kernel is an embedding from the original feature space to another
+# one. Simply put, it is used to map our original data into a newer and more
+# complex feature space. This new space is explicitly defined by the choice of
+# kernel.
 #
 # In our case, we know that the true generative process is a periodic function.
 # We can use a :class:`~sklearn.gaussian_process.kernels.ExpSineSquared` kernel
@@ -154,8 +156,8 @@ _ = plt.title("Kernel ridge regression with an exponential sine squared\n "
               "kernel using default hyperparameters")
 
 # %%
-# This fitted model is not accurate. Indeed, we did not set the parameters of the
-# kernel and instead used the default ones. We can have a look at them.
+# This fitted model is not accurate. Indeed, we did not set the parameters of
+# the kernel and instead used the default ones. We can have a look at them.
 kernel_ridge.kernel
 
 # %%

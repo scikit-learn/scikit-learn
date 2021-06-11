@@ -140,7 +140,7 @@ _ = plt.title(
 )
 
 # %%
-# First, we see that the model's predictions are precise than the previous 
+# First, we see that the model's predictions are precise than the previous
 # model's. This new model is able to estimate the noise-free functional
 # relationship.
 #
