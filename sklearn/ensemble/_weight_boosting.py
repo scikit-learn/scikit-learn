@@ -33,7 +33,7 @@ from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_array, check_random_state, _safe_indexing
+from ..utils import check_random_state, _safe_indexing
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -41,7 +41,6 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 
 __all__ = [
     'AdaBoostClassifier',
@@ -73,8 +72,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
 
     def _check_X(self, X):
-        return check_array(X, accept_sparse=['csr', 'csc'], ensure_2d=True,
-                           allow_nd=True, dtype=None)
+        # Only called to validate X in non-fit methods, therefore reset=False
+        return self._validate_data(
+            X, accept_sparse=['csr', 'csc'], ensure_2d=True, allow_nd=True,
+            dtype=None, reset=False)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -311,9 +312,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         In case of perfect fit, the learning procedure is stopped early.
 
     learning_rate : float, default=1.
-        Learning rate shrinks the contribution of each classifier by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
+        Weight applied to each classifier at each boosting iteration. A higher
+        learning rate increases the contribution of each classifier. There is
+        a trade-off between the `learning_rate` and `n_estimators` parameters.
 
     algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
@@ -358,6 +359,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     AdaBoostRegressor : An AdaBoost regressor that begins by fitting a
@@ -398,7 +404,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     >>> clf.score(X, y)
     0.983...
     """
-    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None, *,
                  n_estimators=50,
@@ -896,9 +901,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         In case of perfect fit, the learning procedure is stopped early.
 
     learning_rate : float, default=1.
-        Learning rate shrinks the contribution of each regressor by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
+        Weight applied to each classifier at each boosting iteration. A higher
+        learning rate increases the contribution of each classifier. There is
+        a trade-off between the `learning_rate` and `n_estimators` parameters.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
         The loss function to use when updating the weights after each
@@ -935,6 +940,11 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.ensemble import AdaBoostRegressor
@@ -962,7 +972,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
     """
-    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None, *,
                  n_estimators=50,

@@ -24,7 +24,7 @@ from .utils import check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
-from .utils.validation import check_non_negative, _deprecate_positional_args
+from .utils.validation import check_non_negative
 
 
 class PolynomialCountSketch(BaseEstimator, TransformerMixin):
@@ -76,6 +76,11 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     bitHash_ : ndarray of shape (degree, n_features), dtype=float32
         Array with random entries in {+1, -1}, used to represent
         the 2-wise independent hash functions for Count Sketch computation.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -228,6 +233,10 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Random projection directions drawn from the Fourier transform
         of the RBF kernel.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -253,7 +262,6 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     Benjamin Recht.
     (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
-    @_deprecate_positional_args
     def __init__(self, *, gamma=1., n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
@@ -341,6 +349,11 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Bias term, which will be added to the data. It is uniformly distributed
         between 0 and 2*pi.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import SkewedChi2Sampler
@@ -369,7 +382,6 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
 
     sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
-    @_deprecate_positional_args
     def __init__(self, *, skewedness=1., n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
@@ -464,6 +476,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Stored sampling interval. Specified as a parameter if sample_steps not
         in {1,2,3}.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -500,7 +517,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
     2011
     """
-    @_deprecate_positional_args
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
@@ -693,6 +709,11 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import datasets, svm
@@ -728,7 +749,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
-    @_deprecate_positional_args
     def __init__(self, kernel="rbf", *, gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None,
                  n_jobs=None):

@@ -15,7 +15,6 @@ from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 
@@ -189,7 +188,6 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
-@_deprecate_positional_args
 def locally_linear_embedding(
         X, *, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
         tol=1e-6, max_iter=100, method='standard', hessian_tol=1E-4,
@@ -563,15 +561,15 @@ class LocallyLinearEmbedding(TransformerMixin,
         Not used if eigen_solver=='dense'.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
-        standard : use the standard locally linear embedding algorithm.  see
-                   reference [1]
-        hessian  : use the Hessian eigenmap method. This method requires
-                   ``n_neighbors > n_components * (1 + (n_components + 1) / 2``
-                   see reference [2]
-        modified : use the modified locally linear embedding algorithm.
-                   see reference [3]
-        ltsa     : use local tangent space alignment algorithm
-                   see reference [4]
+        - `standard`: use the standard locally linear embedding algorithm. see
+          reference [1]_
+        - `hessian`: use the Hessian eigenmap method. This method requires
+          ``n_neighbors > n_components * (1 + (n_components + 1) / 2``. see
+          reference [2]_
+        - `modified`: use the modified locally linear embedding algorithm.
+          see reference [3]_
+        - `ltsa`: use local tangent space alignment algorithm. see
+          reference [4]_
 
     hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
@@ -605,6 +603,11 @@ class LocallyLinearEmbedding(TransformerMixin,
     reconstruction_error_ : float
         Reconstruction error associated with `embedding_`
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
@@ -636,7 +639,6 @@ class LocallyLinearEmbedding(TransformerMixin,
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,

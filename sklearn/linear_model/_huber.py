@@ -9,7 +9,6 @@ from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
 from ..utils import axis0_safe_slice
 from ..utils.validation import _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
 
@@ -180,6 +179,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     scale_ : float
         The value by which ``|y - X'w - c|`` is scaled down.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` has run for.
@@ -223,7 +227,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
            https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
-    @_deprecate_positional_args
     def __init__(self, *, epsilon=1.35, max_iter=100, alpha=0.0001,
                  warm_start=False, fit_intercept=True, tol=1e-05):
         self.epsilon = epsilon

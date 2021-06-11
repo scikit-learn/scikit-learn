@@ -15,7 +15,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
 
@@ -188,6 +187,11 @@ class SimpleImputer(_BaseImputer):
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     IterativeImputer : Multivariate imputation of missing values.
@@ -211,7 +215,6 @@ class SimpleImputer(_BaseImputer):
     upon :meth:`transform` if strategy is not "constant".
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, missing_values=np.nan, strategy="mean",
                  fill_value=None, verbose=0, copy=True, add_indicator=False):
         super().__init__(
@@ -426,6 +429,12 @@ class SimpleImputer(_BaseImputer):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
+
+        Returns
+        -------
+        X_imputed : {ndarray, sparse matrix} of shape \
+                (n_samples, n_features_out)
+            `X` with imputed values.
         """
         check_is_fitted(self)
 
@@ -600,6 +609,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         They are computed during ``fit``. For ``features='all'``, it is
         to ``range(n_features)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -620,7 +634,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
            [False, False]])
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, missing_values=np.nan, features="missing-only",
                  sparse="auto", error_on_new=True):
         self.missing_values = missing_values

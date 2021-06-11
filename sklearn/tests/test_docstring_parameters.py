@@ -83,8 +83,9 @@ def test_docstring_parameters():
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
-        # Exclude imported classes
-        classes = [cls for cls in classes if cls[1].__module__ == name]
+        # Exclude non-scikit-learn classes
+        classes = [cls for cls in classes
+                   if cls[1].__module__.startswith('sklearn')]
         for cname, cls in classes:
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
@@ -174,6 +175,12 @@ def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
 
+N_FEATURES_MODULES_TO_IGNORE = {
+    'model_selection',
+    'multioutput',
+}
+
+
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -183,22 +190,28 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer',
-               'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
-               'GaussianRandomProjection',
-               'MultiOutputClassifier', 'MultiOutputRegressor',
-               'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
-               'RegressorChain', 'SelectFromModel',
-               'SparseCoder', 'SparseRandomProjection',
-               'SpectralBiclustering', 'StackingClassifier',
-               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor', 'SequentialFeatureSelector',
-               'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
+    IGNORED = {
+        'ClassifierChain',
+        'CountVectorizer', 'DictVectorizer',
+        'GaussianRandomProjection',
+        'MultiOutputClassifier', 'MultiOutputRegressor',
+        'NoSampleWeightWrapper', 'RFE', 'RFECV',
+        'RegressorChain', 'SelectFromModel',
+        'SparseCoder', 'SparseRandomProjection',
+        'SpectralBiclustering', 'StackingClassifier',
+        'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
+        'VotingRegressor', 'SequentialFeatureSelector',
+    }
+
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    if Estimator.__name__ in ("RandomizedSearchCV", "GridSearchCV"):
+    if Estimator.__name__ in (
+        "HalvingRandomSearchCV",
+        "RandomizedSearchCV",
+        "HalvingGridSearchCV",
+        "GridSearchCV",
+    ):
         est = _construct_searchcv_instance(Estimator)
     else:
         est = _construct_instance(Estimator)
@@ -212,13 +225,14 @@ def test_fit_docstring_attributes(name, Estimator):
     if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
         est.n_components = 1  # default = 2 is invalid for single target.
 
-    # FIXME: TO BE REMOVED for 1.0 (avoid FutureWarning)
-    if Estimator.__name__ == 'AffinityPropagation':
-        est.random_state = 63
-
     # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
         est.init = 'nndsvda'
+
+    # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
+    if Estimator.__name__ == 'TSNE':
+        est.learning_rate = 200.0
+        est.init = 'random'
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
@@ -234,9 +248,12 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    skipped_attributes = {'n_features_in_',
-                          'x_scores_',  # For PLS, TODO remove in 1.1
+    skipped_attributes = {'x_scores_',  # For PLS, TODO remove in 1.1
                           'y_scores_'}  # For PLS, TODO remove in 1.1
+
+    module = est.__module__.split(".")[1]
+    if module in N_FEATURES_MODULES_TO_IGNORE:
+        skipped_attributes.add("n_features_in_")
 
     for attr in attributes:
         if attr.name in skipped_attributes:
@@ -251,17 +268,34 @@ def test_fit_docstring_attributes(name, Estimator):
         with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'Birch', 'LarsCV', 'Lasso',
-               'OrthogonalMatchingPursuit'}
-
-    if Estimator.__name__ in IGNORED:
-        pytest.xfail(
-            reason="Estimator has too many undocumented attributes.")
-
-    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
-                and not k.startswith('_')]
+    fit_attr = _get_all_fitted_attributes(est)
     fit_attr_names = [attr.name for attr in attributes]
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
     undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
     assert not undocumented_attrs,\
         "Undocumented attributes: {}".format(undocumented_attrs)
+
+
+def _get_all_fitted_attributes(estimator):
+    "Get all the fitted attributes of an estimator including properties"
+    # attributes
+    fit_attr = list(estimator.__dict__.keys())
+
+    # properties
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=FutureWarning)
+
+        for name in dir(estimator.__class__):
+            obj = getattr(estimator.__class__, name)
+            if not isinstance(obj, property):
+                continue
+
+            # ignore properties that raises an AttributeError and deprecated
+            # properties
+            try:
+                getattr(estimator, name)
+            except (AttributeError, FutureWarning):
+                continue
+            fit_attr.append(name)
+
+    return [k for k in fit_attr if k.endswith('_') and not k.startswith('_')]

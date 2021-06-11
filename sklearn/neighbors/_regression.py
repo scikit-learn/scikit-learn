@@ -17,8 +17,6 @@ import numpy as np
 from ._base import _get_weights, _check_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
-from ..utils import check_array
-from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
 
 
@@ -108,6 +106,11 @@ class KNeighborsRegressor(KNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -144,17 +147,15 @@ class KNeighborsRegressor(KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_neighbors=5, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None):
         super().__init__(
               n_neighbors=n_neighbors,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
-              metric_params=metric_params, n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+              metric_params=metric_params, n_jobs=n_jobs)
+        self.weights = weights
 
     def _more_tags(self):
         # For cross-validation routines to split data correctly
@@ -187,6 +188,8 @@ class KNeighborsRegressor(KNeighborsMixin,
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
+        self.weights = _check_weights(self.weights)
+
         return self._fit(X, y)
 
     def predict(self, X):
@@ -203,7 +206,7 @@ class KNeighborsRegressor(KNeighborsMixin,
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -315,6 +318,11 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -344,18 +352,16 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None):
         super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,
               p=p, metric=metric, metric_params=metric_params,
-              n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+              n_jobs=n_jobs)
+        self.weights = weights
 
     def fit(self, X, y):
         """Fit the radius neighbors regressor from the training dataset.
@@ -375,6 +381,8 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
+        self.weights = _check_weights(self.weights)
+
         return self._fit(X, y)
 
     def predict(self, X):
@@ -392,7 +400,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
                 dtype=double
             Target values.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 

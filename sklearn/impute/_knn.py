@@ -13,7 +13,6 @@ from ..neighbors._base import _check_weights
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 
 class KNNImputer(_BaseImputer):
@@ -77,6 +76,11 @@ class KNNImputer(_BaseImputer):
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     References
     ----------
     * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
@@ -96,7 +100,6 @@ class KNNImputer(_BaseImputer):
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
     """
-    @_deprecate_positional_args
     def __init__(self, *, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean", copy=True,
                  add_indicator=False):

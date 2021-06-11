@@ -3,16 +3,16 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
+import warnings
 
 import numpy as np
 from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
-from ...utils import check_random_state, check_array, resample
+from ...utils import check_random_state, resample
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length,
-                                 _check_sample_weight,
-                                 _deprecate_positional_args)
+                                 _check_sample_weight)
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -82,7 +82,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError(
                 'validation_fraction={} must be strictly '
                 'positive, or None.'.format(self.validation_fraction))
-        if self.tol is not None and self.tol < 0:
+        if self.tol < 0:
             raise ValueError('tol={} '
                              'must not be smaller than 0.'.format(self.tol))
 
@@ -646,8 +646,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # harder for subsequent iteration to be considered an improvement upon
         # the reference score, and therefore it is more likely to early stop
         # because of the lack of significant improvement.
-        tol = 0 if self.tol is None else self.tol
-        reference_score = scores[-reference_position] + tol
+        reference_score = scores[-reference_position] + self.tol
         recent_scores = scores[-reference_position + 1:]
         recent_improvements = [score > reference_score
                                for score in recent_scores]
@@ -734,7 +733,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         is_binned = getattr(self, '_in_fit', False)
         dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
-        X = check_array(X, dtype=dtype, force_all_finite=False)
+        X = self._validate_data(X, dtype=dtype, force_all_finite=False,
+                                reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -790,7 +790,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predictions of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
-        X = check_array(X, dtype=X_DTYPE, force_all_finite=False)
+        X = self._validate_data(X, dtype=X_DTYPE, force_all_finite=False,
+                                reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -885,25 +886,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
-    .. note::
-
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-        >>> # now you can import normally from ensemble
-        >>> from sklearn.ensemble import HistGradientBoostingRegressor
-
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
     .. versionadded:: 0.21
 
     Parameters
     ----------
-    loss : {'least_squares', 'least_absolute_deviation', 'poisson'}, \
-            default='least_squares'
+    loss : {'squared_error', 'least_squares', 'absolute_error', \
+            'least_absolute_deviation', 'poisson'}, default='squared_error'
         The loss function to use in the boosting process. Note that the
         "least squares" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
@@ -912,6 +902,15 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
+
+        .. deprecated:: 1.0
+            The loss 'least_squares' was deprecated in v1.0 and will be removed
+            in version 1.2. Use `loss='squared_error'` which is equivalent.
+
+        .. deprecated:: 1.0
+            The loss 'least_absolute_deviation' was deprecated in v1.0 and will
+            be removed in version 1.2. Use `loss='absolute_error'` which is
+            equivalent.
 
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
@@ -941,14 +940,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
-
     categorical_features : array-like of {bool, int} of shape (n_features) \
             or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
@@ -964,6 +955,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
@@ -992,7 +991,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. Only used if early stopping is performed.
-    tol : float or None, default=1e-7
+    tol : float, default=1e-7
         The absolute tolerance to use when comparing scores during early
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
@@ -1031,11 +1030,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     is_categorical_ : ndarray, shape (n_features, ) or None
         Boolean mask for the categorical features. ``None`` if there are no
         categorical features.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
-    >>> # To use this experimental feature, we need to explicitly ask for it:
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_diabetes
     >>> X, y = load_diabetes(return_X_y=True)
@@ -1044,11 +1045,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
-    _VALID_LOSSES = ('least_squares', 'least_absolute_deviation',
-                     'poisson')
+    _VALID_LOSSES = ('squared_error', 'least_squares', 'absolute_error',
+                     'least_absolute_deviation', 'poisson')
 
-    @_deprecate_positional_args
-    def __init__(self, loss='least_squares', *, learning_rate=0.1,
+    def __init__(self, loss='squared_error', *, learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  categorical_features=None, monotonic_cst=None,
@@ -1120,6 +1120,22 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return y
 
     def _get_loss(self, sample_weight):
+        # TODO: Remove in v1.2
+        if self.loss == "least_squares":
+            warnings.warn(
+                "The loss 'least_squares' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use 'squared_error' which is "
+                "equivalent.",
+                FutureWarning)
+            return _LOSSES["squared_error"](sample_weight=sample_weight)
+        elif self.loss == "least_absolute_deviation":
+            warnings.warn(
+                "The loss 'least_absolute_deviation' was deprecated in v1.0 "
+                " and will be removed in version 1.2. Use 'absolute_error' "
+                "which is equivalent.",
+                FutureWarning)
+            return _LOSSES["absolute_error"](sample_weight=sample_weight)
+
         return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
@@ -1141,17 +1157,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
-
-    .. note::
-
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-        >>> # now you can import normally from ensemble
-        >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
@@ -1194,14 +1199,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
-
     categorical_features : array-like of {bool, int} of shape (n_features) \
             or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
@@ -1217,6 +1214,14 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1245,7 +1250,7 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. Only used if early stopping is performed.
-    tol : float or None, default=1e-7
+    tol : float, default=1e-7
         The absolute tolerance to use when comparing scores. The higher the
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
@@ -1287,11 +1292,13 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     is_categorical_ : ndarray, shape (n_features, ) or None
         Boolean mask for the categorical features. ``None`` if there are no
         categorical features.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
-    >>> # To use this experimental feature, we need to explicitly ask for it:
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingClassifier
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
@@ -1303,7 +1310,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
                      'auto')
 
-    @_deprecate_positional_args
     def __init__(self, loss='auto', *, learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255,

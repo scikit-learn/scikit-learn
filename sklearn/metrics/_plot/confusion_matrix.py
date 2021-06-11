@@ -6,7 +6,6 @@ from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
 from ...utils.multiclass import unique_labels
-from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
 
@@ -49,7 +48,10 @@ class ConfusionMatrixDisplay:
     --------
     confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
         classification.
-    plot_confusion_matrix : Plot Confusion Matrix.
+    ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
+        given an estimator, the data, and the label.
+    ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
+        given the true and predicted labels.
 
     Examples
     --------
@@ -69,12 +71,10 @@ class ConfusionMatrixDisplay:
     ...                               display_labels=clf.classes_)
     >>> disp.plot() # doctest: +SKIP
     """
-    @_deprecate_positional_args
     def __init__(self, confusion_matrix, *, display_labels=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
 
-    @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None,
              ax=None, colorbar=True):
@@ -119,7 +119,7 @@ class ConfusionMatrixDisplay:
         n_classes = cm.shape[0]
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
-        cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(256)
+        cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(1.0)
 
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
@@ -432,7 +432,6 @@ class ConfusionMatrixDisplay:
     "ConfusionMatrixDisplay.from_predictions or "
     "ConfusionMatrixDisplay.from_estimator."
 )
-@_deprecate_positional_args
 def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                           sample_weight=None, normalize=None,
                           display_labels=None, include_values=True,

@@ -10,7 +10,6 @@ from ._base import KNeighborsMixin
 from ..base import OutlierMixin
 
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 
 __all__ = ["LocalOutlierFactor"]
@@ -104,7 +103,7 @@ class LocalOutlierFactor(KNeighborsMixin,
 
         - if 'auto', the threshold is determined as in the
           original paper,
-        - if a float, the contamination should be in the range [0, 0.5].
+        - if a float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -114,7 +113,7 @@ class LocalOutlierFactor(KNeighborsMixin,
         By default, LocalOutlierFactor is only meant to be used for outlier
         detection (novelty=False). Set novelty to True if you want to use
         LocalOutlierFactor for novelty detection. In this case be aware that
-        that you should only use predict, decision_function and score_samples
+        you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
 
         .. versionadded:: 0.20
@@ -158,6 +157,11 @@ class LocalOutlierFactor(KNeighborsMixin,
     effective_metric_params_ : dict
         The effective additional keyword arguments for the metric function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 
@@ -177,7 +181,6 @@ class LocalOutlierFactor(KNeighborsMixin,
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
            LOF: identifying density-based local outliers. In ACM sigmod record.
     """
-    @_deprecate_positional_args
     def __init__(self, n_neighbors=20, *, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
                  contamination="auto", novelty=False, n_jobs=None):

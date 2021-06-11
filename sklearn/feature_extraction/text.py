@@ -33,7 +33,6 @@ from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
-from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ['HashingVectorizer',
@@ -552,16 +551,16 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     Parameters
     ----------
 
-    input : string {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+    input : {'filename', 'file', 'content'}, default='content'
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -597,7 +596,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    stop_words : string {'english'}, list, default=None
+    stop_words : {'english'}, list, default=None
         If 'english', a built-in stop word list for English is used.
         There are several known issues with 'english' and you should
         consider an alternative (see :ref:`stop_words`).
@@ -633,10 +632,9 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
-        first read from the file and then passed to the given callable
-        analyzer.
+            Since v0.21, if ``input`` is ``'filename'`` or ``'file'``, the data
+            is first read from the file and then passed to the given callable
+            analyzer.
 
     n_features : int, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
@@ -680,7 +678,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     CountVectorizer, TfidfVectorizer
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -819,16 +816,16 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     Parameters
     ----------
-    input : string {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+    input : {'filename', 'file', 'content'}, default='content'
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -864,7 +861,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    stop_words : string {'english'}, list, default=None
+    stop_words : {'english'}, list, default=None
         If 'english', a built-in stop word list for English is used.
         There are several known issues with 'english' and you should
         consider an alternative (see :ref:`stop_words`).
@@ -1005,7 +1002,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """
-    @_deprecate_positional_args
     def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -1107,6 +1103,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         analyze = self.build_analyzer()
         j_indices = []
         indptr = []
+
+        if self.lowercase:
+            for vocab in vocabulary:
+                if any(map(str.isupper, vocab)):
+                    warnings.warn("Upper case characters found in"
+                                  " vocabulary while 'lowercase'"
+                                  " is True. These entries will not"
+                                  " be matched with any documents")
+                    break
 
         values = _make_int_array()
         indptr.append(0)
@@ -1271,22 +1276,20 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             List of arrays of terms.
         """
         self._check_vocabulary()
-
-        if sp.issparse(X):
-            # We need CSR format for fast row manipulations.
-            X = X.tocsr()
-        else:
-            # We need to convert X to a matrix, so that the indexing
-            # returns 2D objects
-            X = np.asmatrix(X)
+        # We need CSR format for fast row manipulations.
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         terms = np.array(list(self.vocabulary_.keys()))
         indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
-                for i in range(n_samples)]
+        if sp.issparse(X):
+            return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
+                    for i in range(n_samples)]
+        else:
+            return [inverse_vocabulary[np.flatnonzero(X[i, :])].ravel()
+                    for i in range(n_samples)]
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
@@ -1383,6 +1386,11 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.20
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -1418,7 +1426,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
     """
-    @_deprecate_positional_args
     def __init__(self, *, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
         self.norm = norm
@@ -1434,7 +1441,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         X : sparse matrix of shape n_samples, n_features)
             A matrix of term/token counts.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'))
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'))
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
         dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
@@ -1474,7 +1481,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=FLOAT_DTYPES, copy=copy, reset=False)
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
 
@@ -1491,11 +1499,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             check_is_fitted(self, attributes=["idf_"],
                             msg='idf vector is not fitted')
 
-            expected_n_features = self._idf_diag.shape[0]
-            if n_features != expected_n_features:
-                raise ValueError("Input has n_features=%d while the model"
-                                 " has been trained with n_features=%d" % (
-                                     n_features, expected_n_features))
             # *= doesn't work
             X = X * self._idf_diag
 
@@ -1532,15 +1535,15 @@ class TfidfVectorizer(CountVectorizer):
     Parameters
     ----------
     input : {'filename', 'file', 'content'}, default='content'
-        If 'filename', the sequence passed as an argument to fit is
-        expected to be a list of filenames that need reading to fetch
-        the raw content to analyze.
+        - If `'filename'`, the sequence passed as an argument to fit is
+          expected to be a list of filenames that need reading to fetch
+          the raw content to analyze.
 
-        If 'file', the sequence items must have a 'read' method (file-like
-        object) that is called to fetch the bytes in memory.
+        - If `'file'`, the sequence items must have a 'read' method (file-like
+          object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be a sequence of items that
-        can be of type string or byte.
+        - If `'content'`, the input is expected to be a sequence of items that
+          can be of type string or byte.
 
     encoding : str, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -1585,10 +1588,9 @@ class TfidfVectorizer(CountVectorizer):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
-        first read from the file and then passed to the given callable
-        analyzer.
+            Since v0.21, if ``input`` is ``'filename'`` or ``'file'``, the data
+            is first read from the file and then passed to the given callable
+            analyzer.
 
     stop_words : {'english'}, list, default=None
         If a string, it is passed to _check_stop_list and the appropriate stop
@@ -1728,7 +1730,6 @@ class TfidfVectorizer(CountVectorizer):
     >>> print(X.shape)
     (4, 9)
     """
-    @_deprecate_positional_args
     def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',

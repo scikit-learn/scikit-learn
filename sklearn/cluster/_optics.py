@@ -17,7 +17,6 @@ import numpy as np
 from ..exceptions import DataConversionWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..utils import gen_batches, get_chunk_n_rows
-from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
@@ -179,6 +178,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
         ``X[ordering_][start:end + 1]`` form a cluster.
         Only available when ``cluster_method='xi'``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     DBSCAN : A similar clustering for a specified neighborhood radius (eps).
@@ -204,7 +208,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
     """
-    @_deprecate_positional_args
     def __init__(self, *, min_samples=5, max_eps=np.inf, metric='minkowski',
                  p=2, metric_params=None, cluster_method='xi', eps=None,
                  xi=0.05, predecessor_correction=True, min_cluster_size=None,
@@ -348,7 +351,6 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     return core_distances
 
 
-@_deprecate_positional_args
 def compute_optics_graph(X, *, min_samples, max_eps, metric, p, metric_params,
                          algorithm, leaf_size, n_jobs):
     """Computes the OPTICS reachability graph.
@@ -483,6 +485,9 @@ def compute_optics_graph(X, *, min_samples, max_eps, metric, p, metric_params,
                                                working_memory=None)
     # OPTICS puts an upper limit on these, use inf for undefined.
     core_distances_[core_distances_ > max_eps] = np.inf
+    np.around(core_distances_,
+              decimals=np.finfo(core_distances_.dtype).precision,
+              out=core_distances_)
 
     # Main OPTICS loop. Not parallelizable. The order that entries are
     # written to the 'ordering_' list is important!
@@ -543,12 +548,12 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
                                    **_params).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])
+    np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
     improved = np.where(rdists < np.take(reachability_, unproc))
     reachability_[unproc[improved]] = rdists[improved]
     predecessor_[unproc[improved]] = point_index
 
 
-@_deprecate_positional_args
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     """Performs DBSCAN extraction for an arbitrary epsilon.
 

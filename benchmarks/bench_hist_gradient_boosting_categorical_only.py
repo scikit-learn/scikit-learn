@@ -3,7 +3,6 @@ from time import time
 
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.datasets import make_classification
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.utils import (
     get_equivalent_estimator)

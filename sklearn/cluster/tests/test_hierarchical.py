@@ -5,6 +5,7 @@ Several basic tests for hierarchical clustering procedures
 # Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
 #          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
+import itertools
 from tempfile import mkdtemp
 import shutil
 import pytest
@@ -15,9 +16,12 @@ from scipy import sparse
 from scipy.cluster import hierarchy
 
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.utils._testing import assert_almost_equal
+from sklearn.neighbors.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    create_memmap_backed_data
+)
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
@@ -29,11 +33,14 @@ from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors import kneighbors_graph
-from sklearn.cluster._hierarchical_fast import average_merge, max_merge
+from sklearn.neighbors import kneighbors_graph, DistanceMetric
+from sklearn.cluster._hierarchical_fast import (
+    average_merge,
+    max_merge,
+    mst_linkage_core
+)
 from sklearn.utils._fast_dict import IntFloatDict
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
 
 
@@ -94,17 +101,18 @@ def test_unstructured_linkage_tree():
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
         with ignore_warnings():
-            children, n_nodes, n_leaves, parent = assert_warns(
-                UserWarning, ward_tree, this_X.T, n_clusters=10)
+            with pytest.warns(UserWarning):
+                children, n_nodes, n_leaves, parent = ward_tree(
+                    this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
             with ignore_warnings():
-                children, n_nodes, n_leaves, parent = assert_warns(
-                    UserWarning, tree_builder, this_X.T, n_clusters=10)
-
+                with pytest.warns(UserWarning):
+                    children, n_nodes, n_leaves, parent = tree_builder(
+                        this_X.T, n_clusters=10)
             n_nodes = 2 * X.shape[1] - 1
             assert len(children) + n_leaves == n_nodes
 
@@ -140,7 +148,8 @@ def test_zero_cosine_linkage_tree():
     X = np.array([[0, 1],
                   [0, 0]])
     msg = 'Cosine affinity cannot be used when X contains zero vectors'
-    assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
+    with pytest.raises(ValueError, match=msg):
+        linkage_tree(X, affinity='cosine')
 
 
 @pytest.mark.parametrize('n_clusters, distance_threshold',
@@ -264,6 +273,16 @@ def test_agglomerative_clustering():
     assert_array_equal(clustering.labels_, clustering2.labels_)
 
 
+def test_agglomerative_clustering_memory_mapped():
+    """AgglomerativeClustering must work on mem-mapped dataset.
+
+    Non-regression test for issue #19875.
+    """
+    rng = np.random.RandomState(0)
+    Xmm = create_memmap_backed_data(rng.randn(50, 100))
+    AgglomerativeClustering(affinity="euclidean", linkage="single").fit(Xmm)
+
+
 def test_ward_agglomeration():
     # Check that we obtain the correct solution in a simplistic case
     rng = np.random.RandomState(0)
@@ -373,6 +392,25 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     cut = _hc_cut(n_clusters, children, n_leaves)
     cut_scipy = _hc_cut(n_clusters, children_scipy, n_leaves)
     assess_same_labelling(cut, cut_scipy)
+
+
+@pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
+def test_mst_linkage_core_memory_mapped(metric):
+    """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
+
+    Non-regression test for issue #19875.
+    """
+    rng = np.random.RandomState(seed=1)
+    X = rng.normal(size=(20, 4))
+    Xmm = create_memmap_backed_data(X)
+    argdict = METRICS_DEFAULT_PARAMS[metric]
+    keys = argdict.keys()
+    for vals in itertools.product(*argdict.values()):
+        kwargs = dict(zip(keys, vals))
+        distance_metric = DistanceMetric.get_metric(metric, **kwargs)
+        mst = mst_linkage_core(X, distance_metric)
+        mst_mm = mst_linkage_core(Xmm, distance_metric)
+        np.testing.assert_equal(mst, mst_mm)
 
 
 def test_identical_points():
@@ -550,7 +588,8 @@ def test_connectivity_fixing_non_lil():
     m = np.array([[True, False], [False, True]])
     c = grid_to_graph(n_x=2, n_y=2, mask=m)
     w = AgglomerativeClustering(connectivity=c, linkage='ward')
-    assert_warns(UserWarning, w.fit, x)
+    with pytest.warns(UserWarning):
+        w.fit(x)
 
 
 def test_int_float_dict():
@@ -631,7 +670,8 @@ def test_n_components():
     connectivity = np.eye(5)
 
     for linkage_func in _TREE_BUILDERS.values():
-        assert ignore_warnings(linkage_func)(X, connectivity)[1] == 5
+        assert ignore_warnings(linkage_func)(
+            X, connectivity=connectivity)[1] == 5
 
 
 def test_agg_n_clusters():
@@ -643,7 +683,8 @@ def test_agg_n_clusters():
         agc = AgglomerativeClustering(n_clusters=n_clus)
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
-        assert_raise_message(ValueError, msg, agc.fit, X)
+        with pytest.raises(ValueError, match=msg):
+            agc.fit(X)
 
 
 def test_affinity_passed_to_fix_connectivity():
