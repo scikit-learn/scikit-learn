@@ -34,11 +34,14 @@ def test_variance_threshold():
         assert (len(data), 1) == X.shape
 
 
-def test_variance_negative():
-    # Test VarianceThreshold with negative variance.
-    for X in [data, csr_matrix(data)]:
-        with pytest.raises(ValueError):
-            VarianceThreshold(threshold=-1.).fit(X)
+@pytest.mark.parametrize('X', [data, csr_matrix(data)])
+def test_variance_negative(X):
+    """Test VarianceThreshold with negative variance."""
+    var_threshold = VarianceThreshold(threshold=-1.)
+    msg = '^Threshold must be non-negative.' \
+          ' Got: -1.0$'
+    with pytest.raises(ValueError, match=msg):
+        var_threshold.fit(X)
 
 
 @pytest.mark.skipif(np.var(data2) == 0,
