@@ -412,8 +412,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
             if self._min_degree > 1:
                 n_XP, n_Xout = self._n_out_full, self.n_output_features_
-                Xout = np.empty_like(
-                    XP, shape=(n_samples, n_Xout))
+                Xout = np.empty(
+                    shape=(n_samples, n_Xout),
+                    dtype=XP.dtype,
+                    order=self.order
+                )
                 if self.include_bias:
                     Xout[:, 0] = 1
                     Xout[:, 1:] = XP[:, n_XP - n_Xout + 1:]
