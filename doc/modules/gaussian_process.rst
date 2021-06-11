@@ -45,7 +45,7 @@ will combine this prior and the likelihood function based on training samples.
 It allows to give a probabilistic approach to prediction by giving the mean and
 standard deviation as output when predicting.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_targets_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_targets_002.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy_targets.html
    :align: center
 
@@ -72,7 +72,7 @@ kernel, which can estimate the global noise level from the data (see example
 below). The figure below shows the effect of noisy target handled by setting
 the parameter `alpha`.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_targets_002.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_targets_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy_targets.html
    :align: center
 
@@ -90,7 +90,7 @@ the API of standard scikit-learn estimators, :class:`GaussianProcessRegressor`:
 
 .. topic:: Examples
 
-   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy_target.py`
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy_targets.py`
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy.py`
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`
    * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_co2.py`
