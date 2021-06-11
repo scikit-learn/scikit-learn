@@ -736,12 +736,12 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        A clustering of the data into disjoint subsets, called :math:`U` in the
-        above formula.
+        A clustering of the data into disjoint subsets, called :math:`U` in 
+        the above formula.
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets, called :math:`V` in the
-        above formula.
+        A clustering of the data into disjoint subsets, called :math:`V` in 
+        the above formula.
 
     contingency : {ndarray, sparse matrix} of shape \
             (n_classes_true, n_classes_pred), default=None
@@ -827,12 +827,12 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        A clustering of the data into disjoint subsets, called :math:`U` in the
-        above formula.
+        A clustering of the data into disjoint subsets, called :math:`U` in 
+        the above formula.
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets, called :math:`V` in the
-        above formula.
+        A clustering of the data into disjoint subsets, called :math:`V` in 
+        the above formula.
 
     average_method : str, default='arithmetic'
         How to compute the normalizer in the denominator. Possible options
