@@ -947,6 +947,23 @@ class CalibrationDisplay:
         and predicted labels.
     CalibrationDisplay.from_estimator : Plot calibration curve using an
         estimator and data.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.calibration import calibration_curve, CalibrationDisplay
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> clf = LogisticRegression(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    LogisticRegression(random_state=0)
+    >>> y_prob = clf.predict_proba(X_test)[:, 1]
+    >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
+    >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
+    >>> disp.plot() # doctest: +SKIP
     """
     def __init__(self, prob_true, prob_pred, y_prob, *, name=None):
         self.prob_true = prob_true
@@ -1080,6 +1097,22 @@ class CalibrationDisplay:
         --------
         CalibrationDisplay.from_predictions : Plot calibration curve using true
             and predicted labels.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.calibration import CalibrationDisplay
+        >>> X, y = make_classification(random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(
+        ...     X, y, random_state=0)
+        >>> clf = LogisticRegression(random_state=0)
+        >>> clf.fit(X_train, y_train)
+        LogisticRegression(random_state=0)
+        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        >>> plt.show()  # doctest: +SKIP
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
@@ -1172,6 +1205,23 @@ class CalibrationDisplay:
         --------
         CalibrationDisplay.from_estimator : Plot calibration curve using an
             estimator and data.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.calibration import CalibrationDisplay
+        >>> X, y = make_classification(random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(
+        ...     X, y, random_state=0)
+        >>> clf = LogisticRegression(random_state=0)
+        >>> clf.fit(X_train, y_train)
+        LogisticRegression(random_state=0)
+        >>> y_prob = clf.predict_proba(X_test)[:, 1]
+        >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
+        >>> plt.show()  # doctest: +SKIP
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
