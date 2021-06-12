@@ -2134,3 +2134,15 @@ def test_criterion_deprecated(Tree, old_criterion, new_criterion):
 
     tree_new = Tree(criterion=new_criterion).fit(X, y)
     assert_allclose(tree.predict(X), tree_new.predict(X))
+
+
+# TODO: Remove in v.1.2
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+def test_max_features_auto_deprecated(Tree):
+    """Check that max_features="auto" is deprecated for regression trees."""
+    with pytest.warns(
+        FutureWarning,
+        match=r"Option 'auto' will be changed to `sqrt\(n_features\)` in "
+              r"v1.2."
+    ):
+        Tree(max_features="auto").fit(X, y)
