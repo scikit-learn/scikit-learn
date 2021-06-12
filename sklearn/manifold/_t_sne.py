@@ -627,6 +627,11 @@ class TSNE(BaseEstimator):
     kl_divergence_ : float
         Kullback-Leibler divergence after optimization.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of iterations run.
 

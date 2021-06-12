@@ -272,7 +272,10 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             # the np.sqrt. Otherwise constant features cannot be detected with
             # sample weights.
             constant_mask = _is_constant_feature(X_var, X_offset, X.shape[0])
-            X_var *= X.shape[0]
+            if sample_weight is None:
+                X_var *= X.shape[0]
+            else:
+                X_var *= sample_weight.sum()
             X_scale = np.sqrt(X_var, out=X_var)
             X_scale[constant_mask] = 1.
             if sp.issparse(X):
@@ -559,6 +562,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     intercept_ : float or array of shape (n_targets,)
         Independent term in the linear model. Set to 0.0 if
         `fit_intercept = False`.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     See Also
     --------
