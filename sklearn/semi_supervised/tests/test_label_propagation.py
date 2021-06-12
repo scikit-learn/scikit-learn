@@ -84,10 +84,12 @@ def test_predict_proba(matrix_type):
                                   np.array([[0.5, 0.5]]))
 
 
-def test_label_spreading_closed_form():
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+def test_label_spreading_closed_form(matrix_type):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
+    X = matrix_type(X)
     y[::3] = -1
     clf = label_propagation.LabelSpreading().fit(X, y)
     # adopting notation from Zhou et al (2004):
