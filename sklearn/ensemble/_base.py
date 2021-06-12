@@ -155,11 +155,15 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # TODO: Remove in v1.2
         # criterion "mse" and "mae" would cause warnings in every call to
         # DecisionTreeRegressor.fit(..)
+        # Same for max_features="auto"
         if isinstance(estimator, (DecisionTreeRegressor, ExtraTreeRegressor)):
             if getattr(estimator, "criterion", None) == "mse":
                 estimator.set_params(criterion="squared_error")
             elif getattr(estimator, "criterion", None) == "mae":
                 estimator.set_params(criterion="absolute_error")
+
+            if getattr(estimator, "max_features", None) == "auto":
+                estimator.set_params(max_features=None)
 
         if random_state is not None:
             _set_random_states(estimator, random_state)

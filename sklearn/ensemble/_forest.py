@@ -369,6 +369,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     FutureWarning
                 )
 
+            if self.max_features == "auto":
+                warn(
+                    "Option 'auto' will be changed to `sqrt(n_features)` "
+                    "in v1.2.",
+                    category=FutureWarning
+                )
+
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
