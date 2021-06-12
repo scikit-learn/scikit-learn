@@ -280,6 +280,12 @@ Changelog
   interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
   :user:`murata-yu`.
 
+- |Enhancement| The option `max_features="auto"` for
+  :class:`ensemble.RandomForestRegressor` and
+  :class:`ensemble.ExtraTreesRegressor` will change its behavior in version
+  1.2 from `n_features` to `sqrt(n_features)`.
+  :pr:`20255` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -523,6 +529,12 @@ Changelog
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
+
+- |Enhancement| The option `max_features="auto"` for
+  :class:`tree.DecisionTreeRegressor` and :class:`tree.ExtraTreeRegressor`
+  will change its behavior in version 1.2 from `n_features` to
+  `sqrt(n_features)`.
+  :pr:`20255` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.utils`
 ....................
