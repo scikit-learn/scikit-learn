@@ -352,7 +352,7 @@ Changelog
   BayesianRidge, ARDRegression were deprecated in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
 
-- |Fix|: `sample_weight` are now fully taken into account in linear models
+- |Fix| `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature
   scaling.
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
@@ -365,6 +365,10 @@ Changelog
 - |Enhancement| `fit` method preserves dtype for numpy.float32 in
   :class:`Lars`, :class:`LassoLars`, :class:`LassoLars`, :class:`LarsCV` and
   :class:`LassoLarsCV`. :pr:`20155` by :user:`Takeshi Oura <takoika>`.
+
+- |Fix| Sample weight invariance for class:`Ridge` was fixed in :pr:`19616` by
+  :user:`Oliver Grisel <ogrisel>` and
+  :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.manifold`
 .......................
