@@ -2038,7 +2038,7 @@ diagonal entries::
    Classification 1985
    <https://link.springer.com/article/10.1007%2FBF01908075>_
 
-.. bisect_k_means:
+.. _bisect_k_means:
 
 Bisecting K-Means
 =================
