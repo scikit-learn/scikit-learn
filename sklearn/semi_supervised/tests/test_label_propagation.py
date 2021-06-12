@@ -14,18 +14,6 @@ from sklearn.exceptions import ConvergenceWarning
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
-ESTIMATORS = [
-    (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
-    (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2}),
-    (label_propagation.LabelPropagation, {
-        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
-    }),
-    (label_propagation.LabelSpreading, {'kernel': 'rbf'}),
-    (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2}),
-    (label_propagation.LabelSpreading, {
-        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
-    }),
-]
 
 ESTIMATOR_CLS = [label_propagation.LabelPropagation,
                  label_propagation.LabelSpreading]
@@ -51,37 +39,37 @@ def test_fit_transduction(matrix_type, estimator, parameters):
 
 
 @pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
-def test_distribution(matrix_type):
+@pytest.mark.parametrize("estimator", ESTIMATOR_CLS)
+@pytest.mark.parametrize("parameters", PARAMETERS)
+def test_distribution(matrix_type, estimator, parameters):
     samples = matrix_type([[1., 0.], [0., 1.], [1., 1.]])
     labels = [0, 1, -1]
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(samples, labels)
-        if parameters['kernel'] == 'knn':
-            continue    # unstable test; changes in k-NN ordering break it
-            assert_array_almost_equal(clf.predict_proba([[1., 0.0]]),
-                                      np.array([[1., 0.]]), 2)
-        else:
-            assert_array_almost_equal(np.asarray(clf.label_distributions_[2]),
-                                      np.array([.5, .5]), 2)
+    clf = estimator(**parameters).fit(samples, labels)
+    if parameters['kernel'] != 'knn':
+        # unstable test; changes in k-NN ordering break it
+        assert_array_almost_equal(np.asarray(clf.label_distributions_[2]),
+                                  np.array([.5, .5]), 2)
 
 
 @pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
-def test_predict(matrix_type):
+@pytest.mark.parametrize("estimator", ESTIMATOR_CLS)
+@pytest.mark.parametrize("parameters", PARAMETERS)
+def test_predict(matrix_type, estimator, parameters):
     samples = matrix_type([[1., 0.], [0., 2.], [1., 3.]])
     labels = [0, 1, -1]
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(samples, labels)
-        assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
+    clf = estimator(**parameters).fit(samples, labels)
+    assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
 
 
 @pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
-def test_predict_proba(matrix_type):
+@pytest.mark.parametrize("estimator", ESTIMATOR_CLS)
+@pytest.mark.parametrize("parameters", PARAMETERS)
+def test_predict_proba(matrix_type, estimator, parameters):
     samples = matrix_type([[1., 0.], [0., 1.], [1., 2.5]])
     labels = [0, 1, -1]
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(samples, labels)
-        assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
-                                  np.array([[0.5, 0.5]]))
+    clf = estimator(**parameters).fit(samples, labels)
+    assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
+                              np.array([[0.5, 0.5]]))
 
 
 @pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
