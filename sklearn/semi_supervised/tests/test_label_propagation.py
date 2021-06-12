@@ -74,8 +74,9 @@ def test_predict(matrix_type):
         assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
 
 
-def test_predict_proba():
-    samples = [[1., 0.], [0., 1.], [1., 2.5]]
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+def test_predict_proba(matrix_type):
+    samples = matrix_type([[1., 0.], [0., 1.], [1., 2.5]])
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
