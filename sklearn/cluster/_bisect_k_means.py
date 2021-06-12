@@ -128,17 +128,18 @@ class BisectKMeans(KMeans):
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    max_iter : int, default=300
-        Maximum number of iterations of the k-means algorithm for a
-        single run.
+    max_iter : int, default=30
+        Maximum number of iterations of the inner k-means algorithm at each
+        bisection.
 
     verbose : int, default=0
         Verbosity mode.
 
     tol : float, default=1e-4
         Relative tolerance with regards to Frobenius norm of the difference
-        in the cluster centers of two consecutive iterations to declare
-        convergence.
+        in the cluster centers of two consecutive iterations  to declare
+        convergence. Used in inner k-means algorithm at each bisection to pick
+        best possible clusters.
 
     copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
@@ -204,13 +205,13 @@ class BisectKMeans(KMeans):
     ...               [10, 6], [10, 8], [10, 10]])
     >>> bisect_means = BisectKMeans(n_clusters=3, random_state=0).fit(X)
     >>> bisect_means.labels_
-    array([0, 0, 0, 2, 2, 2, 1, 1, 1], dtype=int32)
+    array([0, 0, 0, 1, 1, 1, 2, 2, 2], dtype=int32)
     >>> bisect_means.predict([[0, 0], [12, 3]])
-    array([0, 2], dtype=int32)
+    array([0, 1], dtype=int32)
     >>> bisect_means.cluster_centers_
     array([[ 1.,  2.],
-           [10.,  8.],
-           [10.,  2.]])
+           [10.,  2.],
+           [10.,  8.]])
     """
     def __init__(self,  n_clusters=8, init='k-means++', n_init=10,
                  random_state=None, max_iter=30, verbose=0,
@@ -227,9 +228,6 @@ class BisectKMeans(KMeans):
     def _compute_bisect_errors(self, X, centers, labels, sample_weight):
         """
         Calculate the squared error of each sample and group them by label.
-
-        .. note:: That function works only if there are two labels (0,1) and
-        may be less efficient for sparse data.
 
         Parameters
         ----------
@@ -419,9 +417,9 @@ class BisectKMeans(KMeans):
         if self.n_clusters == 1:
             x_squared_norms = row_norms(X, squared=True)
 
-            self.cluster_centers_ = self._init_centroids(X, x_squared_norms,
-                                                         init, random_state,
-                                                         n_centroids=1)
+            clusters = self._init_centroids(X, x_squared_norms,
+                                            init, random_state,
+                                            n_centroids=1)
             warnings.warn("Bisection won't be performed - "
                           "needs at least two clusters to run.")
 
