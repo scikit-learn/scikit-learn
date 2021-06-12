@@ -50,8 +50,9 @@ def test_fit_transduction(matrix_type, estimator, parameters):
     assert clf.transduction_[2] == 1
 
 
-def test_distribution():
-    samples = [[1., 0.], [0., 1.], [1., 1.]]
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+def test_distribution(matrix_type):
+    samples = matrix_type([[1., 0.], [0., 1.], [1., 1.]])
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
