@@ -2140,6 +2140,6 @@ class LogisticRegressionCV(LogisticRegression,
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
