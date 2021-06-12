@@ -210,7 +210,8 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls, matrix_type)
         assert len(record) == 0
 
 
-def test_predict_sparse_callable_kernel():
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+def test_predict_sparse_callable_kernel(matrix_type):
     # This is a non-regression test for #15866
 
     # Custom sparse kernel (top-K RBF)
@@ -232,7 +233,7 @@ def test_predict_sparse_callable_kernel():
                                n_redundant=0,
                                n_repeated=0,
                                random_state=0)
-
+    X = matrix_type(X)
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         test_size=n_test,
                                                         random_state=0)
