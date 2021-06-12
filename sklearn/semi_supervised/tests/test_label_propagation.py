@@ -105,10 +105,12 @@ def test_label_spreading_closed_form(matrix_type):
         assert_array_almost_equal(expected, clf.label_distributions_, 4)
 
 
-def test_label_propagation_closed_form():
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+def test_label_propagation_closed_form(matrix_type):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
+    X = matrix_type(X)
     y[::3] = -1
     Y = np.zeros((len(y), n_classes + 1))
     Y[np.arange(len(y)), y] = 1
