@@ -38,8 +38,7 @@ def test_variance_threshold():
 def test_variance_negative(X):
     """Test VarianceThreshold with negative variance."""
     var_threshold = VarianceThreshold(threshold=-1.)
-    msg = '^Threshold must be non-negative.' \
-          ' Got: -1.0$'
+    msg = r"^Threshold must be non-negative. Got: -1.0$"
     with pytest.raises(ValueError, match=msg):
         var_threshold.fit(X)
 
