@@ -307,6 +307,11 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *data_range_*
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_seen_ : int
         The number of samples processed by the estimator.
         It will be reset on new calls to fit, but increments across
@@ -657,6 +662,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         The variance for each feature in the training set. Used to compute
         `scale_`. Equal to ``None`` when ``with_std=False``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_seen_ : int or ndarray of shape (n_features,)
         The number of samples processed by the estimator for each feature.
         If there are no missing samples, the ``n_samples_seen`` will be an
@@ -990,6 +1000,11 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     max_abs_ : ndarray of shape (n_features,)
         Per feature maximum absolute value.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
@@ -1299,6 +1314,11 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.17
            *scale_* attribute.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1701,19 +1721,12 @@ class Normalizer(TransformerMixin, BaseEstimator):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
 
-    Examples
-    --------
-    >>> from sklearn.preprocessing import Normalizer
-    >>> X = [[4, 1, 2, 2],
-    ...      [1, 3, 9, 3],
-    ...      [5, 7, 5, 1]]
-    >>> transformer = Normalizer().fit(X)  # fit does nothing.
-    >>> transformer
-    Normalizer()
-    >>> transformer.transform(X)
-    array([[0.8, 0.2, 0.4, 0.4],
-           [0.1, 0.3, 0.9, 0.3],
-           [0.5, 0.7, 0.5, 0.1]])
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Notes
     -----
@@ -1727,6 +1740,20 @@ class Normalizer(TransformerMixin, BaseEstimator):
     See Also
     --------
     normalize : Equivalent function without the estimator API.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import Normalizer
+    >>> X = [[4, 1, 2, 2],
+    ...      [1, 3, 9, 3],
+    ...      [5, 7, 5, 1]]
+    >>> transformer = Normalizer().fit(X)  # fit does nothing.
+    >>> transformer
+    Normalizer()
+    >>> transformer.transform(X)
+    array([[0.8, 0.2, 0.4, 0.4],
+           [0.1, 0.3, 0.9, 0.3],
+           [0.5, 0.7, 0.5, 0.1]])
     """
 
     def __init__(self, norm='l2', *, copy=True):
@@ -1856,6 +1883,13 @@ class Binarizer(TransformerMixin, BaseEstimator):
         set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
 
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.preprocessing import Binarizer
@@ -1971,6 +2005,11 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
     K_fit_all_ : float
         Average of kernel matrix.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     References
     ----------
@@ -2198,6 +2237,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
     references_ : ndarray of shape (n_quantiles, )
         Quantiles of references.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -2723,6 +2767,11 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     ----------
     lambdas_ : ndarray of float of shape (n_features,)
         The parameters of the power transformation for the selected features.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

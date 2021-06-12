@@ -440,6 +440,11 @@ class SpectralEmbedding(BaseEstimator):
     affinity_matrix_ : ndarray of shape (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_neighbors_ : int
         Number of nearest neighbors effectively used.
 

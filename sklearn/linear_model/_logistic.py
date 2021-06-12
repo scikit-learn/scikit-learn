@@ -1212,6 +1212,11 @@ class LogisticRegression(LinearClassifierMixin,
         corresponds to outcome 1 (True) and `-intercept_` corresponds to
         outcome 0 (False).
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : ndarray of shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
         it returns only 1 element. For liblinear solver, only the maximum
@@ -1764,6 +1769,10 @@ class LogisticRegressionCV(LogisticRegression,
         If ``penalty='elasticnet'``, the shape is ``(n_classes, n_folds,
         n_cs, n_l1_ratios)`` or ``(1, n_folds, n_cs, n_l1_ratios)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

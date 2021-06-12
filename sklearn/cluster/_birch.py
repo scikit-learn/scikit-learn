@@ -401,6 +401,11 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         if partial_fit is used instead of fit, they are assigned to the
         last batch of data.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     MiniBatchKMeans : Alternative implementation that does incremental updates

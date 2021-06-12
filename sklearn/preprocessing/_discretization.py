@@ -64,13 +64,18 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
+    bin_edges_ : ndarray of ndarray of shape (n_features,)
+        The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
+        Ignored features will have empty arrays.
+
     n_bins_ : ndarray of shape (n_features,), dtype=np.int_
         Number of bins per feature. Bins whose width are too small
         (i.e., <= 1e-8) are removed with a warning.
 
-    bin_edges_ : ndarray of ndarray of shape (n_features,)
-        The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
-        Ignored features will have empty arrays.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     See Also
     --------

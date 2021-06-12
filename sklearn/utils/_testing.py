@@ -187,30 +187,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     return result
 
 
-def assert_warns_div0(func, *args, **kw):
-    """Assume that numpy's warning for divide by zero is raised.
-
-    Handles the case of platforms that do not support warning on divide by
-    zero.
-
-    Parameters
-    ----------
-    func
-    *args
-    **kw
-    """
-
-    with np.errstate(divide='warn', invalid='warn'):
-        try:
-            assert_warns(RuntimeWarning, np.divide, 1, np.zeros(1))
-        except AssertionError:
-            # This platform does not report numpy divide by zeros
-            return func(*args, **kw)
-        return assert_warns_message(RuntimeWarning,
-                                    'invalid value encountered',
-                                    func, *args, **kw)
-
-
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
     """
