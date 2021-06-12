@@ -54,11 +54,3 @@ def test_sparse():
     bisect_means.fit(X)
     normal_centers = bisect_means.cluster_centers_
     assert_array_almost_equal(normal_centers, sparse_centers)
-
-def test_fast():
-    X = np.array([[1, 2], [1, 4], [1, 0],
-                  [10, 2], [10, 4], [10, 0],
-                  [10, 6], [10, 8], [10, 10]])
-    bisect_means = BisectKMeans(n_clusters=3, random_state=0)
-    bisect_means.fit(X)
-    print(bisect_means.cluster_centers_)
