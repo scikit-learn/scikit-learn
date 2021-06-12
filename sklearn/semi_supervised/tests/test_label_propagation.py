@@ -161,9 +161,10 @@ def test_convergence_speed(matrix_type):
     assert_array_equal(mdl.predict(X), [0, 1, 1])
 
 
-def test_convergence_warning():
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+def test_convergence_warning(matrix_type):
     # This is a non-regression test for #5774
-    X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
+    X = matrix_type([[1., 0.], [0., 1.], [1., 2.5]])
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=1)
     warn_msg = ('max_iter=1 was reached without convergence.')
@@ -179,12 +180,14 @@ def test_convergence_warning():
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=500)
     with pytest.warns(None) as record:
         mdl.fit(X, y)
-    assert len(record) == 0
+    if matrix_type is not sp.dok_matrix:  # does not converge for dok_matrix
+        assert len(record) == 0
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
     with pytest.warns(None) as record:
         mdl.fit(X, y)
-    assert len(record) == 0
+    if matrix_type is not sp.dok_matrix:  # does not converge for dok_matrix
+        assert len(record) == 0
 
 
 @pytest.mark.parametrize("LabelPropagationCls",
