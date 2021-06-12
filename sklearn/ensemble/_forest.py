@@ -1413,6 +1413,9 @@ class RandomForestRegressor(ForestRegressor):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
+        .. deprecated:: 1.0
+            Option "auto" will be changed to `sqrt(n_features)` in v1.2.
+
     max_leaf_nodes : int, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -2042,6 +2045,9 @@ class ExtraTreesRegressor(ForestRegressor):
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
+
+        .. deprecated:: 1.0
+            Option "auto" will be changed to `sqrt(n_features)` in v1.2.
 
     max_leaf_nodes : int, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
