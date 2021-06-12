@@ -194,7 +194,9 @@ def test_convergence_warning(matrix_type):
 @pytest.mark.parametrize("LabelPropagationCls",
                          [label_propagation.LabelSpreading,
                           label_propagation.LabelPropagation])
-def test_label_propagation_non_zero_normalizer(LabelPropagationCls, matrix_type):
+def test_label_propagation_non_zero_normalizer(
+    LabelPropagationCls, matrix_type
+):
     # check that we don't divide by zero in case of null normalizer
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/15946
