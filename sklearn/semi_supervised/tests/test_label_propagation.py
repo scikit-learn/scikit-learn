@@ -148,9 +148,10 @@ def test_valid_alpha(matrix_type):
             label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
-def test_convergence_speed():
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+def test_convergence_speed(matrix_type):
     # This is a non-regression test for #5774
-    X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
+    X = matrix_type([[1., 0.], [0., 1.], [1., 2.5]])
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=5000)
     mdl.fit(X, y)
