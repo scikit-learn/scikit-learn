@@ -28,6 +28,34 @@ from ..utils.validation import check_random_state
 
 
 def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
+    """ Compute the labels of the given samples and centers.
+
+    Parameters
+    ----------
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The input samples to assign to the labels. If sparse matrix, must
+        be in CSR format.
+
+    sample_weight : ndarray of shape (n_samples,)
+        The weights for each observation in X.
+
+    x_squared_norms : ndarray of shape (n_samples,)
+        Precomputed squared euclidean norm of each data point, to speed up
+        computations.
+
+    centers : ndarray of shape (n_clusters, n_features)
+        The cluster centers.
+
+    n_threads : int, default=1
+        The number of OpenMP threads to use for the computation. Parallelism is
+        sample-wise on the main cython loop which assigns each sample to its
+        closest center.
+
+    Returns
+    -------
+    labels : ndarray of shape (n_samples,)
+        The resulting assignment (Labels of each point).
+    """
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
 
@@ -48,7 +76,7 @@ def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
 
 
 def _check_labels_threadpool_limit(X, sample_weight, x_squared_norms,
-                                     centers, n_threads=1):
+                                   centers, n_threads=1):
     """Same as _check_labels but in a threadpool_limits context."""
     with threadpool_limits(limits=1, user_api="blas"):
         labels = _check_labels(X, sample_weight, x_squared_norms,
@@ -386,7 +414,6 @@ class BisectKMeans(KMeans):
         if not sp.issparse(X):
             X_mean = X.mean(axis=0)
             X -= X_mean
-            self.x_mean = X_mean
 
         # Only assign to created centroid when n_clusters == 1
         if self.n_clusters == 1:
@@ -455,20 +482,23 @@ class BisectKMeans(KMeans):
             Labels of each point.
         """
         strategy = self.bisect_strategy
-        label_indexes = np.arange(X.shape[0])
         x_squared_norms = row_norms(X, squared=True)
 
+        # Dictionary storing calculated centroids
         centers_dict = {
             0: None,
         }
-        picked_data = X
-        picked_weights = sample_weight
+        # Boolean mask for picking data to bisect
+        picked_labels = np.ones(X.shape[0], dtype=bool)
 
-        biggest = 0
-        biggest_label = 0
+        biggest_id = 0
         last_center_id = 0
 
         for n_iter in range(self.n_clusters - 1):
+            # Pick data and weights to bisect
+            picked_data = X[picked_labels]
+            picked_weights = sample_weight[picked_labels]
+
             # Perform Bisection
             _centers, _ = self._bisect(picked_data, picked_weights,
                                        random_state)
@@ -482,7 +512,7 @@ class BisectKMeans(KMeans):
             centers_dict[last_center_id + 2] = _centers[1]
 
             # Delete cluster that was split from dict
-            del centers_dict[biggest]
+            del centers_dict[biggest_id]
 
             # Convert centers to numpy array for further calculations
             centers = np.asarray(list(centers_dict.values()))
@@ -503,25 +533,16 @@ class BisectKMeans(KMeans):
                 biggest_label, _ = max(errors.items(), key=lambda x: x[1])
             else:
                 # "largest_cluster"
-                biggest_count = 0
+                # Count occurrences of each label
+                labels_occurrences = np.bincount(labels)
+                # Pick cluster with largest number of data points assigned
+                biggest_label = np.argmax(labels_occurrences)
 
-                # Iterate over clusters to pick the one
-                # containing most of data points
-                for center_idx in range(centers.shape[0]):
-                    checked_labels = labels[labels == center_idx]
-                    checked_count = checked_labels.shape[0]
-
-                    if checked_count > biggest_count:
-                        biggest_label = center_idx
-                        biggest_count = checked_count
-
-            # Pick data for further split
-            picked_labels = label_indexes[labels == biggest_label]
-            picked_data = X[picked_labels]
-            picked_weights = sample_weight[picked_labels]
+            # Pick indexes of data for further split
+            picked_labels = (labels == biggest_label)
 
             # Pick id of cluster for further split
-            biggest = list(centers_dict.keys())[biggest_label]
+            biggest_id = list(centers_dict.keys())[biggest_label]
 
             last_center_id += 2
 
