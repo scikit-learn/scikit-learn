@@ -489,8 +489,10 @@ def single_feature_degree2():
         ((2, 3), False, True, []),
     ]
 )
-@pytest.mark.parametrize("sparse_X",
-    [False, sparse.csr_matrix, sparse.csc_matrix])
+@pytest.mark.parametrize(
+    "sparse_X",
+    [False, sparse.csr_matrix, sparse.csc_matrix],
+)
 def test_polynomial_features_one_feature(
     single_feature_degree2,
     degree,
@@ -559,9 +561,10 @@ def two_features_degree3():
         ((2, 3), False, True, [4]),
     ]
 )
-@pytest.mark.parametrize("sparse_X",
-    [False, sparse.csr_matrix, sparse.csc_matrix])
-
+@pytest.mark.parametrize(
+    "sparse_X",
+    [False, sparse.csr_matrix, sparse.csc_matrix],
+)
 def test_polynomial_features_two_features(
     two_features_degree3,
     degree,
