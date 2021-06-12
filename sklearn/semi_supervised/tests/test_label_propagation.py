@@ -65,8 +65,9 @@ def test_distribution(matrix_type):
                                       np.array([.5, .5]), 2)
 
 
-def test_predict():
-    samples = [[1., 0.], [0., 2.], [1., 3.]]
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
+def test_predict(matrix_type):
+    samples = matrix_type([[1., 0.], [0., 2.], [1., 3.]])
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
