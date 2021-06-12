@@ -2041,7 +2041,7 @@ diagonal entries::
 .. bisect_k_means:
 
 Bisecting K-Means
-=======
+=================
 
 The :class:`BisectKMeans` is an iterative variant of :class:`KMeans`, using
 divisive hierarchical clustering.
