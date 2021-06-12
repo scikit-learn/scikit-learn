@@ -351,6 +351,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying classifier exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     final_estimator_ : estimator
         The classifier which predicts given the output of `estimators_`.
 
@@ -611,9 +617,17 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying regressor exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
+
+    stack_method_ : list of str
+        The method used by each base estimator.
 
     References
     ----------

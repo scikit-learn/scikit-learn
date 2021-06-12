@@ -83,6 +83,10 @@ class Pipeline(_BaseComposition):
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only exist if the last step of the pipeline is a
+        classifier.
+
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying first estimator in `steps` exposes such an attribute
