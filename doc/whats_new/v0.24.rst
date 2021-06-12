@@ -12,12 +12,6 @@ Version 0.24.2
 Changelog
 ---------
 
-:mod:`sklearn.semi_supervised`
-..............................
-
-- |Fix| :meth:`BaseLabelPropagation.fit` does not accept sparse matrix.
-  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
-
 :mod:`sklearn.compose`
 ......................
 
@@ -79,7 +73,7 @@ Changelog
 - |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
-  
+
 :mod:`sklearn.metrics`
 ......................
 
