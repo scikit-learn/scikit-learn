@@ -238,7 +238,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             Fitted transformer.
         """
         _, n_features = self._validate_data(X, accept_sparse=True).shape
-        self.n_input_features_ = n_features
 
         if isinstance(self.degree, numbers.Integral):
             if self.degree < 0:
