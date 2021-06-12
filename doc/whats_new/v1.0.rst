@@ -216,6 +216,10 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
   when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
 
+- |Fix| Shorten data file names in the openml tests to better support
+  installing on Windows and its default 260 character limit on file names.
+  :pr:`20209` by `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
