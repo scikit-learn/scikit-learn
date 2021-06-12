@@ -489,67 +489,100 @@ def single_feature_degree2():
         ((2, 3), False, True, []),
     ]
 )
-def test_polynomial_features_degree_3(
+@pytest.mark.parametrize("sparse_X",
+    [False, sparse.csr_matrix, sparse.csc_matrix])
+def test_polynomial_features_one_feature(
     single_feature_degree2,
     degree,
     include_bias,
     interaction_only,
-    indices
+    indices,
+    sparse_X,
 ):
-    """Test Polynomial Features of degree 3."""
+    """Test PolynomialFeatures on single feature up to degree 3."""
     X, P = single_feature_degree2
+    if sparse_X:
+        X = sparse_X(X)
     tf = PolynomialFeatures(
         degree=degree,
         include_bias=include_bias,
         interaction_only=interaction_only
     ).fit(X)
-    assert_allclose(tf.transform(X), P[:, indices])
+    out = tf.transform(X)
+    if sparse_X:
+        out = out.toarray()
+    assert_allclose(out, P[:, indices])
     if tf.n_output_features_ > 0:
         assert tf.powers_.shape == (tf.n_output_features_, tf.n_features_in_)
 
 
 @pytest.fixture()
-def two_feature_degree3():
+def two_features_degree3():
     X = np.arange(6).reshape((3, 2))
     x1 = X[:, :1]
     x2 = X[:, 1:]
-    P = np.hstack([x1 ** 0 * x2 ** 0,   # 0
-                   x1 ** 1 * x2 ** 0,   # 1
-                   x1 ** 0 * x2 ** 1,   # 2
-                   x1 ** 2 * x2 ** 0,   # 3
-                   x1 ** 1 * x2 ** 1,   # 4
-                   x1 ** 0 * x2 ** 2])  # 5
+    P = np.hstack(
+        [
+            x1 ** 0 * x2 ** 0,   # 0
+            x1 ** 1 * x2 ** 0,   # 1
+            x1 ** 0 * x2 ** 1,   # 2
+            x1 ** 2 * x2 ** 0,   # 3
+            x1 ** 1 * x2 ** 1,   # 4
+            x1 ** 0 * x2 ** 2,   # 5
+            x1 ** 3 * x2 ** 0,   # 6
+            x1 ** 2 * x2 ** 1,   # 7
+            x1 ** 1 * x2 ** 2,   # 8
+            x1 ** 0 * x2 ** 3,   # 9
+        ]
+    )
     return X, P
 
 
 @pytest.mark.parametrize(
     "degree, include_bias, interaction_only, indices",
     [
-        (2, True, False, slice(None, None)),
-        (2, False, False, slice(1, None)),
+        (2, True, False, slice(0, 6)),
+        (2, False, False, slice(1, 6)),
         (2, True, True, [0, 1, 2, 4]),
         (2, False, True, [1, 2, 4]),
         ((2, 2), True, False, [0, 3, 4, 5]),
         ((2, 2), False, False, [3, 4, 5]),
         ((2, 2), True, True, [0, 4]),
         ((2, 2), False, True, [4]),
+        (3, True, False, slice(None, None)),
+        (3, False, False, slice(1, None)),
+        (3, True, True, [0, 1, 2, 4]),
+        (3, False, True, [1, 2, 4]),
+        ((2, 3), True, False, [0, 3, 4, 5, 6, 7, 8, 9]),
+        ((2, 3), False, False, slice(3, None)),
+        ((2, 3), True, True, [0, 4]),
+        ((2, 3), False, True, [4]),
     ]
 )
-def test_polynomial_features_degree_2(
-    two_feature_degree3,
+@pytest.mark.parametrize("sparse_X",
+    [False, sparse.csr_matrix, sparse.csc_matrix])
+
+def test_polynomial_features_two_features(
+    two_features_degree3,
     degree,
     include_bias,
     interaction_only,
-    indices
+    indices,
+    sparse_X,
 ):
-    """Test Polynomial Features of degree 2."""
-    X, P = two_feature_degree3
+    """Test PolynomialFeatures on 2 features up to degree 3."""
+    X, P = two_features_degree3
+    if sparse_X:
+        X = sparse_X(X)
     tf = PolynomialFeatures(
         degree=degree,
         include_bias=include_bias,
         interaction_only=interaction_only
     ).fit(X)
-    assert_allclose(tf.transform(X), P[:, indices])
+    out = tf.transform(X)
+    if sparse_X:
+        out = out.toarray()
+    assert_allclose(out, P[:, indices])
     if tf.n_output_features_ > 0:
         assert tf.powers_.shape == (tf.n_output_features_, tf.n_features_in_)
 
