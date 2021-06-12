@@ -111,6 +111,13 @@ Overview of clustering methods
      - Large dataset, outlier removal, data reduction, inductive
      - Euclidean distance between points
 
+   * - :ref:`Bisecting K-Means <bisect_k_means>`
+     - number of clusters
+     - Very large ``n_samples``, medium ``n_clusters``
+     - General-purpose, even cluster size, flat geometry,
+       no empty clusters, inductive, hierarchical
+     - Distances between points
+
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
 not the right metric. This case arises in the two top rows of the figure
@@ -2030,3 +2037,46 @@ diagonal entries::
  * L. Hubert and P. Arabie, Comparing Partitions, Journal of
    Classification 1985
    <https://link.springer.com/article/10.1007%2FBF01908075>_
+
+.. bisect_k_means:
+
+Bisecting K-Means
+=======
+
+The :class:`BisectKMeans` is an iterative variant of :class:`KMeans`, using
+divisive hierarchical clustering.
+Instead of creating all centroids at once - It consequently split selected
+cluster into two new clusters till it reaches desired number of clusters.
+
+With that approach, it is possible to produce either an un-nested (flat)
+clustering or a hierarchical clustering.
+
+Cluster to split is picked depending on parameter ``bisect_strategy``:
+- Cluster with largest amount of data points (with ``largest_cluster``)
+- Cluster with biggest SSE (Sum of Squared Errors) (with ``biggest_sse``)
+
+Cluster to split is always picked from all clusters obtained from previous
+iterations of algorithm.
+
+Picking by largest amount of data points in most cases produce result as
+accurate as picking by SSE and sometimes may be faster.
+
+If the number of clusters is large and if refinement is not used, then
+Bisecting K-Means is more efficient than the regular K-Means algorithm.
+
+.. topic:: References:
+
+ * `"A Comparison of Document Clustering Techniques"
+   <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_
+   Michael Steinbach, George Karypis and Vipin Kumar,
+   Department of Computer Science and Egineering, University of Minnesota
+   (June 2000)
+ * `"PerformanceAnalysis of  K-Means and BisectingK-Means Algorithms in Weblog Data"
+   <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
+   K.Abirami and Dr.P.Mayilvahanan
+   International Journal of Emerging Technologies in Engineering Research(IJETER)
+   Volume 4, Issue 8, (August 2016)
+ * `"Bisecting K-means Algorithm Based on K-valued Self-determining and Clustering Center Optimization"
+   <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
+   Jian Di, Xinyue Gou
+   School of Control and Computer Engineering,North China Electric Power University, Baoding, Hebei, China (August 2017)
