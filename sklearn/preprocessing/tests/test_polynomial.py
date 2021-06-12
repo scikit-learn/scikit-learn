@@ -601,6 +601,22 @@ def test_polynomial_feature_names():
                         'b c', 'c^2', 'a^3', 'a^2 b', 'a^2 c',
                         'a b^2', 'a b c', 'a c^2', 'b^3', 'b^2 c',
                         'b c^2', 'c^3'], feature_names)
+
+    poly = PolynomialFeatures(degree=(2, 3), include_bias=False).fit(X)
+    feature_names = poly.get_feature_names(["a", "b", "c"])
+    assert_array_equal(
+        [
+            'a^2', 'a b', 'a c', 'b^2', 'b c', 'c^2', 'a^3', 'a^2 b', 'a^2 c',
+            'a b^2', 'a b c', 'a c^2', 'b^3', 'b^2 c', 'b c^2', 'c^3'
+        ],
+        feature_names
+    )
+
+    poly = PolynomialFeatures(
+        degree=(3, 3), include_bias=True, interaction_only=True).fit(X)
+    feature_names = poly.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['1', 'a b c'], feature_names)
+
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
     feature_names = poly.get_feature_names(
