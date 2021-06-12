@@ -44,9 +44,9 @@ MATRIX_TYPES = (sp.csc_matrix, sp.csr_matrix, sp.coo_matrix, sp.dok_matrix,
 @pytest.mark.parametrize("estimator", ESTIMATOR_CLS)
 @pytest.mark.parametrize("parameters", PARAMETERS)
 def test_fit_transduction(matrix_type, estimator, parameters):
-    samples = [[1., 0.], [0., 2.], [1., 3.]]
+    samples = matrix_type([[1., 0.], [0., 2.], [1., 3.]])
     labels = [0, 1, -1]
-    clf = estimator(**parameters).fit(matrix_type(samples), labels)
+    clf = estimator(**parameters).fit(samples, labels)
     assert clf.transduction_[2] == 1
 
 
