@@ -320,7 +320,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 return self.transform(X.tocsc()).tocsr()
             to_stack = []
             if self.include_bias:
-                to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
+                to_stack.append(sparse.csc_matrix(
+                    np.ones(shape=(n_samples, 1), dtype=X.dtype)))
             if self._min_degree <= 1:
                 to_stack.append(X)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
@@ -331,7 +332,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 if Xp_next is None:
                     break
                 to_stack.append(Xp_next)
-            XP = sparse.hstack(to_stack, format='csr')
+            if len(to_stack) == 0:
+                # edge case: deal with empty matrix
+                XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
+            else:
+                XP = sparse.hstack(to_stack, format='csr')
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
         elif sparse.isspmatrix(X):
