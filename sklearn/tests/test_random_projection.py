@@ -260,12 +260,12 @@ def test_random_projection_embedding_quality():
         assert 1 - eps < distances_ratio.min()
 
 
-def test_SparseRandomProjection_output_representation():
-    for SparseRandomProjection in all_SparseRandomProjection:
+def test_SparseRandomProj_output_representation():
+    for SparseRandomProj in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
-        rp = SparseRandomProjection(n_components=10, dense_output=True,
-                                    random_state=0)
+        rp = SparseRandomProj(n_components=10, dense_output=True,
+                              random_state=0)
         rp.fit(data)
         assert isinstance(rp.transform(data), np.ndarray)
 
@@ -273,8 +273,8 @@ def test_SparseRandomProjection_output_representation():
         assert isinstance(rp.transform(sparse_data), np.ndarray)
 
         # the output can be left to a sparse matrix instead
-        rp = SparseRandomProjection(n_components=10, dense_output=False,
-                                    random_state=0)
+        rp = SparseRandomProj(n_components=10, dense_output=False,
+                              random_state=0)
         rp = rp.fit(data)
         # output for dense input will stay dense:
         assert isinstance(rp.transform(data), np.ndarray)

@@ -16,3 +16,28 @@ requires = [
 
     "scipy>=1.1.0",
 ]
+
+[tool.black]
+line-length = 88
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.mypy_cache
+    | examples
+    | build
+    | dist
+    | doc
+    | sklearn/externals
+  )/
+)
+'''
+include = '''
+(
+  /(
+      doc/conf.py
+  )/
+)
+'''
