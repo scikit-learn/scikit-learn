@@ -51,6 +51,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # sklearn/svm/_libsvm.cpython-38-darwin.so,
             # 2): Symbol not found: _svm_check_parameter error
             TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
+        else
+            # Without openmp, we use the system clang. Here we use /usr/bin/ar
+            # instead because llvm-ar errors
+            export AR=/usr/bin/ar
         fi
     fi
 	make_conda $TO_INSTALL
@@ -66,9 +70,9 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION)
 
-elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
+elif [[ "$DISTRIB" == "debian-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
+    apt-get install -y python3-dev python3-numpy python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
@@ -96,7 +100,11 @@ elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     python -m pip install -U pip
     echo "Installing numpy and scipy master wheels"
     dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas
+
+    # issue with metadata in scipy dev builds https://github.com/scipy/scipy/issues/13196
+    # --use-deprecated=legacy-resolver needs to be included
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url scipy --use-deprecated=legacy-resolver
     pip install --pre cython
     setup_ccache
     echo "Installing joblib master"
@@ -144,6 +152,20 @@ if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # environment:
     pip install --verbose --editable .
 else
+    if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+        sudo apt-get update
+        sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+        source /opt/intel/oneapi/setvars.sh
+
+        # The "build_clib" command is implicitly used to build "libsvm-skl".
+        # To compile with a different compiler, we also need to specify the
+        # compiler for this command
+        python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
+    fi
     # Use the pre-installed build dependencies and build directly in the
     # current environment.
     python setup.py develop

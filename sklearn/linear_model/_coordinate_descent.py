@@ -24,7 +24,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -169,7 +168,6 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                        num=n_alphas)[::-1]
 
 
-@_deprecate_positional_args
 def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
@@ -314,7 +312,6 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
                      positive=positive, return_n_iter=return_n_iter, **params)
 
 
-@_deprecate_positional_args
 def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
@@ -332,7 +329,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     For multi-output tasks it is::
 
-        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        (1 / (2 * n_samples)) * ||Y - XW||_Fro^2
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
@@ -507,6 +504,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
     for i, alpha in enumerate(alphas):
+        # account for n_samples scaling in objectives between here and cd_fast
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
@@ -535,7 +533,9 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                              "'auto' or array-like. Got %r" % precompute)
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
-        dual_gaps[i] = dual_gap_
+        # we correct the scale of the returned dual gap, as the objective
+        # in cd_fast is n_samples * the objective in this docstring.
+        dual_gaps[i] = dual_gap_ / n_samples
         n_iters.append(n_iter_)
 
         if verbose:
@@ -567,7 +567,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
 
-            a * L1 + b * L2
+            a * ||w||_1 + 0.5 * b * ||w||_2^2
 
     where::
 
@@ -612,7 +612,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                  default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. The Gram matrix can also be passed as argument.
-        For sparse input this option is always ``True`` to preserve sparsity.
+        For sparse input this option is always ``False`` to preserve sparsity.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -666,6 +666,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Given param alpha, the dual gaps at the end of the optimization,
         same shape as each observation of y.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNet
@@ -698,7 +703,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     path = staticmethod(enet_path)
 
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
@@ -729,7 +733,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weight.
+            Sample weight. Internally, the `sample_weight` vector will be
+            rescaled to sum to `n_samples`.
 
             .. versionadded:: 0.23
 
@@ -790,7 +795,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                                                      dtype=X.dtype)
             # simplify things by rescaling sw to sum up to n_samples
             # => np.average(x, weights=sw) = np.mean(sw * x)
-            sample_weight *= (n_samples / np.sum(sample_weight))
+            sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
             # Objective function is:
             # 1/2 * np.average(squared error, weights=sw) + alpha * penalty
             # but coordinate descent minimizes:
@@ -935,12 +940,11 @@ class Lasso(ElasticNet):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : 'auto', bool or array-like of shape (n_features, n_features),\
+    precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument. For sparse input
-        this option is always ``True`` to preserve sparsity.
+        calculations. The Gram matrix can also be passed as argument.
+        For sparse input this option is always ``False`` to preserve sparsity.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -994,6 +998,11 @@ class Lasso(ElasticNet):
         Number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1023,7 +1032,6 @@ class Lasso(ElasticNet):
     """
     path = staticmethod(enet_path)
 
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
@@ -1177,6 +1185,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
     @abstractmethod
     def _is_multitask(self):
         """Bool indicating if class is meant for multidimensional target."""
+
+    @staticmethod
+    @abstractmethod
+    def path(X, y, **kwargs):
+        """Compute path with coordinate descent."""
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent.
@@ -1479,6 +1492,11 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoCV
@@ -1509,7 +1527,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(lasso_path)
 
-    @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
@@ -1665,6 +1682,11 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNetCV
@@ -1716,7 +1738,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(enet_path)
 
-    @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
@@ -1847,6 +1868,11 @@ class MultiTaskElasticNet(Lasso):
             (n_tasks, n_features)
         Sparse representation of the `coef_`.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1873,7 +1899,6 @@ class MultiTaskElasticNet(Lasso):
     To avoid unnecessary memory duplication the X and y arguments of the fit
     method should be directly passed as Fortran-contiguous numpy arrays.
     """
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
                  warm_start=False, random_state=None, selection='cyclic'):
@@ -1951,6 +1976,9 @@ class MultiTaskElasticNet(Lasso):
             cd_fast.enet_coordinate_descent_multi_task(
                 self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
                 check_random_state(self.random_state), random)
+
+        # account for different objective scaling here and in cd_fast
+        self.dual_gap_ /= n_samples
 
         self._set_intercept(X_offset, y_offset, X_scale)
 
@@ -2046,6 +2074,11 @@ class MultiTaskLasso(MultiTaskElasticNet):
             (n_tasks, n_features)
         Sparse representation of the `coef_`.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2071,7 +2104,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
     To avoid unnecessary memory duplication the X and y arguments of the fit
     method should be directly passed as Fortran-contiguous numpy arrays.
     """
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
                  random_state=None, selection='cyclic'):
@@ -2226,6 +2258,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     dual_gap_ : float
         The dual gap at the end of the optimization for the optimal alpha.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2254,7 +2291,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(enet_path)
 
-    @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
@@ -2406,6 +2442,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     dual_gap_ : float
         The dual gap at the end of the optimization for the optimal alpha.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import MultiTaskLassoCV
@@ -2435,7 +2476,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(lasso_path)
 
-    @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,

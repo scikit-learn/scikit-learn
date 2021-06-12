@@ -13,8 +13,6 @@ from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.compose import make_column_transformer
 
-# To use this experimental feature, we need to explicitly ask for it:
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
@@ -85,7 +83,7 @@ def test_invalid_classification_loss():
         (None, None, True, 5, 1e-1),
         ('loss', .1, True, 5, 1e-7),  # use loss
         ('loss', None, True, 5, 1e-1),  # use loss on training data
-        (None, None, False, 5, None),  # no early stopping
+        (None, None, False, 5, 0.0),  # no early stopping
         ])
 def test_early_stopping_regression(scoring, validation_fraction,
                                    early_stopping, n_iter_no_change, tol):
@@ -126,7 +124,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
         (None, None, True, 5, 1e-1),
         ('loss', .1, True, 5, 1e-7),  # use loss
         ('loss', None, True, 5, 1e-1),  # use loss on training data
-        (None, None, False, 5, None),  # no early stopping
+        (None, None, False, 5, 0.0),  # no early stopping
         ])
 def test_early_stopping_classification(data, scoring, validation_fraction,
                                        early_stopping, n_iter_no_change, tol):
@@ -194,13 +192,27 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
     assert gbdt._should_stop(scores) == stopping
 
 
-def test_least_absolute_deviation():
+def test_absolute_error():
     # For coverage only.
     X, y = make_regression(n_samples=500, random_state=0)
-    gbdt = HistGradientBoostingRegressor(loss='least_absolute_deviation',
+    gbdt = HistGradientBoostingRegressor(loss='absolute_error',
                                          random_state=0)
     gbdt.fit(X, y)
     assert gbdt.score(X, y) > .9
+
+
+def test_absolute_error_sample_weight():
+    # non regression test for issue #19400
+    # make sure no error is thrown during fit of
+    # HistGradientBoostingRegressor with absolute_error loss function
+    # and passing sample_weight
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.uniform(-1, 1, size=(n_samples, 2))
+    y = rng.uniform(-1, 1, size=n_samples)
+    sample_weight = rng.uniform(0, 1, size=n_samples)
+    gbdt = HistGradientBoostingRegressor(loss='absolute_error')
+    gbdt.fit(X, y, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize('y', [([1., -2., 0.]), ([0., 0., 0.])])
@@ -226,7 +238,7 @@ def test_poisson():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
                                                         random_state=rng)
     gbdt_pois = HistGradientBoostingRegressor(loss='poisson', random_state=rng)
-    gbdt_ls = HistGradientBoostingRegressor(loss='least_squares',
+    gbdt_ls = HistGradientBoostingRegressor(loss='squared_error',
                                             random_state=rng)
     gbdt_pois.fit(X_train, y_train)
     gbdt_ls.fit(X_train, y_train)
@@ -234,7 +246,7 @@ def test_poisson():
 
     for X, y in [(X_train, y_train), (X_test, y_test)]:
         metric_pois = mean_poisson_deviance(y, gbdt_pois.predict(X))
-        # least_squares might produce non-positive predictions => clip
+        # squared_error might produce non-positive predictions => clip
         metric_ls = mean_poisson_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15,
                                                      None))
         metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
@@ -638,8 +650,7 @@ def test_sample_weight_effect(problem, duplication):
                        est_dup._raw_predict(X_dup))
 
 
-@pytest.mark.parametrize('loss_name', ('least_squares',
-                                       'least_absolute_deviation'))
+@pytest.mark.parametrize('loss_name', ('squared_error', 'absolute_error'))
 def test_sum_hessians_are_sample_weight(loss_name):
     # For losses with constant hessians, the sum_hessians field of the
     # histograms must be equal to the sum of the sample weight of samples at
@@ -978,3 +989,21 @@ def test_uint8_predict(Est):
     est = Est()
     est.fit(X, y)
     est.predict(X)
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("old_loss, new_loss", [
+    ("least_squares", "squared_error"),
+    ("least_absolute_deviation", "absolute_error"),
+])
+def test_loss_deprecated(old_loss, new_loss):
+    X, y = make_regression(n_samples=50, random_state=0)
+    est1 = HistGradientBoostingRegressor(loss=old_loss, random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match=f"The loss '{old_loss}' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = HistGradientBoostingRegressor(loss=new_loss, random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))

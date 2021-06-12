@@ -46,7 +46,7 @@ enhance the functionality of scikit-learn's estimators.
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
   
-- `Featuretools <https://github.com/FeatureLabs/featuretools>`_
+- `Featuretools <https://github.com/alteryx/featuretools>`_
   A framework to perform automated feature engineering. It can be used for 
   transforming temporal and relational datasets into feature matrices for 
   machine learning.
@@ -58,7 +58,16 @@ enhance the functionality of scikit-learn's estimators.
   it can stream minibatches, use data checkpoints, build funky pipelines, and
   serialize models with custom per-step savers.
 
+- `EvalML <https://github.com/alteryx/evalml>`_
+  EvalML is an AutoML library which builds, optimizes, and evaluates
+  machine learning pipelines using domain-specific objective functions.
+  It incorporates multiple modeling libraries under one API, and
+  the objects that EvalML creates use an sklearn-compatible API.
+
 **Experimentation frameworks**
+
+- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
+  organize, log and reproduce experiments
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
   research in a consistent and reproducible way
@@ -93,11 +102,11 @@ enhance the functionality of scikit-learn's estimators.
   cross-validated parameter search using any of these strategies.
 
 - `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
-   algorithms instead of gridsearch in scikit-learn.
+  algorithms instead of gridsearch in scikit-learn.
 
 **Model export for production**
 
-- `onnxmltools <https://github.com/onnx/onnxmltools>`_ Serializes many
+- `sklearn-onnx <https://github.com/onnx/sklearn-onnx>`_ Serialization of many
   Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
   prediction.
 
@@ -148,14 +157,18 @@ and tasks.
 - `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
   abstractions around existing neural network libraries
 
-- `keras <https://github.com/fchollet/keras>`_ Deep Learning library capable of
-  running on top of either TensorFlow or Theano.
+- `Keras <https://www.tensorflow.org/api_docs/python/tf/keras>`_ High-level API for
+  TensorFlow with a scikit-learn inspired API.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
 
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
+
+- `scikeras <https://github.com/adriangb/scikeras>`_ provides a wrapper around
+  Keras to interface it with scikit-learn. SciKeras is the successor
+  of `tf.keras.wrappers.scikit_learn`.
 
 **Broad scope**
 
@@ -260,11 +273,12 @@ Other packages useful for data analysis and machine learning.
 - `PyMC <https://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
   fitting algorithms.
 
-- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
-  organize, log and reproduce experiments
-
 - `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
+
+- `scikit-survival <https://scikit-survival.readthedocs.io/>`_ A library implementing
+  models to learn from censored time-to-event data (also called survival analysis).
+  Models are fully compatible with scikit-learn.
 
 Recommendation Engine packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -302,3 +316,30 @@ Domain specific packages
 
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
+
+Translations of scikit-learn documentation
+------------------------------------------
+
+Translation’s purpose is to ease reading and understanding in languages
+other than English. Its aim is to help people who do not understand English
+or have doubts about its interpretation. Additionally, some people prefer
+to read documentation in their native language, but please bear in mind that
+the only official documentation is the English one [#f1]_.
+
+Those translation efforts are community initiatives and we have no control
+on them.
+If you want to contribute or report an issue with the translation, please
+contact the authors of the translation.
+Some available translations are linked here to improve their dissemination
+and promote community efforts.
+
+- `Chinese translation <https://sklearn.apachecn.org/>`_
+  (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
+- `Persian translation <https://sklearn.ir/>`_
+  (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
+
+.. rubric:: Footnotes
+
+.. [#f1] following `linux documentation Disclaimer
+   <https://www.kernel.org/doc/html/latest/translations/index.html#disclaimer>`__
+

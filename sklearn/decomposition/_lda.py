@@ -20,7 +20,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 
 from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
@@ -30,7 +29,7 @@ EPS = np.finfo(float).eps
 
 
 def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
-                             max_iters,
+                             max_doc_update_iter,
                              mean_change_tol, cal_sstats, random_state):
     """E-step: update document-topic distribution.
 
@@ -46,7 +45,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     doc_topic_prior : float
         Prior of document topic distribution `theta`.
 
-    max_iters : int
+    max_doc_update_iter : int
         Max number of iterations for updating document topic distribution in
         the E-step.
 
@@ -106,7 +105,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
-        for _ in range(0, max_iters):
+        for _ in range(0, max_doc_update_iter):
             last_d = doc_topic_d
 
             # The optimal phi_{dwk} is proportional to
@@ -188,13 +187,15 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         called tau_0.
 
     max_iter : int, default=10
-        The maximum number of iterations.
+        The maximum number of passes over the training data (aka epochs).
+        It only impacts the behavior in the :meth:`fit` method, and not the
+        :meth:`partial_fit` method.
 
     batch_size : int, default=128
         Number of documents to use in each EM iteration. Only used in online
         learning.
 
-    evaluate_every : int, default=0
+    evaluate_every : int, default=-1
         How often to evaluate perplexity. Only used in `fit` method.
         set it to 0 or negative number to not evaluate perplexity in
         training at all. Evaluating perplexity can help you check convergence
@@ -247,6 +248,11 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     n_batch_iter_ : int
         Number of iterations of the EM step.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of passes over the dataset.
 
@@ -293,7 +299,6 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         https://github.com/blei-lab/onlineldavb
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=10, *, doc_topic_prior=None,
                  topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,

@@ -16,11 +16,28 @@ from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from ..utils.deprecation import deprecated
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
+
+
+def _pinv2_old(a):
+    # Used previous scipy pinv2 that was updated in:
+    # https://github.com/scipy/scipy/pull/10067
+    # We can not set `cond` or `rcond` for pinv2 in scipy >= 1.3 to keep the
+    # same behavior of pinv2 for scipy < 1.3, because the condition used to
+    # determine the rank is dependent on the output of svd.
+    u, s, vh = svd(a, full_matrices=False, check_finite=False)
+
+    t = u.dtype.char.lower()
+    factor = {'f': 1E3, 'd': 1E6}
+    cond = np.max(s) * factor[t] * np.finfo(t).eps
+    rank = np.sum(s > cond)
+
+    u = u[:, :rank]
+    u /= s[:rank]
+    return np.transpose(np.conjugate(np.dot(u, vh[:rank])))
 
 
 def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
@@ -34,7 +51,11 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
     """
 
     eps = np.finfo(X.dtype).eps
-    y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
+    try:
+        y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
+    except StopIteration as e:
+        raise StopIteration("Y residual is constant") from e
+
     x_weights_old = 100  # init to big value for first convergence check
 
     if mode == 'B':
@@ -44,8 +65,7 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
         # As a result, and as detailed in the Wegelin's review, CCA (i.e. mode
         # B) will be unstable if n_features > n_samples or n_targets >
         # n_samples
-        X_pinv = pinv2(X, check_finite=False, cond=10*eps)
-        Y_pinv = pinv2(Y, check_finite=False, cond=10*eps)
+        X_pinv, Y_pinv = _pinv2_old(X), _pinv2_old(Y)
 
     for i in range(max_iter):
         if mode == "B":
@@ -181,12 +201,13 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             # see Wegelin page 25
             rank_upper_bound = p
             if not 1 <= n_components <= rank_upper_bound:
-                # TODO: raise an error in 0.26
+                # TODO: raise an error in 1.1
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
                     f"be in [1, n_features]."
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 0.26, an error will be raised.",
+                    f"In version 1.1 (renaming of 0.26), an error will be "
+                    f"raised.",
                     FutureWarning
                 )
                 n_components = rank_upper_bound
@@ -195,13 +216,14 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             # X and the rank of Y: see Wegelin page 12
             rank_upper_bound = min(n, p, q)
             if not 1 <= self.n_components <= rank_upper_bound:
-                # TODO: raise an error in 0.26
+                # TODO: raise an error in 1.1
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
                     f"be in [1, min(n_features, n_samples, n_targets)] = "
                     f"[1, {rank_upper_bound}]. "
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 0.26, an error will be raised.",
+                    f"In version 1.1 (renaming of 0.26), an error will be "
+                    f"raised.",
                     FutureWarning
                 )
                 n_components = rank_upper_bound
@@ -210,7 +232,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             raise ValueError("algorithm should be 'svd' or 'nipals', got "
                              f"{self.algorithm}.")
 
-        self._norm_y_weights = (self.deflation_mode == 'canonical')  # 0.26
+        self._norm_y_weights = (self.deflation_mode == 'canonical')  # 1.1
         norm_y_weights = self._norm_y_weights
 
         # Scale (in place)
@@ -237,10 +259,17 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
                 Yk[:, Yk_mask] = 0.0
 
-                x_weights, y_weights, n_iter_ = \
-                    _get_first_singular_vectors_power_method(
-                        Xk, Yk, mode=self.mode, max_iter=self.max_iter,
-                        tol=self.tol, norm_y_weights=norm_y_weights)
+                try:
+                    x_weights, y_weights, n_iter_ = \
+                        _get_first_singular_vectors_power_method(
+                            Xk, Yk, mode=self.mode, max_iter=self.max_iter,
+                            tol=self.tol, norm_y_weights=norm_y_weights)
+                except StopIteration as e:
+                    if str(e) != "Y residual is constant":
+                        raise
+                    warnings.warn(f"Y residual is constant at iteration {k}")
+                    break
+
                 self.n_iter_.append(n_iter_)
 
             elif self.algorithm == "svd":
@@ -315,7 +344,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         check_is_fitted(self)
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -377,7 +406,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         space.
         """
         check_is_fitted(self)
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -406,60 +435,60 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute norm_y_weights was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def norm_y_weights(self):
         return self._norm_y_weights
 
     @deprecated(  # type: ignore
         "Attribute x_mean_ was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def x_mean_(self):
         return self._x_mean
 
     @deprecated(  # type: ignore
         "Attribute y_mean_ was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def y_mean_(self):
         return self._y_mean
 
     @deprecated(  # type: ignore
         "Attribute x_std_ was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def x_std_(self):
         return self._x_std
 
     @deprecated(  # type: ignore
         "Attribute y_std_ was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def y_std_(self):
         return self._y_std
 
     @property
     def x_scores_(self):
-        # TODO: raise error in 0.26 instead
+        # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             pass
             warnings.warn(
                 "Attribute x_scores_ was deprecated in version 0.24 and "
-                "will be removed in 0.26. Use est.transform(X) on the "
-                "training data instead.",
+                "will be removed in 1.1 (renaming of 0.26). Use "
+                "est.transform(X) on the training data instead.",
                 FutureWarning
             )
         return self._x_scores
 
     @property
     def y_scores_(self):
-        # TODO: raise error in 0.26 instead
+        # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             warnings.warn(
                 "Attribute y_scores_ was deprecated in version 0.24 and "
-                "will be removed in 0.26. Use est.transform(X) on the "
-                "training data instead.",
+                "will be removed in 1.1 (renaming of 0.26). Use "
+                "est.transform(X) on the training data instead.",
                 FutureWarning
             )
         return self._y_scores
@@ -488,16 +517,11 @@ class PLSRegression(_PLS):
     scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
     max_iter : int, default=500
         The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
 
-    tol : real, default 1e-06
+    tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
@@ -541,7 +565,10 @@ class PLSRegression(_PLS):
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        component.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------
@@ -560,7 +587,6 @@ class PLSRegression(_PLS):
     #     - "plspm " with function plsreg2(X, Y)
     #     - "pls" with function oscorespls.fit(X, Y)
 
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
@@ -595,7 +621,7 @@ class PLSCanonical(_PLS):
         the maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
 
-    tol : real, default 1e-06
+    tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
@@ -625,15 +651,17 @@ class PLSCanonical(_PLS):
         The transformed training samples.
 
         .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 0.26. You
-           can just call `transform` on the training data instead.
+           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     y_scores_ : ndarray of shape (n_samples, n_components)
         The transformed training targets.
 
         .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 0.26. You
-           can just call `transform` on the training data instead.
+           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
@@ -648,6 +676,9 @@ class PLSCanonical(_PLS):
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
         component. Empty if `algorithm='svd'`.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------
@@ -672,7 +703,6 @@ class PLSCanonical(_PLS):
     # exactly implement the Wold algorithm since it does not normalize
     # y_weights to one.
 
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
@@ -696,16 +726,10 @@ class CCA(_PLS):
     scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
     max_iter : int, default=500
-        the maximum number of iterations of the power method when
-        `algorithm='nipals'`. Ignored otherwise.
+        the maximum number of iterations of the power method.
 
-    tol : real, default 1e-06
+    tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
@@ -735,15 +759,17 @@ class CCA(_PLS):
         The transformed training samples.
 
         .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 0.26. You
-           can just call `transform` on the training data instead.
+           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     y_scores_ : ndarray of shape (n_samples, n_components)
         The transformed training targets.
 
         .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 0.26. You
-           can just call `transform` on the training data instead.
+           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
@@ -757,7 +783,10 @@ class CCA(_PLS):
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        component.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------
@@ -775,7 +804,6 @@ class CCA(_PLS):
     PLSSVD
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(n_components=n_components, scale=scale,
@@ -824,15 +852,20 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         The transformed training samples.
 
         .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 0.26. You
-           can just call `transform` on the training data instead.
+           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     y_scores_ : ndarray of shape (n_samples, n_components)
         The transformed training targets.
 
         .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 0.26. You
-           can just call `transform` on the training data instead.
+           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------
@@ -856,7 +889,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     PLSCanonical
     CCA
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
@@ -886,13 +918,13 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         n_components = self.n_components
         rank_upper_bound = min(X.shape[0], X.shape[1], Y.shape[1])
         if not 1 <= n_components <= rank_upper_bound:
-            # TODO: raise an error in 0.26
+            # TODO: raise an error in 1.1
             warnings.warn(
                 f"As of version 0.24, n_components({n_components}) should be "
                 f"in [1, min(n_features, n_samples, n_targets)] = "
                 f"[1, {rank_upper_bound}]. "
                 f"n_components={rank_upper_bound} will be used instead. "
-                f"In version 0.26, an error will be raised.",
+                f"In version 1.1 (renaming of 0.26), an error will be raised.",
                 FutureWarning
             )
             n_components = rank_upper_bound
@@ -908,8 +940,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         U, Vt = svd_flip(U, Vt)
         V = Vt.T
 
-        self._x_scores = np.dot(X, U)  # TODO: remove in 0.26
-        self._y_scores = np.dot(Y, V)  # TODO: remove in 0.26
+        self._x_scores = np.dot(X, U)  # TODO: remove in 1.1
+        self._y_scores = np.dot(Y, V)  # TODO: remove in 1.1
         self.x_weights_ = U
         self.y_weights_ = V
         return self
@@ -917,8 +949,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute x_scores_ was deprecated in version 0.24 and "
-        "will be removed in 0.26. Use est.transform(X) on the "
-        "training data instead.")
+        "will be removed in 1.1 (renaming of 0.26). Use est.transform(X) on "
+        "the training data instead."
+    )
     @property
     def x_scores_(self):
         return self._x_scores
@@ -926,36 +959,37 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute y_scores_ was deprecated in version 0.24 and "
-        "will be removed in 0.26. Use est.transform(X, Y) on the "
-        "training data instead.")
+        "will be removed in 1.1 (renaming of 0.26). Use est.transform(X, Y) "
+        "on the training data instead."
+    )
     @property
     def y_scores_(self):
         return self._y_scores
 
     @deprecated(  # type: ignore
         "Attribute x_mean_ was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def x_mean_(self):
         return self._x_mean
 
     @deprecated(  # type: ignore
         "Attribute y_mean_ was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def y_mean_(self):
         return self._y_mean
 
     @deprecated(  # type: ignore
         "Attribute x_std_ was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def x_std_(self):
         return self._x_std
 
     @deprecated(  # type: ignore
         "Attribute y_std_ was deprecated in version 0.24 and "
-        "will be removed in 0.26.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def y_std_(self):
         return self._y_std
@@ -980,7 +1014,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
-        X = check_array(X, dtype=np.float64)
+        X = self._validate_data(X, dtype=np.float64, reset=False)
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:

@@ -146,7 +146,7 @@ knn = KNeighborsClassifier(n_neighbors=3)
 sfs = SequentialFeatureSelector(knn, n_features_to_select=2)
 sfs.fit(X, y)
 print("Features selected by forward sequential selection: "
-      f"{feature_names[sfs.get_support().tolist()]}")
+      f"{feature_names[sfs.get_support()].tolist()}")
 
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
@@ -172,8 +172,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
                                                     random_state=42)
 pipe.fit(X_train, y_train).score(X_test, y_test)
 
-# ##############################################################################
-# # For comparison, here is the score of a linear baseline for the same data:
+##############################################################################
+# For comparison, here is the score of a linear baseline for the same data:
 
 linear_baseline = make_pipeline(MinMaxScaler(),
                                 LogisticRegression(max_iter=1000))

@@ -9,7 +9,6 @@
 
 import warnings
 from inspect import signature
-from contextlib import suppress
 from functools import partial
 
 from math import log
@@ -24,20 +23,19 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
-    check_array,
     column_or_1d,
     deprecated,
     indexable,
 )
+
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight
-from .pipeline import Pipeline
+from .utils.validation import _check_sample_weight, _num_samples
+from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
-from .utils.validation import _deprecate_positional_args
 
 
 class CalibratedClassifierCV(ClassifierMixin,
@@ -141,6 +139,12 @@ class CalibratedClassifierCV(ClassifierMixin,
     classes_ : ndarray of shape (n_classes,)
         The class labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying base_estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
             or `ensemble=False`)
         The list of classifier and calibrator pairs.
@@ -210,7 +214,6 @@ class CalibratedClassifierCV(ClassifierMixin,
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, method='sigmoid',
                  cv=None, n_jobs=None, ensemble=True):
         self.base_estimator = base_estimator
@@ -250,19 +253,14 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
-            # `classes_` and `n_features_in_` should be consistent with that
-            # of base_estimator
-            if isinstance(self.base_estimator, Pipeline):
-                check_is_fitted(self.base_estimator[-1])
-            else:
-                check_is_fitted(self.base_estimator)
-            with suppress(AttributeError):
-                self.n_features_in_ = base_estimator.n_features_in_
+            # `classes_` should be consistent with that of base_estimator
+            check_is_fitted(self.base_estimator, attributes=["classes_"])
             self.classes_ = self.base_estimator.classes_
 
-            pred_method = _get_prediction_method(base_estimator)
+            pred_method, method_name = _get_prediction_method(base_estimator)
             n_classes = len(self.classes_)
-            predictions = _compute_predictions(pred_method, X, n_classes)
+            predictions = _compute_predictions(pred_method, method_name, X,
+                                               n_classes)
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator, predictions, y, self.classes_, self.method,
@@ -270,10 +268,6 @@ class CalibratedClassifierCV(ClassifierMixin,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
-            X, y = self._validate_data(
-                X, y, accept_sparse=['csc', 'csr', 'coo'],
-                force_all_finite=False, allow_nd=True
-            )
             # Set `classes_` using all `y`
             label_encoder_ = LabelEncoder().fit(y)
             self.classes_ = label_encoder_.classes_
@@ -317,12 +311,13 @@ class CalibratedClassifierCV(ClassifierMixin,
                 )
             else:
                 this_estimator = clone(base_estimator)
-                method_name = _get_prediction_method(this_estimator).__name__
+                _, method_name = _get_prediction_method(this_estimator)
                 pred_method = partial(
                     cross_val_predict, estimator=this_estimator, X=X, y=y,
                     cv=cv, method=method_name, n_jobs=self.n_jobs
                 )
-                predictions = _compute_predictions(pred_method, X, n_classes)
+                predictions = _compute_predictions(pred_method, method_name, X,
+                                                   n_classes)
 
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
@@ -334,6 +329,9 @@ class CalibratedClassifierCV(ClassifierMixin,
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
+        first_clf = self.calibrated_classifiers_[0].base_estimator
+        if hasattr(first_clf, "n_features_in_"):
+            self.n_features_in_ = first_clf.n_features_in_
         return self
 
     def predict_proba(self, X):
@@ -344,8 +342,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : The samples, as accepted by base_estimator.predict_proba
 
         Returns
         -------
@@ -353,11 +350,9 @@ class CalibratedClassifierCV(ClassifierMixin,
             The predicted probas.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
-                        force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        mean_proba = np.zeros((X.shape[0], len(self.classes_)))
+        mean_proba = np.zeros((_num_samples(X), len(self.classes_)))
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -373,8 +368,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples.
+        X : The samples, as accepted by base_estimator.predict
 
         Returns
         -------
@@ -434,19 +428,27 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     -------
     calibrated_classifier : _CalibratedClassifier instance
     """
-    if sample_weight is not None and supports_sw:
-        estimator.fit(X[train], y[train],
-                      sample_weight=sample_weight[train])
+    X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
+    X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
+    if supports_sw and sample_weight is not None:
+        sw_train = _safe_indexing(sample_weight, train)
+        sw_test = _safe_indexing(sample_weight, test)
     else:
-        estimator.fit(X[train], y[train])
+        sw_train = None
+        sw_test = None
+
+    if supports_sw:
+        estimator.fit(X_train, y_train, sample_weight=sw_train)
+    else:
+        estimator.fit(X_train, y_train)
 
     n_classes = len(classes)
-    pred_method = _get_prediction_method(estimator)
-    predictions = _compute_predictions(pred_method, X[test], n_classes)
+    pred_method, method_name = _get_prediction_method(estimator)
+    predictions = _compute_predictions(pred_method, method_name, X_test,
+                                       n_classes)
 
-    sw = None if sample_weight is None else sample_weight[test]
     calibrated_classifier = _fit_calibrator(
-        estimator, predictions, y[test], classes, method, sample_weight=sw
+        estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
     return calibrated_classifier
 
@@ -466,18 +468,21 @@ def _get_prediction_method(clf):
     -------
     prediction_method : callable
         The prediction method.
+    method_name : str
+        The name of the prediction method.
     """
     if hasattr(clf, 'decision_function'):
         method = getattr(clf, 'decision_function')
+        return method, 'decision_function'
     elif hasattr(clf, 'predict_proba'):
         method = getattr(clf, 'predict_proba')
+        return method, 'predict_proba'
     else:
         raise RuntimeError("'base_estimator' has no 'decision_function' or "
                            "'predict_proba' method.")
-    return method
 
 
-def _compute_predictions(pred_method, X, n_classes):
+def _compute_predictions(pred_method, method_name, X, n_classes):
     """Return predictions for `X` and reshape binary outputs to shape
     (n_samples, 1).
 
@@ -485,6 +490,9 @@ def _compute_predictions(pred_method, X, n_classes):
     ----------
     pred_method : callable
         Prediction method.
+
+    method_name: str
+        Name of the prediction method
 
     X : array-like or None
         Data used to obtain predictions.
@@ -499,10 +507,6 @@ def _compute_predictions(pred_method, X, n_classes):
         (X.shape[0], 1).
     """
     predictions = pred_method(X=X)
-    if hasattr(pred_method, '__name__'):
-        method_name = pred_method.__name__
-    else:
-        method_name = signature(pred_method).parameters['method'].default
 
     if method_name == 'decision_function':
         if predictions.ndim == 1:
@@ -599,7 +603,7 @@ class _CalibratedClassifier:
 
         .. deprecated:: 0.24
            `calibrators_` is deprecated from 0.24 and will be removed in
-           0.26. Use `calibrators` instead.
+           1.1 (renaming of 0.26). Use `calibrators` instead.
     """
     def __init__(self, base_estimator, calibrators, *, classes,
                  method='sigmoid'):
@@ -608,11 +612,11 @@ class _CalibratedClassifier:
         self.classes = classes
         self.method = method
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "calibrators_ is deprecated in 0.24 and will be removed in 0.26. "
-        "Use calibrators instead."
+        "calibrators_ is deprecated in 0.24 and will be removed in 1.1"
+        "(renaming of 0.26). Use calibrators instead."
     )
     @property
     def calibrators_(self):
@@ -635,15 +639,16 @@ class _CalibratedClassifier:
             The predicted probabilities. Can be exact zeros.
         """
         n_classes = len(self.classes)
-        pred_method = _get_prediction_method(self.base_estimator)
-        predictions = _compute_predictions(pred_method, X, n_classes)
+        pred_method, method_name = _get_prediction_method(self.base_estimator)
+        predictions = _compute_predictions(pred_method, method_name, X,
+                                           n_classes)
 
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(
             self.base_estimator.classes_
         )
 
-        proba = np.zeros((X.shape[0], n_classes))
+        proba = np.zeros((_num_samples(X), n_classes))
         for class_idx, this_pred, calibrator in \
                 zip(pos_class_indices, predictions.T, self.calibrators):
             if n_classes == 2:
@@ -656,10 +661,13 @@ class _CalibratedClassifier:
         if n_classes == 2:
             proba[:, 0] = 1. - proba[:, 1]
         else:
-            proba /= np.sum(proba, axis=1)[:, np.newaxis]
-
-        # XXX : for some reason all probas can be 0
-        proba[np.isnan(proba)] = 1. / n_classes
+            denominator = np.sum(proba, axis=1)[:, np.newaxis]
+            # In the edge case where for each class calibrator returns a null
+            # probability for a given sample, use the uniform distribution
+            # instead.
+            uniform_proba = np.full_like(proba, 1 / n_classes)
+            proba = np.divide(proba, denominator, out=uniform_proba,
+                              where=denominator != 0)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
@@ -784,7 +792,6 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-@_deprecate_positional_args
 def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
                       strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.

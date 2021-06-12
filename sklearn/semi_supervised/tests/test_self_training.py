@@ -4,13 +4,15 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
 
+from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.metrics import accuracy_score
+
+from sklearn.semi_supervised import SelfTrainingClassifier
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -318,3 +320,26 @@ def test_k_best_selects_best():
 
     for row in most_confident_svc.tolist():
         assert row in added_by_st
+
+
+def test_base_estimator_meta_estimator():
+    # Check that a meta-estimator relying on an estimator implementing
+    # `predict_proba` will work even if it does expose this method before being
+    # fitted.
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/19119
+
+    base_estimator = StackingClassifier(
+        estimators=[
+            ("svc_1", SVC(probability=True)), ("svc_2", SVC(probability=True)),
+        ],
+        final_estimator=SVC(probability=True), cv=2
+    )
+
+    # make sure that the `base_estimator` does not expose `predict_proba`
+    # without being fitted
+    assert not hasattr(base_estimator, "predict_proba")
+
+    clf = SelfTrainingClassifier(base_estimator=base_estimator)
+    clf.fit(X_train, y_train_missing_labels)
+    clf.predict_proba(X_test)

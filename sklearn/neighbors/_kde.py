@@ -7,9 +7,8 @@ Kernel Density Estimation
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import check_array, check_random_state
+from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight, check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 from ..utils.extmath import row_norms
 from ._ball_tree import BallTree, DTYPE
@@ -41,7 +40,7 @@ class KernelDensity(BaseEstimator):
                  'cosine'}, default='gaussian'
         The kernel to use.
 
-    metric : str, default='euclidian'
+    metric : str, default='euclidean'
         The distance metric to use.  Note that not all metrics are
         valid with all algorithms.  Refer to the documentation of
         :class:`BallTree` and :class:`KDTree` for a description of
@@ -72,6 +71,11 @@ class KernelDensity(BaseEstimator):
 
     Attributes
     ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
 
@@ -94,7 +98,6 @@ class KernelDensity(BaseEstimator):
     >>> log_density
     array([-1.52955942, -1.51462041, -1.60244657])
     """
-    @_deprecate_positional_args
     def __init__(self, *, bandwidth=1.0, algorithm='auto',
                  kernel='gaussian', metric="euclidean", atol=0, rtol=0,
                  breadth_first=True, leaf_size=40, metric_params=None):
@@ -198,7 +201,7 @@ class KernelDensity(BaseEstimator):
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = check_array(X, order='C', dtype=DTYPE)
+        X = self._validate_data(X, order='C', dtype=DTYPE, reset=False)
         if self.tree_.sample_weight is None:
             N = self.tree_.data.shape[0]
         else:

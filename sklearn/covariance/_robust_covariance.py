@@ -17,7 +17,6 @@ from scipy.stats import chi2
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
-from ..utils.validation import _deprecate_positional_args
 
 
 # Minimum Covariance Determinant
@@ -583,6 +582,11 @@ class MinCovDet(EmpiricalCovariance):
         Mahalanobis distances of the training set (on which :meth:`fit` is
         called) observations.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -615,7 +619,6 @@ class MinCovDet(EmpiricalCovariance):
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, random_state=None):
         self.store_precision = store_precision
@@ -632,8 +635,8 @@ class MinCovDet(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y: Ignored
-            Not used, present for API consistence purpose.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------

@@ -18,7 +18,6 @@ import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils import check_array
-from ..utils.validation import _deprecate_positional_args
 
 
 # ShrunkCovariance estimator
@@ -92,6 +91,11 @@ class ShrunkCovariance(EmpiricalCovariance):
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -118,7 +122,6 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     where mu = trace(cov) / n_features
     """
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
         super().__init__(store_precision=store_precision,
@@ -135,8 +138,8 @@ class ShrunkCovariance(EmpiricalCovariance):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y: Ignored
-            not used, present for API consistence purpose.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -253,7 +256,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-@_deprecate_positional_args
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
@@ -359,6 +361,11 @@ class LedoitWolf(EmpiricalCovariance):
         Coefficient in the convex combination used for the computation
         of the shrunk estimate. Range is [0, 1].
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -391,7 +398,6 @@ class LedoitWolf(EmpiricalCovariance):
     Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
     February 2004, pages 365-411.
     """
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  block_size=1000):
         super().__init__(store_precision=store_precision,
@@ -408,7 +414,7 @@ class LedoitWolf(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         y : Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -431,7 +437,6 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-@_deprecate_positional_args
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
@@ -538,6 +543,11 @@ class OAS(EmpiricalCovariance):
       coefficient in the convex combination used for the computation
       of the shrunk estimate. Range is [0, 1].
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -584,7 +594,7 @@ class OAS(EmpiricalCovariance):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
         y : Ignored
-            not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------

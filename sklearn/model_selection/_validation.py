@@ -24,7 +24,6 @@ from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
@@ -38,7 +37,6 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-@_deprecate_positional_args
 def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
@@ -65,20 +63,23 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    scoring : str, callable, list/tuple, or dict, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+    scoring : str, callable, list, tuple, or dict, default=None
+        Strategy to evaluate the performance of the cross-validated model on
+        the test set.
 
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
+        If `scoring` represents a single score, one can use:
 
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
+        - a single string (see :ref:`scoring_parameter`);
+        - a callable (see :ref:`scoring`) that returns a single value.
+
+        If `scoring` represents multiple scores, one can use:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where the keys are the metric
+          names and the values are the metric scores;
+        - a dictionary with metric names as keys and callables a values.
 
         See :ref:`multimetric_grid_search` for an example.
-
-        If None, the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -91,7 +92,8 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`.Fold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -313,7 +315,6 @@ def _normalize_score_results(scores, scaler_score_key='score'):
     return {scaler_score_key: scores}
 
 
-@_deprecate_positional_args
 def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
                     cv=None, n_jobs=None, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs', error_score=np.nan):
@@ -361,7 +362,8 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -628,13 +630,21 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         end_msg = f"[CV{progress_msg}] END "
         result_msg = params_msg + (";" if params_msg else "")
-        if verbose > 2 and isinstance(test_scores, dict):
-            for scorer_name in sorted(test_scores):
-                result_msg += f" {scorer_name}: ("
+        if verbose > 2:
+            if isinstance(test_scores, dict):
+                for scorer_name in sorted(test_scores):
+                    result_msg += f" {scorer_name}: ("
+                    if return_train_score:
+                        scorer_scores = train_scores[scorer_name]
+                        result_msg += f"train={scorer_scores:.3f}, "
+                    result_msg += f"test={test_scores[scorer_name]:.3f})"
+            else:
+                result_msg += ", score="
                 if return_train_score:
-                    scorer_scores = train_scores[scorer_name]
-                    result_msg += f"train={scorer_scores:.3f}, "
-                result_msg += f"test={test_scores[scorer_name]:.3f})"
+                    result_msg += (f"(train={train_scores:.3f}, "
+                                   f"test={test_scores:.3f})")
+                else:
+                    result_msg += f"{test_scores:.3f}"
         result_msg += f" total time={logger.short_format_time(total_time)}"
 
         # Right align the result_msg
@@ -709,7 +719,6 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     return scores
 
 
-@_deprecate_positional_args
 def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
                       n_jobs=None, verbose=0, fit_params=None,
                       pre_dispatch='2*n_jobs', method='predict'):
@@ -755,7 +764,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -773,7 +783,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, defualt=None
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
     pre_dispatch : int or str, default='2*n_jobs'
@@ -1045,7 +1055,6 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
-@_deprecate_positional_args
 def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None, fit_params=None):
@@ -1104,7 +1113,8 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1209,7 +1219,6 @@ def _shuffle(y, groups, random_state):
     return _safe_indexing(y, indices)
 
 
-@_deprecate_positional_args
 def learning_curve(estimator, X, y, *, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
@@ -1268,7 +1277,8 @@ def learning_curve(estimator, X, y, *, groups=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1470,7 +1480,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     if n_ticks > train_sizes_abs.shape[0]:
         warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
                       "of ticks will be less than the size of "
-                      "'train_sizes' %d instead of %d)."
+                      "'train_sizes': %d instead of %d."
                       % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
 
     return train_sizes_abs
@@ -1518,7 +1528,6 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array(ret).T
 
 
-@_deprecate_positional_args
 def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
                      verbose=0, error_score=np.nan, fit_params=None):
@@ -1568,7 +1577,8 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

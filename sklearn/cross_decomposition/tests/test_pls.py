@@ -148,9 +148,12 @@ def test_sanity_check_pls_regression_constant_column_Y():
 
     x_loadings_sign_flip = np.sign(expected_x_loadings / pls.x_loadings_)
     x_weights_sign_flip = np.sign(expected_x_weights / pls.x_weights_)
-    y_loadings_sign_flip = np.sign(expected_y_loadings / pls.y_loadings_)
+    # we ignore the first full-zeros row for y
+    y_loadings_sign_flip = np.sign(expected_y_loadings[1:] /
+                                   pls.y_loadings_[1:])
+
     assert_array_equal(x_loadings_sign_flip, x_weights_sign_flip)
-    assert_array_equal(x_loadings_sign_flip[1:], y_loadings_sign_flip[1:])
+    assert_array_equal(x_loadings_sign_flip[1:], y_loadings_sign_flip)
 
 
 def test_sanity_check_pls_canonical():
@@ -315,7 +318,7 @@ def test_convergence_fail():
         pls_nipals.fit(X, Y)
 
 
-@pytest.mark.filterwarnings('ignore:.*scores_ was deprecated')  # 0.26
+@pytest.mark.filterwarnings('ignore:.*scores_ was deprecated')  # 1.1
 @pytest.mark.parametrize('Est', (PLSSVD, PLSRegression, PLSCanonical))
 def test_attibutes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
@@ -439,7 +442,7 @@ def test_scale_and_stability(Est, X, Y):
 @pytest.mark.parametrize('n_components', (0, 4))
 def test_n_components_bounds(Est, n_components):
     # n_components should be in [1, min(n_samples, n_features, n_targets)]
-    # TODO: catch error instead of warning in 0.26
+    # TODO: catch error instead of warning in 1.1
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
@@ -454,7 +457,7 @@ def test_n_components_bounds(Est, n_components):
 @pytest.mark.parametrize('n_components', (0, 6))
 def test_n_components_bounds_pls_regression(n_components):
     # For PLSRegression, the upper bound for n_components is n_features
-    # TODO: catch error instead of warning in 0.26
+    # TODO: catch error instead of warning in 1.1
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
@@ -471,7 +474,7 @@ def test_scores_deprecations(Est):
     # Make sure x_scores_ and y_scores_ are deprecated.
     # It's not deprecated for PLSRegression because y_score_ is different from
     # transform(Y_train)
-    # TODO: remove attributes and test in 0.26
+    # TODO: remove attributes and test in 1.1
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
@@ -492,7 +495,7 @@ def test_norm_y_weights_deprecation(Est):
         est.norm_y_weights
 
 
-# TODO: Remove test in 0.26
+# TODO: Remove test in 1.1
 @pytest.mark.parametrize('Estimator',
                          (PLSRegression, PLSCanonical, CCA, PLSSVD))
 @pytest.mark.parametrize('attribute',
@@ -549,3 +552,34 @@ def test_svd_flip_1d():
 
     assert_allclose(v, v_expected.ravel())
     assert_allclose(v, [-1, -2, -3])
+
+
+def test_loadings_converges():
+    """Test that CCA converges. Non-regression test for #19549."""
+    X, y = make_regression(n_samples=200, n_features=20, n_targets=20,
+                           random_state=20)
+
+    cca = CCA(n_components=10, max_iter=500)
+
+    with pytest.warns(None) as record:
+        cca.fit(X, y)
+    # ConvergenceWarning is not raised
+    assert not record
+
+    # Loadings converges to reasonable values
+    assert np.all(np.abs(cca.x_loadings_) < 1)
+
+
+def test_pls_constant_y():
+    """Checks warning when y is constant. Non-regression test for #19831"""
+    rng = np.random.RandomState(42)
+    x = rng.rand(100, 3)
+    y = np.zeros(100)
+
+    pls = PLSRegression()
+
+    msg = "Y residual is constant at iteration"
+    with pytest.warns(UserWarning, match=msg):
+        pls.fit(x, y)
+
+    assert_allclose(pls.x_rotations_, 0)

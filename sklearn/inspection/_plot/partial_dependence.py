@@ -17,7 +17,6 @@ from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
 
 
-@_deprecate_positional_args
 def plot_partial_dependence(
     estimator,
     X,
@@ -174,6 +173,9 @@ def plot_partial_dependence(
 
     n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences.
+        Computation is parallelized over features specified by the `features`
+        parameter.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -536,7 +538,6 @@ class PartialDependenceDisplay:
     partial_dependence : Compute Partial Dependence values.
     plot_partial_dependence : Plot Partial Dependence.
     """
-    @_deprecate_positional_args
     def __init__(
         self,
         pd_results,
@@ -817,7 +818,7 @@ class PartialDependenceDisplay:
             ax.set_xlabel(self.feature_names[feature_idx[0]])
         ax.set_ylabel(self.feature_names[feature_idx[1]])
 
-    @_deprecate_positional_args(version="0.26")
+    @_deprecate_positional_args(version="1.1")
     def plot(self, *, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
 

@@ -1,7 +1,6 @@
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD 3 clause
 
-from ..utils.validation import _deprecate_positional_args
 from ._stochastic_gradient import BaseSGDClassifier
 from ._stochastic_gradient import BaseSGDRegressor
 from ._stochastic_gradient import DEFAULT_EPSILON
@@ -121,6 +120,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
@@ -164,7 +168,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
@@ -319,7 +322,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         squared_epsilon_insensitive: equivalent to PA-II in the reference
         paper.
 
-    epsilon : float, default=DEFAULT_EPSILON
+    epsilon : float, default=0.1
         If the difference between the current prediction and the correct label
         is below this threshold, the model is not updated.
 
@@ -356,6 +359,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
@@ -391,7 +399,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0,

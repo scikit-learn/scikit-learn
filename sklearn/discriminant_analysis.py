@@ -18,12 +18,10 @@ from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
-from .utils import check_array
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .preprocessing import StandardScaler
-from .utils.validation import _deprecate_positional_args
 
 
 __all__ = ['LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis']
@@ -280,6 +278,11 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     QuadraticDiscriminantAnalysis : Quadratic Discriminant Analysis.
@@ -477,8 +480,12 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
         # (n_classes) centers
         _, S, Vt = linalg.svd(X, full_matrices=0)
 
-        self.explained_variance_ratio_ = (S**2 / np.sum(
-            S**2))[:self._max_components]
+        if self._max_components == 0:
+            self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
+        else:
+            self.explained_variance_ratio_ = (S**2 / np.sum(
+                S**2))[:self._max_components]
+
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
@@ -586,7 +593,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
                                       "solver (use 'svd' or 'eigen').")
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         if self.solver == 'svd':
             X_new = np.dot(X - self.xbar_, self.scalings_)
         elif self.solver == 'eigen':
@@ -730,6 +737,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     classes_ : ndarray of shape (n_classes,)
         Unique class labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
@@ -746,7 +758,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     --------
     LinearDiscriminantAnalysis : Linear Discriminant Analysis.
     """
-    @_deprecate_positional_args
     def __init__(self, *, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
@@ -824,7 +835,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         # return log posterior, see eq (4.12) p. 110 of the ESL.
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]

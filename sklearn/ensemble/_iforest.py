@@ -16,7 +16,6 @@ from ..utils import (
 )
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..base import OutlierMixin
 
 from ._bagging import BaseBagging
@@ -70,7 +69,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             - If 'auto', the threshold is determined as in the
               original paper.
-            - If float, the contamination should be in the range [0, 0.5].
+            - If float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -144,6 +143,15 @@ class IsolationForest(OutlierMixin, BaseBagging):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
@@ -177,7 +185,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> clf.predict([[0.1], [0], [90]])
     array([ 1,  1, -1])
     """
-    @_deprecate_positional_args
     def __init__(self, *,
                  n_estimators=100,
                  max_samples="auto",
@@ -238,7 +245,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = check_array(X, accept_sparse=['csc'])
+        X = self._validate_data(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -249,6 +256,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
+
+        if self.contamination != 'auto':
+            if not(0. < self.contamination <= .5):
+                raise ValueError("contamination must be in (0, 0.5], "
+                                 "got: %f" % self.contamination)
 
         if isinstance(self.max_samples, str):
             if self.max_samples == 'auto':
@@ -309,7 +321,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             be considered as an inlier according to the fitted model.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         is_inlier = np.ones(X.shape[0], dtype=int)
         is_inlier[self.decision_function(X) < 0] = -1
         return is_inlier
@@ -375,12 +387,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = check_array(X, accept_sparse='csr')
-        if self.n_features_ != X.shape[1]:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {0} and "
-                             "input n_features is {1}."
-                             "".format(self.n_features_, X.shape[1]))
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
@@ -446,11 +453,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 + _average_path_length(n_samples_leaf)
                 - 1.0
             )
-
+        denominator = (
+            len(self.estimators_) * _average_path_length([self.max_samples_])
+        )
         scores = 2 ** (
-            -depths
-            / (len(self.estimators_)
-               * _average_path_length([self.max_samples_]))
+            # For a single training sample, denominator and depth are 0.
+            # Therefore, we set the score manually to 1.
+            -np.divide(depths, denominator, out=np.ones_like(depths),
+                       where=denominator != 0)
         )
         return scores
 

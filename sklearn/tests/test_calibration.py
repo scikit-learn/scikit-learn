@@ -7,26 +7,28 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
+from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import LeaveOneOut, train_test_split
 
 from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_almost_equal,
                                     assert_array_equal,
-                                    assert_raises, ignore_warnings)
+                                    ignore_warnings)
 from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import (RandomForestClassifier, RandomForestRegressor,
+                              VotingClassifier)
 from sklearn.svm import LinearSVC
 from sklearn.isotonic import IsotonicRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import CalibratedClassifierCV
+from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
@@ -59,7 +61,8 @@ def test_calibration(data, method, ensemble):
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
     cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
-    assert_raises(ValueError, cal_clf.fit, X, y)
+    with pytest.raises(ValueError):
+        cal_clf.fit(X, y)
 
     # Naive Bayes with calibration
     for this_X_train, this_X_test in [(X_train, X_test),
@@ -275,6 +278,29 @@ def test_calibration_multiclass(method, ensemble, seed):
     assert calibrated_brier < 1.1 * uncalibrated_brier
 
 
+def test_calibration_zero_probability():
+    # Test an edge case where _CalibratedClassifier avoids numerical errors
+    # in the multiclass normalization step if all the calibrators output
+    # are zero all at once for a given sample and instead fallback to uniform
+    # probabilities.
+    class ZeroCalibrator():
+        # This function is called from _CalibratedClassifier.predict_proba.
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+    X, y = make_blobs(n_samples=50, n_features=10, random_state=7,
+                      centers=10, cluster_std=15.0)
+    clf = DummyClassifier().fit(X, y)
+    calibrator = ZeroCalibrator()
+    cal_clf = _CalibratedClassifier(
+        base_estimator=clf, calibrators=[calibrator], classes=clf.classes_)
+
+    probas = cal_clf.predict_proba(X)
+
+    # Check that all probabilities are uniformly 1. / clf.n_classes_
+    assert_allclose(probas, 1. / clf.n_classes_)
+
+
 def test_calibration_prefit():
     """Test calibration for prefitted classifiers"""
     n_samples = 50
@@ -362,8 +388,8 @@ def test_sigmoid_calibration():
 
     # check that _SigmoidCalibration().fit only accepts 1d array or 2d column
     # arrays
-    assert_raises(ValueError, _SigmoidCalibration().fit,
-                  np.vstack((exF, exF)), exY)
+    with pytest.raises(ValueError):
+        _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
 
 
 def test_calibration_curve():
@@ -382,8 +408,8 @@ def test_calibration_curve():
 
     # probabilities outside [0, 1] should not be accepted when normalize
     # is set to False
-    assert_raises(ValueError, calibration_curve, [1.1], [-0.1],
-                  normalize=False)
+    with pytest.raises(ValueError):
+        calibration_curve([1.1], [-0.1], normalize=False)
 
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
@@ -397,8 +423,8 @@ def test_calibration_curve():
     assert_almost_equal(prob_pred_quantile, [0.1, 0.8])
 
     # Check that error is raised when invalid strategy is selected
-    assert_raises(ValueError, calibration_curve, y_true2, y_pred2,
-                  strategy='percentile')
+    with pytest.raises(ValueError):
+        calibration_curve(y_true2, y_pred2, strategy='percentile')
 
 
 @pytest.mark.parametrize('ensemble', [True, False])
@@ -487,19 +513,19 @@ def test_calibration_accepts_ndarray(X):
 
 
 @pytest.fixture
-def text_data():
-    text_data = [
+def dict_data():
+    dict_data = [
         {'state': 'NY', 'age': 'adult'},
         {'state': 'TX', 'age': 'adult'},
         {'state': 'VT', 'age': 'child'},
     ]
     text_labels = [1, 0, 1]
-    return text_data, text_labels
+    return dict_data, text_labels
 
 
 @pytest.fixture
-def text_data_pipeline(text_data):
-    X, y = text_data
+def dict_data_pipeline(dict_data):
+    X, y = dict_data
     pipeline_prefit = Pipeline([
         ('vectorizer', DictVectorizer()),
         ('clf', RandomForestClassifier())
@@ -507,19 +533,30 @@ def text_data_pipeline(text_data):
     return pipeline_prefit.fit(X, y)
 
 
-def test_calibration_pipeline(text_data, text_data_pipeline):
-    # Test that calibration works in prefit pipeline with transformer,
-    # where `X` is not array-like, sparse matrix or dataframe at the start.
-    # See https://github.com/scikit-learn/scikit-learn/issues/8710
-    X, y = text_data
-    clf = text_data_pipeline
+def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
+    """Test that calibration works in prefit pipeline with transformer
+
+    `X` is not array-like, sparse matrix or dataframe at the start.
+    See https://github.com/scikit-learn/scikit-learn/issues/8710
+
+    Also test it can predict without running into validation errors.
+    See https://github.com/scikit-learn/scikit-learn/issues/19637
+    """
+    X, y = dict_data
+    clf = dict_data_pipeline
     calib_clf = CalibratedClassifierCV(clf, cv='prefit')
     calib_clf.fit(X, y)
     # Check attributes are obtained from fitted estimator
     assert_array_equal(calib_clf.classes_, clf.classes_)
-    msg = "'CalibratedClassifierCV' object has no attribute"
-    with pytest.raises(AttributeError, match=msg):
-        calib_clf.n_features_in_
+
+    # Neither the pipeline nor the calibration meta-estimator
+    # expose the n_features_in_ check on this kind of data.
+    assert not hasattr(clf, 'n_features_in_')
+    assert not hasattr(calib_clf, 'n_features_in_')
+
+    # Ensure that no error is thrown with predict and predict_proba
+    calib_clf.predict(X)
+    calib_clf.predict_proba(X)
 
 
 @pytest.mark.parametrize('clf, cv', [
@@ -544,7 +581,20 @@ def test_calibration_attributes(clf, cv):
         assert calib_clf.n_features_in_ == X.shape[1]
 
 
-# FIXME: remove in 0.26
+def test_calibration_inconsistent_prefit_n_features_in():
+    # Check that `n_features_in_` from prefit base estimator
+    # is consistent with training set
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=2, random_state=7)
+    clf = LinearSVC(C=1).fit(X, y)
+    calib_clf = CalibratedClassifierCV(clf, cv='prefit')
+
+    msg = "X has 3 features, but LinearSVC is expecting 5 features as input."
+    with pytest.raises(ValueError, match=msg):
+        calib_clf.fit(X[:, :3], y)
+
+
+# FIXME: remove in 1.1
 def test_calibrated_classifier_cv_deprecation(data):
     # Check that we raise the proper deprecation warning if accessing
     # `calibrators_` from the `_CalibratedClassifier`.
@@ -558,3 +608,20 @@ def test_calibrated_classifier_cv_deprecation(data):
         calibrators, calib_clf.calibrated_classifiers_[0].calibrators
     ):
         assert clf1 is clf2
+
+
+def test_calibration_votingclassifier():
+    # Check that `CalibratedClassifier` works with `VotingClassifier`.
+    # The method `predict_proba` from `VotingClassifier` is dynamically
+    # defined via a property that only works when voting="soft".
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=2, random_state=7)
+    vote = VotingClassifier(
+        estimators=[('dummy'+str(i), DummyClassifier()) for i in range(3)],
+        voting="soft"
+    )
+    vote.fit(X, y)
+
+    calib_clf = CalibratedClassifierCV(base_estimator=vote, cv="prefit")
+    # smoke test: should not raise an error
+    calib_clf.fit(X, y)

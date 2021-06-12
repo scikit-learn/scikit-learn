@@ -17,15 +17,12 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..base import is_classifier
 
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
 from . import DecisionTreeClassifier
-
-import warnings
 
 
 def _color_brew(n):
@@ -78,12 +75,10 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
-@_deprecate_positional_args
 def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
-              class_names=None, label='all', filled=False,
-              impurity=True, node_ids=False,
-              proportion=False, rotate='deprecated', rounded=False,
-              precision=3, ax=None, fontsize=None):
+              class_names=None, label='all', filled=False, impurity=True,
+              node_ids=False, proportion=False, rounded=False, precision=3,
+              ax=None, fontsize=None):
     """Plot a decision tree.
 
     The sample counts that are shown are weighted with any sample_weights that
@@ -135,14 +130,6 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
 
-    rotate : bool, default=False
-        This parameter has no effect on the matplotlib tree visualisation and
-        it is kept here for backward compatibility.
-
-        .. deprecated:: 0.23
-           ``rotate`` is deprecated in 0.23 and will be removed in 0.25.
-
-
     rounded : bool, default=False
         When set to ``True``, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
@@ -180,16 +167,10 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
 
     check_is_fitted(decision_tree)
 
-    if rotate != 'deprecated':
-        warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
-                       "It will be removed in 0.25."),
-                      FutureWarning)
-
     exporter = _MPLTreeExporter(
         max_depth=max_depth, feature_names=feature_names,
-        class_names=class_names, label=label, filled=filled,
-        impurity=impurity, node_ids=node_ids,
-        proportion=proportion, rotate=rotate, rounded=rounded,
+        class_names=class_names, label=label, filled=filled, impurity=impurity,
+        node_ids=node_ids, proportion=proportion, rounded=rounded,
         precision=precision, fontsize=fontsize)
     return exporter.export(decision_tree, ax=ax)
 
@@ -198,7 +179,7 @@ class _BaseTreeExporter:
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
-                 proportion=False, rotate=False, rounded=False,
+                 proportion=False, rounded=False,
                  precision=3, fontsize=None):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -208,7 +189,6 @@ class _BaseTreeExporter:
         self.impurity = impurity
         self.node_ids = node_ids
         self.proportion = proportion
-        self.rotate = rotate
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
@@ -299,6 +279,9 @@ class _BaseTreeExporter:
         if self.impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
                 criterion = "friedman_mse"
+            elif (isinstance(criterion, _criterion.MSE)
+                  or criterion == "squared_error"):
+                criterion = "squared_error"
             elif not isinstance(criterion, str):
                 criterion = "impurity"
             if labels:
@@ -371,18 +354,18 @@ class _DOTTreeExporter(_BaseTreeExporter):
                  feature_names=None, class_names=None, label='all',
                  filled=False, leaves_parallel=False, impurity=True,
                  node_ids=False, proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3):
+                 special_characters=False, precision=3, fontname='helvetica'):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
-            impurity=impurity,
-            node_ids=node_ids, proportion=proportion, rotate=rotate,
-            rounded=rounded,
-            precision=precision)
+            impurity=impurity, node_ids=node_ids, proportion=proportion,
+            rounded=rounded, precision=precision)
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
+        self.fontname = fontname
+        self.rotate = rotate
 
         # PostScript compatibility for special characters
         if special_characters:
@@ -449,16 +432,17 @@ class _DOTTreeExporter(_BaseTreeExporter):
             self.out_file.write(
                 ', style="%s", color="black"'
                 % ", ".join(rounded_filled))
-        if self.rounded:
-            self.out_file.write(', fontname=helvetica')
+
+        self.out_file.write(', fontname="%s"' % self.fontname)
         self.out_file.write('] ;\n')
 
         # Specify graph & edge aesthetics
         if self.leaves_parallel:
             self.out_file.write(
                 'graph [ranksep=equally, splines=polyline] ;\n')
-        if self.rounded:
-            self.out_file.write('edge [fontname=helvetica] ;\n')
+
+        self.out_file.write('edge [fontname="%s"] ;\n' % self.fontname)
+
         if self.rotate:
             self.out_file.write('rankdir=LR ;\n')
 
@@ -528,14 +512,14 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
-                 proportion=False, rotate=False, rounded=False,
+                 proportion=False, rounded=False,
                  precision=3, fontsize=None):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity, node_ids=node_ids, proportion=proportion,
-            rotate=rotate, rounded=rounded, precision=precision)
+            rounded=rounded, precision=precision)
         self.fontsize = fontsize
 
         # validate
@@ -627,7 +611,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
         import matplotlib.pyplot as plt
         kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
-                      zorder=100 - 10 * depth, xycoords='axes pixels',
+                      zorder=100 - 10 * depth, xycoords='axes points',
                       arrowprops=self.arrow_args.copy())
         kwargs['arrowprops']['edgecolor'] = plt.rcParams['text.color']
 
@@ -662,12 +646,12 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
-@_deprecate_positional_args
 def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False, precision=3):
+                    rounded=False, special_characters=False, precision=3,
+                    fontname='helvetica'):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -734,8 +718,7 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
         When set to ``True``, orient tree left to right rather than top-down.
 
     rounded : bool, default=False
-        When set to ``True``, draw node boxes with rounded corners and use
-        Helvetica fonts instead of Times-Roman.
+        When set to ``True``, draw node boxes with rounded corners.
 
     special_characters : bool, default=False
         When set to ``False``, ignore special characters for PostScript
@@ -744,6 +727,9 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
     precision : int, default=3
         Number of digits of precision for floating point in the values of
         impurity, threshold and value attributes of each node.
+
+    fontname : str, default='helvetica'
+        Name of font used to render text.
 
     Returns
     -------
@@ -784,7 +770,7 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
             filled=filled, leaves_parallel=leaves_parallel, impurity=impurity,
             node_ids=node_ids, proportion=proportion, rotate=rotate,
             rounded=rounded, special_characters=special_characters,
-            precision=precision)
+            precision=precision, fontname=fontname)
         exporter.export(decision_tree)
 
         if return_string:
@@ -815,7 +801,6 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
-@_deprecate_positional_args
 def export_text(decision_tree, *, feature_names=None, max_depth=10,
                 spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.

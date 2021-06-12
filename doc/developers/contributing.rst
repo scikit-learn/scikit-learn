@@ -213,6 +213,18 @@ latest up-to-date workflow.
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
 
+- Sprint-specific instructions and practical tips:
+  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
+
+.. note::
+  In January 2021, the default branch name changed from ``master`` to ``main``
+  for the scikit-learn GitHub repository to use more inclusive terms.
+  These videos were created prior to the renaming of the branch.
+  For contributors who are viewing these videos to set up their
+  working environment and submitting a PR, ``master`` should be replaced to ``main``.
+
 How to contribute
 -----------------
 
@@ -269,12 +281,14 @@ You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-7. Synchronize your master branch with the upstream master branch:
+7. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+   more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash $
 
-        git checkout master
-        git pull upstream master
+        git checkout main
+        git fetch upstream
+        git merge upstream/main
 
 8. Create a feature branch to hold your development changes:
 
@@ -283,7 +297,7 @@ modifying code and submitting a PR:
         git checkout -b my_feature
 
    and start making changes. Always use a feature branch. It's good
-   practice to never work on the ``master`` branch!
+   practice to never work on the ``main`` branch!
 
 9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
    run code style checks before each commit:
@@ -336,7 +350,7 @@ latest changes of the main scikit-learn repository:
 .. prompt:: bash $
 
     git fetch upstream
-    git merge upstream/master
+    git merge upstream/main
 
 Subsequently, you might need to solve the conflicts. You can refer to the
 `Git documentation related to resolving merge conflict using the command
@@ -411,16 +425,16 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    verify the correct behavior of the fix or feature. In this manner, further
    modifications on the code base are granted to be consistent with the
    desired behavior. In the case of bug fixes, at the time of the PR, the
-   non-regression tests should fail for the code base in the master branch
+   non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
 5. **Make sure that your PR does not add PEP8 violations**. To check the
    code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the upstream remote):
+   :ref:`above <upstream>` to set up the ``upstream`` remote):
 
    .. prompt:: bash $
 
-        git diff upstream/master -u -- "*.py" | flake8 --diff
+        git diff upstream/main -u -- "*.py" | flake8 --diff
 
    or `make flake8-diff` which should work on unix-like system.
 
@@ -445,14 +459,17 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    performance and efficiency (see :ref:`monitoring_performances`) or through
    examples of usage. Examples also illustrate the features and intricacies of
    the library to users. Have a look at other examples in the `examples/
-   <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
+   <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
    directory for reference. Examples should demonstrate why the new
    functionality is useful in practice and, if possible, compare it to other
    methods available in scikit-learn.
 
-10. New features often need to be illustrated with narrative documentation in
-    the user guide, with small code snippets. If relevant, please also add
-    references in the literature, with PDF links when possible.
+10. New features have some maintenance overhead. We expect PR authors
+    to take part in the maintenance for the code they submit, at least
+    initially. New features need to be illustrated with narrative
+    documentation in the user guide, with small code snippets.
+    If relevant, please also add references in the literature, with PDF links
+    when possible.
 
 11. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
@@ -779,6 +796,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
     sample_weight : array-like of shape (n_samples,), default=None
 
+    multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
+
   In general have the following in mind:
 
       1. Use Python basic types. (``bool`` instead of ``boolean``)
@@ -792,10 +811,18 @@ Finally, follow the formatting rules below to make it consistently good:
       5. Specify ``dataframe`` when "frame-like" features are being used, such
          as the column names.
       6. When specifying the data type of a list, use ``of`` as a delimiter:
-         ``list of int``.
+         ``list of int``. When the parameter supports arrays giving details
+         about the shape and/or data type and a list of such arrays, you can
+         use one of ``array-like of shape (n_samples,) or list of such arrays``.
       7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
          after defining the shape:
-         ``ndarray of shape (n_samples,), dtype=np.int32``.
+         ``ndarray of shape (n_samples,), dtype=np.int32``. You can specify
+         multiple dtype as a set:
+         ``array-like of shape (n_samples,), dtype={np.float64, np.float32}``.
+         If one wants to mention arbitrary precision, use `integral` and
+         `floating` rather than the Python dtype `int` and `float`. When both
+         `int` and `floating` are supported, there is no need to specify the
+         dtype.
       8. When the default is ``None``, ``None`` only needs to be specified at the
          end with ``default=None``. Be sure to include in the docstring, what it
          means for the parameter or attribute to be ``None``.
@@ -916,24 +943,24 @@ scikit-learn. Make sure it is up to date:
 
 In the benchmark suite, the benchmarks are organized following the same
 structure as scikit-learn. For example, you can compare the performance of a
-specific estimator between upstream/master and the branch you are working on:
+specific estimator between ``upstream/main`` and the branch you are working on:
 
 .. prompt:: bash $
 
-  asv continuous -b LogisticRegression upstream/master HEAD
+  asv continuous -b LogisticRegression upstream/main HEAD
 
 The command uses conda by default for creating the benchmark environments. If
 you want to use virtualenv instead, use the `-E` flag:
 
 .. prompt:: bash $
 
-  asv continuous -E virtualenv -b LogisticRegression upstream/master HEAD
+  asv continuous -E virtualenv -b LogisticRegression upstream/main HEAD
 
 You can also specify a whole module to benchmark:
 
 .. prompt:: bash $
 
-  asv continuous -b linear_model upstream/master HEAD
+  asv continuous -b linear_model upstream/main HEAD
 
 You can replace `HEAD` by any local branch. By default it will only report the
 benchmarks that have change by at least 10%. You can control this ratio with
@@ -943,7 +970,7 @@ To run the full benchmark suite, simply remove the `-b` flag :
 
 .. prompt:: bash $
 
-  asv continuous upstream/master HEAD
+  asv continuous upstream/main HEAD
 
 However this can take up to two hours. The `-b` flag also accepts a regular
 expression for a more complex subset of benchmarks to run.
@@ -1235,11 +1262,43 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+.. _communication:
+
+Communication Guidelines
+------------------------
+
+Reviewing open pull requests (PRs) helps move the project forward. It is a
+great way to get familiar with the codebase and should motivate the
+contributor to keep involved in the project. [1]_
+
+- Every PR, good or bad, is an act of generosity. Opening with a positive
+  comment will help the author feel rewarded, and your subsequent remarks may
+  be heard more clearly. You may feel good also.
+- Begin if possible with the large issues, so the author knows they’ve been
+  understood. Resist the temptation to immediately go line by line, or to open
+  with small pervasive issues.
+- Do not let perfect be the enemy of the good. If you find yourself making
+  many small suggestions that are a matter of subjective taste rather than
+  somewhat objective, the following approaches are suggested:
+
+  - refrain from submitting these;
+  - prefix them as "Nit" so that the contributor knows it's OK not to address;
+  - follow up in a subsequent PR, out of courtesy, you may want to let the
+    original contributor know.
+
+- Do not rush, take the time to make your comments clear and justify your
+  suggestions.
+- You are the face of the project. Bad days occur to everyone, in that
+  occasion you deserve a break: try to take your time and stay offline.
+
+.. [1] Adapted from the numpy `communication guidelines
+       <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
+
 Reading the existing code base
 ==============================
 
 Reading and digesting an existing code base is always a difficult exercise
-that takes time and experience to master. Even though we try to write simple
+that takes time and experience to main. Even though we try to write simple
 code in general, understanding the code can seem overwhelming at first,
 given the sheer size of the project. Here is a list of tips that may help
 make this task easier and faster (in no particular order).

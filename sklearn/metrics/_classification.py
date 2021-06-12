@@ -37,7 +37,6 @@ from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
@@ -137,7 +136,6 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return sample_score.sum()
 
 
-@_deprecate_positional_args
 def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Accuracy classification score.
 
@@ -210,7 +208,6 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-@_deprecate_positional_args
 def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                      normalize=None):
     """Compute confusion matrix to evaluate the accuracy of a classification.
@@ -259,7 +256,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
 
     See Also
     --------
-    plot_confusion_matrix : Plot Confusion Matrix.
+    ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
+        given an estimator, the data, and the label.
+    ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
+        given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     References
@@ -306,7 +306,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
             raise ValueError("'labels' should contains at least one label.")
         elif y_true.size == 0:
             return np.zeros((n_labels, n_labels), dtype=int)
-        elif np.all([l not in y_true for l in labels]):
+        elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
@@ -321,17 +321,25 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                          "'all', None}")
 
     n_labels = labels.size
-    label_to_ind = {y: x for x, y in enumerate(labels)}
-    # convert yt, yp into index
-    y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
-    y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
+    # If labels are not consecutive integers starting from zero, then
+    # y_true and y_pred must be converted into index form
+    need_index_conversion = not (
+        labels.dtype.kind in {'i', 'u', 'b'} and
+        np.all(labels == np.arange(n_labels)) and
+        y_true.min() >= 0 and y_pred.min() >= 0
+    )
+    if need_index_conversion:
+        label_to_ind = {y: x for x, y in enumerate(labels)}
+        y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
+        y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
     ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
-    y_pred = y_pred[ind]
-    y_true = y_true[ind]
-    # also eliminate weights of eliminated items
-    sample_weight = sample_weight[ind]
+    if not np.all(ind):
+        y_pred = y_pred[ind]
+        y_true = y_true[ind]
+        # also eliminate weights of eliminated items
+        sample_weight = sample_weight[ind]
 
     # Choose the accumulator dtype to always have high precision
     if sample_weight.dtype.kind in {'i', 'u', 'b'}:
@@ -355,7 +363,6 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     return cm
 
 
-@_deprecate_positional_args
 def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
                                 labels=None, samplewise=False):
     """Compute a confusion matrix for each class or sample.
@@ -557,7 +564,6 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-@_deprecate_positional_args
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
                       sample_weight=None):
     r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
@@ -639,7 +645,6 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
     return 1 - k
 
 
-@_deprecate_positional_args
 def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
                   average='binary', sample_weight=None, zero_division="warn"):
     """Jaccard similarity coefficient score.
@@ -785,7 +790,6 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
     return np.average(jaccard, weights=weights)
 
 
-@_deprecate_positional_args
 def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC).
 
@@ -867,15 +871,13 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
     cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
-    mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
-    if np.isnan(mcc):
+    if cov_ypyp * cov_ytyt == 0:
         return 0.
     else:
-        return mcc
+        return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
 
-@_deprecate_positional_args
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
@@ -946,7 +948,6 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         return n_samples - score
 
 
-@_deprecate_positional_args
 def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
              sample_weight=None, zero_division="warn"):
     """Compute the F1 score, also known as balanced F-score or F-measure.
@@ -1071,7 +1072,6 @@ def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
                        zero_division=zero_division)
 
 
-@_deprecate_positional_args
 def fbeta_score(y_true, y_pred, *, beta, labels=None, pos_label=1,
                 average='binary', sample_weight=None, zero_division="warn"):
     """Compute the F-beta score.
@@ -1299,7 +1299,6 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     return labels
 
 
-@_deprecate_positional_args
 def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
@@ -1540,7 +1539,6 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     return precision, recall, f_score, true_sum
 
 
-@_deprecate_positional_args
 def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
                     average='binary', sample_weight=None,
                     zero_division="warn"):
@@ -1660,7 +1658,6 @@ def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
     return p
 
 
-@_deprecate_positional_args
 def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
                  sample_weight=None, zero_division="warn"):
     """Compute the recall.
@@ -1778,7 +1775,6 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
     return r
 
 
-@_deprecate_positional_args
 def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
                             adjusted=False):
     """Compute the balanced accuracy.
@@ -1806,7 +1802,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
 
     adjusted : bool, default=False
         When true, the result is adjusted for chance, so that random
-        performance would score 0, and perfect performance scores 1.
+        performance would score 0, while keeping perfect performance at a score
+        of 1.
 
     Returns
     -------
@@ -1858,7 +1855,6 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
     return score
 
 
-@_deprecate_positional_args
 def classification_report(y_true, y_pred, *, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,
                           zero_division="warn"):
@@ -2060,7 +2056,6 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         return report
 
 
-@_deprecate_positional_args
 def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
 
@@ -2152,7 +2147,6 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-@_deprecate_positional_args
 def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
              labels=None):
     r"""Log loss, aka logistic loss or cross-entropy loss.
@@ -2281,7 +2275,6 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-@_deprecate_positional_args
 def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized).
 
@@ -2366,11 +2359,29 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
     y_true_unique = np.unique(labels if labels is not None else y_true)
+
     if y_true_unique.size > 2:
-        if (labels is None and pred_decision.ndim > 1 and
-                (np.size(y_true_unique) != pred_decision.shape[1])):
-            raise ValueError("Please include all labels in y_true "
-                             "or pass labels as third argument")
+
+        if pred_decision.ndim <= 1:
+            raise ValueError("The shape of pred_decision cannot be 1d array"
+                             "with a multiclass target. pred_decision shape "
+                             "must be (n_samples, n_classes), that is "
+                             f"({y_true.shape[0]}, {y_true_unique.size})."
+                             f" Got: {pred_decision.shape}")
+
+        # pred_decision.ndim > 1 is true
+        if y_true_unique.size != pred_decision.shape[1]:
+            if labels is None:
+                raise ValueError("Please include all labels in y_true "
+                                 "or pass labels as third argument")
+            else:
+                raise ValueError("The shape of pred_decision is not "
+                                 "consistent with the number of classes. "
+                                 "With a multiclass target, pred_decision "
+                                 "shape must be "
+                                 "(n_samples, n_classes), that is "
+                                 f"({y_true.shape[0]}, {y_true_unique.size}). "
+                                 f"Got: {pred_decision.shape}")
         if labels is None:
             labels = y_true_unique
         le = LabelEncoder()
@@ -2403,7 +2414,6 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
-@_deprecate_positional_args
 def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     """Compute the Brier score loss.
 

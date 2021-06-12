@@ -2,11 +2,10 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -33,16 +32,16 @@ G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 
 def test_correct_shapes():
     assert (orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5).shape ==
-                 (n_features,))
+            (n_features,))
     assert (orthogonal_mp(X, y, n_nonzero_coefs=5).shape ==
-                 (n_features, 3))
+            (n_features, 3))
 
 
 def test_correct_shapes_gram():
     assert (orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape ==
-                 (n_features,))
+            (n_features,))
     assert (orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape ==
-                 (n_features, 3))
+            (n_features, 3))
 
 
 def test_n_nonzero_coefs():
@@ -76,23 +75,26 @@ def test_unreachable_accuracy():
     assert_array_almost_equal(
         orthogonal_mp(X, y, tol=0),
         orthogonal_mp(X, y, n_nonzero_coefs=n_features))
+    warning_message = (
+        "Orthogonal matching pursuit ended prematurely "
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        assert_array_almost_equal(
+            orthogonal_mp(X, y, tol=0, precompute=True),
+            orthogonal_mp(X, y, precompute=True,
+                          n_nonzero_coefs=n_features))
 
-    assert_array_almost_equal(
-        assert_warns(RuntimeWarning, orthogonal_mp, X, y, tol=0,
-                     precompute=True),
-        orthogonal_mp(X, y, precompute=True,
-                      n_nonzero_coefs=n_features))
 
-
-def test_bad_input():
-    assert_raises(ValueError, orthogonal_mp, X, y, tol=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y, n_nonzero_coefs=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y,
-                  n_nonzero_coefs=n_features + 1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, tol=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_nonzero_coefs=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy,
-                  n_nonzero_coefs=n_features + 1)
+@pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
+@pytest.mark.parametrize(
+    "keyword_params",
+    [{"tol": -1}, {"n_nonzero_coefs": -1}, {"n_nonzero_coefs": n_features + 1}]
+)
+def test_bad_input(positional_params, keyword_params):
+    with pytest.raises(ValueError):
+        orthogonal_mp(*positional_params, **keyword_params)
 
 
 def test_perfect_signal_recovery():
@@ -155,7 +157,13 @@ def test_identical_regressors():
     gamma = np.zeros(n_features)
     gamma[0] = gamma[1] = 1.
     newy = np.dot(newX, gamma)
-    assert_warns(RuntimeWarning, orthogonal_mp, newX, newy, 2)
+    warning_message = (
+        "Orthogonal matching pursuit ended prematurely "
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        orthogonal_mp(newX, newy, n_nonzero_coefs=2)
 
 
 def test_swapped_regressors():

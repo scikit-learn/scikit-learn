@@ -50,20 +50,20 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
+from ..base import is_classifier
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
-from ..metrics import r2_score
+from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array, compute_sample_weight
+from ..utils import check_random_state, compute_sample_weight, deprecated
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ["RandomForestClassifier",
@@ -86,7 +86,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     max_samples : int or float
         The maximum number of samples to draw from the total available:
             - if float, this indicates a fraction of the total and should be
-              the interval `(0, 1)`;
+              the interval `(0.0, 1.0]`;
             - if int, this indicates the exact number of samples;
             - if None, this indicates the total number of samples.
 
@@ -105,8 +105,8 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples < 1):
-            msg = "`max_samples` must be in range (0, 1) but got value {}"
+        if not (0 < max_samples <= 1):
+            msg = "`max_samples` must be in range (0.0, 1.0] but got value {}"
             raise ValueError(msg.format(max_samples))
         return round(n_samples * max_samples)
 
@@ -311,9 +311,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # ensemble sorts the indices.
             X.sort_indices()
 
-        # Remap output
-        self.n_features_ = X.shape[1]
-
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
             warn("A column-vector y was passed when a 1d array was"
@@ -325,6 +322,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # reshape is necessary to preserve the data contiguity against vs
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
+
+        if self.criterion == "poisson":
+            if np.any(y < 0):
+                raise ValueError("Some value(s) of y are negative which is "
+                                 "not allowed for Poisson regression.")
+            if np.sum(y) <= 0:
+                raise ValueError("Sum of y is not strictly positive which "
+                                 "is necessary for Poisson regression.")
 
         self.n_outputs_ = y.shape[1]
 
@@ -347,6 +352,22 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         # Check parameters
         self._validate_estimator()
+        # TODO: Remove in v1.2
+        if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
+            if self.criterion == "mse":
+                warn(
+                    "Criterion 'mse' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
+            elif self.criterion == "mae":
+                warn(
+                    "Criterion 'mae' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='absolute_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
 
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
@@ -396,7 +417,19 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.estimators_.extend(trees)
 
         if self.oob_score:
-            self._set_oob_score(X, y)
+            y_type = type_of_target(y)
+            if y_type in ("multiclass-multioutput", "unknown"):
+                # FIXME: we could consider to support multiclass-multioutput if
+                # we introduce or reuse a constructor parameter (e.g.
+                # oob_score) allowing our user to pass a callable defining the
+                # scoring strategy on OOB sample.
+                raise ValueError(
+                    f"The type of target cannot be used to compute OOB "
+                    f"estimates. Got {y_type} while only the following are "
+                    f"supported: continuous, continuous-multioutput, binary, "
+                    f"multiclass, multilabel-indicator."
+                )
+            self._set_oob_score_and_attributes(X, y)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -406,9 +439,77 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _set_oob_score(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y):
+        """Compute and set the OOB score and attributes.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+        y : ndarray of shape (n_samples, n_outputs)
+            The target matrix.
         """
-        Calculate out of bag predictions and score."""
+
+    def _compute_oob_predictions(self, X, y):
+        """Compute and set the OOB score.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+        y : ndarray of shape (n_samples, n_outputs)
+            The target matrix.
+
+        Returns
+        -------
+        oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
+                (n_samples, 1, n_outputs)
+            The OOB predictions.
+      """
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse='csr',
+                                reset=False)
+
+        n_samples = y.shape[0]
+        n_outputs = self.n_outputs_
+        if is_classifier(self) and hasattr(self, "n_classes_"):
+            # n_classes_ is a ndarray at this stage
+            # all the supported type of target will have the same number of
+            # classes in all outputs
+            oob_pred_shape = (n_samples, self.n_classes_[0], n_outputs)
+        else:
+            # for regression, n_classes_ does not exist and we create an empty
+            # axis to be consistent with the classification case and make
+            # the array operations compatible with the 2 settings
+            oob_pred_shape = (n_samples, 1, n_outputs)
+
+        oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
+        n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
+
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples,
+        )
+        for estimator in self.estimators_:
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples, n_samples_bootstrap,
+            )
+
+            y_pred = self._get_oob_predictions(
+                estimator, X[unsampled_indices, :]
+            )
+            oob_pred[unsampled_indices, ...] += y_pred
+            n_oob_pred[unsampled_indices, :] += 1
+
+        for k in range(n_outputs):
+            if (n_oob_pred == 0).any():
+                warn(
+                    "Some inputs do not have OOB scores. This probably means "
+                    "too few trees were used to compute any reliable OOB "
+                    "estimates.", UserWarning
+                )
+                n_oob_pred[n_oob_pred == 0] = 1
+            oob_pred[..., k] /= n_oob_pred[..., [k]]
+
+        return oob_pred
 
     def _validate_y_class_weight(self, y):
         # Default implementation
@@ -450,11 +551,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             for tree in self.estimators_ if tree.tree_.node_count > 1)
 
         if not all_importances:
-            return np.zeros(self.n_features_, dtype=np.float64)
+            return np.zeros(self.n_features_in_, dtype=np.float64)
 
         all_importances = np.mean(all_importances,
                                   axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute n_features_ was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use 'n_features_in_' instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -507,53 +618,53 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             class_weight=class_weight,
             max_samples=max_samples)
 
-    def _set_oob_score(self, X, y):
+    @staticmethod
+    def _get_oob_predictions(tree, X):
+        """Compute the OOB predictions for an individual tree.
+
+        Parameters
+        ----------
+        tree : DecisionTreeClassifier object
+            A single decision tree classifier.
+        X : ndarray of shape (n_samples, n_features)
+            The OOB samples.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples, n_classes, n_outputs)
+            The OOB associated predictions.
         """
-        Compute out-of-bag score."""
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
-
-        n_classes_ = self.n_classes_
-        n_samples = y.shape[0]
-
-        oob_decision_function = []
-        oob_score = 0.0
-        predictions = [np.zeros((n_samples, n_classes_[k]))
-                       for k in range(self.n_outputs_)]
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples
-        )
-
-        for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_samples_bootstrap)
-            p_estimator = estimator.predict_proba(X[unsampled_indices, :],
-                                                  check_input=False)
-
-            if self.n_outputs_ == 1:
-                p_estimator = [p_estimator]
-
-            for k in range(self.n_outputs_):
-                predictions[k][unsampled_indices, :] += p_estimator[k]
-
-        for k in range(self.n_outputs_):
-            if (predictions[k].sum(axis=1) == 0).any():
-                warn("Some inputs do not have OOB scores. "
-                     "This probably means too few trees were used "
-                     "to compute any reliable oob estimates.")
-
-            decision = (predictions[k] /
-                        predictions[k].sum(axis=1)[:, np.newaxis])
-            oob_decision_function.append(decision)
-            oob_score += np.mean(y[:, k] ==
-                                 np.argmax(predictions[k], axis=1), axis=0)
-
-        if self.n_outputs_ == 1:
-            self.oob_decision_function_ = oob_decision_function[0]
+        y_pred = tree.predict_proba(X, check_input=False)
+        y_pred = np.array(y_pred, copy=False)
+        if y_pred.ndim == 2:
+            # binary and multiclass
+            y_pred = y_pred[..., np.newaxis]
         else:
-            self.oob_decision_function_ = oob_decision_function
+            # Roll the first `n_outputs` axis to the last axis. We will reshape
+            # from a shape of (n_outputs, n_samples, n_classes) to a shape of
+            # (n_samples, n_classes, n_outputs).
+            y_pred = np.rollaxis(y_pred, axis=0, start=3)
+        return y_pred
 
-        self.oob_score_ = oob_score / self.n_outputs_
+    def _set_oob_score_and_attributes(self, X, y):
+        """Compute and set the OOB score and attributes.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+        y : ndarray of shape (n_samples, n_outputs)
+            The target matrix.
+        """
+        self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
+        if self.oob_decision_function_.shape[-1] == 1:
+            # drop the n_outputs axis if there is a single output
+            self.oob_decision_function_ = self.oob_decision_function_.squeeze(
+                axis=-1
+            )
+        self.oob_score_ = accuracy_score(
+            y, np.argmax(self.oob_decision_function_, axis=1)
+        )
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -664,8 +775,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         Returns
         -------
-        p : ndarray of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
+        p : ndarray of shape (n_samples, n_classes), or a list of such arrays
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -711,8 +821,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         Returns
         -------
-        p : ndarray of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
+        p : ndarray of shape (n_samples, n_classes), or a list of such arrays
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -803,52 +912,48 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return y_hat
 
-    def _set_oob_score(self, X, y):
+    @staticmethod
+    def _get_oob_predictions(tree, X):
+        """Compute the OOB predictions for an individual tree.
+
+        Parameters
+        ----------
+        tree : DecisionTreeRegressor object
+            A single decision tree regressor.
+        X : ndarray of shape (n_samples, n_features)
+            The OOB samples.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples, 1, n_outputs)
+            The OOB associated predictions.
         """
-        Compute out-of-bag scores."""
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        y_pred = tree.predict(X, check_input=False)
+        if y_pred.ndim == 1:
+            # single output regression
+            y_pred = y_pred[:, np.newaxis, np.newaxis]
+        else:
+            # multioutput regression
+            y_pred = y_pred[:, np.newaxis, :]
+        return y_pred
 
-        n_samples = y.shape[0]
+    def _set_oob_score_and_attributes(self, X, y):
+        """Compute and set the OOB score and attributes.
 
-        predictions = np.zeros((n_samples, self.n_outputs_))
-        n_predictions = np.zeros((n_samples, self.n_outputs_))
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+        y : ndarray of shape (n_samples, n_outputs)
+            The target matrix.
+        """
+        self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(
+            axis=1
         )
-
-        for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_samples_bootstrap)
-            p_estimator = estimator.predict(
-                X[unsampled_indices, :], check_input=False)
-
-            if self.n_outputs_ == 1:
-                p_estimator = p_estimator[:, np.newaxis]
-
-            predictions[unsampled_indices, :] += p_estimator
-            n_predictions[unsampled_indices, :] += 1
-
-        if (n_predictions == 0).any():
-            warn("Some inputs do not have OOB scores. "
-                 "This probably means too few trees were used "
-                 "to compute any reliable oob estimates.")
-            n_predictions[n_predictions == 0] = 1
-
-        predictions /= n_predictions
-        self.oob_prediction_ = predictions
-
-        if self.n_outputs_ == 1:
-            self.oob_prediction_ = \
-                self.oob_prediction_.reshape((n_samples, ))
-
-        self.oob_score_ = 0.0
-
-        for k in range(self.n_outputs_):
-            self.oob_score_ += r2_score(y[:, k],
-                                        predictions[:, k])
-
-        self.oob_score_ /= self.n_outputs_
+        if self.oob_prediction_.shape[-1] == 1:
+            # drop the n_outputs axis if there is a single output
+            self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
+        self.oob_score_ = r2_score(y, self.oob_prediction_)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
@@ -880,6 +985,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         averaged_predictions /= len(self.estimators_)
 
         return averaged_predictions
+
 
 class RandomForestClassifier(ForestClassifier):
     """
@@ -991,16 +1097,16 @@ class RandomForestClassifier(ForestClassifier):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
-
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate
-        the generalization accuracy.
+        Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1065,7 +1171,7 @@ class RandomForestClassifier(ForestClassifier):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1089,6 +1195,15 @@ class RandomForestClassifier(ForestClassifier):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1107,7 +1222,8 @@ class RandomForestClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes) or \
+            (n_samples, n_classes, n_outputs)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1150,7 +1266,6 @@ class RandomForestClassifier(ForestClassifier):
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-    @_deprecate_positional_args
     def __init__(self,
                  n_estimators=100, *,
                  criterion="gini",
@@ -1222,14 +1337,29 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"mse", "mae"}, default="mse"
+    criterion : {"squared_error", "mse", "absolute_error", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, "absolute_error"
+        for the mean absolute error, and "poisson" which uses reduction in
+        Poisson deviance to find splits.
+        Training using "absolute_error" is significantly slower
+        than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 1.0
+           Poisson criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1314,15 +1444,16 @@ class RandomForestRegressor(ForestRegressor):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        whether to use out-of-bag samples to estimate
-        the R^2 on unseen data.
+        Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1361,7 +1492,7 @@ class RandomForestRegressor(ForestRegressor):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1388,6 +1519,15 @@ class RandomForestRegressor(ForestRegressor):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1395,7 +1535,7 @@ class RandomForestRegressor(ForestRegressor):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_prediction_ : ndarray of shape (n_samples,)
+    oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
@@ -1441,10 +1581,10 @@ class RandomForestRegressor(ForestRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
     """
-    @_deprecate_positional_args
+
     def __init__(self,
                  n_estimators=100, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -1596,15 +1736,16 @@ class ExtraTreesClassifier(ForestClassifier):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate
-        the generalization accuracy.
+        Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1673,7 +1814,7 @@ class ExtraTreesClassifier(ForestClassifier):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1708,6 +1849,15 @@ class ExtraTreesClassifier(ForestClassifier):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1715,7 +1865,8 @@ class ExtraTreesClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes) or \
+            (n_samples, n_classes, n_outputs)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1752,7 +1903,7 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     """
-    @_deprecate_positional_args
+
     def __init__(self,
                  n_estimators=100, *,
                  criterion="gini",
@@ -1822,14 +1973,23 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"mse", "mae"}, default="mse"
+    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, and "absolute_error"
+        for the mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1914,14 +2074,16 @@ class ExtraTreesRegressor(ForestRegressor):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
     oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate the R^2 on unseen data.
+        Whether to use out-of-bag samples to estimate the generalization score.
+        Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1964,7 +2126,7 @@ class ExtraTreesRegressor(ForestRegressor):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1991,6 +2153,15 @@ class ExtraTreesRegressor(ForestRegressor):
     n_features_ : int
         The number of features.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs.
 
@@ -1998,7 +2169,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_prediction_ : ndarray of shape (n_samples,)
+    oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
@@ -2033,10 +2204,10 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg.score(X_test, y_test)
     0.2708...
     """
-    @_deprecate_positional_args
+
     def __init__(self,
                  n_estimators=100, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -2173,7 +2344,8 @@ class RandomTreesEmbedding(BaseForest):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     sparse_output : bool, default=True
         Whether or not to return a sparse CSR matrix, as default behavior,
@@ -2214,6 +2386,15 @@ class RandomTreesEmbedding(BaseForest):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -2243,10 +2424,9 @@ class RandomTreesEmbedding(BaseForest):
            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
     """
 
-    criterion = 'mse'
+    criterion = "squared_error"
     max_features = 1
 
-    @_deprecate_positional_args
     def __init__(self,
                  n_estimators=100, *,
                  max_depth=5,
@@ -2286,7 +2466,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
 
-    def _set_oob_score(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):
@@ -2343,7 +2523,7 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        X = check_array(X, accept_sparse=['csc'])
+        X = self._validate_data(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.

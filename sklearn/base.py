@@ -21,11 +21,10 @@ from .utils._tags import (
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
+from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
-from .utils.validation import _deprecate_positional_args
 
 
-@_deprecate_positional_args
 def clone(estimator, *, safe=True):
     """Constructs a new unfitted estimator with the same parameters.
 
@@ -349,7 +348,18 @@ class BaseEstimator:
                call to `partial_fit`. All other methods that validate `X`
                should set `reset=False`.
         """
-        n_features = X.shape[1]
+        try:
+            n_features = _num_features(X)
+        except TypeError as e:
+            if not reset and hasattr(self, "n_features_in_"):
+                raise ValueError(
+                    "X does not contain any features, but "
+                    f"{self.__class__.__name__} is expecting "
+                    f"{self.n_features_in_} features"
+                ) from e
+            # If the number of features is not defined and reset=True,
+            # then we skip this check
+            return
 
         if reset:
             self.n_features_in_ = n_features
@@ -845,9 +855,12 @@ def _is_pairwise(estimator):
 
     if has_pairwise_attribute:
         if pairwise_attribute != pairwise_tag:
-            warnings.warn("_pairwise was deprecated in 0.24 and will be "
-                          "removed in 0.26. Set the estimator tags of your "
-                          "estimator instead", FutureWarning)
+            warnings.warn(
+                "_pairwise was deprecated in 0.24 and will be removed in 1.1 "
+                "(renaming of 0.26). Set the estimator tags of your estimator "
+                "instead",
+                FutureWarning
+            )
         return pairwise_attribute
 
     # use pairwise tag when the attribute is not present

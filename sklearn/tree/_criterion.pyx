@@ -1344,7 +1344,7 @@ cdef class Poisson(RegressionCriterion):
     implemented impurity:
         1/n * sum(y_true * log(y_true/y_pred)
     """
-    # FIXME in 0.25:
+    # FIXME in 1.0:
     # min_impurity_split with default = 0 forces us to use a non-negative
     # impurity like the Poisson deviance. Without this restriction, one could
     # throw away the 'constant' term sum(y_true * log(y_true)) and just use

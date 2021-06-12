@@ -12,6 +12,7 @@ import sys
 import re
 import pkgutil
 from inspect import isgenerator
+from itertools import product
 from functools import partial
 
 import pytest
@@ -19,10 +20,10 @@ import pytest
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import FitFailedWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.base import BiclusterMixin
 
 from sklearn.decomposition import PCA
 from sklearn.linear_model._base import LinearClassifierMixin
@@ -72,8 +73,6 @@ def test_get_check_estimator_ids(val, expected):
 
 def _tested_estimators():
     for name, Estimator in all_estimators():
-        if issubclass(Estimator, BiclusterMixin):
-            continue
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
@@ -214,8 +213,11 @@ def test_class_support_removed():
 
 
 def _generate_search_cv_instances():
-    for SearchCV, (Estimator, param_grid) in zip(
-        [GridSearchCV, RandomizedSearchCV],
+    for SearchCV, (Estimator, param_grid) in product(
+        [
+            GridSearchCV,
+            RandomizedSearchCV,
+        ],
         [
             (Ridge, {"alpha": [0.1, 1.0]}),
             (LogisticRegression, {"C": [0.1, 1.0]}),
@@ -223,8 +225,11 @@ def _generate_search_cv_instances():
     ):
         yield SearchCV(Estimator(), param_grid)
 
-    for SearchCV, (Estimator, param_grid) in zip(
-        [GridSearchCV, RandomizedSearchCV],
+    for SearchCV, (Estimator, param_grid) in product(
+        [
+            GridSearchCV,
+            RandomizedSearchCV,
+        ],
         [
             (Ridge, {"ridge__alpha": [0.1, 1.0]}),
             (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
@@ -246,6 +251,7 @@ def test_search_cv(estimator, check, request):
             ConvergenceWarning,
             UserWarning,
             FutureWarning,
+            FitFailedWarning,
         )
     ):
         check(estimator)
@@ -262,28 +268,8 @@ def test_search_cv(estimator, check, request):
 #
 # check_classifiers_train would need to be updated with the error message
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
-    'calibration',
-    'compose',
-    'covariance',
-    'cross_decomposition',
-    'discriminant_analysis',
-    'ensemble',
-    'feature_extraction',
-    'feature_selection',
-    'gaussian_process',
-    'isotonic',
-    'linear_model',
-    'manifold',
-    'mixture',
     'model_selection',
-    'multiclass',
     'multioutput',
-    'naive_bayes',
-    'neighbors',
-    'pipeline',
-    'random_projection',
-    'semi_supervised',
-    'svm',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
