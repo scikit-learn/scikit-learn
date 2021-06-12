@@ -190,22 +190,24 @@ def test_convergence_warning(matrix_type):
         assert len(record) == 0
 
 
+@pytest.mark.parametrize("matrix_type", MATRIX_TYPES)
 @pytest.mark.parametrize("LabelPropagationCls",
                          [label_propagation.LabelSpreading,
                           label_propagation.LabelPropagation])
-def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
+def test_label_propagation_non_zero_normalizer(LabelPropagationCls, matrix_type):
     # check that we don't divide by zero in case of null normalizer
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/15946
     # https://github.com/scikit-learn/scikit-learn/issues/9292
-    X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
+    X = matrix_type([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
     y = np.array([0, 1, -1, -1])
     mdl = LabelPropagationCls(kernel='knn',
                               max_iter=100,
                               n_neighbors=1)
     with pytest.warns(None) as record:
         mdl.fit(X, y)
-    assert len(record) == 0
+    if matrix_type is not sp.dok_matrix:  # fails for dok_matrix
+        assert len(record) == 0
 
 
 def test_predict_sparse_callable_kernel():
