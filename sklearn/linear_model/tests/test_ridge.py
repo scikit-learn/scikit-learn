@@ -1436,6 +1436,30 @@ def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
     assert(np.all(model.coef_ >= 0))
 
 
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('alpha', [1e-3, 1e-2, 0.1, 1.])
+def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
+    # Test whether Ridge converge to the same solution
+    # with positive=True and positive=False
+    # when the ground truth coefs are all positive
+    rng = np.random.RandomState(42)
+    X = rng.randn(300, 100)
+    b = rng.uniform(0.1, 1.0, size=X.shape[1])
+    if fit_intercept:
+        intercept = 1
+        y = X.dot(b) + intercept
+    else:
+        y = X.dot(b)
+    y += rng.normal(size=X.shape[0]) * 0.1
+
+    results = []
+    for positive in [True, False]:
+        model = Ridge(alpha=alpha, positive=positive,
+                      fit_intercept=fit_intercept, tol=1e-10)
+        results.append(model.fit(X, y).coef_)
+    assert_array_almost_equal(*results)
+
+
 @pytest.mark.parametrize(
     'solver', ['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'])
 def test_ridge_positive_error_test(solver):
