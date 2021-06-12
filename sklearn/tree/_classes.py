@@ -259,7 +259,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 else:
                     warnings.warn(
                         "Option 'auto' will be changed to `sqrt(n_features)` "
-                        "in v1.2.",
+                        "in v1.2. Use `max_features=None` to avoid this "
+                        "warning and keep the current behavior. Use "
+                        "`max_features='sqrt'` to get the future behavior.",
                         category=FutureWarning
                     )
                     max_features = self.n_features_
