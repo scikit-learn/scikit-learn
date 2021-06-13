@@ -1052,6 +1052,11 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_classes_ : int
         The number of classes.
 
@@ -1604,6 +1609,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     max_features_ : int
         The inferred value of max_features.
 
@@ -1612,7 +1622,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     HistGradientBoostingRegressor : Histogram-based Gradient Boosting
         Classification Tree.
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
-    sklearn.tree.RandomForestRegressor : A random forest regressor.
+    sklearn.ensemble.RandomForestRegressor : A random forest regressor.
 
     Notes
     -----
@@ -1756,9 +1766,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     # FIXME: to be removed in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
-                "in version 0.24 and will be removed in 1.1 "
-                "(renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute n_classes_ was deprecated "
+        "in version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def n_classes_(self):
         try:

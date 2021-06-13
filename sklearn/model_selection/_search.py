@@ -367,8 +367,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # allows cross-validation to see 'precomputed' metrics
@@ -1177,6 +1178,10 @@ class GridSearchCV(BaseSearchCV):
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1498,6 +1503,10 @@ class RandomizedSearchCV(BaseSearchCV):
 
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
+
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
 
     Notes
     -----

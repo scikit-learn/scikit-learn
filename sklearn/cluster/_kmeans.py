@@ -766,6 +766,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     MiniBatchKMeans : Alternative online implementation that does incremental
@@ -1227,7 +1232,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             },
         }
 
@@ -1470,6 +1475,11 @@ class MiniBatchKMeans(KMeans):
            This attribute is deprecated in 0.24 and will be removed in
            1.1 (renaming of 0.26).
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     KMeans : The classic implementation of the clustering method based on the
@@ -1525,20 +1535,23 @@ class MiniBatchKMeans(KMeans):
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
 
-    @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
-                " and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "The attribute 'counts_' is deprecated in 0.24"
+        " and will be removed in 1.1 (renaming of 0.26).")
     @property
     def counts_(self):
         return self._counts
 
-    @deprecated("The attribute 'init_size_' is deprecated in "  # type: ignore
-                "0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "The attribute 'init_size_' is deprecated in "
+        "0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def init_size_(self):
         return self._init_size
 
-    @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "The attribute 'random_state_' is deprecated "
+        "in 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def random_state_(self):
         return getattr(self, "_random_state", None)
@@ -1918,6 +1931,6 @@ class MiniBatchKMeans(KMeans):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }

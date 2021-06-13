@@ -91,6 +91,11 @@ class ShrunkCovariance(EmpiricalCovariance):
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -356,6 +361,11 @@ class LedoitWolf(EmpiricalCovariance):
         Coefficient in the convex combination used for the computation
         of the shrunk estimate. Range is [0, 1].
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -532,6 +542,11 @@ class OAS(EmpiricalCovariance):
     shrinkage_ : float
       coefficient in the convex combination used for the computation
       of the shrunk estimate. Range is [0, 1].
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

@@ -967,6 +967,7 @@ def check_complex_data(name, estimator_orig):
     # Something both valid for classification and regression
     y = rng.randint(low=0, high=2, size=10) + 1j
     estimator = clone(estimator_orig)
+    set_random_state(estimator, random_state=0)
     with raises(ValueError, match="Complex data not supported"):
         estimator.fit(X, y)
 

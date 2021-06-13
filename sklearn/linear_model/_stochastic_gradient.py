@@ -934,6 +934,11 @@ class SGDClassifier(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     sklearn.svm.LinearSVC : Linear support vector classification.
@@ -1098,7 +1103,7 @@ class SGDClassifier(BaseSGDClassifier):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1538,6 +1543,11 @@ class SGDRegressor(BaseSGDRegressor):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -1580,7 +1590,7 @@ class SGDRegressor(BaseSGDRegressor):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1692,6 +1702,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Same as ``(n_iter_ * n_samples)``.
 
     loss_function_ : concrete ``LossFunction``
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

@@ -127,6 +127,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         This is stored only when a non-fitted estimator is passed to the
         ``SelectFromModel``, i.e when prefit is False.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     threshold_ : float
         The threshold value used for feature selection.
 
