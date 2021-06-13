@@ -299,6 +299,10 @@ Changelog
   :pr:`17169` by :user:`Dmytro Lituiev <DSLituiev>`
   and :user:`Julien Jerphanion <jjerphan>`.
 
+- |API| Raises an error in :class:`feature_selection.VarianceThreshold`
+  when the variance threshold is negative.
+  :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
+
 :mod:`sklearn.inspection`
 .........................
 
