@@ -192,7 +192,7 @@ class BisectKMeans(KMeans):
 
     Notes
     -----
-    Bisection cannot be performed if n_clusters < 2.
+    That algorithm will not work if n_cluster is smaller than 2.
 
     Also it might be inefficient when n_cluster is equal to 2
 
@@ -438,7 +438,6 @@ class BisectKMeans(KMeans):
 
         self.cluster_centers_ = clusters
 
-        # Calculate Inertia (Total SSE of all points and centers)
         self.inertia_ = _inertia(X, sample_weight, self.cluster_centers_,
                                  self.labels_, self._n_threads)
 
@@ -490,7 +489,6 @@ class BisectKMeans(KMeans):
         # Boolean mask for picking data to bisect
         picked_labels = np.ones(X.shape[0], dtype=bool)
 
-        # ID of biggest center stored in centers_dict
         biggest_id = 0
         last_center_id = 0
 
