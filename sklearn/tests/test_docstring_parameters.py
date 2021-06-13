@@ -202,7 +202,8 @@ N_FEATURES_MODULES_TO_IGNORE = {
     'random_projection',
     'semi_supervised',
     'svm',
-    'tree'
+    'tree',
+    'BisectKMeans'
 }
 
 
