@@ -22,7 +22,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, \
-    _check_sample_weight, _deprecate_positional_args
+    _check_sample_weight
 from ..utils.fixes import delayed
 
 
@@ -537,6 +537,11 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     estimators_ : list of estimators
         The collection of fitted base estimators.
 
@@ -593,7 +598,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
-    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None,
                  n_estimators=10, *,
@@ -929,6 +933,11 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     estimators_ : list of estimators
         The collection of fitted sub-estimators.
 
@@ -979,7 +988,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
-    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None,
                  n_estimators=10, *,

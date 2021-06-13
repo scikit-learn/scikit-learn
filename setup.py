@@ -14,13 +14,12 @@ import setuptools  # noqa
 from distutils.command.clean import clean as Clean
 from distutils.command.sdist import sdist
 
-from pkg_resources import parse_version
 import traceback
 import importlib
 try:
     import builtins
 except ImportError:
-    # Python 2 compat: just to be able to declare that Python >=3.6 is needed.
+    # Python 2 compat: just to be able to declare that Python >=3.7 is needed.
     import __builtin__ as builtins
 
 # This is a bit (!) hackish: we are setting a global variable so that the
@@ -51,6 +50,7 @@ PROJECT_URLS = {
 # does not need the compiled code
 import sklearn
 import sklearn._min_dependencies as min_deps  # noqa
+from sklearn.externals._packaging.version import parse as parse_version  # noqa
 
 
 VERSION = sklearn.__version__
@@ -145,7 +145,7 @@ try:
 
 except ImportError:
     # Numpy should not be a dependency just to be able to introspect
-    # that python 3.6 is required.
+    # that python 3.7 is required.
     pass
 
 
@@ -251,7 +251,6 @@ def setup_package():
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
                                  'Programming Language :: Python :: 3.8',
                                  'Programming Language :: Python :: 3.9',
@@ -261,19 +260,14 @@ def setup_package():
                                   'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
-                    python_requires=">=3.6",
+                    python_requires=">=3.7",
                     install_requires=min_deps.tag_to_packages['install'],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
-    if len(sys.argv) == 1 or (
-            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-                                    sys.argv[1] in ('--help-commands',
-                                                    'egg_info',
-                                                    'dist_info',
-                                                    '--version',
-                                                    'clean',
-                                                    'check'))):
+    commands = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
+    if all(command in ('egg_info', 'dist_info', 'clean', 'check')
+           for command in commands):
         # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.
@@ -285,7 +279,7 @@ def setup_package():
     else:
         if sys.version_info < (3, 6):
             raise RuntimeError(
-                "Scikit-learn requires Python 3.6 or later. The current"
+                "Scikit-learn requires Python 3.7 or later. The current"
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 

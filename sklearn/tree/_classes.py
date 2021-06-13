@@ -36,7 +36,6 @@ from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -62,8 +61,11 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _criterion.Gini,
                 "entropy": _criterion.Entropy}
-CRITERIA_REG = {"mse": _criterion.MSE,
+# TODO: Remove "mse" and "mae" in version 1.2.
+CRITERIA_REG = {"squared_error": _criterion.MSE,
+                "mse": _criterion.MSE,
                 "friedman_mse": _criterion.FriedmanMSE,
+                "absolute_error": _criterion.MAE,
                 "mae": _criterion.MAE,
                 "poisson": _criterion.Poisson}
 
@@ -86,7 +88,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    @_deprecate_positional_args
     def __init__(self, *,
                  criterion,
                  splitter,
@@ -350,6 +351,21 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_,
                                                          n_samples)
+            # TODO: Remove in v1.2
+            if self.criterion == "mse":
+                warnings.warn(
+                    "Criterion 'mse' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
+            elif self.criterion == "mae":
+                warnings.warn(
+                    "Criterion 'mae' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='absolute_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
             # might be shared and modified concurrently during parallel fitting
@@ -780,6 +796,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -833,7 +854,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
-    @_deprecate_positional_args
     def __init__(self, *,
                  criterion="gini",
                  splitter="best",
@@ -991,21 +1011,30 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae", "poisson"}, default="mse"
+    criterion : {"squared_error", "mse", "friedman_mse", "absolute_error", \
+            "mae", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion and minimizes the L2 loss
-        using the mean of each terminal node, "friedman_mse", which uses mean
-        squared error with Friedman's improvement score for potential splits,
-        "mae" for the mean absolute error, which minimizes the L1 loss using
-        the median of each terminal node, and "poisson" which uses reduction in
-        Poisson deviance to find splits.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1137,6 +1166,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1185,9 +1219,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
-    @_deprecate_positional_args
     def __init__(self, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  splitter="best",
                  max_depth=None,
                  min_samples_split=2,
@@ -1454,6 +1487,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1498,7 +1536,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     >>> cls.score(X_test, y_test)
     0.8947...
     """
-    @_deprecate_positional_args
     def __init__(self, *,
                  criterion="gini",
                  splitter="random",
@@ -1545,17 +1582,26 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
+    criterion : {"squared_error", "mse", "friedman_mse", "mae"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion and "mae" for the
+        mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1668,6 +1714,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     feature_importances_ : ndarray of shape (n_features,)
         Return impurity-based feature importances (the higher, the more
         important the feature).
@@ -1720,9 +1771,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> reg.score(X_test, y_test)
     0.33...
     """
-    @_deprecate_positional_args
     def __init__(self, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  splitter="random",
                  max_depth=None,
                  min_samples_split=2,

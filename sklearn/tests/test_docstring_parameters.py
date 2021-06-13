@@ -176,36 +176,8 @@ def _construct_searchcv_instance(SearchCV):
 
 
 N_FEATURES_MODULES_TO_IGNORE = {
-    'calibration',
-    'cluster',
-    'compose',
-    'covariance',
-    'decomposition',
-    'discriminant_analysis',
-    'dummy',
-    'ensemble',
-    'feature_extraction',
-    'feature_selection',
-    'gaussian_process',
-    'impute',
-    'isotonic',
-    'kernel_approximation',
-    'kernel_ridge',
-    'linear_model',
-    'manifold',
-    'mixture',
     'model_selection',
-    'multiclass',
     'multioutput',
-    'naive_bayes',
-    'neighbors',
-    'neural_network',
-    'pipeline',
-    'preprocessing',
-    'random_projection',
-    'semi_supervised',
-    'svm',
-    'tree'
 }
 
 
@@ -218,22 +190,28 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer',
-               'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
-               'GaussianRandomProjection',
-               'MultiOutputClassifier', 'MultiOutputRegressor',
-               'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
-               'RegressorChain', 'SelectFromModel',
-               'SparseCoder', 'SparseRandomProjection',
-               'SpectralBiclustering', 'StackingClassifier',
-               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor', 'SequentialFeatureSelector',
-               'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
+    IGNORED = {
+        'ClassifierChain',
+        'CountVectorizer', 'DictVectorizer',
+        'GaussianRandomProjection',
+        'MultiOutputClassifier', 'MultiOutputRegressor',
+        'NoSampleWeightWrapper', 'RFE', 'RFECV',
+        'RegressorChain', 'SelectFromModel',
+        'SparseCoder', 'SparseRandomProjection',
+        'SpectralBiclustering', 'StackingClassifier',
+        'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
+        'VotingRegressor', 'SequentialFeatureSelector',
+    }
+
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    if Estimator.__name__ in ("RandomizedSearchCV", "GridSearchCV"):
+    if Estimator.__name__ in (
+        "HalvingRandomSearchCV",
+        "RandomizedSearchCV",
+        "HalvingGridSearchCV",
+        "GridSearchCV",
+    ):
         est = _construct_searchcv_instance(Estimator)
     else:
         est = _construct_instance(Estimator)
@@ -247,13 +225,14 @@ def test_fit_docstring_attributes(name, Estimator):
     if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
         est.n_components = 1  # default = 2 is invalid for single target.
 
-    # FIXME: TO BE REMOVED for 1.0 (avoid FutureWarning)
-    if Estimator.__name__ == 'AffinityPropagation':
-        est.random_state = 63
-
     # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
         est.init = 'nndsvda'
+
+    # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
+    if Estimator.__name__ == 'TSNE':
+        est.learning_rate = 200.0
+        est.init = 'random'
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
@@ -289,17 +268,34 @@ def test_fit_docstring_attributes(name, Estimator):
         with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'Birch', 'LarsCV', 'Lasso',
-               'OrthogonalMatchingPursuit'}
-
-    if Estimator.__name__ in IGNORED:
-        pytest.xfail(
-            reason="Estimator has too many undocumented attributes.")
-
-    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
-                and not k.startswith('_')]
+    fit_attr = _get_all_fitted_attributes(est)
     fit_attr_names = [attr.name for attr in attributes]
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
     undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
     assert not undocumented_attrs,\
         "Undocumented attributes: {}".format(undocumented_attrs)
+
+
+def _get_all_fitted_attributes(estimator):
+    "Get all the fitted attributes of an estimator including properties"
+    # attributes
+    fit_attr = list(estimator.__dict__.keys())
+
+    # properties
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=FutureWarning)
+
+        for name in dir(estimator.__class__):
+            obj = getattr(estimator.__class__, name)
+            if not isinstance(obj, property):
+                continue
+
+            # ignore properties that raises an AttributeError and deprecated
+            # properties
+            try:
+                getattr(estimator, name)
+            except (AttributeError, FutureWarning):
+                continue
+            fit_attr.append(name)
+
+    return [k for k in fit_attr if k.endswith('_') and not k.startswith('_')]

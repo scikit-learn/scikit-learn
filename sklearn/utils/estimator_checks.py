@@ -959,11 +959,15 @@ def check_dtype_object(name, estimator_orig):
 
 
 def check_complex_data(name, estimator_orig):
+    rng = np.random.RandomState(42)
     # check that estimators raise an exception on providing complex data
-    X = np.random.sample(10) + 1j * np.random.sample(10)
+    X = rng.uniform(size=10) + 1j * rng.uniform(size=10)
     X = X.reshape(-1, 1)
-    y = np.random.sample(10) + 1j * np.random.sample(10)
+
+    # Something both valid for classification and regression
+    y = rng.randint(low=0, high=2, size=10) + 1j
     estimator = clone(estimator_orig)
+    set_random_state(estimator, random_state=0)
     with raises(ValueError, match="Complex data not supported"):
         estimator.fit(X, y)
 
@@ -3113,11 +3117,13 @@ def check_requires_y_none(name, estimator_orig):
             warnings.warn(warning_msg, FutureWarning)
 
 
+@ignore_warnings(category=FutureWarning)
 def check_n_features_in_after_fitting(name, estimator_orig):
     # Make sure that n_features_in are checked after fitting
     tags = _safe_tags(estimator_orig)
 
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+    if ("2darray" not in tags["X_types"] and "sparse" not in tags["X_types"] or
+            tags["no_validation"]):
         return
 
     rng = np.random.RandomState(0)

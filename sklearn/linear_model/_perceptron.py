@@ -1,7 +1,6 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
 
-from ..utils.validation import _deprecate_positional_args
 from ._stochastic_gradient import BaseSGDClassifier
 
 
@@ -118,6 +117,11 @@ class Perceptron(BaseSGDClassifier):
         The function that determines the loss, or difference between the
         output of the algorithm and the target values.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
@@ -154,7 +158,6 @@ class Perceptron(BaseSGDClassifier):
 
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
-    @_deprecate_positional_args
     def __init__(self, *, penalty=None, alpha=0.0001, l1_ratio=0.15,
                  fit_intercept=True,
                  max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,

@@ -64,7 +64,6 @@ from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ["RandomForestClassifier",
@@ -87,7 +86,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     max_samples : int or float
         The maximum number of samples to draw from the total available:
             - if float, this indicates a fraction of the total and should be
-              the interval `(0, 1)`;
+              the interval `(0.0, 1.0]`;
             - if int, this indicates the exact number of samples;
             - if None, this indicates the total number of samples.
 
@@ -106,8 +105,8 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples < 1):
-            msg = "`max_samples` must be in range (0, 1) but got value {}"
+        if not (0 < max_samples <= 1):
+            msg = "`max_samples` must be in range (0.0, 1.0] but got value {}"
             raise ValueError(msg.format(max_samples))
         return round(n_samples * max_samples)
 
@@ -324,6 +323,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
 
+        if self.criterion == "poisson":
+            if np.any(y < 0):
+                raise ValueError("Some value(s) of y are negative which is "
+                                 "not allowed for Poisson regression.")
+            if np.sum(y) <= 0:
+                raise ValueError("Sum of y is not strictly positive which "
+                                 "is necessary for Poisson regression.")
+
         self.n_outputs_ = y.shape[1]
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
@@ -345,6 +352,22 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         # Check parameters
         self._validate_estimator()
+        # TODO: Remove in v1.2
+        if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
+            if self.criterion == "mse":
+                warn(
+                    "Criterion 'mse' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
+            elif self.criterion == "mae":
+                warn(
+                    "Criterion 'mae' was deprecated in v1.0 and will be "
+                    "removed in version 1.2. Use `criterion='absolute_error'` "
+                    "which is equivalent.",
+                    FutureWarning
+                )
 
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
@@ -1148,7 +1171,7 @@ class RandomForestClassifier(ForestClassifier):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1175,6 +1198,11 @@ class RandomForestClassifier(ForestClassifier):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1238,7 +1266,6 @@ class RandomForestClassifier(ForestClassifier):
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-    @_deprecate_positional_args
     def __init__(self,
                  n_estimators=100, *,
                  criterion="gini",
@@ -1310,14 +1337,27 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"mse", "mae"}, default="mse"
+    criterion : {"squared_error", "mse", "absolute_error", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, "absolute_error"
+        for the mean absolute error, and "poisson" which uses reduction in
+        Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 1.0
+           Poisson criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1450,7 +1490,7 @@ class RandomForestRegressor(ForestRegressor):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1480,6 +1520,11 @@ class RandomForestRegressor(ForestRegressor):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1534,10 +1579,10 @@ class RandomForestRegressor(ForestRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
     """
-    @_deprecate_positional_args
+
     def __init__(self,
                  n_estimators=100, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -1767,7 +1812,7 @@ class ExtraTreesClassifier(ForestClassifier):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1805,6 +1850,11 @@ class ExtraTreesClassifier(ForestClassifier):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1851,7 +1901,7 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     """
-    @_deprecate_positional_args
+
     def __init__(self,
                  n_estimators=100, *,
                  criterion="gini",
@@ -1921,14 +1971,23 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"mse", "mae"}, default="mse"
+    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, and "absolute_error"
+        for the mean absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. deprecated:: 1.0
+            Criterion "mse" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="squared_error"` which is equivalent.
+
+        .. deprecated:: 1.0
+            Criterion "mae" was deprecated in v1.0 and will be removed in
+            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -2065,7 +2124,7 @@ class ExtraTreesRegressor(ForestRegressor):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -2095,6 +2154,11 @@ class ExtraTreesRegressor(ForestRegressor):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         The number of outputs.
@@ -2138,10 +2202,10 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg.score(X_test, y_test)
     0.2708...
     """
-    @_deprecate_positional_args
+
     def __init__(self,
                  n_estimators=100, *,
-                 criterion="mse",
+                 criterion="squared_error",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -2324,6 +2388,11 @@ class RandomTreesEmbedding(BaseForest):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -2353,10 +2422,9 @@ class RandomTreesEmbedding(BaseForest):
            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
     """
 
-    criterion = 'mse'
+    criterion = "squared_error"
     max_features = 1
 
-    @_deprecate_positional_args
     def __init__(self,
                  n_estimators=100, *,
                  max_depth=5,
