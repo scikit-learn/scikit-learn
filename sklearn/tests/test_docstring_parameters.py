@@ -295,6 +295,9 @@ def test_fit_docstring_attributes(name, Estimator):
     if module in N_FEATURES_MODULES_TO_IGNORE:
         skipped_attributes.add("n_features_in_")
 
+    if name == 'BisectKMeans':
+        skipped_attributes.add("n_features_in_")
+
     for attr in attributes:
         if attr.name in skipped_attributes:
             continue

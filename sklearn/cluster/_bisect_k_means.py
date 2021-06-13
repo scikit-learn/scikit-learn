@@ -192,7 +192,7 @@ class BisectKMeans(KMeans):
 
     Notes
     -----
-    That algorithm will not work if n_cluster is smaller than 2.
+    Bisection cannot be performed if n_cluster < 2.
 
     Also it might be inefficient when n_cluster is equal to 2
 
@@ -399,14 +399,14 @@ class BisectKMeans(KMeans):
         else:
             self._kmeans_single = _kmeans_single_elkan
 
+        _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
+
         if self.verbose:
             print("Running Bisecting K-Means with parameters:")
             print(f"-> number of clusters: {self.n_clusters}")
             print(f"-> number of centroid initializations: {self.n_init}")
             print("-> relative tolerance: {:.4e}".format(self.tol))
             print(f"-> bisect strategy: {self.bisect_strategy} \n")
-
-        _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
 
         # Subtract of mean of X for more accurate distance computations
         if not sp.issparse(X):
@@ -489,7 +489,9 @@ class BisectKMeans(KMeans):
         # Boolean mask for picking data to bisect
         picked_labels = np.ones(X.shape[0], dtype=bool)
 
+        # ID of biggest center stored in centers_dict
         biggest_id = 0
+
         last_center_id = 0
 
         for n_iter in range(self.n_clusters - 1):
