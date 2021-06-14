@@ -84,6 +84,11 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.decomposition import TruncatedSVD

@@ -949,9 +949,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
-    fixed_vocabulary_: boolean
+    fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping
-        is provided by the user
+        is provided by the user.
 
     stop_words_ : set
         Terms that were ignored because they either:
@@ -1684,9 +1684,9 @@ class TfidfVectorizer(CountVectorizer):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
-    fixed_vocabulary_: bool
+    fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping
-        is provided by the user
+        is provided by the user.
 
     idf_ : array of shape (n_features,)
         The inverse document frequency (IDF) vector; only defined

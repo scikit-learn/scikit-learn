@@ -125,6 +125,11 @@ class EmpiricalCovariance(BaseEstimator):
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np

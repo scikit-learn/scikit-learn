@@ -217,6 +217,11 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.cluster import DBSCAN
