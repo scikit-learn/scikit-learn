@@ -12,6 +12,7 @@ from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils.deprecation import deprecated
 from ..utils.fixes import linspace
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
@@ -55,11 +56,15 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    powers_ : ndarray of shape (n_output_features, n_input_features)
+    powers_ : ndarray of shape (`n_output_features_`, `n_features_in_`)
         powers_[i, j] is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
         The total number of input features.
+
+        .. deprecated:: 1.0
+            This attribute is deprecated in 1.0 and will be removed in 1.2.
+            Refer to `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -146,10 +151,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     def powers_(self):
         check_is_fitted(self)
 
-        combinations = self._combinations(self.n_input_features_, self.degree,
+        combinations = self._combinations(self.n_features_in_, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        return np.vstack([np.bincount(c, minlength=self.n_input_features_)
+        return np.vstack([np.bincount(c, minlength=self.n_features_in_)
                           for c in combinations])
 
     def get_feature_names(self, input_features=None):
@@ -200,7 +205,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             Fitted transformer.
         """
         _, n_features = self._validate_data(X, accept_sparse=True).shape
-        self.n_input_features_ = n_features
         self.n_output_features_ = self._num_combinations(
             n_features, self.degree, self.interaction_only, self.include_bias
         )
@@ -242,9 +246,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                                 accept_sparse=('csr', 'csc'))
 
         n_samples, n_features = X.shape
-
-        if n_features != self.n_input_features_:
-            raise ValueError("X shape does not match training shape")
 
         if sparse.isspmatrix_csr(X):
             if self.degree > 3:
@@ -335,6 +336,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     index = new_index
 
         return XP
+
+    # TODO: Remove in 1.2
+    @deprecated("The attribute n_input_features_ was "  # type: ignore
+                "deprecated in version 1.0 and will be removed in 1.2.")
+    @property
+    def n_input_features_(self):
+        return self.n_features_in_
 
 
 # TODO:
