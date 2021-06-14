@@ -225,6 +225,8 @@ latest up-to-date workflow.
   For contributors who are viewing these videos to set up their
   working environment and submitting a PR, ``master`` should be replaced to ``main``.
 
+.. _how_to_contribute:
+
 How to contribute
 -----------------
 
@@ -256,7 +258,7 @@ how to set up your git repository:
 
     .. prompt:: bash $
 
-       pip install cython pytest pytest-cov flake8 mypy
+       pip install cython pytest pytest-cov flake8 mypy black
 
 5. Install scikit-learn in editable mode:
 
@@ -428,7 +430,15 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. **Make sure that your PR does not add PEP8 violations**. To check the
+5. Run `black` to auto-format your code. Installing the pre-commit hook as
+   described in the :ref:`how_to_contribute` section will run black before
+   each commit.
+
+   .. prompt:: bash $
+
+        black
+
+6. **Make sure that your PR does not add PEP8 violations**. To check the
    code that you changed, you can run the following command (see
    :ref:`above <upstream>` to set up the ``upstream`` remote):
 
@@ -438,14 +448,14 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 
    or `make flake8-diff` which should work on unix-like system.
 
-6. Follow the :ref:`coding-guidelines`.
+7. Follow the :ref:`coding-guidelines`.
 
 
-7. When applicable, use the validation tools and scripts in the
+8. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
    for developers can be found in the :ref:`developers-utils` page.
 
-8. Often pull requests resolve one or more other issues (or pull requests).
+9. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
    be closed, you should `use keywords to create link to them
    <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -455,7 +465,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    related to some other issues/PRs, create a link to them without using
    the keywords (e.g., ``See also #1234``).
 
-9. PRs should often substantiate the change, through benchmarks of
+10. PRs should often substantiate the change, through benchmarks of
    performance and efficiency (see :ref:`monitoring_performances`) or through
    examples of usage. Examples also illustrate the features and intricacies of
    the library to users. Have a look at other examples in the `examples/
@@ -464,14 +474,14 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    functionality is useful in practice and, if possible, compare it to other
    methods available in scikit-learn.
 
-10. New features have some maintenance overhead. We expect PR authors
+11. New features have some maintenance overhead. We expect PR authors
     to take part in the maintenance for the code they submit, at least
     initially. New features need to be illustrated with narrative
     documentation in the user guide, with small code snippets.
     If relevant, please also add references in the literature, with PDF links
     when possible.
 
-11. The user guide should also include expected time and space complexity
+12. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     n_features is expected to be lower than 100".
@@ -1352,3 +1362,13 @@ make this task easier and faster (in no particular order).
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
+
+- We can configure `git blame` to ignore the commit that migrated the code
+  style to `black`.
+
+  .. prompt:: bash $
+
+      git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+  Find out more information in black's
+  `documentation for avoiding ruining git blame <https://black.readthedocs.io/en/stable/guides/introducing_black_to_your_project.html#avoiding-ruining-git-blame>`_.
