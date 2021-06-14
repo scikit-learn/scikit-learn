@@ -470,13 +470,13 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    the keywords (e.g., ``See also #1234``).
 
 10. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency (see :ref:`monitoring_performances`) or through
-   examples of usage. Examples also illustrate the features and intricacies of
-   the library to users. Have a look at other examples in the `examples/
-   <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
-   directory for reference. Examples should demonstrate why the new
-   functionality is useful in practice and, if possible, compare it to other
-   methods available in scikit-learn.
+    performance and efficiency (see :ref:`monitoring_performances`) or through
+    examples of usage. Examples also illustrate the features and intricacies of
+    the library to users. Have a look at other examples in the `examples/
+    <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
+    directory for reference. Examples should demonstrate why the new
+    functionality is useful in practice and, if possible, compare it to other
+    methods available in scikit-learn.
 
 11. New features have some maintenance overhead. We expect PR authors
     to take part in the maintenance for the code they submit, at least
