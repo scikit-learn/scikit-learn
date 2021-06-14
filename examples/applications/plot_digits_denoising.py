@@ -41,15 +41,14 @@ X, y = fetch_openml(data_id=41082, as_frame=False, return_X_y=True)
 X = MinMaxScaler().fit_transform(X)
 
 # %%
-# The idea will be to learn a PCA basis (with and without a kernel) on denoised
-# images and then used these models to reconstruct images corrupted with some
-# additional noise.
+# The idea will be to learn a PCA basis (with and without a kernel) on
+# noise-free images and then used these models to reconstruct images corrupted
+# with some additional noise.
 #
 # Thus, we split our dataset into a training and testing set composed of 1,000
 # samples for the training and 100 samples for testing. In addition, we create
 # a copy of the testing subset to which we an additional Gaussian noise.
-
-# %%
+#
 # The idea of this application, is to show that we can denoise corrupted images
 # by learning a PCA basis on some uncorrupted images. We will use both a PCA
 # and a kernel-based PCA to solve this problem.
@@ -69,6 +68,8 @@ rng = np.random.RandomState(0)
 noise = rng.normal(scale=0.25, size=X_test.shape)
 X_test_noisy = X_test + noise
 
+noise = rng.normal(scale=0.25, size=X_train.shape)
+X_train_noisy = X_train + noise
 
 # %%
 # In addition, we will create a helper function to qualitatively assess the
@@ -102,11 +103,11 @@ plot_digits(X_test_noisy,
 from sklearn.decomposition import PCA, KernelPCA
 
 pca = PCA(n_components=32)
-kernel_pca = KernelPCA(n_components=200, kernel="rbf", gamma=1e-3,
+kernel_pca = KernelPCA(n_components=400, kernel="rbf", gamma=1e-3,
                        fit_inverse_transform=True, alpha=5e-3)
 
-pca.fit(X_train)
-_ = kernel_pca.fit(X_train)
+pca.fit(X_train_noisy)
+_ = kernel_pca.fit(X_train_noisy)
 
 # %%
 # Now, we can transform and reconstruct the noisy test set. Since we used less
