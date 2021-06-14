@@ -2142,7 +2142,7 @@ def test_max_features_auto_deprecated(Tree):
     """Check that max_features="auto" is deprecated for regression trees."""
     with pytest.warns(
         FutureWarning,
-        match=r"Option 'auto' will be changed to `sqrt\(n_features\)` in "
+        match=r"Option 'auto' will behave as `sqrt\(n_features\)` in "
               r"v1.2."
     ):
         Tree(max_features="auto").fit(X, y)

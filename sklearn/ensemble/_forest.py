@@ -371,7 +371,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
             if self.max_features == "auto":
                 warn(
-                    "Option 'auto' will be changed to `sqrt(n_features)` "
+                    "Option 'auto' will behave as `sqrt(n_features)` "
                     "in v1.2. Use `max_features=None` to avoid this "
                     "warning and keep the current behavior. Use "
                     "`max_features='sqrt'` to get the future behavior.",
@@ -1423,7 +1423,7 @@ class RandomForestRegressor(ForestRegressor):
         effectively inspect more than ``max_features`` features.
 
         .. deprecated:: 1.0
-            Option "auto" will be changed to `sqrt(n_features)` in v1.2.
+            Option "auto" will behave as `sqrt(n_features)` in v1.2.
 
     max_leaf_nodes : int, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
@@ -2061,7 +2061,7 @@ class ExtraTreesRegressor(ForestRegressor):
         effectively inspect more than ``max_features`` features.
 
         .. deprecated:: 1.0
-            Option "auto" will be changed to `sqrt(n_features)` in v1.2.
+            Option "auto" will behave as `sqrt(n_features)` in v1.2.
 
     max_leaf_nodes : int, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.

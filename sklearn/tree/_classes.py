@@ -258,7 +258,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     max_features = max(1, int(np.sqrt(self.n_features_)))
                 else:
                     warnings.warn(
-                        "Option 'auto' will be changed to `sqrt(n_features)` "
+                        "Option 'auto' will behave as `sqrt(n_features)` "
                         "in v1.2. Use `max_features=None` to avoid this "
                         "warning and keep the current behavior. Use "
                         "`max_features='sqrt'` to get the future behavior.",
@@ -1101,7 +1101,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         effectively inspect more than ``max_features`` features.
 
         .. deprecated:: 1.0
-            Option "auto" will be changed to `sqrt(n_features)` in v1.2.
+            Option "auto" will behave as `sqrt(n_features)` in v1.2.
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
@@ -1671,7 +1671,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         effectively inspect more than ``max_features`` features.
 
         .. deprecated:: 1.0
-            Option "auto" will be changed to `sqrt(n_features)` in v1.2.
+            Option "auto" will behave as `sqrt(n_features)` in v1.2.
 
     random_state : int, RandomState instance or None, default=None
         Used to pick randomly the `max_features` used at each split.
