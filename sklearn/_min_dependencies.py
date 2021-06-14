@@ -36,7 +36,7 @@ dependent_packages = {
     'black': ('21.6b0', 'tests'),
     'mypy': ('0.770', 'tests'),
     'pyamg': ('4.0.0', 'tests'),
-    'sphinx': ('3.2.0', 'docs'),
+    'sphinx': ('4.0.1', 'docs'),
     'sphinx-gallery': ('0.7.0', 'docs'),
     'numpydoc': ('1.0.0', 'docs'),
     'Pillow': ('7.1.2', 'docs'),
