@@ -15,7 +15,11 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.neighbors import (
+    NearestNeighbors,
+    VALID_METRICS_SPARSE,
+    VALID_METRICS,
+)
 from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import assert_array_almost_equal
@@ -1762,3 +1766,51 @@ def test_pairwise_deprecated(NearestNeighbors):
     msg = r"Attribute _pairwise was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         nn._pairwise
+
+
+@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("d", [5, 10, 100, 500])
+@pytest.mark.parametrize("ratio_train_test", [10, 2, 1, 0.5])
+@pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
+@pytest.mark.parametrize("chunk_size", [2 ** i for i in range(8, 13)])
+@pytest.mark.parametrize("strategy", ["auto", "chunk_on_train", "chunk_on_test"])
+def test_fast_sqeuclidean_correctness(
+        n,
+        d,
+        ratio_train_test,
+        n_neighbors,
+        chunk_size,
+        strategy,
+        dtype=np.float64,
+):
+    """ The Fast squared euclidean strategy ("fast-sqeuclidean") is a faster
+    alternative to the squared euclidean strategy ("sqeuclidean").
+    It computed reduced squared euclidean distances of using the
+    the GEMM subroutine of BLAS, allowing high arithmetic intensity.
+
+    Yet, it can be unstable for some range of data far the origin overflowing
+    the representation for float64.
+    """
+    if n < n_neighbors:
+        pytest.skip(
+            f"Skipping as n (={n}) < n_neighbors (={n_neighbors})",
+            allow_module_level=True,
+        )
+
+    rng = np.random.RandomState(1)
+    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d))
+    X_test = rng.rand(
+        int(n * d / ratio_train_test)).astype(dtype).reshape((-1, d))
+
+    neigh = NearestNeighbors(n_neighbors=n_neighbors, algorithm="brute",
+                             metric="euclidean").fit(X_train)
+    eucl_dist, eucl_nn = neigh.kneighbors(X=X_test, n_neighbors=n_neighbors,
+                                          return_distance=True)
+
+    fse_neigh = NearestNeighbors(n_neighbors=n_neighbors, algorithm="brute",
+                                 metric="fast_sqeuclidean").fit(X_train)
+    fse_dist, fse_nn = fse_neigh.kneighbors(X=X_test, n_neighbors=n_neighbors,
+                                            return_distance=True)
+
+    np.testing.assert_almost_equal(eucl_dist, fse_dist)
+    np.testing.assert_array_equal(eucl_nn, fse_nn)

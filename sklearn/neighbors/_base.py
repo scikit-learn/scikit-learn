@@ -23,6 +23,7 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics._argkmin_fast import _argkmin
 from ..utils import (
     check_array,
     gen_even_slices,
@@ -42,7 +43,8 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      # sklearn.metrics.pairwise doc string
                      brute=(list(PAIRWISE_DISTANCE_FUNCTIONS.keys()) +
                             ['braycurtis', 'canberra', 'chebyshev',
-                             'correlation', 'cosine', 'dice', 'hamming',
+                             'correlation', 'cosine', 'dice',
+                             'fast_sqeuclidean', 'hamming',
                              'jaccard', 'kulsinski', 'mahalanobis',
                              'matching', 'minkowski', 'rogerstanimoto',
                              'russellrao', 'seuclidean', 'sokalmichener',
@@ -684,6 +686,14 @@ class KNeighborsMixin:
             results = _kneighbors_from_graph(
                 X, n_neighbors=n_neighbors,
                 return_distance=return_distance)
+
+        elif (self._fit_method == 'brute' and
+                self.effective_metric_ == 'fast_sqeuclidean'):
+            # TODO: generalise this simple plug here
+            results = _argkmin(X, Y=self._fit_X,
+                               k=n_neighbors,
+                               strategy='auto',
+                               return_distance=return_distance)
 
         elif self._fit_method == 'brute':
             reduce_func = partial(self._kneighbors_reduce_func,
