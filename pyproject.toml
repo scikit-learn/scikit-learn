@@ -28,7 +28,7 @@ exclude = '''
   | build
   | dist
   | doc/tutorial
-  | doc/sphinxext
+  | doc/auto_examples
   | sklearn/externals
 )/
 '''
