@@ -545,11 +545,7 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
     The Cython method tree.query is not directly picklable by cloudpickle
     under PyPy.
     """
-    with config_context(assume_finite=True):
-        # We remove the validation of the query points (in *args)
-        # done at the beginning of BinaryTree.query as those
-        # points already got validated in the caller.
-        return tree.query(*args, **kwargs)
+    return tree.query(*args, **kwargs)
 
 
 class KNeighborsMixin:
@@ -722,11 +718,17 @@ class KNeighborsMixin:
                 parallel_kwargs = {"backend": "threading"}
             else:
                 parallel_kwargs = {"prefer": "threads"}
-            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
-                delayed(_tree_query_parallel_helper)(
-                    self._tree, X[s], n_neighbors, return_distance)
-                for s in gen_even_slices(X.shape[0], n_jobs)
-            )
+
+            with config_context(assume_finite=True):
+                # We remove the validation of the query points
+                # (in *parallel_kwargs) done at the beginning of
+                # BinaryTree.query as those points already got
+                # validated in the caller.
+                chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+                    delayed(_tree_query_parallel_helper)(
+                        self._tree, X[s], n_neighbors, return_distance)
+                    for s in gen_even_slices(X.shape[0], n_jobs)
+                )
         else:
             raise ValueError("internal: _fit_method not recognized")
 
@@ -855,11 +857,7 @@ def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
     The Cython method tree.query_radius is not directly picklable by
     cloudpickle under PyPy.
     """
-    with config_context(assume_finite=True):
-        # We remove the validation of the query points (in *args)
-        # done at the beginning of BinaryTree.query_radius as those
-        # points already got validated in the caller.
-        return tree.query_radius(*args, **kwargs)
+    return tree.query_radius(*args, **kwargs)
 
 
 class RadiusNeighborsMixin:
@@ -1053,12 +1051,17 @@ class RadiusNeighborsMixin:
             else:
                 parallel_kwargs = {"prefer": "threads"}
 
-            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(self._tree, X[s], radius, return_distance,
-                              sort_results=sort_results)
+            with config_context(assume_finite=True):
+                # We remove the validation of the query points
+                # (in *parallel_kwargs) done at the beginning of
+                # BinaryTree.query_radius as those points already
+                # got validated in the caller.
+                chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+                    delayed_query(self._tree, X[s], radius, return_distance,
+                                  sort_results=sort_results)
 
-                for s in gen_even_slices(X.shape[0], n_jobs)
-            )
+                    for s in gen_even_slices(X.shape[0], n_jobs)
+                )
             if return_distance:
                 neigh_ind, neigh_dist = tuple(zip(*chunked_results))
                 results = np.hstack(neigh_dist), np.hstack(neigh_ind)
