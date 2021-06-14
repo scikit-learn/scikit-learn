@@ -1571,8 +1571,9 @@ class RandomForestRegressor(ForestRegressor):
     fitting, ``random_state`` has to be fixed.
 
     The default value ``max_features="auto"`` uses ``n_features``
-    rather than ``n_features / 3``. The latter was originally suggested in
-    [1], whereas the former was more recently justified empirically in [2].
+    rather than ``sqrt(n_features)`` or ``n_features / 3``. The latter was
+    originally suggested in [1], whereas the former was more recently
+    justified empirically in [2], see also [3] for a summary.
 
     References
     ----------
@@ -1580,6 +1581,10 @@ class RandomForestRegressor(ForestRegressor):
 
     .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
+
+    .. [3] P. Probst, M. Wright, and A. Boulesteix, `"Hyperparameters and
+           Tuning Strategies for Random Forest"
+           <https://arxiv.org/pdf/1804.03515.pdf>`_.
 
     Examples
     --------
