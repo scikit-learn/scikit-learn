@@ -5,11 +5,6 @@ repos:
     -   id: check-yaml
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
--   repo: https://github.com/psf/black
-    rev: 21.6b0
-    hooks:
-    - id: black
-      language_version: python3
 -   repo: https://gitlab.com/pycqa/flake8
     rev: 3.7.8
     hooks:

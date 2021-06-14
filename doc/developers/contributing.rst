@@ -225,8 +225,6 @@ latest up-to-date workflow.
   For contributors who are viewing these videos to set up their
   working environment and submitting a PR, ``master`` should be replaced to ``main``.
 
-.. _how_to_contribute:
-
 How to contribute
 -----------------
 
@@ -438,9 +436,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 
    See black's
    `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
-   to configure your editor to run `black`. Installing the pre-commit hook as
-   described in the :ref:`how_to_contribute` section will run black before
-   each commit.
+   to configure your editor to run `black`.
 
 6. **Make sure that your PR does not add PEP8 violations**. To check the
    code that you changed, you can run the following command (see
