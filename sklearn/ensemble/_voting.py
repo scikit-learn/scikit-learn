@@ -30,7 +30,6 @@ from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
@@ -200,8 +199,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
-    classes_ : array-like of shape (n_predictions,)
+    le_ : :class:`~sklearn.preprocessing.LabelEncoder`
+        Transformer used to encode the labels during fit and decode during
+        prediction.
+
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying classifier exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     See Also
     --------
@@ -242,7 +251,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     >>> print(eclf3.transform(X).shape)
     (6, 6)
     """
-    @_deprecate_positional_args
     def __init__(self, estimators, *, voting='hard', weights=None,
                  n_jobs=None, flatten_transform=True, verbose=False):
         super().__init__(estimators=estimators)
@@ -433,6 +441,12 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying regressor exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     VotingClassifier : Soft Voting/Majority Rule classifier.
@@ -451,7 +465,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
-    @_deprecate_positional_args
     def __init__(self, estimators, *, weights=None, n_jobs=None,
                  verbose=False):
         super().__init__(estimators=estimators)

@@ -86,6 +86,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         When a sample has iteration -1, the sample was not labeled in any
         iteration.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         The number of rounds of self-training, that is the number of times the
         base estimator is fitted on relabeled variants of the training set.

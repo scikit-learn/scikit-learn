@@ -18,3 +18,4 @@ repos:
     hooks:
      -  id: mypy
         files: sklearn/
+        additional_dependencies: [pytest==6.2.4]

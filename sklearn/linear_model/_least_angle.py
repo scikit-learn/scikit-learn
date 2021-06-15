@@ -24,13 +24,11 @@ from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..utils import check_random_state
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
 
-@_deprecate_positional_args
 def lars_path(
     X,
     y,
@@ -175,7 +173,6 @@ def lars_path(
         return_n_iter=return_n_iter, positive=positive)
 
 
-@_deprecate_positional_args
 def lars_path_gram(
     Xy,
     Gram,
@@ -479,12 +476,23 @@ def _lars_path_solver(
 
     max_features = min(max_iter, n_features)
 
-    if return_path:
-        coefs = np.zeros((max_features + 1, n_features))
-        alphas = np.zeros(max_features + 1)
+    dtypes = set(a.dtype for a in (X, y, Xy, Gram) if a is not None)
+    if len(dtypes) == 1:
+        # use the precision level of input data if it is consistent
+        return_dtype = next(iter(dtypes))
     else:
-        coef, prev_coef = np.zeros(n_features), np.zeros(n_features)
-        alpha, prev_alpha = np.array([0.]), np.array([0.])  # better ideas?
+        # fallback to double precision otherwise
+        return_dtype = np.float64
+
+    if return_path:
+        coefs = np.zeros((max_features + 1, n_features), dtype=return_dtype)
+        alphas = np.zeros(max_features + 1, dtype=return_dtype)
+    else:
+        coef, prev_coef = (np.zeros(n_features, dtype=return_dtype),
+                           np.zeros(n_features, dtype=return_dtype))
+        alpha, prev_alpha = (np.array([0.], dtype=return_dtype),
+                             np.array([0.], dtype=return_dtype))
+        # above better ideas?
 
     n_iter, n_active = 0, 0
     active, indices = list(), np.arange(n_features)
@@ -891,6 +899,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         The number of iterations taken by lars_path to find the
         grid of alphas for each target.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -910,7 +923,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     method = "lar"
     positive = False
 
-    @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
                  eps=np.finfo(float).eps, copy_X=True, fit_path=True,
@@ -952,7 +964,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
         self.alphas_ = []
         self.n_iter_ = []
-        self.coef_ = np.empty((n_targets, n_features))
+        self.coef_ = np.empty((n_targets, n_features), dtype=X.dtype)
 
         if fit_path:
             self.active_ = []
@@ -1150,6 +1162,11 @@ class LassoLars(Lars):
         The number of iterations taken by lars_path to find the
         grid of alphas for each target.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1172,7 +1189,6 @@ class LassoLars(Lars):
     """
     method = 'lasso'
 
-    @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(float).eps, copy_X=True, fit_path=True,
@@ -1414,6 +1430,11 @@ class LarsCV(Lars):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import LarsCV
@@ -1434,7 +1455,6 @@ class LarsCV(Lars):
 
     method = "lar"
 
-    @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(float).eps,
@@ -1649,6 +1669,11 @@ class LassoLarsCV(LarsCV):
     active_ : list of int
         Indices of active variables at the end of the path.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoLarsCV
@@ -1681,7 +1706,6 @@ class LassoLarsCV(LarsCV):
 
     method = 'lasso'
 
-    @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(float).eps,
@@ -1795,6 +1819,10 @@ class LassoLarsIC(LassoLars):
         chosen. This value is larger by a factor of ``n_samples`` compared to
         Eqns. 2.15 and 2.16 in (Zou et al, 2007).
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1820,7 +1848,6 @@ class LassoLarsIC(LassoLars):
     --------
     lars_path, LassoLars, LassoLarsCV
     """
-    @_deprecate_positional_args
     def __init__(self, criterion='aic', *, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(float).eps, copy_X=True, positive=False):

@@ -163,7 +163,7 @@ def test_identical_regressors():
         "The requested precision might not have been met."
     )
     with pytest.warns(RuntimeWarning, match=warning_message):
-        orthogonal_mp(newX, newy, 2)
+        orthogonal_mp(newX, newy, n_nonzero_coefs=2)
 
 
 def test_swapped_regressors():

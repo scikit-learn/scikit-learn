@@ -5,7 +5,6 @@
 import numpy as np
 from . import MinCovDet
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..metrics import accuracy_score
 from ..base import OutlierMixin
 
@@ -84,6 +83,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         Mahalanobis distances of the training set (on which :meth:`fit` is
         called) observations.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -120,7 +124,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
        minimum covariance determinant estimator" Technometrics 41(3), 212
        (1999)
     """
-    @_deprecate_positional_args
     def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, contamination=0.1,
                  random_state=None):
