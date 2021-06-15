@@ -131,6 +131,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If `normalize=True`, parameter used to scale data to a unit
         standard deviation.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -490,6 +495,11 @@ class ARDRegression(RegressorMixin, LinearModel):
     X_scale_ : float
         If `normalize=True`, parameter used to scale data to a unit
         standard deviation.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

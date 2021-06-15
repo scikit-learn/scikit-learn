@@ -1030,6 +1030,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     is_categorical_ : ndarray, shape (n_features, ) or None
         Boolean mask for the categorical features. ``None`` if there are no
         categorical features.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1288,6 +1292,10 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     is_categorical_ : ndarray, shape (n_features, ) or None
         Boolean mask for the categorical features. ``None`` if there are no
         categorical features.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

@@ -343,6 +343,11 @@ class MDS(BaseEstimator):
         - or constructs a dissimilarity matrix from data using
           Euclidean distances.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         The number of iterations corresponding to the best stress.
 
@@ -388,8 +393,9 @@ class MDS(BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.dissimilarity == "precomputed"

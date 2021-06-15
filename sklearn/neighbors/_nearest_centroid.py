@@ -55,6 +55,11 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     classes_ : array of shape (n_classes,)
         The unique classes labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.neighbors import NearestCentroid

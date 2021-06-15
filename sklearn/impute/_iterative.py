@@ -164,6 +164,11 @@ class IterativeImputer(_BaseImputer):
         Number of iteration rounds that occurred. Will be less than
         ``self.max_iter`` if early stopping criterion was reached.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_features_with_missing_ : int
         Number of features with missing values.
 

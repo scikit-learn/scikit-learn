@@ -796,6 +796,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1161,6 +1166,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1477,6 +1487,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1698,6 +1713,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     feature_importances_ : ndarray of shape (n_features,)
         Return impurity-based feature importances (the higher, the more

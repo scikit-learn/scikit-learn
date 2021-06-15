@@ -43,6 +43,7 @@ from sklearn.utils.validation import (
     _num_samples,
     check_scalar,
     _check_psd_eigenvalues,
+    _check_y,
     _deprecate_positional_args,
     _check_sample_weight,
     _allclose_dense_sparse,
@@ -678,6 +679,12 @@ def test_check_array_complex_data_error():
     X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
     with pytest.raises(ValueError, match="Complex data not supported"):
         check_array(X)
+
+    # target variable does not always go through check_array but should
+    # never accept complex data either.
+    y = np.array([1 + 2j, 3 + 4j, 5 + 7j, 2 + 3j, 4 + 5j, 6 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        _check_y(y)
 
 
 def test_has_fit_parameter():
