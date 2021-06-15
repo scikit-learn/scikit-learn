@@ -43,6 +43,10 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
+- |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
+  of rounding errors. Previously some extra spurious splits could occur.
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -535,6 +539,11 @@ Changelog
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
+
+- |Fix| Fixed a bug in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor` where a node could be split whereas it
+  should not have been due to incorrect handling of rounding errors.
+  :pr:`19336` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.utils`
 ....................
