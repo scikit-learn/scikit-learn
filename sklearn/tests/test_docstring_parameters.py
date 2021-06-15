@@ -198,13 +198,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-N_FEATURES_MODULES_TO_IGNORE = {
-    'multioutput',
-}
-
-
-@pytest.mark.parametrize('name, Estimator',
-                         all_estimators())
+@pytest.mark.parametrize('name, Estimator', all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip('numpydoc')
     from numpydoc import docscrape
@@ -289,10 +283,6 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(np.c_[y, y])
     else:
         est.fit(X, y)
-
-    module = est.__module__.split(".")[1]
-    if module in N_FEATURES_MODULES_TO_IGNORE:
-        skipped_attributes.add("n_features_in_")
 
     for attr in attributes:
         if attr.name in skipped_attributes:
