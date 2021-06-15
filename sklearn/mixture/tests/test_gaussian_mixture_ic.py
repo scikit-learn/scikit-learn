@@ -210,12 +210,14 @@ def test_two_class_sequential_v_parallel():
     X = np.vstack((X1, X2))
 
     gmIC_parallel = GaussianMixtureIC(
-        max_components=5, criterion="bic", n_jobs=-1, affinity="all"
+        max_components=5, criterion="bic", n_jobs=-1,
+        affinity="all", random_state=1
     )
     preds_parallel = gmIC_parallel.fit_predict(X)
 
     gmIC_sequential = GaussianMixtureIC(
-        max_components=5, criterion="bic", n_jobs=1, affinity="all"
+        max_components=5, criterion="bic", n_jobs=1,
+        affinity="all", random_state=1
     )
     preds_sequential = gmIC_sequential.fit_predict(X)
 

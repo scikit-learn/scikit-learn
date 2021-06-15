@@ -409,12 +409,14 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self, X, X_subset, y, ag_params, gm_params, agg_clustering, seed
     ):
         label_init = self.label_init
+        n_samples = X.shape[0]
         if label_init is not None:
             gm_params = self._init_gm_params(X, label_init, gm_params)
         elif ag_params["affinity"] != "none":
             gm_params = self._init_gm_params(
                 X_subset, agg_clustering, gm_params
             )
+            n_samples = X_subset.shape[0]
         else:
             gm_params["init_params"] = "kmeans"
         gm_params["max_iter"] = self.max_iter
@@ -456,6 +458,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             break
 
         gm_params["reg_covar"] = reg_covar
+        # change the precision of "criter" based on sample size
+        criter = round(criter, int(np.log10(n_samples)))
         results = _CollectResults(model, criter, gm_params, ag_params)
         return results
 
@@ -530,12 +534,12 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             np.iinfo(np.int32).max, size=len(param_grid)
         )
 
-        n = X.shape[0]
-        if self.max_agglom_size is None or n <= self.max_agglom_size:
+        n_samples = X.shape[0]
+        if self.max_agglom_size is None or n_samples <= self.max_agglom_size:
             X_subset = X
         else:  # if dataset is huge, agglomerate a subset
             subset_idxs = random_state.choice(
-                np.arange(0, n), self.max_agglom_size
+                np.arange(0, n_samples), self.max_agglom_size
             )
             X_subset = X[subset_idxs, :]
 
@@ -576,8 +580,11 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             delayed(_fit_for_data)(ag_params, gm_params, seed)
             for (ag_params, gm_params), seed in zip(param_grid, seeds)
         )
-
-        best_idx = np.argmin([result.criterion for result in results])
+        best_criter = [result.criterion for result in results]
+        # select the best model randomly in case there is a tie
+        best_idx = random_state.choice(
+            np.where(best_criter == np.min(best_criter))[0]
+        )
 
         self.best_criterion_ = results[best_idx].criterion
         self.n_components_ = results[best_idx].n_components
@@ -673,11 +680,11 @@ def _onehot_to_initial_params(X, onehot, cov_type):
     cov_type : {'full', 'tied', 'diag', 'spherical'}
         Covariance type for :class:`sklearn.mixture.GaussianMixture`.
     """
-    n = X.shape[0]
+    n_samples = X.shape[0]
     weights, means, covariances = _estimate_gaussian_parameters(
         X, onehot, 1e-06, cov_type
     )
-    weights /= n
+    weights /= n_samples
 
     precisions_cholesky_ = _compute_precision_cholesky(covariances, cov_type)
 
