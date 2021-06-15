@@ -43,6 +43,10 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
+- |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
+  of rounding errors. Previously some extra spurious splits could occur.
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
