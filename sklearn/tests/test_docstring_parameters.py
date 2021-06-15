@@ -198,13 +198,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-N_FEATURES_MODULES_TO_IGNORE = {
-    'model_selection',
-}
-
-
-@pytest.mark.parametrize('name, Estimator',
-                         all_estimators())
+@pytest.mark.parametrize('name, Estimator', all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip('numpydoc')
     from numpydoc import docscrape
@@ -290,10 +284,6 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    module = est.__module__.split(".")[1]
-    if module in N_FEATURES_MODULES_TO_IGNORE:
-        skipped_attributes.add("n_features_in_")
-
     for attr in attributes:
         if attr.name in skipped_attributes:
             continue
@@ -311,8 +301,11 @@ def test_fit_docstring_attributes(name, Estimator):
     fit_attr_names = [attr.name for attr in attributes]
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
     undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
-    assert not undocumented_attrs,\
-        "Undocumented attributes: {}".format(undocumented_attrs)
+    if undocumented_attrs:
+        raise AssertionError(
+            f"Undocumented attributes for {Estimator.__name__}: "
+            f"{undocumented_attrs}"
+        )
 
 
 def _get_all_fitted_attributes(estimator):

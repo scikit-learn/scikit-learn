@@ -1192,6 +1192,12 @@ class GridSearchCV(BaseSearchCV):
         The classes labels. This is present only if ``refit`` is specified and
         the underlying estimator is a classifier.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1517,6 +1523,12 @@ class RandomizedSearchCV(BaseSearchCV):
     classes_ : ndarray of shape (n_classes,)
         The classes labels. This is present only if ``refit`` is specified and
         the underlying estimator is a classifier.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     Notes
     -----
