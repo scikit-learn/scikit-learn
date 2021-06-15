@@ -199,8 +199,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
-    classes_ : array-like of shape (n_predictions,)
+    le_ : :class:`~sklearn.preprocessing.LabelEncoder`
+        Transformer used to encode the labels during fit and decode during
+        prediction.
+
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying classifier exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     See Also
     --------
@@ -430,6 +440,12 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying regressor exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     See Also
     --------

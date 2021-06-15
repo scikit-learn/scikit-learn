@@ -1,11 +1,18 @@
 import os
 from os import environ
 from functools import wraps
+import platform
+import sys
 
 import pytest
 from threadpoolctl import threadpool_limits
+from _pytest.doctest import DoctestItem
 
+from sklearn.utils import _IS_32BIT
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.externals import _pilutil
+from sklearn._min_dependencies import PYTEST_MIN_VERSION
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.datasets import fetch_california_housing
@@ -14,6 +21,11 @@ from sklearn.datasets import fetch_kddcup99
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.datasets import fetch_rcv1
 
+
+if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
+    raise ImportError('Your version of pytest is too old, you should have '
+                      'at least pytest >= {} installed.'
+                      .format(PYTEST_MIN_VERSION))
 
 dataset_fetchers = {
     'fetch_20newsgroups_fxt': fetch_20newsgroups,
@@ -92,6 +104,58 @@ def pytest_collection_modifyitems(config, items):
     if worker_id == "gw0" and run_network_tests:
         for name in datasets_to_download:
             dataset_fetchers[name]()
+
+    for item in items:
+        # FeatureHasher is not compatible with PyPy
+        if (item.name.endswith(('_hash.FeatureHasher',
+                                'text.HashingVectorizer'))
+                and platform.python_implementation() == 'PyPy'):
+            marker = pytest.mark.skip(
+                reason='FeatureHasher is not compatible with PyPy')
+            item.add_marker(marker)
+        # Known failure on with GradientBoostingClassifier on ARM64
+        elif (item.name.endswith('GradientBoostingClassifier')
+                and platform.machine() == 'aarch64'):
+
+            marker = pytest.mark.xfail(
+                reason=(
+                    'know failure. See '
+                    'https://github.com/scikit-learn/scikit-learn/issues/17797'  # noqa
+                )
+            )
+            item.add_marker(marker)
+
+    # numpy changed the str/repr formatting of numpy arrays in 1.14. We want to
+    # run doctests only for numpy >= 1.14.
+    skip_doctests = False
+    try:
+        if np_version < parse_version('1.14'):
+            reason = 'doctests are only run for numpy >= 1.14'
+            skip_doctests = True
+        elif _IS_32BIT:
+            reason = ('doctest are only run when the default numpy int is '
+                      '64 bits.')
+            skip_doctests = True
+        elif sys.platform.startswith("win32"):
+            reason = ("doctests are not run for Windows because numpy arrays "
+                      "repr is inconsistent across platforms.")
+            skip_doctests = True
+    except ImportError:
+        pass
+
+    if skip_doctests:
+        skip_marker = pytest.mark.skip(reason=reason)
+
+        for item in items:
+            if isinstance(item, DoctestItem):
+                item.add_marker(skip_marker)
+    elif not _pilutil.pillow_installed:
+        skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
+        for item in items:
+            if item.name in [
+                    "sklearn.feature_extraction.image.PatchExtractor",
+                    "sklearn.feature_extraction.image.extract_patches_2d"]:
+                item.add_marker(skip_marker)
 
 
 @pytest.fixture(scope='function')

@@ -120,6 +120,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits

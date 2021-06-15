@@ -459,6 +459,11 @@ class GaussianRandomProjection(BaseRandomProjection):
     components_ : ndarray of shape (n_components, n_features)
         Random matrix used for the projection.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -585,6 +590,11 @@ class SparseRandomProjection(BaseRandomProjection):
 
     density_ : float in range 0.0 - 1.0
         Concrete density computed from when density = "auto".
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

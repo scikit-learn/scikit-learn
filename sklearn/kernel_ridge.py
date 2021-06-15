@@ -89,6 +89,11 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         kernel == "precomputed" this is instead the precomputed
         training matrix, of shape (n_samples, n_samples).
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     References
     ----------
     * Kevin P. Murphy
@@ -136,8 +141,9 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"

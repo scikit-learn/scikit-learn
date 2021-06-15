@@ -309,6 +309,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations taken to converge.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
@@ -366,8 +371,9 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
