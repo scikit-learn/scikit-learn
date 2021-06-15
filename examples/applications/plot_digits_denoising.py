@@ -42,24 +42,18 @@ X = MinMaxScaler().fit_transform(X)
 
 # %%
 # The idea will be to learn a PCA basis (with and without a kernel) on
-# noise-free images and then used these models to reconstruct images corrupted
-# with some additional noise.
+# noisy images and then used these models to reconstruct and denoise these
+# images.
 #
 # Thus, we split our dataset into a training and testing set composed of 1,000
-# samples for the training and 100 samples for testing. In addition, we create
-# a copy of the testing subset to which we an additional Gaussian noise.
+# samples for the training and 100 samples for testing. These images are
+# noise-free and we will use them to evaluate the efficiency of the denoising
+# approaches. In addition, we create a copy of the original dataset and add a
+# Gaussian noise.
 #
 # The idea of this application, is to show that we can denoise corrupted images
 # by learning a PCA basis on some uncorrupted images. We will use both a PCA
 # and a kernel-based PCA to solve this problem.
-#
-# Our experimental setup will be the following: create a training set with
-# uncorrupted data, a testing set with uncorrupted data as well, and make a
-# copy of this test to which we will add a Gaussian noise to corrupt it.
-#
-# We create a training and testing of 1,000 samples and a test set of 100
-# samples.
-
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, random_state=0, train_size=1_000, test_size=100
 )
@@ -90,14 +84,17 @@ def plot_digits(X, title):
 # In addition, we will use the mean squared error (MSE) to quantitatively
 # assess the image reconstruction.
 #
-# Let's first have a look at our entire dataset.
-plot_digits(X_train, "Uncorrupted train images")
+# Let's first have a look to see the difference between noise-free and noisy
+# images. We will check the test set in this regard.
 plot_digits(X_test, "Uncorrupted test images")
 plot_digits(X_test_noisy,
             f"Noisy test images\n"
             f"MSE: {np.mean((X_test - X_test_noisy) ** 2):.2f}")
 
 # %%
+# Learn the `PCA` basis
+# ---------------------
+#
 # We can now learn our PCA basis using both a linear PCA and a kernel PCA that
 # uses a radial basis function (RBF) kernel.
 from sklearn.decomposition import PCA, KernelPCA
@@ -110,6 +107,9 @@ pca.fit(X_train_noisy)
 _ = kernel_pca.fit(X_train_noisy)
 
 # %%
+# Reconstruct and denoise test images
+# -----------------------------------
+#
 # Now, we can transform and reconstruct the noisy test set. Since we used less
 # components than the number of original features, we will get an approximation
 # of the original set. Indeed, by dropping the components explaining less
@@ -131,7 +131,9 @@ plot_digits(X_reconstructed_kernel_pca,
             f"MSE: {np.mean((X_test - X_reconstructed_kernel_pca) ** 2):.2f}")
 
 # %%
-# Even if both PCA and kernel PCA have the same MSE, a qualitative analysis
-# will favor the output of the kernel PCA. However, it should be noted that
-# the results of the denoising with kernel PCA will depend of the parameters
-# `n_components`, `gamma`, and `alpha`.
+# PCA has a lower MSE than kernel PCA. However, the qualitative might not favor
+# PCA instead of kernel PCA. We observe that kernel PCA is able to remove
+# background noise and provide a smoother image.
+#
+# However, it should be noted that the results of the denoising with kernel PCA
+# will depend of the parameters `n_components`, `gamma`, and `alpha`.
