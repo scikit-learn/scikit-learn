@@ -32,6 +32,7 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
+from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
@@ -172,8 +173,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                      "necessary for Poisson regression.")
 
         # Determine output settings
-        n_samples, self.n_features_ = X.shape
-        self.n_features_in_ = self.n_features_
+        n_samples, self.n_features_in_ = X.shape
         is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
@@ -253,25 +253,25 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 if is_classification:
-                    max_features = max(1, int(np.sqrt(self.n_features_)))
+                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
                 else:
-                    max_features = self.n_features_
+                    max_features = self.n_features_in_
             elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self.n_features_)))
+                max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
-                max_features = max(1, int(np.log2(self.n_features_)))
+                max_features = max(1, int(np.log2(self.n_features_in_)))
             else:
                 raise ValueError("Invalid value for max_features. "
                                  "Allowed string values are 'auto', "
                                  "'sqrt' or 'log2'.")
         elif self.max_features is None:
-            max_features = self.n_features_
+            max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         else:  # float
             if self.max_features > 0.0:
-                max_features = max(1,
-                                   int(self.max_features * self.n_features_))
+                max_features = (
+                    max(1, int(self.max_features * self.n_features_in_)))
             else:
                 max_features = 0
 
@@ -284,7 +284,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
-        if not (0 < max_features <= self.n_features_):
+        if not (0 < max_features <= self.n_features_in_):
             raise ValueError("max_features must be in (0, n_features]")
         if not isinstance(max_leaf_nodes, numbers.Integral):
             raise ValueError("max_leaf_nodes must be integral number but was "
@@ -364,10 +364,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                                 random_state)
 
         if is_classifier(self):
-            self.tree_ = Tree(self.n_features_,
+            self.tree_ = Tree(self.n_features_in_,
                               self.n_classes_, self.n_outputs_)
         else:
-            self.tree_ = Tree(self.n_features_,
+            self.tree_ = Tree(self.n_features_in_,
                               # TODO: tree should't need this in this case
                               np.array([1] * self.n_outputs_, dtype=np.intp),
                               self.n_outputs_)
@@ -529,9 +529,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # build pruned tree
         if is_classifier(self):
             n_classes = np.atleast_1d(self.n_classes_)
-            pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
+            pruned_tree = Tree(self.n_features_in_, n_classes, self.n_outputs_)
         else:
-            pruned_tree = Tree(self.n_features_,
+            pruned_tree = Tree(self.n_features_in_,
                                # TODO: the tree shouldn't need this param
                                np.array([1] * self.n_outputs_, dtype=np.intp),
                                self.n_outputs_)
@@ -765,6 +765,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+           `n_features_` is deprecated in 1.0 and will be removed in
+           1.2. Use `n_features_in_` instead.
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -970,6 +974,13 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             return proba
 
+    @deprecated(  # type: ignore
+        "The attribute 'n_features_' is deprecated in 1.0 and will be removed "
+        "in 1.2. Use 'n_features_in_' instead.")
+    @property
+    def n_features_(self):
+        return self.n_features_in_
+
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     """A decision tree regressor.
@@ -1122,6 +1133,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+        .. deprecated:: 1.0
+           `n_features_` is deprecated in 1.0 and will be removed in
+           1.2. Use `n_features_in_` instead.
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1267,6 +1282,13 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         self.tree_.compute_partial_dependence(
             grid, target_features, averaged_predictions)
         return averaged_predictions
+
+    @deprecated(  # type: ignore
+        "The attribute 'n_features_' is deprecated in 1.0 and will be removed "
+        "in 1.2. Use 'n_features_in_' instead.")
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -1429,6 +1451,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+           `n_features_` is deprecated in 1.0 and will be removed in
+           1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1643,6 +1669,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+        .. deprecated:: 1.0
+           `n_features_` is deprecated in 1.0 and will be removed in
+           1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
