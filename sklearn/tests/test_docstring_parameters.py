@@ -200,7 +200,6 @@ def _construct_sparse_coder(Estimator):
 
 N_FEATURES_MODULES_TO_IGNORE = {
     'model_selection',
-    'multioutput',
 }
 
 

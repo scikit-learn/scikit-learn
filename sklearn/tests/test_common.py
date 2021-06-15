@@ -295,7 +295,6 @@ def test_search_cv(estimator, check, request):
 # check_classifiers_train would need to be updated with the error message
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'model_selection',
-    'multioutput',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
