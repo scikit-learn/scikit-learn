@@ -594,6 +594,13 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         This is present only if ``refit`` is not False.
 
+    multimetric_ : bool
+        Whether or not the scorers compute several metrics.
+
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
+
     See Also
     --------
     :class:`HalvingRandomSearchCV`:
@@ -885,6 +892,13 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         Seconds used for refitting the best model on the whole dataset.
 
         This is present only if ``refit`` is not False.
+
+    multimetric_ : bool
+        Whether or not the scorers compute several metrics.
+
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
 
     See Also
     --------

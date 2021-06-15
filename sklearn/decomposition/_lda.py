@@ -248,6 +248,11 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     n_batch_iter_ : int
         Number of iterations of the EM step.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of passes over the dataset.
 

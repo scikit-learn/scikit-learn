@@ -776,6 +776,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+        .. versionadded:: 0.24
+
     children_ : array-like of shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
@@ -1044,6 +1046,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     children_ : array-like of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`

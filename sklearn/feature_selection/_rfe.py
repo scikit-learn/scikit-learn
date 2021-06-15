@@ -99,11 +99,20 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only available when `estimator` is a classifier.
+
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
     n_features_ : int
         The number of selected features.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
@@ -464,6 +473,9 @@ class RFECV(RFE):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only available when `estimator` is a classifier.
+
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
@@ -474,6 +486,12 @@ class RFECV(RFE):
 
     n_features_ : int
         The number of selected features with cross-validation.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`

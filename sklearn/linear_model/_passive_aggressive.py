@@ -120,6 +120,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
@@ -353,6 +358,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.

@@ -261,6 +261,8 @@ class SpectralCoclustering(BaseSpectral):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralCoclustering
@@ -398,8 +400,13 @@ class SpectralBiclustering(BaseSpectral):
     column_labels_ : array-like of shape (n_cols,)
         Column partition labels.
 
+    biclusters_ : tuple of two ndarrays
+        The tuple contains the `rows_` and `columns_` arrays.
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

@@ -272,6 +272,11 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Number of combinations taken into account from 'n choose k', where n is
         the number of samples and k is the number of subsamples.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import TheilSenRegressor

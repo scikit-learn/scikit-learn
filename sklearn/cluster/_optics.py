@@ -181,6 +181,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+        .. versionadded:: 0.24
+
     See Also
     --------
     DBSCAN : A similar clustering for a specified neighborhood radius (eps).
