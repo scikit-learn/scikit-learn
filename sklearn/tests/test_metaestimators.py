@@ -267,6 +267,7 @@ def test_meta_estimators_delegate_data_validation(estimator):
     else:
         y = rng.randint(3, size=n_samples)
 
+    # We convert to lists to make sure it works on array-like
     X = _enforce_estimator_tags_x(estimator, X).tolist()
     y = _enforce_estimator_tags_y(estimator, y).tolist()
 
