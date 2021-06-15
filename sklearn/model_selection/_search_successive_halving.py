@@ -11,10 +11,7 @@ from ..base import is_classifier
 from ._split import check_cv, _yields_constant_splits
 from ..utils import resample
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import (
-    column_or_1d,
-    _num_samples,
-)
+from ..utils.validation import _num_samples
 
 
 __all__ = ['HalvingGridSearchCV', 'HalvingRandomSearchCV']
@@ -149,7 +146,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
-                    y = column_or_1d(y, warn=True)
+                    y = self._validate_data(X="no_validation", y=y)
                     check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
