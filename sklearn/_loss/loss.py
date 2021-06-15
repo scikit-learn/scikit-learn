@@ -451,7 +451,8 @@ class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
         loss(x_i) = 0.5 * (y_true_i - raw_prediction_i)**2
 
     The factor of 0.5 simplifies the computation of gradients and results in a
-    unit hessian (and be consistent with what is done in LightGBM).
+    unit hessian (and is consistent with what is done in LightGBM). It is also
+    half the Normal distribution deviance.
     """
 
     def __init__(self, sample_weight=None):
@@ -512,7 +513,7 @@ class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
 
 
 class AbsoluteError(IdentityLink, BaseLoss, cAbsoluteError):
-    """Least absolute error, for regression.
+    """Absolute error with identity link, for regression.
 
     Domain:
     y_true and y_pred all real numbers
@@ -734,7 +735,7 @@ class HalfTweedieLoss(LogLink, BaseLoss, cHalfTweedieLoss):
 
 
 class BinaryCrossEntropy(LogitLink, BaseLoss, cBinaryCrossEntropy):
-    """Binary cross entropy loss for binary classification.
+    """Binary cross entropy loss with logit link, for binary classification.
 
     Domain:
     y_true in [0, 1]
@@ -743,14 +744,20 @@ class BinaryCrossEntropy(LogitLink, BaseLoss, cBinaryCrossEntropy):
     Link:
     y_pred = expit(raw_prediction)
 
-    For a given sample x_i, the binary cross-entropy, aka log loss, is defined
-    as the negative log-likelihood of the Bernoulli distribution and can be
-    expressed as::
+    For a given sample x_i, the binary cross-entropy, is defined as the
+    negative log-likelihood of the Bernoulli distribution and can be expressed
+    as::
 
         loss(x_i) = log(1 + exp(raw_pred_i)) - y_true_i * raw_pred_i
 
     See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman,
     section 4.4.1 (about logistic regression).
+
+    This loss is also known as log loss or logistic loss.
+    Note that the formulation works for classification, y = {0, 1}, as well as
+    logistic regression, y = [0, 1].
+    If you add `constant_to_optimal_zero` to the loss, you get half the
+    Bernoulli/binomial deviance.
     """
 
     def __init__(self, sample_weight=None):
@@ -780,7 +787,7 @@ class BinaryCrossEntropy(LogitLink, BaseLoss, cBinaryCrossEntropy):
 class CategoricalCrossEntropy(
     MultinomialLogit, BaseLoss, cCategoricalCrossEntropy
 ):
-    """Categorical cross-entropy loss for multiclass classification.
+    """Categorical cross-entropy loss, for multiclass classification.
 
     Domain:
     y_true in {0, 1, 2, 3, .., n_classes - 1}
@@ -789,7 +796,9 @@ class CategoricalCrossEntropy(
     Link:
     y_pred = softmax(raw_prediction)
 
-    Note: We assume y_true to be already label encoded.
+    Note: We assume y_true to be already label encoded. The inverse link is
+    softmax. But the full link function is the symmetric multinomial logit
+    function.
 
     For a given sample x_i, the categorical cross-entropy loss is defined as
     the negative log-likelihood of the multinomial distribution, it
