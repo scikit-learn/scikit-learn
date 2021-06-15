@@ -646,6 +646,21 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 and not callable(self.refit)):
             raise ValueError(multimetric_refit_msg)
 
+    @staticmethod
+    def _select_best_index(refit, refit_metric, results):
+        """Select index of the best combination of hyperparemeters."""
+        if callable(refit):
+            # If callable, refit is expected to return the index of the best
+            # parameter set.
+            best_index = refit(results)
+            if not isinstance(best_index, numbers.Integral):
+                raise TypeError('best_index_ returned is not an integer')
+            if (best_index < 0 or best_index >= len(results["params"])):
+                raise IndexError('best_index_ index out of range')
+        else:
+            best_index = results[f"rank_test_{refit_metric}"].argmin()
+        return best_index
+
     def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -779,20 +794,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            # If callable, refit is expected to return the index of the best
-            # parameter set.
-            if callable(self.refit):
-                self.best_index_ = self.refit(results)
-                if not isinstance(self.best_index_, numbers.Integral):
-                    raise TypeError('best_index_ returned is not an integer')
-                if (self.best_index_ < 0 or
-                   self.best_index_ >= len(results["params"])):
-                    raise IndexError('best_index_ index out of range')
-            else:
-                self.best_index_ = results["rank_test_%s"
-                                           % refit_metric].argmin()
-                self.best_score_ = results["mean_test_%s" % refit_metric][
-                                           self.best_index_]
+            self.best_index_ = self._select_best_index(
+                self.refit, refit_metric, results
+            )
+            if not callable(self.refit):
+                # With a non-custom callable, we can select the best score
+                # based on the best index
+                self.best_score_ = results[f"mean_test_{refit_metric}"][
+                    self.best_index_
+                ]
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:

@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator
+from inspect import isgenerator, signature
 from itertools import product
 from functools import partial
 
@@ -31,10 +31,16 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import HalvingGridSearchCV
+from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import (
+    SkipTest,
+    set_random_state,
+)
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -216,28 +222,48 @@ def _generate_search_cv_instances():
     for SearchCV, (Estimator, param_grid) in product(
         [
             GridSearchCV,
+            HalvingGridSearchCV,
             RandomizedSearchCV,
+            HalvingGridSearchCV,
         ],
         [
             (Ridge, {"alpha": [0.1, 1.0]}),
             (LogisticRegression, {"C": [0.1, 1.0]}),
         ],
     ):
-        yield SearchCV(Estimator(), param_grid)
+        init_params = signature(SearchCV).parameters
+        extra_params = (
+            {"min_resources": "smallest"}
+            if "min_resources" in init_params
+            else {}
+        )
+        search_cv = SearchCV(Estimator(), param_grid, cv=2, **extra_params)
+        set_random_state(search_cv)
+        yield search_cv
 
     for SearchCV, (Estimator, param_grid) in product(
         [
             GridSearchCV,
+            HalvingGridSearchCV,
             RandomizedSearchCV,
+            HalvingRandomSearchCV,
         ],
         [
             (Ridge, {"ridge__alpha": [0.1, 1.0]}),
             (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
         ],
     ):
-        yield SearchCV(
-            make_pipeline(PCA(), Estimator()), param_grid
+        init_params = signature(SearchCV).parameters
+        extra_params = (
+            {"min_resources": "smallest"}
+            if "min_resources" in init_params
+            else {}
+        )
+        search_cv = SearchCV(
+            make_pipeline(PCA(), Estimator()), param_grid, cv=2, **extra_params
         ).set_params(error_score="raise")
+        set_random_state(search_cv)
+        yield search_cv
 
 
 @parametrize_with_checks(list(_generate_search_cv_instances()))
