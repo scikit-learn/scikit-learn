@@ -46,6 +46,10 @@
     <p>Guillaume Lemaitre</p>
     </div>
     <div>
+    <a href='https://github.com/lorentzenchr'><img src='https://avatars2.githubusercontent.com/u/15324633?v=4' class='avatar' /></a> <br />
+    <p>Christian Lorentzen</p>
+    </div>
+    <div>
     <a href='https://github.com/jmetzen'><img src='https://avatars1.githubusercontent.com/u/1116263?v=4' class='avatar' /></a> <br />
     <p>Jan Hendrik Metzen</p>
     </div>

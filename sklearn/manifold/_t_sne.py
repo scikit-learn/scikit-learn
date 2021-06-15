@@ -8,6 +8,7 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -19,7 +20,6 @@ from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
-from ..utils.validation import _deprecate_positional_args
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
@@ -36,7 +36,7 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
 
     Parameters
     ----------
-    distances : array, shape (n_samples * (n_samples-1) / 2,)
+    distances : ndarray of shape (n_samples * (n_samples-1) / 2,)
         Distances of samples are stored as condensed matrices, i.e.
         we omit the diagonal and duplicate entries and store everything
         in a one-dimensional array.
@@ -49,7 +49,7 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
 
     Returns
     -------
-    P : array, shape (n_samples * (n_samples-1) / 2,)
+    P : ndarray of shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
     """
     # Compute conditional probabilities such that they approximately match
@@ -73,9 +73,10 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
 
     Parameters
     ----------
-    distances : CSR sparse matrix, shape (n_samples, n_samples)
+    distances : sparse matrix of shape (n_samples, n_samples)
         Distances of samples to its n_neighbors nearest neighbors. All other
         distances are left to zero (and are not materialized in memory).
+        Matrix should be of CSR format.
 
     desired_perplexity : float
         Desired perplexity of the joint probability distributions.
@@ -85,8 +86,9 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
 
     Returns
     -------
-    P : csr sparse matrix, shape (n_samples, n_samples)
-        Condensed joint probability matrix with only nearest neighbors.
+    P : sparse matrix of shape (n_samples, n_samples)
+        Condensed joint probability matrix with only nearest neighbors. Matrix
+        will be of CSR format.
     """
     t0 = time()
     # Compute conditional probabilities such that they approximately match
@@ -125,10 +127,10 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     Parameters
     ----------
-    params : array, shape (n_params,)
+    params : ndarray of shape (n_params,)
         Unraveled embedding.
 
-    P : array, shape (n_samples * (n_samples-1) / 2,)
+    P : ndarray of shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
     degrees_of_freedom : int
@@ -140,12 +142,12 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     n_components : int
         Dimension of the embedded space.
 
-    skip_num_points : int (optional, default:0)
+    skip_num_points : int, default=0
         This does not compute the gradient for points with indices below
         `skip_num_points`. This is useful when computing transforms of new
         data where you'd like to keep the old data fixed.
 
-    compute_error: bool (optional, default:True)
+    compute_error: bool, default=True
         If False, the kl_divergence is not computed and returns NaN.
 
     Returns
@@ -153,7 +155,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     kl_divergence : float
         Kullback-Leibler divergence of p_ij and q_ij.
 
-    grad : array, shape (n_params,)
+    grad : ndarray of shape (n_params,)
         Unraveled gradient of the Kullback-Leibler divergence with respect to
         the embedding.
     """
@@ -196,16 +198,16 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
     Uses Barnes-Hut tree methods to calculate the gradient that
-    runs in O(NlogN) instead of O(N^2)
+    runs in O(NlogN) instead of O(N^2).
 
     Parameters
     ----------
-    params : array, shape (n_params,)
+    params : ndarray of shape (n_params,)
         Unraveled embedding.
 
-    P : csr sparse matrix, shape (n_samples, n_sample)
+    P : sparse matrix of shape (n_samples, n_sample)
         Sparse approximate joint probability matrix, computed only for the
-        k nearest-neighbors and symmetrized.
+        k nearest-neighbors and symmetrized. Matrix should be of CSR format.
 
     degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
@@ -216,7 +218,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     n_components : int
         Dimension of the embedded space.
 
-    angle : float (default: 0.5)
+    angle : float, default=0.5
         This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
         'angle' is the angular size (referred to as theta in [3]) of a distant
         node as measured from a point. If this size is below 'angle' then it is
@@ -225,18 +227,18 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
-    skip_num_points : int (optional, default:0)
+    skip_num_points : int, default=0
         This does not compute the gradient for points with indices below
         `skip_num_points`. This is useful when computing transforms of new
         data where you'd like to keep the old data fixed.
 
-    verbose : int
+    verbose : int, default=False
         Verbosity level.
 
-    compute_error: bool (optional, default:True)
+    compute_error: bool, default=True
         If False, the kl_divergence is not computed and returns NaN.
 
-    num_threads : int (optional, default:1)
+    num_threads : int, default=1
         Number of threads used to compute the gradient. This is set here to
         avoid calling _openmp_effective_n_threads for each gradient step.
 
@@ -245,7 +247,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     kl_divergence : float
         Kullback-Leibler divergence of p_ij and q_ij.
 
-    grad : array, shape (n_params,)
+    grad : ndarray of shape (n_params,)
         Unraveled gradient of the Kullback-Leibler divergence with respect to
         the embedding.
     """
@@ -277,13 +279,13 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     Parameters
     ----------
-    objective : function or callable
+    objective : callable
         Should return a tuple of cost and gradient for a given parameter
         vector. When expensive to compute, the cost can optionally
         be None and can be computed every n_iter_check steps using
         the objective_error function.
 
-    p0 : array-like, shape (n_params,)
+    p0 : array-like of shape (n_params,)
         Initial parameter vector.
 
     it : int
@@ -301,7 +303,7 @@ def _gradient_descent(objective, p0, it, n_iter,
         Maximum number of iterations without progress before we abort the
         optimization.
 
-    momentum : float, within (0.0, 1.0), default=0.8
+    momentum : float within (0.0, 1.0), default=0.8
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
@@ -330,7 +332,7 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     Returns
     -------
-    p : array, shape (n_params,)
+    p : ndarray of shape (n_params,)
         Optimum parameters.
 
     error : float
@@ -398,7 +400,6 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-@_deprecate_positional_args
 def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     r"""Expresses to what extent the local structure is retained.
 
@@ -423,17 +424,17 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features) or (n_samples, n_samples)
+    X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
         If the metric is 'precomputed' X must be a square distance
         matrix. Otherwise it contains a sample per row.
 
-    X_embedded : array, shape (n_samples, n_components)
+    X_embedded : ndarray of shape (n_samples, n_components)
         Embedding of the training data in low-dimensional space.
 
     n_neighbors : int, default=5
         Number of neighbors k that will be considered.
 
-    metric : string, or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples
         from the original input space. If metric is 'precomputed', X must be a
         matrix of pairwise distances or squared distances. Otherwise, see the
@@ -498,11 +499,11 @@ class TSNE(BaseEstimator):
     n_components : int, default=2
         Dimension of the embedded space.
 
-    perplexity : float, default=30
+    perplexity : float, default=30.0
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
-        between 5 and 50. Different values can result in significanlty
+        between 5 and 50. Different values can result in significantly
         different results.
 
     early_exaggeration : float, default=12.0
@@ -514,13 +515,19 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, default=200.0
+    learning_rate : float or 'auto', default=200.0
         The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
         the learning rate is too high, the data may look like a 'ball' with any
         point approximately equidistant from its nearest neighbours. If the
         learning rate is too low, most points may look compressed in a dense
         cloud with few outliers. If the cost function gets stuck in a bad local
         minimum increasing the learning rate may help.
+        Note that many other t-SNE implementations (bhtsne, FIt-SNE, openTSNE,
+        etc.) use a definition of learning_rate that is 4 times smaller than
+        ours. So our learning_rate=200 corresponds to learning_rate=800 in
+        those other implementations. The 'auto' option sets the learning_rate
+        to `max(N / early_exaggeration / 4, 50)` where N is the sample size,
+        following [4] and [5]. This will become default in 1.2.
 
     n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
@@ -539,7 +546,7 @@ class TSNE(BaseEstimator):
         If the gradient norm is below this threshold, the optimization will
         be stopped.
 
-    metric : string or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -551,22 +558,24 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : string or numpy array, default="random"
+    init : {'random', 'pca'} or ndarray of shape (n_samples, n_components), \
+            default='random'
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
-        usually more globally stable than random initialization.
+        usually more globally stable than random initialization. `init='pca'`
+        will become default in 1.2.
 
     verbose : int, default=0
         Verbosity level.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator. Pass an int for reproducible
         results across multiple function calls. Note that different
         initializations might result in different local minima of the cost
         function. See :term: `Glossary <random_state>`.
 
-    method : string, default='barnes_hut'
+    method : str, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
@@ -587,7 +596,7 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search. This parameter
         has no impact when ``metric="precomputed"`` or
         (``metric="euclidean"`` and ``method="exact"``).
@@ -597,13 +606,31 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.22
 
+    square_distances : True or 'legacy', default='legacy'
+        Whether TSNE should square the distance values. ``'legacy'`` means
+        that distance values are squared only when ``metric="euclidean"``.
+        ``True`` means that distance values are squared for all metrics.
+
+        .. versionadded:: 0.24
+           Added to provide backward compatibility during deprecation of
+           legacy squaring behavior.
+        .. deprecated:: 0.24
+           Legacy squaring behavior was deprecated in 0.24. The ``'legacy'``
+           value will be removed in 1.1 (renaming of 0.26), at which point the
+           default value will change to ``True``.
+
     Attributes
     ----------
-    embedding_ : array-like, shape (n_samples, n_components)
+    embedding_ : array-like of shape (n_samples, n_components)
         Stores the embedding vectors.
 
     kl_divergence_ : float
         Kullback-Leibler divergence after optimization.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         Number of iterations run.
@@ -614,7 +641,8 @@ class TSNE(BaseEstimator):
     >>> import numpy as np
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> X_embedded = TSNE(n_components=2).fit_transform(X)
+    >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
+    ...                   init='random').fit_transform(X)
     >>> X_embedded.shape
     (4, 2)
 
@@ -630,6 +658,14 @@ class TSNE(BaseEstimator):
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
         https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
+
+    [4] Belkina, A. C., Ciccolella, C. O., Anno, R., Halpert, R., Spidlen, J.,
+        & Snyder-Cappione, J. E. (2019). Automated optimized parameters for
+        T-distributed stochastic neighbor embedding improve visualization
+        and analysis of large datasets. Nature Communications, 10(1), 1-12.
+
+    [5] Kobak, D., & Berens, P. (2019). The art of using t-SNE for single-cell
+        transcriptomics. Nature Communications, 10(1), 1-14.
     """
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
@@ -637,13 +673,12 @@ class TSNE(BaseEstimator):
     # Control the number of iterations between progress checks
     _N_ITER_CHECK = 50
 
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, perplexity=30.0,
-                 early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
+                 early_exaggeration=12.0, learning_rate="warn", n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
-                 metric="euclidean", init="random", verbose=0,
+                 metric="euclidean", init="warn", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
-                 n_jobs=None):
+                 n_jobs=None, square_distances='legacy'):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -658,14 +693,56 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
+        # TODO Revisit deprecation of square_distances for 1.1-1.3 (#12401)
+        self.square_distances = square_distances
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
 
+        if isinstance(self.init, str) and self.init == 'warn':
+            # See issue #18018
+            warnings.warn("The default initialization in TSNE will change "
+                          "from 'random' to 'pca' in 1.2.", FutureWarning)
+            self._init = 'random'
+        else:
+            self._init = self.init
+        if self.learning_rate == 'warn':
+            # See issue #18018
+            warnings.warn("The default learning rate in TSNE will change "
+                          "from 200.0 to 'auto' in 1.2.", FutureWarning)
+            self._learning_rate = 200.0
+        else:
+            self._learning_rate = self.learning_rate
+
+        if isinstance(self._init, str) and self._init == 'pca' and issparse(X):
+            raise TypeError("PCA initialization is currently not suported "
+                            "with the sparse input matrix. Use "
+                            "init=\"random\" instead.")
         if self.method not in ['barnes_hut', 'exact']:
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.square_distances not in [True, 'legacy']:
+            raise ValueError("'square_distances' must be True or 'legacy'.")
+        if self._learning_rate == 'auto':
+            # See issue #18018
+            self._learning_rate = X.shape[0] / self.early_exaggeration / 4
+            self._learning_rate = np.maximum(self._learning_rate, 50)
+        else:
+            if not (self._learning_rate > 0):
+                raise ValueError("'learning_rate' must be a positive number "
+                                 "or 'auto'.")
+        if self.metric != "euclidean" and self.square_distances is not True:
+            warnings.warn(
+                "'square_distances' has been introduced in 0.24 to help phase "
+                "out legacy squaring behavior. The 'legacy' setting will be "
+                "removed in 1.1 (renaming of 0.26), and the default setting "
+                "will be changed to True. In 1.3, 'square_distances' will be "
+                "removed altogether, and distances will be squared by "
+                "default. Set 'square_distances'=True to silence this "
+                "warning.",
+                FutureWarning
+            )
         if self.method == 'barnes_hut':
             X = self._validate_data(X, accept_sparse=['csr'],
                                     ensure_min_samples=2,
@@ -674,7 +751,7 @@ class TSNE(BaseEstimator):
             X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
                                     dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
-            if isinstance(self.init, str) and self.init == 'pca':
+            if isinstance(self._init, str) and self._init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
@@ -715,15 +792,23 @@ class TSNE(BaseEstimator):
                     print("[t-SNE] Computing pairwise distances...")
 
                 if self.metric == "euclidean":
+                    # Euclidean is squared here, rather than using **= 2,
+                    # because euclidean_distances already calculates
+                    # squared distances, and returns np.sqrt(dist) for
+                    # squared=False.
+                    # Also, Euclidean is slower for n_jobs>1, so don't set here
                     distances = pairwise_distances(X, metric=self.metric,
                                                    squared=True)
                 else:
                     distances = pairwise_distances(X, metric=self.metric,
                                                    n_jobs=self.n_jobs)
 
-                if np.any(distances < 0):
-                    raise ValueError("All distances should be positive, the "
-                                     "metric given is not correct")
+            if np.any(distances < 0):
+                raise ValueError("All distances should be positive, the "
+                                 "metric given is not correct")
+
+            if self.metric != "euclidean" and self.square_distances is True:
+                distances **= 2
 
             # compute the joint probability distribution for the input space
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
@@ -765,7 +850,7 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if self.metric == "euclidean":
+            if self.square_distances is True or self.metric == "euclidean":
                 # knn return the euclidean distance but we need it squared
                 # to be consistent with the 'exact' method. Note that the
                 # the method was derived using the euclidean method as in the
@@ -777,13 +862,21 @@ class TSNE(BaseEstimator):
             P = _joint_probabilities_nn(distances_nn, self.perplexity,
                                         self.verbose)
 
-        if isinstance(self.init, np.ndarray):
-            X_embedded = self.init
-        elif self.init == 'pca':
+        if isinstance(self._init, np.ndarray):
+            X_embedded = self._init
+        elif self._init == 'pca':
             pca = PCA(n_components=self.n_components, svd_solver='randomized',
                       random_state=random_state)
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
-        elif self.init == 'random':
+            # TODO: Update in 1.2
+            # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
+            # the default value for random initialization. See issue #18018.
+            warnings.warn("The PCA initialization in TSNE will change to "
+                          "have the standard deviation of PC1 equal to 1e-4 "
+                          "in 1.2. This will ensure better convergence.",
+                          FutureWarning)
+            # X_embedded = X_embedded / np.std(X_embedded[:, 0]) * 1e-4
+        elif self._init == 'random':
             # The embedding is initialized with iid samples from Gaussians with
             # standard deviation 1e-4.
             X_embedded = 1e-4 * random_state.randn(
@@ -817,7 +910,7 @@ class TSNE(BaseEstimator):
             "it": 0,
             "n_iter_check": self._N_ITER_CHECK,
             "min_grad_norm": self.min_grad_norm,
-            "learning_rate": self.learning_rate,
+            "learning_rate": self._learning_rate,
             "verbose": self.verbose,
             "kwargs": dict(skip_num_points=skip_num_points),
             "args": [P, degrees_of_freedom, n_samples, self.n_components],
@@ -875,7 +968,7 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
+        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
@@ -886,7 +979,7 @@ class TSNE(BaseEstimator):
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
         embedding = self._fit(X)
@@ -898,7 +991,7 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
+        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'

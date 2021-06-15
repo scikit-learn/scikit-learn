@@ -15,6 +15,8 @@ See http://scikit-learn.org for complete documentation.
 import sys
 import logging
 import os
+import random
+
 
 from ._config import get_config, set_config, config_context
 
@@ -25,19 +27,19 @@ logger = logging.getLogger(__name__)
 # https://www.python.org/dev/peps/pep-0440/
 #
 # Generic release markers:
-#   X.Y
+#   X.Y.0   # For first release after an increment in Y
 #   X.Y.Z   # For bugfix releases
 #
 # Admissible pre-release markers:
-#   X.YaN   # Alpha release
-#   X.YbN   # Beta release
-#   X.YrcN  # Release Candidate
-#   X.Y     # Final release
+#   X.Y.ZaN   # Alpha release
+#   X.Y.ZbN   # Beta release
+#   X.Y.ZrcN  # Release Candidate
+#   X.Y.Z     # Final release
 #
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.24.dev0'
+__version__ = '1.0.dev0'
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -97,9 +99,8 @@ else:
 
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""
-    import os
+
     import numpy as np
-    import random
 
     # Check if a random seed exists in the environment, if not create one.
     _random_seed = os.environ.get('SKLEARN_SEED', None)

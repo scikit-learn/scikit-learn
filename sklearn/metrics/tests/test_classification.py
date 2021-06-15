@@ -20,7 +20,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_warns_div0
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
@@ -153,6 +152,31 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['support']) == int
 
 
+def test_classification_report_output_dict_empty_input():
+    report = classification_report(y_true=[], y_pred=[], output_dict=True)
+    expected_report = {'accuracy': 0.0,
+                       'macro avg': {'f1-score': np.nan,
+                                     'precision': np.nan,
+                                     'recall': np.nan,
+                                     'support': 0},
+                       'weighted avg': {'f1-score': 0.0,
+                                        'precision': 0.0,
+                                        'recall': 0.0,
+                                        'support': 0}}
+    assert isinstance(report, dict)
+    # assert the 2 dicts are equal.
+    assert report.keys() == expected_report.keys()
+    for key in expected_report:
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
+
+
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
@@ -221,13 +245,13 @@ def test_precision_recall_f_binary_single_class():
     assert 1. == precision_score([1, 1], [1, 1])
     assert 1. == recall_score([1, 1], [1, 1])
     assert 1. == f1_score([1, 1], [1, 1])
-    assert 1. == fbeta_score([1, 1], [1, 1], 0)
+    assert 1. == fbeta_score([1, 1], [1, 1], beta=0)
 
     assert 0. == precision_score([-1, -1], [-1, -1])
     assert 0. == recall_score([-1, -1], [-1, -1])
     assert 0. == f1_score([-1, -1], [-1, -1])
-    assert 0. == fbeta_score([-1, -1], [-1, -1], float('inf'))
-    assert fbeta_score([-1, -1], [-1, -1], float('inf')) == pytest.approx(
+    assert 0. == fbeta_score([-1, -1], [-1, -1], beta=float('inf'))
+    assert fbeta_score([-1, -1], [-1, -1], beta=float('inf')) == pytest.approx(
         fbeta_score([-1, -1], [-1, -1], beta=1e5))
 
 
@@ -597,7 +621,6 @@ def test_cohen_kappa():
                         weights="quadratic"), 0.9541, decimal=4)
 
 
-@ignore_warnings
 def test_matthews_corrcoef_nan():
     assert matthews_corrcoef([0], [1]) == 0.0
     assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
@@ -659,17 +682,11 @@ def test_matthews_corrcoef():
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
-    # result in a RuntimeWarning
-    mcc = assert_warns_div0(matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
-
-    # But will output 0
-    assert_almost_equal(mcc, 0.)
+    # output 0
+    assert_almost_equal(matthews_corrcoef([0, 0, 0, 0], [0, 0, 0, 0]), 0.)
 
     # And also for any other vector with 0 variance
-    mcc = assert_warns_div0(matthews_corrcoef, y_true, ['a'] * len(y_true))
-
-    # But will output 0
-    assert_almost_equal(mcc, 0.)
+    assert_almost_equal(matthews_corrcoef(y_true, ['a'] * len(y_true)), 0.)
 
     # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
@@ -706,12 +723,15 @@ def test_matthews_corrcoef_multiclass():
     assert_almost_equal(matthews_corrcoef(y_true, y_pred_min),
                         -12 / np.sqrt(24 * 16))
 
-    # Zero variance will result in an mcc of zero and a Runtime Warning
+    # Zero variance will result in an mcc of zero
     y_true = [0, 1, 2]
     y_pred = [3, 3, 3]
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true, y_pred)
-    assert_almost_equal(mcc, 0.0)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred), 0.0)
+
+    # Also for ground truth with zero variance
+    y_true = [3, 3, 3]
+    y_pred = [0, 1, 2]
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred), 0.0)
 
     # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
@@ -729,16 +749,12 @@ def test_matthews_corrcoef_multiclass():
                                           sample_weight=sample_weight), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
-    # result in a RuntimeWarning
+    # output 0
     y_true = [0, 0, 1, 2]
     y_pred = [0, 0, 1, 2]
     sample_weight = [1, 1, 0, 0]
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true, y_pred,
-                               sample_weight=sample_weight)
-
-    # But will output 0
-    assert_almost_equal(mcc, 0.)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred,
+                                          sample_weight=sample_weight), 0.)
 
 
 @pytest.mark.parametrize('n_points', [100, 10000])
@@ -1222,7 +1238,7 @@ def test_multilabel_hamming_loss():
 def test_jaccard_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
-    err_msg = r"pos_label=2 is not a valid label: array\(\[0, 1\]\)"
+    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
     with pytest.raises(ValueError, match=err_msg):
         jaccard_score(y_true, y_pred, average='binary', pos_label=2)
 
@@ -1382,6 +1398,35 @@ def test_average_binary_jaccard_score(recwarn):
 
     assert not list(recwarn)
 
+
+def test_jaccard_score_zero_division_warning():
+    # check that we raised a warning with default behavior if a zero division
+    # happens
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    msg = ('Jaccard is ill-defined and being set to 0.0 in '
+           'samples with no true or predicted labels.'
+           ' Use `zero_division` parameter to control this behavior.')
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        score = jaccard_score(
+            y_true, y_pred, average='samples', zero_division='warn'
+        )
+        assert score == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    "zero_division, expected_score", [(0, 0), (1, 0.5)]
+)
+def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
+    # check that we don't issue warning by passing the zero_division parameter
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    with pytest.warns(None) as record:
+        score = jaccard_score(
+            y_true, y_pred, average="samples", zero_division=zero_division
+        )
+    assert score == pytest.approx(expected_score)
+    assert len(record) == 0
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
@@ -2065,7 +2110,7 @@ def test_hinge_loss_multiclass():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
 
 
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
@@ -2080,6 +2125,31 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
                      "or pass labels as third argument")
     with pytest.raises(ValueError, match=error_message):
         hinge_loss(y_true, pred_decision)
+
+
+def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
+    # test for inconsistency between multiclass problem and pred_decision
+    # argument
+    y_true = np.array([2, 1, 0, 1, 0, 1, 1])
+    pred_decision = np.array([0, 1, 2, 1, 0, 2, 1])
+    error_message = ("The shape of pred_decision cannot be 1d array"
+                     "with a multiclass target. pred_decision shape "
+                     "must be (n_samples, n_classes), that is "
+                     "(7, 3). Got: (7,)")
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        hinge_loss(y_true=y_true, pred_decision=pred_decision)
+
+    # test for inconsistency between pred_decision shape and labels number
+    pred_decision = np.array([[0, 1], [0, 1], [0, 1], [0, 1],
+                              [2, 0], [0, 1], [1, 0]])
+    labels = [0, 1, 2]
+    error_message = ("The shape of pred_decision is not "
+                     "consistent with the number of classes. "
+                     "With a multiclass target, pred_decision "
+                     "shape must be (n_samples, n_classes), that is "
+                     "(7, 3). Got: (7, 2)")
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        hinge_loss(y_true=y_true, pred_decision=pred_decision, labels=labels)
 
 
 def test_hinge_loss_multiclass_with_missing_labels():
@@ -2102,7 +2172,36 @@ def test_hinge_loss_multiclass_with_missing_labels():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision, labels=labels) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_missing_labels_only_two_unq_in_y_true():
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/17630
+    # check that we can compute the hinge loss when providing an array
+    # with labels allowing to not have all labels in y_true
+    pred_decision = np.array([
+        [+0.36, -0.17, -0.58],
+        [-0.15, -0.58, -0.48],
+        [-1.45, -0.58, -0.38],
+        [-0.55, -0.78, -0.42],
+        [-1.45, -0.58, -0.38]
+    ])
+    y_true = np.array([0, 2, 2, 0, 2])
+    labels = np.array([0, 1, 2])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][2] + pred_decision[1][0],
+        1 - pred_decision[2][2] + pred_decision[2][1],
+        1 - pred_decision[3][0] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][1]
+    ])
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_almost_equal(
+        hinge_loss(y_true, pred_decision, labels=labels),
+        dummy_hinge_loss
+    )
 
 
 def test_hinge_loss_multiclass_invariance_lists():
@@ -2237,9 +2336,12 @@ def test_brier_score_loss():
     # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = ("Only binary classification is supported. Labels "
-                     "in y_true: {}".format(np.array([0, 1, 2])))
-    with pytest.raises(ValueError, match=re.escape(error_message)):
+    error_message = (
+        "Only binary classification is supported. The type of the target is "
+        "multiclass"
+    )
+
+    with pytest.raises(ValueError, match=error_message):
         brier_score_loss(y_true, y_pred)
 
     # calculate correctly when there's only one class in y_true

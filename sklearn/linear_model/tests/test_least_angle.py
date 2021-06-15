@@ -3,21 +3,18 @@ import warnings
 import numpy as np
 import pytest
 from scipy import linalg
-
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
 from sklearn.linear_model._least_angle import _lars_path_residues
 from sklearn.linear_model import LassoLarsIC, lars_path
-from sklearn.linear_model import Lars, LassoLars
+from sklearn.linear_model import Lars, LassoLars, LarsCV, LassoLarsCV
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -38,7 +35,8 @@ def test_simple():
         sys.stdout = StringIO()
 
         _, _, coef_path_ = linear_model.lars_path(
-            X, y, method='lar', verbose=10)
+            X, y, method="lar", verbose=10
+        )
 
         sys.stdout = old_stdout
 
@@ -60,8 +58,7 @@ def test_simple():
 def test_simple_precomputed():
     # The same, with precomputed Gram matrix
 
-    _, _, coef_path_ = linear_model.lars_path(
-        X, y, Gram=G, method='lar')
+    _, _, coef_path_ = linear_model.lars_path(X, y, Gram=G, method="lar")
 
     for i, coef_ in enumerate(coef_path_.T):
         res = y - np.dot(X, coef_)
@@ -82,8 +79,8 @@ def _assert_same_lars_path_result(output1, output2):
         assert_allclose(o1, o2)
 
 
-@pytest.mark.parametrize('method', ['lar', 'lasso'])
-@pytest.mark.parametrize('return_path', [True, False])
+@pytest.mark.parametrize("method", ["lar", "lasso"])
+@pytest.mark.parametrize("return_path", [True, False])
 def test_lars_path_gram_equivalent(method, return_path):
     _assert_same_lars_path_result(
         linear_model.lars_path_gram(
@@ -97,15 +94,15 @@ def test_lars_path_gram_equivalent(method, return_path):
 def test_x_none_gram_none_raises_value_error():
     # Test that lars_path with no X and Gram raises exception
     Xy = np.dot(X.T, y)
-    assert_raises(ValueError, linear_model.lars_path, None, y, Gram=None,
-                  Xy=Xy)
+    with pytest.raises(ValueError):
+        linear_model.lars_path(None, y, Gram=None, Xy=Xy)
 
 
 def test_all_precomputed():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
-    for method in 'lar', 'lasso':
+    for method in "lar", "lasso":
         output = linear_model.lars_path(X, y, method=method)
         output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy,
                                             method=method)
@@ -163,10 +160,10 @@ def test_collinearity():
 
 def test_no_path():
     # Test that the ``return_path=False`` option returns the correct output
-    alphas_, _, coef_path_ = linear_model.lars_path(
-        X, y, method='lar')
+    alphas_, _, coef_path_ = linear_model.lars_path(X, y, method="lar")
     alpha_, _, coef = linear_model.lars_path(
-        X, y, method='lar', return_path=False)
+        X, y, method="lar", return_path=False
+    )
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert alpha_ == alphas_[-1]
@@ -174,10 +171,10 @@ def test_no_path():
 
 def test_no_path_precomputed():
     # Test that the ``return_path=False`` option with Gram remains correct
-    alphas_, _, coef_path_ = linear_model.lars_path(
-        X, y, method='lar', Gram=G)
+    alphas_, _, coef_path_ = linear_model.lars_path(X, y, method="lar", Gram=G)
     alpha_, _, coef = linear_model.lars_path(
-        X, y, method='lar', Gram=G, return_path=False)
+        X, y, method="lar", Gram=G, return_path=False
+    )
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert alpha_ == alphas_[-1]
@@ -372,7 +369,11 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
                 + alpha * linalg.norm(coef, 1))
 
     lars = linear_model.LassoLars(alpha=alpha, normalize=False)
-    assert_warns(ConvergenceWarning, lars.fit, X, y)
+    warning_message = (
+        "Regressors in active set degenerate."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        lars.fit(X, y)
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
@@ -486,7 +487,9 @@ def test_lasso_lars_ic():
 
     # test error on unknown IC
     lars_broken = linear_model.LassoLarsIC('<unknown>')
-    assert_raises(ValueError, lars_broken.fit, X, y)
+
+    with pytest.raises(ValueError):
+        lars_broken.fit(X, y)
 
 
 def test_lars_path_readonly_data():
@@ -512,8 +515,9 @@ def test_lars_path_positive_constraint():
 
     err_msg = "Positive constraint not supported for 'lar' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               method='lar', positive=True)
+        linear_model.lars_path(
+            diabetes["data"], diabetes["target"], method="lar", positive=True
+        )
 
     method = 'lasso'
     _, _, coefs = \
@@ -760,3 +764,67 @@ def test_X_none_gram_not_none():
     with pytest.raises(ValueError,
                        match="X cannot be None if Gram is not None"):
         lars_path(X=None, y=[1], Gram='not None')
+
+
+def test_copy_X_with_auto_gram():
+    # Non-regression test for #17789, `copy_X=True` and Gram='auto' does not
+    # overwrite X
+    rng = np.random.RandomState(42)
+    X = rng.rand(6, 6)
+    y = rng.rand(6)
+
+    X_before = X.copy()
+    linear_model.lars_path(X, y, Gram='auto', copy_X=True, method='lasso')
+    # X did not change
+    assert_allclose(X, X_before)
+
+
+@pytest.mark.parametrize("LARS, has_coef_path, args",
+                         ((Lars, True, {}),
+                          (LassoLars, True, {}),
+                          (LassoLarsIC, False, {}),
+                          (LarsCV, True, {}),
+                          # max_iter=5 is for avoiding ConvergenceWarning
+                          (LassoLarsCV, True, {"max_iter": 5})))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_lars_dtype_match(LARS, has_coef_path, args, dtype):
+    # The test ensures that the fit method preserves input dtype
+    rng = np.random.RandomState(0)
+    X = rng.rand(6, 6).astype(dtype)
+    y = rng.rand(6).astype(dtype)
+
+    model = LARS(**args)
+    model.fit(X, y)
+    assert model.coef_.dtype == dtype
+    if has_coef_path:
+        assert model.coef_path_.dtype == dtype
+    assert model.intercept_.dtype == dtype
+
+
+@pytest.mark.parametrize("LARS, has_coef_path, args",
+                         ((Lars, True, {}),
+                          (LassoLars, True, {}),
+                          (LassoLarsIC, False, {}),
+                          (LarsCV, True, {}),
+                          # max_iter=5 is for avoiding ConvergenceWarning
+                          (LassoLarsCV, True, {"max_iter": 5})))
+def test_lars_numeric_consistency(LARS, has_coef_path, args):
+    # The test ensures numerical consistency between trained coefficients
+    # of float32 and float64.
+    rtol = 1e-5
+    atol = 1e-5
+
+    rng = np.random.RandomState(0)
+    X_64 = rng.rand(6, 6)
+    y_64 = rng.rand(6)
+
+    model_64 = LARS(**args).fit(X_64, y_64)
+    model_32 = LARS(**args).fit(X_64.astype(np.float32),
+                                y_64.astype(np.float32))
+
+    assert_allclose(model_64.coef_, model_32.coef_, rtol=rtol, atol=atol)
+    if has_coef_path:
+        assert_allclose(model_64.coef_path_, model_32.coef_path_,
+                        rtol=rtol, atol=atol)
+    assert_allclose(model_64.intercept_, model_32.intercept_,
+                    rtol=rtol, atol=atol)

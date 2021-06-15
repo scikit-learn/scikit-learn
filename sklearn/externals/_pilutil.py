@@ -87,13 +87,13 @@ def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     ----------
     data : ndarray
         PIL image data array.
-    cmin : scalar, optional
+    cmin : scalar, default=None
         Bias scaling of small values. Default is ``data.min()``.
-    cmax : scalar, optional
+    cmax : scalar, default=None
         Bias scaling of large values. Default is ``data.max()``.
-    high : scalar, optional
+    high : scalar, default=None
         Scale max value to `high`.  Default is 255.
-    low : scalar, optional
+    low : scalar, default=None
         Scale min value to `low`.  Default is 0.
 
     Returns
@@ -158,9 +158,9 @@ def imread(name, flatten=False, mode=None):
     ----------
     name : str or file object
         The file name or file object to be read.
-    flatten : bool, optional
+    flatten : bool, default=False
         If True, flattens the color layers into a single gray-scale layer.
-    mode : str, optional
+    mode : str, default=None
         Mode to convert image to, e.g. ``'RGB'``.  See the Notes for more
         details.
 
@@ -229,7 +229,7 @@ def imsave(name, arr, format=None):
         represents a grey-level image.  Shape ``MxNx3`` stores the red, green
         and blue bands along the last dimension.  An alpha layer may be
         included, specified as the last colour band of an ``MxNx4`` array.
-    format : str
+    format : str, default=None
         Image format. If omitted, the format to use is determined from the
         file name extension. If a file object was used instead of a file name,
         this parameter should always be used.
@@ -272,9 +272,9 @@ def fromimage(im, flatten=False, mode=None):
     ----------
     im : PIL image
         Input image.
-    flatten : bool
+    flatten : bool, default=False
         If true, convert the output to grey-scale.
-    mode : str, optional
+    mode : str, default=None
         Mode to convert image to, e.g. ``'RGB'``.  See the Notes of the
         `imread` docstring for more details.
 
@@ -470,10 +470,10 @@ def imresize(arr, size, interp='bilinear', mode=None):
         * float - Fraction of current size.
         * tuple - Size of the output image (height, width).
 
-    interp : str, optional
+    interp : str, default='bilinear'
         Interpolation to use for re-sizing ('nearest', 'lanczos', 'bilinear',
         'bicubic' or 'cubic').
-    mode : str, optional
+    mode : str, default=None
         The PIL image mode ('P', 'L', etc.) to convert `arr` before resizing.
         If ``mode=None`` (the default), 2-D images will be treated like
         ``mode='L'``, i.e. casting to long integer.  For 3-D and 4-D arrays,

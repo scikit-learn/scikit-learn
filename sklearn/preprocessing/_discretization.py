@@ -15,7 +15,6 @@ from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -28,10 +27,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_bins : int or array-like, shape (n_features,) (default=5)
+    n_bins : int or array-like of shape (n_features,), default=5
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
 
-    encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
+    encode : {'onehot', 'onehot-dense', 'ordinal'}, default='onehot'
         Method used to encode the transformed result.
 
         onehot
@@ -45,7 +44,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         ordinal
             Return the bin identifier encoded as an integer value.
 
-    strategy : {'uniform', 'quantile', 'kmeans'}, (default='quantile')
+    strategy : {'uniform', 'quantile', 'kmeans'}, default='quantile'
         Strategy used to define the widths of the bins.
 
         uniform
@@ -61,19 +60,26 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         consistent with input dtype. Only np.float32 and np.float64 are
         supported.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
-    n_bins_ : int array, shape (n_features,)
-        Number of bins per feature. Bins whose width are too small
-        (i.e., <= 1e-8) are removed with a warning.
-
-    bin_edges_ : array of arrays, shape (n_features, )
+    bin_edges_ : ndarray of ndarray of shape (n_features,)
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
         Ignored features will have empty arrays.
 
+    n_bins_ : ndarray of shape (n_features,), dtype=np.int_
+        Number of bins per feature. Bins whose width are too small
+        (i.e., <= 1e-8) are removed with a warning.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
-     sklearn.preprocessing.Binarizer : Class used to bin values as ``0`` or
+    Binarizer : Class used to bin values as ``0`` or
         ``1`` based on a parameter ``threshold``.
 
     Notes
@@ -123,8 +129,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile',
+    def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
         self.encode = encode
@@ -137,7 +142,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : numeric array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data to be discretized.
 
         y : None
@@ -203,7 +208,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
-                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1,
+                            algorithm='full')
                 centers = km.fit(column[:, None]).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
@@ -274,24 +280,20 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : numeric array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data to be discretized.
 
         Returns
         -------
-        Xt : numeric array-like or sparse matrix
-            Data in the binned space.
+        Xt : {ndarray, sparse matrix}, dtype={np.float32, np.float64}
+            Data in the binned space. Will be a sparse matrix if
+            `self.encode='onehot'` and ndarray otherwise.
         """
         check_is_fitted(self)
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = check_array(X, copy=True, dtype=dtype)
-
-        n_features = self.n_bins_.shape[0]
-        if Xt.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, Xt.shape[1]))
+        Xt = self._validate_data(X, copy=True, dtype=dtype, reset=False)
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
@@ -328,12 +330,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        Xt : numeric array-like, shape (n_sample, n_features)
+        Xt : array-like of shape (n_samples, n_features)
             Transformed data in the binned space.
 
         Returns
         -------
-        Xinv : numeric array-like
+        Xinv : ndarray, dtype={np.float32, np.float64}
             Data in the original feature space.
         """
         check_is_fitted(self)

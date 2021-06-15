@@ -16,17 +16,18 @@ Seeding is performed using a binning technique for scalability.
 
 import numpy as np
 import warnings
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from collections import defaultdict
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
+from ..utils.fixes import delayed
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
+from .._config import config_context
 
 
-@_deprecate_positional_args
 def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0,
                        n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
@@ -107,7 +108,6 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
-@_deprecate_positional_args
 def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
                n_jobs=None):
@@ -218,6 +218,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     bin_seeds : array-like of shape (n_samples, n_features)
         Points used as initial kernel positions in clustering.mean_shift.
     """
+    if bin_size == 0:
+        return X
 
     # Bin points
     bin_sizes = defaultdict(int)
@@ -309,6 +311,11 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.22
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.cluster import MeanShift
@@ -348,7 +355,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Machine Intelligence. 2002. pp. 603-619.
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, bandwidth=None, seeds=None, bin_seeding=False,
                  min_bin_freq=1, cluster_all=True, n_jobs=None, max_iter=300):
         self.bandwidth = bandwidth
@@ -459,5 +465,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-
-        return pairwise_distances_argmin(X, self.cluster_centers_)
+        X = self._validate_data(X, reset=False)
+        with config_context(assume_finite=True):
+            return pairwise_distances_argmin(X, self.cluster_centers_)

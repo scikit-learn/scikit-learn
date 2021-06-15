@@ -33,7 +33,7 @@ X, y = iris.data, iris.target
 # This dataset is way too high-dimensional. Better do PCA:
 pca = PCA(n_components=2)
 
-# Maybe some original features where good, too?
+# Maybe some original features were good, too?
 selection = SelectKBest(k=1)
 
 # Build estimator from PCA and Univariate selection:

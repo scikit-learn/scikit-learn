@@ -1,10 +1,12 @@
 from functools import partial
+from itertools import chain
 
 import pytest
 import numpy as np
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.cluster import rand_score
 from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import fowlkes_mallows_score
 from sklearn.metrics.cluster import homogeneity_score
@@ -33,6 +35,7 @@ from sklearn.utils._testing import assert_allclose
 SUPERVISED_METRICS = {
     "adjusted_mutual_info_score": adjusted_mutual_info_score,
     "adjusted_rand_score": adjusted_rand_score,
+    "rand_score": rand_score,
     "completeness_score": completeness_score,
     "homogeneity_score": homogeneity_score,
     "mutual_info_score": mutual_info_score,
@@ -58,7 +61,7 @@ UNSUPERVISED_METRICS = {
 # Symmetric with respect to their input arguments y_true and y_pred.
 # Symmetric metrics only apply to supervised clusters.
 SYMMETRIC_METRICS = [
-    "adjusted_rand_score", "v_measure_score",
+    "adjusted_rand_score", "rand_score", "v_measure_score",
     "mutual_info_score", "adjusted_mutual_info_score",
     "normalized_mutual_info_score", "fowlkes_mallows_score"
 ]
@@ -67,9 +70,9 @@ NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
 # Metrics whose upper bound is 1
 NORMALIZED_METRICS = [
-    "adjusted_rand_score", "homogeneity_score", "completeness_score",
-    "v_measure_score", "adjusted_mutual_info_score", "fowlkes_mallows_score",
-    "normalized_mutual_info_score"
+    "adjusted_rand_score", "rand_score", "homogeneity_score",
+    "completeness_score", "v_measure_score", "adjusted_mutual_info_score",
+    "fowlkes_mallows_score", "normalized_mutual_info_score"
 ]
 
 
@@ -126,7 +129,7 @@ def test_normalized_output(metric_name):
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
-    "metric_name", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS)
 )
 def test_permute_labels(metric_name):
     # All clustering metrics do not change score due to permutations of labels
@@ -149,7 +152,7 @@ def test_permute_labels(metric_name):
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
-    "metric_name", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS)
 )
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negative or string

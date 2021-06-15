@@ -1,13 +1,13 @@
 # Author: Vlad Niculae
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -32,17 +32,18 @@ G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # and y (n_samples, 3)
 
 
-# FIXME: 'normalize' to be removed in 0.26
-@pytest.mark.parametrize('OmpModel', [OrthogonalMatchingPursuit,
-                                      OrthogonalMatchingPursuitCV])
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.parametrize('OmpModel', [
+    OrthogonalMatchingPursuit,
+    OrthogonalMatchingPursuitCV
+])
 @pytest.mark.parametrize(
-    'normalize, n_warnings, warning',
-    [(True, 1, FutureWarning),
-     (False, 1, FutureWarning),
-     ("deprecate", 1, FutureWarning)]
+    'normalize, n_warnings',
+    [(True, 0),
+     (False, 0),
+     ("deprecated", 1)]
 )
-def test_assure_warning_when_normalize(OmpModel,
-                                       normalize, n_warnings, warning):
+def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
     # check that we issue a FutureWarning when normalize was set
     rng = check_random_state(0)
     n_samples = 200
@@ -52,23 +53,25 @@ def test_assure_warning_when_normalize(OmpModel,
     y = rng.rand(n_samples)
 
     model = OmpModel(normalize=normalize)
-    with pytest.warns(warning) as record:
+    with warnings.catch_warnings(record=True) as record:
         model.fit(X, y)
+
+    record = [r for r in record if r.category == FutureWarning]
     assert len(record) == n_warnings
 
 
 def test_correct_shapes():
     assert (orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5).shape ==
-                 (n_features,))
+            (n_features,))
     assert (orthogonal_mp(X, y, n_nonzero_coefs=5).shape ==
-                 (n_features, 3))
+            (n_features, 3))
 
 
 def test_correct_shapes_gram():
     assert (orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape ==
-                 (n_features,))
+            (n_features,))
     assert (orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape ==
-                 (n_features, 3))
+            (n_features, 3))
 
 
 def test_n_nonzero_coefs():
@@ -102,23 +105,26 @@ def test_unreachable_accuracy():
     assert_array_almost_equal(
         orthogonal_mp(X, y, tol=0),
         orthogonal_mp(X, y, n_nonzero_coefs=n_features))
+    warning_message = (
+        "Orthogonal matching pursuit ended prematurely "
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        assert_array_almost_equal(
+            orthogonal_mp(X, y, tol=0, precompute=True),
+            orthogonal_mp(X, y, precompute=True,
+                          n_nonzero_coefs=n_features))
 
-    assert_array_almost_equal(
-        assert_warns(RuntimeWarning, orthogonal_mp, X, y, tol=0,
-                     precompute=True),
-        orthogonal_mp(X, y, precompute=True,
-                      n_nonzero_coefs=n_features))
 
-
-def test_bad_input():
-    assert_raises(ValueError, orthogonal_mp, X, y, tol=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y, n_nonzero_coefs=-1)
-    assert_raises(ValueError, orthogonal_mp, X, y,
-                  n_nonzero_coefs=n_features + 1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, tol=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_nonzero_coefs=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy,
-                  n_nonzero_coefs=n_features + 1)
+@pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
+@pytest.mark.parametrize(
+    "keyword_params",
+    [{"tol": -1}, {"n_nonzero_coefs": -1}, {"n_nonzero_coefs": n_features + 1}]
+)
+def test_bad_input(positional_params, keyword_params):
+    with pytest.raises(ValueError):
+        orthogonal_mp(*positional_params, **keyword_params)
 
 
 def test_perfect_signal_recovery():
@@ -146,7 +152,7 @@ def test_orthogonal_mp_gram_readonly():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
-# FIXME: 'normalize' to be removed in 0.26
+# FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
@@ -183,7 +189,13 @@ def test_identical_regressors():
     gamma = np.zeros(n_features)
     gamma[0] = gamma[1] = 1.
     newy = np.dot(newX, gamma)
-    assert_warns(RuntimeWarning, orthogonal_mp, newX, newy, 2)
+    warning_message = (
+        "Orthogonal matching pursuit ended prematurely "
+        "due to linear dependence in the dictionary. "
+        "The requested precision might not have been met."
+    )
+    with pytest.warns(RuntimeWarning, match=warning_message):
+        orthogonal_mp(newX, newy, n_nonzero_coefs=2)
 
 
 def test_swapped_regressors():
@@ -232,7 +244,7 @@ def test_omp_return_path_prop_with_gram():
     assert_array_almost_equal(path[:, :, -1], last)
 
 
-# FIXME: 'normalize' to be removed in 0.26
+# FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_cv():
     y_ = y[:, 0]
@@ -248,7 +260,7 @@ def test_omp_cv():
     assert_array_almost_equal(ompcv.coef_, omp.coef_)
 
 
-# FIXME: 'normalize' to be removed in 0.26
+# FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_reaches_least_squares():
     # Use small simple data; it's a sanity check but OMP can stop early

@@ -74,8 +74,10 @@ following:
 
 When using Cython, use either
 
-   $ python setup.py build_ext -i
-   $ python setup.py install
+.. prompt:: bash $
+
+  python setup.py build_ext -i
+  python setup.py install
 
 to generate C files. You are responsible for adding .c/.cpp extensions along
 with build parameters in each submodule ``setup.py``.
@@ -179,22 +181,25 @@ It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
 Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line_profiler`` and wire it to IPython::
+us install ``line_profiler`` and wire it to IPython:
 
-  $ pip install line_profiler
+.. prompt:: bash $
 
-- **Under IPython 0.13+**, first create a configuration profile::
+  pip install line_profiler
 
-    $ ipython profile create
+- **Under IPython 0.13+**, first create a configuration profile:
 
-  Then register the line_profiler extension in
-  ``~/.ipython/profile_default/ipython_config.py``::
+.. prompt:: bash $
+
+  ipython profile create
+
+Then register the line_profiler extension in
+``~/.ipython/profile_default/ipython_config.py``::
 
     c.TerminalIPythonApp.extensions.append('line_profiler')
     c.InteractiveShellApp.extensions.append('line_profiler')
 
-  This will register the ``%lprun`` magic command in the IPython terminal
-  application and the other frontends such as qtconsole and notebook.
+This will register the ``%lprun`` magic command in the IPython terminal application and the other frontends such as qtconsole and notebook.
 
 Now restart IPython and let us use this new toy::
 
@@ -252,26 +257,30 @@ Memory usage profiling
 
 You can analyze in detail the memory usage of any Python code with the help of
 `memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
-install the latest version::
+install the latest version:
 
-    $ pip install -U memory_profiler
+.. prompt:: bash $
+
+  pip install -U memory_profiler
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython 0.11+**, first create a configuration profile::
+- **Under IPython 0.11+**, first create a configuration profile:
 
-    $ ipython profile create
+.. prompt:: bash $
+  
+    ipython profile create
 
-  Then register the extension in
-  ``~/.ipython/profile_default/ipython_config.py``
-  alongside the line profiler::
+
+Then register the extension in
+``~/.ipython/profile_default/ipython_config.py``
+alongside the line profiler::
 
     c.TerminalIPythonApp.extensions.append('memory_profiler')
     c.InteractiveShellApp.extensions.append('memory_profiler')
 
-  This will register the ``%memit`` and ``%mprun`` magic commands in the
-  IPython terminal application and the other frontends such as qtconsole and
-  notebook.
+This will register the ``%memit`` and ``%mprun`` magic commands in the
+IPython terminal application and the other frontends such as qtconsole and   notebook.
 
 ``%mprun`` is useful to examine, line-by-line, the memory usage of key
 functions in your program. It is very similar to ``%lprun``, discussed in the
@@ -388,10 +397,14 @@ kcachegrind
 ~~~~~~~~~~~
 
 ``yep`` can be used to create a profiling report.
-``kcachegrind`` provides a graphical environment to visualize this report::
+``kcachegrind`` provides a graphical environment to visualize this report:
+
+.. prompt:: bash $
 
   # Run yep to profile some python script
   python -m yep -c my_file.py
+
+.. prompt:: bash $
 
   # open my_file.py.callgrin with kcachegrind
   kcachegrind my_file.py.prof

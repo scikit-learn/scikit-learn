@@ -1,7 +1,7 @@
 """
 This module contains the TreeGrower class.
 
-TreeGrowee builds a regression tree fitting a Newton-Raphson step, based on
+TreeGrower builds a regression tree fitting a Newton-Raphson step, based on
 the gradients and hessians of the training data.
 """
 # Author: Nicolas Hug
@@ -16,9 +16,10 @@ from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .utils import sum_parallel
 from .common import PREDICTOR_RECORD_DTYPE
+from .common import X_BITSET_INNER_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
-
+from ._bitset import set_raw_bitset_from_binned_bitset
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
@@ -33,27 +34,23 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
     sum_hessians : float
         The sum of the hessians of the samples at the node.
-    parent : TreeNode or None, optional (default=None)
-        The parent of the node. None for root.
 
     Attributes
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
     sum_hessians : float
         The sum of the hessians of the samples at the node.
-    parent : TreeNode or None
-        The parent of the node. None for root.
     split_info : SplitInfo or None
         The result of the split evaluation.
     left_child : TreeNode or None
@@ -73,8 +70,6 @@ class TreeNode:
     left_child = None
     right_child = None
     histograms = None
-    sibling = None
-    parent = None
 
     # start and stop indices of the node in the splitter.partition
     # array. Concretely,
@@ -88,13 +83,12 @@ class TreeNode:
     partition_stop = 0
 
     def __init__(self, depth, sample_indices, sum_gradients,
-                 sum_hessians, parent=None, value=None):
+                 sum_hessians, value=None):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
         self.sum_gradients = sum_gradients
         self.sum_hessians = sum_hessians
-        self.parent = parent
         self.value = value
         self.is_leaf = False
         self.set_children_bounds(float('-inf'), float('+inf'))
@@ -134,53 +128,62 @@ class TreeGrower:
 
     Parameters
     ----------
-    X_binned : ndarray of int, shape (n_samples, n_features)
+    X_binned : ndarray of shape (n_samples, n_features), dtype=np.uint8
         The binned input samples. Must be Fortran-aligned.
-    gradients : ndarray, shape (n_samples,)
+    gradients : ndarray of shape (n_samples,)
         The gradients of each training sample. Those are the gradients of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
-    hessians : ndarray, shape (n_samples,)
+    hessians : ndarray of shape (n_samples,)
         The hessians of each training sample. Those are the hessians of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
-    max_leaf_nodes : int or None, optional (default=None)
+    max_leaf_nodes : int, default=None
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
-    max_depth : int or None, optional (default=None)
+    max_depth : int, default=None
         The maximum depth of each tree. The depth of a tree is the number of
         edges to go from the root to the deepest leaf.
         Depth isn't constrained by default.
-    min_samples_leaf : int, optional (default=20)
+    min_samples_leaf : int, default=20
         The minimum number of samples per leaf.
-    min_gain_to_split : float, optional (default=0.)
+    min_gain_to_split : float, default=0.
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
-    n_bins : int, optional (default=256)
+    n_bins : int, default=256
         The total number of bins, including the bin for missing values. Used
         to define the shape of the histograms.
-    n_bins_non_missing_ : array of uint32
+    n_bins_non_missing : ndarray, dtype=np.uint32, default=None
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this
         is equal to ``n_bins - 1``. If it's an int, all features are
         considered to have the same number of bins. If None, all features
         are considered to have ``n_bins - 1`` bins.
-    has_missing_values : ndarray of bool or bool, optional (default=False)
+    has_missing_values : bool or ndarray, dtype=bool, default=False
         Whether each feature contains missing values (in the training data).
         If it's a bool, the same value is used for all features.
-    l2_regularization : float, optional (default=0)
+    is_categorical : ndarray of bool of shape (n_features,), default=None
+        Indicates categorical features.
+    monotonic_cst : array-like of shape (n_features,), dtype=int, default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
+    l2_regularization : float, default=0.
         The L2 regularization parameter.
-    min_hessian_to_split : float, optional (default=1e-3)
+    min_hessian_to_split : float, default=1e-3
         The minimum sum of hessians needed in each node. Splits that result in
         at least one child having a sum of hessians less than
         ``min_hessian_to_split`` are discarded.
-    shrinkage : float, optional (default=1)
+    shrinkage : float, default=1.
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
     """
+
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
-                 monotonic_cst=None, l2_regularization=0.,
-                 min_hessian_to_split=1e-3, shrinkage=1.):
+                 is_categorical=None, monotonic_cst=None,
+                 l2_regularization=0., min_hessian_to_split=1e-3,
+                 shrinkage=1.):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -223,19 +226,31 @@ class TreeGrower:
                     "-1, 0 or 1."
                     )
 
+        if is_categorical is None:
+            is_categorical = np.zeros(shape=X_binned.shape[1], dtype=np.uint8)
+        else:
+            is_categorical = np.asarray(is_categorical, dtype=np.uint8)
+
+        if np.any(np.logical_and(is_categorical == 1,
+                                 monotonic_cst != MonotonicConstraint.NO_CST)):
+            raise ValueError("Categorical features cannot have monotonic "
+                             "constraints.")
+
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
             X_binned, n_bins, gradients, hessians, hessians_are_constant)
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
             X_binned, n_bins_non_missing, missing_values_bin_idx,
-            has_missing_values, monotonic_cst,
+            has_missing_values, is_categorical, monotonic_cst,
             l2_regularization, min_hessian_to_split,
             min_samples_leaf, min_gain_to_split, hessians_are_constant)
         self.n_bins_non_missing = n_bins_non_missing
+        self.missing_values_bin_idx = missing_values_bin_idx
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
+        self.is_categorical = is_categorical
         self.l2_regularization = l2_regularization
         self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
@@ -248,6 +263,7 @@ class TreeGrower:
         self.total_find_split_time = 0.  # time spent finding the best splits
         self.total_compute_hist_time = 0.  # time spent computing histograms
         self.total_apply_split_time = 0.  # time spent splitting nodes
+        self.n_categorical_splits = 0
         self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
 
@@ -382,19 +398,15 @@ class TreeGrower:
                                    sample_indices_left,
                                    node.split_info.sum_gradient_left,
                                    node.split_info.sum_hessian_left,
-                                   parent=node,
                                    value=node.split_info.value_left,
                                    )
         right_child_node = TreeNode(depth,
                                     sample_indices_right,
                                     node.split_info.sum_gradient_right,
                                     node.split_info.sum_hessian_right,
-                                    parent=node,
                                     value=node.split_info.value_right,
                                     )
 
-        left_child_node.sibling = right_child_node
-        right_child_node.sibling = left_child_node
         node.right_child = right_child_node
         node.left_child = left_child_node
 
@@ -412,6 +424,7 @@ class TreeGrower:
                 left_child_node.n_samples > right_child_node.n_samples)
 
         self.n_nodes += 2
+        self.n_categorical_splits += node.split_info.is_categorical
 
         if (self.max_leaf_nodes is not None
                 and n_leaf_nodes == self.max_leaf_nodes):
@@ -486,6 +499,16 @@ class TreeGrower:
                 self._compute_best_split_and_push(right_child_node)
             self.total_find_split_time += time() - tic
 
+            # Release memory used by histograms as they are no longer needed
+            # for leaf nodes since they won't be split.
+            for child in (left_child_node, right_child_node):
+                if child.is_leaf:
+                    del child.histograms
+
+        # Release memory used by histograms as they are no longer needed for
+        # internal nodes once children histograms have been computed.
+        del node.histograms
+
         return left_child_node, right_child_node
 
     def _finalize_leaf(self, node):
@@ -503,29 +526,41 @@ class TreeGrower:
             node = self.splittable_nodes.pop()
             self._finalize_leaf(node)
 
-    def make_predictor(self, bin_thresholds=None):
+    def make_predictor(self, binning_thresholds):
         """Make a TreePredictor object out of the current tree.
 
         Parameters
         ----------
-        bin_thresholds : array-like of floats, optional (default=None)
-            The actual thresholds values of each bin.
+        binning_thresholds : array-like of floats
+            Corresponds to the bin_thresholds_ attribute of the BinMapper.
+            For each feature, this stores:
+
+            - the bin frontiers for continuous features
+            - the unique raw category values for categorical features
 
         Returns
         -------
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
-        _fill_predictor_node_array(predictor_nodes, self.root,
-                                   bin_thresholds, self.n_bins_non_missing)
-        return TreePredictor(predictor_nodes)
+        binned_left_cat_bitsets = np.zeros((self.n_categorical_splits, 8),
+                                           dtype=X_BITSET_INNER_DTYPE)
+        raw_left_cat_bitsets = np.zeros((self.n_categorical_splits, 8),
+                                        dtype=X_BITSET_INNER_DTYPE)
+        _fill_predictor_arrays(predictor_nodes, binned_left_cat_bitsets,
+                               raw_left_cat_bitsets,
+                               self.root, binning_thresholds,
+                               self.n_bins_non_missing)
+        return TreePredictor(predictor_nodes, binned_left_cat_bitsets,
+                             raw_left_cat_bitsets)
 
 
-def _fill_predictor_node_array(predictor_nodes, grower_node,
-                               bin_thresholds, n_bins_non_missing,
-                               next_free_idx=0):
+def _fill_predictor_arrays(predictor_nodes, binned_left_cat_bitsets,
+                           raw_left_cat_bitsets, grower_node,
+                           binning_thresholds, n_bins_non_missing,
+                           next_free_node_idx=0, next_free_bitset_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
-    node = predictor_nodes[next_free_idx]
+    node = predictor_nodes[next_free_node_idx]
     node['count'] = grower_node.n_samples
     node['depth'] = grower_node.depth
     if grower_node.split_info is not None:
@@ -538,34 +573,47 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
     if grower_node.is_leaf:
         # Leaf node
         node['is_leaf'] = True
-        return next_free_idx + 1
+        return next_free_node_idx + 1, next_free_bitset_idx
+
+    split_info = grower_node.split_info
+    feature_idx, bin_idx = split_info.feature_idx, split_info.bin_idx
+    node['feature_idx'] = feature_idx
+    node['bin_threshold'] = bin_idx
+    node['missing_go_to_left'] = split_info.missing_go_to_left
+    node['is_categorical'] = split_info.is_categorical
+
+    if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
+        # Split is on the last non-missing bin: it's a "split on nans".
+        # All nans go to the right, the rest go to the left.
+        # Note: for categorical splits, bin_idx is 0 and we rely on the bitset
+        node['num_threshold'] = np.inf
+    elif split_info.is_categorical:
+        categories = binning_thresholds[feature_idx]
+        node['bitset_idx'] = next_free_bitset_idx
+        binned_left_cat_bitsets[next_free_bitset_idx] = (
+            split_info.left_cat_bitset)
+        set_raw_bitset_from_binned_bitset(
+            raw_left_cat_bitsets[next_free_bitset_idx],
+            split_info.left_cat_bitset, categories
+        )
+        next_free_bitset_idx += 1
     else:
-        # Decision node
-        split_info = grower_node.split_info
-        feature_idx, bin_idx = split_info.feature_idx, split_info.bin_idx
-        node['feature_idx'] = feature_idx
-        node['bin_threshold'] = bin_idx
-        node['missing_go_to_left'] = split_info.missing_go_to_left
+        node['num_threshold'] = binning_thresholds[feature_idx][bin_idx]
 
-        if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
-            # Split is on the last non-missing bin: it's a "split on nans". All
-            # nans go to the right, the rest go to the left.
-            node['threshold'] = np.inf
-        elif bin_thresholds is not None:
-            node['threshold'] = bin_thresholds[feature_idx][bin_idx]
+    next_free_node_idx += 1
 
-        next_free_idx += 1
+    node['left'] = next_free_node_idx
+    next_free_node_idx, next_free_bitset_idx = _fill_predictor_arrays(
+        predictor_nodes, binned_left_cat_bitsets, raw_left_cat_bitsets,
+        grower_node.left_child, binning_thresholds=binning_thresholds,
+        n_bins_non_missing=n_bins_non_missing,
+        next_free_node_idx=next_free_node_idx,
+        next_free_bitset_idx=next_free_bitset_idx)
 
-        node['left'] = next_free_idx
-        next_free_idx = _fill_predictor_node_array(
-            predictor_nodes, grower_node.left_child,
-            bin_thresholds=bin_thresholds,
-            n_bins_non_missing=n_bins_non_missing,
-            next_free_idx=next_free_idx)
-
-        node['right'] = next_free_idx
-        return _fill_predictor_node_array(
-            predictor_nodes, grower_node.right_child,
-            bin_thresholds=bin_thresholds,
-            n_bins_non_missing=n_bins_non_missing,
-            next_free_idx=next_free_idx)
+    node['right'] = next_free_node_idx
+    return _fill_predictor_arrays(
+        predictor_nodes, binned_left_cat_bitsets, raw_left_cat_bitsets,
+        grower_node.right_child, binning_thresholds=binning_thresholds,
+        n_bins_non_missing=n_bins_non_missing,
+        next_free_node_idx=next_free_node_idx,
+        next_free_bitset_idx=next_free_bitset_idx)
