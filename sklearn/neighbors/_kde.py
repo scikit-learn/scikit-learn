@@ -289,6 +289,6 @@ class KernelDensity(BaseEstimator):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'sample_weight must have positive values',
+                ('sample_weight must have positive values'),
             }
         }

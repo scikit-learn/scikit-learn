@@ -1098,17 +1098,6 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
-
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -1285,7 +1274,6 @@ class RandomForestClassifier(ForestClassifier):
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=None,
@@ -1301,8 +1289,8 @@ class RandomForestClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "min_impurity_decrease", "random_state",
+                              "ccp_alpha"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1320,7 +1308,6 @@ class RandomForestClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
 
 
@@ -1447,17 +1434,6 @@ class RandomForestRegressor(ForestRegressor):
         if ``sample_weight`` is passed.
 
         .. versionadded:: 0.19
-
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
@@ -1609,7 +1585,6 @@ class RandomForestRegressor(ForestRegressor):
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=None,
@@ -1624,8 +1599,8 @@ class RandomForestRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "min_impurity_decrease", "random_state",
+                              "ccp_alpha"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1642,7 +1617,6 @@ class RandomForestRegressor(ForestRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
 
 
@@ -1744,17 +1718,6 @@ class ExtraTreesClassifier(ForestClassifier):
         if ``sample_weight`` is passed.
 
         .. versionadded:: 0.19
-
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -1931,7 +1894,6 @@ class ExtraTreesClassifier(ForestClassifier):
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=None,
@@ -1947,8 +1909,8 @@ class ExtraTreesClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "min_impurity_decrease", "random_state",
+                              "ccp_alpha"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1966,7 +1928,6 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
 
 
@@ -2085,17 +2046,6 @@ class ExtraTreesRegressor(ForestRegressor):
         if ``sample_weight`` is passed.
 
         .. versionadded:: 0.19
-
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -2235,7 +2185,6 @@ class ExtraTreesRegressor(ForestRegressor):
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=None,
@@ -2250,8 +2199,8 @@ class ExtraTreesRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "min_impurity_decrease", "random_state",
+                              "ccp_alpha"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -2268,7 +2217,6 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
 
 
@@ -2355,17 +2303,6 @@ class RandomTreesEmbedding(BaseForest):
         if ``sample_weight`` is passed.
 
         .. versionadded:: 0.19
-
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
 
     sparse_output : bool, default=True
         Whether or not to return a sparse CSR matrix, as default behavior,
@@ -2455,7 +2392,6 @@ class RandomTreesEmbedding(BaseForest):
                  min_weight_fraction_leaf=0.,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  sparse_output=True,
                  n_jobs=None,
                  random_state=None,
@@ -2467,8 +2403,7 @@ class RandomTreesEmbedding(BaseForest):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state"),
+                              "min_impurity_decrease", "random_state"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
@@ -2483,7 +2418,6 @@ class RandomTreesEmbedding(BaseForest):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
 
     def _set_oob_score_and_attributes(self, X, y):

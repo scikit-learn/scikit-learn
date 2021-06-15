@@ -33,11 +33,12 @@ import pytest
 # FutureWarnings
 with warnings.catch_warnings():
     warnings.simplefilter('ignore', FutureWarning)
+    # mypy error: Module has no attribute "__path__"
+    sklearn_path = sklearn.__path__   # type: ignore  # mypy issue #1422
     PUBLIC_MODULES = set([
         pckg[1] for pckg in walk_packages(
             prefix='sklearn.',
-            # mypy error: Module has no attribute "__path__"
-            path=sklearn.__path__)  # type: ignore  # mypy issue #1422
+            path=sklearn_path)
         if not ("._" in pckg[1] or ".tests." in pckg[1])
     ])
 
@@ -199,7 +200,6 @@ def _construct_sparse_coder(Estimator):
 
 N_FEATURES_MODULES_TO_IGNORE = {
     'model_selection',
-    'multioutput',
 }
 
 
