@@ -548,7 +548,7 @@ Changelog
 - |API| The `n_features_` attribute of :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
   :class:`tree.ExtraTreeRegressor` is deprecated in favor of `n_features_in_`
-  and will be removed in 1.2. :pr:`???` by
+  and will be removed in 1.2. :pr:`20272` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.utils`
