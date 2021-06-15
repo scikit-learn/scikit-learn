@@ -1909,6 +1909,11 @@ class SVDD(OutlierMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         The constant in the decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
