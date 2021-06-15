@@ -757,10 +757,13 @@ def test_loss_intercept_only(loss, sample_weight):
 @pytest.mark.parametrize(
     "loss, func, random_dist",
     [
-        (HalfSquaredError, np.mean, "normal"),
-        (AbsoluteError, np.median, "normal"),
-        (HalfPoissonLoss, np.mean, "poisson"),
-        (BinaryCrossEntropy, np.mean, "binomial"),
+        (HalfSquaredError(), np.mean, "normal"),
+        (AbsoluteError(), np.median, "normal"),
+        (PinballLoss(quantile=0.25), lambda x: np.quantile(x, q=0.25), "normal"),
+        (HalfPoissonLoss(), np.mean, "poisson"),
+        (HalfGammaLoss(), np.mean, "exponential"),
+        (HalfTweedieLoss(), np.mean, "exponential"),
+        (BinaryCrossEntropy(), np.mean, "binomial"),
     ],
 )
 def test_specific_fit_intercept_only(loss, func, random_dist):
@@ -770,7 +773,6 @@ def test_specific_fit_intercept_only(loss, func, random_dist):
     squared error estimates the expectation of a probability distribution.
     """
     rng = np.random.RandomState(0)
-    loss = loss()
     if random_dist == "binomial":
         y_train = rng.binomial(1, 0.5, size=100)
     else:
@@ -780,6 +782,7 @@ def test_specific_fit_intercept_only(loss, func, random_dist):
     # or median.
     assert_all_finite(baseline_prediction)
     assert baseline_prediction == approx(loss.link(func(y_train)))
+    assert loss.inverse(baseline_prediction) == approx(func(y_train))
     if isinstance(loss, IdentityLink):
         assert_allclose(
             loss.inverse(baseline_prediction), baseline_prediction
