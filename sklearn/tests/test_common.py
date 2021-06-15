@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator
+from inspect import isgenerator, signature
 from itertools import product
 from functools import partial
 
@@ -31,10 +31,16 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import HalvingGridSearchCV
+from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import (
+    SkipTest,
+    set_random_state,
+)
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -216,28 +222,48 @@ def _generate_search_cv_instances():
     for SearchCV, (Estimator, param_grid) in product(
         [
             GridSearchCV,
+            HalvingGridSearchCV,
             RandomizedSearchCV,
+            HalvingGridSearchCV,
         ],
         [
             (Ridge, {"alpha": [0.1, 1.0]}),
             (LogisticRegression, {"C": [0.1, 1.0]}),
         ],
     ):
-        yield SearchCV(Estimator(), param_grid)
+        init_params = signature(SearchCV).parameters
+        extra_params = (
+            {"min_resources": "smallest"}
+            if "min_resources" in init_params
+            else {}
+        )
+        search_cv = SearchCV(Estimator(), param_grid, cv=2, **extra_params)
+        set_random_state(search_cv)
+        yield search_cv
 
     for SearchCV, (Estimator, param_grid) in product(
         [
             GridSearchCV,
+            HalvingGridSearchCV,
             RandomizedSearchCV,
+            HalvingRandomSearchCV,
         ],
         [
             (Ridge, {"ridge__alpha": [0.1, 1.0]}),
             (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
         ],
     ):
-        yield SearchCV(
-            make_pipeline(PCA(), Estimator()), param_grid
+        init_params = signature(SearchCV).parameters
+        extra_params = (
+            {"min_resources": "smallest"}
+            if "min_resources" in init_params
+            else {}
+        )
+        search_cv = SearchCV(
+            make_pipeline(PCA(), Estimator()), param_grid, cv=2, **extra_params
         ).set_params(error_score="raise")
+        set_random_state(search_cv)
+        yield search_cv
 
 
 @parametrize_with_checks(list(_generate_search_cv_instances()))
@@ -257,29 +283,9 @@ def test_search_cv(estimator, check, request):
         check(estimator)
 
 
-# TODO: When more modules get added, we can remove it from this list to make
-# sure it gets tested. After we finish each module we can move the checks
-# into sklearn.utils.estimator_checks.check_n_features_in.
-#
-# check_estimators_partial_fit_n_features can either be removed or updated
-# with the two more assertions:
-# 1. `n_features_in_` is set during the first call to `partial_fit`.
-# 2. More strict when it comes to the error message.
-#
-# check_classifiers_train would need to be updated with the error message
-N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
-    'model_selection',
-    'multioutput',
-}
-
-N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
-    est for est in _tested_estimators() if est.__module__.split('.')[1] not in
-    N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE
-]
-
-
-@pytest.mark.parametrize("estimator", N_FEATURES_IN_AFTER_FIT_ESTIMATORS,
-                         ids=_get_check_estimator_ids)
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
 def test_check_n_features_in_after_fitting(estimator):
     _set_checking_parameters(estimator)
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
