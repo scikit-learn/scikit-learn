@@ -1814,3 +1814,36 @@ def test_fast_sqeuclidean_correctness(
 
     np.testing.assert_almost_equal(eucl_dist, fse_dist)
     np.testing.assert_array_equal(eucl_nn, fse_nn)
+
+
+@pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
+@pytest.mark.parametrize("strategy", ["chunk_on_train", "chunk_on_test"])
+@pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
+def test_fast_sqeuclidean_translation_invariance(
+    n_neighbors,
+    strategy,
+    translation,
+    dtype=np.float64,
+):
+    """ The Fast euclidean strategy should be translation invariant. """
+    n = 10_000
+    d = 50
+
+    rng = np.random.RandomState(1)
+    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d))
+    X_test = rng.rand(int(n * d)).astype(dtype).reshape((-1, d))
+
+    neigh = NearestNeighbors(n_neighbors=n_neighbors, algorithm="brute",
+                             metric="fast_sqeuclidean").fit(X_train)
+    reference_dist, reference_nns = neigh.kneighbors(X=X_test,
+                                                     n_neighbors=n_neighbors,
+                                                     return_distance=True)
+
+    neigh = NearestNeighbors(n_neighbors=n_neighbors, algorithm="brute",
+                             metric="fast_sqeuclidean").fit(X_train + translation)
+    dist, nns = neigh.kneighbors(X=X_test + translation,
+                                 n_neighbors=n_neighbors,
+                                 return_distance=True)
+
+    np.testing.assert_array_equal(reference_nns, nns)
+    np.testing.assert_almost_equal(reference_dist, dist)
