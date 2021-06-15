@@ -613,3 +613,19 @@ def test_min_resources_null(SearchCV):
     err_msg = "min_resources_=0: you might have passed an empty dataset X."
     with pytest.raises(ValueError, match=err_msg):
         search.fit(X, [])
+
+
+@pytest.mark.parametrize(
+    "SearchCV", [HalvingGridSearchCV, HalvingRandomSearchCV]
+)
+def test_select_best_index(SearchCV):
+    """Check the selection strategy of the halving search."""
+    results = {  # this isn't a 'real world' result dict
+        'iter': np.array([0, 0, 0, 0, 1, 1, 2, 2, 2]),
+        'mean_test_score': np.array([4, 3, 5, 1, 11, 10, 5, 6, 9]),
+        'params': np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']),
+    }
+
+    # we expect the index of 'i'
+    best_index = SearchCV._select_best_index(None, None, results)
+    assert best_index == 8

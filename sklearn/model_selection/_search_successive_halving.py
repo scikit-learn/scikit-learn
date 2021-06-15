@@ -13,8 +13,6 @@ from ..utils import resample
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import (
     column_or_1d,
-    _assert_all_finite,
-    _ensure_no_complex_data,
     _num_samples,
 )
 
@@ -151,6 +149,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
+                    y = column_or_1d(y, warn=True)
+                    check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
             else:
@@ -220,15 +220,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
-        # y needs to be validated for the parameters validation later on
-        if is_classifier(self.estimator):
-            # during input parameter checks, `y` is expected to be validated
-            # to compute the available classes
-            y = column_or_1d(y, warn=True)
-            _assert_all_finite(y)
-            _ensure_no_complex_data(y)
-            check_classification_targets(y)
-
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator))
 
