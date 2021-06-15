@@ -311,8 +311,11 @@ def test_fit_docstring_attributes(name, Estimator):
     fit_attr_names = [attr.name for attr in attributes]
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
     undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
-    assert not undocumented_attrs,\
-        "Undocumented attributes: {}".format(undocumented_attrs)
+    if undocumented_attrs:
+        raise AssertionError(
+            f"Undocumented attributes for {Estimator.__name__}: "
+            f"{undocumented_attrs}"
+        )
 
 
 def _get_all_fitted_attributes(estimator):
