@@ -563,6 +563,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
+
     See Also
     --------
     :class:`HalvingRandomSearchCV`:
@@ -855,6 +859,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
+
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
 
     See Also
     --------

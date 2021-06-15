@@ -9,6 +9,7 @@ from copy import deepcopy
 import joblib
 
 from sklearn.base import is_classifier
+from sklearn.base import clone
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
@@ -453,7 +454,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         X_train = sparse.csr_matrix(X_train)
         X_test = _convert_container(X_train, 'sparse')
 
-    sample_weight = rng.rand(X_train.shape[0])
+    sample_weight = rng.uniform(low=0.1, high=100, size=X_train.shape[0])
 
     # linear estimator with built-in feature normalization
     reg_with_normalize = estimator(normalize=True, fit_intercept=True,
@@ -462,7 +463,12 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     # linear estimator in a pipeline with a StandardScaler, normalize=False
     linear_regressor = estimator(normalize=False, fit_intercept=True, **params)
-    _scale_alpha_inplace(linear_regressor, X_train.shape[0])  # rescale alpha
+
+    # rescale alpha
+    if model_name in ["Lasso", "ElasticNet"]:
+        _scale_alpha_inplace(linear_regressor, y_test.shape[0])
+    else:
+        _scale_alpha_inplace(linear_regressor, sample_weight.sum())
     reg_with_scaler = Pipeline([
         ("scaler", StandardScaler(with_mean=with_mean)),
         ("linear_regressor", linear_regressor)
@@ -479,7 +485,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # sense that they predict exactly the same outcome.
     y_pred_normalize = reg_with_normalize.predict(X_test)
     y_pred_scaler = reg_with_scaler.predict(X_test)
-    assert_allclose(y_pred_normalize,  y_pred_scaler)
+    assert_allclose(y_pred_normalize, y_pred_scaler)
+
     # Check intercept computation when normalize is True
     y_train_mean = np.average(y_train, weights=sample_weight)
     if is_sparse:
@@ -1446,39 +1453,78 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
     # effective_rank are more problematic in particular.
 
     rng = np.random.RandomState(42)
+    n_samples = 300
     X, y = make_regression(
-        n_samples=100,
-        n_features=300,
-        effective_rank=100,
+        n_samples=n_samples,
+        n_features=100,
+        effective_rank=10,
         n_informative=50,
         random_state=rng,
     )
-    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
-
-    ridge = Ridge(
-        alpha=ridge_alpha,
+    sw = rng.uniform(low=0.01, high=10, size=X.shape[0])
+    alpha = 1.
+    common_params = dict(
         normalize=normalize,
-    ).fit(X, y, sample_weight=sw)
-
-    enet = ElasticNet(
-        alpha=ridge_alpha / sw.sum(),
-        normalize=normalize,
-        l1_ratio=0.,
-        max_iter=1000,
+        tol=1e-12,
     )
-    # Even when the ElasticNet model has actually converged, the duality gap
-    # convergence criterion is never met when l1_ratio is 0 and for any value
-    # of the `tol` parameter. The convergence message should point the user to
-    # Ridge instead:
-    expected_msg = (
-        r"Objective did not converge\. .* "
-        r"Linear regression models with null weight for the "
-        r"l1 regularization term are more efficiently fitted "
-        r"using one of the solvers implemented in "
-        r"sklearn\.linear_model\.Ridge/RidgeCV instead\."
+    ridge = Ridge(alpha=alpha, **common_params).fit(
+        X, y, sample_weight=sw
     )
-    with pytest.warns(ConvergenceWarning, match=expected_msg):
-        enet.fit(X, y, sample_weight=sw)
-
+    if normalize:
+        alpha_enet = alpha / n_samples
+    else:
+        alpha_enet = alpha / sw.sum()
+    enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, **common_params).fit(
+        X, y, sample_weight=sw
+    )
     assert_allclose(ridge.coef_, enet.coef_)
     assert_allclose(ridge.intercept_, enet.intercept_)
+
+
+@pytest.mark.parametrize(
+    "estimator", [
+        Lasso(alpha=1.),
+        ElasticNet(alpha=1., l1_ratio=0.1),
+    ]
+)
+def test_sample_weight_invariance(estimator):
+    rng = np.random.RandomState(42)
+    X, y = make_regression(
+        n_samples=100,
+        n_features=300,
+        effective_rank=10,
+        n_informative=50,
+        random_state=rng,
+    )
+    normalize = False  # These tests don't work for normalize=True.
+    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    params = dict(normalize=normalize, tol=1e-12)
+
+    # Check that setting some weights to 0 is equivalent to trimming the
+    # samples:
+    cutoff = X.shape[0] // 3
+    sw_with_null = sw.copy()
+    sw_with_null[:cutoff] = 0.
+    X_trimmed, y_trimmed = X[cutoff:, :], y[cutoff:]
+    sw_trimmed = sw[cutoff:]
+
+    reg_trimmed = clone(estimator).set_params(**params).fit(
+        X_trimmed, y_trimmed, sample_weight=sw_trimmed)
+    reg_null_weighted = clone(estimator).set_params(**params).fit(
+        X, y, sample_weight=sw_with_null)
+    assert_allclose(reg_null_weighted.coef_, reg_trimmed.coef_)
+    assert_allclose(reg_null_weighted.intercept_, reg_trimmed.intercept_)
+
+    # Check that duplicating the training dataset is equivalent to multiplying
+    # the weights by 2:
+    X_dup = np.concatenate([X, X], axis=0)
+    y_dup = np.concatenate([y, y], axis=0)
+    sw_dup = np.concatenate([sw, sw], axis=0)
+
+    reg_2sw = clone(estimator).set_params(**params).fit(
+        X, y, sample_weight=2 * sw)
+    reg_dup = clone(estimator).set_params(**params).fit(
+        X_dup, y_dup, sample_weight=sw_dup)
+
+    assert_allclose(reg_2sw.coef_, reg_dup.coef_)
+    assert_allclose(reg_2sw.intercept_, reg_dup.intercept_)

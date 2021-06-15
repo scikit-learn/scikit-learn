@@ -278,6 +278,11 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     QuadraticDiscriminantAnalysis : Quadratic Discriminant Analysis.
@@ -731,6 +736,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     classes_ : ndarray of shape (n_classes,)
         Unique class labels.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

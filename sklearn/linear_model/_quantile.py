@@ -59,6 +59,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     intercept_ : float
         The intercept of the model, aka bias term.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         The actual number of iterations performed by the solver.
 

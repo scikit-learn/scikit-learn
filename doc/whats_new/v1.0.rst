@@ -138,6 +138,10 @@ Changelog
   :class:`calibration.CalibratedClassifierCV` can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
+- |Fix| Fixed an error when using a ::class:`ensemble.VotingClassifier`
+  as `base_estimator` in ::class:`calibration.CalibratedClassifierCV`.
+  :pr:`20087` by :user:`Clément Fauchereau <clement-f>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -212,6 +216,10 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
   when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
 
+- |Fix| Shorten data file names in the openml tests to better support
+  installing on Windows and its default 260 character limit on file names.
+  :pr:`20209` by `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -266,6 +274,16 @@ Changelog
   :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
   :pr:`19564` by `Thomas Fan`_.
 
+- |Enhancement| Documented and tested support of the Poisson criterion for
+  :class:`ensemble.RandomForestRegressor`. :pr:`19836` by
+  :user:`Brian Sun <bsun94>`.
+
+- |Fix| Fixed the range of the argument max_samples to be (0.0, 1.0]
+  in :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, where `max_samples=1.0` is
+  interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
+  :user:`murata-yu`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -280,6 +298,10 @@ Changelog
   correlation coefficients between the features and the target.
   :pr:`17169` by :user:`Dmytro Lituiev <DSLituiev>`
   and :user:`Julien Jerphanion <jjerphan>`.
+
+- |API| Raises an error in :class:`feature_selection.VarianceThreshold`
+  when the variance threshold is negative.
+  :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
 
 :mod:`sklearn.inspection`
 .........................
@@ -338,7 +360,7 @@ Changelog
   BayesianRidge, ARDRegression were deprecated in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
 
-- |Fix|: `sample_weight` are now fully taken into account in linear models
+- |Fix| `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature
   scaling.
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
@@ -351,6 +373,10 @@ Changelog
 - |Enhancement| `fit` method preserves dtype for numpy.float32 in
   :class:`Lars`, :class:`LassoLars`, :class:`LassoLars`, :class:`LarsCV` and
   :class:`LassoLarsCV`. :pr:`20155` by :user:`Takeshi Oura <takoika>`.
+
+- |Fix| Sample weight invariance for class:`Ridge` was fixed in :pr:`19616` by
+  :user:`Oliver Grisel <ogrisel>` and
+  :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -388,6 +414,9 @@ Changelog
 - |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
+
+- |Fix| :meth:`metrics.ConfusionMatrixDisplay.plot` uses the correct max
+  for colormap. :pr:`19784` by `Thomas Fan`_.
 
 - |Fix| Samples with zero `sample_weight` values do not affect the results
   from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
@@ -494,6 +523,11 @@ Changelog
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
+
+- |API| The `n_input_features_` attribute of
+  :class:`preprocessing.PolynomialFeatures` is deprecated in favor of
+  `n_features_in_` and will be removed in 1.2. :pr:`20240` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.tree`
 ...................

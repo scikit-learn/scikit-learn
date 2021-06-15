@@ -592,6 +592,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         `n_nonzero_coefs` is None and `tol` is None this value is either set
         to 10% of `n_features` or 1, whichever is greater.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuit
@@ -834,6 +839,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     n_iter_ : int or array-like
         Number of active features across every target for the model refit with
         the best hyperparameters got by cross-validating across all folds.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

@@ -114,25 +114,34 @@ def _check_estimator(estimator):
 class _ConstantPredictor(BaseEstimator):
 
     def fit(self, X, y):
-        self._check_n_features(X, reset=True)
+        check_params = dict(force_all_finite=False, dtype=None,
+                            ensure_2d=False, accept_sparse=True)
+        self._validate_data(X, y, reset=True,
+                            validate_separately=(check_params, check_params))
         self.y_ = y
         return self
 
     def predict(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
+                            ensure_2d=False, reset=False)
 
         return np.repeat(self.y_, _num_samples(X))
 
     def decision_function(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
+                            ensure_2d=False, reset=False)
 
         return np.repeat(self.y_, _num_samples(X))
 
     def predict_proba(self, X):
         check_is_fitted(self)
-        self._check_n_features(X, reset=True)
+        self._validate_data(X, force_all_finite=False, dtype=None,
+                            accept_sparse=True,
+                            ensure_2d=False, reset=False)
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
                          _num_samples(X), axis=0)
@@ -472,11 +481,12 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     # TODO: Remove coef_ attribute in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
-                "If you observe this warning while using RFE "
-                "or SelectFromModel, use the importance_getter "
-                "parameter instead.")
+    @deprecated(  # type: ignore
+        "Attribute coef_ was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
+        "If you observe this warning while using RFE "
+        "or SelectFromModel, use the importance_getter "
+        "parameter instead.")
     @property
     def coef_(self):
         check_is_fitted(self)
@@ -490,11 +500,12 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     # TODO: Remove intercept_ attribute in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
-                "If you observe this warning while using RFE "
-                "or SelectFromModel, use the importance_getter "
-                "parameter instead.")
+    @deprecated(  # type: ignore
+        "Attribute intercept_ was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
+        "If you observe this warning while using RFE "
+        "or SelectFromModel, use the importance_getter "
+        "parameter instead.")
     @property
     def intercept_(self):
         check_is_fitted(self)
@@ -505,8 +516,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
@@ -785,8 +797,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
