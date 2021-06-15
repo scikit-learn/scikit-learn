@@ -480,10 +480,12 @@ def test_transform():
     "X, y, voter",
     [(X, y, VotingClassifier(
         [('lr', LogisticRegression()),
-         ('rf', RandomForestClassifier(n_estimators=5))])),
+         ('rf', RandomForestClassifier(
+             n_estimators=5, max_features="sqrt"))])),
      (X_r, y_r, VotingRegressor(
          [('lr', LinearRegression()),
-          ('rf', RandomForestRegressor(n_estimators=5))]))]
+          ('rf', RandomForestRegressor(
+              n_estimators=5, max_features="sqrt"))]))]
 )
 def test_none_estimator_with_weights(X, y, voter):
     # check that an estimator can be set to 'drop' and passing some weight
