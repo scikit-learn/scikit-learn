@@ -239,7 +239,7 @@ def svd_timing(X, n_comps, n_iter, n_oversamples,
     Measure time for decomposition
     """
     print("... running SVD ...")
-    if method is not 'fbpca':
+    if method != 'fbpca':
         gc.collect()
         t0 = time()
         U, mu, V = randomized_svd(X, n_comps, n_oversamples, n_iter,

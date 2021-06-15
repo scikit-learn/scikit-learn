@@ -21,6 +21,7 @@ from .utils._tags import (
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
+from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
 
@@ -376,15 +377,21 @@ class BaseEstimator:
                 f"X has {n_features} features, but {self.__class__.__name__} "
                 f"is expecting {self.n_features_in_} features as input.")
 
-    def _validate_data(self, X, y='no_validation', reset=True,
+    def _validate_data(self, X='no_validation', y='no_validation', reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
-                (n_samples, n_features)
+                (n_samples, n_features), default='no validation'
             The input samples.
+            If `'no_validation'`, no validation is performed on `X`. This is
+            useful for meta-estimator which can delegate input validation to
+            their underlying estimator(s). In that case `y` must be passed and
+            the only accepted `check_params` are `multi_output` and
+            `y_numeric`.
+
         y : array-like of shape (n_samples,), default='no_validation'
             The targets.
 
@@ -392,9 +399,11 @@ class BaseEstimator:
               requires_y tag is True, then an error will be raised.
             - If `'no_validation'`, `check_array` is called on `X` and the
               estimator's requires_y tag is ignored. This is a default
-              placeholder and is never meant to be explicitly set.
-            - Otherwise, both `X` and `y` are checked with either `check_array`
-              or `check_X_y` depending on `validate_separately`.
+              placeholder and is never meant to be explicitly set. In that case
+              `X` must be passed.
+            - Otherwise, only `y` with `_check_y` or both `X` and `y` are
+              checked with either `check_array` or `check_X_y` depending on
+              `validate_separately`.
 
         reset : bool, default=True
             Whether to reset the `n_features_in_` attribute.
@@ -416,20 +425,26 @@ class BaseEstimator:
         Returns
         -------
         out : {ndarray, sparse matrix} or tuple of these
-            The validated input. A tuple is returned if `y` is not None.
+            The validated input. A tuple is returned if both `X` and `y` are
+            validated.
         """
+        if y is None and self._get_tags()['requires_y']:
+            raise ValueError(
+                f"This {self.__class__.__name__} estimator "
+                f"requires y to be passed, but the target y is None."
+            )
 
-        if y is None:
-            if self._get_tags()['requires_y']:
-                raise ValueError(
-                    f"This {self.__class__.__name__} estimator "
-                    f"requires y to be passed, but the target y is None."
-                )
+        no_val_X = isinstance(X, str) and X == 'no_validation'
+        no_val_y = y is None or isinstance(y, str) and y == 'no_validation'
+
+        if no_val_X and no_val_y:
+            raise ValueError("Validation should be done on X, y or both.")
+        elif not no_val_X and no_val_y:
             X = check_array(X, **check_params)
             out = X
-        elif isinstance(y, str) and y == 'no_validation':
-            X = check_array(X, **check_params)
-            out = X
+        elif no_val_X and not no_val_y:
+            y = _check_y(y, **check_params)
+            out = y
         else:
             if validate_separately:
                 # We need this because some estimators validate X and y
@@ -443,7 +458,7 @@ class BaseEstimator:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
 
-        if check_params.get('ensure_2d', True):
+        if not no_val_X and check_params.get('ensure_2d', True):
             self._check_n_features(X, reset=reset)
 
         return out

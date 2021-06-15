@@ -1101,9 +1101,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return self
 
-    @deprecated("The attribute 'components_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use "
-                "the 'dictionary' instead.")
+    @deprecated(  # type: ignore
+        "The attribute 'components_' is deprecated "
+        "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
+        "'dictionary' instead.")
     @property
     def components_(self):
         return self.dictionary
