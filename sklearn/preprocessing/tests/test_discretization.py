@@ -322,3 +322,20 @@ def test_32_equal_64(input_dtype, encode):
     Xt_64 = kbd_64.transform(X_input)
 
     assert_allclose_dense_sparse(Xt_32, Xt_64)
+
+
+@pytest.mark.parametrize('encode', ['onehot', 'onehot-dense', 'ordinal'])
+@pytest.mark.parametrize('strategy', ['uniform', 'quantile', 'kmeans'])
+def test_kbinsdiscretizer_with_nan_input(encode, strategy):
+    X = np.arange(20).reshape((-1, 1)).astype(float)
+    X[2] = np.nan
+    kbd = KBinsDiscretizer(n_bins=4, encode=encode, strategy=strategy)
+    encoded = kbd.fit_transform(X)
+    inversed = kbd.inverse_transform(encoded)
+    if encode == 'ordinal':
+        assert np.isnan(encoded).sum() == 1
+    elif encode == 'onehot-dense':
+        assert np.isnan(encoded).sum() == 0
+    elif encode == 'onehot':
+        assert np.isnan(encoded.toarray()).sum() == 0
+    assert np.isnan(inversed).sum() == 1
