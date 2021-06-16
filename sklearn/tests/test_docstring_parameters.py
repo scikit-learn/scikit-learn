@@ -206,6 +206,7 @@ N_FEATURES_MODULES_TO_IGNORE = {
 
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
+@ignore_warnings(category=FutureWarning)
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip('numpydoc')
     from numpydoc import docscrape
