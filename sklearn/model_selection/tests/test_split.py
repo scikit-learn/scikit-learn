@@ -1170,9 +1170,9 @@ def test_train_test_split_errors():
                   shuffle=False, stratify=True)
 
     with pytest.raises(ValueError,
-                       match=r'train_size=11 should be either positive and '
-                             r'smaller than the number of samples 10 or a '
-                             r'float in the \(0, 1\) range'):
+                       match=r'train_size=11 should be either positive and smaller '
+                             r'or equal to the number of samples 10 or a '
+                             r'float in the \(0, 1\] range'):
         train_test_split(range(10), train_size=11, test_size=1)
 
 
@@ -1186,7 +1186,7 @@ def test_train_test_split_errors():
     (0.8, -.2)])
 def test_train_test_split_invalid_sizes1(train_size, test_size):
     with pytest.raises(ValueError,
-                       match=r'should be .* in the \(0, 1\) range'):
+                       match=r'should be .* in the'):
         train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
