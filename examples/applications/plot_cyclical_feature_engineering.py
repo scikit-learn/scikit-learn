@@ -1,4 +1,18 @@
 
+"""
+==========================
+Cyclic feature engineering
+==========================
+
+This notebook introduces different strategies to leverage time-related features
+for a bike sharing demand regression task that is highly dependent on business
+cycles (days, weeks, months) and yearly season cycles.
+
+In the process we introduce how to perform periodic feature engineering using
+the :class:`sklearn.preprocessing.SplineTransformer` class and its
+`extrapolation="periodic"` option.
+
+"""
 # %%
 from sklearn.datasets import fetch_openml
 
@@ -6,27 +20,50 @@ X, y = fetch_openml(
     "Bike_Sharing_Demand", version=2, as_frame=True, return_X_y=True
 )
 # %%
-y.hist(bins=30)
 y.max()
+
+# %% [markdown]
+#
+# Let's rescale the target variable (absolute value of the demand) to predict a
+# relative demand so that the mean absolute error is more easily interpreted as
+# a fraction of the maximum demand and avoid numerical issues.
 
 # %%
 y /= 1000
 y.hist(bins=30)
 
 # %%
+# The input feature data frame is a time annotated hourly log of variables
+# describing the weather conditions. It includes both numerical and categorical
+# variables. Note that the time information has already been expanded into
+# several complementary columns.
+#
 X
 # %%
+# We first introspect the distribution of the categorical variables, starting
+# with `"weather"`:
+#
 X["weather"].value_counts()
 
 # %%
+# Since there are only a few `"heavy_rain"` events, we cannot use this category
+# to train machine learning models. Instead it we simplify the representation
+# by collapsing those into the `"rain"` category.
+#
 X["weather"][X["weather"] == "heavy_rain"] = "rain"
 # %%
 X["weather"].value_counts()
 
 # %%
+# The season variable is well behaved:
+#
 X["season"].value_counts()
 
 # %%
+# Since the dataset is a time-ordered event log (hourly demand), we will use a
+# time-sensitive cross-validation splitter to evaluate our demand forecasting
+# model as realistically as possible:
+
 from sklearn.model_selection import TimeSeriesSplit
 
 ts_cv = TimeSeriesSplit(
@@ -86,6 +123,9 @@ gbrt_pipeline = make_pipeline(
     ),
 )
 
+# %%
+#
+# Lets evaluate our gradient boosting model with
 
 def evaluate(model, X, y, cv):
     cv_results = cross_validate(
@@ -202,4 +242,3 @@ plt.plot(y.iloc[test_0].values[last_hours], label="True")
 plt.plot(gbrt_predictions[last_hours], label="GBDT predictions")
 plt.plot(cyclic_spline_poly_predictions[last_hours], label="Spline poly predictions")
 _ = plt.legend()
-# %%
