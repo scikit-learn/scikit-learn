@@ -2347,14 +2347,14 @@ def train_test_split(*arrays,
     arrays = indexable(*arrays)
 
     n_samples = _num_samples(arrays[0])
-
+    n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,
+                                              default_test_size=0.25)
     if shuffle is False:
         if stratify is not None:
             raise ValueError(
                 "Stratified train/test split is not implemented for "
                 "shuffle=False")
-        n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,
-                                                  default_test_size=0.25)
+
         train = np.arange(n_train)
         test = np.arange(n_train, n_train + n_test)
 
@@ -2364,8 +2364,8 @@ def train_test_split(*arrays,
         else:
             CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=test_size,
-                     train_size=train_size,
+        cv = CVClass(test_size=n_test,
+                     train_size=n_train,
                      random_state=random_state)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
