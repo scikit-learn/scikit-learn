@@ -80,11 +80,18 @@ def test_parameter_checking():
         NMF(init=init).fit(-A)
     with pytest.raises(ValueError, match=msg):
         MiniBatchNMF().fit(-A)
-    with pytest.raises(ValueError, match=msg):
-        nmf._initialize_nmf(-A, 2, 'nndsvd')
     clf = NMF(2, tol=0.1, init=init).fit(A)
     with pytest.raises(ValueError, match=msg):
         clf.transform(-A)
+    with pytest.raises(ValueError, match=msg):
+        nmf._initialize_nmf(-A, 2, 'nndsvd')
+    msg = "Invalid beta_loss parameter: got 'spam' instead of one"
+    with pytest.raises(ValueError, match=msg):
+        MiniBatchNMF(solver='mu', beta_loss=name).fit(A)
+    msg = ("Invalid solver 'cd' not supported "
+           "when batch_size is not None.")
+    with pytest.raises(ValueError, match=msg):
+        MiniBatchNMF(solver='cd', beta_loss='frobenius').fit(A)
 
     for init in ['nndsvd', 'nndsvda', 'nndsvdar']:
         msg = re.escape(
@@ -192,7 +199,7 @@ def test_nmf_true_reconstruction(regularization):
     X_calc = np.dot(transf, model.components_)
 
     assert model.reconstruction_err_ < 0.1
-    assert_array_almost_equal(X, X_calc)
+    assert_allclose(X, X_calc)
 
     mbmodel = MiniBatchNMF(n_components=n_components, solver='mu',
                            init=init, beta_loss=beta_loss,
@@ -203,7 +210,7 @@ def test_nmf_true_reconstruction(regularization):
     X_calc = np.dot(transf, mbmodel.components_)
 
     assert mbmodel.reconstruction_err_ < 0.1
-    assert_array_almost_equal(X, X_calc, decimal=1)
+    assert_allclose(X, X_calc, atol=1)
 
 
 @pytest.mark.parametrize(['Estimator', 'solver'],
@@ -219,7 +226,7 @@ def test_nmf_transform(Estimator, solver, regularization):
                   regularization=regularization, random_state=0, tol=1e-6)
     ft = m.fit_transform(A)
     t = m.transform(A)
-    assert_array_almost_equal(ft, t, decimal=2)
+    assert_allclose(ft, t, atol=1e-1)
 
 
 @pytest.mark.parametrize('Estimator', [NMF, MiniBatchNMF])
@@ -251,7 +258,7 @@ def test_nmf_inverse_transform(Estimator, solver, regularization):
                   regularization=regularization, max_iter=5000, tol=1e-6)
     ft = m.fit_transform(A)
     A_new = m.inverse_transform(ft)
-    assert_array_almost_equal(A, A_new, decimal=2)
+    assert_allclose(A, A_new, atol=1e-2)
 
 
 @pytest.mark.parametrize('Estimator', [NMF, MiniBatchNMF])
@@ -287,8 +294,8 @@ def test_nmf_sparse_input(Estimator, solver, regularization):
     H1 = est1.components_
     H2 = est2.components_
 
-    assert_array_almost_equal(W1, W2)
-    assert_array_almost_equal(H1, H2)
+    assert_allclose(W1, W2)
+    assert_allclose(H1, H2)
 
 
 @pytest.mark.parametrize(['Estimator', 'solver'],
@@ -307,7 +314,7 @@ def test_nmf_sparse_transform(Estimator, solver):
                       max_iter=400, init=init)
     A_fit_tr = model.fit_transform(A)
     A_tr = model.transform(A)
-    assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
+    assert_allclose(A_fit_tr, A_tr, atol=1e-1)
 
 
 @pytest.mark.parametrize('init', ['random', 'nndsvd'])
@@ -343,8 +350,8 @@ def test_non_negative_factorization_consistency(Estimator, init,
     W_cls = model_class.fit_transform(A)
     W_cls_2 = model_class.transform(A)
 
-    assert_array_almost_equal(W_nmf, W_cls, decimal=10)
-    assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
+    assert_allclose(W_nmf, W_cls, atol=1e-7)
+    assert_allclose(W_nmf_2, W_cls_2, atol=1e-7)
 
 
 def test_non_negative_factorization_checking():
@@ -504,8 +511,8 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
             l1_ratio=l1_ratio, regularization='both', random_state=42,
             forget_factor=forget_factor)
 
-        assert_array_almost_equal(W1, W2, decimal=7)
-        assert_array_almost_equal(H1, H2, decimal=7)
+        assert_allclose(W1, W2, atol=1e-7)
+        assert_allclose(H1, H2, atol=1e-7)
 
         # Compare with almost same beta_loss, since some values have a specific
         # behavior, but the results should be continuous w.r.t beta_loss
@@ -517,8 +524,8 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
             l1_ratio=l1_ratio, regularization='both', random_state=42,
             forget_factor=forget_factor)
 
-        assert_array_almost_equal(W1, W3, decimal=4)
-        assert_array_almost_equal(H1, H3, decimal=4)
+        assert_allclose(W1, W3, atol=1e-4)
+        assert_allclose(H1, H3, atol=1e-4)
 
 
 @pytest.mark.parametrize('forget_factor', [None, 0.7])
@@ -708,7 +715,7 @@ def test_nmf_float32_float64_consistency(Estimator, solver, regularization):
                       random_state=0, init=init, tol=tol)
     W64 = nmf64.fit_transform(X)
 
-    assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)
+    assert_allclose(W32, W64, rtol=1e-6, atol=1e-4)
 
 
 @pytest.mark.parametrize('Estimator', [NMF, MiniBatchNMF])
@@ -727,7 +734,7 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
-def test_nmf_is_minibatch_nmf():
+def test_nmf_minibatchnmf_equivalence():
     # Test that the standard nmf is the minibatch nmf after 1 iteration
     # with batch_size = n_samples and forget_factor 0.0
     rng = np.random.mtrand.RandomState(42)
@@ -741,7 +748,7 @@ def test_nmf_is_minibatch_nmf():
                          batch_size=X.shape[0], forget_factor=0.0)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW)
+    assert_allclose(W, mbW)
 
 
 @pytest.mark.parametrize('batch_size', [24, 32, 48])
@@ -761,7 +768,7 @@ def test_nmf_close_minibatch_nmf(batch_size):
                          beta_loss=beta_loss)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW, decimal=1)
+    assert_allclose(W, mbW, atol=1e-1)
 
 
 def test_minibatch_nmf_partial_fit():
@@ -777,8 +784,7 @@ def test_minibatch_nmf_partial_fit():
         mbnmf2.partial_fit(X)
 
     assert mbnmf1.n_iter_ == mbnmf2.n_iter_
-    assert_array_almost_equal(mbnmf1.components_, mbnmf2.components_,
-                              decimal=0)
+    assert_allclose(mbnmf1.components_, mbnmf2.components_)
 
 
 # FIXME : should be removed in 1.1

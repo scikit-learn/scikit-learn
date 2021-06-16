@@ -239,11 +239,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.set_params(n_components=2)
 
     # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
-    if Estimator.__name__ == 'NMF':
+    if Estimator.__name__ in ['NMF', 'MiniBatchNMF']:
         est.set_params(init='nndsvda')
-
-    if Estimator.__name__ == 'MiniBatchNMF':
-        est.beta_loss = 'kullback-leibler'
 
     # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
     if Estimator.__name__ == 'TSNE':
