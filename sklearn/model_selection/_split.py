@@ -2348,16 +2348,13 @@ def train_test_split(*arrays,
 
     n_samples = _num_samples(arrays[0])
 
-
     if shuffle is False:
         if stratify is not None:
             raise ValueError(
                 "Stratified train/test split is not implemented for "
                 "shuffle=False")
-
         n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,
-        default_test_size=0.25)
-
+                                                  default_test_size=0.25)
         train = np.arange(n_train)
         test = np.arange(n_train, n_train + n_test)
 
