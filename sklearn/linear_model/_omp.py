@@ -606,7 +606,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> from sklearn.linear_model import OrthogonalMatchingPursuit
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = OrthogonalMatchingPursuit().fit(X, y)
+    >>> reg = OrthogonalMatchingPursuit(normalize=False).fit(X, y)
     >>> reg.score(X, y)
     0.9991...
     >>> reg.predict(X[:1,])
@@ -868,7 +868,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=100, n_informative=10,
     ...                        noise=4, random_state=0)
-    >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
+    >>> reg = OrthogonalMatchingPursuitCV(cv=5, normalize=False).fit(X, y)
     >>> reg.score(X, y)
     0.9991...
     >>> reg.n_nonzero_coefs_
