@@ -1767,3 +1767,45 @@ def test_pairwise_deprecated(NearestNeighbors):
     msg = r"Attribute _pairwise was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         nn._pairwise
+
+
+@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("d", [5, 10, 100, 500])
+@pytest.mark.parametrize("n_neighbors", [1, 10, 100])
+@pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
+@pytest.mark.parametrize("metric", ["euclidean", "manhattan", "chebyshev"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_translation_invariance(
+    n,
+    d,
+    n_neighbors,
+    translation,
+    metric,
+    dtype,
+):
+    """ K-NN search must be translation-invariant. """
+    rng = np.random.RandomState(1)
+    X_train = rng.rand(n, d).astype(dtype)
+    X_test = rng.rand(n, d).astype(dtype)
+
+    neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
+                                       algorithm="brute",
+                                       metric=metric).fit(X_train)
+    reference_dist, reference_nns = neigh.kneighbors(X=X_test,
+                                                     n_neighbors=n_neighbors,
+                                                     return_distance=True)
+
+    neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
+                                       algorithm="brute",
+                                       metric=metric).fit(X_train +
+                                                          translation)
+    dist, nns = neigh.kneighbors(X=X_test + translation,
+                                 n_neighbors=n_neighbors,
+                                 return_distance=True)
+
+    np.testing.assert_array_equal(reference_nns, nns)
+
+    # Using a tolerance above the float32 epsilon
+    rtol = 1e-05 if dtype is np.flaot32 else 1e-07
+
+    np.testing.assert_allclose(reference_dist, dist, rtol=rtol)
