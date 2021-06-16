@@ -1982,17 +1982,17 @@ def _validate_shuffle_split(n_samples, test_size, train_size,
     test_size_type = np.asarray(test_size).dtype.kind
     train_size_type = np.asarray(train_size).dtype.kind
 
-    if (test_size_type == 'i' and (test_size >= n_samples or test_size <= 0)
-       or test_size_type == 'f' and (test_size <= 0 or test_size >= 1)):
+    if (test_size_type == 'i' and (test_size >= n_samples or test_size < 0)
+       or test_size_type == 'f' and (test_size < 0 or test_size >= 1)):
         raise ValueError('test_size={0} should be either positive and smaller'
                          ' than the number of samples {1} or a float in the '
-                         '(0, 1) range'.format(test_size, n_samples))
+                         '[0, 1) range'.format(test_size, n_samples))
 
-    if (train_size_type == 'i' and (train_size >= n_samples or train_size <= 0)
-       or train_size_type == 'f' and (train_size <= 0 or train_size >= 1)):
-        raise ValueError('train_size={0} should be either positive and smaller'
-                         ' than the number of samples {1} or a float in the '
-                         '(0, 1) range'.format(train_size, n_samples))
+    if (train_size_type == 'i' and (train_size > n_samples or train_size <= 0)
+       or train_size_type == 'f' and (train_size <= 0 or train_size > 1)):
+        raise ValueError('train_size={0} should be either positive and smaller or equal'
+                         ' to the number of samples {1} or a float in the '
+                         '(0, 1] range'.format(train_size, n_samples))
 
     if train_size is not None and train_size_type not in ('i', 'f'):
         raise ValueError("Invalid value for train_size: {}".format(train_size))
@@ -2347,8 +2347,7 @@ def train_test_split(*arrays,
     arrays = indexable(*arrays)
 
     n_samples = _num_samples(arrays[0])
-    n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,
-                                              default_test_size=0.25)
+
 
     if shuffle is False:
         if stratify is not None:
@@ -2356,6 +2355,8 @@ def train_test_split(*arrays,
                 "Stratified train/test split is not implemented for "
                 "shuffle=False")
 
+        n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,
+                                              default_test_size=0.25)
         train = np.arange(n_train)
         test = np.arange(n_train, n_train + n_test)
 
@@ -2365,8 +2366,8 @@ def train_test_split(*arrays,
         else:
             CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=n_test,
-                     train_size=n_train,
+        cv = CVClass(test_size=test_size,
+                     train_size=train_size,
                      random_state=random_state)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
