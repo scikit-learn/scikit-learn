@@ -1,8 +1,6 @@
 # Author: Vlad Niculae
 # License: BSD 3 clause
 
-import warnings
-
 import numpy as np
 import pytest
 
@@ -53,7 +51,7 @@ def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
     y = rng.rand(n_samples)
 
     model = OmpModel(normalize=normalize)
-    with warnings.catch_warnings(record=True) as record:
+    with pytest.warns(None) as record:
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]
@@ -153,7 +151,7 @@ def test_orthogonal_mp_gram_readonly():
 
 
 # FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.filterwarnings("ignore:The default of 'normalize'")
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
@@ -245,7 +243,7 @@ def test_omp_return_path_prop_with_gram():
 
 
 # FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.filterwarnings("ignore:The default of 'normalize'")
 def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
@@ -261,7 +259,7 @@ def test_omp_cv():
 
 
 # FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.filterwarnings("ignore:The default of 'normalize'")
 def test_omp_reaches_least_squares():
     # Use small simple data; it's a sanity check but OMP can stop early
     rng = check_random_state(0)
