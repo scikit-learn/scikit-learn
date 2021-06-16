@@ -30,7 +30,7 @@ G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # and y (n_samples, 3)
 
 
-# FIXME: 'normalize' to be removed in 1.2
+# FIXME: 'normalize' to set to False in 1.2 and removed in 1.4
 @pytest.mark.parametrize('OmpModel', [
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV

@@ -199,7 +199,6 @@ def _construct_sparse_coder(Estimator):
 
 
 @pytest.mark.parametrize('name, Estimator', all_estimators())
-@ignore_warnings(category=FutureWarning)
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip('numpydoc')
     from numpydoc import docscrape
@@ -238,6 +237,12 @@ def test_fit_docstring_attributes(name, Estimator):
     ):
         # default="auto" raises an error with the shape of `X`
         est.set_params(n_components=2)
+    elif Estimator.__name__ in (
+        "OrthogonalMatchingPursuit",
+        "OrthogonalMatchingPursuitCV",
+    ):
+        # default="auto" raises an error with the shape of `X`
+        est.set_params(normalize=False)
 
     # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
