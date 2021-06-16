@@ -571,8 +571,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-           `normalize` was deprecated in version 1.0 and will be
-           removed in 1.2.
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
 
     precompute : 'auto' or bool, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
@@ -735,8 +735,8 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-           `normalize` was deprecated in version 1.0 and will be
-           removed in 1.2.
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
 
     max_iter : int, default=100
         Maximum numbers of iterations to perform, therefore maximum features
@@ -808,8 +808,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-           `normalize` was deprecated in version 1.0 and will be
-           removed in 1.2.
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
 
     max_iter : int, default=None
         Maximum numbers of iterations to perform, therefore maximum features
