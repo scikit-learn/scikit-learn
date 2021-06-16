@@ -1769,21 +1769,19 @@ def test_pairwise_deprecated(NearestNeighbors):
         nn._pairwise
 
 
-@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("d", [5, 10, 100, 500])
-@pytest.mark.parametrize("n_neighbors", [1, 10, 100])
 @pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.parametrize("metric", ["euclidean", "manhattan", "chebyshev"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_translation_invariance(
-    n,
-    d,
-    n_neighbors,
     translation,
     metric,
     dtype,
 ):
     """ K-NN search must be translation-invariant. """
+    n = 10_000
+    d = 50
+    n_neighbors = 100
+
     rng = np.random.RandomState(1)
     X_train = rng.rand(n, d).astype(dtype)
     X_test = rng.rand(n, d).astype(dtype)
@@ -1805,7 +1803,7 @@ def test_translation_invariance(
 
     np.testing.assert_array_equal(reference_nns, nns)
 
-    # Using a tolerance above the float32 epsilon
-    rtol = 1e-05 if dtype is np.flaot32 else 1e-07
+    # Using a tolerance well greater than the float epsilon
+    rtol = 1e-03 if dtype is np.float32 else 1e-05
 
     np.testing.assert_allclose(reference_dist, dist, rtol=rtol)
