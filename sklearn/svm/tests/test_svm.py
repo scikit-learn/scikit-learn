@@ -19,10 +19,7 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils import shuffle
 from sklearn.exceptions import ConvergenceWarning
@@ -125,7 +122,8 @@ def test_precomputed():
     # same as before, but using a callable function instead of the kernel
     # matrix. kernel is just a linear kernel
 
-    kfunc = lambda x, y: np.dot(x, y.T)
+    def kfunc(x, y):
+        return np.dot(x, y.T)
     clf = svm.SVC(kernel=kfunc)
     clf.fit(np.array(X), Y)
     pred = clf.predict(T)
@@ -741,13 +739,16 @@ def test_linear_svx_uppercase_loss_penality_raises_error():
 
     X, y = [[0.0], [1.0]], [0, 1]
 
-    assert_raise_message(ValueError, "loss='SQuared_hinge' is not supported",
-                         svm.LinearSVC(loss="SQuared_hinge").fit, X, y)
+    msg = "loss='SQuared_hinge' is not supported"
+    with pytest.raises(ValueError, match=msg):
+        svm.LinearSVC(loss="SQuared_hinge").fit(X, y)
 
-    assert_raise_message(ValueError,
-                         ("The combination of penalty='L2'"
-                          " and loss='squared_hinge' is not supported"),
-                         svm.LinearSVC(penalty="L2").fit, X, y)
+    msg = (
+        "The combination of penalty='L2'"
+        " and loss='squared_hinge' is not supported"
+    )
+    with pytest.raises(ValueError, match=msg):
+        svm.LinearSVC(penalty="L2").fit(X, y)
 
 
 def test_linearsvc():
@@ -979,7 +980,12 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    assert_warns(ConvergenceWarning, a.fit, np.array(X), Y)
+    warning_msg = (
+        r'Solver terminated early \(max_iter=1\).  Consider pre-processing '
+        r'your data with StandardScaler or MinMaxScaler.'
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
+        a.fit(np.array(X), Y)
 
 
 def test_unfitted():
@@ -1008,11 +1014,16 @@ def test_linear_svm_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
     lsvc = svm.LinearSVC(random_state=0, max_iter=2)
-    assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
+    warning_msg = (
+        "Liblinear failed to converge, increase the number of iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
+        lsvc.fit(X, Y)
     assert lsvc.n_iter_ == 2
 
     lsvr = svm.LinearSVR(random_state=0, max_iter=2)
-    assert_warns(ConvergenceWarning, lsvr.fit, iris.data, iris.target)
+    with pytest.warns(ConvergenceWarning, match=warning_msg):
+        lsvr.fit(iris.data, iris.target)
     assert lsvr.n_iter_ == 2
 
 
@@ -1035,10 +1046,12 @@ def test_linear_svc_intercept_scaling():
 
     for i in [-1, 0]:
         lsvc = svm.LinearSVC(intercept_scaling=i)
+
         msg = ('Intercept scaling is %r but needs to be greater than 0.'
                ' To disable fitting an intercept,'
                ' set fit_intercept=False.' % lsvc.intercept_scaling)
-        assert_raise_message(ValueError, msg, lsvc.fit, X, Y)
+        with pytest.raises(ValueError, match=msg):
+            lsvc.fit(X, Y)
 
 
 def test_lsvc_intercept_scaling_zero():
@@ -1068,7 +1081,9 @@ def test_hasattr_predict_proba():
     G.probability = True
     assert hasattr(G, 'predict_proba')
     msg = "predict_proba is not available when fitted with probability=False"
-    assert_raise_message(NotFittedError, msg, G.predict_proba, iris.data)
+
+    with pytest.raises(NotFittedError, match=msg):
+        G.predict_proba(iris.data)
 
 
 def test_decision_function_shape_two_class():
@@ -1160,21 +1175,30 @@ def test_svc_ovr_tie_breaking(SVCClass):
 def test_gamma_auto():
     X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
 
-    assert_no_warnings(svm.SVC(kernel='linear').fit, X, y)
-    assert_no_warnings(svm.SVC(kernel='precomputed').fit, X, y)
+    with pytest.warns(None) as record:
+        svm.SVC(kernel='linear').fit(X, y)
+    assert not len(record)
+
+    with pytest.warns(None) as record:
+        svm.SVC(kernel='precomputed').fit(X, y)
+    assert not len(record)
 
 
 def test_gamma_scale():
     X, y = [[0.], [1.]], [0, 1]
 
     clf = svm.SVC()
-    assert_no_warnings(clf.fit, X, y)
+    with pytest.warns(None) as record:
+        clf.fit(X, y)
+    assert not len(record)
     assert_almost_equal(clf._gamma, 4)
 
     # X_var ~= 1 shouldn't raise warning, for when
     # gamma is not explicitly set.
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
-    assert_no_warnings(clf.fit, X, y)
+    with pytest.warns(None) as record:
+        clf.fit(X, y)
+    assert not len(record)
 
 
 @pytest.mark.parametrize(
@@ -1233,21 +1257,6 @@ def test_n_support_oneclass_svr():
     assert reg.n_support_ == reg.support_vectors_.shape[0]
     assert reg.n_support_.size == 1
     assert reg.n_support_ == 4
-
-
-# TODO: Remove in 0.25 when probA_ and probB_ are deprecated
-@pytest.mark.parametrize("SVMClass, data", [
-    (svm.OneClassSVM, (X, )),
-    (svm.SVR, (X, Y))
-])
-@pytest.mark.parametrize("deprecated_prob", ["probA_", "probB_"])
-def test_svm_probA_proB_deprecated(SVMClass, data, deprecated_prob):
-    clf = SVMClass().fit(*data)
-
-    msg = ("The {} attribute is deprecated in version 0.23 and will be "
-           "removed in version 0.25.").format(deprecated_prob)
-    with pytest.warns(FutureWarning, match=msg):
-        getattr(clf, deprecated_prob)
 
 
 @pytest.mark.parametrize("Estimator", [svm.SVC, svm.SVR])

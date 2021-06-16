@@ -17,6 +17,8 @@ def configuration(parent_package='', top_path=None):
                                        join('src', 'newrand')],
                          depends=[join('src', 'newrand', 'newrand.h')],
                          language='c++',
+                         # Use C++11 random number generator fix
+                         extra_compile_args=['-std=c++11']
                          )
 
     # Section LibSVM

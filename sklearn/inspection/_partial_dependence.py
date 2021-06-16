@@ -22,12 +22,11 @@ from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
-from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
+from ..ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)
 
 
@@ -48,7 +47,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
     Parameters
     ----------
     X : ndarray, shape (n_samples, n_target_features)
-        The data
+        The data.
 
     percentiles : tuple of floats
         The percentiles which are used to construct the extreme values of
@@ -164,9 +163,9 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             predictions.append(pred)
             # average over samples
             averaged_predictions.append(np.mean(pred, axis=0))
-        except NotFittedError:
+        except NotFittedError as e:
             raise ValueError(
-                "'estimator' parameter must be a fitted estimator")
+                "'estimator' parameter must be a fitted estimator") from e
 
     n_samples = X.shape[0]
 
@@ -203,7 +202,6 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     return averaged_predictions, predictions
 
 
-@_deprecate_positional_args
 def partial_dependence(estimator, X, features, *, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
                        method='auto', kind='legacy'):
@@ -307,7 +305,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
 
         .. versionadded:: 0.24
         .. deprecated:: 0.24
-            `kind='legacy'` is deprecated and will be removed in version 0.26.
+            `kind='legacy'` is deprecated and will be removed in version 1.1.
             `kind='average'` will be the new default. It is intended to migrate
             from the ndarray output to :class:`~sklearn.utils.Bunch` output.
 
@@ -358,6 +356,11 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         ``grid_resolution``, or the number of unique values in ``X[:, j]``,
         whichever is smaller. Only available when `kind="legacy"`.
 
+    See Also
+    --------
+    plot_partial_dependence : Plot Partial Dependence.
+    PartialDependenceDisplay : Partial Dependence visualization.
+
     Examples
     --------
     >>> X = [[0, 0, 2], [1, 0, 0]]
@@ -367,10 +370,6 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
     ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
-
-    See also
-    --------
-    sklearn.inspection.plot_partial_dependence: Plot partial dependence
     """
     if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError(
@@ -503,12 +502,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     if kind == 'legacy':
         warnings.warn(
             "A Bunch will be returned in place of 'predictions' from version"
-            " 0.26 with partial dependence results accessible via the "
-            "'average' key. In the meantime, pass kind='average' to get the "
-            "future behaviour.",
+            " 1.1 (renaming of 0.26) with partial dependence results "
+            "accessible via the 'average' key. In the meantime, pass "
+            "kind='average' to get the future behaviour.",
             FutureWarning
         )
-        # TODO 0.26: Remove kind == 'legacy' section
+        # TODO 1.1: Remove kind == 'legacy' section
         return averaged_predictions, values
     elif kind == 'average':
         return Bunch(average=averaged_predictions, values=values)

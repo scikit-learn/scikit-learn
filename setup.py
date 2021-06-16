@@ -8,15 +8,18 @@ import sys
 import os
 import platform
 import shutil
+
+# We need to import setuptools before because it monkey-patches distutils
+import setuptools  # noqa
 from distutils.command.clean import clean as Clean
 from distutils.command.sdist import sdist
-from pkg_resources import parse_version
+
 import traceback
 import importlib
 try:
     import builtins
 except ImportError:
-    # Python 2 compat: just to be able to declare that Python >=3.6 is needed.
+    # Python 2 compat: just to be able to declare that Python >=3.7 is needed.
     import __builtin__ as builtins
 
 # This is a bit (!) hackish: we are setting a global variable so that the
@@ -45,15 +48,14 @@ PROJECT_URLS = {
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
-import sklearn
-import sklearn._build_utils.min_dependencies as min_deps  # noqa
+import sklearn  # noqa
+import sklearn._min_dependencies as min_deps  # noqa
+from sklearn.externals._packaging.version import parse as parse_version  # noqa
 
 
 VERSION = sklearn.__version__
 
-# Optional setuptools features
-# We need to import setuptools early, if we want setuptools features,
-# as it monkey-patches the 'setup' function
+
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
@@ -62,8 +64,6 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
-
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
@@ -108,13 +108,27 @@ class CleanCommand(Clean):
 
 cmdclass = {'clean': CleanCommand, 'sdist': sdist}
 
-# custom build_ext command to set OpenMP compile flags depending on os and
-# compiler
+# Custom build_ext command to set OpenMP compile flags depending on os and
+# compiler. Also makes it possible to set the parallelism level via
+# and environment variable (useful for the wheel building CI).
 # build_ext has to be imported after setuptools
 try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
     class build_ext_subclass(build_ext):
+
+        def finalize_options(self):
+            super().finalize_options()
+            if self.parallel is None:
+                # Do not override self.parallel if already defined by
+                # command-line flag (--parallel or -j)
+
+                parallel = os.environ.get("SKLEARN_BUILD_PARALLEL")
+                if parallel:
+                    self.parallel = int(parallel)
+            if self.parallel:
+                print("setting parallel=%d " % self.parallel)
+
         def build_extensions(self):
             from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
@@ -131,7 +145,7 @@ try:
 
 except ImportError:
     # Numpy should not be a dependency just to be able to introspect
-    # that python 3.6 is required.
+    # that python 3.7 is required.
     pass
 
 
@@ -231,44 +245,41 @@ def setup_package():
                                  'Programming Language :: Python',
                                  'Topic :: Software Development',
                                  'Topic :: Scientific/Engineering',
+                                 'Development Status :: 5 - Production/Stable',
                                  'Operating System :: Microsoft :: Windows',
                                  'Operating System :: POSIX',
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
                                  'Programming Language :: Python :: 3.8',
+                                 'Programming Language :: Python :: 3.9',
                                  ('Programming Language :: Python :: '
                                   'Implementation :: CPython'),
                                  ('Programming Language :: Python :: '
                                   'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
-                    python_requires=">=3.6",
+                    python_requires=">=3.7",
                     install_requires=min_deps.tag_to_packages['install'],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
-    if len(sys.argv) == 1 or (
-            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-                                    sys.argv[1] in ('--help-commands',
-                                                    'egg_info',
-                                                    'dist_info',
-                                                    '--version',
-                                                    'clean'))):
-        # For these actions, NumPy is not required
-        #
-        # They are required to succeed without Numpy for example when
+    commands = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
+    if all(command in ('egg_info', 'dist_info', 'clean', 'check')
+           for command in commands):
+        # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.
+
+        # These commands use setup from setuptools
         from setuptools import setup
 
         metadata['version'] = VERSION
     else:
         if sys.version_info < (3, 6):
             raise RuntimeError(
-                "Scikit-learn requires Python 3.6 or later. The current"
+                "Scikit-learn requires Python 3.7 or later. The current"
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
@@ -276,7 +287,8 @@ def setup_package():
 
         check_package_status('scipy', min_deps.SCIPY_MIN_VERSION)
 
-        import setuptools  # noqa
+        # These commands require the setup from numpy.distutils because they
+        # may use numpy.distutils compiler classes.
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration

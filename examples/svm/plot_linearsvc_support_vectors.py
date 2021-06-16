@@ -24,7 +24,10 @@ for i, C in enumerate([1, 100]):
     decision_function = clf.decision_function(X)
     # we can also calculate the decision function manually
     # decision_function = np.dot(X, clf.coef_[0]) + clf.intercept_[0]
-    support_vector_indices = np.where((2 * y - 1) * decision_function <= 1)[0]
+    # The support vectors are the samples that lie within the margin
+    # boundaries, whose size is conventionally constrained to 1
+    support_vector_indices = np.where(
+        np.abs(decision_function) <= 1 + 1e-15)[0]
     support_vectors = X[support_vector_indices]
 
     plt.subplot(1, 2, i + 1)

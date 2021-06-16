@@ -8,12 +8,14 @@
 
 import numpy as np
 import numbers
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
+
 
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -32,8 +34,10 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
     return rfe._fit(
-        X_train, y_train, lambda estimator, features:
-        _score(estimator, X_test[:, features], y_test, scorer)).scores_
+        X_train, y_train,
+        lambda estimator, features: _score(
+            estimator, X_test[:, features], y_test, scorer
+        )).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -64,6 +68,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         to select. If float between 0 and 1, it is the fraction of features to
         select.
 
+        .. versionchanged:: 0.24
+           Added float values for fractions.
+
     step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
@@ -92,11 +99,20 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only available when `estimator` is a classifier.
+
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
     n_features_ : int
         The number of selected features.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
@@ -128,10 +144,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     -----
     Allows NaN/Inf in the input if the underlying estimator does as well.
 
-    See also
+    See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features
+        selection of the best number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
 
     References
     ----------
@@ -140,7 +160,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_features_to_select=None, step=1,
                  verbose=0, importance_getter='auto'):
         self.estimator = estimator
@@ -181,7 +200,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
+            force_all_finite=not tags.get("allow_nan", True),
             multi_output=True
         )
         error_msg = ("n_features_to_select must be either None, a "
@@ -361,11 +380,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True),
-                'requires_y': True,
-                }
+        return {
+            'poor_score': True,
+            'allow_nan': _safe_tags(self.estimator, key='allow_nan'),
+            'requires_y': True,
+        }
 
 
 class RFECV(RFE):
@@ -454,6 +473,9 @@ class RFECV(RFE):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only available when `estimator` is a classifier.
+
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
@@ -464,6 +486,12 @@ class RFECV(RFE):
 
     n_features_ : int
         The number of selected features with cross-validation.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`
@@ -501,9 +529,9 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    See also
+    See Also
     --------
-    RFE : Recursive feature elimination
+    RFE : Recursive feature elimination.
 
     References
     ----------
@@ -512,7 +540,6 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, step=1, min_features_to_select=1,
                  cv=None, scoring=None, verbose=0, n_jobs=None,
                  importance_getter='auto'):

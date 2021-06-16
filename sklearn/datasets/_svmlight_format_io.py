@@ -25,7 +25,6 @@ import scipy.sparse as sp
 from .. import __version__
 
 from ..utils import check_array, IS_PYPY
-from ..utils.validation import _deprecate_positional_args
 
 if not IS_PYPY:
     from ._svmlight_format_fast import _load_svmlight_file
@@ -38,7 +37,6 @@ else:
                 'for the status updates).')
 
 
-@_deprecate_positional_args
 def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
                        multilabel=False, zero_based="auto", query_id=False,
                        offset=0, length=-1):
@@ -132,11 +130,10 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
        query_id for each sample. Only returned when query_id is set to
        True.
 
-    See also
+    See Also
     --------
-    load_svmlight_files: similar function for loading multiple files in this
-                         format, enforcing the same number of features/columns
-                         on all of them.
+    load_svmlight_files : Similar function for loading multiple files in this
+        format, enforcing the same number of features/columns on all of them.
 
     Examples
     --------
@@ -203,7 +200,6 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id,
     return data, indices, indptr, labels, query
 
 
-@_deprecate_positional_args
 def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
                         multilabel=False, zero_based="auto", query_id=False,
                         offset=0, length=-1):
@@ -287,7 +283,7 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
 
-    See also
+    See Also
     --------
     load_svmlight_file
     """
@@ -388,7 +384,6 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         f.write((line_pattern % feat).encode('ascii'))
 
 
-@_deprecate_positional_args
 def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
                        query_id=None,
                        multilabel=False):
@@ -416,11 +411,11 @@ def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
         If file-like, data will be written to f. f should be opened in binary
         mode.
 
-    zero_based : boolean, optional
+    zero_based : boolean, default=True
         Whether column indices should be written zero-based (True) or one-based
         (False).
 
-    comment : string, optional
+    comment : string, default=None
         Comment to insert at the top of the file. This should be either a
         Unicode string, which will be encoded as UTF-8, or an ASCII byte
         string.
@@ -428,11 +423,11 @@ def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
         the file as having been dumped by scikit-learn. Note that not all
         tools grok comments in SVMlight files.
 
-    query_id : array-like of shape (n_samples,)
+    query_id : array-like of shape (n_samples,), default=None
         Array containing pairwise preference constraints (qid in svmlight
         format).
 
-    multilabel : boolean, optional
+    multilabel : boolean, default=False
         Samples may have several labels each (see
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 

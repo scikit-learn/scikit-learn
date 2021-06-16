@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 
 import math
+import re
 import pytest
 import numpy as np
 import scipy.sparse as sp
@@ -19,7 +20,6 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer
@@ -449,18 +449,19 @@ def test_get_auto_step_size():
             assert_almost_equal(step_size_log, step_size_log_, decimal=4)
 
     msg = 'Unknown loss function for SAG solver, got wrong instead of'
-    assert_raise_message(ValueError, msg, get_auto_step_size,
-                         max_squared_sum_, alpha, "wrong", fit_intercept)
+    with pytest.raises(ValueError, match=msg):
+        get_auto_step_size(max_squared_sum_, alpha, "wrong", fit_intercept)
 
 
-def test_sag_regressor():
+@pytest.mark.parametrize("seed", range(3))  # locally tested with 1000 seeds
+def test_sag_regressor(seed):
     """tests if the sag regressor performs well"""
     xmin, xmax = -5, 5
-    n_samples = 20
+    n_samples = 300
     tol = .001
-    max_iter = 50
+    max_iter = 100
     alpha = 0.1
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(seed)
     X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
 
     # simple linear function without noise
@@ -473,8 +474,8 @@ def test_sag_regressor():
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
-    assert score1 > 0.99
-    assert score2 > 0.99
+    assert score1 > 0.98
+    assert score2 > 0.98
 
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -486,9 +487,8 @@ def test_sag_regressor():
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
-    score2 = clf2.score(X, y)
-    assert score1 > 0.5
-    assert score2 > 0.5
+    assert score1 > 0.45
+    assert score2 > 0.45
 
 
 @pytest.mark.filterwarnings('ignore:The max_iter was reached')
@@ -737,11 +737,9 @@ def test_classifier_single_class():
     X = [[1, 2], [3, 4]]
     y = [1, 1]
 
-    assert_raise_message(ValueError,
-                         "This solver needs samples of at least 2 classes "
-                         "in the data",
-                         LogisticRegression(solver='sag').fit,
-                         X, y)
+    msg = "This solver needs samples of at least 2 classes in the data"
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegression(solver='sag').fit(X, y)
 
 
 def test_step_size_alpha_error():
@@ -749,15 +747,19 @@ def test_step_size_alpha_error():
     y = [1, -1]
     fit_intercept = False
     alpha = 1.
-    msg = ("Current sag implementation does not handle the case"
-           " step_size * alpha_scaled == 1")
+    msg = re.escape(
+        "Current sag implementation does not handle the case"
+        " step_size * alpha_scaled == 1"
+    )
 
     clf1 = LogisticRegression(solver='sag', C=1. / alpha,
                               fit_intercept=fit_intercept)
-    assert_raise_message(ZeroDivisionError, msg, clf1.fit, X, y)
+    with pytest.raises(ZeroDivisionError, match=msg):
+        clf1.fit(X, y)
 
     clf2 = Ridge(fit_intercept=fit_intercept, solver='sag', alpha=alpha)
-    assert_raise_message(ZeroDivisionError, msg, clf2.fit, X, y)
+    with pytest.raises(ZeroDivisionError, match=msg):
+        clf2.fit(X, y)
 
 
 def test_multinomial_loss():

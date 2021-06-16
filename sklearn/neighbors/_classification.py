@@ -14,17 +14,14 @@ from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 
 import warnings
-from ._base import \
-    _check_weights, _get_weights, \
-    NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin
+from ._base import _check_weights, _get_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
-from ..utils import check_array
-from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
-                           SupervisedIntegerMixin, ClassifierMixin):
+class KNeighborsClassifier(KNeighborsMixin,
+                           ClassifierMixin,
+                           NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
 
     Read more in the :ref:`User Guide <classification>`.
@@ -104,6 +101,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -124,7 +126,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> print(neigh.predict_proba([[0.9]]))
     [[0.66666667 0.33333333]]
 
-    See also
+    See Also
     --------
     RadiusNeighborsClassifier
     KNeighborsRegressor
@@ -146,18 +148,38 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_neighbors=5, *,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None):
         super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params,
-            n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+            n_jobs=n_jobs)
+        self.weights = weights
+
+    def fit(self, X, y):
+        """Fit the k-nearest neighbors classifier from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : KNeighborsClassifier
+            The fitted k-nearest neighbors classifier.
+        """
+        self.weights = _check_weights(self.weights)
+
+        return self._fit(X, y)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -173,7 +195,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
@@ -217,7 +239,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -256,8 +278,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         return probabilities
 
 
-class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
-                                SupervisedIntegerMixin, ClassifierMixin):
+class RadiusNeighborsClassifier(RadiusNeighborsMixin,
+                                ClassifierMixin,
+                                NeighborsBase):
     """Classifier implementing a vote among neighbors within a given radius
 
     Read more in the :ref:`User Guide <classification>`.
@@ -336,7 +359,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier.
 
-    effective_metric_ : str or callble
+    effective_metric_ : str or callable
         The distance metric used. It will be same as the `metric` parameter
         or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
@@ -346,6 +369,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         will be same with `metric_params` parameter, but may also contain the
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_samples_fit_ : int
         Number of samples in the fitted data.
@@ -371,7 +399,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     >>> print(neigh.predict_proba([[1.0]]))
     [[0.66666667 0.33333333]]
 
-    See also
+    See Also
     --------
     KNeighborsClassifier
     RadiusNeighborsRegressor
@@ -386,7 +414,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, n_jobs=None,
@@ -396,27 +423,31 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
               algorithm=algorithm,
               leaf_size=leaf_size,
               metric=metric, p=p, metric_params=metric_params,
-              n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+              n_jobs=n_jobs)
+        self.weights = weights
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
+        """Fit the radius neighbors classifier from the training dataset.
 
         Parameters
         ----------
-        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
-                (n_samples, n_features) or (n_samples, n_samples)
-            Training data. If array or matrix, the shape is (n_samples,
-            n_features), or (n_samples, n_samples) if metric='precomputed'.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
 
         y : {array-like, sparse matrix} of shape (n_samples,) or \
-                (n_samples, n_output)
+                (n_samples, n_outputs)
             Target values.
 
+        Returns
+        -------
+        self : RadiusNeighborsClassifier
+            The fitted radius neighbors classifier.
         """
+        self.weights = _check_weights(self.weights)
 
-        SupervisedIntegerMixin.fit(self, X, y)
+        self._fit(X, y)
 
         classes_ = self.classes_
         _y = self._y
@@ -461,6 +492,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                     "y.".format(label, classes))
 
         self.outlier_label_ = outlier_label_
+
         return self
 
     def predict(self, X):
@@ -522,7 +554,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             by lexicographic order.
         """
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)

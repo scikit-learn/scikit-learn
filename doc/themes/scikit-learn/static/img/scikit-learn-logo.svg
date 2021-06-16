@@ -6,7 +6,7 @@
   <head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# githubog: http://ogp.me/ns/fb/githubog#">
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>scikit-learn/doc/logos/scikit-learn-logo.svg at master · scikit-learn/scikit-learn</title>
+        <title>scikit-learn/doc/logos/scikit-learn-logo.svg at main · scikit-learn/scikit-learn</title>
     <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="GitHub" />
     <link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub" />
     <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-114.png" />
@@ -18,8 +18,8 @@
     <meta name="hostname" content="fe4.rs.github.com">
     <link rel="assets" href="https://github.global.ssl.fastly.net/">
     <link rel="xhr-socket" href="/_sockets" />
-    
-    
+
+
 
 
     <meta name="msapplication-TileImage" content="/windows-tile.png" />
@@ -27,8 +27,8 @@
     <meta name="selected-link" value="repo_source" data-pjax-transient />
     <meta content="collector.githubapp.com" name="octolytics-host" /><meta content="github" name="octolytics-app-id" /><meta content="295195" name="octolytics-actor-id" /><meta content="vmichel" name="octolytics-actor-login" /><meta content="12af56ff3873f70afc40e04ed1de8c6d1d3afc81672a2e87a8ac3fafdaff894c" name="octolytics-actor-hash" />
 
-    
-    
+
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 
     <meta content="authenticity_token" name="csrf-param" />
@@ -36,12 +36,12 @@
 
     <link href="https://github.global.ssl.fastly.net/assets/github-8921d913c104b05dbca482140b50a4899d808da0.css" media="all" rel="stylesheet" type="text/css" />
     <link href="https://github.global.ssl.fastly.net/assets/github2-3d41bb4cf621d85b14f818b30d303826fdcc6556.css" media="all" rel="stylesheet" type="text/css" />
-    
+
 
 
       <script src="https://github.global.ssl.fastly.net/assets/frameworks-e8054ad804a1cf9e9849130fee5a4a5487b663ed.js" type="text/javascript"></script>
       <script src="https://github.global.ssl.fastly.net/assets/github-1b7840e1ec2954c0675f2263b9e3789a0fee0808.js" type="text/javascript"></script>
-      
+
       <meta http-equiv="x-pjax-version" content="937fa06ecc5e3385af78bf5912d4a166">
 
         <link data-pjax-transient rel='permalink' href='/scikit-learn/scikit-learn/blob/798f44265472ff4d954c0f78674bb64742408a76/doc/logos/scikit-learn-logo.svg'>
@@ -55,7 +55,7 @@
   <meta name="description" content="scikit-learn: machine learning in Python" />
 
   <meta content="365630" name="octolytics-dimension-user_id" /><meta content="scikit-learn" name="octolytics-dimension-user_login" /><meta content="843222" name="octolytics-dimension-repository_id" /><meta content="scikit-learn/scikit-learn" name="octolytics-dimension-repository_nwo" /><meta content="true" name="octolytics-dimension-repository_public" /><meta content="false" name="octolytics-dimension-repository_is_fork" /><meta content="843222" name="octolytics-dimension-repository_network_root_id" /><meta content="scikit-learn/scikit-learn" name="octolytics-dimension-repository_network_root_nwo" />
-  <link href="https://github.com/scikit-learn/scikit-learn/commits/master.atom" rel="alternate" title="Recent Commits to scikit-learn:master" type="application/atom+xml" />
+  <link href="https://github.com/scikit-learn/scikit-learn/commits/main.atom" rel="alternate" title="Recent Commits to scikit-learn:main" type="application/atom+xml" />
 
   </head>
 
@@ -63,9 +63,9 @@
   <body class="logged_in page-blob linux vis-public env-production ">
 
     <div class="wrapper">
-      
-      
-      
+
+
+
 
 
       <div class="header header-logged-in true">
@@ -87,10 +87,10 @@
           <form accept-charset="UTF-8" action="/search" class="command-bar-form" id="top_search_form" method="get">
 
 <input type="text" data-hotkey=" s" name="q" id="js-command-bar-field" placeholder="Search or type a command" tabindex="1" autocapitalize="off"
-    
+
     data-username="vmichel"
       data-repo="scikit-learn/scikit-learn"
-      data-branch="master"
+      data-branch="main"
       data-sha="717ee4d7202708759558670a8fbcb5f982f37009"
   >
 
@@ -136,9 +136,9 @@
         </ul>
       </div>
 
-    
 
-  
+
+
 
     <ul id="user-links">
       <li>
@@ -171,7 +171,7 @@
 
 
 <div class="js-new-dropdown-contents hidden">
-  
+
 
 <ul class="dropdown-menu">
   <li>
@@ -206,22 +206,22 @@
 </div>
 
 
-    
+
   </div>
 </div>
 
-      
 
-      
+
+
 
 
 
 
           <div class="site" itemscope itemtype="http://schema.org/WebPage">
-    
+
     <div class="pagehead repohead instapaper_ignore readability-menu">
       <div class="container">
-        
+
 
 <ul class="pagehead-actions">
 
@@ -297,7 +297,7 @@
     </li>
 
   <li>
-  
+
 <div class="js-toggler-container js-social-container starring-container on">
   <a href="/scikit-learn/scikit-learn/unstar" class="minibutton with-count js-toggler-target star-button starred upwards" title="Unstar this repo" data-remote="true" data-method="post" rel="nofollow">
     <span class="octicon octicon-star-delete"></span><span class="text">Unstar</span>
@@ -342,7 +342,7 @@
       <div class="repository-with-sidebar repo-container ">
 
         <div class="repository-sidebar">
-            
+
 
 <div class="repo-nav repo-nav-full js-repository-container-pjax js-octicon-loaders">
   <div class="repo-nav-contents">
@@ -411,9 +411,9 @@
 </div>
 
             <div class="only-with-full-nav">
-              
 
-  
+
+
 
 <div class="clone-url open"
   data-protocol-type="http"
@@ -426,7 +426,7 @@
   <span class="js-zeroclipboard url-box-clippy minibutton zeroclipboard-button" data-clipboard-text="https://github.com/scikit-learn/scikit-learn.git" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
 </div>
 
-  
+
 
 <div class="clone-url "
   data-protocol-type="ssh"
@@ -439,7 +439,7 @@
   <span class="js-zeroclipboard url-box-clippy minibutton zeroclipboard-button" data-clipboard-text="git@github.com:scikit-learn/scikit-learn.git" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
 </div>
 
-  
+
 
 <div class="clone-url "
   data-protocol-type="subversion"
@@ -463,7 +463,7 @@
 
 
 
-                <a href="/scikit-learn/scikit-learn/archive/master.zip"
+                <a href="/scikit-learn/scikit-learn/archive/main.zip"
                    class="minibutton sidebar-button"
                    title="Download this repository as a zip file"
                    rel="nofollow">
@@ -474,7 +474,7 @@
         </div><!-- /.repository-sidebar -->
 
         <div id="js-repo-pjax-container" class="repository-content context-loader-container" data-pjax-container>
-          
+
 
 
 <!-- blob contrib key: blob_contributors:v21:d840ac6fb3b8fa9e89a48bb05435b185 -->
@@ -482,19 +482,19 @@
 
 <p title="This is a placeholder element" class="js-history-link-replace hidden"></p>
 
-<a href="/scikit-learn/scikit-learn/find/master" data-pjax data-hotkey="t" style="display:none">Show File Finder</a>
+<a href="/scikit-learn/scikit-learn/find/main" data-pjax data-hotkey="t" style="display:none">Show File Finder</a>
 
 <div class="file-navigation">
-  
+
 
 
 <div class="select-menu js-menu-container js-select-menu" >
   <span class="minibutton select-menu-button js-menu-target" data-hotkey="w"
-    data-master-branch="master"
-    data-ref="master">
+    data-main-branch="main"
+    data-ref="main">
     <span class="octicon octicon-git-branch"></span>
     <i>branch:</i>
-    <span class="js-select-button">master</span>
+    <span class="js-select-button">main</span>
   </span>
 
   <div class="select-menu-modal-holder js-menu-content js-navigation-container" data-pjax>
@@ -568,7 +568,7 @@
             </div> <!-- /.select-menu-item -->
             <div class="select-menu-item js-navigation-item selected">
               <span class="select-menu-item-icon octicon octicon-check"></span>
-              <a href="/scikit-learn/scikit-learn/blob/master/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="master" data-skip-pjax="true" rel="nofollow" title="master">master</a>
+              <a href="/scikit-learn/scikit-learn/blob/main/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="main" data-skip-pjax="true" rel="nofollow" title="main">main</a>
             </div> <!-- /.select-menu-item -->
         </div>
 
@@ -576,10 +576,10 @@
             <span class="octicon octicon-git-branch-create select-menu-item-icon"></span>
             <div class="select-menu-item-text">
               <h4>Create branch: <span class="js-new-item-name"></span></h4>
-              <span class="description">from ‘master’</span>
+              <span class="description">from ‘main’</span>
             </div>
             <input type="hidden" name="name" id="name" class="js-new-item-value">
-            <input type="hidden" name="branch" id="branch" value="master" />
+            <input type="hidden" name="branch" id="branch" value="main" />
             <input type="hidden" name="path" id="branch" value="doc/logos/scikit-learn-logo.svg" />
           </form> <!-- /.select-menu-item -->
 
@@ -803,12 +803,12 @@
 </div> <!-- /.select-menu -->
 
   <div class="breadcrumb">
-    <span class='repo-root js-repo-root'><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn" data-branch="master" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">scikit-learn</span></a></span></span><span class="separator"> / </span><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn/tree/master/doc" data-branch="master" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">doc</span></a></span><span class="separator"> / </span><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn/tree/master/doc/logos" data-branch="master" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">logos</span></a></span><span class="separator"> / </span><strong class="final-path">scikit-learn-logo.svg</strong> <span class="js-zeroclipboard minibutton zeroclipboard-button" data-clipboard-text="doc/logos/scikit-learn-logo.svg" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
+    <span class='repo-root js-repo-root'><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn" data-branch="main" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">scikit-learn</span></a></span></span><span class="separator"> / </span><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn/tree/main/doc" data-branch="main" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">doc</span></a></span><span class="separator"> / </span><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn/tree/main/doc/logos" data-branch="main" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">logos</span></a></span><span class="separator"> / </span><strong class="final-path">scikit-learn-logo.svg</strong> <span class="js-zeroclipboard minibutton zeroclipboard-button" data-clipboard-text="doc/logos/scikit-learn-logo.svg" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
   </div>
 </div>
 
 
-  <div class="commit commit-loader file-history-tease js-deferred-content" data-url="/scikit-learn/scikit-learn/contributors/master/doc/logos/scikit-learn-logo.svg">
+  <div class="commit commit-loader file-history-tease js-deferred-content" data-url="/scikit-learn/scikit-learn/contributors/main/doc/logos/scikit-learn-logo.svg">
     Fetching contributors…
 
     <div class="participation">
@@ -829,14 +829,14 @@
       <div class="actions">
         <div class="button-group">
                 <a class="minibutton"
-                   href="/scikit-learn/scikit-learn/edit/master/doc/logos/scikit-learn-logo.svg"
+                   href="/scikit-learn/scikit-learn/edit/main/doc/logos/scikit-learn-logo.svg"
                    data-method="post" rel="nofollow" data-hotkey="e">Edit</a>
-          <a href="/scikit-learn/scikit-learn/raw/master/doc/logos/scikit-learn-logo.svg" class="button minibutton " id="raw-url">Raw</a>
-            <a href="/scikit-learn/scikit-learn/blame/master/doc/logos/scikit-learn-logo.svg" class="button minibutton ">Blame</a>
-          <a href="/scikit-learn/scikit-learn/commits/master/doc/logos/scikit-learn-logo.svg" class="button minibutton " rel="nofollow">History</a>
+          <a href="/scikit-learn/scikit-learn/raw/main/doc/logos/scikit-learn-logo.svg" class="button minibutton " id="raw-url">Raw</a>
+            <a href="/scikit-learn/scikit-learn/blame/main/doc/logos/scikit-learn-logo.svg" class="button minibutton ">Blame</a>
+          <a href="/scikit-learn/scikit-learn/commits/main/doc/logos/scikit-learn-logo.svg" class="button minibutton " rel="nofollow">History</a>
         </div><!-- /.button-group -->
             <a class="minibutton danger empty-icon tooltipped downwards"
-               href="/scikit-learn/scikit-learn/delete/master/doc/logos/scikit-learn-logo.svg"
+               href="/scikit-learn/scikit-learn/delete/main/doc/logos/scikit-learn-logo.svg"
                title="" data-method="post" rel="nofollow">
             Delete
           </a>
@@ -1044,7 +1044,6 @@
       Something went wrong with that request. Please try again.
     </div>
 
-    
+
   </body>
 </html>
-
