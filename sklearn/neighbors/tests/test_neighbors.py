@@ -1783,8 +1783,8 @@ def test_translation_invariance(
     n_neighbors = 100
 
     rng = np.random.RandomState(1)
-    X_train = rng.rand(n, d).astype(dtype)
-    X_test = rng.rand(n, d).astype(dtype)
+    X_train = rng.rand(n, d).astype(dtype) * 1000
+    X_test = rng.rand(n, d).astype(dtype) * 1000
 
     neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                        algorithm="brute",
@@ -1801,7 +1801,8 @@ def test_translation_invariance(
                                  n_neighbors=n_neighbors,
                                  return_distance=True)
 
-    np.testing.assert_array_equal(reference_nns, nns)
+    np.testing.assert_array_equal(np.sort(reference_nns, axis=1),
+                                  np.sort(nns, axis=1))
 
     # Using a tolerance well greater than the float epsilon
     rtol = 1e-03 if dtype is np.float32 else 1e-05
