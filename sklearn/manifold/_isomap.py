@@ -27,6 +27,10 @@ class Isomap(TransformerMixin, BaseEstimator):
         Number of neighbors to consider for each point. Use radius-based
         neighbors when set to ``None``.
 
+    radius : float or None, default=None
+        Limiting distance of neighbors to return. Use k-neighbors
+        when set to ``None``.
+
     n_components : int, default=2
         Number of coordinates for the manifold
 
@@ -91,10 +95,6 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.22
 
-    radius : float or None, default=None
-        Limiting distance of neighbors to return. Use k-neighbors
-        when set to ``None``.
-
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
@@ -136,11 +136,12 @@ class Isomap(TransformerMixin, BaseEstimator):
     """
     # Once positional arguments are no longer supported, we should move `radius`
     # closer to `n_neighbors`, details see pull request 19794.
-    def __init__(self, *, n_neighbors=5, n_components=2,
+    def __init__(self, *, n_neighbors=5, radius=None, n_components=2,
                  eigen_solver='auto', tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
-                 p=2, metric_params=None, radius=None):
+                 p=2, metric_params=None):
         self.n_neighbors = n_neighbors
+        self.radius = radius
         self.n_components = n_components
         self.eigen_solver = eigen_solver
         self.tol = tol
@@ -151,7 +152,6 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.metric = metric
         self.p = p
         self.metric_params = metric_params
-        self.radius = radius
 
     def _fit_transform(self, X):
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
