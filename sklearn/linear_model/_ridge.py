@@ -458,7 +458,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     if positive and solver != "trf":
         raise ValueError("When positive=True, only 'trf' solver can fit. "
-                         "Please change solver to 'trf' "
+                         f"Please change solver {solver} to 'trf' "
                          "or set positive=False.")
 
     if return_intercept and solver not in ['sag']:
