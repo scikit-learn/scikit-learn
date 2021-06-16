@@ -1771,16 +1771,17 @@ def test_pairwise_deprecated(NearestNeighbors):
 
 @pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.parametrize("metric", ["euclidean", "manhattan", "chebyshev"])
+@pytest.mark.parametrize("n_neighbors", [10, 100])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_translation_invariance(
     translation,
     metric,
+    n_neighbors,
     dtype,
 ):
     """ K-NN search must be translation-invariant. """
     n = 10_000
     d = 50
-    n_neighbors = 100
 
     rng = np.random.RandomState(1)
     X_train = rng.rand(n, d).astype(dtype) * 1000
