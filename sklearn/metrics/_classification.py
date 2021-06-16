@@ -27,6 +27,8 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
+from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import leaves_list, linkage
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -209,7 +211,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
 
 def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
-                     normalize=None):
+                     normalize=None, cluster_classes=False):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -246,6 +248,12 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         conditions or all the population. If None, confusion matrix will not be
         normalized.
 
+    cluster_classes : bool, default=False
+        Sort the classes in order for the most confused classes to end up next
+        to each other. If True, it will return the confusion matrix as
+        well as the newly ordered labels. This is mostly useful when there are
+        many classes.
+
     Returns
     -------
     C : ndarray of shape (n_classes, n_classes)
@@ -253,6 +261,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         column entry indicates the number of
         samples with true label being i-th class
         and predicted label being j-th class.
+
+    labels : list
+        If cluster_classes == True, return a list of the labels in their new
+        order.
 
     See Also
     --------
@@ -292,6 +304,28 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
 
+    >>> y_true = ["lion"]*200
+    >>> y_pred = ["lion"]*120 + ["jag"]*50 + ["cat"]*20 + ["wolf"]*6 +\
+ ["dog"]*4
+    >>> y_true += ["jag"]*200
+    >>> y_pred += ["jag"]*140 + ["lion"]*25 + ["cat"]*25 + ["wolf"]*3 +\
+ ["dog"]*7
+    >>> y_true += ["cat"]*200
+    >>> y_pred += ["cat"]*135 + ["lion"]*25 + ["jag"]*30 + ["wolf"]*8 +\
+ ["dog"]*2
+    >>> y_true += ["wolf"]*200
+    >>> y_pred += ["wolf"]*130 + ["dog"]*50 + ["lion"]*6 + ["jag"]*7 +\
+ ["cat"]*7
+    >>> y_true += ["dog"]*200
+    >>> y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["jag"]*10 +\
+ ["cat"]*5
+    >>> confusion_matrix(y_true, y_pred, cluster_classes=True)
+    (array([[130,  50,   7,   6,   7],
+            [ 40, 130,  10,  15,   5],
+            [  3,   7, 140,  25,  25],
+            [  6,   4,  50, 120,  20],
+            [  8,   2,  30,  25, 135]]),
+     ['wolf', 'dog', 'jag', 'lion', 'cat'])
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -308,6 +342,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
             return np.zeros((n_labels, n_labels), dtype=int)
         elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
+
+    if cluster_classes and y_type != 'multiclass':
+        raise ValueError("cluster_classes can only be used when there are "
+                         "more than 2 classes")
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
@@ -359,6 +397,26 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         elif normalize == 'all':
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
+
+    if cluster_classes and y_type == 'multiclass':
+        # Sorting the normalized confusion matrix gives better results
+        if normalize is None:
+            cm_norm = cm / cm.sum(axis=1, keepdims=True)
+        else:
+            cm_norm = cm
+
+        dists = pdist(cm_norm)
+        # In case we are dealing with an older scipy version
+        try:
+            links = linkage(dists, optimal_ordering=True)
+        except TypeError:
+            raise ValueError("Old version of Scipy")
+        idx = leaves_list(links)
+        cm = cm[idx, :]
+        cm = cm[:, idx]
+        labels = [labels[i] for i in idx]
+
+        return cm, labels
 
     return cm
 
