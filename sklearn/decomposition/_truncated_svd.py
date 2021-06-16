@@ -9,6 +9,7 @@
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
+import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
@@ -183,8 +184,10 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             k = self.n_components
             n_features = X.shape[1]
             if k >= n_features:
-                raise ValueError("n_components must be < n_features;"
-                                 " got %d >= %d" % (k, n_features))
+                msg = "n_components must be < n_features;"
+                msg += " resetting %d n_components to %d n_components"
+                warnings.warn(msg % (k, n_features), UserWarning)
+                k = n_features - 1
             U, Sigma, VT = randomized_svd(X, self.n_components,
                                           n_iter=self.n_iter,
                                           random_state=random_state)
