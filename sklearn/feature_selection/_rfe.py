@@ -299,8 +299,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @if_delegate_has_method(delegate='estimator')
     def score(self, X, y):
-        """Reduce X to the selected features and then return the score of the underlying estimator.
-
+        """Reduce X to the selected features and return the score of the underlying estimator.
+        
         Parameters
         ----------
         X : array of shape [n_samples, n_features]
