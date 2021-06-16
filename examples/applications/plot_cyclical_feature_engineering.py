@@ -52,7 +52,6 @@ X.iloc[test_4]
 X.iloc[train_4]
 
 # %%
-%%time
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.compose import ColumnTransformer
@@ -104,7 +103,6 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 
 
 # %%
-%%time
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import RidgeCV
 from sklearn.linear_model import SGDRegressor
@@ -127,7 +125,6 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 
 
 # %%
-%%time
 from sklearn.preprocessing import SplineTransformer
 
 # one knot for each month in year
@@ -169,7 +166,6 @@ evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 
 
 # %%
-%%time
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.kernel_approximation import Nystroem
 
@@ -204,5 +200,5 @@ last_hours = slice(-96, None)
 plt.plot(y.iloc[test_0].values[last_hours], label="True")
 plt.plot(gbrt_predictions[last_hours], label="GBDT predictions")
 plt.plot(cyclic_spline_poly_predictions[last_hours], label="Spline poly predictions")
-plt.legend();
+_ = plt.legend()
 # %%
