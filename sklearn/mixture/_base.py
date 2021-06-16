@@ -7,6 +7,7 @@
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
+from sklearn import preprocessing
 
 import numpy as np
 from scipy.special import logsumexp
@@ -120,6 +121,14 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             resp = np.zeros((n_samples, self.n_components))
             label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
                                    random_state=random_state).fit(X).labels_
+            resp[np.arange(n_samples), label] = 1
+        elif self.init_params == 'kmeans-scaled':
+            resp = np.zeros((n_samples, self.n_components))
+
+            # Here the data is scaled before kmeans is applied
+            Xs = preprocessing.scale(X)
+            label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
+                                   random_state=random_state).fit(Xs).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
