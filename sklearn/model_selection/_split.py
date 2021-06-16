@@ -2355,7 +2355,8 @@ def train_test_split(*arrays,
                 "Stratified train/test split is not implemented for "
                 "shuffle=False")
 
-        n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,default_test_size=0.25)
+        n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,
+        default_test_size=0.25)
 
         train = np.arange(n_train)
         test = np.arange(n_train, n_train + n_test)
