@@ -10,6 +10,9 @@ from ._rbm import BernoulliRBM
 from ._multilayer_perceptron import MLPClassifier
 from ._multilayer_perceptron import MLPRegressor
 
+from .random_basis_function import RandomBasisFunction
+
 __all__ = ["BernoulliRBM",
            "MLPClassifier",
-           "MLPRegressor"]
+           "MLPRegressor",
+           "RandomBasisFunction"]
