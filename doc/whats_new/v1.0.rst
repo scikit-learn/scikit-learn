@@ -571,6 +571,16 @@ Changelog
   :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
+:mod:`sklearn.metrics`
+............................
+
+- |Enhancement| :func:`metrics.confusion_matrix` now can return a confusion
+  matrix with labels in form of dict as an option, :pr:`19190`
+  by :user:`Shubham Shinde <shubhamdo>` and
+  :user:`Max Kinner <maxkinner>` and
+  :user:`Varun John <varunjohn786>` and
+  :user:`Vinayak Parab <vinayak-parab>`
+
 Code and Documentation Contributors
 -----------------------------------
 
