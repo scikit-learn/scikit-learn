@@ -1816,19 +1816,22 @@ def test_fast_sqeuclidean_correctness(
     np.testing.assert_array_equal(eucl_nn, fse_nn)
 
 
+@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("d", [5, 10, 100, 500])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
 @pytest.mark.parametrize("strategy", ["chunk_on_train", "chunk_on_test"])
+@pytest.mark.parametrize("chunk_size", [2 ** i for i in range(8, 13)])
 @pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 def test_fast_sqeuclidean_translation_invariance(
+    n,
+    d,
     n_neighbors,
     strategy,
+    chunk_size,
     translation,
     dtype=np.float64,
 ):
     """ The Fast euclidean strategy should be translation invariant. """
-    n = 10_000
-    d = 50
-
     rng = np.random.RandomState(1)
     X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d))
     X_test = rng.rand(int(n * d)).astype(dtype).reshape((-1, d))
