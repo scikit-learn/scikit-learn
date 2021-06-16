@@ -314,6 +314,13 @@ Changelog
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Enhancement| Add
+  :meth:`~sklearn.kernel_approximation.Nystroem.inverse_transform`.
+  :pr:`19971` by :user:`Kei Ishikawa <kstoneriv3>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
