@@ -28,8 +28,8 @@ class Isomap(TransformerMixin, BaseEstimator):
         neighbors when set to ``None``.
 
     radius : float or None, default=None
-        Limiting distance of neighbors to return. Use k-neighbors
-        when set to ``None``.
+        Limiting distance of neighbors to return. Use n_neighbors
+        when radius is set to ``None``.
 
     n_components : int, default=2
         Number of coordinates for the manifold
