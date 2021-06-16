@@ -391,13 +391,13 @@ class _DOTTreeExporter(_BaseTreeExporter):
     def export(self, decision_tree):
         # Check length of feature_names before getting into the tree node
         # Raise error if length of feature_names does not match
-        # n_features_ in the decision_tree
+        # n_features_in_ in the decision_tree
         if self.feature_names is not None:
-            if len(self.feature_names) != decision_tree.n_features_:
+            if len(self.feature_names) != decision_tree.n_features_in_:
                 raise ValueError("Length of feature_names, %d "
                                  "does not match number of features, %d"
                                  % (len(self.feature_names),
-                                    decision_tree.n_features_))
+                                    decision_tree.n_features_in_))
         # each part writes to out_file
         self.head()
         # Now recurse the tree and add node & edge attributes

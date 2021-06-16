@@ -545,6 +545,12 @@ Changelog
   should not have been due to incorrect handling of rounding errors.
   :pr:`19336` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| The `n_features_` attribute of :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` is deprecated in favor of `n_features_in_`
+  and will be removed in 1.2. :pr:`20272` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.utils`
 ....................
 
