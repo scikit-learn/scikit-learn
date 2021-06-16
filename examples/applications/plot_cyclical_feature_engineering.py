@@ -105,7 +105,6 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 # %%
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import RidgeCV
-from sklearn.linear_model import SGDRegressor
 import numpy as np
 
 
@@ -186,6 +185,9 @@ cyclic_spline_poly_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 cyclic_spline_poly_predictions = cyclic_spline_poly_pipeline.predict(X.iloc[test_0])
 
 # %%
+import matplotlib.pyplot as plt
+
+
 plt.scatter(y.iloc[test_0].values, gbrt_predictions, alpha=0.1)
 plt.scatter(y.iloc[test_0].values, cyclic_spline_poly_predictions, alpha=0.1)
 plt.plot([0, 1], [0, 1], "--")
@@ -193,7 +195,6 @@ plt.xlim(0, 1)
 plt.ylim(0, 1)
 
 # %%
-import matplotlib.pyplot as plt
 
 plt.figure(figsize=(12, 4))
 last_hours = slice(-96, None)
