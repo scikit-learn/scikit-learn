@@ -182,7 +182,7 @@ def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
 @pytest.mark.parametrize('est, method', [
     (LinearRegression(), 'brute'),
     (GradientBoostingRegressor(random_state=0), 'brute'),
-    (GradientBoostingRegressor(random_state=0), 'recursion'),
+    (GradientBoostingRegressor(random_state=0), 'brute'),
     (HistGradientBoostingRegressor(random_state=0), 'brute'),
     (HistGradientBoostingRegressor(random_state=0), 'recursion')]
 )

@@ -182,7 +182,7 @@ data, close to chance::
     >>> X_test_selected = select.transform(X_test)
     >>> y_pred = gbc.predict(X_test_selected)
     >>> accuracy_score(y_test, y_pred)
-    0.46
+    0.48
 
 Here again, we recommend using a :class:`~sklearn.pipeline.Pipeline` to chain
 together the feature selection and model estimators. The pipeline ensures
@@ -201,7 +201,7 @@ is used only for calculating the accuracy score::
 
     >>> y_pred = pipeline.predict(X_test)
     >>> accuracy_score(y_test, y_pred)
-    0.46
+    0.48
 
 The pipeline can also be fed into a cross-validation
 function such as :func:`~sklearn.model_selection.cross_val_score`.
@@ -211,7 +211,7 @@ method is used during fitting and predicting::
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean accuracy: {scores.mean():.2f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.45+/-0.07
+    Mean accuracy: 0.47+/-0.07
 
 How to avoid data leakage
 -------------------------
@@ -375,13 +375,13 @@ following snippet::
 
     >>> X, y = make_classification(random_state=0)
 
-    >>> rf_123 = RandomForestClassifier(random_state=123)
+    >>> rf_123 = RandomForestClassifier(random_state=12345)
     >>> cross_val_score(rf_123, X, y)
-    array([0.85, 0.95, 0.95, 0.9 , 0.9 ])
+    array([0.8 , 0.95, 0.95, 0.9 , 0.95])
 
     >>> rf_inst = RandomForestClassifier(random_state=np.random.RandomState(0))
     >>> cross_val_score(rf_inst, X, y)
-    array([0.9 , 0.95, 0.95, 0.9 , 0.9 ])
+    array([0.85, 0.95, 0.95, 0.9 , 0.9 ])
 
 We see that the cross-validated scores of `rf_123` and `rf_inst` are
 different, as should be expected since we didn't pass the same `random_state`
