@@ -6,6 +6,7 @@ algorithms.
 from ._spectral import spectral_clustering, SpectralClustering
 from ._mean_shift import (mean_shift, MeanShift,
                           estimate_bandwidth, get_bin_seeds)
+from ._mean_shift_v2 import MeanShiftv2
 from ._affinity_propagation import affinity_propagation, AffinityPropagation
 from ._agglomerative import (ward_tree, AgglomerativeClustering,
                              linkage_tree, FeatureAgglomeration)
@@ -27,6 +28,7 @@ __all__ = ['AffinityPropagation',
            'KMeans',
            'FeatureAgglomeration',
            'MeanShift',
+           'MeanShiftv2',
            'MiniBatchKMeans',
            'SpectralClustering',
            'affinity_propagation',
