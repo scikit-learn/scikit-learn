@@ -229,7 +229,7 @@ Debugging memory errors in Cython with valgrind
 
 While python/numpy's built-in memory management is relatively robust, it can
 lead to performance penalties for some routines. For this reason, much of
-the high-performance code in scikit-learn in written in cython. This
+the high-performance code in scikit-learn is written in cython. This
 performance gain comes with a tradeoff, however: it is very easy for memory
 bugs to crop up in cython code, especially in situations where that code
 relies heavily on pointer arithmetic.

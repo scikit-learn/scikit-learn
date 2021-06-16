@@ -21,7 +21,6 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array, gen_batches
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
-from ..utils.validation import _deprecate_positional_args
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -958,7 +957,6 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         return W, H, n_iter, iter_offset, A, B
 
 
-@_deprecate_positional_args
 def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                init='warn', update_H=True, solver='cd',
                                batch_size=None,
@@ -1329,6 +1327,11 @@ class NMF(TransformerMixin, BaseEstimator):
     n_iter_ : int
         Actual number of iterations.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -1348,8 +1351,6 @@ class NMF(TransformerMixin, BaseEstimator):
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, init='warn', solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,

@@ -11,7 +11,6 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
-from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
@@ -19,7 +18,6 @@ from ..manifold import spectral_embedding
 from ._kmeans import k_means
 
 
-@_deprecate_positional_args
 def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
                random_state=None):
     """Search for a partition matrix (clustering) which is closest to the
@@ -158,7 +156,6 @@ def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
     return labels
 
 
-@_deprecate_positional_args
 def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
                         eigen_tol=0.0, assign_labels='kmeans',
@@ -200,11 +197,18 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
         used.
 
     random_state : int, RandomState instance, default=None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg' and by
-        the K-Means initialization. Use an int to make the randomness
-        deterministic.
-        See :term:`Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigenvectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -325,11 +329,18 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Number of eigenvectors to use for the spectral embedding
 
     random_state : int, RandomState instance, default=None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when ``eigen_solver='amg'`` and by
-        the K-Means initialization. Use an int to make the randomness
-        deterministic.
-        See :term:`Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigenvectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -407,6 +418,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     labels_ : ndarray of shape (n_samples,)
         Labels of each point
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralClustering
@@ -455,7 +471,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
       Stella X. Yu, Jianbo Shi
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, eigen_solver=None, n_components=None,
                  random_state=None, n_init=10, gamma=1., affinity='rbf',
                  n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
@@ -577,8 +592,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.affinity in ["precomputed",

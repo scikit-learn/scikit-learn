@@ -12,8 +12,7 @@ from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
 from ...utils import check_random_state, resample
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length,
-                                 _check_sample_weight,
-                                 _deprecate_positional_args)
+                                 _check_sample_weight)
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -1031,6 +1030,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     is_categorical_ : ndarray, shape (n_features, ) or None
         Boolean mask for the categorical features. ``None`` if there are no
         categorical features.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1045,7 +1048,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     _VALID_LOSSES = ('squared_error', 'least_squares', 'absolute_error',
                      'least_absolute_deviation', 'poisson')
 
-    @_deprecate_positional_args
     def __init__(self, loss='squared_error', *, learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
@@ -1290,6 +1292,10 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     is_categorical_ : ndarray, shape (n_features, ) or None
         Boolean mask for the categorical features. ``None`` if there are no
         categorical features.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1304,7 +1310,6 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
                      'auto')
 
-    @_deprecate_positional_args
     def __init__(self, loss='auto', *, learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255,

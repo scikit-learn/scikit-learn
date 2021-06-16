@@ -37,7 +37,6 @@ from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
-from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
@@ -239,7 +238,6 @@ class ParameterSampler:
     ...                  {'b': 1.038159, 'a': 2}]
     True
     """
-    @_deprecate_positional_args
     def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError('Parameter distribution is not a dict or '
@@ -340,7 +338,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    @_deprecate_positional_args
     def __init__(self, estimator, *, scoring=None, n_jobs=None,
                  refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score=np.nan,
@@ -370,8 +367,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # allows cross-validation to see 'precomputed' metrics
@@ -648,7 +646,21 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 and not callable(self.refit)):
             raise ValueError(multimetric_refit_msg)
 
-    @_deprecate_positional_args
+    @staticmethod
+    def _select_best_index(refit, refit_metric, results):
+        """Select index of the best combination of hyperparemeters."""
+        if callable(refit):
+            # If callable, refit is expected to return the index of the best
+            # parameter set.
+            best_index = refit(results)
+            if not isinstance(best_index, numbers.Integral):
+                raise TypeError('best_index_ returned is not an integer')
+            if (best_index < 0 or best_index >= len(results["params"])):
+                raise IndexError('best_index_ index out of range')
+        else:
+            best_index = results[f"rank_test_{refit_metric}"].argmin()
+        return best_index
+
     def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -782,20 +794,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            # If callable, refit is expected to return the index of the best
-            # parameter set.
-            if callable(self.refit):
-                self.best_index_ = self.refit(results)
-                if not isinstance(self.best_index_, numbers.Integral):
-                    raise TypeError('best_index_ returned is not an integer')
-                if (self.best_index_ < 0 or
-                   self.best_index_ >= len(results["params"])):
-                    raise IndexError('best_index_ index out of range')
-            else:
-                self.best_index_ = results["rank_test_%s"
-                                           % refit_metric].argmin()
-                self.best_score_ = results["mean_test_%s" % refit_metric][
-                                           self.best_index_]
+            self.best_index_ = self._select_best_index(
+                self.refit, refit_metric, results
+            )
+            if not callable(self.refit):
+                # With a non-custom callable, we can select the best score
+                # based on the best index
+                self.best_score_ = results[f"mean_test_{refit_metric}"][
+                    self.best_index_
+                ]
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
@@ -1181,6 +1188,16 @@ class GridSearchCV(BaseSearchCV):
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1206,7 +1223,6 @@ class GridSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_grid"]
 
-    @_deprecate_positional_args
     def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
@@ -1504,6 +1520,16 @@ class RandomizedSearchCV(BaseSearchCV):
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     The parameters selected are those that maximize the score of the held-out
@@ -1541,7 +1567,6 @@ class RandomizedSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_distributions"]
 
-    @_deprecate_positional_args
     def __init__(self, estimator, param_distributions, *, n_iter=10,
                  scoring=None, n_jobs=None, refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',

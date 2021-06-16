@@ -19,7 +19,7 @@ from ..utils import deprecated
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
@@ -193,7 +193,6 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
 
 # XXX : could be moved to the linear_model module
-@_deprecate_positional_args
 def sparse_encode(X, dictionary, *, gram=None, cov=None,
                   algorithm='lasso_lars', n_nonzero_coefs=None, alpha=None,
                   copy_cov=True, init=None, max_iter=1000, n_jobs=None,
@@ -427,7 +426,6 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
         print(f"{n_unused} unused atoms resampled.")
 
 
-@_deprecate_positional_args
 def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=None, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
@@ -438,11 +436,13 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
 
-        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+        (U^*, V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                      (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
-    where V is the dictionary and U is the sparse code.
+    where V is the dictionary and U is the sparse code. ||.||_Fro stands for
+    the Frobenius norm and ||.||_1,1 stands for the entry-wise matrix norm
+    which is the sum of the absolute values of all the entries in the matrix.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -626,7 +626,6 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         return code, dictionary, errors
 
 
-@_deprecate_positional_args
 def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True,
@@ -640,12 +639,14 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
 
-        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+        (U^*, V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                      (U,V)
                      with || V_k ||_2 = 1 for all  0 <= k < n_components
 
-    where V is the dictionary and U is the sparse code. This is
-    accomplished by repeatedly iterating over mini-batches by slicing
+    where V is the dictionary and U is the sparse code. ||.||_Fro stands for
+    the Frobenius norm and ||.||_1,1 stands for the entry-wise matrix norm
+    which is the sum of the absolute values of all the entries in the matrix.
+    This is accomplished by repeatedly iterating over mini-batches by slicing
     the input data.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
@@ -1032,6 +1033,14 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
            This attribute is deprecated in 0.24 and will be removed in
            1.1 (renaming of 0.26). Use `dictionary` instead.
 
+    n_components_ : int
+        Number of atoms.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -1063,7 +1072,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     """
     _required_parameters = ["dictionary"]
 
-    @_deprecate_positional_args
     def __init__(self, dictionary, *, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
@@ -1093,9 +1101,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return self
 
-    @deprecated("The attribute 'components_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use "
-                "the 'dictionary' instead.")
+    @deprecated(  # type: ignore
+        "The attribute 'components_' is deprecated "
+        "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
+        "'dictionary' instead.")
     @property
     def components_(self):
         return self.dictionary
@@ -1141,9 +1150,13 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     Solves the optimization problem::
 
-        (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+        (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+
+    ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
+    the entry-wise matrix norm which is the sum of the absolute values
+    of all the entries in the matrix.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -1255,6 +1268,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     error_ : array
         vector of errors at each iteration
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of iterations run.
 
@@ -1299,7 +1317,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     SparsePCA
     MiniBatchSparsePCA
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1372,9 +1389,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     Solves the optimization problem::
 
-       (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+       (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+
+    ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
+    the entry-wise matrix norm which is the sum of the absolute values
+    of all the entries in the matrix.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -1485,6 +1506,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of iterations run.
 
@@ -1537,7 +1563,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     MiniBatchSparsePCA
 
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=None, batch_size=3, shuffle=True,
                  dict_init=None, transform_algorithm='omp',

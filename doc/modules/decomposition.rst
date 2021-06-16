@@ -230,12 +230,14 @@ problem solved is a PCA problem (dictionary learning) with an
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||V||_1 \\
+                ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
                 \text{subject to } & ||U_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{components}
 
-
-The sparsity-inducing :math:`\ell_1` norm also prevents learning
+:math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
+stands for the entry-wise matrix norm which is the sum of the absolute values
+of all the entries in the matrix.
+The sparsity-inducing :math:`||.||_{1,1}` matrix norm also prevents learning
 components from noise when few training samples are available. The degree
 of penalization (and thus sparsity) can be adjusted through the
 hyperparameter ``alpha``. Small values lead to a gently regularized
@@ -510,7 +512,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||U||_1 \\
+                ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
                 \text{subject to } & ||V_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
@@ -525,7 +527,9 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. centered:: |pca_img2| |dict_img2|
 
-
+:math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
+stands for the entry-wise matrix norm which is the sum of the absolute values
+of all the entries in the matrix.
 After using such a procedure to fit the dictionary, the transform is simply a
 sparse coding step that shares the same implementation with all dictionary
 learning objects (see :ref:`SparseCoder`).

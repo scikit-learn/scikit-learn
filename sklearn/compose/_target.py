@@ -10,7 +10,6 @@ from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..utils import check_array, _safe_indexing
 from ..preprocessing import FunctionTransformer
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
 
 __all__ = ['TransformedTargetRegressor']
@@ -83,6 +82,12 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     transformer_ : object
         Transformer used in ``fit`` and ``predict``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying regressor exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -109,7 +114,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
 
     """
-    @_deprecate_positional_args
     def __init__(self, regressor=None, *, transformer=None,
                  func=None, inverse_func=None, check_inverse=True):
         self.regressor = regressor

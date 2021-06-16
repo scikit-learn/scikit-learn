@@ -17,7 +17,6 @@ from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ._base import SelectorMixin
 
 
@@ -296,7 +295,6 @@ def r_regression(X, y, *, center=True):
     return correlation_coefficient
 
 
-@_deprecate_positional_args
 def f_regression(X, y, *, center=True):
     """Univariate linear regression tests returning F-statistic and p-values.
 
@@ -455,6 +453,11 @@ class SelectPercentile(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -485,7 +488,6 @@ class SelectPercentile(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, percentile=10):
         super().__init__(score_func=score_func)
         self.percentile = percentile
@@ -542,6 +544,11 @@ class SelectKBest(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -573,7 +580,6 @@ class SelectKBest(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, k=10):
         super().__init__(score_func=score_func)
         self.k = k
@@ -628,6 +634,11 @@ class SelectFpr(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -654,7 +665,6 @@ class SelectFpr(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -703,6 +713,11 @@ class SelectFdr(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     References
     ----------
     https://en.wikipedia.org/wiki/False_discovery_rate
@@ -722,7 +737,6 @@ class SelectFdr(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -774,6 +788,11 @@ class SelectFwe(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -787,7 +806,6 @@ class SelectFwe(_BaseFilter):
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -830,6 +848,11 @@ class GenericUnivariateSelect(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned scores only.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -857,13 +880,12 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     """
 
-    _selection_modes = {'percentile': SelectPercentile,
-                        'k_best': SelectKBest,
-                        'fpr': SelectFpr,
-                        'fdr': SelectFdr,
-                        'fwe': SelectFwe}
+    _selection_modes: dict = {'percentile': SelectPercentile,
+                              'k_best': SelectKBest,
+                              'fpr': SelectFpr,
+                              'fdr': SelectFdr,
+                              'fwe': SelectFwe}
 
-    @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, mode='percentile', param=1e-5):
         super().__init__(score_func=score_func)
         self.mode = mode

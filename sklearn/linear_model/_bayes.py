@@ -15,7 +15,6 @@ from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 
 
 ###############################################################################
@@ -132,6 +131,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If `normalize=True`, parameter used to scale data to a unit
         standard deviation.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -159,7 +163,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
     M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
     Journal of Machine Learning Research, Vol. 1, 2001.
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
                  lambda_init=None, compute_score=False, fit_intercept=True,
@@ -493,6 +496,11 @@ class ARDRegression(RegressorMixin, LinearModel):
         If `normalize=True`, parameter used to scale data to a unit
         standard deviation.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -520,7 +528,6 @@ class ARDRegression(RegressorMixin, LinearModel):
     which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                  threshold_lambda=1.e+4, fit_intercept=True,

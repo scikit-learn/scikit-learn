@@ -467,7 +467,9 @@ def test_preprocess_data_weighted(is_sparse):
                                      axis=0)
     constant_mask = X_sample_weight_var < 10 * np.finfo(X.dtype).eps
     assert_array_equal(constant_mask, [0, 0, 1, 1])
-    expected_X_scale = np.sqrt(X_sample_weight_var) * np.sqrt(n_samples)
+    expected_X_scale = (
+        np.sqrt(X_sample_weight_var) * np.sqrt(sample_weight.sum())
+    )
 
     # near constant features should not be scaled
     expected_X_scale[constant_mask] = 1
@@ -510,14 +512,16 @@ def test_preprocess_data_weighted(is_sparse):
     # _preprocess_data with normalize=True scales the data by the feature-wise
     # euclidean norms while StandardScaler scales the data by the feature-wise
     # standard deviations.
-    # The two are equivalent up to a ratio of np.sqrt(n_samples).
+    # The two are equivalent up to a ratio of np.sqrt(n_samples) if unweighted
+    # or np.sqrt(sample_weight.sum()) if weighted.
     if is_sparse:
         scaler = StandardScaler(with_mean=False).fit(
             X, sample_weight=sample_weight)
 
         # Non-constant features are scaled similarly with np.sqrt(n_samples)
         assert_array_almost_equal(
-            scaler.transform(X).toarray()[:, :2] / np.sqrt(n_samples),
+            scaler.transform(X).toarray()[:, :2]
+            / np.sqrt(sample_weight.sum()),
             Xt.toarray()[:, :2]
         )
 
@@ -530,7 +534,10 @@ def test_preprocess_data_weighted(is_sparse):
         scaler = StandardScaler(with_mean=True).fit(
             X, sample_weight=sample_weight)
         assert_array_almost_equal(scaler.mean_, X_mean)
-        assert_array_almost_equal(scaler.transform(X) / np.sqrt(n_samples), Xt)
+        assert_array_almost_equal(
+            scaler.transform(X) / np.sqrt(sample_weight.sum()),
+            Xt,
+        )
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 

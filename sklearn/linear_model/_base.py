@@ -31,7 +31,6 @@ from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import _incremental_mean_and_var
@@ -273,7 +272,10 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             # the np.sqrt. Otherwise constant features cannot be detected with
             # sample weights.
             constant_mask = _is_constant_feature(X_var, X_offset, X.shape[0])
-            X_var *= X.shape[0]
+            if sample_weight is None:
+                X_var *= X.shape[0]
+            else:
+                X_var *= sample_weight.sum()
             X_scale = np.sqrt(X_var, out=X_var)
             X_scale[constant_mask] = 1.
             if sp.issparse(X):
@@ -561,6 +563,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         Independent term in the linear model. Set to 0.0 if
         `fit_intercept = False`.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     Ridge : Ridge regression addresses some of the
@@ -595,7 +602,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
-    @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize='deprecated',
                  copy_X=True, n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept

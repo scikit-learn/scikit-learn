@@ -12,7 +12,6 @@ from ..base import MultiOutputMixin
 from ..utils import check_random_state, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
 from ..exceptions import ConvergenceWarning
@@ -193,6 +192,11 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         .. versionadded:: 0.19
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import RANSACRegressor
@@ -211,7 +215,6 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """  # noqa: E501
-    @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, min_samples=None,
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100, max_skips=np.inf,
@@ -528,6 +531,6 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }

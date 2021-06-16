@@ -30,7 +30,6 @@ from .._loss.glm_distribution import TweedieDistribution
 from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import _check_sample_weight
 from ..utils.stats import _weighted_percentile
 from ..exceptions import UndefinedMetricWarning
@@ -123,7 +122,6 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     return y_type, y_true, y_pred, multioutput
 
 
-@_deprecate_positional_args
 def mean_absolute_error(y_true, y_pred, *,
                         sample_weight=None,
                         multioutput='uniform_average'):
@@ -228,6 +226,7 @@ def mean_pinball_loss(y_true, y_pred, *,
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+
     Returns
     -------
     loss : float or ndarray of floats
@@ -354,7 +353,6 @@ def mean_absolute_percentage_error(y_true, y_pred,
     return np.average(output_errors, weights=multioutput)
 
 
-@_deprecate_positional_args
 def mean_squared_error(y_true, y_pred, *,
                        sample_weight=None,
                        multioutput='uniform_average', squared=True):
@@ -434,7 +432,6 @@ def mean_squared_error(y_true, y_pred, *,
     return np.average(output_errors, weights=multioutput)
 
 
-@_deprecate_positional_args
 def mean_squared_log_error(y_true, y_pred, *,
                            sample_weight=None,
                            multioutput='uniform_average'):
@@ -501,7 +498,6 @@ def mean_squared_log_error(y_true, y_pred, *,
                               multioutput=multioutput)
 
 
-@_deprecate_positional_args
 def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
                           sample_weight=None):
     """Median absolute error regression loss.
@@ -575,7 +571,6 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
     return np.average(output_errors, weights=multioutput)
 
 
-@_deprecate_positional_args
 def explained_variance_score(y_true, y_pred, *,
                              sample_weight=None,
                              multioutput='uniform_average'):
@@ -667,7 +662,6 @@ def explained_variance_score(y_true, y_pred, *,
     return np.average(output_scores, weights=avg_weights)
 
 
-@_deprecate_positional_args
 def r2_score(y_true, y_pred, *, sample_weight=None,
              multioutput="uniform_average"):
     """:math:`R^2` (coefficient of determination) regression score function.
@@ -839,7 +833,6 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
-@_deprecate_positional_args
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
@@ -904,7 +897,6 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     return np.average(dev, weights=sample_weight)
 
 
-@_deprecate_positional_args
 def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
@@ -942,7 +934,6 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     )
 
 
-@_deprecate_positional_args
 def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
 

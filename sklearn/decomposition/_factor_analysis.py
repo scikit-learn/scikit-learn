@@ -28,7 +28,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
@@ -120,6 +120,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -147,7 +152,6 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, tol=1e-2, copy=True,
                  max_iter=1000,
                  noise_variance_init=None, svd_method='randomized',

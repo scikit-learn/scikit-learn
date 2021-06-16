@@ -21,7 +21,6 @@ from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
@@ -71,7 +70,6 @@ class _ValidationScoreCallback:
 
 class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
-    @_deprecate_positional_args
     def __init__(self, loss, *, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
@@ -454,7 +452,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     }
 
     @abstractmethod
-    @_deprecate_positional_args
     def __init__(self, loss="hinge", *, penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
@@ -937,6 +934,11 @@ class SGDClassifier(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     sklearn.svm.LinearSVC : Linear support vector classification.
@@ -962,7 +964,6 @@ class SGDClassifier(BaseSGDClassifier):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
-    @_deprecate_positional_args
     def __init__(self, loss="hinge", *, penalty='l2', alpha=0.0001,
                  l1_ratio=0.15,
                  fit_intercept=True, max_iter=1000, tol=1e-3, shuffle=True,
@@ -1102,7 +1103,7 @@ class SGDClassifier(BaseSGDClassifier):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1120,7 +1121,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
     }
 
     @abstractmethod
-    @_deprecate_positional_args
     def __init__(self, loss="squared_error", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
@@ -1543,6 +1543,11 @@ class SGDRegressor(BaseSGDRegressor):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -1565,7 +1570,6 @@ class SGDRegressor(BaseSGDRegressor):
     Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
-    @_deprecate_positional_args
     def __init__(self, loss="squared_error", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
@@ -1586,7 +1590,7 @@ class SGDRegressor(BaseSGDRegressor):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1698,6 +1702,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Same as ``(n_iter_ * n_samples)``.
 
     loss_function_ : concrete ``LossFunction``
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -2031,7 +2040,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                'check_sample_weights_invariance': (
+                    'zero sample_weight is not equivalent to removing samples'
+                )
             }
         }

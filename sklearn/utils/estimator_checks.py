@@ -969,6 +969,7 @@ def check_complex_data(name, estimator_orig):
     # Something both valid for classification and regression
     y = rng.randint(low=0, high=2, size=10) + 1j
     estimator = clone(estimator_orig)
+    set_random_state(estimator, random_state=0)
     with raises(ValueError, match="Complex data not supported"):
         estimator.fit(X, y)
 
@@ -3123,7 +3124,8 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     # Make sure that n_features_in are checked after fitting
     tags = _safe_tags(estimator_orig)
 
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+    if ("2darray" not in tags["X_types"] and "sparse" not in tags["X_types"] or
+            tags["no_validation"]):
         return
 
     rng = np.random.RandomState(0)

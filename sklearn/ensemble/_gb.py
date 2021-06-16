@@ -54,7 +54,6 @@ from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
-from ..utils.validation import _deprecate_positional_args
 
 
 class VerboseReporter:
@@ -137,11 +136,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, *, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
-                 max_depth, min_impurity_decrease, min_impurity_split,
-                 init, subsample, max_features, ccp_alpha,
-                 random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 max_depth, min_impurity_decrease, init, subsample,
+                 max_features, ccp_alpha, random_state, alpha=0.9, verbose=0,
+                 max_leaf_nodes=None, warm_start=False,
+                 validation_fraction=0.1, n_iter_no_change=None, tol=1e-4):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -154,7 +152,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_features = max_features
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
         self.init = init
         self.random_state = random_state
@@ -200,7 +197,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 min_samples_leaf=self.min_samples_leaf,
                 min_weight_fraction_leaf=self.min_weight_fraction_leaf,
                 min_impurity_decrease=self.min_impurity_decrease,
-                min_impurity_split=self.min_impurity_split,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
@@ -905,17 +901,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
-
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
         ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
@@ -1053,6 +1038,11 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_classes_ : int
         The number of classes.
 
@@ -1112,12 +1102,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    @_deprecate_positional_args
     def __init__(self, *, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=None, init=None,
+                 max_depth=3, min_impurity_decrease=0., init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  validation_fraction=0.1, n_iter_no_change=None, tol=1e-4,
@@ -1133,7 +1121,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
             warm_start=warm_start, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
@@ -1453,17 +1440,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
-
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
         ``init`` has to provide :term:`fit` and :term:`predict`. If 'zero', the
@@ -1606,6 +1582,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     max_features_ : int
         The inferred value of max_features.
 
@@ -1614,7 +1595,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     HistGradientBoostingRegressor : Histogram-based Gradient Boosting
         Classification Tree.
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
-    sklearn.tree.RandomForestRegressor : A random forest regressor.
+    sklearn.ensemble.RandomForestRegressor : A random forest regressor.
 
     Notes
     -----
@@ -1656,16 +1637,15 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     _SUPPORTED_LOSS = ("squared_error", 'ls', "absolute_error", 'lad', 'huber',
                        'quantile')
 
-    @_deprecate_positional_args
     def __init__(self, *, loss="squared_error", learning_rate=0.1,
                  n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=None, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
+                 max_depth=3, min_impurity_decrease=0., init=None,
+                 random_state=None, max_features=None, alpha=0.9, verbose=0,
+                 max_leaf_nodes=None, warm_start=False,
+                 validation_fraction=0.1, n_iter_no_change=None, tol=1e-4,
+                 ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1675,7 +1655,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             max_depth=max_depth, init=init, subsample=subsample,
             max_features=max_features,
             min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             validation_fraction=validation_fraction,
@@ -1759,9 +1738,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     # FIXME: to be removed in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
-                "in version 0.24 and will be removed in 1.1 "
-                "(renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute n_classes_ was deprecated "
+        "in version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def n_classes_(self):
         try:

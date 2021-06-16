@@ -17,7 +17,6 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..base import is_classifier
 
 from . import _criterion
@@ -76,7 +75,6 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
-@_deprecate_positional_args
 def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False, impurity=True,
               node_ids=False, proportion=False, rounded=False, precision=3,
@@ -393,13 +391,13 @@ class _DOTTreeExporter(_BaseTreeExporter):
     def export(self, decision_tree):
         # Check length of feature_names before getting into the tree node
         # Raise error if length of feature_names does not match
-        # n_features_ in the decision_tree
+        # n_features_in_ in the decision_tree
         if self.feature_names is not None:
-            if len(self.feature_names) != decision_tree.n_features_:
+            if len(self.feature_names) != decision_tree.n_features_in_:
                 raise ValueError("Length of feature_names, %d "
                                  "does not match number of features, %d"
                                  % (len(self.feature_names),
-                                    decision_tree.n_features_))
+                                    decision_tree.n_features_in_))
         # each part writes to out_file
         self.head()
         # Now recurse the tree and add node & edge attributes
@@ -613,7 +611,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
         import matplotlib.pyplot as plt
         kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
-                      zorder=100 - 10 * depth, xycoords='axes pixels',
+                      zorder=100 - 10 * depth, xycoords='axes points',
                       arrowprops=self.arrow_args.copy())
         kwargs['arrowprops']['edgecolor'] = plt.rcParams['text.color']
 
@@ -648,7 +646,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
-@_deprecate_positional_args
 def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
@@ -804,7 +801,6 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
-@_deprecate_positional_args
 def export_text(decision_tree, *, feature_names=None, max_depth=10,
                 spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.

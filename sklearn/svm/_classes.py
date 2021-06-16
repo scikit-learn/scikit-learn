@@ -5,7 +5,6 @@ from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 
 
@@ -115,6 +114,11 @@ class LinearSVC(LinearClassifierMixin,
     classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
@@ -178,7 +182,6 @@ class LinearSVC(LinearClassifierMixin,
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-    @_deprecate_positional_args
     def __init__(self, penalty='l2', loss='squared_hinge', *, dual=True,
                  tol=1e-4, C=1.0, multi_class='ovr', fit_intercept=True,
                  intercept_scaling=1, class_weight=None, verbose=0,
@@ -248,7 +251,7 @@ class LinearSVC(LinearClassifierMixin,
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -333,6 +336,11 @@ class LinearSVR(RegressorMixin, LinearModel):
     intercept_ : ndarray of shape (1) if n_classes == 2 else (n_classes)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
@@ -373,7 +381,6 @@ class LinearSVR(RegressorMixin, LinearModel):
         various loss functions and regularization regimes.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, epsilon=0.0, tol=1e-4, C=1.0,
                  loss='epsilon_insensitive', fit_intercept=True,
                  intercept_scaling=1., dual=True, verbose=0,
@@ -434,7 +441,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -586,6 +593,11 @@ class SVC(BaseSVC):
     intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
@@ -645,7 +657,6 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    @_deprecate_positional_args
     def __init__(self, *, C=1.0, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
@@ -666,7 +677,7 @@ class SVC(BaseSVC):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -807,6 +818,11 @@ class NuSVC(BaseSVC):
     intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
@@ -866,7 +882,6 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    @_deprecate_positional_args
     def __init__(self, *, nu=0.5, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
@@ -886,10 +901,10 @@ class NuSVC(BaseSVC):
         return {
             '_xfail_checks': {
                 'check_methods_subset_invariance':
-                'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored.',
+                ('fails for the decision_function method'),
+                'check_class_weight_classifiers': ('class_weight is ignored.'),
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -986,6 +1001,11 @@ class SVR(RegressorMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1033,7 +1053,6 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = 'epsilon_svr'
 
-    @_deprecate_positional_args
     def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
@@ -1048,7 +1067,7 @@ class SVR(RegressorMixin, BaseLibSVM):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1139,6 +1158,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1186,7 +1210,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = 'nu_svr'
 
-    @_deprecate_positional_args
     def __init__(self, *, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma='scale', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
@@ -1201,7 +1224,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1288,6 +1311,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constant in the decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1325,7 +1353,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     _impl = 'one_class'
 
-    @_deprecate_positional_args
     def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
@@ -1422,6 +1449,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }

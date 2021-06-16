@@ -12,7 +12,7 @@ from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_random_state
 from ..utils.deprecation import deprecated
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
 from .._config import config_context
@@ -32,7 +32,6 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
-@_deprecate_positional_args
 def affinity_propagation(S, *, preference=None, convergence_iter=15,
                          max_iter=200, damping=0.5, copy=True, verbose=False,
                          return_n_iter=False, random_state=None):
@@ -310,6 +309,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations taken to converge.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
@@ -352,7 +356,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     array([[1, 2],
            [4, 2]])
     """
-    @_deprecate_positional_args
     def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
                  verbose=False, random_state=None):
@@ -368,8 +371,9 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
@@ -438,7 +442,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self._validate_data(X, reset=False, accept_sparse='csr')
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")

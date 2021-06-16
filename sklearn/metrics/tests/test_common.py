@@ -511,14 +511,11 @@ def _require_positive_targets(y1, y2):
 def test_symmetry_consistency():
 
     # We shouldn't forget any metrics
-    assert (SYMMETRIC_METRICS.union(
-        NOT_SYMMETRIC_METRICS, set(THRESHOLDED_METRICS),
-        METRIC_UNDEFINED_BINARY_MULTICLASS) ==
-        set(ALL_METRICS))
+    assert ((SYMMETRIC_METRICS | NOT_SYMMETRIC_METRICS |
+             set(THRESHOLDED_METRICS) | METRIC_UNDEFINED_BINARY_MULTICLASS) ==
+            set(ALL_METRICS))
 
-    assert (
-        SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS) ==
-        set())
+    assert (SYMMETRIC_METRICS & NOT_SYMMETRIC_METRICS) == set()
 
 
 @pytest.mark.parametrize("name", sorted(SYMMETRIC_METRICS))
@@ -821,7 +818,7 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809
-    [([np.nan, 1, 2], [1, 2, 3])]
+    [([np.nan, 1, 2], [1, 2, 3])]  # type: ignore
 )
 def test_classification_inf_nan_input(metric, y_true, y_score):
     """check that classification metrics raise a message mentioning the

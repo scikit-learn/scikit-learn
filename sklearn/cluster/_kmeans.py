@@ -24,7 +24,6 @@ from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import deprecated
@@ -252,7 +251,6 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
-@_deprecate_positional_args
 def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
             n_init=10, max_iter=300, verbose=False, tol=1e-4,
             random_state=None, copy_x=True, algorithm="auto",
@@ -768,6 +766,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     MiniBatchKMeans : Alternative online implementation that does incremental
@@ -813,7 +816,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     array([[10.,  2.],
            [ 1.,  2.]])
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, verbose=0, random_state=None,
                  copy_x=True, algorithm='auto'):
@@ -1225,7 +1227,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             },
         }
 
@@ -1468,6 +1470,11 @@ class MiniBatchKMeans(KMeans):
            This attribute is deprecated in 0.24 and will be removed in
            1.1 (renaming of 0.26).
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     KMeans : The classic implementation of the clustering method based on the
@@ -1508,7 +1515,6 @@ class MiniBatchKMeans(KMeans):
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
     """
-    @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
                  batch_size=1024, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
@@ -1524,20 +1530,23 @@ class MiniBatchKMeans(KMeans):
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
 
-    @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
-                " and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "The attribute 'counts_' is deprecated in 0.24"
+        " and will be removed in 1.1 (renaming of 0.26).")
     @property
     def counts_(self):
         return self._counts
 
-    @deprecated("The attribute 'init_size_' is deprecated in "  # type: ignore
-                "0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "The attribute 'init_size_' is deprecated in "
+        "0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def init_size_(self):
         return self._init_size
 
-    @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "The attribute 'random_state_' is deprecated "
+        "in 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def random_state_(self):
         return getattr(self, "_random_state", None)
@@ -1917,6 +1926,6 @@ class MiniBatchKMeans(KMeans):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
