@@ -413,6 +413,8 @@ Samples generator
    ensemble.VotingRegressor
    ensemble.HistGradientBoostingRegressor
    ensemble.HistGradientBoostingClassifier
+   ensemble.GAMBoostingRegressor
+   ensemble.GAMBoostingClassifier
 
 
 .. autosummary::

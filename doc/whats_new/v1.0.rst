@@ -262,6 +262,10 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| Adds generalized additive models,
+  :class:`ensemble.GAMBoostingClassifier` and
+  :class:`ensemble.GAMBoostingRegressor`. :pr:`19914` by `Thomas Fan`_.
+
 - |Fix| Do not allow to compute out-of-bag (OOB) score in
   :class:`ensemble.RandomForestClassifier` and
   :class:`ensemble.ExtraTreesClassifier` with multiclass-multioutput target
@@ -447,6 +451,11 @@ Changelog
   group within a single split.
   :pr:`18649` by :user:`Leandro Hermida <hermidalc>` and
   :user:`Rodion Martynov <marrodion>`.
+
+- |Fix| The `fit` method of the successive halving parameter search
+  (:class:`model_selection.HalvingGridSearchCV`, and
+  :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
+  `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
