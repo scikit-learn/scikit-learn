@@ -646,19 +646,25 @@ def pairwise_distances_argmin_min(
     """
     X, Y = check_pairwise_arrays(X, Y)
 
-    if metric_kwargs is None:
-        metric_kwargs = {}
+    if metric == "fast_sqeuclidean":
+        # TODO: generalise this simple plug here
+        values, indices = _argkmin(X, Y, k=1, strategy="auto", return_distance=True)
+        values = np.ndarray.flatten(values)
+        indices = np.ndarray.flatten(indices)
+    else:
+        if metric_kwargs is None:
+            metric_kwargs = {}
 
-    if axis == 0:
-        X, Y = Y, X
+        if axis == 0:
+            X, Y = Y, X
 
-    indices, values = zip(
-        *pairwise_distances_chunked(
-            X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
+        indices, values = zip(
+            *pairwise_distances_chunked(
+                X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
+            )
         )
-    )
-    indices = np.concatenate(indices)
-    values = np.concatenate(values)
+        indices = np.concatenate(indices)
+        values = np.concatenate(values)
 
     return indices, values
 

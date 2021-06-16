@@ -1477,3 +1477,25 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # and fails due to rounding errors
     rtol = 1e-5 if dtype is np.float32 else 1e-7
     assert_allclose(dist, expected_dist, rtol=rtol)
+
+
+@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("d", [5, 10, 100])
+@pytest.mark.parametrize("X_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
+@pytest.mark.parametrize("Y_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
+@pytest.mark.parametrize("sign", [1, -1])
+def test_fast_sqeuclidean_correctness(n, d, X_translation, Y_translation, sign):
+
+    rng = np.random.RandomState(1)
+
+    # Translating to test numerical stability
+    X = X_translation + rng.rand(int(n * d)).reshape((-1, d))
+    Y = sign * Y_translation + rng.rand(int(n * d)).reshape((-1, d))
+
+    argmins, distances = pairwise_distances_argmin_min(X, Y,
+                                                       metric="euclidean")
+    fsq_argmins, fsq_distances = pairwise_distances_argmin_min(X, Y,
+                                                               metric="fast_sqeuclidean")
+
+    np.testing.assert_array_equal(argmins, fsq_argmins)
+    np.testing.assert_almost_equal(distances, fsq_distances)
