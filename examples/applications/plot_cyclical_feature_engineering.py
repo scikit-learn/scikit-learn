@@ -125,7 +125,9 @@ gbrt_pipeline = make_pipeline(
 
 # %%
 #
-# Lets evaluate our gradient boosting model with
+# Lets evaluate our gradient boosting model with the mean absolute error of the
+# relative demand averaged accross our 5 time-based cross-validation splits:
+
 
 def evaluate(model, X, y, cv):
     cv_results = cross_validate(
@@ -141,8 +143,19 @@ def evaluate(model, X, y, cv):
 
 evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 
+# %%
+# This models has an average error around 4 to 5% of the maximum demand. This
+# is quite good for a model with default hyper-parameter that just required to
+# make the categorical variables explicit. Note that the time related features
+# are passed as such but this not much of a problem for tree-based models as
+# they can learn a non-monotonic relationship between ordinal input features
+# and the target.
+#
+# This is not the case for linear regression model as we will see in the
+# following.
 
 # %%
+# As usual for linear models, categorical variables need to be one-hot encoded:
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import RidgeCV
 import numpy as np
@@ -238,7 +251,8 @@ plt.ylim(0, 1)
 
 plt.figure(figsize=(12, 4))
 last_hours = slice(-96, None)
-plt.plot(y.iloc[test_0].values[last_hours], label="True")
-plt.plot(gbrt_predictions[last_hours], label="GBDT predictions")
-plt.plot(cyclic_spline_poly_predictions[last_hours], label="Spline poly predictions")
+plt.plot(y.iloc[test_0].values[last_hours], "x-", label="True")
+plt.plot(gbrt_predictions[last_hours], "x-", label="GBDT predictions")
+plt.plot(cyclic_spline_poly_predictions[last_hours], "x-",
+         label="Spline poly predictions")
 _ = plt.legend()
