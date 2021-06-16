@@ -13,25 +13,44 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import VotingClassifier, VotingRegressor
+from sklearn.ensemble import (
+    VotingClassifier, VotingRegressor, AdaBoostClassifier)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
+from sklearn.multioutput import RegressorChain, ClassifierChain
+from sklearn.metrics import jaccard_score
+from sklearn.utils import shuffle
 
 
 # Load datasets
+
+# Classification
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
+# Regression
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
+
+# Multioutput regression
+X_r_multi, y_r_multi = datasets.load_linnerud(return_X_y=True)
+
+# Multiouput binarized classification
+X_multi_bin, y_multi_bin = datasets.make_multilabel_classification(
+    n_samples=100, n_classes=8, n_labels=5, random_state=42)
+iris = datasets.load_iris()
+
+# Multiouput classification
+X_multi = X
+y1 = iris.target
+y2 = shuffle(y1, random_state=42)
+y_multi = np.column_stack((y1, y2))
 
 
 @pytest.mark.parametrize(
@@ -227,21 +246,6 @@ def test_predict_proba_on_toy_problem():
                                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                                 voting='hard')
         eclf.fit(X, y).predict_proba(X)
-
-
-def test_multilabel():
-    """Check if error is raised for multilabel classification."""
-    X, y = make_multilabel_classification(n_classes=2, n_labels=1,
-                                          allow_unlabeled=False,
-                                          random_state=123)
-    clf = OneVsRestClassifier(SVC(kernel='linear'))
-
-    eclf = VotingClassifier(estimators=[('ovr', clf)], voting='hard')
-
-    try:
-        eclf.fit(X, y)
-    except NotImplementedError:
-        return
 
 
 def test_gridsearch():
@@ -540,3 +544,122 @@ def test_voting_verbose(estimator, capsys):
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
+
+
+def test_multi_output_regression():
+    X_train, X_test, y_train, _ = train_test_split(
+        X_r_multi, y_r_multi, test_size=.25, random_state=42)
+
+    base_regs = [DummyRegressor(strategy='mean'),
+                 DummyRegressor(strategy='median'),
+                 DummyRegressor(strategy='quantile', quantile=.2),
+                 DummyRegressor(strategy='constant', constant=0)]
+    multi_regs = [(est.strategy, RegressorChain(est, random_state=42))
+                  for est in base_regs]
+
+    v_reg = VotingRegressor(multi_regs)
+    v_pred = v_reg.fit(X_train, y_train).predict(X_test)
+
+    est_pred = [reg.fit(X_train, y_train).predict(X_test)
+                for _, reg in multi_regs]
+    avg = np.average(np.asarray(est_pred), axis=0)
+
+    assert_almost_equal(v_pred, avg, decimal=2)
+
+
+@pytest.mark.parametrize(
+    "voting_rule",
+    ["hard", "soft"]
+)
+def test_multi_label_classification_binarized(voting_rule):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multi_bin, y_multi_bin, test_size=.25, random_state=42)
+    base_clsf = AdaBoostClassifier()
+    chains = [(str(i), ClassifierChain(base_clsf, order='random',
+                                       random_state=i))
+              for i in range(5)]
+
+    est_pred = [est.fit(X_train, y_train).predict(X_test)
+                for _, est in chains]
+    avg_score = np.average([jaccard_score(y_test, pred, average='samples')
+                            for pred in est_pred])
+
+    v_class = VotingClassifier(chains, voting=voting_rule)
+    y_pred = v_class.fit(X_train, y_train).predict(X_test)
+    v_score = jaccard_score(y_test, y_pred, average='samples')
+    assert y_pred.shape == y_test.shape  # Correct output format
+    assert v_score > avg_score  # Better performance than an individual model
+
+
+def test_multi_label_classification_not_binarized():
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multi, y_multi, test_size=.25, random_state=42)
+
+    base_clsf = AdaBoostClassifier()
+    chains = [(str(i), ClassifierChain(base_clsf, order='random',
+                                       random_state=i))
+              for i in range(5)]
+
+    v_class = VotingClassifier(chains)
+    y_pred = v_class.fit(X_train, y_train).predict(X_test)
+    assert y_pred.shape == y_test.shape  # Correct output format
+    # Second feature is random, so the resultats can't be that high
+    assert _matrix_similarity(y_pred, y_test) > 0.5  # Random is 0.33
+
+    v_class = VotingClassifier(chains, voting='soft')
+    msg = ("Soft voting not handled yet for "
+           "multiclass-multioutput problems")
+    assert_raise_message(ValueError, msg, v_class.fit,
+                         X_train, y_train)
+
+
+def test_label_sequence():
+    X = np.array([[1, 2, 3],
+                  [1, 2, 4],
+                  [0, 0, 0],
+                  [0, 0, 4]])
+    y = [["label1"],
+         ["label1"],
+         [],
+         ["label1", "label2"]]
+
+    base_clsf = AdaBoostClassifier()
+    chains = [(str(i), ClassifierChain(base_clsf, order='random',
+                                       random_state=i))
+              for i in range(5)]
+
+    v_class = VotingClassifier(chains)
+
+    msg = 'You appear to be using a legacy multi-label data'
+    assert_raise_message(ValueError, msg, v_class.fit, X, y)
+
+
+# To replace jaccard score for multiouput multilabel
+def _matrix_similarity(y_pred, y_true):
+    nb_similar_values = np.count_nonzero(y_pred == y_true)
+    return nb_similar_values / y_pred.size
+
+
+def test_incorrect_output_shape():
+    X = np.random.rand(10, 5)
+    y_r = np.random.rand(10, 2, 2)
+    y = np.random.randint(5, size=(10, 2, 3))
+    msg = ('y argument should be a 1 or 2D array-like,'
+           'got array with shape %s')
+
+    base_regs = [DummyRegressor(strategy='mean'),
+                 DummyRegressor(strategy='median')]
+    multi_regs = [(est.strategy, RegressorChain(est, random_state=42))
+                  for est in base_regs]
+    v_reg = VotingRegressor(multi_regs)
+    assert_raise_message(ValueError, msg % str(y_r.shape), v_reg.fit,
+                         X, y_r)
+
+    base_clsf = AdaBoostClassifier()
+    chains = [(str(i), ClassifierChain(base_clsf, order='random',
+                                       random_state=i))
+              for i in range(5)]
+
+    v_class = VotingClassifier(chains)
+    assert_raise_message(ValueError, msg % str(y.shape), v_class.fit,
+                         X, y)

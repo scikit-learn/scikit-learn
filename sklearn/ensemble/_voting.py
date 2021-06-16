@@ -28,7 +28,7 @@ from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import type_of_target
 from ..utils.validation import column_or_1d
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
@@ -160,7 +160,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
         the sums of the predicted probabilities, which is recommended for
-        an ensemble of well-calibrated classifiers.
+        an ensemble of well-calibrated classifiers. 'soft' not handled for
+        multiouput-multilabel problems.
 
     weights : array-like of shape (n_classifiers,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -269,7 +270,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : array-like
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -284,20 +285,66 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
 
         """
-        check_classification_targets(y)
-        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
-            raise NotImplementedError('Multilabel and multi-output'
-                                      ' classification is not supported.')
+        self._classif_type = type_of_target(y)
 
         if self.voting not in ('soft', 'hard'):
             raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
                              % self.voting)
-
-        self.le_ = LabelEncoder().fit(y)
-        self.classes_ = self.le_.classes_
-        transformed_y = self.le_.transform(y)
+        if (self._classif_type == 'multiclass-multioutput' and
+                self.voting == 'soft'):
+            raise ValueError(("Soft voting not handled yet for "
+                              "multiclass-multioutput problems"))
+        self._define_encoder(y)
+        transformed_y = self._transform_y(y)
 
         return super().fit(X, transformed_y, sample_weight)
+
+    def _define_encoder(self, y):
+        "Define the appropriate encode according the classification type."
+        if self._classif_type in ['binary', 'multiclass']:
+            self.le_ = LabelEncoder().fit(y)
+            self.classes_ = self.le_.classes_
+        elif self._classif_type == 'multiclass-multioutput':
+            self.le_ = [LabelEncoder().fit(column) for column in y.T]
+            self.classes_ = [encoder.classes_ for encoder in self.le_]
+        elif self._classif_type == 'multilabel-indicator':
+            self.le_ = None
+            self.classes_ = None
+        else:
+            if isinstance(y, np.ndarray):
+                array_y = y
+            else:
+                array_y = np.array(y)
+            if len(array_y.shape) > 2 and array_y.shape[2] > 1:
+                raise ValueError('y argument should be a 1 or 2D array-like,'
+                                 'got array with shape %s' % (str(y.shape)))
+            else:
+                raise ValueError('Unknown label type: %r' % self._classif_type)
+
+    def _transform_y(self, y):
+        "Transform y for the classification task."
+        if self._classif_type == 'multilabel-indicator':
+            return y
+        elif self._classif_type == 'multiclass-multioutput':
+            values = [encoder.transform(col)
+                      for encoder, col in zip(self.le_, y.T)]
+            return np.array(values, dtype=np.int32).T
+        else:
+            return self.le_.transform(y)
+
+    def _inverse_transform_y(self, y):
+        "Transform y for the classification task."
+        if not issubclass(y.dtype.type, np.integer):
+            y = y.astype(np.int32)
+
+        if self._classif_type == 'multilabel-indicator':
+            return y
+        elif self._classif_type == 'multiclass-multioutput':
+            values = [encoder.inverse_transform(col)
+                      for encoder, col in zip(self.le_, y.T)]
+            return np.array(values).T
+        else:
+            return self.le_.inverse_transform(y)
 
     def predict(self, X):
         """Predict class labels for X.
@@ -309,23 +356,35 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Returns
         -------
-        maj : array-like of shape (n_samples,)
+        maj : array-like
             Predicted class labels.
         """
         check_is_fitted(self)
+
         if self.voting == 'soft':
-            maj = np.argmax(self.predict_proba(X), axis=1)
+            probas = self.predict_proba(X)
+            if self._classif_type in ['binary', 'multiclass']:
+                maj = np.argmax(probas, axis=1)
+            else:
+                # We have to return a binary matrix
+                maj = np.rint(probas)
 
         else:  # 'hard' voting
             predictions = self._predict(X)
-            maj = np.apply_along_axis(
-                lambda x: np.argmax(
-                    np.bincount(x, weights=self._weights_not_none)),
-                axis=1, arr=predictions)
+            if not issubclass(predictions.dtype.type, np.integer):
+                predictions = predictions.astype(np.int32)
+            if self._classif_type in ['binary', 'multiclass']:
+                maj = np.apply_along_axis(
+                        lambda x: np.argmax(
+                            np.bincount(x, weights=self._weights_not_none)),
+                        axis=1, arr=predictions)
+            else:
+                maj = np.apply_along_axis(
+                        lambda x: np.argmax(
+                            np.bincount(x, weights=self._weights_not_none)),
+                        axis=2, arr=predictions).T
 
-        maj = self.le_.inverse_transform(maj)
-
-        return maj
+        return self._inverse_transform_y(maj)
 
     def _collect_probas(self, X):
         """Collect results from clf.predict calls."""
@@ -494,7 +553,15 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        y = column_or_1d(y, warn=True)
+        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
+            if len(y.shape) > 2 and y.shape[2] > 1:
+                raise ValueError('y argument should be a 1 or 2D array-like,'
+                                 'got array with shape %s' % (str(y.shape)))
+            self.multioutput_ = True
+        else:
+            self.multioutput_ = False
+            y = column_or_1d(y, warn=True)
+
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):
@@ -514,8 +581,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1,
-                          weights=self._weights_not_none)
+        axis = 2 if self.multioutput_ else 1
+        return np.average(self._predict(X), axis=axis,
+                          weights=self._weights_not_none).T
 
     def transform(self, X):
         """Return predictions for X for each estimator.
