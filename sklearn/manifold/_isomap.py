@@ -134,7 +134,6 @@ class Isomap(TransformerMixin, BaseEstimator):
     .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
-    # Once positional arguments are no longer supported, we should move `radius`
     # closer to `n_neighbors`, details see pull request 19794.
     def __init__(self, *, n_neighbors=5, radius=None, n_components=2,
                  eigen_solver='auto', tol=0, max_iter=None, path_method='auto',
