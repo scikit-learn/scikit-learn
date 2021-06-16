@@ -48,6 +48,10 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
+
+# TODO: Remove filterwarning in 1.2
+pytestmark = pytest.mark.filterwarnings("ignore:Option 'auto'.*in v1.2.*:FutureWarning")
+
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 

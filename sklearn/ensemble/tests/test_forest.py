@@ -57,6 +57,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.tree._classes import SPARSE_SPLITTERS
 
 
+# TODO: Remove filterwarning in 1.2
+pytestmark = pytest.mark.filterwarnings("ignore:Option 'auto'.*in v1.2.*:FutureWarning")
+
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]

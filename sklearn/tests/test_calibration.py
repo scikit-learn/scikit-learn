@@ -117,13 +117,16 @@ def test_calibration_bad_method(data, ensemble):
         clf_invalid_method.fit(X, y)
 
 
+# TODO: Remove filterwarning in 1.2
+@pytest.mark.filterwarnings("ignore:Option 'auto'.*in v1.2.*:FutureWarning")
 @pytest.mark.parametrize('ensemble', [True, False])
 def test_calibration_regressor(data, ensemble):
     # `base-estimator` should provide either decision_function or
     # predict_proba (most regressors, for instance, should fail)
     X, y = data
-    clf_base_regressor = \
-        CalibratedClassifierCV(RandomForestRegressor(), ensemble=ensemble)
+    clf_base_regressor = CalibratedClassifierCV(
+        RandomForestRegressor(), ensemble=ensemble
+    )
     with pytest.raises(RuntimeError):
         clf_base_regressor.fit(X, y)
 
