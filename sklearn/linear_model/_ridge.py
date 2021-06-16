@@ -269,7 +269,8 @@ def _solve_trf(X, y, alpha,
                                         bounds=bounds, **lsq_config)
 
         if not result["success"]:
-            raise ValueError("Failed fitting using trf solver")
+            warnings.warn("trf solver did not converge.",
+                          ConvergenceWarning)
         coefs[i] = result["x"]
 
     return coefs

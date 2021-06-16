@@ -1487,8 +1487,8 @@ def test_trf_solver_error():
 
     model = Ridge(alpha=0.01, positive=True, solver="trf",
                   fit_intercept=False, tol=1e-12, max_iter=1)
-    with pytest.raises(ValueError,
-                       match="Failed fitting using trf solver"):
+    with pytest.warns(ConvergenceWarning,
+                      match="trf solver did not converge"):
         model.fit(X, y)
 
 
