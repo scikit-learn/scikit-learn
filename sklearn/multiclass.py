@@ -750,7 +750,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             return self.classes_[(Y > 0).astype(int)]
         return self.classes_[Y.argmax(axis=1)]
 
-    def decision_function(self, X):
+    @_deprecate_positional_args
+    def decision_function(self, X, random_state='warn'):
         """Decision function for the OneVsOneClassifier.
 
         The decision values for the samples are computed by adding the
@@ -761,6 +762,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+        init: issues a warning by default and makes it possible to choose
+              between the past or future behaviour.
 
         Returns
         -------
@@ -789,9 +792,19 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             return Y[:, 1]
         return Y
 
-    @property
-    def n_classes_(self):
-        return len(self.classes_)
+        if random_state == 'warn':
+            warnings.warn(
+                "'random_state' will be set to None starting from 1.2 which"
+                "means that results will differ at every function call."
+                "Set 'random_state' to an integer value to silence this"
+                "warning, or to 0 to keep the behavior of versions <1.0",
+                FutureWarning
+            )
+        random_state = 0
+
+        @property
+        def n_classes_(self):
+            return len(self.classes_)
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported

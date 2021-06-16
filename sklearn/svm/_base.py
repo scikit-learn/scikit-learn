@@ -561,7 +561,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         return np.asarray(y, dtype=np.float64, order='C')
 
-    def decision_function(self, X):
+    @_deprecate_positional_args
+    def decision_function(self, X, random_state='warn'):
         """Evaluates the decision function for the samples in X.
 
         Parameters
@@ -592,6 +593,16 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             return _ovr_decision_function(dec < 0, -dec, len(self.classes_))
         return dec
 
+        if random_state == 'warn':
+            warnings.warn(
+                "'random_state' will be set to None starting from 1.2 which"
+                "means that results will differ at every function call."
+                "Set 'random_state' to an integer value to silence this"
+                "warning, or to 0 to keep the behavior of versions <1.0",
+                FutureWarning
+            )
+        random_state = 0
+
     def predict(self, X):
         """Perform classification on samples in X.
 
@@ -599,8 +610,9 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
-                (n_samples_test, n_samples_train)
+        X : {array-like, sparse matrix} of shape
+            (n_samples, n_features) or \
+            (n_samples_test, n_samples_train)
             For kernel="precomputed", the expected shape of X is
             (n_samples_test, n_samples_train).
 

@@ -461,4 +461,4 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     # of 1 vote.
     transformed_confidences = (sum_of_confidences /
                                (3 * (np.abs(sum_of_confidences) + 1)))
-    return votes + transformed_confidences
+    return votes + transformed_confidences - (n_classes - 1) / 2
