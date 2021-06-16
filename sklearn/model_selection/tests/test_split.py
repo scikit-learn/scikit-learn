@@ -940,8 +940,7 @@ def test_leave_one_p_group_out():
     assert repr(logo) == 'LeaveOneGroupOut()'
     assert repr(lpgo_1) == 'LeavePGroupsOut(n_groups=1)'
     assert repr(lpgo_2) == 'LeavePGroupsOut(n_groups=2)'
-    assert (repr(LeavePGroupsOut(n_groups=3)) ==
-                 'LeavePGroupsOut(n_groups=3)')
+    assert (repr(LeavePGroupsOut(n_groups=3)) == 'LeavePGroupsOut(n_groups=3)')
 
     for j, (cv, p_groups_out) in enumerate(((logo, 1), (lpgo_1, 1),
                                             (lpgo_2, 2))):
@@ -1008,7 +1007,7 @@ def test_leave_group_out_changing_groups():
     # n_splits = no of 2 (p) group combinations of the unique groups = 3C2 = 3
     assert (
         3 == LeavePGroupsOut(n_groups=2).get_n_splits(X, y=X,
-                                                    groups=groups))
+                                                      groups=groups))
     # n_splits = no of unique groups (C(uniq_lbls, 1) = n_unique_groups)
     assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X,
                                                 groups=groups)
@@ -1184,7 +1183,6 @@ def test_train_test_split_errors():
     (-.2, 0.8),
     (0.8, 1.2),
     (0.8, 1.),
-    (0.8, 0.),
     (0.8, -.2)])
 def test_train_test_split_invalid_sizes1(train_size, test_size):
     with pytest.raises(ValueError,
@@ -1197,7 +1195,6 @@ def test_train_test_split_invalid_sizes1(train_size, test_size):
     (0, 0.8),
     (11, 0.8),
     (0.8, -10),
-    (0.8, 0),
     (0.8, 11)])
 def test_train_test_split_invalid_sizes2(train_size, test_size):
     with pytest.raises(ValueError,
@@ -1462,8 +1459,7 @@ def test_group_kfold(kfold):
     # Check that folds have approximately the same size
     assert len(folds) == len(groups)
     for i in np.unique(folds):
-        assert (tolerance >=
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+        assert (tolerance >= abs(sum(folds == i) - ideal_n_groups_per_fold))
 
     # Check that each group appears only in 1 fold
     for group in np.unique(groups):
@@ -1499,8 +1495,7 @@ def test_group_kfold(kfold):
     # Check that folds have approximately the same size
     assert len(folds) == len(groups)
     for i in np.unique(folds):
-        assert (tolerance >=
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+        assert (tolerance >= abs(sum(folds == i) - ideal_n_groups_per_fold))
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
