@@ -50,8 +50,6 @@ from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
-from .utils.validation import column_or_1d
-from .utils.validation import _assert_all_finite
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
@@ -922,8 +920,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        y = column_or_1d(y, warn=True)
-        _assert_all_finite(y)
+        y = self._validate_data(X='no_validation', y=y)
 
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {0}"
