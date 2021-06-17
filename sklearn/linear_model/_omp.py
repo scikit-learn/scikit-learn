@@ -688,7 +688,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         tol=None,
         fit_intercept=True,
         normalize="deprecated",
-        precompute="auto"
+        precompute="auto",
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
