@@ -1,4 +1,3 @@
-
 import pytest
 import numpy as np
 import scipy.sparse as sp
@@ -72,14 +71,14 @@ def test_multi_target_regression_partial_fit():
 
     y_pred = sgr.predict(X_test)
     assert_almost_equal(references, y_pred)
-    assert not hasattr(MultiOutputRegressor(Lasso), 'partial_fit')
+    assert not hasattr(MultiOutputRegressor(Lasso), "partial_fit")
 
 
 def test_multi_target_regression_one_target():
     # Test multi target regression raises
     X, y = datasets.make_regression(n_targets=1)
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
-    msg = 'at least two dimensions'
+    msg = "at least two dimensions"
     with pytest.raises(ValueError, match=msg):
         rgr.fit(X, y)
 
@@ -89,16 +88,20 @@ def test_multi_target_sparse_regression():
     X_train, y_train = X[:50], y[:50]
     X_test = X[50:]
 
-    for sparse in [sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.dok_matrix,
-                   sp.lil_matrix]:
+    for sparse in [
+        sp.csr_matrix,
+        sp.csc_matrix,
+        sp.coo_matrix,
+        sp.dok_matrix,
+        sp.lil_matrix,
+    ]:
         rgr = MultiOutputRegressor(Lasso(random_state=0))
         rgr_sparse = MultiOutputRegressor(Lasso(random_state=0))
 
         rgr.fit(X_train, y_train)
         rgr_sparse.fit(sparse(X_train), y_train)
 
-        assert_almost_equal(rgr.predict(X_test),
-                            rgr_sparse.predict(sparse(X_test)))
+        assert_almost_equal(rgr.predict(X_test), rgr_sparse.predict(sparse(X_test)))
 
 
 def test_multi_target_sample_weights_api():
@@ -120,12 +123,12 @@ def test_multi_target_sample_weight_partial_fit():
     # weighted regressor
     X = [[1, 2, 3], [4, 5, 6]]
     y = [[3.141, 2.718], [2.718, 3.141]]
-    w = [2., 1.]
+    w = [2.0, 1.0]
     rgr_w = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
     rgr_w.partial_fit(X, y, w)
 
     # weighted with different weights
-    w = [2., 2.]
+    w = [2.0, 2.0]
     rgr = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
     rgr.partial_fit(X, y, w)
 
@@ -136,7 +139,7 @@ def test_multi_target_sample_weights():
     # weighted regressor
     Xw = [[1, 2, 3], [4, 5, 6]]
     yw = [[3.141, 2.718], [2.718, 3.141]]
-    w = [2., 1.]
+    w = [2.0, 1.0]
     rgr_w = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     rgr_w.fit(Xw, yw, w)
 
@@ -165,7 +168,7 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 
 def test_multi_output_classification_partial_fit_parallelism():
-    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
     mor.partial_fit(X, y, classes)
     est1 = mor.estimators_[0]
@@ -186,7 +189,7 @@ def test_hasattr_multi_output_predict_proba():
     assert not hasattr(multi_target_linear, "predict_proba")
 
     # case where predict_proba attribute exists
-    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
     assert hasattr(multi_target_linear, "predict_proba")
@@ -195,7 +198,7 @@ def test_hasattr_multi_output_predict_proba():
 # check predict_proba passes
 def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
-    param = {'loss': ('hinge', 'log', 'modified_huber')}
+    param = {"loss": ("hinge", "log", "modified_huber")}
 
     # inner function for custom scoring
     def custom_scorer(estimator, X, y):
@@ -203,8 +206,10 @@ def test_multi_output_predict_proba():
             return 1.0
         else:
             return 0.0
-    grid_clf = GridSearchCV(sgd_linear_clf, param_grid=param,
-                            scoring=custom_scorer, cv=3)
+
+    grid_clf = GridSearchCV(
+        sgd_linear_clf, param_grid=param, scoring=custom_scorer, cv=3
+    )
     multi_target_linear = MultiOutputClassifier(grid_clf)
     multi_target_linear.fit(X, y)
 
@@ -224,13 +229,12 @@ def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict
 
-    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
 
     # train the multi_target_linear and also get the predictions.
     half_index = X.shape[0] // 2
-    multi_target_linear.partial_fit(
-        X[:half_index], y[:half_index], classes=classes)
+    multi_target_linear.partial_fit(X[:half_index], y[:half_index], classes=classes)
 
     first_predictions = multi_target_linear.predict(X)
     assert (n_samples, n_outputs) == first_predictions.shape
@@ -245,14 +249,15 @@ def test_multi_output_classification_partial_fit():
         # create a clone with the same state
         sgd_linear_clf = clone(sgd_linear_clf)
         sgd_linear_clf.partial_fit(
-            X[:half_index], y[:half_index, i], classes=classes[i])
+            X[:half_index], y[:half_index, i], classes=classes[i]
+        )
         assert_array_equal(sgd_linear_clf.predict(X), first_predictions[:, i])
         sgd_linear_clf.partial_fit(X[half_index:], y[half_index:, i])
         assert_array_equal(sgd_linear_clf.predict(X), second_predictions[:, i])
 
 
 def test_multi_output_classification_partial_fit_no_first_classes_exception():
-    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     msg = "classes must be passed on the first call to partial_fit."
     with pytest.raises(ValueError, match=msg):
@@ -278,16 +283,14 @@ def test_multi_output_classification():
     for class_probabilities in predict_proba:
         assert (n_samples, n_classes) == class_probabilities.shape
 
-    assert_array_equal(np.argmax(np.dstack(predict_proba), axis=1),
-                       predictions)
+    assert_array_equal(np.argmax(np.dstack(predict_proba), axis=1), predictions)
 
     # train the forest with each column and assert that predictions are equal
     for i in range(3):
         forest_ = clone(forest)  # create a clone with the same state
         forest_.fit(X, y[:, i])
         assert list(forest_.predict(X)) == list(predictions[:, i])
-        assert_array_equal(list(forest_.predict_proba(X)),
-                           list(predict_proba[i]))
+        assert_array_equal(list(forest_.predict_proba(X)), list(predict_proba[i]))
 
 
 def test_multiclass_multioutput_estimator():
@@ -305,8 +308,7 @@ def test_multiclass_multioutput_estimator():
     for i in range(3):
         multi_class_svc_ = clone(multi_class_svc)  # create a clone
         multi_class_svc_.fit(X, y[:, i])
-        assert (list(multi_class_svc_.predict(X)) ==
-                list(predictions[:, i]))
+        assert list(multi_class_svc_.predict(X)) == list(predictions[:, i])
 
 
 def test_multiclass_multioutput_estimator_predict_proba():
@@ -319,27 +321,38 @@ def test_multiclass_multioutput_estimator_predict_proba():
     X = rng.normal(size=(5, 5))
 
     # random labels
-    y1 = np.array(['b', 'a', 'a', 'b', 'a']).reshape(5, 1)  # 2 classes
-    y2 = np.array(['d', 'e', 'f', 'e', 'd']).reshape(5, 1)  # 3 classes
+    y1 = np.array(["b", "a", "a", "b", "a"]).reshape(5, 1)  # 2 classes
+    y2 = np.array(["d", "e", "f", "e", "d"]).reshape(5, 1)  # 3 classes
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(LogisticRegression(
-        solver='liblinear', random_state=seed))
+    clf = MultiOutputClassifier(
+        LogisticRegression(solver="liblinear", random_state=seed)
+    )
 
     clf.fit(X, Y)
 
     y_result = clf.predict_proba(X)
-    y_actual = [np.array([[0.23481764, 0.76518236],
-                          [0.67196072, 0.32803928],
-                          [0.54681448, 0.45318552],
-                          [0.34883923, 0.65116077],
-                          [0.73687069, 0.26312931]]),
-                np.array([[0.5171785, 0.23878628, 0.24403522],
-                          [0.22141451, 0.64102704, 0.13755846],
-                          [0.16751315, 0.18256843, 0.64991843],
-                          [0.27357372, 0.55201592, 0.17441036],
-                          [0.65745193, 0.26062899, 0.08191907]])]
+    y_actual = [
+        np.array(
+            [
+                [0.23481764, 0.76518236],
+                [0.67196072, 0.32803928],
+                [0.54681448, 0.45318552],
+                [0.34883923, 0.65116077],
+                [0.73687069, 0.26312931],
+            ]
+        ),
+        np.array(
+            [
+                [0.5171785, 0.23878628, 0.24403522],
+                [0.22141451, 0.64102704, 0.13755846],
+                [0.16751315, 0.18256843, 0.64991843],
+                [0.27357372, 0.55201592, 0.17441036],
+                [0.65745193, 0.26062899, 0.08191907],
+            ]
+        ),
+    ]
 
     for i in range(len(y_actual)):
         assert_almost_equal(y_result[i], y_actual[i])
@@ -349,7 +362,7 @@ def test_multi_output_classification_sample_weights():
     # weighted classifier
     Xw = [[1, 2, 3], [4, 5, 6]]
     yw = [[3, 2], [2, 3]]
-    w = np.asarray([2., 1.])
+    w = np.asarray([2.0, 1.0])
     forest = RandomForestClassifier(n_estimators=10, random_state=1)
     clf_w = MultiOutputClassifier(forest)
     clf_w.fit(Xw, yw, w)
@@ -369,7 +382,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
     # weighted classifier
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     yw = [[3, 2], [2, 3], [3, 2]]
-    w = np.asarray([2., 1., 1.])
+    w = np.asarray([2.0, 1.0, 1.0])
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
     clf_w = MultiOutputClassifier(sgd_linear_clf)
     clf_w.fit(Xw, yw, w)
@@ -415,14 +428,11 @@ def generate_multilabel_dataset_with_correlations():
     # Generate a multilabel data set from a multiclass dataset as a way of
     # by representing the integer number of the original class using a binary
     # encoding.
-    X, y = make_classification(n_samples=1000,
-                               n_features=100,
-                               n_classes=16,
-                               n_informative=10,
-                               random_state=0)
+    X, y = make_classification(
+        n_samples=1000, n_features=100, n_classes=16, n_informative=10, random_state=0
+    )
 
-    Y_multi = np.array([[int(yyy) for yyy in format(yy, '#06b')[2:]]
-                        for yy in y])
+    Y_multi = np.array([[int(yyy) for yyy in format(yy, "#06b")[2:]] for yy in y])
     return X, Y_multi
 
 
@@ -437,9 +447,9 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
 
     Y_decision = classifier_chain.decision_function(X)
 
-    Y_binary = (Y_decision >= 0)
+    Y_binary = Y_decision >= 0
     assert_array_equal(Y_binary, Y_pred)
-    assert not hasattr(classifier_chain, 'predict_proba')
+    assert not hasattr(classifier_chain, "predict_proba")
 
 
 def test_classifier_chain_fit_and_predict_with_sparse_data():
@@ -476,24 +486,25 @@ def test_classifier_chain_vs_independent_models():
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
-    assert (jaccard_score(Y_test, Y_pred_chain, average='samples') >
-            jaccard_score(Y_test, Y_pred_ovr, average='samples'))
+    assert jaccard_score(Y_test, Y_pred_chain, average="samples") > jaccard_score(
+        Y_test, Y_pred_ovr, average="samples"
+    )
 
 
 def test_base_chain_fit_and_predict():
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
-    chains = [RegressorChain(Ridge()),
-              ClassifierChain(LogisticRegression())]
+    chains = [RegressorChain(Ridge()), ClassifierChain(LogisticRegression())]
     for chain in chains:
         chain.fit(X, Y)
         Y_pred = chain.predict(X)
         assert Y_pred.shape == Y.shape
-        assert ([c.coef_.size for c in chain.estimators_] ==
-                list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+        assert [c.coef_.size for c in chain.estimators_] == list(
+            range(X.shape[1], X.shape[1] + Y.shape[1])
+        )
 
     Y_prob = chains[1].predict_proba(X)
-    Y_binary = (Y_prob >= .5)
+    Y_binary = Y_prob >= 0.5
     assert_array_equal(Y_binary, Y_pred)
 
     assert isinstance(chains[1], ClassifierMixin)
@@ -503,8 +514,10 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = sp.csr_matrix(X)
-    base_chains = [ClassifierChain(LogisticRegression(), cv=3),
-                   RegressorChain(Ridge(), cv=3)]
+    base_chains = [
+        ClassifierChain(LogisticRegression(), cv=3),
+        RegressorChain(Ridge(), cv=3),
+    ]
     for chain in base_chains:
         chain.fit(X_sparse, Y)
         Y_pred = chain.predict(X_sparse)
@@ -514,9 +527,8 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
 def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
-    for chain in [ClassifierChain(LogisticRegression()),
-                  RegressorChain(Ridge())]:
-        chain_random = clone(chain).set_params(order='random', random_state=42)
+    for chain in [ClassifierChain(LogisticRegression()), RegressorChain(Ridge())]:
+        chain_random = clone(chain).set_params(order="random", random_state=42)
         chain_random.fit(X, Y)
         chain_fixed = clone(chain).set_params(order=chain_random.order_)
         chain_fixed.fit(X, Y)
@@ -526,8 +538,7 @@ def test_base_chain_random_order():
         assert len(set(chain_random.order_)) == 4
         # Randomly ordered chain should behave identically to a fixed order
         # chain with the same order.
-        for est1, est2 in zip(chain_random.estimators_,
-                              chain_fixed.estimators_):
+        for est1, est2 in zip(chain_random.estimators_, chain_fixed.estimators_):
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
@@ -536,8 +547,7 @@ def test_base_chain_crossval_fit_and_predict():
     # performance
     X, Y = generate_multilabel_dataset_with_correlations()
 
-    for chain in [ClassifierChain(LogisticRegression()),
-                  RegressorChain(Ridge())]:
+    for chain in [ClassifierChain(LogisticRegression()), RegressorChain(Ridge())]:
         chain.fit(X, Y)
         chain_cv = clone(chain).set_params(cv=3)
         chain_cv.fit(X, Y)
@@ -547,16 +557,18 @@ def test_base_chain_crossval_fit_and_predict():
         assert Y_pred_cv.shape == Y_pred.shape
         assert not np.all(Y_pred == Y_pred_cv)
         if isinstance(chain, ClassifierChain):
-            assert jaccard_score(Y, Y_pred_cv, average='samples') > .4
+            assert jaccard_score(Y, Y_pred_cv, average="samples") > 0.4
         else:
-            assert mean_squared_error(Y, Y_pred_cv) < .25
+            assert mean_squared_error(Y, Y_pred_cv) < 0.25
 
 
 @pytest.mark.parametrize(
-    'estimator',
-    [RandomForestClassifier(n_estimators=2),
-     MultiOutputClassifier(RandomForestClassifier(n_estimators=2)),
-     ClassifierChain(RandomForestClassifier(n_estimators=2))]
+    "estimator",
+    [
+        RandomForestClassifier(n_estimators=2),
+        MultiOutputClassifier(RandomForestClassifier(n_estimators=2)),
+        ClassifierChain(RandomForestClassifier(n_estimators=2)),
+    ],
 )
 def test_multi_output_classes_(estimator):
     # Tests classes_ attribute of multioutput classifiers
@@ -564,8 +576,7 @@ def test_multi_output_classes_(estimator):
     estimator.fit(X, y)
     assert isinstance(estimator.classes_, list)
     assert len(estimator.classes_) == n_outputs
-    for estimator_classes, expected_classes in zip(classes,
-                                                   estimator.classes_):
+    for estimator_classes, expected_classes in zip(classes, estimator.classes_):
         assert_array_equal(estimator_classes, expected_classes)
 
 
@@ -583,16 +594,23 @@ class DummyClassifierWithFitParams(DummyClassifier):
 
 @pytest.mark.parametrize(
     "estimator, dataset",
-    [(MultiOutputClassifier(DummyClassifierWithFitParams(strategy="prior")),
-      datasets.make_multilabel_classification()),
-     (MultiOutputRegressor(DummyRegressorWithFitParams()),
-      datasets.make_regression(n_targets=3))])
+    [
+        (
+            MultiOutputClassifier(DummyClassifierWithFitParams(strategy="prior")),
+            datasets.make_multilabel_classification(),
+        ),
+        (
+            MultiOutputRegressor(DummyRegressorWithFitParams()),
+            datasets.make_regression(n_targets=3),
+        ),
+    ],
+)
 def test_multioutput_estimator_with_fit_params(estimator, dataset):
     X, y = dataset
     some_param = np.zeros_like(X)
     estimator.fit(X, y, some_param=some_param)
     for dummy_estimator in estimator.estimators_:
-        assert 'some_param' in dummy_estimator._fit_params
+        assert "some_param" in dummy_estimator._fit_params
 
 
 def test_regressor_chain_w_fit_params():
@@ -602,15 +620,14 @@ def test_regressor_chain_w_fit_params():
     weight = rng.rand(y.shape[0])
 
     class MySGD(SGDRegressor):
-
         def fit(self, X, y, **fit_params):
-            self.sample_weight_ = fit_params['sample_weight']
+            self.sample_weight_ = fit_params["sample_weight"]
             super().fit(X, y, **fit_params)
 
     model = RegressorChain(MySGD())
 
     # Fitting with params
-    fit_param = {'sample_weight': weight}
+    fit_param = {"sample_weight": weight}
     model.fit(X, y, **fit_param)
 
     for est in model.estimators_:
@@ -618,9 +635,8 @@ def test_regressor_chain_w_fit_params():
 
 
 @pytest.mark.parametrize(
-    'MultiOutputEstimator, Estimator',
-    [(MultiOutputClassifier, LogisticRegression),
-     (MultiOutputRegressor, Ridge)]
+    "MultiOutputEstimator, Estimator",
+    [(MultiOutputClassifier, LogisticRegression), (MultiOutputRegressor, Ridge)],
 )
 # FIXME: we should move this test in `estimator_checks` once we are able
 # to construct meta-estimator instances
@@ -630,7 +646,7 @@ def test_support_missing_values(MultiOutputEstimator, Estimator):
     # the underlying pipeline, regressor or classifier
     rng = np.random.RandomState(42)
     X, y = rng.randn(50, 2), rng.binomial(1, 0.5, (50, 3))
-    mask = rng.choice([1, 0], X.shape, p=[.01, .99]).astype(bool)
+    mask = rng.choice([1, 0], X.shape, p=[0.01, 0.99]).astype(bool)
     X[mask] = np.nan
 
     pipe = make_pipeline(SimpleImputer(), Estimator())
@@ -658,7 +674,7 @@ def test_classifier_chain_tuple_invalid_order():
 
     chain = ClassifierChain(RandomForestClassifier(), order=order)
 
-    with pytest.raises(ValueError, match='invalid order'):
+    with pytest.raises(ValueError, match="invalid order"):
         chain.fit(X, y)
 
 
@@ -669,7 +685,7 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
     stacker = StackingRegressor(
         estimators=[("sgd", SGDRegressor(random_state=1))],
         final_estimator=Ridge(),
-        cv=2
+        cv=2,
     )
 
     reg = MultiOutputRegressor(estimator=stacker).fit(X, y)

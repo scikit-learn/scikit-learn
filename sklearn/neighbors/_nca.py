@@ -166,9 +166,18 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
     """
 
-    def __init__(self, n_components=None, *, init='auto', warm_start=False,
-                 max_iter=50, tol=1e-5, callback=None, verbose=0,
-                 random_state=None):
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        init="auto",
+        warm_start=False,
+        max_iter=50,
+        tol=1e-5,
+        callback=None,
+        verbose=0,
+        random_state=None
+    ):
         self.n_components = n_components
         self.init = init
         self.warm_start = warm_start
@@ -214,15 +223,16 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         # Create a dictionary of parameters to be passed to the optimizer
         disp = self.verbose - 2 if self.verbose > 1 else -1
-        optimizer_params = {'method': 'L-BFGS-B',
-                            'fun': self._loss_grad_lbfgs,
-                            'args': (X, same_class_mask, -1.0),
-                            'jac': True,
-                            'x0': transformation,
-                            'tol': self.tol,
-                            'options': dict(maxiter=self.max_iter, disp=disp),
-                            'callback': self._callback
-                            }
+        optimizer_params = {
+            "method": "L-BFGS-B",
+            "fun": self._loss_grad_lbfgs,
+            "args": (X, same_class_mask, -1.0),
+            "jac": True,
+            "x0": transformation,
+            "tol": self.tol,
+            "options": dict(maxiter=self.max_iter, disp=disp),
+            "callback": self._callback,
+        }
 
         # Call the optimizer
         self.n_iter_ = 0
@@ -238,11 +248,14 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
             # Warn the user if the algorithm did not converge
             if not opt_result.success:
-                warn('[{}] NCA did not converge: {}'.format(
-                    cls_name, opt_result.message),
-                     ConvergenceWarning)
+                warn(
+                    "[{}] NCA did not converge: {}".format(
+                        cls_name, opt_result.message
+                    ),
+                    ConvergenceWarning,
+                )
 
-            print('[{}] Training took {:8.2f}s.'.format(cls_name, t_train))
+            print("[{}] Training took {:8.2f}s.".format(cls_name, t_train))
 
         return self
 
@@ -310,33 +323,35 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
-            check_scalar(
-                self.n_components, 'n_components', numbers.Integral, min_val=1)
+            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
 
             if self.n_components > X.shape[1]:
-                raise ValueError('The preferred dimensionality of the '
-                                 'projected space `n_components` ({}) cannot '
-                                 'be greater than the given data '
-                                 'dimensionality ({})!'
-                                 .format(self.n_components, X.shape[1]))
+                raise ValueError(
+                    "The preferred dimensionality of the "
+                    "projected space `n_components` ({}) cannot "
+                    "be greater than the given data "
+                    "dimensionality ({})!".format(self.n_components, X.shape[1])
+                )
 
         # If warm_start is enabled, check that the inputs are consistent
-        check_scalar(self.warm_start, 'warm_start', bool)
-        if self.warm_start and hasattr(self, 'components_'):
+        check_scalar(self.warm_start, "warm_start", bool)
+        if self.warm_start and hasattr(self, "components_"):
             if self.components_.shape[1] != X.shape[1]:
-                raise ValueError('The new inputs dimensionality ({}) does not '
-                                 'match the input dimensionality of the '
-                                 'previously learned transformation ({}).'
-                                 .format(X.shape[1],
-                                         self.components_.shape[1]))
+                raise ValueError(
+                    "The new inputs dimensionality ({}) does not "
+                    "match the input dimensionality of the "
+                    "previously learned transformation ({}).".format(
+                        X.shape[1], self.components_.shape[1]
+                    )
+                )
 
-        check_scalar(self.max_iter, 'max_iter', numbers.Integral, min_val=1)
-        check_scalar(self.tol, 'tol', numbers.Real, min_val=0.)
-        check_scalar(self.verbose, 'verbose', numbers.Integral, min_val=0)
+        check_scalar(self.max_iter, "max_iter", numbers.Integral, min_val=1)
+        check_scalar(self.tol, "tol", numbers.Real, min_val=0.0)
+        check_scalar(self.verbose, "verbose", numbers.Integral, min_val=0)
 
         if self.callback is not None:
             if not callable(self.callback):
-                raise ValueError('`callback` is not callable.')
+                raise ValueError("`callback` is not callable.")
 
         # Check how the linear transformation should be initialized
         init = self.init
@@ -347,35 +362,40 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             # Assert that init.shape[1] = X.shape[1]
             if init.shape[1] != X.shape[1]:
                 raise ValueError(
-                    'The input dimensionality ({}) of the given '
-                    'linear transformation `init` must match the '
-                    'dimensionality of the given inputs `X` ({}).'
-                    .format(init.shape[1], X.shape[1]))
+                    "The input dimensionality ({}) of the given "
+                    "linear transformation `init` must match the "
+                    "dimensionality of the given inputs `X` ({}).".format(
+                        init.shape[1], X.shape[1]
+                    )
+                )
 
             # Assert that init.shape[0] <= init.shape[1]
             if init.shape[0] > init.shape[1]:
                 raise ValueError(
-                    'The output dimensionality ({}) of the given '
-                    'linear transformation `init` cannot be '
-                    'greater than its input dimensionality ({}).'
-                    .format(init.shape[0], init.shape[1]))
+                    "The output dimensionality ({}) of the given "
+                    "linear transformation `init` cannot be "
+                    "greater than its input dimensionality ({}).".format(
+                        init.shape[0], init.shape[1]
+                    )
+                )
 
             if self.n_components is not None:
                 # Assert that self.n_components = init.shape[0]
                 if self.n_components != init.shape[0]:
-                    raise ValueError('The preferred dimensionality of the '
-                                     'projected space `n_components` ({}) does'
-                                     ' not match the output dimensionality of '
-                                     'the given linear transformation '
-                                     '`init` ({})!'
-                                     .format(self.n_components,
-                                             init.shape[0]))
-        elif init in ['auto', 'pca', 'lda', 'identity', 'random']:
+                    raise ValueError(
+                        "The preferred dimensionality of the "
+                        "projected space `n_components` ({}) does"
+                        " not match the output dimensionality of "
+                        "the given linear transformation "
+                        "`init` ({})!".format(self.n_components, init.shape[0])
+                    )
+        elif init in ["auto", "pca", "lda", "identity", "random"]:
             pass
         else:
             raise ValueError(
                 "`init` must be 'auto', 'pca', 'lda', 'identity', 'random' "
-                "or a numpy array of shape (n_components, n_features).")
+                "or a numpy array of shape (n_components, n_features)."
+            )
 
         return X, y, init
 
@@ -401,48 +421,47 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         transformation = init
-        if self.warm_start and hasattr(self, 'components_'):
+        if self.warm_start and hasattr(self, "components_"):
             transformation = self.components_
         elif isinstance(init, np.ndarray):
             pass
         else:
             n_samples, n_features = X.shape
             n_components = self.n_components or n_features
-            if init == 'auto':
+            if init == "auto":
                 n_classes = len(np.unique(y))
                 if n_components <= min(n_features, n_classes - 1):
-                    init = 'lda'
+                    init = "lda"
                 elif n_components < min(n_features, n_samples):
-                    init = 'pca'
+                    init = "pca"
                 else:
-                    init = 'identity'
-            if init == 'identity':
+                    init = "identity"
+            if init == "identity":
                 transformation = np.eye(n_components, X.shape[1])
-            elif init == 'random':
-                transformation = self.random_state_.randn(n_components,
-                                                          X.shape[1])
-            elif init in {'pca', 'lda'}:
+            elif init == "random":
+                transformation = self.random_state_.randn(n_components, X.shape[1])
+            elif init in {"pca", "lda"}:
                 init_time = time.time()
-                if init == 'pca':
-                    pca = PCA(n_components=n_components,
-                              random_state=self.random_state_)
+                if init == "pca":
+                    pca = PCA(
+                        n_components=n_components, random_state=self.random_state_
+                    )
                     if self.verbose:
-                        print('Finding principal components... ', end='')
+                        print("Finding principal components... ", end="")
                         sys.stdout.flush()
                     pca.fit(X)
                     transformation = pca.components_
-                elif init == 'lda':
-                    from ..discriminant_analysis import (
-                        LinearDiscriminantAnalysis)
+                elif init == "lda":
+                    from ..discriminant_analysis import LinearDiscriminantAnalysis
+
                     lda = LinearDiscriminantAnalysis(n_components=n_components)
                     if self.verbose:
-                        print('Finding most discriminative components... ',
-                              end='')
+                        print("Finding most discriminative components... ", end="")
                         sys.stdout.flush()
                     lda.fit(X, y)
                     transformation = lda.scalings_.T[:n_components]
                 if self.verbose:
-                    print('done in {:5.2f}s'.format(time.time() - init_time))
+                    print("done in {:5.2f}s".format(time.time() - init_time))
         return transformation
 
     def _callback(self, transformation):
@@ -486,13 +505,16 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         if self.n_iter_ == 0:
             self.n_iter_ += 1
             if self.verbose:
-                header_fields = ['Iteration', 'Objective Value', 'Time(s)']
-                header_fmt = '{:>10} {:>20} {:>10}'
+                header_fields = ["Iteration", "Objective Value", "Time(s)"]
+                header_fmt = "{:>10} {:>20} {:>10}"
                 header = header_fmt.format(*header_fields)
                 cls_name = self.__class__.__name__
-                print('[{}]'.format(cls_name))
-                print('[{}] {}\n[{}] {}'.format(cls_name, header,
-                                                cls_name, '-' * len(header)))
+                print("[{}]".format(cls_name))
+                print(
+                    "[{}] {}\n[{}] {}".format(
+                        cls_name, header, cls_name, "-" * len(header)
+                    )
+                )
 
         t_funcall = time.time()
 
@@ -519,12 +541,15 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         if self.verbose:
             t_funcall = time.time() - t_funcall
-            values_fmt = '[{}] {:>10} {:>20.6e} {:>10.2f}'
-            print(values_fmt.format(self.__class__.__name__, self.n_iter_,
-                                    loss, t_funcall))
+            values_fmt = "[{}] {:>10} {:>20.6e} {:>10.2f}"
+            print(
+                values_fmt.format(
+                    self.__class__.__name__, self.n_iter_, loss, t_funcall
+                )
+            )
             sys.stdout.flush()
 
         return sign * loss, sign * gradient.ravel()
 
     def _more_tags(self):
-        return {'requires_y': True}
+        return {"requires_y": True}

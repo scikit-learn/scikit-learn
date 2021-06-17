@@ -117,8 +117,17 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> clf.fit(X, y)
     KernelRidge(alpha=1.0)
     """
-    def __init__(self, alpha=1, *, kernel="linear", gamma=None, degree=3,
-                 coef0=1, kernel_params=None):
+
+    def __init__(
+        self,
+        alpha=1,
+        *,
+        kernel="linear",
+        gamma=None,
+        degree=3,
+        coef0=1,
+        kernel_params=None
+    ):
         self.alpha = alpha
         self.kernel = kernel
         self.gamma = gamma
@@ -130,20 +139,18 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if callable(self.kernel):
             params = self.kernel_params or {}
         else:
-            params = {"gamma": self.gamma,
-                      "degree": self.degree,
-                      "coef0": self.coef0}
-        return pairwise_kernels(X, Y, metric=self.kernel,
-                                filter_params=True, **params)
+            params = {"gamma": self.gamma, "degree": self.degree, "coef0": self.coef0}
+        return pairwise_kernels(X, Y, metric=self.kernel, filter_params=True, **params)
 
     def _more_tags(self):
-        return {'pairwise': self.kernel == 'precomputed'}
+        return {"pairwise": self.kernel == "precomputed"}
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute _pairwise was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
+    )
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
@@ -168,8 +175,9 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : returns an instance of self.
         """
         # Convert data
-        X, y = self._validate_data(X, y, accept_sparse=("csr", "csc"),
-                                   multi_output=True, y_numeric=True)
+        X, y = self._validate_data(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -182,9 +190,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             ravel = True
 
         copy = self.kernel == "precomputed"
-        self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha,
-                                                 sample_weight,
-                                                 copy)
+        self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha, sample_weight, copy)
         if ravel:
             self.dual_coef_ = self.dual_coef_.ravel()
 
