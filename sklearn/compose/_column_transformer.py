@@ -660,7 +660,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
-            return np.hstack(Xs)
+
+            # convert to a common dtype explicitly before np.hstack
+            # detail see issue 20090
+            array_dtypes = [x.dtype if hasattr(x, 'dtype') else x.values.dtype
+                            for x in Xs]
+            common_dtype = np.find_common_type(array_dtypes, [])
+            return np.hstack([x.astype(common_dtype) for x in Xs])
 
     def _sk_visual_block_(self):
         if isinstance(self.remainder, str) and self.remainder == 'drop':
