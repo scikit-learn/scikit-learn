@@ -97,7 +97,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         *,
         input_type="dict",
         dtype=np.float64,
-        alternate_sign=True
+        alternate_sign=True,
     ):
         self._validate_params(n_features, input_type)
 

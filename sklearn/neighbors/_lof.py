@@ -191,7 +191,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         metric_params=None,
         contamination="auto",
         novelty=False,
-        n_jobs=None
+        n_jobs=None,
     ):
         super().__init__(
             n_neighbors=n_neighbors,

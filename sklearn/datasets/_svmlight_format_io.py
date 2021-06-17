@@ -48,7 +48,7 @@ def load_svmlight_file(
     zero_based="auto",
     query_id=False,
     offset=0,
-    length=-1
+    length=-1,
 ):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
@@ -225,7 +225,7 @@ def load_svmlight_files(
     zero_based="auto",
     query_id=False,
     offset=0,
-    length=-1
+    length=-1,
 ):
     """Load dataset from multiple files in SVMlight format
 

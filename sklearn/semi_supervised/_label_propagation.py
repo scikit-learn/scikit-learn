@@ -114,7 +114,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         alpha=1,
         max_iter=30,
         tol=1e-3,
-        n_jobs=None
+        n_jobs=None,
     ):
 
         self.max_iter = max_iter
@@ -414,7 +414,7 @@ class LabelPropagation(BaseLabelPropagation):
         n_neighbors=7,
         max_iter=1000,
         tol=1e-3,
-        n_jobs=None
+        n_jobs=None,
     ):
         super().__init__(
             kernel=kernel,
@@ -547,7 +547,7 @@ class LabelSpreading(BaseLabelPropagation):
         alpha=0.2,
         max_iter=30,
         tol=1e-3,
-        n_jobs=None
+        n_jobs=None,
     ):
 
         # this one has different base parameters

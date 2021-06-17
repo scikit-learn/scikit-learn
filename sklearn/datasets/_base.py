@@ -93,7 +93,7 @@ def load_files(
     shuffle=True,
     encoding=None,
     decode_error="strict",
-    random_state=0
+    random_state=0,
 ):
     """Load text files with categories as subfolder names.
 

@@ -87,7 +87,7 @@ def graphical_lasso(
     verbose=False,
     return_costs=False,
     eps=np.finfo(np.float64).eps,
-    return_n_iter=False
+    return_n_iter=False,
 ):
     """l1-penalized covariance estimator
 
@@ -408,7 +408,7 @@ class GraphicalLasso(EmpiricalCovariance):
         enet_tol=1e-4,
         max_iter=100,
         verbose=False,
-        assume_centered=False
+        assume_centered=False,
     ):
         super().__init__(assume_centered=assume_centered)
         self.alpha = alpha
@@ -758,7 +758,7 @@ class GraphicalLassoCV(GraphicalLasso):
         mode="cd",
         n_jobs=None,
         verbose=False,
-        assume_centered=False
+        assume_centered=False,
     ):
         super().__init__(
             mode=mode,

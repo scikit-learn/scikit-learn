@@ -98,7 +98,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         validation_fraction=0.1,
         n_iter_no_change=5,
         warm_start=False,
-        average=False
+        average=False,
     ):
         self.loss = loss
         self.penalty = penalty
@@ -550,7 +550,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         n_iter_no_change=5,
         class_weight=None,
         warm_start=False,
-        average=False
+        average=False,
     ):
 
         super().__init__(
@@ -784,7 +784,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         result = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(require="sharedmem")
+            **_joblib_parallel_args(require="sharedmem"),
         )(
             delayed(fit_binary)(
                 self,
@@ -1192,7 +1192,7 @@ class SGDClassifier(BaseSGDClassifier):
         n_iter_no_change=5,
         class_weight=None,
         warm_start=False,
-        average=False
+        average=False,
     ):
         super().__init__(
             loss=loss,
@@ -1381,7 +1381,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         validation_fraction=0.1,
         n_iter_no_change=5,
         warm_start=False,
-        average=False
+        average=False,
     ):
         super().__init__(
             loss=loss,
@@ -1922,7 +1922,7 @@ class SGDRegressor(BaseSGDRegressor):
         validation_fraction=0.1,
         n_iter_no_change=5,
         warm_start=False,
-        average=False
+        average=False,
     ):
         super().__init__(
             loss=loss,

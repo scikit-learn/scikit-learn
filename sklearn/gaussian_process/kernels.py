@@ -2334,7 +2334,7 @@ class PairwiseKernel(Kernel):
             metric=self.metric,
             gamma=self.gamma,
             filter_params=True,
-            **pairwise_kernels_kwargs
+            **pairwise_kernels_kwargs,
         )
         if eval_gradient:
             if self.hyperparameter_gamma.fixed:
@@ -2348,7 +2348,7 @@ class PairwiseKernel(Kernel):
                         metric=self.metric,
                         gamma=np.exp(gamma),
                         filter_params=True,
-                        **pairwise_kernels_kwargs
+                        **pairwise_kernels_kwargs,
                     )
 
                 return K, _approx_fprime(self.theta, f, 1e-10)

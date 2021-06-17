@@ -918,7 +918,7 @@ def non_negative_factorization(
     regularization=None,
     random_state=None,
     verbose=0,
-    shuffle=False
+    shuffle=False,
 ):
     """Compute Non-negative Matrix Factorization (NMF).
 
@@ -1292,7 +1292,7 @@ class NMF(TransformerMixin, BaseEstimator):
         l1_ratio=0.0,
         verbose=0,
         shuffle=False,
-        regularization="both"
+        regularization="both",
     ):
         self.n_components = n_components
         self.init = init

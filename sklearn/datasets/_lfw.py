@@ -232,7 +232,7 @@ def fetch_lfw_people(
     color=False,
     slice_=(slice(70, 195), slice(78, 172)),
     download_if_missing=True,
-    return_X_y=False
+    return_X_y=False,
 ):
     """Load the Labeled Faces in the Wild (LFW) people dataset \
 (classification).
@@ -413,7 +413,7 @@ def fetch_lfw_pairs(
     resize=0.5,
     color=False,
     slice_=(slice(70, 195), slice(78, 172)),
-    download_if_missing=True
+    download_if_missing=True,
 ):
     """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
 

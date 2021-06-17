@@ -642,7 +642,7 @@ class SparseRandomProjection(BaseRandomProjection):
         density="auto",
         eps=0.1,
         dense_output=False,
-        random_state=None
+        random_state=None,
     ):
         super().__init__(
             n_components=n_components,

@@ -42,7 +42,7 @@ def affinity_propagation(
     copy=True,
     verbose=False,
     return_n_iter=False,
-    random_state=None
+    random_state=None,
 ):
     """Perform Affinity Propagation Clustering of data.
 
@@ -385,7 +385,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         preference=None,
         affinity="euclidean",
         verbose=False,
-        random_state=None
+        random_state=None,
     ):
 
         self.damping = damping

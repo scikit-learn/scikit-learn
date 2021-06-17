@@ -853,7 +853,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         compute_full_tree="auto",
         linkage="ward",
         distance_threshold=None,
-        compute_distances=False
+        compute_distances=False,
     ):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
@@ -953,7 +953,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             connectivity=connectivity,
             n_clusters=n_clusters,
             return_distance=return_distance,
-            **kwargs
+            **kwargs,
         )
         (self.children_, self.n_connected_components_, self.n_leaves_, parents) = out[
             :4
@@ -1141,7 +1141,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         linkage="ward",
         pooling_func=np.mean,
         distance_threshold=None,
-        compute_distances=False
+        compute_distances=False,
     ):
         super().__init__(
             n_clusters=n_clusters,

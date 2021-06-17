@@ -89,7 +89,7 @@ def permutation_importance(
     n_repeats=5,
     n_jobs=None,
     random_state=None,
-    sample_weight=None
+    sample_weight=None,
 ):
     """Permutation importance for feature evaluation [BRE]_.
 

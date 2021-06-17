@@ -463,7 +463,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         branching_factor=50,
         n_clusters=3,
         compute_labels=True,
-        copy=True
+        copy=True,
     ):
         self.threshold = threshold
         self.branching_factor = branching_factor

@@ -309,7 +309,7 @@ class SpectralCoclustering(BaseSpectral):
         mini_batch=False,
         init="k-means++",
         n_init=10,
-        random_state=None
+        random_state=None,
     ):
         super().__init__(
             n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state
@@ -461,7 +461,7 @@ class SpectralBiclustering(BaseSpectral):
         mini_batch=False,
         init="k-means++",
         n_init=10,
-        random_state=None
+        random_state=None,
     ):
         super().__init__(
             n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state

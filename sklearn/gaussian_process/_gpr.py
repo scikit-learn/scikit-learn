@@ -166,7 +166,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         n_restarts_optimizer=0,
         normalize_y=False,
         copy_X_train=True,
-        random_state=None
+        random_state=None,
     ):
         self.kernel = kernel
         self.alpha = alpha

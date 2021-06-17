@@ -45,7 +45,7 @@ def lars_path(
     verbose=0,
     return_path=True,
     return_n_iter=False,
-    positive=False
+    positive=False,
 ):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
@@ -200,7 +200,7 @@ def lars_path_gram(
     verbose=0,
     return_path=True,
     return_n_iter=False,
-    positive=False
+    positive=False,
 ):
     """lars_path in the sufficient stats mode [1]
 
@@ -631,7 +631,7 @@ def _lars_path_solver(
                     trans=0,
                     lower=1,
                     overwrite_b=True,
-                    **SOLVE_TRIANGULAR_ARGS
+                    **SOLVE_TRIANGULAR_ARGS,
                 )
 
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
@@ -968,7 +968,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         copy_X=True,
         fit_path=True,
         jitter=None,
-        random_state=None
+        random_state=None,
     ):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
@@ -1269,7 +1269,7 @@ class LassoLars(Lars):
         fit_path=True,
         positive=False,
         jitter=None,
-        random_state=None
+        random_state=None,
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -1565,7 +1565,7 @@ class LarsCV(Lars):
         max_n_alphas=1000,
         n_jobs=None,
         eps=np.finfo(float).eps,
-        copy_X=True
+        copy_X=True,
     ):
         self.max_iter = max_iter
         self.cv = cv
@@ -1843,7 +1843,7 @@ class LassoLarsCV(LarsCV):
         n_jobs=None,
         eps=np.finfo(float).eps,
         copy_X=True,
-        positive=False
+        positive=False,
     ):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
@@ -1995,7 +1995,7 @@ class LassoLarsIC(LassoLars):
         max_iter=500,
         eps=np.finfo(float).eps,
         copy_X=True,
-        positive=False
+        positive=False,
     ):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
