@@ -476,8 +476,6 @@ def test_transform():
     )
 
 
-# TODO: Remove filterwarning in 1.2
-@pytest.mark.filterwarnings("ignore:Option 'auto'.*in v1.2.*:FutureWarning")
 @pytest.mark.parametrize(
     "X, y, voter",
     [(X, y, VotingClassifier(
@@ -485,7 +483,7 @@ def test_transform():
          ('rf', RandomForestClassifier(n_estimators=5))])),
      (X_r, y_r, VotingRegressor(
          [('lr', LinearRegression()),
-          ('rf', RandomForestRegressor(n_estimators=5))]))]
+          ('rf', RandomForestRegressor(n_estimators=5, max_features="sqrt"))]))]
 )
 def test_none_estimator_with_weights(X, y, voter):
     # check that an estimator can be set to 'drop' and passing some weight
@@ -525,7 +523,7 @@ def test_n_features_in(est):
     "estimator",
     [VotingRegressor(
         estimators=[('lr', LinearRegression()),
-                    ('rf', RandomForestRegressor(random_state=123))],
+                    ('rf', RandomForestRegressor(random_state=123, max_features="sqrt"))],
         verbose=True),
      VotingClassifier(
          estimators=[('lr', LogisticRegression(random_state=123)),
