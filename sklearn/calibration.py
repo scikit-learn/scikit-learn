@@ -793,7 +793,7 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
 
 def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
-                      strategy='uniform'):
+                      strategy='uniform', return_bin_size=False):
     """Compute true and predicted probabilities for a calibration curve.
 
     The method assumes the inputs come from a binary classifier, and
@@ -830,6 +830,11 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
         quantile
             The bins have the same number of samples and depend on `y_prob`.
 
+    return_bin_size : bool, default=False
+        Whether or not to return the total number of samples in each bin. These
+        quantities can be useful to create confidence intervals, which may
+        be important when some bins contain few samples (say, < 100).
+
     Returns
     -------
     prob_true : ndarray of shape (n_bins,) or smaller
@@ -838,6 +843,10 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
 
     prob_pred : ndarray of shape (n_bins,) or smaller
         The mean predicted probability in each bin.
+
+    bin_size : ndarray of shape (n_bins,) or smaller
+        The total number of samples in each bin. Only returned when
+        `return_bin_size` is True.
 
     References
     ----------
@@ -894,4 +903,8 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
     prob_true = bin_true[nonzero] / bin_total[nonzero]
     prob_pred = bin_sums[nonzero] / bin_total[nonzero]
 
-    return prob_true, prob_pred
+    if return_bin_size:
+        bin_size = bin_total[nonzero]
+        return prob_true, prob_pred, bin_size
+    else:
+        return prob_true, prob_pred

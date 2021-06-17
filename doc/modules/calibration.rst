@@ -227,6 +227,7 @@ one, a postprocessing is performed to normalize them.
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
+   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve_with_ci.py`
    * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
    * :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
    * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
