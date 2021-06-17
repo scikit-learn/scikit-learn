@@ -22,6 +22,7 @@ def _augment_diagonal(graph, weight=1):
     :math:`d` is the degree vector for an unweighted graph and the sum of magnitude of
     edge weights for each node for a weighted graph. For a directed graph the in/out
     :math:`d` is averaged.
+
     Parameters
     ----------
     graph: {ndarray, sparse matrix}
@@ -50,46 +51,57 @@ def _augment_diagonal(graph, weight=1):
 
     return graph
 
+
 def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized"):
     r"""
-    Dimensionality reduction using SVD.
-    Performs linear dimensionality reduction by using either full singular
-    value decomposition (SVD) or truncated SVD. Full SVD is performed using
-    SciPy's wrapper for ARPACK, while truncated SVD is performed using either
-    SciPy's wrapper for LAPACK or Sklearn's implementation of randomized SVD.
-    It also performs optimal dimensionality selection using Zhu & Godsie svd_solver
-    if number of target dimension is not specified.
+    Dimensionality reduction using either full Singular Value Decomposition
+    (SVD) or truncated SVD.
+
+    Full SVD is performed using SciPy's wrapper for ARPACK,
+    while truncated SVD is performed using either SciPy's wrapper for LAPACK
+    or scikit-learn's implementation of randomized SVD.
+
+    It also performs optimal dimensionality selection using Zhu & Godsie [1]_
+    `svd_solver` if the number of target dimension is not specified.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
-        The data to perform svd on.
-    n_components : int or None, default = None
+        The data to perform whose dimension are to reduce.
+
+    n_components : int or None, default=None
         Desired dimensionality of output data. If "full",
-        ``n_components`` must be ``<= min(X.shape)``. Otherwise, ``n_components`` must be
-        ``< min(X.shape)``. If None, then optimal dimensions will be chosen by
-        :func:`~graspologic.embed.select_dimension` using ``n_elbows`` argument.
-    n_elbows : int, optional, default: 2
+        ``n_components`` must be ``<= min(X.shape[0])``.
+        Otherwise, ``n_components`` must be ``< min(X.shape[0])``.
+        If `None`, then optimal dimensions will be chosen
+        using ``n_elbows`` argument.
+
+    n_elbows : int, optional, default=2
         If ``n_components`` is None, then compute the optimal embedding dimension using
-        :func:`~graspologic.embed.select_dimension`. Otherwise, ignored.
+        [1]_. Otherwise, ignored.
+
     svd_solver : {'randomized' (default), 'full', 'truncated'}, optional
         SVD solver to use:
         - 'randomized'
-            Computes randomized svd using
+            Computes randomized SVD using
             :func:`sklearn.utils.extmath.randomized_svd`
         - 'full'
-            Computes full svd using :func:`scipy.linalg.svd`
-            Does not support ``graph`` input of type scipy.sparse.csr_matrix
+            Computes full SVD using :func:`scipy.linalg.svd`
+            Does not support ``graph`` input of type `scipy.sparse.csr_matrix`
         - 'truncated'
-            Computes truncated svd using :func:`scipy.sparse.linalg.svds`
+            Computes truncated SVD using :func:`scipy.sparse.linalg.svds`
 
     Returns
     -------
     U : array-like, shape (n_samples, n_components)
         Left singular vectors corresponding to singular values.
+
     D : array-like, shape (n_components)
         Singular values in decreasing order, as a 1d array.
+
     V : array-like, shape (n_components, n_samples)
         Right singular vectors corresponding to singular values.
+
     References
     ----------
     .. [1] Zhu, M. and Ghodsi, A. (2006).
@@ -142,39 +154,49 @@ def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized"):
 
     return U, D, V
 
+
 def _select_dimension(
     X, n_components=None, n_elbows=2, threshold=None, return_likelihoods=False
 ):
     """
     Generates profile likelihood from array based on Zhu and Godsie method.
     Elbows correspond to the optimal embedding dimension.
+
     Parameters
     ----------
     X : 1d or 2d array-like
         Input array generate profile likelihoods for. If 1d-array, it should be
         sorted in decreasing order. If 2d-array, shape should be
         (n_samples, n_features).
+
     n_components : int, optional, default: None.
         Number of components to embed. If None, ``n_components =
         floor(log2(min(n_samples, n_features)))``. Ignored if ``X`` is 1d-array.
+
     n_elbows : int, optional, default: 2.
         Number of likelihood elbows to return. Must be ``> 1``.
+
     threshold : float, int, optional, default: None
         If given, only consider the singular values that are ``> threshold``. Must
         be ``>= 0``.
+
     return_likelihoods : bool, optional, default: False
         If True, returns the all likelihoods associated with each elbow.
+
     Returns
     -------
     elbows : list
         Elbows indicate subsequent optimal embedding dimensions. Number of
         elbows may be less than ``n_elbows`` if there are not enough singular
         values.
+
     sing_vals : list
         The singular values associated with each elbow.
+
     likelihoods : list of array-like
         Array of likelihoods of the corresponding to each elbow. Only returned
         if ``return_likelihoods`` is True.
+
     References
     ----------
     .. [1] Zhu, M. and Ghodsi, A. (2006).
@@ -258,6 +280,8 @@ def _select_dimension(
         return elbows, values, likelihoods
     else:
         return elbows, values
+
+
 def _compute_likelihood(arr):
     """
     Computes the log likelihoods based on normal distribution given
@@ -298,18 +322,23 @@ def _compute_likelihood(arr):
 
     return likelihoods
 
+
 def _to_laplacian(A, regularizer=None):
     r"""
     A function to convert graph adjacency matrix to graph Laplacian.
+
     Currently supports I-DAD, DAD, and R-DAD Laplacians, where D is the diagonal
     matrix of degrees of each node raised to the -1/2 power, I is the
     identity matrix, and A is the adjacency matrix.
+
     R-DAD is regularized Laplacian: where :math:`D_t = D + regularizer \times I`.
+
     Parameters
     ----------
     graph: object
         Either array-like, (n_vertices, n_vertices) numpy array,
         scipy.sparse.csr_matrix, or an object of type networkx.Graph.
+
     form: {'I-DAD' (default), 'DAD', 'R-DAD'}, string, optional
         - 'I-DAD'
             Computes :math:`L = I - D_i A D_i`
@@ -318,14 +347,17 @@ def _to_laplacian(A, regularizer=None):
         - 'R-DAD'
             Computes :math:`L = D_o^r A D_i^r`
             where :math:`D_o^r = D_o + regularizer \times I` and likewise for :math:`D_i`
+
     regularizer: int, float or None, optional (default=None)
         Constant to add to the degree vector(s). If None, average node degree is added.
         If int or float, must be >= 0. Only used when ``form`` is 'R-DAD'.
+
     Returns
     -------
     L : numpy.ndarray
         2D (n_vertices, n_vertices) array representing graph
         Laplacian of specified form
+
     References
     ----------
     .. [1] Qin, Tai, and Karl Rohe. "Regularized spectral clustering
@@ -334,16 +366,6 @@ def _to_laplacian(A, regularizer=None):
     .. [2] Rohe, Karl, Tai Qin, and Bin Yu. "Co-clustering directed graphs to discover
            asymmetries and directional communities." Proceedings of the National Academy
            of Sciences 113.45 (2016): 12679-12684.
-    Examples
-    --------
-    >>> a = np.array([
-    ...    [0, 1, 1],
-    ...    [1, 0, 0],
-    ...    [1, 0, 0]])
-    >>> to_laplacian(a, "DAD")
-    array([[0.        , 0.70710678, 0.70710678],
-           [0.70710678, 0.        , 0.        ],
-           [0.70710678, 0.        , 0.        ]])
     """
 
     in_degree = np.reshape(np.asarray(A.sum(axis=0)), (-1,))
@@ -383,15 +405,19 @@ def _to_laplacian(A, regularizer=None):
         # sometimes machine prec. makes this necessary
     return L
 
+
 def _is_symmetric(array, tol=1e-15):
     """Check if matrix is symmetric.
+
     Parameters
     ----------
     array : {ndarray, sparse matrix}
         Input object to check / convert. Must be two-dimensional and square,
         otherwise a ValueError will be raised.
+
     tol : float, default=1e-10
         Absolute tolerance for equivalence of arrays. Default = 1E-15.
+
     Returns
     -------
     symmetric : bool
@@ -404,6 +430,7 @@ def _is_symmetric(array, tol=1e-15):
         symmetric = np.allclose(array, array.T, atol=tol)
 
     return symmetric
+
 
 class GraphSpectralEmbedding(BaseEstimator):
     r"""Spectral embedding for dimensionality reduction of graph represented data.
@@ -423,14 +450,17 @@ class GraphSpectralEmbedding(BaseEstimator):
         ``n_components`` must be ``<= min(X.shape)``. Otherwise, ``n_components`` must be
         ``< min(X.shape)``. If None, then optimal dimensions will be chosen by Zhu and
         Ghodsi method using ``n_elbows`` argument.
+
     n_elbows : int, optional, default: 2
         If ``n_components`` is None, then compute the optimal embedding dimension using
         Zhu and Ghodsi method. Otherwise, ignored.
+
     aglorithm : {'ASE' , 'LSE'}, default = 'ASE'
         - 'ASE'
             Adjacency Spectral Embedding
         - 'LSE'
             Laplacian Spectral Embedding
+
     svd_solver : {'randomized' (default), 'full', 'truncated'}, optional
         SVD solver to use:
         - 'randomized'
@@ -441,29 +471,37 @@ class GraphSpectralEmbedding(BaseEstimator):
             Does not support ``graph`` input of type scipy.sparse.csr_matrix
         - 'truncated'
             Computes truncated svd using :func:`scipy.sparse.linalg.svds`
+
     check_lcc : bool , optional (default = True)
         Whether to check if input graph is connected. May result in non-optimal
         results if the graph is unconnected. If True and input is unconnected,
         a UserWarning is thrown. Not checking for connectedness may result in
         faster computation.
+
     regularizer: int, float or bool, optional (default = True)
         When `algorithm`='ASE', whether to replace the main diagonal of the adjacency matrix with a vector
         corresponding to the degree (or sum of edge weights for a weighted network)
         before embedding. Empirically, this produces latent position estimates closer
         to the ground truth.
+
         When `algorithm`='LSE', constant to be added to the diagonal of degree matrix. If `True`, average
         node degree is added. If int or float, must be >= 0.
+
     concat : bool, optional (default False)
         If graph is directed, whether to concatenate left and right (out and in) latent positions along axis 1.
+
     Attributes
     ----------
     n_features_in_: int
         Number of features passed to the method.
+
     latent_left_ : array, shape (n_samples, n_components)
         Estimated left latent positions of the graph.
+
     latent_right_ : array, shape (n_samples, n_components), or None
         Only computed when the graph is directed, or adjacency matrix is assymetric.
         Estimated right latent positions of the graph. Otherwise, None.
+
     singular_values_ : array, shape (n_components)
         Singular values associated with the latent position matrices.
 
@@ -514,11 +552,14 @@ class GraphSpectralEmbedding(BaseEstimator):
     def fit(self, X, y=None):
         """
         Fit model to input graph
+
         Parameters
         ----------
         X : {array-like, sparse matrix} shape (n_samples, n_samples)
             Adjacency matrix of graph to embed.
+
         y: Ignored
+
         Returns
         -------
         self : object
@@ -528,7 +569,7 @@ class GraphSpectralEmbedding(BaseEstimator):
                                 estimator=self)
 
         if self.check_lcc:
-            directed = ~_is_symmetric(A)
+            directed = not _is_symmetric(A)
             n_components = connected_components(
                             A, directed, connection="weak", return_labels=False)
             if n_components != 1:
@@ -582,11 +623,14 @@ class GraphSpectralEmbedding(BaseEstimator):
     def fit_transform(self, X, y=None):
         """
         Fit model to input graph
+
         Parameters
         ----------
         X : {array-like, sparse matrix} shape (n_samples, n_samples)
             Adjacency matrix of graph to embed.
+
         y: Ignored
+
         Returns
         -------
         X_new : array-like of shape (n_samples, n_components)
@@ -605,34 +649,40 @@ class GraphSpectralEmbedding(BaseEstimator):
         Obtain latent positions from an adjacency matrix or matrix of out-of-sample
         vertices. For more details on transforming out-of-sample vertices, see the
         :ref:`tutorials <embed_tutorials>`. For mathematical background, see [2].
+
         Parameters
         ----------
         X : array-like or tuple, original shape or (n_oos_vertices, n_vertices).
             The original fitted matrix ("graph" in fit) or new out-of-sample data.
             If ``X`` is the original fitted matrix, returns a matrix close to
             ``self.fit_transform(X)``.
+
             If ``X`` is an out-of-sample matrix, n_oos_vertices is the number
             of new vertices, and n_vertices is the number of vertices in the
             original graph. If tuple, graph is directed and ``X[0]`` contains
             edges from out-of-sample vertices to in-sample vertices.
+
         Returns
         -------
-        array_like or tuple, shape (n_oos_vertices, n_components)
-        or (n_vertices, n_components).
+        array_like or tuple, shape (n_oos_vertices, n_components) or (n_vertices, n_components).
             Array of latent positions. Transforms the fitted matrix if it was passed
             in.
+
             If ``X`` is an array or tuple containing adjacency vectors corresponding to
             new nodes, returns the estimated latent positions for the new out-of-sample
             adjacency vectors.
+
             If undirected, returns array.
             If directed, returns ``(X_out, X_in)``, where ``X_out`` contains
             latent positions corresponding to nodes with edges from out-of-sample
             vertices to in-sample vertices.
+
         Notes
         -----
         If the matrix was diagonally augmented (e.g., ``self.regularizer`` was True), ``fit``
         followed by ``transform`` will produce a slightly different matrix than
         ``fit_transform``.
+
         To get the original embedding, using ``fit_transform`` is recommended. In the
         directed case, if A is the original in-sample adjacency matrix, the tuple
         (A.T, A) will need to be passed to ``transform`` if you do not wish to use
@@ -673,4 +723,4 @@ class GraphSpectralEmbedding(BaseEstimator):
         if not directed:
             return X @ self._pinv_left
         elif directed:
-            return X[1] @ self._pinv_right, X[0] @ self._pinv_lef
+            return X[1] @ self._pinv_right, X[0] @ self._pinv_left

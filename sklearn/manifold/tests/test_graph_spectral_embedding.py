@@ -7,7 +7,7 @@ from scipy.sparse import csr_matrix
 from sklearn.cluster import KMeans
 from sklearn.manifold import GraphSpectralEmbedding
 from sklearn.metrics import adjusted_rand_score
-from sklearn.datasets import make_er_graph, make_sbm_graph
+from sklearn.datasets import make_erdos_reyni_graph, make_sbm_graph
 
 def _kmeans_comparison(data, labels, n_clusters):
     """
@@ -49,7 +49,7 @@ def _test_output_dim_directed(self, method):
     embed = GraphSpectralEmbedding(n_components=n_components, concat=True, algorithm=method)
     n = 10
     M = 20
-    A = make_er_graph(n, M, directed=True) + 5
+    A = make_erdos_reyni_graph(n, M, directed=True) + 5
     self.assertEqual(embed.fit_transform(A).shape, (n, 8))
     self.assertEqual(embed.latent_left_.shape, (n, 4))
     self.assertEqual(embed.latent_right_.shape, (n, 4))
@@ -60,7 +60,7 @@ def _test_output_dim(self, method, sparse=False, *args, **kwargs):
     embed = GraphSpectralEmbedding(n_components=n_components,algorithm=method)
     n = 10
     M = 20
-    A = make_er_graph(n, M) + 5
+    A = make_erdos_reyni_graph(n, M) + 5
     if sparse:
         A = csr_matrix(A)
     embed.fit(A)
@@ -113,7 +113,7 @@ def _test_sbm_er_binary(self, method, P, directed=False, sparse=True, *args, **k
 
 
 def test_input_params():
-    X = make_er_graph(10, 20)
+    X = make_erdos_reyni_graph(10, 20)
 
     # value error, check n_components type int
     _test_inputs(X, ValueError, n_components='not_int')
@@ -148,11 +148,11 @@ class TestAdjacencySpectralEmbed(unittest.TestCase):
         _test_output_dim_directed(self, 'ASE')
 
     def test_unconnected_warning(self):
-        A = make_er_graph(100, 10)
+        A = make_erdos_reyni_graph(100, 10)
         with self.assertWarns(UserWarning):
             ase = GraphSpectralEmbedding(algorithm='ASE')
             ase.fit(A)
-        A = make_er_graph(100, 10, directed=True)
+        A = make_erdos_reyni_graph(100, 10, directed=True)
         with self.assertWarns(UserWarning):
             ase = GraphSpectralEmbedding(algorithm='ASE')
             ase.fit(A)

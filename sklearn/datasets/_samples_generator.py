@@ -1782,7 +1782,7 @@ def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10,
 
     return result, rows, cols
 
-def make_er_graph(n, m, directed=False):
+def make_erdos_reyni_graph(n, m, directed=False):
     '''Generates an Erdos-Reyni (ER) graph.
 
     Erdos Renyi (n, m) graph is a simple graph with n vertices and exactly m
