@@ -32,7 +32,7 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(func=None, *, version="1.0 (renaming of 0.25)"):
+def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -42,7 +42,7 @@ def _deprecate_positional_args(func=None, *, version="1.0 (renaming of 0.25)"):
     ----------
     func : callable, default=None
         Function to check arguments on.
-    version : callable, default="1.0 (renaming of 0.25)"
+    version : callable, default="1.1 (renaming of 0.26)"
         The version when positional arguments will result in error.
     """
     def _inner_deprecate_positional_args(f):
@@ -111,7 +111,6 @@ def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
             raise ValueError("Input contains NaN")
 
 
-@_deprecate_positional_args
 def assert_all_finite(X, *, allow_nan=False):
     """Throw a ValueError if X contains NaN or infinity.
 
@@ -124,7 +123,6 @@ def assert_all_finite(X, *, allow_nan=False):
     _assert_all_finite(X.data if sp.issparse(X) else X, allow_nan)
 
 
-@_deprecate_positional_args
 def as_float_array(X, *, copy=True, force_all_finite=True):
     """Converts an array-like to an array of floats.
 
@@ -458,7 +456,6 @@ def _ensure_no_complex_data(array):
                          "{}\n".format(array))
 
 
-@_deprecate_positional_args
 def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
@@ -546,6 +543,14 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     array_converted : object
         The converted and validated array.
     """
+    if isinstance(array, np.matrix):
+        warnings.warn(
+            "np.matrix usage is deprecated in 1.0 and will raise a TypeError "
+            "in 1.2. Please convert to a numpy array with np.asarray. For "
+            "more information see: "
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
+            FutureWarning)
+
     # store reference to original array to check if copy is needed when
     # function returns
     array_orig = array
@@ -761,7 +766,6 @@ def _check_large_sparse(X, accept_large_sparse=False):
                                  % indices_datatype)
 
 
-@_deprecate_positional_args
 def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
               dtype="numeric", order=None, copy=False, force_all_finite=True,
               ensure_2d=True, allow_nd=False, multi_output=False,
@@ -876,21 +880,29 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
                     ensure_min_samples=ensure_min_samples,
                     ensure_min_features=ensure_min_features,
                     estimator=estimator)
-    if multi_output:
-        y = check_array(y, accept_sparse='csr', force_all_finite=True,
-                        ensure_2d=False, dtype=None)
-    else:
-        y = column_or_1d(y, warn=True)
-        _assert_all_finite(y)
-    if y_numeric and y.dtype.kind == 'O':
-        y = y.astype(np.float64)
+
+    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric)
 
     check_consistent_length(X, y)
 
     return X, y
 
 
-@_deprecate_positional_args
+def _check_y(y, multi_output=False, y_numeric=False):
+    """Isolated part of check_X_y dedicated to y validation"""
+    if multi_output:
+        y = check_array(y, accept_sparse='csr', force_all_finite=True,
+                        ensure_2d=False, dtype=None)
+    else:
+        y = column_or_1d(y, warn=True)
+        _assert_all_finite(y)
+        _ensure_no_complex_data(y)
+    if y_numeric and y.dtype.kind == 'O':
+        y = y.astype(np.float64)
+
+    return y
+
+
 def column_or_1d(y, *, warn=False):
     """ Ravel column or 1d numpy array, else raises an error.
 
@@ -971,7 +983,6 @@ def has_fit_parameter(estimator, parameter):
     return parameter in signature(estimator.fit).parameters
 
 
-@_deprecate_positional_args
 def check_symmetric(array, *, tol=1E-10, raise_warning=True,
                     raise_exception=False):
     """Make sure that array is 2D, square and symmetric.
@@ -1031,7 +1042,6 @@ def check_symmetric(array, *, tol=1E-10, raise_warning=True,
     return array
 
 
-@_deprecate_positional_args
 def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 

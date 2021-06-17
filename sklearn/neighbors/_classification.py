@@ -17,7 +17,6 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
-from ..utils.validation import _deprecate_positional_args
 
 
 class KNeighborsClassifier(KNeighborsMixin,
@@ -102,6 +101,11 @@ class KNeighborsClassifier(KNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -144,7 +148,6 @@ class KNeighborsClassifier(KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_neighbors=5, *,
                  weights='uniform', algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None):
@@ -154,7 +157,7 @@ class KNeighborsClassifier(KNeighborsMixin,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params,
             n_jobs=n_jobs)
-        self.weights = _check_weights(weights)
+        self.weights = weights
 
     def fit(self, X, y):
         """Fit the k-nearest neighbors classifier from the training dataset.
@@ -174,6 +177,8 @@ class KNeighborsClassifier(KNeighborsMixin,
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
+        self.weights = _check_weights(self.weights)
+
         return self._fit(X, y)
 
     def predict(self, X):
@@ -365,6 +370,11 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -404,7 +414,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
     def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, n_jobs=None,
@@ -415,7 +424,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
               leaf_size=leaf_size,
               metric=metric, p=p, metric_params=metric_params,
               n_jobs=n_jobs)
-        self.weights = _check_weights(weights)
+        self.weights = weights
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
@@ -436,6 +445,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
+        self.weights = _check_weights(self.weights)
+
         self._fit(X, y)
 
         classes_ = self.classes_

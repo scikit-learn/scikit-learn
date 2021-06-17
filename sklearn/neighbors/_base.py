@@ -58,13 +58,12 @@ VALID_METRICS_SPARSE = dict(ball_tree=[],
 
 def _check_weights(weights):
     """Check to make sure weights are valid"""
-    if weights in (None, 'uniform', 'distance'):
-        return weights
-    elif callable(weights):
-        return weights
-    else:
+    if (weights not in (None, 'uniform', 'distance') and
+            not callable(weights)):
         raise ValueError("weights not recognized: should be 'uniform', "
                          "'distance', or a callable function")
+
+    return weights
 
 
 def _get_weights(dist, weights):
@@ -312,7 +311,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.metric_params = metric_params
         self.p = p
         self.n_jobs = n_jobs
-        self._check_algorithm_metric()
 
     def _check_algorithm_metric(self):
         if self.algorithm not in ['auto', 'brute',
@@ -528,8 +526,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly

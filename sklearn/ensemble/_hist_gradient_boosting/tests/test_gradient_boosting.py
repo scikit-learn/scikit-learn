@@ -192,26 +192,26 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
     assert gbdt._should_stop(scores) == stopping
 
 
-def test_least_absolute_deviation():
+def test_absolute_error():
     # For coverage only.
     X, y = make_regression(n_samples=500, random_state=0)
-    gbdt = HistGradientBoostingRegressor(loss='least_absolute_deviation',
+    gbdt = HistGradientBoostingRegressor(loss='absolute_error',
                                          random_state=0)
     gbdt.fit(X, y)
     assert gbdt.score(X, y) > .9
 
 
-def test_least_absolute_deviation_sample_weight():
+def test_absolute_error_sample_weight():
     # non regression test for issue #19400
     # make sure no error is thrown during fit of
-    # HistGradientBoostingRegressor with least_absolute_deviation loss function
+    # HistGradientBoostingRegressor with absolute_error loss function
     # and passing sample_weight
     rng = np.random.RandomState(0)
     n_samples = 100
     X = rng.uniform(-1, 1, size=(n_samples, 2))
     y = rng.uniform(-1, 1, size=n_samples)
     sample_weight = rng.uniform(0, 1, size=n_samples)
-    gbdt = HistGradientBoostingRegressor(loss='least_absolute_deviation')
+    gbdt = HistGradientBoostingRegressor(loss='absolute_error')
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
@@ -650,8 +650,7 @@ def test_sample_weight_effect(problem, duplication):
                        est_dup._raw_predict(X_dup))
 
 
-@pytest.mark.parametrize('loss_name', ('squared_error',
-                                       'least_absolute_deviation'))
+@pytest.mark.parametrize('loss_name', ('squared_error', 'absolute_error'))
 def test_sum_hessians_are_sample_weight(loss_name):
     # For losses with constant hessians, the sum_hessians field of the
     # histograms must be equal to the sum of the sample weight of samples at
@@ -993,14 +992,18 @@ def test_uint8_predict(Est):
 
 
 # TODO: Remove in v1.2
-def test_loss_least_squares_deprecated():
+@pytest.mark.parametrize("old_loss, new_loss", [
+    ("least_squares", "squared_error"),
+    ("least_absolute_deviation", "absolute_error"),
+])
+def test_loss_deprecated(old_loss, new_loss):
     X, y = make_regression(n_samples=50, random_state=0)
-    est1 = HistGradientBoostingRegressor(loss="least_squares", random_state=0)
+    est1 = HistGradientBoostingRegressor(loss=old_loss, random_state=0)
 
     with pytest.warns(FutureWarning,
-                      match="The loss 'least_squares' was deprecated"):
+                      match=f"The loss '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
-    est2 = HistGradientBoostingRegressor(loss="squared_error", random_state=0)
+    est2 = HistGradientBoostingRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))

@@ -28,6 +28,11 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     variances_ : array, shape (n_features,)
         Variances of individual features.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     Allows NaN in the input.
@@ -84,6 +89,10 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
             # for constant features
             compare_arr = np.array([self.variances_, peak_to_peaks])
             self.variances_ = np.nanmin(compare_arr, axis=0)
+        elif self.threshold < 0.:
+            raise ValueError(
+                "Threshold must be non-negative."
+                f" Got: {self.threshold}")
 
         if np.all(~np.isfinite(self.variances_) |
                   (self.variances_ <= self.threshold)):

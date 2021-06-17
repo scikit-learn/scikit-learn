@@ -16,7 +16,6 @@ from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
-from ..utils.validation import _deprecate_positional_args
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
@@ -165,6 +164,11 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
         a reference. This attribute is used for the calls to transform.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -192,7 +196,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         A randomized algorithm for the decomposition of matrices
         Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
@@ -221,8 +224,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"

@@ -28,7 +28,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 _check_sample_weight,
-                                FLOAT_DTYPES, _deprecate_positional_args)
+                                FLOAT_DTYPES)
 
 from ._encoders import OneHotEncoder
 
@@ -106,7 +106,6 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         return scale
 
 
-@_deprecate_positional_args
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
@@ -308,6 +307,11 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *data_range_*
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_seen_ : int
         The number of samples processed by the estimator.
         It will be reset on new calls to fit, but increments across
@@ -344,7 +348,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
         self.copy = copy
@@ -492,7 +495,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
 
@@ -660,6 +662,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         The variance for each feature in the training set. Used to compute
         `scale_`. Equal to ``None`` when ``with_std=False``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_seen_ : int or ndarray of shape (n_features,)
         The number of samples processed by the estimator for each feature.
         If there are no missing samples, the ``n_samples_seen`` will be an
@@ -707,7 +714,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
 
-    @_deprecate_positional_args
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -994,6 +1000,11 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     max_abs_ : ndarray of shape (n_features,)
         Per feature maximum absolute value.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
@@ -1026,7 +1037,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, copy=True):
         self.copy = copy
 
@@ -1161,7 +1171,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
@@ -1306,6 +1315,11 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *scale_* attribute.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.preprocessing import RobustScaler
@@ -1337,7 +1351,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     https://en.wikipedia.org/wiki/Median
     https://en.wikipedia.org/wiki/Interquartile_range
     """
-    @_deprecate_positional_args
     def __init__(self, *, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
         self.with_centering = with_centering
@@ -1471,7 +1484,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
     """Standardize a dataset along any axis
@@ -1579,7 +1591,6 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
     return X
 
 
-@_deprecate_positional_args
 def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
@@ -1710,19 +1721,12 @@ class Normalizer(TransformerMixin, BaseEstimator):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
 
-    Examples
-    --------
-    >>> from sklearn.preprocessing import Normalizer
-    >>> X = [[4, 1, 2, 2],
-    ...      [1, 3, 9, 3],
-    ...      [5, 7, 5, 1]]
-    >>> transformer = Normalizer().fit(X)  # fit does nothing.
-    >>> transformer
-    Normalizer()
-    >>> transformer.transform(X)
-    array([[0.8, 0.2, 0.4, 0.4],
-           [0.1, 0.3, 0.9, 0.3],
-           [0.5, 0.7, 0.5, 0.1]])
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Notes
     -----
@@ -1736,9 +1740,22 @@ class Normalizer(TransformerMixin, BaseEstimator):
     See Also
     --------
     normalize : Equivalent function without the estimator API.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import Normalizer
+    >>> X = [[4, 1, 2, 2],
+    ...      [1, 3, 9, 3],
+    ...      [5, 7, 5, 1]]
+    >>> transformer = Normalizer().fit(X)  # fit does nothing.
+    >>> transformer
+    Normalizer()
+    >>> transformer.transform(X)
+    array([[0.8, 0.2, 0.4, 0.4],
+           [0.1, 0.3, 0.9, 0.3],
+           [0.5, 0.7, 0.5, 0.1]])
     """
 
-    @_deprecate_positional_args
     def __init__(self, norm='l2', *, copy=True):
         self.norm = norm
         self.copy = copy
@@ -1790,7 +1807,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
         return {'stateless': True}
 
 
-@_deprecate_positional_args
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
 
@@ -1867,6 +1883,13 @@ class Binarizer(TransformerMixin, BaseEstimator):
         set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
 
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.preprocessing import Binarizer
@@ -1894,7 +1917,6 @@ class Binarizer(TransformerMixin, BaseEstimator):
     binarize : Equivalent function without the estimator API.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold
         self.copy = copy
@@ -1983,6 +2005,11 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
     K_fit_all_ : float
         Average of kernel matrix.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     References
     ----------
@@ -2078,8 +2105,9 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1.")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1.")
     @property
     def _pairwise(self):
         return True
@@ -2211,6 +2239,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     references_ : ndarray of shape (n_quantiles, )
         Quantiles of references.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -2241,7 +2274,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
                  random_state=None, copy=True):
@@ -2560,7 +2592,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def quantile_transform(X, *, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
                        ignore_implicit_zeros=False,
@@ -2738,6 +2769,11 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     lambdas_ : ndarray of float of shape (n_features,)
         The parameters of the power transformation for the selected features.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -2779,7 +2815,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
     """
-    @_deprecate_positional_args
     def __init__(self, method='yeo-johnson', *, standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
@@ -3057,7 +3092,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-@_deprecate_positional_args
 def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
     """
     Power transforms are a family of parametric, monotonic transformations

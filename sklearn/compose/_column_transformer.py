@@ -21,7 +21,6 @@ from ..utils import _safe_indexing
 from ..utils import _get_column_indices
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 
 
@@ -142,6 +141,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 1.0
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying transformers expose such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
@@ -179,7 +184,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     """
     _required_parameters = ['transformers']
 
-    @_deprecate_positional_args
     def __init__(self,
                  transformers, *,
                  remainder='drop',
@@ -867,7 +871,6 @@ class make_column_selector:
            [-0.30151134,  0.        ,  1.        ,  0.        ],
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
-    @_deprecate_positional_args
     def __init__(self, pattern=None, *, dtype_include=None,
                  dtype_exclude=None):
         self.pattern = pattern

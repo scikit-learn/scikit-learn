@@ -20,7 +20,6 @@ from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
-from ..utils.validation import _deprecate_positional_args
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
@@ -401,7 +400,6 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-@_deprecate_positional_args
 def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     r"""Expresses to what extent the local structure is retained.
 
@@ -629,6 +627,11 @@ class TSNE(BaseEstimator):
     kl_divergence_ : float
         Kullback-Leibler divergence after optimization.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of iterations run.
 
@@ -670,7 +673,6 @@ class TSNE(BaseEstimator):
     # Control the number of iterations between progress checks
     _N_ITER_CHECK = 50
 
-    @_deprecate_positional_args
     def __init__(self, n_components=2, *, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate="warn", n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
