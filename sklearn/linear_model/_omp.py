@@ -13,7 +13,7 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel
 
-from ._base import LinearModel, _pre_fit
+from ._base import LinearModel, _pre_fit, _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.fixes import delayed
@@ -616,6 +616,10 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
+
     precompute : 'auto' or bool, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
@@ -648,7 +652,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> from sklearn.linear_model import OrthogonalMatchingPursuit
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = OrthogonalMatchingPursuit().fit(X, y)
+    >>> reg = OrthogonalMatchingPursuit(normalize=False).fit(X, y)
     >>> reg.score(X, y)
     0.9991...
     >>> reg.predict(X[:1,])
@@ -683,7 +687,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         n_nonzero_coefs=None,
         tol=None,
         fit_intercept=True,
-        normalize=True,
+        normalize="deprecated",
         precompute="auto",
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
@@ -709,11 +713,15 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
+        _normalize = _deprecate_normalize(
+            self.normalize, default=True, estimator_name=self.__class__.__name__
+        )
+
         X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
-            X, y, None, self.precompute, self.normalize, self.fit_intercept, copy=True
+            X, y, None, self.precompute, _normalize, self.fit_intercept, copy=True
         )
 
         if y.ndim == 1:
@@ -797,6 +805,10 @@ def _omp_path_residues(
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
+
     max_iter : int, default=100
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 100 by default.
@@ -872,6 +884,10 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
+
     max_iter : int, default=None
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 10% of ``n_features`` but at least 5 if available.
@@ -929,7 +945,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=100, n_informative=10,
     ...                        noise=4, random_state=0)
-    >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
+    >>> reg = OrthogonalMatchingPursuitCV(cv=5, normalize=False).fit(X, y)
     >>> reg.score(X, y)
     0.9991...
     >>> reg.n_nonzero_coefs_
@@ -956,7 +972,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         *,
         copy=True,
         fit_intercept=True,
-        normalize=True,
+        normalize="deprecated",
         max_iter=None,
         cv=None,
         n_jobs=None,
@@ -986,6 +1002,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
+
+        _normalize = _deprecate_normalize(
+            self.normalize, default=True, estimator_name=self.__class__.__name__
+        )
+
         X, y = self._validate_data(
             X, y, y_numeric=True, ensure_min_features=2, estimator=self
         )
@@ -1004,7 +1025,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
                 y[test],
                 self.copy,
                 self.fit_intercept,
-                self.normalize,
+                _normalize,
                 max_iter,
             )
             for train, test in cv.split(X)
@@ -1019,7 +1040,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         omp = OrthogonalMatchingPursuit(
             n_nonzero_coefs=best_n_nonzero_coefs,
             fit_intercept=self.fit_intercept,
-            normalize=self.normalize,
+            normalize=_normalize,
         )
         omp.fit(X, y)
         self.coef_ = omp.coef_
