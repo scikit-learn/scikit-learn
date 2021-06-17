@@ -31,8 +31,12 @@ df = bike_sharing.frame
 # distinguish the commute patterns in the morning and evenings of the work days
 # and the leisure use of the bikes on the weekends with a more spread peak
 # demand around the middle of the days:
+import matplotlib.pyplot as plt
+
+
 average_week_demand = df.groupby(["weekday", "hour"]).mean()["count"]
 average_week_demand.plot(figsize=(12, 4))
+plt.title("Average number of bike rentals during the week")
 
 
 # %%
@@ -231,7 +235,7 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 
 # %%
 #
-# The performance is a not good: around 15% of the max demand on average. This
+# The performance is a not good: around 14% of the max demand on average. This
 # is three times higher than the gradient boosting model. We can suspect that
 # the non-monotonic original encoding of the periodic time-related features
 # might prevent the linear regression model to properly leverage the time
@@ -285,34 +289,28 @@ evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 # and as a result a larger number of expanded features:
 from sklearn.preprocessing import SplineTransformer
 
-# one knot for each month in year
-cyclic_month_splines = SplineTransformer(
-    degree=3,
-    n_knots=12,
-    knots=np.linspace(0, 12, 12).reshape(12, 1),
-    extrapolation="periodic",
-)
-# one knot for each day in week
-cyclic_weekday_splines = SplineTransformer(
-    degree=3,
-    n_knots=7,
-    knots=np.linspace(0, 7, 7).reshape(7, 1),
-    extrapolation="periodic",
-)
-# one knot every 2 hours in the day
-cyclic_hour_splines = SplineTransformer(
-    degree=3,
-    n_knots=24,
-    knots=np.linspace(0, 24, 24).reshape(24, 1),
-    extrapolation="periodic",
-)
 
+def periodic_spline_transformer(period, n_knots=None, degree=3):
+    if n_knots is None:
+        n_knots = period
+    return SplineTransformer(
+        degree=degree,
+        n_knots=n_knots,
+        knots=np.linspace(0, period, n_knots).reshape(n_knots, 1),
+        extrapolation="periodic",
+    )
+
+
+# %%
+# For the "hours" columns we use only 12 knots for a period of 24 hours to
+# avoid over-representing this feature compared to months (12 natural knots)
+# and weekday (7 natural knots).
 cyclic_spline_transformer = ColumnTransformer(
     transformers=[
         ("categorical", one_hot_encoder, categorical_columns),
-        ("cyclic_month", cyclic_month_splines, ["month"]),
-        ("cyclic_weekday", cyclic_weekday_splines, ["weekday"]),
-        ("cyclic_hour", cyclic_hour_splines, ["hour"]),
+        ("cyclic_month", periodic_spline_transformer(12), ["month"]),
+        ("cyclic_weekday", periodic_spline_transformer(7), ["weekday"]),
+        ("cyclic_hour", periodic_spline_transformer(24, n_knots=12), ["hour"]),
     ],
     remainder="passthrough",
 )
@@ -325,14 +323,22 @@ evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 
 # %%
 # Spline features make it possible for the linear model to successfully
-# leverage the periodic time-related features. However such linear models
-# cannot capture interactions between features (for instance the impact of rain
-# might not be the same during the work days and the week-ends).
+# leverage the periodic time-related features and reduce the error from ~14% to
+# ~10%.
 #
-# To capture such interaction we could either use a partial polynomial
+# However linear models cannot capture non-linear interactions between features
+# even if the features them-selves are marginally non-linear as is the case
+# with features constructed by `SplineTransformer`.
+#
+# An example of a such a non-linear interaction that we would like to model
+# could be the impact of the rain that might not be the same during the working
+# days and the week-ends and holidays for instance.
+#
+# To capture such interactions we could either use a partial polynomial
 # expansion `PolynomicalFeatures(degree=2, interaction_only=True)` or use the
-# Nystroem method to compute an approximate polynomial kernel expansion. Let
-# try the latter for computational reasons:
+# Nystroem method to compute an approximate polynomial kernel expansion.
+#
+# Let us try the latter for computational reasons:
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.kernel_approximation import Nystroem
 
@@ -347,14 +353,18 @@ evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
 
 # %%
 # We observe that this model performance can almost rival the performance of
-# the gradient boosted trees.
+# the gradient boosted trees with an average error around 6% of the maximum
+# demand.
 #
 # Note that while the final step of this pipeline is a linear regression model,
 # the intermediate steps such as the spline feature extraction and the Nyström
-# kernel approximation are highly non-linear. As the result the compound model
-# is much more expressive than a simple linear model.
+# kernel approximation are highly non-linear. As a result the compound
+# pipeline is much more expressive than a simple linear model.
 #
-# Let have a qualitative look at the predictions of this model and the gradient
+# Qualitative Analysis of the Models Predictions
+# ----------------------------------------------
+#
+# Let us have a qualitative look at the predictions of this model and the gradient
 # boosted trees:
 
 # %%
@@ -365,13 +375,11 @@ cyclic_spline_poly_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 cyclic_spline_poly_predictions = cyclic_spline_poly_pipeline.predict(X.iloc[test_0])
 
 # %%
-import matplotlib.pyplot as plt
-
 plt.figure(figsize=(6, 6))
 plt.scatter(y.iloc[test_0].values, gbrt_predictions,
-            alpha=0.2, label="GBDT")
+            alpha=0.2, label="Gradient Boosted Trees")
 plt.scatter(y.iloc[test_0].values, cyclic_spline_poly_predictions,
-            alpha=0.2, label="Spline poly reg.")
+            alpha=0.2, label="Splines + polynomial kernel regression")
 plt.plot([0, 1], [0, 1], "--", label="Perfect model")
 plt.xlim(0, 1)
 plt.ylim(0, 1)
@@ -389,10 +397,92 @@ _ = plt.legend()
 # We can confirm this global analysis by zooming on the last 96 hours (4 days)
 # of the test set:
 
+last_hours = slice(-96, None)
+plt.figure(figsize=(12, 4))
+plt.plot(
+    gbrt_predictions[last_hours],
+    "x-",
+    label="Gradient Boosted Trees",
+)
+plt.plot(
+    cyclic_spline_poly_predictions[last_hours],
+    "x-",
+    label="Splines + polynomial kernel regression",
+)
+plt.title("Predictions by non-linear models")
+plt.plot(
+    y.iloc[test_0].values[last_hours],
+    "x-",
+    alpha=0.2,
+    label="Actual demand",
+    color="black",
+)
+_ = plt.legend()
+
+# %%
+# Let us know compare the predictions of the 3 linear models (without kernel
+# approximation).
+#
+# Here we want to visualize the impact of the feature engineering choices on
+# the time related-shape of the predictions.
+naive_linear_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
+naive_linear_predictions = naive_linear_pipeline.predict(X.iloc[test_0])
+
+cyclic_cossin_linear_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
+cyclic_cossin_linear_predictions = cyclic_cossin_linear_pipeline.predict(
+    X.iloc[test_0]
+)
+
+cyclic_spline_linear_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
+cyclic_spline_linear_preictions = cyclic_spline_linear_pipeline.predict(
+    X.iloc[test_0]
+)
+
+# %%
 plt.figure(figsize=(12, 4))
 last_hours = slice(-96, None)
-plt.plot(y.iloc[test_0].values[last_hours], "x-", label="True demand")
-plt.plot(gbrt_predictions[last_hours], "x-", label="GBDT predictions")
-plt.plot(cyclic_spline_poly_predictions[last_hours], "x-",
-         label="Spline poly predictions")
+plt.plot(naive_linear_predictions[last_hours], "x-", label="Raw time features")
+plt.plot(
+    cyclic_cossin_linear_predictions[last_hours],
+    "x-",
+    label="Trigonometric time features"
+)
+plt.plot(
+    cyclic_spline_linear_preictions[last_hours],
+    "x-",
+    label="Spline-based time features"
+)
+plt.plot(
+    y.iloc[test_0].values[last_hours],
+    "x-",
+    alpha=0.2,
+    label="Actual demand",
+    color="black",
+)
+plt.title("Predictions by linear models")
 _ = plt.legend()
+
+# %%
+# We can draw the following conclusions from the above plot:
+#
+# - the raw ordinal time features are problematic because they do not capture
+#   the natural periodicity: we observe a big jump in the predictions at the
+#   end of each day when the hour features goes from 23 back to 0. We can
+#   expect similar artifacts at the end of each weak or each year.
+#
+# - as expected, the trigonometric features (sine and cosine) do not have this
+#   end-of-day discontinuties but the linear regression model fails to leverage
+#   those features to properly model intra-day variations. Using higher
+#   frequency trigonmetric features or additional phased trigonometric features
+#   could potentially fix this problem.
+#
+# - the periodic spline-based features fix those two problems at a time: they
+#   give more expressivity to the linear model by making it possible to focus
+#   on a specific hours thanks to the use of 12 knots. Furthermore the
+#   `extrapolation="periodic"` option enforces a smooth representation between
+#   `hour=23` and `hour=0`.
+#
+# Finally the lack of modeling of interactions between features seems to be a
+# problem even for the model with spline-based features as its performance is
+# qualitatively much worse than the same model with a polynomial kernel
+# approximation on top as shown previously.
