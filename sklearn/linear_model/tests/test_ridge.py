@@ -1543,7 +1543,7 @@ def test_trf_solver_error():
 @pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize(
     "solver",
-    ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga"]
+    ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga", "trf"]
 )
 def test_ridge_sample_weight_invariance(normalize, solver):
     """Test that Ridge fulfils sample weight invariance.
