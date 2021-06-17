@@ -9,7 +9,9 @@ from scipy.interpolate import BSpline
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
-    KBinsDiscretizer, PolynomialFeatures, SplineTransformer
+    KBinsDiscretizer,
+    PolynomialFeatures,
+    SplineTransformer,
 )
 from sklearn.utils.fixes import linspace, sp_version, parse_version
 
@@ -72,14 +74,12 @@ def test_polynomial_and_spline_array_order(est):
         ({"include_bias": "string"}, "include_bias must be bool."),
         (
             {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
-            "Periodic splines require degree < n_knots. Got n_knots="
-            "3 and degree=3."
+            "Periodic splines require degree < n_knots. Got n_knots=" "3 and degree=3.",
         ),
         (
             {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
-            "Periodic splines require degree < n_knots. Got n_knots=2 and "
-            "degree=2."
-        )
+            "Periodic splines require degree < n_knots. Got n_knots=2 and " "degree=2.",
+        ),
     ],
 )
 def test_spline_transformer_input_validation(params, err_msg):
@@ -109,9 +109,7 @@ def test_spline_transformer_integer_knots(extrapolation):
     X = np.arange(20).reshape(10, 2)
     knots = [[0, 1], [1, 2], [5, 5], [11, 10], [12, 11]]
     _ = SplineTransformer(
-        degree=3,
-        knots=knots,
-        extrapolation=extrapolation
+        degree=3, knots=knots, extrapolation=extrapolation
     ).fit_transform(X)
 
 
@@ -157,12 +155,7 @@ def test_spline_transformer_feature_names():
 @pytest.mark.parametrize("n_knots", range(3, 5))
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
 @pytest.mark.parametrize("extrapolation", ["constant", "periodic"])
-def test_spline_transformer_unity_decomposition(
-    degree,
-    n_knots,
-    knots,
-    extrapolation
-):
+def test_spline_transformer_unity_decomposition(degree, n_knots, knots, extrapolation):
     """Test that B-splines are indeed a decomposition of unity.
 
     Splines basis functions must sum up to 1 per row, if we stay in between
@@ -181,7 +174,7 @@ def test_spline_transformer_unity_decomposition(
         degree=degree,
         knots=knots,
         include_bias=True,
-        extrapolation=extrapolation
+        extrapolation=extrapolation,
     )
     splt.fit(X_train)
     for X in [X_train, X_test]:
@@ -211,27 +204,25 @@ def test_spline_transformer_linear_regression(bias, intercept):
     assert_allclose(pipe.predict(X), y, rtol=1e-3)
 
 
-@pytest.mark.parametrize("knots, n_knots, degree", [
-    ("uniform", 5, 3),
-    ("uniform", 12, 8),
-    (
-        [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
-        None,
-        3
-    )
-])
-def test_spline_transformer_periodicity_of_extrapolation(
-    knots, n_knots, degree
-):
+@pytest.mark.parametrize(
+    "knots, n_knots, degree",
+    [
+        ("uniform", 5, 3),
+        ("uniform", 12, 8),
+        (
+            [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
+            None,
+            3,
+        ),
+    ],
+)
+def test_spline_transformer_periodicity_of_extrapolation(knots, n_knots, degree):
     """Test that the SplineTransformer is periodic for multiple features."""
     X_1 = linspace((-1, 0), (1, 5), 10)
     X_2 = linspace((1, 5), (3, 10), 10)
 
     splt = SplineTransformer(
-        knots=knots,
-        n_knots=n_knots,
-        degree=degree,
-        extrapolation="periodic"
+        knots=knots, n_knots=n_knots, degree=degree, extrapolation="periodic"
     )
     splt.fit(X_1)
 
@@ -280,9 +271,7 @@ def test_spline_transformer_periodic_spline_backport():
 
     # Use periodic extrapolation backport in SplineTransformer
     transformer = SplineTransformer(
-        degree=degree,
-        extrapolation="periodic",
-        knots=[[-1.0], [0.0], [1.0]]
+        degree=degree, extrapolation="periodic", knots=[[-1.0], [0.0], [1.0]]
     )
     Xt = transformer.fit_transform(X)
 
@@ -302,13 +291,13 @@ def test_spline_transformer_periodic_splines_periodicity():
     transformer_1 = SplineTransformer(
         degree=3,
         extrapolation="periodic",
-        knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]]
+        knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]],
     )
 
     transformer_2 = SplineTransformer(
         degree=3,
         extrapolation="periodic",
-        knots=[[1.0], [3.0], [4.0], [5.0], [8.0], [9.0]]
+        knots=[[1.0], [3.0], [4.0], [5.0], [8.0], [9.0]],
     )
 
     Xt_1 = transformer_1.fit_transform(X)
@@ -325,7 +314,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     transformer = SplineTransformer(
         degree=degree,
         extrapolation="periodic",
-        knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]]
+        knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]],
     )
     Xt = transformer.fit_transform(X)
 
@@ -423,9 +412,7 @@ def test_spline_transformer_kbindiscretizer():
     )
     splines = splt.fit_transform(X)
 
-    kbd = KBinsDiscretizer(
-        n_bins=n_bins, encode="onehot-dense", strategy="quantile"
-    )
+    kbd = KBinsDiscretizer(n_bins=n_bins, encode="onehot-dense", strategy="quantile")
     kbins = kbd.fit_transform(X)
 
     # Though they should be exactly equal, we test approximately with high
@@ -438,11 +425,7 @@ def test_spline_transformer_kbindiscretizer():
 @pytest.mark.parametrize("degree", [3, 5])
 def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
     """Test that transform results in n_features_out_ features."""
-    splt = SplineTransformer(
-        n_knots=n_knots,
-        degree=degree,
-        include_bias=include_bias
-    )
+    splt = SplineTransformer(n_knots=n_knots, degree=degree, include_bias=include_bias)
     X = np.linspace(0, 1, 10)[:, None]
     splt.fit(X)
 
@@ -452,19 +435,22 @@ def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
 def test_polynomial_features():
     # Test Polynomial Features
     X1 = np.arange(6)[:, np.newaxis]
-    P1 = np.hstack([np.ones_like(X1),
-                    X1, X1 ** 2, X1 ** 3])
+    P1 = np.hstack([np.ones_like(X1), X1, X1 ** 2, X1 ** 3])
     deg1 = 3
 
     X2 = np.arange(6).reshape((3, 2))
     x1 = X2[:, :1]
     x2 = X2[:, 1:]
-    P2 = np.hstack([x1 ** 0 * x2 ** 0,
-                    x1 ** 1 * x2 ** 0,
-                    x1 ** 0 * x2 ** 1,
-                    x1 ** 2 * x2 ** 0,
-                    x1 ** 1 * x2 ** 1,
-                    x1 ** 0 * x2 ** 2])
+    P2 = np.hstack(
+        [
+            x1 ** 0 * x2 ** 0,
+            x1 ** 1 * x2 ** 0,
+            x1 ** 0 * x2 ** 1,
+            x1 ** 2 * x2 ** 0,
+            x1 ** 1 * x2 ** 1,
+            x1 ** 0 * x2 ** 2,
+        ]
+    )
     deg2 = 2
 
     for (deg, X, P) in [(deg1, X1, P1), (deg2, X2, P2)]:
@@ -478,48 +464,74 @@ def test_polynomial_features():
     X_poly = interact.fit_transform(X)
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
-    assert interact.powers_.shape == (interact.n_output_features_,
-                                      interact.n_features_in_)
+    assert interact.powers_.shape == (
+        interact.n_output_features_,
+        interact.n_features_in_,
+    )
 
 
 def test_polynomial_feature_names():
     X = np.arange(30).reshape(10, 3)
     poly = PolynomialFeatures(degree=2, include_bias=True).fit(X)
     feature_names = poly.get_feature_names()
-    assert_array_equal(['1', 'x0', 'x1', 'x2', 'x0^2', 'x0 x1',
-                        'x0 x2', 'x1^2', 'x1 x2', 'x2^2'],
-                       feature_names)
+    assert_array_equal(
+        ["1", "x0", "x1", "x2", "x0^2", "x0 x1", "x0 x2", "x1^2", "x1 x2", "x2^2"],
+        feature_names,
+    )
 
     poly = PolynomialFeatures(degree=3, include_bias=False).fit(X)
     feature_names = poly.get_feature_names(["a", "b", "c"])
-    assert_array_equal(['a', 'b', 'c', 'a^2', 'a b', 'a c', 'b^2',
-                        'b c', 'c^2', 'a^3', 'a^2 b', 'a^2 c',
-                        'a b^2', 'a b c', 'a c^2', 'b^3', 'b^2 c',
-                        'b c^2', 'c^3'], feature_names)
+    assert_array_equal(
+        [
+            "a",
+            "b",
+            "c",
+            "a^2",
+            "a b",
+            "a c",
+            "b^2",
+            "b c",
+            "c^2",
+            "a^3",
+            "a^2 b",
+            "a^2 c",
+            "a b^2",
+            "a b c",
+            "a c^2",
+            "b^3",
+            "b^2 c",
+            "b c^2",
+            "c^3",
+        ],
+        feature_names,
+    )
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names(
-        ["\u0001F40D", "\u262E", "\u05D0"])
-    assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"],
-                       feature_names)
+    feature_names = poly.get_feature_names(["\u0001F40D", "\u262E", "\u05D0"])
+    assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"], feature_names)
 
 
-@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
-                         [(1, True, False, int),
-                          (2, True, False, int),
-                          (2, True, False, np.float32),
-                          (2, True, False, np.float64),
-                          (3, False, False, np.float64),
-                          (3, False, True, np.float64),
-                          (4, False, False, np.float64),
-                          (4, False, True, np.float64)])
+@pytest.mark.parametrize(
+    ["deg", "include_bias", "interaction_only", "dtype"],
+    [
+        (1, True, False, int),
+        (2, True, False, int),
+        (2, True, False, np.float32),
+        (2, True, False, np.float64),
+        (3, False, False, np.float64),
+        (3, False, True, np.float64),
+        (4, False, False, np.float64),
+        (4, False, True, np.float64),
+    ],
+)
 def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
     X_csc = sparse.csc_matrix(X)
 
-    est = PolynomialFeatures(deg, include_bias=include_bias,
-                             interaction_only=interaction_only)
+    est = PolynomialFeatures(
+        deg, include_bias=include_bias, interaction_only=interaction_only
+    )
     Xt_csc = est.fit_transform(X_csc.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
@@ -528,20 +540,25 @@ def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
     assert_array_almost_equal(Xt_csc.A, Xt_dense)
 
 
-@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
-                         [(1, True, False, int),
-                          (2, True, False, int),
-                          (2, True, False, np.float32),
-                          (2, True, False, np.float64),
-                          (3, False, False, np.float64),
-                          (3, False, True, np.float64)])
+@pytest.mark.parametrize(
+    ["deg", "include_bias", "interaction_only", "dtype"],
+    [
+        (1, True, False, int),
+        (2, True, False, int),
+        (2, True, False, np.float32),
+        (2, True, False, np.float64),
+        (3, False, False, np.float64),
+        (3, False, True, np.float64),
+    ],
+)
 def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
     X_csr = sparse.csr_matrix(X)
 
-    est = PolynomialFeatures(deg, include_bias=include_bias,
-                             interaction_only=interaction_only)
+    est = PolynomialFeatures(
+        deg, include_bias=include_bias, interaction_only=interaction_only
+    )
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype, copy=False))
 
@@ -571,18 +588,22 @@ def test_num_combinations(n_features, degree, interaction_only, include_bias):
     assert num_combos == sum([1 for _ in combos])
 
 
-@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
-                         [(2, True, False, np.float32),
-                          (2, True, False, np.float64),
-                          (3, False, False, np.float64),
-                          (3, False, True, np.float64)])
-def test_polynomial_features_csr_X_floats(deg, include_bias,
-                                          interaction_only, dtype):
+@pytest.mark.parametrize(
+    ["deg", "include_bias", "interaction_only", "dtype"],
+    [
+        (2, True, False, np.float32),
+        (2, True, False, np.float64),
+        (3, False, False, np.float64),
+        (3, False, True, np.float64),
+    ],
+)
+def test_polynomial_features_csr_X_floats(deg, include_bias, interaction_only, dtype):
     X_csr = sparse_random(1000, 10, 0.5, random_state=0).tocsr()
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(deg, include_bias=include_bias,
-                             interaction_only=interaction_only)
+    est = PolynomialFeatures(
+        deg, include_bias=include_bias, interaction_only=interaction_only
+    )
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
@@ -591,19 +612,29 @@ def test_polynomial_features_csr_X_floats(deg, include_bias,
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-@pytest.mark.parametrize(['zero_row_index', 'deg', 'interaction_only'],
-                         [(0, 2, True), (1, 2, True), (2, 2, True),
-                          (0, 3, True), (1, 3, True), (2, 3, True),
-                          (0, 2, False), (1, 2, False), (2, 2, False),
-                          (0, 3, False), (1, 3, False), (2, 3, False)])
-def test_polynomial_features_csr_X_zero_row(zero_row_index, deg,
-                                            interaction_only):
+@pytest.mark.parametrize(
+    ["zero_row_index", "deg", "interaction_only"],
+    [
+        (0, 2, True),
+        (1, 2, True),
+        (2, 2, True),
+        (0, 3, True),
+        (1, 3, True),
+        (2, 3, True),
+        (0, 2, False),
+        (1, 2, False),
+        (2, 2, False),
+        (0, 3, False),
+        (1, 3, False),
+        (2, 3, False),
+    ],
+)
+def test_polynomial_features_csr_X_zero_row(zero_row_index, deg, interaction_only):
     X_csr = sparse_random(3, 10, 1.0, random_state=0).tocsr()
     X_csr[zero_row_index, :] = 0.0
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(deg, include_bias=False,
-                             interaction_only=interaction_only)
+    est = PolynomialFeatures(deg, include_bias=False, interaction_only=interaction_only)
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
@@ -614,15 +645,17 @@ def test_polynomial_features_csr_X_zero_row(zero_row_index, deg,
 
 # This degree should always be one more than the highest degree supported by
 # _csr_expansion.
-@pytest.mark.parametrize(['include_bias', 'interaction_only'],
-                         [(True, True), (True, False),
-                          (False, True), (False, False)])
+@pytest.mark.parametrize(
+    ["include_bias", "interaction_only"],
+    [(True, True), (True, False), (False, True), (False, False)],
+)
 def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
     X_csr = sparse_random(1000, 10, 0.5, random_state=0).tocsr()
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(4, include_bias=include_bias,
-                             interaction_only=interaction_only)
+    est = PolynomialFeatures(
+        4, include_bias=include_bias, interaction_only=interaction_only
+    )
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
@@ -631,17 +664,21 @@ def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-@pytest.mark.parametrize(['deg', 'dim', 'interaction_only'],
-                         [(2, 1, True),
-                          (2, 2, True),
-                          (3, 1, True),
-                          (3, 2, True),
-                          (3, 3, True),
-                          (2, 1, False),
-                          (2, 2, False),
-                          (3, 1, False),
-                          (3, 2, False),
-                          (3, 3, False)])
+@pytest.mark.parametrize(
+    ["deg", "dim", "interaction_only"],
+    [
+        (2, 1, True),
+        (2, 2, True),
+        (3, 1, True),
+        (3, 2, True),
+        (3, 3, True),
+        (2, 1, False),
+        (2, 2, False),
+        (3, 1, False),
+        (3, 2, False),
+        (3, 3, False),
+    ],
+)
 def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     X_csr = sparse_random(1000, dim, 0.5, random_state=0).tocsr()
     X = X_csr.toarray()
@@ -658,8 +695,10 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
 def test_polynomial_features_deprecated_n_input_features():
     # check that we raise a deprecation warning when accessing
     # `n_input_features_`. FIXME: remove in 1.2
-    depr_msg = ("The attribute n_input_features_ was deprecated in version "
-                "1.0 and will be removed in 1.2.")
+    depr_msg = (
+        "The attribute n_input_features_ was deprecated in version "
+        "1.0 and will be removed in 1.2."
+    )
     X = np.arange(10).reshape(5, 2)
 
     with pytest.warns(FutureWarning, match=depr_msg):

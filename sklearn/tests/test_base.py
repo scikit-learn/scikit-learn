@@ -30,7 +30,6 @@ import pickle
 #############################################################################
 # A few test classes
 class MyEstimator(BaseEstimator):
-
     def __init__(self, l1=0, empty=None):
         self.l1 = l1
         self.empty = empty
@@ -50,17 +49,17 @@ class T(BaseEstimator):
 
 class NaNTag(BaseEstimator):
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}
 
 
 class NoNaNTag(BaseEstimator):
     def _more_tags(self):
-        return {'allow_nan': False}
+        return {"allow_nan": False}
 
 
 class OverrideTag(NaNTag):
     def _more_tags(self):
-        return {'allow_nan': False}
+        return {"allow_nan": False}
 
 
 class DiamondOverwriteTag(NaNTag, NoNaNTag):
@@ -77,12 +76,13 @@ class ModifyInitParams(BaseEstimator):
     Equal parameters but with a type cast.
     Doesn't fulfill a is a
     """
+
     def __init__(self, a=np.array([0])):
         self.a = a.copy()
 
 
 class Buggy(BaseEstimator):
-    " A buggy estimator that does not set its parameters right. "
+    "A buggy estimator that does not set its parameters right."
 
     def __init__(self, a=None):
         self.a = 1
@@ -101,12 +101,14 @@ class NoEstimator:
 
 class VargEstimator(BaseEstimator):
     """scikit-learn estimators shouldn't have vargs."""
+
     def __init__(self, *vargs):
         pass
 
 
 #############################################################################
 # The tests
+
 
 def test_clone():
     # Tests that clone creates a correct deep copy.
@@ -181,8 +183,8 @@ def test_clone_nan():
 
 def test_clone_sparse_matrices():
     sparse_matrix_classes = [
-        getattr(sp, name)
-        for name in dir(sp) if name.endswith('_matrix')]
+        getattr(sp, name) for name in dir(sp) if name.endswith("_matrix")
+    ]
 
     for cls in sparse_matrix_classes:
         sparse_matrix = cls(np.eye(5))
@@ -214,9 +216,7 @@ def test_repr():
     my_estimator = MyEstimator()
     repr(my_estimator)
     test = T(K(), K())
-    assert (
-        repr(test) ==
-        "T(a=K(), b=K())")
+    assert repr(test) == "T(a=K(), b=K())"
 
     some_est = T(a=["long_params"] * 1000)
     assert len(repr(some_est)) == 485
@@ -231,8 +231,8 @@ def test_str():
 def test_get_params():
     test = T(K(), K())
 
-    assert 'a__d' in test.get_params(deep=True)
-    assert 'a__d' not in test.get_params(deep=False)
+    assert "a__d" in test.get_params(deep=True)
+    assert "a__d" not in test.get_params(deep=False)
 
     test.set_params(a__d=2)
     assert test.a.d == 2
@@ -244,10 +244,9 @@ def test_get_params():
 def test_is_classifier():
     svc = SVC()
     assert is_classifier(svc)
-    assert is_classifier(GridSearchCV(svc, {'C': [0.1, 1]}))
-    assert is_classifier(Pipeline([('svc', svc)]))
-    assert is_classifier(Pipeline(
-        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))]))
+    assert is_classifier(GridSearchCV(svc, {"C": [0.1, 1]}))
+    assert is_classifier(Pipeline([("svc", svc)]))
+    assert is_classifier(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
 
 
 def test_set_params():
@@ -279,11 +278,12 @@ def test_set_params_passes_all_parameters():
             assert kwargs == expected_kwargs
             return self
 
-    expected_kwargs = {'max_depth': 5, 'min_samples_leaf': 2}
-    for est in [Pipeline([('estimator', TestDecisionTree())]),
-                GridSearchCV(TestDecisionTree(), {})]:
-        est.set_params(estimator__max_depth=5,
-                       estimator__min_samples_leaf=2)
+    expected_kwargs = {"max_depth": 5, "min_samples_leaf": 2}
+    for est in [
+        Pipeline([("estimator", TestDecisionTree())]),
+        GridSearchCV(TestDecisionTree(), {}),
+    ]:
+        est.set_params(estimator__max_depth=5, estimator__min_samples_leaf=2)
 
 
 def test_set_params_updates_valid_params():
@@ -294,12 +294,19 @@ def test_set_params_updates_valid_params():
     assert gscv.estimator.C == 42.0
 
 
-@pytest.mark.parametrize("tree,dataset", [
-    (DecisionTreeClassifier(max_depth=2, random_state=0),
-     datasets.make_classification(random_state=0)),
-    (DecisionTreeRegressor(max_depth=2, random_state=0),
-     datasets.make_regression(random_state=0)),
-])
+@pytest.mark.parametrize(
+    "tree,dataset",
+    [
+        (
+            DecisionTreeClassifier(max_depth=2, random_state=0),
+            datasets.make_classification(random_state=0),
+        ),
+        (
+            DecisionTreeRegressor(max_depth=2, random_state=0),
+            datasets.make_regression(random_state=0),
+        ),
+    ],
+)
 def test_score_sample_weight(tree, dataset):
     rng = np.random.RandomState(0)
     # check that the score with and without sample weights are different
@@ -315,7 +322,6 @@ def test_score_sample_weight(tree, dataset):
 
 
 def test_clone_pandas_dataframe():
-
     class DummyEstimator(TransformerMixin, BaseEstimator):
         """This is a dummy class for generating numerical features
 
@@ -331,6 +337,7 @@ def test_clone_pandas_dataframe():
         Notes
         -----
         """
+
         def __init__(self, df=None, scalar_param=1):
             self.df = df
             self.scalar_param = scalar_param
@@ -375,16 +382,19 @@ pickle_error_message = (
     "version {old_version} when using version "
     "{current_version}. This might "
     "lead to breaking code or invalid results. "
-    "Use at your own risk.")
+    "Use at your own risk."
+)
 
 
 def test_pickle_version_warning_is_issued_upon_different_version():
     iris = datasets.load_iris()
     tree = TreeBadVersion().fit(iris.data, iris.target)
     tree_pickle_other = pickle.dumps(tree)
-    message = pickle_error_message.format(estimator="TreeBadVersion",
-                                          old_version="something",
-                                          current_version=sklearn.__version__)
+    message = pickle_error_message.format(
+        estimator="TreeBadVersion",
+        old_version="something",
+        current_version=sklearn.__version__,
+    )
     assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_other)
 
 
@@ -400,12 +410,13 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
 
     tree_pickle_noversion = pickle.dumps(tree)
     assert b"version" not in tree_pickle_noversion
-    message = pickle_error_message.format(estimator="TreeNoVersion",
-                                          old_version="pre-0.18",
-                                          current_version=sklearn.__version__)
+    message = pickle_error_message.format(
+        estimator="TreeNoVersion",
+        old_version="pre-0.18",
+        current_version=sklearn.__version__,
+    )
     # check we got the warning about using pre-0.18 pickle
-    assert_warns_message(UserWarning, message, pickle.loads,
-                         tree_pickle_noversion)
+    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_noversion)
 
 
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
@@ -457,10 +468,9 @@ def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
         type(estimator).__module__ = "notsklearn"
 
         serialized = estimator.__getstate__()
-        assert serialized == {'_attribute_not_pickled': None,
-                              'attribute_pickled': 5}
+        assert serialized == {"_attribute_not_pickled": None, "attribute_pickled": 5}
 
-        serialized['attribute_pickled'] = 4
+        serialized["attribute_pickled"] = 4
         estimator.__setstate__(serialized)
         assert estimator.attribute_pickled == 4
         assert estimator._restored
@@ -495,17 +505,17 @@ def test_tag_inheritance():
 
     nan_tag_est = NaNTag()
     no_nan_tag_est = NoNaNTag()
-    assert nan_tag_est._get_tags()['allow_nan']
-    assert not no_nan_tag_est._get_tags()['allow_nan']
+    assert nan_tag_est._get_tags()["allow_nan"]
+    assert not no_nan_tag_est._get_tags()["allow_nan"]
 
     redefine_tags_est = OverrideTag()
-    assert not redefine_tags_est._get_tags()['allow_nan']
+    assert not redefine_tags_est._get_tags()["allow_nan"]
 
     diamond_tag_est = DiamondOverwriteTag()
-    assert diamond_tag_est._get_tags()['allow_nan']
+    assert diamond_tag_est._get_tags()["allow_nan"]
 
     inherit_diamond_tag_est = InheritDiamondOverwriteTag()
-    assert inherit_diamond_tag_est._get_tags()['allow_nan']
+    assert inherit_diamond_tag_est._get_tags()["allow_nan"]
 
 
 def test_raises_on_get_params_non_attribute():
@@ -530,7 +540,7 @@ def test_repr_mimebundle_():
     assert "text/plain" in output
     assert "text/html" not in output
 
-    with config_context(display='diagram'):
+    with config_context(display="diagram"):
         output = tree._repr_mimebundle_()
         assert "text/plain" in output
         assert "text/html" in output
@@ -543,7 +553,7 @@ def test_repr_html_wraps():
     with pytest.raises(AttributeError, match=msg):
         output = tree._repr_html_()
 
-    with config_context(display='diagram'):
+    with config_context(display="diagram"):
         output = tree._repr_html_()
         assert "<style>" in output
 
@@ -551,7 +561,7 @@ def test_repr_html_wraps():
 # TODO: Remove in 1.1 when the _pairwise attribute is removed
 def test_is_pairwise():
     # simple checks for _is_pairwise
-    pca = KernelPCA(kernel='precomputed')
+    pca = KernelPCA(kernel="precomputed")
     with pytest.warns(None) as record:
         assert _is_pairwise(pca)
     assert not record
@@ -560,7 +570,7 @@ def test_is_pairwise():
     class IncorrectTagPCA(KernelPCA):
         _pairwise = False
 
-    pca = IncorrectTagPCA(kernel='precomputed')
+    pca = IncorrectTagPCA(kernel="precomputed")
     msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         assert not _is_pairwise(pca)
@@ -589,8 +599,7 @@ def test_n_features_in_validation():
 
     assert est.n_features_in_ == 3
 
-    msg = ("X does not contain any features, but MyEstimator is expecting "
-           "3 features")
+    msg = "X does not contain any features, but MyEstimator is expecting " "3 features"
     with pytest.raises(ValueError, match=msg):
         est._check_n_features("invalid X", reset=False)
 
