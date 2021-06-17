@@ -331,14 +331,27 @@ cyclic_spline_poly_predictions = cyclic_spline_poly_pipeline.predict(X.iloc[test
 # %%
 import matplotlib.pyplot as plt
 
-
-plt.scatter(y.iloc[test_0].values, gbrt_predictions, alpha=0.1)
-plt.scatter(y.iloc[test_0].values, cyclic_spline_poly_predictions, alpha=0.1)
-plt.plot([0, 1], [0, 1], "--")
+plt.figure(figsize=(6, 6))
+plt.scatter(y.iloc[test_0].values, gbrt_predictions,
+            alpha=0.2, label="GBDT")
+plt.scatter(y.iloc[test_0].values, cyclic_spline_poly_predictions,
+            alpha=0.2, label="Spline poly reg.")
+plt.plot([0, 1], [0, 1], "--", label="Perfect model")
 plt.xlim(0, 1)
 plt.ylim(0, 1)
+plt.xlabel("True demand")
+plt.ylabel("Predicted demand")
+_ = plt.legend()
+
 
 # %%
+# We can observe that both models under-estimate the high demand events, but
+# gradient boosting a bit less so. The low demand events are well predicted on
+# average by gradient boosting while the spline polynomial regression pipeline
+# seems to systematic over-estimate demand in that regime.
+#
+# We can confirm this global analysis by zooming on the last 96 hours (4 days)
+# of the test set:
 
 plt.figure(figsize=(12, 4))
 last_hours = slice(-96, None)
@@ -347,3 +360,5 @@ plt.plot(gbrt_predictions[last_hours], "x-", label="GBDT predictions")
 plt.plot(cyclic_spline_poly_predictions[last_hours], "x-",
          label="Spline poly predictions")
 _ = plt.legend()
+
+# %%
