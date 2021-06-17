@@ -687,7 +687,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         n_nonzero_coefs=None,
         tol=None,
         fit_intercept=True,
-        normalize='deprecated',
+        normalize="deprecated",
         precompute="auto"
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
@@ -714,13 +714,12 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             returns an instance of self.
         """
         _normalize = _deprecate_normalize(
-            self.normalize, default=True,
-            estimator_name=self.__class__.__name__
+            self.normalize, default=True, estimator_name=self.__class__.__name__
         )
 
         X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
-        
+
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
             X, y, None, self.precompute, _normalize, self.fit_intercept, copy=True
         )
@@ -973,7 +972,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         *,
         copy=True,
         fit_intercept=True,
-        normalize='deprecated',
+        normalize="deprecated",
         max_iter=None,
         cv=None,
         n_jobs=None,
@@ -1005,12 +1004,12 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         """
 
         _normalize = _deprecate_normalize(
-            self.normalize, default=True,
-            estimator_name=self.__class__.__name__
+            self.normalize, default=True, estimator_name=self.__class__.__name__
         )
 
-        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2,
-                                   estimator=self)
+        X, y = self._validate_data(
+            X, y, y_numeric=True, ensure_min_features=2, estimator=self
+        )
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         max_iter = (

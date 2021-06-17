@@ -36,15 +36,11 @@ G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 
 
 # FIXME: 'normalize' to set to False in 1.2 and removed in 1.4
-@pytest.mark.parametrize('OmpModel', [
-    OrthogonalMatchingPursuit,
-    OrthogonalMatchingPursuitCV
-])
 @pytest.mark.parametrize(
-    'normalize, n_warnings',
-    [(True, 0),
-     (False, 0),
-     ("deprecated", 1)]
+    "OmpModel", [OrthogonalMatchingPursuit, OrthogonalMatchingPursuitCV]
+)
+@pytest.mark.parametrize(
+    "normalize, n_warnings", [(True, 0), (False, 0), ("deprecated", 1)]
 )
 def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
     # check that we issue a FutureWarning when normalize was set
@@ -52,7 +48,7 @@ def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
     n_samples = 200
     n_features = 2
     X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.
+    X[X < 0.1] = 0.0
     y = rng.rand(n_samples)
 
     model = OmpModel(normalize=normalize)
