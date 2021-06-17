@@ -4,9 +4,7 @@ from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
 
 
-class NearestNeighbors(KNeighborsMixin,
-                       RadiusNeighborsMixin,
-                       NeighborsBase):
+class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -115,15 +113,28 @@ class NearestNeighbors(KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
     """
 
-    def __init__(self, *, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=30, metric='minkowski',
-                 p=2, metric_params=None, n_jobs=None):
+    def __init__(
+        self,
+        *,
+        n_neighbors=5,
+        radius=1.0,
+        algorithm="auto",
+        leaf_size=30,
+        metric="minkowski",
+        p=2,
+        metric_params=None,
+        n_jobs=None
+    ):
         super().__init__(
-              n_neighbors=n_neighbors,
-              radius=radius,
-              algorithm=algorithm,
-              leaf_size=leaf_size, metric=metric, p=p,
-              metric_params=metric_params, n_jobs=n_jobs)
+            n_neighbors=n_neighbors,
+            radius=radius,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
 
     def fit(self, X, y=None):
         """Fit the nearest neighbors estimator from the training dataset.

@@ -23,42 +23,42 @@ from sklearn.datasets import fetch_rcv1
 
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
-    raise ImportError('Your version of pytest is too old, you should have '
-                      'at least pytest >= {} installed.'
-                      .format(PYTEST_MIN_VERSION))
+    raise ImportError(
+        "Your version of pytest is too old, you should have "
+        "at least pytest >= {} installed.".format(PYTEST_MIN_VERSION)
+    )
 
 dataset_fetchers = {
-    'fetch_20newsgroups_fxt': fetch_20newsgroups,
-    'fetch_20newsgroups_vectorized_fxt': fetch_20newsgroups_vectorized,
-    'fetch_california_housing_fxt': fetch_california_housing,
-    'fetch_covtype_fxt': fetch_covtype,
-    'fetch_kddcup99_fxt': fetch_kddcup99,
-    'fetch_olivetti_faces_fxt': fetch_olivetti_faces,
-    'fetch_rcv1_fxt': fetch_rcv1,
+    "fetch_20newsgroups_fxt": fetch_20newsgroups,
+    "fetch_20newsgroups_vectorized_fxt": fetch_20newsgroups_vectorized,
+    "fetch_california_housing_fxt": fetch_california_housing,
+    "fetch_covtype_fxt": fetch_covtype,
+    "fetch_kddcup99_fxt": fetch_kddcup99,
+    "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
+    "fetch_rcv1_fxt": fetch_rcv1,
 }
 
 
 def _fetch_fixture(f):
     """Fetch dataset (download if missing and requested by environment)."""
-    download_if_missing = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
+    download_if_missing = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
 
     @wraps(f)
     def wrapped(*args, **kwargs):
-        kwargs['download_if_missing'] = download_if_missing
+        kwargs["download_if_missing"] = download_if_missing
         try:
             return f(*args, **kwargs)
         except IOError as e:
             if str(e) != "Data not found and `download_if_missing` is False":
                 raise
-            pytest.skip("test is enabled when "
-                        "SKLEARN_SKIP_NETWORK_TESTS=0")
+            pytest.skip("test is enabled when " "SKLEARN_SKIP_NETWORK_TESTS=0")
+
     return pytest.fixture(lambda: wrapped)
 
 
 # Adds fixtures for fetching data
 fetch_20newsgroups_fxt = _fetch_fixture(fetch_20newsgroups)
-fetch_20newsgroups_vectorized_fxt = \
-    _fetch_fixture(fetch_20newsgroups_vectorized)
+fetch_20newsgroups_vectorized_fxt = _fetch_fixture(fetch_20newsgroups_vectorized)
 fetch_california_housing_fxt = _fetch_fixture(fetch_california_housing)
 fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
@@ -74,9 +74,10 @@ def pytest_collection_modifyitems(config, items):
     config : pytest config
     items : list of collected items
     """
-    run_network_tests = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
     skip_network = pytest.mark.skip(
-        reason="test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
+        reason="test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0"
+    )
 
     # download datasets during collection to avoid thread unsafe behavior
     # when running pytest in parallel with pytest-xdist
@@ -107,20 +108,24 @@ def pytest_collection_modifyitems(config, items):
 
     for item in items:
         # FeatureHasher is not compatible with PyPy
-        if (item.name.endswith(('_hash.FeatureHasher',
-                                'text.HashingVectorizer'))
-                and platform.python_implementation() == 'PyPy'):
+        if (
+            item.name.endswith(("_hash.FeatureHasher", "text.HashingVectorizer"))
+            and platform.python_implementation() == "PyPy"
+        ):
             marker = pytest.mark.skip(
-                reason='FeatureHasher is not compatible with PyPy')
+                reason="FeatureHasher is not compatible with PyPy"
+            )
             item.add_marker(marker)
         # Known failure on with GradientBoostingClassifier on ARM64
-        elif (item.name.endswith('GradientBoostingClassifier')
-                and platform.machine() == 'aarch64'):
+        elif (
+            item.name.endswith("GradientBoostingClassifier")
+            and platform.machine() == "aarch64"
+        ):
 
             marker = pytest.mark.xfail(
                 reason=(
-                    'know failure. See '
-                    'https://github.com/scikit-learn/scikit-learn/issues/17797'  # noqa
+                    "know failure. See "
+                    "https://github.com/scikit-learn/scikit-learn/issues/17797"  # noqa
                 )
             )
             item.add_marker(marker)
@@ -129,16 +134,17 @@ def pytest_collection_modifyitems(config, items):
     # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
-        if np_version < parse_version('1.14'):
-            reason = 'doctests are only run for numpy >= 1.14'
+        if np_version < parse_version("1.14"):
+            reason = "doctests are only run for numpy >= 1.14"
             skip_doctests = True
         elif _IS_32BIT:
-            reason = ('doctest are only run when the default numpy int is '
-                      '64 bits.')
+            reason = "doctest are only run when the default numpy int is " "64 bits."
             skip_doctests = True
         elif sys.platform.startswith("win32"):
-            reason = ("doctests are not run for Windows because numpy arrays "
-                      "repr is inconsistent across platforms.")
+            reason = (
+                "doctests are not run for Windows because numpy arrays "
+                "repr is inconsistent across platforms."
+            )
             skip_doctests = True
     except ImportError:
         pass
@@ -153,12 +159,13 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
         for item in items:
             if item.name in [
-                    "sklearn.feature_extraction.image.PatchExtractor",
-                    "sklearn.feature_extraction.image.extract_patches_2d"]:
+                "sklearn.feature_extraction.image.PatchExtractor",
+                "sklearn.feature_extraction.image.extract_patches_2d",
+            ]:
                 item.add_marker(skip_marker)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def pyplot():
     """Setup and teardown fixture for matplotlib.
 
@@ -171,10 +178,10 @@ def pyplot():
     pyplot : module
         The ``matplotlib.pyplot`` module.
     """
-    pyplot = pytest.importorskip('matplotlib.pyplot')
-    pyplot.close('all')
+    pyplot = pytest.importorskip("matplotlib.pyplot")
+    pyplot.close("all")
     yield pyplot
-    pyplot.close('all')
+    pyplot.close("all")
 
 
 def pytest_runtest_setup(item):
@@ -187,20 +194,21 @@ def pytest_runtest_setup(item):
         item to be processed
     """
     try:
-        xdist_worker_count = int(os.environ['PYTEST_XDIST_WORKER_COUNT'])
+        xdist_worker_count = int(os.environ["PYTEST_XDIST_WORKER_COUNT"])
     except KeyError:
         # raises when pytest-xdist is not installed
         return
 
     openmp_threads = _openmp_effective_n_threads()
     threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
-    threadpool_limits(threads_per_worker, user_api='openmp')
+    threadpool_limits(threads_per_worker, user_api="openmp")
 
 
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
         import matplotlib
-        matplotlib.use('agg')
+
+        matplotlib.use("agg")
     except ImportError:
         pass

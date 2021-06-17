@@ -17,8 +17,9 @@ def _weights_scorer(scorer, estimator, X, y, sample_weight):
     return scorer(estimator, X, y)
 
 
-def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
-                                  random_state, n_repeats, scorer):
+def _calculate_permutation_scores(
+    estimator, X, y, sample_weight, col_idx, random_state, n_repeats, scorer
+):
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
 
@@ -40,9 +41,7 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        scores.append(
-            _weights_scorer(scorer, estimator, X_permuted, y, sample_weight)
-        )
+        scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
 
     if isinstance(scores[0], dict):
         scores = _aggregate_score_dicts(scores)
@@ -74,13 +73,24 @@ def _create_importances_bunch(baseline_score, permuted_score):
             Raw permutation importance scores.
     """
     importances = baseline_score - permuted_score
-    return Bunch(importances_mean=np.mean(importances, axis=1),
-                 importances_std=np.std(importances, axis=1),
-                 importances=importances)
+    return Bunch(
+        importances_mean=np.mean(importances, axis=1),
+        importances_std=np.std(importances, axis=1),
+        importances=importances,
+    )
 
 
-def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
-                           n_jobs=None, random_state=None, sample_weight=None):
+def permutation_importance(
+    estimator,
+    X,
+    y,
+    *,
+    scoring=None,
+    n_repeats=5,
+    n_jobs=None,
+    random_state=None,
+    sample_weight=None
+):
     """Permutation importance for feature evaluation [BRE]_.
 
     The :term:`estimator` is required to be a fitted estimator. `X` can be the
@@ -184,7 +194,7 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     array([0.2211..., 0.       , 0.       ])
     """
     if not hasattr(X, "iloc"):
-        X = check_array(X, force_all_finite='allow-nan', dtype=None)
+        X = check_array(X, force_all_finite="allow-nan", dtype=None)
 
     # Precompute random seed from the random state to be used
     # to get a fresh independent RandomState instance for each
@@ -202,23 +212,21 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
         scorers_dict = _check_multimetric_scoring(estimator, scoring)
         scorer = _MultimetricScorer(**scorers_dict)
 
-    baseline_score = _weights_scorer(scorer, estimator, X, y,
-                                     sample_weight)
+    baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
     scores = Parallel(n_jobs=n_jobs)(
         delayed(_calculate_permutation_scores)(
-            estimator, X, y, sample_weight, col_idx, random_seed,
-            n_repeats, scorer
-        ) for col_idx in range(X.shape[1]))
+            estimator, X, y, sample_weight, col_idx, random_seed, n_repeats, scorer
+        )
+        for col_idx in range(X.shape[1])
+    )
 
     if isinstance(baseline_score, dict):
         return {
             name: _create_importances_bunch(
                 baseline_score[name],
                 # unpack the permuted scores
-                np.array([
-                    scores[col_idx][name] for col_idx in range(X.shape[1])
-                ])
+                np.array([scores[col_idx][name] for col_idx in range(X.shape[1])]),
             )
             for name in baseline_score
         }

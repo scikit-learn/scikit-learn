@@ -22,8 +22,7 @@ import numpy as np
 
 from urllib.request import urlretrieve
 
-RemoteFileMetadata = namedtuple('RemoteFileMetadata',
-                                ['filename', 'url', 'checksum'])
+RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
 
 def get_data_home(data_home=None) -> str:
@@ -48,8 +47,7 @@ def get_data_home(data_home=None) -> str:
         is `~/sklearn_learn_data`.
     """
     if data_home is None:
-        data_home = environ.get('SCIKIT_LEARN_DATA',
-                                join('~', 'scikit_learn_data'))
+        data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
     data_home = expanduser(data_home)
     makedirs(data_home, exist_ok=True)
     return data_home
@@ -68,15 +66,14 @@ def clear_data_home(data_home=None):
     shutil.rmtree(data_home)
 
 
-def _convert_data_dataframe(caller_name, data, target,
-                            feature_names, target_names, sparse_data=False):
-    pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
+def _convert_data_dataframe(
+    caller_name, data, target, feature_names, target_names, sparse_data=False
+):
+    pd = check_pandas_support("{} with as_frame=True".format(caller_name))
     if not sparse_data:
         data_df = pd.DataFrame(data, columns=feature_names)
     else:
-        data_df = pd.DataFrame.sparse.from_spmatrix(
-            data, columns=feature_names
-        )
+        data_df = pd.DataFrame.sparse.from_spmatrix(data, columns=feature_names)
 
     target_df = pd.DataFrame(target, columns=target_names)
     combined_df = pd.concat([data_df, target_df], axis=1)
@@ -87,9 +84,17 @@ def _convert_data_dataframe(caller_name, data, target,
     return combined_df, X, y
 
 
-def load_files(container_path, *, description=None, categories=None,
-               load_content=True, shuffle=True, encoding=None,
-               decode_error='strict', random_state=0):
+def load_files(
+    container_path,
+    *,
+    description=None,
+    categories=None,
+    load_content=True,
+    shuffle=True,
+    encoding=None,
+    decode_error="strict",
+    random_state=0
+):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -188,8 +193,9 @@ def load_files(container_path, *, description=None, categories=None,
     target_names = []
     filenames = []
 
-    folders = [f for f in sorted(listdir(container_path))
-               if isdir(join(container_path, f))]
+    folders = [
+        f for f in sorted(listdir(container_path)) if isdir(join(container_path, f))
+    ]
 
     if categories is not None:
         folders = [f for f in folders if f in categories]
@@ -197,8 +203,7 @@ def load_files(container_path, *, description=None, categories=None,
     for label, folder in enumerate(folders):
         target_names.append(folder)
         folder_path = join(container_path, folder)
-        documents = [join(folder_path, d)
-                     for d in sorted(listdir(folder_path))]
+        documents = [join(folder_path, d) for d in sorted(listdir(folder_path))]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
@@ -216,20 +221,21 @@ def load_files(container_path, *, description=None, categories=None,
     if load_content:
         data = []
         for filename in filenames:
-            with open(filename, 'rb') as f:
+            with open(filename, "rb") as f:
                 data.append(f.read())
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
-        return Bunch(data=data,
-                     filenames=filenames,
-                     target_names=target_names,
-                     target=target,
-                     DESCR=description)
+        return Bunch(
+            data=data,
+            filenames=filenames,
+            target_names=target_names,
+            target=target,
+            DESCR=description,
+        )
 
-    return Bunch(filenames=filenames,
-                 target_names=target_names,
-                 target=target,
-                 DESCR=description)
+    return Bunch(
+        filenames=filenames, target_names=target_names, target=target, DESCR=description
+    )
 
 
 def load_data(module_path, data_file_name):
@@ -258,7 +264,7 @@ def load_data(module_path, data_file_name):
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
     """
-    with open(join(module_path, 'data', data_file_name)) as csv_file:
+    with open(join(module_path, "data", data_file_name)) as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -349,43 +355,47 @@ def load_wine(*, return_X_y=False, as_frame=False):
     ['class_0', 'class_1', 'class_2']
     """
     module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'wine_data.csv')
+    data, target, target_names = load_data(module_path, "wine_data.csv")
 
-    with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
+    with open(join(module_path, "descr", "wine_data.rst")) as rst_file:
         fdescr = rst_file.read()
 
-    feature_names = ['alcohol',
-                     'malic_acid',
-                     'ash',
-                     'alcalinity_of_ash',
-                     'magnesium',
-                     'total_phenols',
-                     'flavanoids',
-                     'nonflavanoid_phenols',
-                     'proanthocyanins',
-                     'color_intensity',
-                     'hue',
-                     'od280/od315_of_diluted_wines',
-                     'proline']
+    feature_names = [
+        "alcohol",
+        "malic_acid",
+        "ash",
+        "alcalinity_of_ash",
+        "magnesium",
+        "total_phenols",
+        "flavanoids",
+        "nonflavanoid_phenols",
+        "proanthocyanins",
+        "color_intensity",
+        "hue",
+        "od280/od315_of_diluted_wines",
+        "proline",
+    ]
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, data, target = _convert_data_dataframe("load_wine",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_columns)
+        frame, data, target = _convert_data_dataframe(
+            "load_wine", data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=feature_names)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        DESCR=fdescr,
+        feature_names=feature_names,
+    )
 
 
 def load_iris(*, return_X_y=False, as_frame=False):
@@ -472,34 +482,40 @@ def load_iris(*, return_X_y=False, as_frame=False):
     ['setosa', 'versicolor', 'virginica']
     """
     module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'iris.csv')
-    iris_csv_filename = join(module_path, 'data', 'iris.csv')
+    data, target, target_names = load_data(module_path, "iris.csv")
+    iris_csv_filename = join(module_path, "data", "iris.csv")
 
-    with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
+    with open(join(module_path, "descr", "iris.rst")) as rst_file:
         fdescr = rst_file.read()
 
-    feature_names = ['sepal length (cm)', 'sepal width (cm)',
-                     'petal length (cm)', 'petal width (cm)']
+    feature_names = [
+        "sepal length (cm)",
+        "sepal width (cm)",
+        "petal length (cm)",
+        "petal width (cm)",
+    ]
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, data, target = _convert_data_dataframe("load_iris",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_columns)
+        frame, data, target = _convert_data_dataframe(
+            "load_iris", data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=feature_names,
-                 filename=iris_csv_filename)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        DESCR=fdescr,
+        feature_names=feature_names,
+        filename=iris_csv_filename,
+    )
 
 
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
@@ -583,47 +599,68 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     ['malignant', 'benign']
     """
     module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'breast_cancer.csv')
-    csv_filename = join(module_path, 'data', 'breast_cancer.csv')
+    data, target, target_names = load_data(module_path, "breast_cancer.csv")
+    csv_filename = join(module_path, "data", "breast_cancer.csv")
 
-    with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
+    with open(join(module_path, "descr", "breast_cancer.rst")) as rst_file:
         fdescr = rst_file.read()
 
-    feature_names = np.array(['mean radius', 'mean texture',
-                              'mean perimeter', 'mean area',
-                              'mean smoothness', 'mean compactness',
-                              'mean concavity', 'mean concave points',
-                              'mean symmetry', 'mean fractal dimension',
-                              'radius error', 'texture error',
-                              'perimeter error', 'area error',
-                              'smoothness error', 'compactness error',
-                              'concavity error', 'concave points error',
-                              'symmetry error', 'fractal dimension error',
-                              'worst radius', 'worst texture',
-                              'worst perimeter', 'worst area',
-                              'worst smoothness', 'worst compactness',
-                              'worst concavity', 'worst concave points',
-                              'worst symmetry', 'worst fractal dimension'])
+    feature_names = np.array(
+        [
+            "mean radius",
+            "mean texture",
+            "mean perimeter",
+            "mean area",
+            "mean smoothness",
+            "mean compactness",
+            "mean concavity",
+            "mean concave points",
+            "mean symmetry",
+            "mean fractal dimension",
+            "radius error",
+            "texture error",
+            "perimeter error",
+            "area error",
+            "smoothness error",
+            "compactness error",
+            "concavity error",
+            "concave points error",
+            "symmetry error",
+            "fractal dimension error",
+            "worst radius",
+            "worst texture",
+            "worst perimeter",
+            "worst area",
+            "worst smoothness",
+            "worst compactness",
+            "worst concavity",
+            "worst concave points",
+            "worst symmetry",
+            "worst fractal dimension",
+        ]
+    )
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, data, target = _convert_data_dataframe("load_breast_cancer",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_columns)
+        frame, data, target = _convert_data_dataframe(
+            "load_breast_cancer", data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=feature_names,
-                 filename=csv_filename)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        DESCR=fdescr,
+        feature_names=feature_names,
+        filename=csv_filename,
+    )
 
 
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
@@ -711,9 +748,8 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         >>> plt.show()
     """
     module_path = dirname(__file__)
-    data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
-                      delimiter=',')
-    with open(join(module_path, 'descr', 'digits.rst')) as f:
+    data = np.loadtxt(join(module_path, "data", "digits.csv.gz"), delimiter=",")
+    with open(join(module_path, "descr", "digits.rst")) as f:
         descr = f.read()
     target = data[:, -1].astype(int, copy=False)
     flat_data = data[:, :-1]
@@ -725,29 +761,33 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         flat_data, target = flat_data[idx], target[idx]
         images = images[idx]
 
-    feature_names = ['pixel_{}_{}'.format(row_idx, col_idx)
-                     for row_idx in range(8)
-                     for col_idx in range(8)]
+    feature_names = [
+        "pixel_{}_{}".format(row_idx, col_idx)
+        for row_idx in range(8)
+        for col_idx in range(8)
+    ]
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, flat_data, target = _convert_data_dataframe("load_digits",
-                                                           flat_data,
-                                                           target,
-                                                           feature_names,
-                                                           target_columns)
+        frame, flat_data, target = _convert_data_dataframe(
+            "load_digits", flat_data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return flat_data, target
 
-    return Bunch(data=flat_data,
-                 target=target,
-                 frame=frame,
-                 feature_names=feature_names,
-                 target_names=np.arange(10),
-                 images=images,
-                 DESCR=descr)
+    return Bunch(
+        data=flat_data,
+        target=target,
+        frame=frame,
+        feature_names=feature_names,
+        target_names=np.arange(10),
+        images=images,
+        DESCR=descr,
+    )
 
 
 def load_diabetes(*, return_X_y=False, as_frame=False):
@@ -759,7 +799,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
     Features         real, -.2 < x < .2
     Targets          integer 25 - 346
     ==============   ==================
-    
+
     .. note::
        The meaning of each feature (i.e. `feature_names`) might be unclear
        (especially for `ltg`) as the documentation of the original dataset is
@@ -815,37 +855,38 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
         .. versionadded:: 0.18
     """
     module_path = dirname(__file__)
-    base_dir = join(module_path, 'data')
-    data_filename = join(base_dir, 'diabetes_data.csv.gz')
+    base_dir = join(module_path, "data")
+    data_filename = join(base_dir, "diabetes_data.csv.gz")
     data = np.loadtxt(data_filename)
-    target_filename = join(base_dir, 'diabetes_target.csv.gz')
+    target_filename = join(base_dir, "diabetes_target.csv.gz")
     target = np.loadtxt(target_filename)
 
-    with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
+    with open(join(module_path, "descr", "diabetes.rst")) as rst_file:
         fdescr = rst_file.read()
 
-    feature_names = ['age', 'sex', 'bmi', 'bp',
-                     's1', 's2', 's3', 's4', 's5', 's6']
+    feature_names = ["age", "sex", "bmi", "bp", "s1", "s2", "s3", "s4", "s5", "s6"]
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, data, target = _convert_data_dataframe("load_diabetes",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_columns)
+        frame, data, target = _convert_data_dataframe(
+            "load_diabetes", data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 DESCR=fdescr,
-                 feature_names=feature_names,
-                 data_filename=data_filename,
-                 target_filename=target_filename)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        DESCR=fdescr,
+        feature_names=feature_names,
+        data_filename=data_filename,
+        target_filename=target_filename,
+    )
 
 
 def load_linnerud(*, return_X_y=False, as_frame=False):
@@ -912,9 +953,9 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
     """
-    base_dir = join(dirname(__file__), 'data/')
-    data_filename = join(base_dir, 'linnerud_exercise.csv')
-    target_filename = join(base_dir, 'linnerud_physiological.csv')
+    base_dir = join(dirname(__file__), "data/")
+    data_filename = join(base_dir, "linnerud_exercise.csv")
+    target_filename = join(base_dir, "linnerud_physiological.csv")
 
     # Read data
     data_exercise = np.loadtxt(data_filename, skiprows=1)
@@ -926,29 +967,31 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     with open(target_filename) as f:
         header_physiological = f.readline().split()
 
-    with open(dirname(__file__) + '/descr/linnerud.rst') as f:
+    with open(dirname(__file__) + "/descr/linnerud.rst") as f:
         descr = f.read()
 
     frame = None
     if as_frame:
-        (frame,
-         data_exercise,
-         data_physiological) = _convert_data_dataframe("load_linnerud",
-                                                       data_exercise,
-                                                       data_physiological,
-                                                       header_exercise,
-                                                       header_physiological)
+        (frame, data_exercise, data_physiological) = _convert_data_dataframe(
+            "load_linnerud",
+            data_exercise,
+            data_physiological,
+            header_exercise,
+            header_physiological,
+        )
     if return_X_y:
         return data_exercise, data_physiological
 
-    return Bunch(data=data_exercise,
-                 feature_names=header_exercise,
-                 target=data_physiological,
-                 target_names=header_physiological,
-                 frame=frame,
-                 DESCR=descr,
-                 data_filename=data_filename,
-                 target_filename=target_filename)
+    return Bunch(
+        data=data_exercise,
+        feature_names=header_exercise,
+        target=data_physiological,
+        target_names=header_physiological,
+        frame=frame,
+        DESCR=descr,
+        data_filename=data_filename,
+        target_filename=target_filename,
+    )
 
 
 def load_boston(*, return_X_y=False):
@@ -1008,11 +1051,11 @@ def load_boston(*, return_X_y=False):
     """
     module_path = dirname(__file__)
 
-    fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
+    fdescr_name = join(module_path, "descr", "boston_house_prices.rst")
     with open(fdescr_name) as f:
         descr_text = f.read()
 
-    data_file_name = join(module_path, 'data', 'boston_house_prices.csv')
+    data_file_name = join(module_path, "data", "boston_house_prices.csv")
     with open(data_file_name) as f:
         data_file = csv.reader(f)
         temp = next(data_file)
@@ -1030,12 +1073,14 @@ def load_boston(*, return_X_y=False):
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 # last column is target value
-                 feature_names=feature_names[:-1],
-                 DESCR=descr_text,
-                 filename=data_file_name)
+    return Bunch(
+        data=data,
+        target=target,
+        # last column is target value
+        feature_names=feature_names[:-1],
+        DESCR=descr_text,
+        filename=data_file_name,
+    )
 
 
 def load_sample_images():
@@ -1075,17 +1120,17 @@ def load_sample_images():
     from ..externals._pilutil import imread
 
     module_path = join(dirname(__file__), "images")
-    with open(join(module_path, 'README.txt')) as f:
+    with open(join(module_path, "README.txt")) as f:
         descr = f.read()
-    filenames = [join(module_path, filename)
-                 for filename in sorted(os.listdir(module_path))
-                 if filename.endswith(".jpg")]
+    filenames = [
+        join(module_path, filename)
+        for filename in sorted(os.listdir(module_path))
+        if filename.endswith(".jpg")
+    ]
     # Load image data for each image in the source folder.
     images = [imread(filename) for filename in filenames]
 
-    return Bunch(images=images,
-                 filenames=filenames,
-                 DESCR=descr)
+    return Bunch(images=images, filenames=filenames, DESCR=descr)
 
 
 def load_sample_image(image_name):
@@ -1181,13 +1226,13 @@ def _fetch_remote(remote, dirname=None):
         Full path of the created file.
     """
 
-    file_path = (remote.filename if dirname is None
-                 else join(dirname, remote.filename))
+    file_path = remote.filename if dirname is None else join(dirname, remote.filename)
     urlretrieve(remote.url, file_path)
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
-        raise IOError("{} has an SHA256 checksum ({}) "
-                      "differing from expected ({}), "
-                      "file may be corrupted.".format(file_path, checksum,
-                                                      remote.checksum))
+        raise IOError(
+            "{} has an SHA256 checksum ({}) "
+            "differing from expected ({}), "
+            "file may be corrupted.".format(file_path, checksum, remote.checksum)
+        )
     return file_path

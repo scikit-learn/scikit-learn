@@ -21,7 +21,7 @@ from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 
-__all__ = ['fastica', 'FastICA']
+__all__ = ["fastica", "FastICA"]
 
 
 def _gs_decorrelation(w, W, j):
@@ -50,13 +50,13 @@ def _gs_decorrelation(w, W, j):
 
 
 def _sym_decorrelation(W):
-    """ Symmetric decorrelation
+    """Symmetric decorrelation
     i.e. W <- (W * W.T) ^{-1/2} * W
     """
     s, u = linalg.eigh(np.dot(W, W.T))
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
-    return np.linalg.multi_dot([u * (1. / np.sqrt(s)), u.T, W])
+    return np.linalg.multi_dot([u * (1.0 / np.sqrt(s)), u.T, W])
 
 
 def _ica_def(X, tol, g, fun_args, max_iter, w_init):
@@ -105,8 +105,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     p_ = float(X.shape[1])
     for ii in range(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
-        W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
-                                - g_wtx[:, np.newaxis] * W)
+        W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_ - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
@@ -114,9 +113,11 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         if lim < tol:
             break
     else:
-        warnings.warn('FastICA did not converge. Consider increasing '
-                      'tolerance or the maximum number of iterations.',
-                      ConvergenceWarning)
+        warnings.warn(
+            "FastICA did not converge. Consider increasing "
+            "tolerance or the maximum number of iterations.",
+            ConvergenceWarning,
+        )
 
     return W, ii + 1
 
@@ -124,7 +125,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
 # Some standard non-linear functions.
 # XXX: these should be optimized, as they can be a bottleneck.
 def _logcosh(x, fun_args=None):
-    alpha = fun_args.get('alpha', 1.0)  # comment it out?
+    alpha = fun_args.get("alpha", 1.0)  # comment it out?
 
     x *= alpha
     gx = np.tanh(x, x)  # apply the tanh inplace
@@ -146,10 +147,22 @@ def _cube(x, fun_args):
     return x ** 3, (3 * x ** 2).mean(axis=-1)
 
 
-def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
-            fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
-            random_state=None, return_X_mean=False, compute_sources=True,
-            return_n_iter=False):
+def fastica(
+    X,
+    n_components=None,
+    *,
+    algorithm="parallel",
+    whiten=True,
+    fun="logcosh",
+    fun_args=None,
+    max_iter=200,
+    tol=1e-04,
+    w_init=None,
+    random_state=None,
+    return_X_mean=False,
+    compute_sources=True,
+    return_n_iter=False
+):
     """Perform Fast Independent Component Analysis.
 
     Read more in the :ref:`User Guide <ICA>`.
@@ -267,17 +280,23 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
 
     """
 
-    est = FastICA(n_components=n_components, algorithm=algorithm,
-                  whiten=whiten, fun=fun, fun_args=fun_args,
-                  max_iter=max_iter, tol=tol, w_init=w_init,
-                  random_state=random_state)
+    est = FastICA(
+        n_components=n_components,
+        algorithm=algorithm,
+        whiten=whiten,
+        fun=fun,
+        fun_args=fun_args,
+        max_iter=max_iter,
+        tol=tol,
+        w_init=w_init,
+        random_state=random_state,
+    )
     sources = est._fit(X, compute_sources=compute_sources)
 
     if whiten:
         if return_X_mean:
             if return_n_iter:
-                return (est.whitening_, est._unmixing, sources, est.mean_,
-                        est.n_iter_)
+                return (est.whitening_, est._unmixing, sources, est.mean_, est.n_iter_)
             else:
                 return est.whitening_, est._unmixing, sources, est.mean_
         else:
@@ -395,13 +414,26 @@ class FastICA(TransformerMixin, BaseEstimator):
     pp. 411-430*
 
     """
-    def __init__(self, n_components=None, *, algorithm='parallel', whiten=True,
-                 fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
-                 w_init=None, random_state=None):
+
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        algorithm="parallel",
+        whiten=True,
+        fun="logcosh",
+        fun_args=None,
+        max_iter=200,
+        tol=1e-4,
+        w_init=None,
+        random_state=None
+    ):
         super().__init__()
         if max_iter < 1:
-            raise ValueError("max_iter should be greater than 1, got "
-                             "(max_iter={})".format(max_iter))
+            raise ValueError(
+                "max_iter should be greater than 1, got "
+                "(max_iter={})".format(max_iter)
+            )
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
@@ -429,30 +461,32 @@ class FastICA(TransformerMixin, BaseEstimator):
         -------
             X_new : ndarray of shape (n_samples, n_components)
         """
-        XT = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                                 ensure_min_samples=2).T
+        XT = self._validate_data(
+            X, copy=self.whiten, dtype=FLOAT_DTYPES, ensure_min_samples=2
+        ).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
 
-        alpha = fun_args.get('alpha', 1.0)
+        alpha = fun_args.get("alpha", 1.0)
         if not 1 <= alpha <= 2:
-            raise ValueError('alpha must be in [1,2]')
+            raise ValueError("alpha must be in [1,2]")
 
-        if self.fun == 'logcosh':
+        if self.fun == "logcosh":
             g = _logcosh
-        elif self.fun == 'exp':
+        elif self.fun == "exp":
             g = _exp
-        elif self.fun == 'cube':
+        elif self.fun == "cube":
             g = _cube
         elif callable(self.fun):
+
             def g(x, fun_args):
                 return self.fun(x, **fun_args)
+
         else:
             exc = ValueError if isinstance(self.fun, str) else TypeError
             raise exc(
                 "Unknown function %r;"
-                " should be one of 'logcosh', 'exp', 'cube' or callable"
-                % self.fun
+                " should be one of 'logcosh', 'exp', 'cube' or callable" % self.fun
             )
 
         n_features, n_samples = XT.shape
@@ -460,15 +494,14 @@ class FastICA(TransformerMixin, BaseEstimator):
         n_components = self.n_components
         if not self.whiten and n_components is not None:
             n_components = None
-            warnings.warn('Ignoring n_components with whiten=False.')
+            warnings.warn("Ignoring n_components with whiten=False.")
 
         if n_components is None:
             n_components = min(n_samples, n_features)
-        if (n_components > min(n_samples, n_features)):
+        if n_components > min(n_samples, n_features):
             n_components = min(n_samples, n_features)
             warnings.warn(
-                'n_components is too large: it will be set to %s'
-                % n_components
+                "n_components is too large: it will be set to %s" % n_components
             )
 
         if self.whiten:
@@ -493,29 +526,34 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         w_init = self.w_init
         if w_init is None:
-            w_init = np.asarray(random_state.normal(
-                size=(n_components, n_components)), dtype=X1.dtype)
+            w_init = np.asarray(
+                random_state.normal(size=(n_components, n_components)), dtype=X1.dtype
+            )
 
         else:
             w_init = np.asarray(w_init)
             if w_init.shape != (n_components, n_components):
                 raise ValueError(
-                    'w_init has invalid shape -- should be %(shape)s'
-                    % {'shape': (n_components, n_components)})
+                    "w_init has invalid shape -- should be %(shape)s"
+                    % {"shape": (n_components, n_components)}
+                )
 
-        kwargs = {'tol': self.tol,
-                  'g': g,
-                  'fun_args': fun_args,
-                  'max_iter': self.max_iter,
-                  'w_init': w_init}
+        kwargs = {
+            "tol": self.tol,
+            "g": g,
+            "fun_args": fun_args,
+            "max_iter": self.max_iter,
+            "w_init": w_init,
+        }
 
-        if self.algorithm == 'parallel':
+        if self.algorithm == "parallel":
             W, n_iter = _ica_par(X1, **kwargs)
-        elif self.algorithm == 'deflation':
+        elif self.algorithm == "deflation":
             W, n_iter = _ica_def(X1, **kwargs)
         else:
-            raise ValueError('Invalid algorithm: must be either `parallel` or'
-                             ' `deflation`.')
+            raise ValueError(
+                "Invalid algorithm: must be either `parallel` or" " `deflation`."
+            )
         del X1
 
         if compute_sources:
@@ -593,8 +631,9 @@ class FastICA(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, copy=(copy and self.whiten),
-                                dtype=FLOAT_DTYPES, reset=False)
+        X = self._validate_data(
+            X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES, reset=False
+        )
         if self.whiten:
             X -= self.mean_
 

@@ -48,8 +48,7 @@ jobs:
         pip install pytest flake8 mypy==0.782 black==21.6b0
       displayName: Install linters
     - bash: |
-        # Remove comment when code is formatted by black
-        # black --check .
+        black --check .
       displayName: Run black
     - bash: |
         ./build_tools/circle/linting.sh

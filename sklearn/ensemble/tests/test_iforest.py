@@ -48,24 +48,22 @@ def test_iforest():
     X_train = np.array([[0, 1], [1, 2]])
     X_test = np.array([[2, 1], [1, 1]])
 
-    grid = ParameterGrid({"n_estimators": [3],
-                          "max_samples": [0.5, 1.0, 3],
-                          "bootstrap": [True, False]})
+    grid = ParameterGrid(
+        {"n_estimators": [3], "max_samples": [0.5, 1.0, 3], "bootstrap": [True, False]}
+    )
 
     with ignore_warnings():
         for params in grid:
-            IsolationForest(random_state=rng,
-                            **params).fit(X_train).predict(X_test)
+            IsolationForest(random_state=rng, **params).fit(X_train).predict(X_test)
 
 
 def test_iforest_sparse():
     """Check IForest for various parameter settings on sparse input."""
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
-                                                        diabetes.target[:50],
-                                                        random_state=rng)
-    grid = ParameterGrid({"max_samples": [0.5, 1.0],
-                          "bootstrap": [True, False]})
+    X_train, X_test, y_train, y_test = train_test_split(
+        diabetes.data[:50], diabetes.target[:50], random_state=rng
+    )
+    grid = ParameterGrid({"max_samples": [0.5, 1.0], "bootstrap": [True, False]})
 
     for sparse_format in [csc_matrix, csr_matrix]:
         X_train_sparse = sparse_format(X_train)
@@ -74,12 +72,14 @@ def test_iforest_sparse():
         for params in grid:
             # Trained on sparse format
             sparse_classifier = IsolationForest(
-                n_estimators=10, random_state=1, **params).fit(X_train_sparse)
+                n_estimators=10, random_state=1, **params
+            ).fit(X_train_sparse)
             sparse_results = sparse_classifier.predict(X_test_sparse)
 
             # Trained on dense format
             dense_classifier = IsolationForest(
-                n_estimators=10, random_state=1, **params).fit(X_train)
+                n_estimators=10, random_state=1, **params
+            ).fit(X_train)
             dense_results = dense_classifier.predict(X_test)
 
             assert_array_equal(sparse_results, dense_results)
@@ -106,18 +106,16 @@ def test_iforest_error():
     # PendingDeprecationWarning triggered by scipy.sparse's use of
     # np.matrix. See issue #11251.
     with pytest.warns(None) as record:
-        IsolationForest(max_samples='auto').fit(X)
-    user_warnings = [each for each in record
-                     if issubclass(each.category, UserWarning)]
+        IsolationForest(max_samples="auto").fit(X)
+    user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
     assert len(user_warnings) == 0
     with pytest.warns(None) as record:
         IsolationForest(max_samples=np.int64(2)).fit(X)
-    user_warnings = [each for each in record
-                     if issubclass(each.category, UserWarning)]
+    user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
     assert len(user_warnings) == 0
 
     with pytest.raises(ValueError):
-        IsolationForest(max_samples='foobar').fit(X)
+        IsolationForest(max_samples="foobar").fit(X)
     with pytest.raises(ValueError):
         IsolationForest(max_samples=1.5).fit(X)
 
@@ -146,19 +144,18 @@ def test_max_samples_attribute():
     assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=0.4).fit(X)
-    assert clf.max_samples_ == 0.4*X.shape[0]
+    assert clf.max_samples_ == 0.4 * X.shape[0]
 
 
 def test_iforest_parallel_regression():
     """Check parallel regression."""
     rng = check_random_state(0)
 
-    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
-                                                        diabetes.target,
-                                                        random_state=rng)
+    X_train, X_test, y_train, y_test = train_test_split(
+        diabetes.data, diabetes.target, random_state=rng
+    )
 
-    ensemble = IsolationForest(n_jobs=3,
-                               random_state=0).fit(X_train)
+    ensemble = IsolationForest(n_jobs=3, random_state=0).fit(X_train)
 
     ensemble.set_params(n_jobs=1)
     y1 = ensemble.predict(X_test)
@@ -166,8 +163,7 @@ def test_iforest_parallel_regression():
     y2 = ensemble.predict(X_test)
     assert_array_almost_equal(y1, y2)
 
-    ensemble = IsolationForest(n_jobs=1,
-                               random_state=0).fit(X_train)
+    ensemble = IsolationForest(n_jobs=1, random_state=0).fit(X_train)
 
     y3 = ensemble.predict(X_test)
     assert_array_almost_equal(y1, y3)
@@ -191,7 +187,7 @@ def test_iforest_performance():
     clf = IsolationForest(max_samples=100, random_state=rng).fit(X_train)
 
     # predict scores (the lower, the more normal)
-    y_pred = - clf.decision_function(X_test)
+    y_pred = -clf.decision_function(X_test)
 
     # check that there is at most 6 errors (false positive or false negative)
     assert roc_auc_score(y_test, y_pred) > 0.98
@@ -222,9 +218,9 @@ def test_max_samples_consistency():
 def test_iforest_subsampled_features():
     # It tests non-regression for #5732 which failed at predict.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
-                                                        diabetes.target[:50],
-                                                        random_state=rng)
+    X_train, X_test, y_train, y_test = train_test_split(
+        diabetes.data[:50], diabetes.target[:50], random_state=rng
+    )
     clf = IsolationForest(max_features=0.8)
     clf.fit(X_train, y_train)
     clf.predict(X_test)
@@ -254,23 +250,29 @@ def test_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf1 = IsolationForest(contamination=0.1).fit(X_train)
     clf2 = IsolationForest().fit(X_train)
-    assert_array_equal(clf1.score_samples([[2., 2.]]),
-                       clf1.decision_function([[2., 2.]]) + clf1.offset_)
-    assert_array_equal(clf2.score_samples([[2., 2.]]),
-                       clf2.decision_function([[2., 2.]]) + clf2.offset_)
-    assert_array_equal(clf1.score_samples([[2., 2.]]),
-                       clf2.score_samples([[2., 2.]]))
+    assert_array_equal(
+        clf1.score_samples([[2.0, 2.0]]),
+        clf1.decision_function([[2.0, 2.0]]) + clf1.offset_,
+    )
+    assert_array_equal(
+        clf2.score_samples([[2.0, 2.0]]),
+        clf2.decision_function([[2.0, 2.0]]) + clf2.offset_,
+    )
+    assert_array_equal(
+        clf1.score_samples([[2.0, 2.0]]), clf2.score_samples([[2.0, 2.0]])
+    )
 
 
 def test_iforest_warm_start():
-    """Test iterative addition of iTrees to an iForest """
+    """Test iterative addition of iTrees to an iForest"""
 
     rng = check_random_state(0)
     X = rng.randn(20, 2)
 
     # fit first 10 trees
-    clf = IsolationForest(n_estimators=10, max_samples=20,
-                          random_state=rng, warm_start=True)
+    clf = IsolationForest(
+        n_estimators=10, max_samples=20, random_state=rng, warm_start=True
+    )
     clf.fit(X)
     # remember the 1st tree
     tree_1 = clf.estimators_[0]
@@ -288,12 +290,8 @@ def test_iforest_warm_start():
     "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 3}),
 )
-@pytest.mark.parametrize(
-    "contamination, n_predict_calls", [(0.25, 3), ("auto", 2)]
-)
-def test_iforest_chunks_works1(
-    mocked_get_chunk, contamination, n_predict_calls
-):
+@pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
+def test_iforest_chunks_works1(mocked_get_chunk, contamination, n_predict_calls):
     test_iforest_works(contamination)
     assert mocked_get_chunk.call_count == n_predict_calls
 
@@ -303,12 +301,8 @@ def test_iforest_chunks_works1(
     "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 10}),
 )
-@pytest.mark.parametrize(
-    "contamination, n_predict_calls", [(0.25, 3), ("auto", 2)]
-)
-def test_iforest_chunks_works2(
-    mocked_get_chunk, contamination, n_predict_calls
-):
+@pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
+def test_iforest_chunks_works2(mocked_get_chunk, contamination, n_predict_calls):
     test_iforest_works(contamination)
     assert mocked_get_chunk.call_count == n_predict_calls
 

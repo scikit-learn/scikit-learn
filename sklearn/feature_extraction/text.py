@@ -35,14 +35,16 @@ from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 
 
-__all__ = ['HashingVectorizer',
-           'CountVectorizer',
-           'ENGLISH_STOP_WORDS',
-           'TfidfTransformer',
-           'TfidfVectorizer',
-           'strip_accents_ascii',
-           'strip_accents_unicode',
-           'strip_tags']
+__all__ = [
+    "HashingVectorizer",
+    "CountVectorizer",
+    "ENGLISH_STOP_WORDS",
+    "TfidfTransformer",
+    "TfidfVectorizer",
+    "strip_accents_ascii",
+    "strip_accents_unicode",
+    "strip_tags",
+]
 
 
 def _preprocess(doc, accent_function=None, lower=False):
@@ -71,8 +73,15 @@ def _preprocess(doc, accent_function=None, lower=False):
     return doc
 
 
-def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
-             preprocessor=None, decoder=None, stop_words=None):
+def _analyze(
+    doc,
+    analyzer=None,
+    tokenizer=None,
+    ngrams=None,
+    preprocessor=None,
+    decoder=None,
+    stop_words=None,
+):
     """Chain together an optional series of text processing steps to go from
     a single document to ngrams, with or without tokenizing or preprocessing.
 
@@ -134,8 +143,8 @@ def strip_accents_unicode(s):
         s.encode("ASCII", errors="strict")
         return s
     except UnicodeEncodeError:
-        normalized = unicodedata.normalize('NFKD', s)
-        return ''.join([c for c in normalized if not unicodedata.combining(c)])
+        normalized = unicodedata.normalize("NFKD", s)
+        return "".join([c for c in normalized if not unicodedata.combining(c)])
 
 
 def strip_accents_ascii(s):
@@ -153,8 +162,8 @@ def strip_accents_ascii(s):
     --------
     strip_accents_unicode : Remove accentuated char for any unicode symbol.
     """
-    nkfd_form = unicodedata.normalize('NFKD', s)
-    return nkfd_form.encode('ASCII', 'ignore').decode('ASCII')
+    nkfd_form = unicodedata.normalize("NFKD", s)
+    return nkfd_form.encode("ASCII", "ignore").decode("ASCII")
 
 
 def strip_tags(s):
@@ -202,19 +211,20 @@ class _VectorizerMixin:
         doc: str
             A string of unicode symbols.
         """
-        if self.input == 'filename':
-            with open(doc, 'rb') as fh:
+        if self.input == "filename":
+            with open(doc, "rb") as fh:
                 doc = fh.read()
 
-        elif self.input == 'file':
+        elif self.input == "file":
             doc = doc.read()
 
         if isinstance(doc, bytes):
             doc = doc.decode(self.encoding, self.decode_error)
 
         if doc is np.nan:
-            raise ValueError("np.nan is an invalid document, expected byte or "
-                             "unicode string.")
+            raise ValueError(
+                "np.nan is an invalid document, expected byte or " "unicode string."
+            )
 
         return doc
 
@@ -242,10 +252,9 @@ class _VectorizerMixin:
             tokens_append = tokens.append
             space_join = " ".join
 
-            for n in range(min_n,
-                           min(max_n + 1, n_original_tokens + 1)):
+            for n in range(min_n, min(max_n + 1, n_original_tokens + 1)):
                 for i in range(n_original_tokens - n + 1):
-                    tokens_append(space_join(original_tokens[i: i + n]))
+                    tokens_append(space_join(original_tokens[i : i + n]))
 
         return tokens
 
@@ -269,7 +278,7 @@ class _VectorizerMixin:
 
         for n in range(min_n, min(max_n + 1, text_len + 1)):
             for i in range(text_len - n + 1):
-                ngrams_append(text_document[i: i + n])
+                ngrams_append(text_document[i : i + n])
         return ngrams
 
     def _char_wb_ngrams(self, text_document):
@@ -288,15 +297,15 @@ class _VectorizerMixin:
         ngrams_append = ngrams.append
 
         for w in text_document.split():
-            w = ' ' + w + ' '
+            w = " " + w + " "
             w_len = len(w)
             for n in range(min_n, max_n + 1):
                 offset = 0
-                ngrams_append(w[offset:offset + n])
+                ngrams_append(w[offset : offset + n])
                 while offset + n < w_len:
                     offset += 1
-                    ngrams_append(w[offset:offset + n])
-                if offset == 0:   # count a short word (w_len < n) only once
+                    ngrams_append(w[offset : offset + n])
+                if offset == 0:  # count a short word (w_len < n) only once
                     break
         return ngrams
 
@@ -316,17 +325,16 @@ class _VectorizerMixin:
             strip_accents = None
         elif callable(self.strip_accents):
             strip_accents = self.strip_accents
-        elif self.strip_accents == 'ascii':
+        elif self.strip_accents == "ascii":
             strip_accents = strip_accents_ascii
-        elif self.strip_accents == 'unicode':
+        elif self.strip_accents == "unicode":
             strip_accents = strip_accents_unicode
         else:
-            raise ValueError('Invalid value for "strip_accents": %s' %
-                             self.strip_accents)
+            raise ValueError(
+                'Invalid value for "strip_accents": %s' % self.strip_accents
+            )
 
-        return partial(
-            _preprocess, accent_function=strip_accents, lower=self.lowercase
-        )
+        return partial(_preprocess, accent_function=strip_accents, lower=self.lowercase)
 
     def build_tokenizer(self):
         """Return a function that splits a string into a sequence of tokens.
@@ -369,7 +377,7 @@ class _VectorizerMixin:
                         performed (e.g. because of the use of a custom
                         preprocessor / tokenizer)
         """
-        if id(self.stop_words) == getattr(self, '_stop_words_id', None):
+        if id(self.stop_words) == getattr(self, "_stop_words_id", None):
             # Stop words are were previously validated
             return None
 
@@ -384,16 +392,18 @@ class _VectorizerMixin:
             self._stop_words_id = id(self.stop_words)
 
             if inconsistent:
-                warnings.warn('Your stop_words may be inconsistent with '
-                              'your preprocessing. Tokenizing the stop '
-                              'words generated tokens %r not in '
-                              'stop_words.' % sorted(inconsistent))
+                warnings.warn(
+                    "Your stop_words may be inconsistent with "
+                    "your preprocessing. Tokenizing the stop "
+                    "words generated tokens %r not in "
+                    "stop_words." % sorted(inconsistent)
+                )
             return not inconsistent
         except Exception:
             # Failed to check stop words consistency (e.g. because a custom
             # preprocessor or tokenizer was used)
             self._stop_words_id = id(self.stop_words)
-            return 'error'
+            return "error"
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing, tokenization
@@ -407,33 +417,44 @@ class _VectorizerMixin:
         """
 
         if callable(self.analyzer):
-            return partial(
-                _analyze, analyzer=self.analyzer, decoder=self.decode
-            )
+            return partial(_analyze, analyzer=self.analyzer, decoder=self.decode)
 
         preprocess = self.build_preprocessor()
 
-        if self.analyzer == 'char':
-            return partial(_analyze, ngrams=self._char_ngrams,
-                           preprocessor=preprocess, decoder=self.decode)
+        if self.analyzer == "char":
+            return partial(
+                _analyze,
+                ngrams=self._char_ngrams,
+                preprocessor=preprocess,
+                decoder=self.decode,
+            )
 
-        elif self.analyzer == 'char_wb':
+        elif self.analyzer == "char_wb":
 
-            return partial(_analyze, ngrams=self._char_wb_ngrams,
-                           preprocessor=preprocess, decoder=self.decode)
+            return partial(
+                _analyze,
+                ngrams=self._char_wb_ngrams,
+                preprocessor=preprocess,
+                decoder=self.decode,
+            )
 
-        elif self.analyzer == 'word':
+        elif self.analyzer == "word":
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
-            self._check_stop_words_consistency(stop_words, preprocess,
-                                               tokenize)
-            return partial(_analyze, ngrams=self._word_ngrams,
-                           tokenizer=tokenize, preprocessor=preprocess,
-                           decoder=self.decode, stop_words=stop_words)
+            self._check_stop_words_consistency(stop_words, preprocess, tokenize)
+            return partial(
+                _analyze,
+                ngrams=self._word_ngrams,
+                tokenizer=tokenize,
+                preprocessor=preprocess,
+                decoder=self.decode,
+                stop_words=stop_words,
+            )
 
         else:
-            raise ValueError('%s is not a valid tokenization scheme/analyzer' %
-                             self.analyzer)
+            raise ValueError(
+                "%s is not a valid tokenization scheme/analyzer" % self.analyzer
+            )
 
     def _validate_vocabulary(self):
         vocabulary = self.vocabulary
@@ -453,8 +474,10 @@ class _VectorizerMixin:
                     raise ValueError("Vocabulary contains repeated indices.")
                 for i in range(len(vocabulary)):
                     if i not in indices:
-                        msg = ("Vocabulary of size %d doesn't contain index "
-                               "%d." % (len(vocabulary), i))
+                        msg = "Vocabulary of size %d doesn't contain index " "%d." % (
+                            len(vocabulary),
+                            i,
+                        )
                         raise ValueError(msg)
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
@@ -465,7 +488,7 @@ class _VectorizerMixin:
 
     def _check_vocabulary(self):
         """Check if vocabulary is empty or missing (not fitted)"""
-        if not hasattr(self, 'vocabulary_'):
+        if not hasattr(self, "vocabulary_"):
             self._validate_vocabulary()
             if not self.fixed_vocabulary_:
                 raise NotFittedError("Vocabulary not fitted or provided")
@@ -479,34 +502,51 @@ class _VectorizerMixin:
         if min_n > max_m:
             raise ValueError(
                 "Invalid value for ngram_range=%s "
-                "lower boundary larger than the upper boundary."
-                % str(self.ngram_range))
+                "lower boundary larger than the upper boundary." % str(self.ngram_range)
+            )
 
     def _warn_for_unused_params(self):
 
         if self.tokenizer is not None and self.token_pattern is not None:
-            warnings.warn("The parameter 'token_pattern' will not be used"
-                          " since 'tokenizer' is not None'")
+            warnings.warn(
+                "The parameter 'token_pattern' will not be used"
+                " since 'tokenizer' is not None'"
+            )
 
         if self.preprocessor is not None and callable(self.analyzer):
-            warnings.warn("The parameter 'preprocessor' will not be used"
-                          " since 'analyzer' is callable'")
+            warnings.warn(
+                "The parameter 'preprocessor' will not be used"
+                " since 'analyzer' is callable'"
+            )
 
-        if (self.ngram_range != (1, 1) and self.ngram_range is not None
-                and callable(self.analyzer)):
-            warnings.warn("The parameter 'ngram_range' will not be used"
-                          " since 'analyzer' is callable'")
-        if self.analyzer != 'word' or callable(self.analyzer):
+        if (
+            self.ngram_range != (1, 1)
+            and self.ngram_range is not None
+            and callable(self.analyzer)
+        ):
+            warnings.warn(
+                "The parameter 'ngram_range' will not be used"
+                " since 'analyzer' is callable'"
+            )
+        if self.analyzer != "word" or callable(self.analyzer):
             if self.stop_words is not None:
-                warnings.warn("The parameter 'stop_words' will not be used"
-                              " since 'analyzer' != 'word'")
-            if self.token_pattern is not None and \
-               self.token_pattern != r"(?u)\b\w\w+\b":
-                warnings.warn("The parameter 'token_pattern' will not be used"
-                              " since 'analyzer' != 'word'")
+                warnings.warn(
+                    "The parameter 'stop_words' will not be used"
+                    " since 'analyzer' != 'word'"
+                )
+            if (
+                self.token_pattern is not None
+                and self.token_pattern != r"(?u)\b\w\w+\b"
+            ):
+                warnings.warn(
+                    "The parameter 'token_pattern' will not be used"
+                    " since 'analyzer' != 'word'"
+                )
             if self.tokenizer is not None:
-                warnings.warn("The parameter 'tokenizer' will not be used"
-                              " since 'analyzer' != 'word'")
+                warnings.warn(
+                    "The parameter 'tokenizer' will not be used"
+                    " since 'analyzer' != 'word'"
+                )
 
 
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
@@ -678,13 +718,27 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     CountVectorizer, TfidfVectorizer
 
     """
-    def __init__(self, *, input='content', encoding='utf-8',
-                 decode_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
-                 binary=False, norm='l2', alternate_sign=True,
-                 dtype=np.float64):
+
+    def __init__(
+        self,
+        *,
+        input="content",
+        encoding="utf-8",
+        decode_error="strict",
+        strip_accents=None,
+        lowercase=True,
+        preprocessor=None,
+        tokenizer=None,
+        stop_words=None,
+        token_pattern=r"(?u)\b\w\w+\b",
+        ngram_range=(1, 1),
+        analyzer="word",
+        n_features=(2 ** 20),
+        binary=False,
+        norm="l2",
+        alternate_sign=True,
+        dtype=np.float64
+    ):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -726,8 +780,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         # triggers a parameter validation
         if isinstance(X, str):
             raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
+                "Iterable over raw text documents expected, " "string object received."
+            )
 
         self._warn_for_unused_params()
         self._validate_params()
@@ -752,8 +806,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         """
         if isinstance(X, str):
             raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
+                "Iterable over raw text documents expected, " "string object received."
+            )
 
         self._validate_params()
 
@@ -786,12 +840,15 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         return self.fit(X, y).transform(X)
 
     def _get_hasher(self):
-        return FeatureHasher(n_features=self.n_features,
-                             input_type='string', dtype=self.dtype,
-                             alternate_sign=self.alternate_sign)
+        return FeatureHasher(
+            n_features=self.n_features,
+            input_type="string",
+            dtype=self.dtype,
+            alternate_sign=self.alternate_sign,
+        )
 
     def _more_tags(self):
-        return {'X_types': ['string']}
+        return {"X_types": ["string"]}
 
 
 def _document_frequency(X):
@@ -1002,13 +1059,28 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """
-    def __init__(self, *, input='content', encoding='utf-8',
-                 decode_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), analyzer='word',
-                 max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64):
+
+    def __init__(
+        self,
+        *,
+        input="content",
+        encoding="utf-8",
+        decode_error="strict",
+        strip_accents=None,
+        lowercase=True,
+        preprocessor=None,
+        tokenizer=None,
+        stop_words=None,
+        token_pattern=r"(?u)\b\w\w+\b",
+        ngram_range=(1, 1),
+        analyzer="word",
+        max_df=1.0,
+        min_df=1,
+        max_features=None,
+        vocabulary=None,
+        binary=False,
+        dtype=np.int64
+    ):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -1025,11 +1097,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
         if max_features is not None:
-            if (not isinstance(max_features, numbers.Integral) or
-                    max_features <= 0):
+            if not isinstance(max_features, numbers.Integral) or max_features <= 0:
                 raise ValueError(
                     "max_features=%r, neither a positive integer nor None"
-                    % max_features)
+                    % max_features
+                )
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
@@ -1046,11 +1118,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             vocabulary[term] = new_val
             map_index[old_val] = new_val
 
-        X.indices = map_index.take(X.indices, mode='clip')
+        X.indices = map_index.take(X.indices, mode="clip")
         return X
 
-    def _limit_features(self, X, vocabulary, high=None, low=None,
-                        limit=None):
+    def _limit_features(self, X, vocabulary, high=None, low=None, limit=None):
         """Remove too rare or too common features.
 
         Prune features that are non zero in more samples than high or less
@@ -1086,13 +1157,14 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 removed_terms.add(term)
         kept_indices = np.where(mask)[0]
         if len(kept_indices) == 0:
-            raise ValueError("After pruning, no terms remain. Try a lower"
-                             " min_df or a higher max_df.")
+            raise ValueError(
+                "After pruning, no terms remain. Try a lower"
+                " min_df or a higher max_df."
+            )
         return X[:, kept_indices], removed_terms
 
     def _count_vocab(self, raw_documents, fixed_vocab):
-        """Create sparse feature matrix, and vocabulary where fixed_vocab=False
-        """
+        """Create sparse feature matrix, and vocabulary where fixed_vocab=False"""
         if fixed_vocab:
             vocabulary = self.vocabulary_
         else:
@@ -1107,10 +1179,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         if self.lowercase:
             for vocab in vocabulary:
                 if any(map(str.isupper, vocab)):
-                    warnings.warn("Upper case characters found in"
-                                  " vocabulary while 'lowercase'"
-                                  " is True. These entries will not"
-                                  " be matched with any documents")
+                    warnings.warn(
+                        "Upper case characters found in"
+                        " vocabulary while 'lowercase'"
+                        " is True. These entries will not"
+                        " be matched with any documents"
+                    )
                     break
 
         values = _make_int_array()
@@ -1136,15 +1210,19 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             # disable defaultdict behaviour
             vocabulary = dict(vocabulary)
             if not vocabulary:
-                raise ValueError("empty vocabulary; perhaps the documents only"
-                                 " contain stop words")
+                raise ValueError(
+                    "empty vocabulary; perhaps the documents only" " contain stop words"
+                )
 
         if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
             if _IS_32BIT:
-                raise ValueError(('sparse CSR array has {} non-zero '
-                                  'elements and requires 64 bit indexing, '
-                                  'which is unsupported with 32 bit Python.')
-                                 .format(indptr[-1]))
+                raise ValueError(
+                    (
+                        "sparse CSR array has {} non-zero "
+                        "elements and requires 64 bit indexing, "
+                        "which is unsupported with 32 bit Python."
+                    ).format(indptr[-1])
+                )
             indices_dtype = np.int64
 
         else:
@@ -1153,9 +1231,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         indptr = np.asarray(indptr, dtype=indices_dtype)
         values = np.frombuffer(values, dtype=np.intc)
 
-        X = sp.csr_matrix((values, j_indices, indptr),
-                          shape=(len(indptr) - 1, len(vocabulary)),
-                          dtype=self.dtype)
+        X = sp.csr_matrix(
+            (values, j_indices, indptr),
+            shape=(len(indptr) - 1, len(vocabulary)),
+            dtype=self.dtype,
+        )
         X.sort_indices()
         return vocabulary, X
 
@@ -1196,8 +1276,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # TfidfVectorizer.
         if isinstance(raw_documents, str):
             raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
+                "Iterable over raw text documents expected, " "string object received."
+            )
 
         self._validate_params()
         self._validate_vocabulary()
@@ -1205,29 +1285,26 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         min_df = self.min_df
         max_features = self.max_features
 
-        vocabulary, X = self._count_vocab(raw_documents,
-                                          self.fixed_vocabulary_)
+        vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary_)
 
         if self.binary:
             X.data.fill(1)
 
         if not self.fixed_vocabulary_:
             n_doc = X.shape[0]
-            max_doc_count = (max_df
-                             if isinstance(max_df, numbers.Integral)
-                             else max_df * n_doc)
-            min_doc_count = (min_df
-                             if isinstance(min_df, numbers.Integral)
-                             else min_df * n_doc)
+            max_doc_count = (
+                max_df if isinstance(max_df, numbers.Integral) else max_df * n_doc
+            )
+            min_doc_count = (
+                min_df if isinstance(min_df, numbers.Integral) else min_df * n_doc
+            )
             if max_doc_count < min_doc_count:
-                raise ValueError(
-                    "max_df corresponds to < documents than min_df")
+                raise ValueError("max_df corresponds to < documents than min_df")
             if max_features is not None:
                 X = self._sort_features(X, vocabulary)
-            X, self.stop_words_ = self._limit_features(X, vocabulary,
-                                                       max_doc_count,
-                                                       min_doc_count,
-                                                       max_features)
+            X, self.stop_words_ = self._limit_features(
+                X, vocabulary, max_doc_count, min_doc_count, max_features
+            )
             if max_features is None:
                 X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
@@ -1252,8 +1329,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         """
         if isinstance(raw_documents, str):
             raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
+                "Iterable over raw text documents expected, " "string object received."
+            )
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -1277,7 +1354,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         """
         self._check_vocabulary()
         # We need CSR format for fast row manipulations.
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse="csr")
         n_samples = X.shape[0]
 
         terms = np.array(list(self.vocabulary_.keys()))
@@ -1285,11 +1362,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         inverse_vocabulary = terms[np.argsort(indices)]
 
         if sp.issparse(X):
-            return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
-                    for i in range(n_samples)]
+            return [
+                inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
+                for i in range(n_samples)
+            ]
         else:
-            return [inverse_vocabulary[np.flatnonzero(X[i, :])].ravel()
-                    for i in range(n_samples)]
+            return [
+                inverse_vocabulary[np.flatnonzero(X[i, :])].ravel()
+                for i in range(n_samples)
+            ]
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
@@ -1302,11 +1383,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         self._check_vocabulary()
 
-        return [t for t, i in sorted(self.vocabulary_.items(),
-                                     key=itemgetter(1))]
+        return [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
 
     def _more_tags(self):
-        return {'X_types': ['string']}
+        return {"X_types": ["string"]}
 
 
 def _make_int_array():
@@ -1426,8 +1506,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
     """
-    def __init__(self, *, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+
+    def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
         self.smooth_idf = smooth_idf
@@ -1441,7 +1521,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         X : sparse matrix of shape n_samples, n_features)
             A matrix of term/token counts.
         """
-        X = self._validate_data(X, accept_sparse=('csr', 'csc'))
+        X = self._validate_data(X, accept_sparse=("csr", "csc"))
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
         dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
@@ -1458,10 +1538,13 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(n_samples / df) + 1
-            self._idf_diag = sp.diags(idf, offsets=0,
-                                      shape=(n_features, n_features),
-                                      format='csr',
-                                      dtype=dtype)
+            self._idf_diag = sp.diags(
+                idf,
+                offsets=0,
+                shape=(n_features, n_features),
+                format="csr",
+                dtype=dtype,
+            )
 
         return self
 
@@ -1481,8 +1564,9 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        X = self._validate_data(X, accept_sparse='csr',
-                                dtype=FLOAT_DTYPES, copy=copy, reset=False)
+        X = self._validate_data(
+            X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
+        )
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
 
@@ -1496,8 +1580,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             # idf_ being a property, the automatic attributes detection
             # does not work as usual and we need to specify the attribute
             # name:
-            check_is_fitted(self, attributes=["idf_"],
-                            msg='idf vector is not fitted')
+            check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
 
             # *= doesn't work
             X = X * self._idf_diag
@@ -1517,11 +1600,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     def idf_(self, value):
         value = np.asarray(value, dtype=np.float64)
         n_features = value.shape[0]
-        self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
-                                    n=n_features, format='csr')
+        self._idf_diag = sp.spdiags(
+            value, diags=0, m=n_features, n=n_features, format="csr"
+        )
 
     def _more_tags(self):
-        return {'X_types': 'sparse'}
+        return {"X_types": "sparse"}
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1730,27 +1814,56 @@ class TfidfVectorizer(CountVectorizer):
     >>> print(X.shape)
     (4, 9)
     """
-    def __init__(self, *, input='content', encoding='utf-8',
-                 decode_error='strict', strip_accents=None, lowercase=True,
-                 preprocessor=None, tokenizer=None, analyzer='word',
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), max_df=1.0, min_df=1,
-                 max_features=None, vocabulary=None, binary=False,
-                 dtype=np.float64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+
+    def __init__(
+        self,
+        *,
+        input="content",
+        encoding="utf-8",
+        decode_error="strict",
+        strip_accents=None,
+        lowercase=True,
+        preprocessor=None,
+        tokenizer=None,
+        analyzer="word",
+        stop_words=None,
+        token_pattern=r"(?u)\b\w\w+\b",
+        ngram_range=(1, 1),
+        max_df=1.0,
+        min_df=1,
+        max_features=None,
+        vocabulary=None,
+        binary=False,
+        dtype=np.float64,
+        norm="l2",
+        use_idf=True,
+        smooth_idf=True,
+        sublinear_tf=False
+    ):
 
         super().__init__(
-            input=input, encoding=encoding, decode_error=decode_error,
-            strip_accents=strip_accents, lowercase=lowercase,
-            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
-            stop_words=stop_words, token_pattern=token_pattern,
-            ngram_range=ngram_range, max_df=max_df, min_df=min_df,
-            max_features=max_features, vocabulary=vocabulary, binary=binary,
-            dtype=dtype)
+            input=input,
+            encoding=encoding,
+            decode_error=decode_error,
+            strip_accents=strip_accents,
+            lowercase=lowercase,
+            preprocessor=preprocessor,
+            tokenizer=tokenizer,
+            analyzer=analyzer,
+            stop_words=stop_words,
+            token_pattern=token_pattern,
+            ngram_range=ngram_range,
+            max_df=max_df,
+            min_df=min_df,
+            max_features=max_features,
+            vocabulary=vocabulary,
+            binary=binary,
+            dtype=dtype,
+        )
 
-        self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
-                                       smooth_idf=smooth_idf,
-                                       sublinear_tf=sublinear_tf)
+        self._tfidf = TfidfTransformer(
+            norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
+        )
 
     # Broadcast the TF-IDF parameters to the underlying transformer instance
     # for easy grid search and repr
@@ -1794,19 +1907,21 @@ class TfidfVectorizer(CountVectorizer):
     @idf_.setter
     def idf_(self, value):
         self._validate_vocabulary()
-        if hasattr(self, 'vocabulary_'):
+        if hasattr(self, "vocabulary_"):
             if len(self.vocabulary_) != len(value):
-                raise ValueError("idf length = %d must be equal "
-                                 "to vocabulary size = %d" %
-                                 (len(value), len(self.vocabulary)))
+                raise ValueError(
+                    "idf length = %d must be equal "
+                    "to vocabulary size = %d" % (len(value), len(self.vocabulary))
+                )
         self._tfidf.idf_ = value
 
     def _check_params(self):
         if self.dtype not in FLOAT_DTYPES:
-            warnings.warn("Only {} 'dtype' should be used. {} 'dtype' will "
-                          "be converted to np.float64."
-                          .format(FLOAT_DTYPES, self.dtype),
-                          UserWarning)
+            warnings.warn(
+                "Only {} 'dtype' should be used. {} 'dtype' will "
+                "be converted to np.float64.".format(FLOAT_DTYPES, self.dtype),
+                UserWarning,
+            )
 
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.
@@ -1870,10 +1985,10 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix of (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, msg='The TF-IDF vectorizer is not fitted')
+        check_is_fitted(self, msg="The TF-IDF vectorizer is not fitted")
 
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
     def _more_tags(self):
-        return {'X_types': ['string'], '_skip_test': True}
+        return {"X_types": ["string"], "_skip_test": True}

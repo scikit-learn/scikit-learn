@@ -124,14 +124,22 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
        minimum covariance determinant estimator" Technometrics 41(3), 212
        (1999)
     """
-    def __init__(self, *, store_precision=True, assume_centered=False,
-                 support_fraction=None, contamination=0.1,
-                 random_state=None):
+
+    def __init__(
+        self,
+        *,
+        store_precision=True,
+        assume_centered=False,
+        support_fraction=None,
+        contamination=0.1,
+        random_state=None
+    ):
         super().__init__(
             store_precision=store_precision,
             assume_centered=assume_centered,
             support_fraction=support_fraction,
-            random_state=random_state)
+            random_state=random_state,
+        )
         self.contamination = contamination
 
     def fit(self, X, y=None):
@@ -145,13 +153,14 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         y : Ignored
             Not used, present for API consistency by convention.
         """
-        if self.contamination != 'auto':
-            if not(0. < self.contamination <= .5):
-                raise ValueError("contamination must be in (0, 0.5], "
-                                 "got: %f" % self.contamination)
+        if self.contamination != "auto":
+            if not (0.0 < self.contamination <= 0.5):
+                raise ValueError(
+                    "contamination must be in (0, 0.5], " "got: %f" % self.contamination
+                )
 
         super().fit(X)
-        self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
+        self.offset_ = np.percentile(-self.dist_, 100.0 * self.contamination)
         return self
 
     def decision_function(self, X):

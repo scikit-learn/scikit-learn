@@ -18,8 +18,7 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
 from sklearn.naive_bayes import CategoricalNB
 
-DISCRETE_NAIVE_BAYES_CLASSES = [
-    BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
+DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
 
 
@@ -55,8 +54,7 @@ def test_gnb():
     # an Error
     # FIXME Remove this test once the more general partial_fit tests are merged
     with pytest.raises(
-        ValueError,
-        match="The target label.* in y do not exist in the initial classes"
+        ValueError, match="The target label.* in y do not exist in the initial classes"
     ):
         GaussianNB().partial_fit(X, y, classes=[0, 1])
 
@@ -73,15 +71,14 @@ def test_gnb_var():
 def test_gnb_prior():
     # Test whether class priors are properly set.
     clf = GaussianNB().fit(X, y)
-    assert_array_almost_equal(np.array([3, 3]) / 6.0,
-                              clf.class_prior_, 8)
+    assert_array_almost_equal(np.array([3, 3]) / 6.0, clf.class_prior_, 8)
     clf = GaussianNB().fit(X1, y1)
     # Check that the class priors sum to 1
     assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
 
 def test_gnb_sample_weight():
-    """Test whether sample weights are properly used in GNB. """
+    """Test whether sample weights are properly used in GNB."""
     # Sample weights all being 1 should not change results
     sw = np.ones(6)
     clf = GaussianNB().fit(X, y)
@@ -114,9 +111,9 @@ def test_gnb_sample_weight():
 
 def test_gnb_neg_priors():
     """Test whether an error is raised in case of negative priors"""
-    clf = GaussianNB(priors=np.array([-1., 2.]))
+    clf = GaussianNB(priors=np.array([-1.0, 2.0]))
 
-    msg = 'Priors must be non-negative'
+    msg = "Priors must be non-negative"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
 
@@ -124,18 +121,31 @@ def test_gnb_neg_priors():
 def test_gnb_priors():
     """Test whether the class prior override is properly used"""
     clf = GaussianNB(priors=np.array([0.3, 0.7])).fit(X, y)
-    assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
-                              np.array([[0.825303662161683,
-                                         0.174696337838317]]), 8)
+    assert_array_almost_equal(
+        clf.predict_proba([[-0.1, -0.1]]),
+        np.array([[0.825303662161683, 0.174696337838317]]),
+        8,
+    )
     assert_array_almost_equal(clf.class_prior_, np.array([0.3, 0.7]))
 
 
 def test_gnb_priors_sum_isclose():
     # test whether the class prior sum is properly tested"""
-    X = np.array([[-1, -1], [-2, -1], [-3, -2], [-4, -5], [-5, -4],
-                  [1, 1], [2, 1], [3, 2], [4, 4], [5, 5]])
-    priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14,
-                       0.11, 0.0])
+    X = np.array(
+        [
+            [-1, -1],
+            [-2, -1],
+            [-3, -2],
+            [-4, -5],
+            [-5, -4],
+            [1, 1],
+            [2, 1],
+            [3, 2],
+            [4, 4],
+            [5, 5],
+        ]
+    )
+    priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14, 0.11, 0.0])
     Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     clf = GaussianNB(priors=priors)
     # smoke test for issue #9633
@@ -143,20 +153,20 @@ def test_gnb_priors_sum_isclose():
 
 
 def test_gnb_wrong_nb_priors():
-    """ Test whether an error is raised if the number of prior is different
+    """Test whether an error is raised if the number of prior is different
     from the number of class"""
-    clf = GaussianNB(priors=np.array([.25, .25, .25, .25]))
+    clf = GaussianNB(priors=np.array([0.25, 0.25, 0.25, 0.25]))
 
-    msg = 'Number of priors must match number of classes'
+    msg = "Number of priors must match number of classes"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
 
 
 def test_gnb_prior_greater_one():
     """Test if an error is raised if the sum of prior greater than one"""
-    clf = GaussianNB(priors=np.array([2., 1.]))
+    clf = GaussianNB(priors=np.array([2.0, 1.0]))
 
-    msg = 'The sum of the priors should be 1'
+    msg = "The sum of the priors should be 1"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
 
@@ -169,14 +179,13 @@ def test_gnb_prior_large_bias():
 
 
 def test_gnb_check_update_with_no_data():
-    """ Test when the partial fit is called without any data"""
+    """Test when the partial fit is called without any data"""
     # Create an empty array
     prev_points = 100
-    mean = 0.
-    var = 1.
+    mean = 0.0
+    var = 1.0
     x_empty = np.empty((0, X.shape[1]))
-    tmean, tvar = GaussianNB._update_mean_variance(prev_points, mean,
-                                                   var, x_empty)
+    tmean, tvar = GaussianNB._update_mean_variance(prev_points, mean, var, x_empty)
     assert tmean == mean
     assert tvar == var
 
@@ -199,14 +208,13 @@ def test_gnb_naive_bayes_scale_invariance():
     # Scaling the data should not change the prediction results
     iris = load_iris()
     X, y = iris.data, iris.target
-    labels = [GaussianNB().fit(f * X, y).predict(f * X)
-              for f in [1E-10, 1, 1E10]]
+    labels = [GaussianNB().fit(f * X, y).predict(f * X) for f in [1e-10, 1, 1e10]]
     assert_array_equal(labels[0], labels[1])
     assert_array_equal(labels[1], labels[2])
 
 
 # TODO: Remove in version 1.1
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_deprecated_coef_intercept(DiscreteNaiveBayes):
     est = DiscreteNaiveBayes().fit(X2, y2)
 
@@ -215,15 +223,16 @@ def test_discretenb_deprecated_coef_intercept(DiscreteNaiveBayes):
             hasattr(est, att)
 
 
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_prior(DiscreteNaiveBayes):
     # Test whether class priors are properly set.
     clf = DiscreteNaiveBayes().fit(X2, y2)
-    assert_array_almost_equal(np.log(np.array([2, 2, 2]) / 6.0),
-                              clf.class_log_prior_, 8)
+    assert_array_almost_equal(
+        np.log(np.array([2, 2, 2]) / 6.0), clf.class_log_prior_, 8
+    )
 
 
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_partial_fit(DiscreteNaiveBayes):
     clf1 = DiscreteNaiveBayes()
     clf1.fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1])
@@ -233,8 +242,7 @@ def test_discretenb_partial_fit(DiscreteNaiveBayes):
     assert_array_equal(clf1.class_count_, clf2.class_count_)
     if DiscreteNaiveBayes is CategoricalNB:
         for i in range(len(clf1.category_count_)):
-            assert_array_equal(clf1.category_count_[i],
-                               clf2.category_count_[i])
+            assert_array_equal(clf1.category_count_[i], clf2.category_count_[i])
     else:
         assert_array_equal(clf1.feature_count_, clf2.feature_count_)
 
@@ -249,10 +257,13 @@ def test_discretenb_partial_fit(DiscreteNaiveBayes):
         # index chronologically with each call of partial fit and therefore
         # the category_count matrices cannot be compared for equality
         for i in range(len(clf1.category_count_)):
-            assert_array_equal(clf1.category_count_[i].shape,
-                               clf3.category_count_[i].shape)
-            assert_array_equal(np.sum(clf1.category_count_[i], axis=1),
-                               np.sum(clf3.category_count_[i], axis=1))
+            assert_array_equal(
+                clf1.category_count_[i].shape, clf3.category_count_[i].shape
+            )
+            assert_array_equal(
+                np.sum(clf1.category_count_[i], axis=1),
+                np.sum(clf3.category_count_[i], axis=1),
+            )
 
         # assert category 0 occurs 1x in the first class and 0x in the 2nd
         # class
@@ -271,12 +282,11 @@ def test_discretenb_partial_fit(DiscreteNaiveBayes):
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
-@pytest.mark.parametrize('NaiveBayes', ALL_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("NaiveBayes", ALL_NAIVE_BAYES_CLASSES)
 def test_NB_partial_fit_no_first_classes(NaiveBayes):
     # classes is required for first call to partial fit
     with pytest.raises(
-        ValueError,
-        match="classes must be passed on the first call to partial_fit."
+        ValueError, match="classes must be passed on the first call to partial_fit."
     ):
         NaiveBayes().partial_fit(X2, y2)
 
@@ -284,8 +294,7 @@ def test_NB_partial_fit_no_first_classes(NaiveBayes):
     clf = NaiveBayes()
     clf.partial_fit(X2, y2, classes=np.unique(y2))
     with pytest.raises(
-        ValueError,
-        match="is not the same as on last call to partial_fit"
+        ValueError, match="is not the same as on last call to partial_fit"
     ):
         clf.partial_fit(X2, y2, classes=np.arange(42))
 
@@ -302,18 +311,21 @@ def test_discretenb_predict_proba():
 
     # test binary case (1-d output)
     y = [0, 0, 2]  # 2 is regression test for binary case, 02e673
-    for DiscreteNaiveBayes, X in zip([BernoulliNB, MultinomialNB],
-                                     [X_bernoulli, X_multinomial]):
+    for DiscreteNaiveBayes, X in zip(
+        [BernoulliNB, MultinomialNB], [X_bernoulli, X_multinomial]
+    ):
         clf = DiscreteNaiveBayes().fit(X, y)
         assert clf.predict(X[-1:]) == 2
         assert clf.predict_proba([X[0]]).shape == (1, 2)
-        assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
-                                  np.array([1., 1.]), 6)
+        assert_array_almost_equal(
+            clf.predict_proba(X[:2]).sum(axis=1), np.array([1.0, 1.0]), 6
+        )
 
     # test multiclass case (2-d output, must sum to one)
     y = [0, 1, 2]
-    for DiscreteNaiveBayes, X in zip([BernoulliNB, MultinomialNB],
-                                     [X_bernoulli, X_multinomial]):
+    for DiscreteNaiveBayes, X in zip(
+        [BernoulliNB, MultinomialNB], [X_bernoulli, X_multinomial]
+    ):
         clf = DiscreteNaiveBayes().fit(X, y)
         assert clf.predict_proba(X[0:1]).shape == (1, 3)
         assert clf.predict_proba(X[:2]).shape == (2, 3)
@@ -323,7 +335,7 @@ def test_discretenb_predict_proba():
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_uniform_prior(DiscreteNaiveBayes):
     # Test whether discrete NB classes fit a uniform prior
     # when fit_prior=False and class_prior=None
@@ -332,49 +344,50 @@ def test_discretenb_uniform_prior(DiscreteNaiveBayes):
     clf.set_params(fit_prior=False)
     clf.fit([[0], [0], [1]], [0, 0, 1])
     prior = np.exp(clf.class_log_prior_)
-    assert_array_almost_equal(prior, np.array([.5, .5]))
+    assert_array_almost_equal(prior, np.array([0.5, 0.5]))
 
 
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_provide_prior(DiscreteNaiveBayes):
     # Test whether discrete NB classes use provided prior
 
     clf = DiscreteNaiveBayes(class_prior=[0.5, 0.5])
     clf.fit([[0], [0], [1]], [0, 0, 1])
     prior = np.exp(clf.class_log_prior_)
-    assert_array_almost_equal(prior, np.array([.5, .5]))
+    assert_array_almost_equal(prior, np.array([0.5, 0.5]))
 
     # Inconsistent number of classes with prior
-    msg = 'Number of priors must match number of classes'
+    msg = "Number of priors must match number of classes"
     with pytest.raises(ValueError, match=msg):
         clf.fit([[0], [1], [2]], [0, 1, 2])
 
-    msg = 'is not the same as on last call to partial_fit'
+    msg = "is not the same as on last call to partial_fit"
     with pytest.raises(ValueError, match=msg):
         clf.partial_fit([[0], [1]], [0, 1], classes=[0, 1, 1])
 
 
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_provide_prior_with_partial_fit(DiscreteNaiveBayes):
     # Test whether discrete NB classes use provided prior
     # when using partial_fit
 
     iris = load_iris()
     iris_data1, iris_data2, iris_target1, iris_target2 = train_test_split(
-        iris.data, iris.target, test_size=0.4, random_state=415)
+        iris.data, iris.target, test_size=0.4, random_state=415
+    )
 
     for prior in [None, [0.3, 0.3, 0.4]]:
         clf_full = DiscreteNaiveBayes(class_prior=prior)
         clf_full.fit(iris.data, iris.target)
         clf_partial = DiscreteNaiveBayes(class_prior=prior)
-        clf_partial.partial_fit(iris_data1, iris_target1,
-                                classes=[0, 1, 2])
+        clf_partial.partial_fit(iris_data1, iris_target1, classes=[0, 1, 2])
         clf_partial.partial_fit(iris_data2, iris_target2)
-        assert_array_almost_equal(clf_full.class_log_prior_,
-                                  clf_partial.class_log_prior_)
+        assert_array_almost_equal(
+            clf_full.class_log_prior_, clf_partial.class_log_prior_
+        )
 
 
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_sample_weight_multiclass(DiscreteNaiveBayes):
     # check shape consistency for number of samples at fit time
     X = [
@@ -391,8 +404,7 @@ def test_discretenb_sample_weight_multiclass(DiscreteNaiveBayes):
 
     # Check sample weight using the partial_fit method
     clf = DiscreteNaiveBayes()
-    clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2],
-                    sample_weight=sample_weight[:2])
+    clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2], sample_weight=sample_weight[:2])
     clf.partial_fit(X[2:3], y[2:3], sample_weight=sample_weight[2:3])
     clf.partial_fit(X[3:], y[3:], sample_weight=sample_weight[3:])
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
@@ -400,8 +412,9 @@ def test_discretenb_sample_weight_multiclass(DiscreteNaiveBayes):
 
 # TODO: Remove in version 1.1
 @ignore_warnings(category=FutureWarning)
-@pytest.mark.parametrize('DiscreteNaiveBayes', [BernoulliNB, ComplementNB,
-                                                MultinomialNB])
+@pytest.mark.parametrize(
+    "DiscreteNaiveBayes", [BernoulliNB, ComplementNB, MultinomialNB]
+)
 def test_discretenb_coef_intercept_shape(DiscreteNaiveBayes):
     # coef_ and intercept_ should have shapes as in other linear models.
     # Non-regression test for issue #2127.
@@ -414,13 +427,13 @@ def test_discretenb_coef_intercept_shape(DiscreteNaiveBayes):
     assert clf.intercept_.shape == (1,)
 
 
-@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
-@pytest.mark.parametrize('use_partial_fit', [False, True])
-@pytest.mark.parametrize('train_on_single_class_y', [False, True])
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("use_partial_fit", [False, True])
+@pytest.mark.parametrize("train_on_single_class_y", [False, True])
 def test_discretenb_degenerate_one_class_case(
-        DiscreteNaiveBayes,
-        use_partial_fit,
-        train_on_single_class_y,
+    DiscreteNaiveBayes,
+    use_partial_fit,
+    train_on_single_class_y,
 ):
     # Most array attributes of a discrete naive Bayes classifier should have a
     # first-axis length equal to the number of classes. Exceptions include:
@@ -448,11 +461,11 @@ def test_discretenb_degenerate_one_class_case(
 
     # Check that attributes have expected first-axis lengths
     attribute_names = [
-        'classes_',
-        'class_count_',
-        'class_log_prior_',
-        'feature_count_',
-        'feature_log_prob_',
+        "classes_",
+        "class_count_",
+        "class_log_prior_",
+        "feature_count_",
+        "feature_log_prob_",
     ]
     for attribute_name in attribute_names:
         attribute = getattr(clf, attribute_name, None)
@@ -467,21 +480,21 @@ def test_discretenb_degenerate_one_class_case(
                 assert element.shape[0] == num_classes
 
 
-@pytest.mark.parametrize('kind', ('dense', 'sparse'))
+@pytest.mark.parametrize("kind", ("dense", "sparse"))
 def test_mnnb(kind):
     # Test Multinomial Naive Bayes classification.
     # This checks that MultinomialNB implements fit and predict and returns
     # correct values for a simple toy dataset.
 
-    if kind == 'dense':
+    if kind == "dense":
         X = X2
-    elif kind == 'sparse':
+    elif kind == "sparse":
         X = scipy.sparse.csr_matrix(X2)
 
     # Check the ability to predict the learning set.
     clf = MultinomialNB()
 
-    msg = 'Negative values in data passed to'
+    msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
         clf.fit(-X, y2)
     y_pred = clf.fit(X, y2).predict(X)
@@ -553,13 +566,10 @@ def test_mnb_prior_unobserved_targets():
 @ignore_warnings(category=FutureWarning)
 def test_mnb_sample_weight():
     clf = MultinomialNB()
-    clf.fit([[1, 2], [1, 2], [1, 0]],
-            [0, 0, 1],
-            sample_weight=[1, 1, 4])
+    clf.fit([[1, 2], [1, 2], [1, 0]], [0, 0, 1], sample_weight=[1, 1, 4])
     assert_array_equal(clf.predict([[1, 0]]), [1])
     positive_prior = np.exp(clf.intercept_[0])
-    assert_array_almost_equal([1 - positive_prior, positive_prior],
-                              [1 / 3., 2 / 3.])
+    assert_array_almost_equal([1 - positive_prior, positive_prior], [1 / 3.0, 2 / 3.0])
 
 
 def test_bnb():
@@ -575,10 +585,9 @@ def test_bnb():
     # Tokyo Japan Chinese (class: Japan)
 
     # Features are Beijing, Chinese, Japan, Macao, Shanghai, and Tokyo
-    X = np.array([[1, 1, 0, 0, 0, 0],
-                  [0, 1, 0, 0, 1, 0],
-                  [0, 1, 0, 1, 0, 0],
-                  [0, 1, 1, 0, 0, 1]])
+    X = np.array(
+        [[1, 1, 0, 0, 0, 0], [0, 1, 0, 0, 1, 0], [0, 1, 0, 1, 0, 0], [0, 1, 1, 0, 0, 1]]
+    )
 
     # Classes are China (0), Japan (1)
     Y = np.array([0, 0, 0, 1])
@@ -592,9 +601,12 @@ def test_bnb():
     assert_array_almost_equal(np.exp(clf.class_log_prior_), class_prior)
 
     # Check the feature probabilities are correct
-    feature_prob = np.array([[0.4, 0.8, 0.2, 0.4, 0.4, 0.2],
-                             [1 / 3.0, 2 / 3.0, 2 / 3.0, 1 / 3.0, 1 / 3.0,
-                              2 / 3.0]])
+    feature_prob = np.array(
+        [
+            [0.4, 0.8, 0.2, 0.4, 0.4, 0.2],
+            [1 / 3.0, 2 / 3.0, 2 / 3.0, 1 / 3.0, 1 / 3.0, 2 / 3.0],
+        ]
+    )
     assert_array_almost_equal(np.exp(clf.feature_log_prob_), feature_prob)
 
     # Testing data point is:
@@ -602,8 +614,7 @@ def test_bnb():
     X_test = np.array([[0, 1, 1, 0, 0, 1]])
 
     # Check the predictive probabilities are correct
-    unnorm_predict_proba = np.array([[0.005183999999999999,
-                                      0.02194787379972565]])
+    unnorm_predict_proba = np.array([[0.005183999999999999, 0.02194787379972565]])
     predict_proba = unnorm_predict_proba / np.sum(unnorm_predict_proba)
     assert_array_almost_equal(clf.predict_proba(X_test), predict_proba)
 
@@ -643,33 +654,35 @@ def test_cnb():
     # Tokyo Japan Chinese (class: Japan)
 
     # Features are Beijing, Chinese, Japan, Macao, Shanghai, and Tokyo.
-    X = np.array([[1, 1, 0, 0, 0, 0],
-                  [0, 1, 0, 0, 1, 0],
-                  [0, 1, 0, 1, 0, 0],
-                  [0, 1, 1, 0, 0, 1]])
+    X = np.array(
+        [[1, 1, 0, 0, 0, 0], [0, 1, 0, 0, 1, 0], [0, 1, 0, 1, 0, 0], [0, 1, 1, 0, 0, 1]]
+    )
 
     # Classes are China (0), Japan (1).
     Y = np.array([0, 0, 0, 1])
 
     # Check that weights are correct. See steps 4-6 in Table 4 of
     # Rennie et al. (2003).
-    theta = np.array([
+    theta = np.array(
         [
-            (0 + 1) / (3 + 6),
-            (1 + 1) / (3 + 6),
-            (1 + 1) / (3 + 6),
-            (0 + 1) / (3 + 6),
-            (0 + 1) / (3 + 6),
-            (1 + 1) / (3 + 6)
-        ],
-        [
-            (1 + 1) / (6 + 6),
-            (3 + 1) / (6 + 6),
-            (0 + 1) / (6 + 6),
-            (1 + 1) / (6 + 6),
-            (1 + 1) / (6 + 6),
-            (0 + 1) / (6 + 6)
-        ]])
+            [
+                (0 + 1) / (3 + 6),
+                (1 + 1) / (3 + 6),
+                (1 + 1) / (3 + 6),
+                (0 + 1) / (3 + 6),
+                (0 + 1) / (3 + 6),
+                (1 + 1) / (3 + 6),
+            ],
+            [
+                (1 + 1) / (6 + 6),
+                (3 + 1) / (6 + 6),
+                (0 + 1) / (6 + 6),
+                (1 + 1) / (6 + 6),
+                (1 + 1) / (6 + 6),
+                (0 + 1) / (6 + 6),
+            ],
+        ]
+    )
 
     weights = np.zeros(theta.shape)
     normed_weights = np.zeros(theta.shape)
@@ -680,7 +693,7 @@ def test_cnb():
     # Verify inputs are nonnegative.
     clf = ComplementNB(alpha=1.0)
 
-    msg = re.escape('Negative values in data passed to ComplementNB (input X)')
+    msg = re.escape("Negative values in data passed to ComplementNB (input X)")
     with pytest.raises(ValueError, match=msg):
         clf.fit(-X, Y)
 
@@ -716,9 +729,7 @@ def test_categoricalnb():
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
     y = np.array([1])
-    error_msg = re.escape(
-        "Negative values in data passed to CategoricalNB (input X)"
-    )
+    error_msg = re.escape("Negative values in data passed to CategoricalNB (input X)")
     with pytest.raises(ValueError, match=error_msg):
         clf.predict(X)
     with pytest.raises(ValueError, match=error_msg):
@@ -728,10 +739,11 @@ def test_categoricalnb():
     X3_test = np.array([[2, 5]])
     # alpha=1 increases the count of all categories by one so the final
     # probability for each category is not 50/50 but 1/3 to 2/3
-    bayes_numerator = np.array([[1/3*1/3, 2/3*2/3]])
+    bayes_numerator = np.array([[1 / 3 * 1 / 3, 2 / 3 * 2 / 3]])
     bayes_denominator = bayes_numerator.sum()
-    assert_array_almost_equal(clf.predict_proba(X3_test),
-                              bayes_numerator / bayes_denominator)
+    assert_array_almost_equal(
+        clf.predict_proba(X3_test), bayes_numerator / bayes_denominator
+    )
 
     # Assert category_count has counted all features
     assert len(clf.category_count_) == X3.shape[1]
@@ -744,7 +756,7 @@ def test_categoricalnb():
     assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([1]))
     assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
-    for factor in [1., 0.3, 5, 0.0001]:
+    for factor in [1.0, 0.3, 5, 0.0001]:
         X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
         y = np.array([1, 1, 2, 2])
         sample_weight = np.array([1, 1, 10, 0.1]) * factor
@@ -758,29 +770,41 @@ def test_categoricalnb():
     "min_categories, exp_X1_count, exp_X2_count, new_X, exp_n_categories_",
     [
         # check min_categories with int > observed categories
-        (3, np.array([[2, 0, 0], [1, 1, 0]]), np.array([[1, 1, 0], [1, 1, 0]]),
-         np.array([[0, 2]]), np.array([3, 3]),
-         ),
+        (
+            3,
+            np.array([[2, 0, 0], [1, 1, 0]]),
+            np.array([[1, 1, 0], [1, 1, 0]]),
+            np.array([[0, 2]]),
+            np.array([3, 3]),
+        ),
         # check with list input
-        ([3, 4], np.array([[2, 0, 0], [1, 1, 0]]),
-         np.array([[1, 1, 0, 0], [1, 1, 0, 0]]), np.array([[0, 3]]),
-         np.array([3, 4]),
-         ),
+        (
+            [3, 4],
+            np.array([[2, 0, 0], [1, 1, 0]]),
+            np.array([[1, 1, 0, 0], [1, 1, 0, 0]]),
+            np.array([[0, 3]]),
+            np.array([3, 4]),
+        ),
         # check min_categories with min less than actual
-        ([1, np.array([[2, 0], [1, 1]]), np.array([[1, 1], [1, 1]]),
-          np.array([[0, 1]]), np.array([2, 2])]
-         ),
-    ]
+        (
+            [
+                1,
+                np.array([[2, 0], [1, 1]]),
+                np.array([[1, 1], [1, 1]]),
+                np.array([[0, 1]]),
+                np.array([2, 2]),
+            ]
+        ),
+    ],
 )
-def test_categoricalnb_with_min_categories(min_categories, exp_X1_count,
-                                           exp_X2_count, new_X,
-                                           exp_n_categories_):
+def test_categoricalnb_with_min_categories(
+    min_categories, exp_X1_count, exp_X2_count, new_X, exp_n_categories_
+):
     X_n_categories = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y_n_categories = np.array([1, 1, 2, 2])
     expected_prediction = np.array([1])
 
-    clf = CategoricalNB(alpha=1, fit_prior=False,
-                        min_categories=min_categories)
+    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
     clf.fit(X_n_categories, y_n_categories)
     X1_count, X2_count = clf.category_count_
     assert_array_equal(X1_count, exp_X1_count)
@@ -793,18 +817,17 @@ def test_categoricalnb_with_min_categories(min_categories, exp_X1_count,
 @pytest.mark.parametrize(
     "min_categories, error_msg",
     [
-        ('bad_arg', "'min_categories' should have integral"),
+        ("bad_arg", "'min_categories' should have integral"),
         ([[3, 2], [2, 4]], "'min_categories' should have shape"),
-        (1., "'min_categories' should have integral"),
-     ]
+        (1.0, "'min_categories' should have integral"),
+    ],
 )
 def test_categoricalnb_min_categories_errors(min_categories, error_msg):
 
     X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y = np.array([1, 1, 2, 2])
 
-    clf = CategoricalNB(alpha=1, fit_prior=False,
-                        min_categories=min_categories)
+    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
     with pytest.raises(ValueError, match=error_msg):
         clf.fit(X, y)
 
@@ -813,11 +836,8 @@ def test_alpha():
     # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
-    nb = BernoulliNB(alpha=0.)
-    msg = (
-        "alpha too small will result in numeric errors,"
-        " setting alpha = 1.0e-10"
-    )
+    nb = BernoulliNB(alpha=0.0)
+    msg = "alpha too small will result in numeric errors," " setting alpha = 1.0e-10"
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
     with pytest.warns(UserWarning, match=msg):
@@ -825,39 +845,39 @@ def test_alpha():
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = MultinomialNB(alpha=0.)
+    nb = MultinomialNB(alpha=0.0)
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
-    prob = np.array([[2. / 3, 1. / 3], [0, 1]])
+    prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = CategoricalNB(alpha=0.)
+    nb = CategoricalNB(alpha=0.0)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
-    prob = np.array([[1., 0.], [0., 1.]])
+    prob = np.array([[1.0, 0.0], [0.0, 1.0]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test sparse X
     X = scipy.sparse.csr_matrix(X)
-    nb = BernoulliNB(alpha=0.)
+    nb = BernoulliNB(alpha=0.0)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = MultinomialNB(alpha=0.)
+    nb = MultinomialNB(alpha=0.0)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
-    prob = np.array([[2. / 3, 1. / 3], [0, 1]])
+    prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test for alpha < 0
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
     expected_msg = re.escape(
-        'Smoothing parameter alpha = -1.0e-01. alpha should be > 0.'
+        "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
     )
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
@@ -896,11 +916,9 @@ def test_alpha_vector():
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test alpha non-negative
-    alpha = np.array([1., -0.1])
+    alpha = np.array([1.0, -0.1])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = (
-        'Smoothing parameter alpha = -1.0e-01. alpha should be > 0.'
-    )
+    expected_msg = "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
 
@@ -909,15 +927,13 @@ def test_alpha_vector():
     alpha = np.array([ALPHA_MIN / 2, 0.5])
     m_nb = MultinomialNB(alpha=alpha)
     m_nb.partial_fit(X, y, classes=[0, 1])
-    assert_array_almost_equal(m_nb._check_alpha(),
-                              [ALPHA_MIN, 0.5],
-                              decimal=12)
+    assert_array_almost_equal(m_nb._check_alpha(), [ALPHA_MIN, 0.5], decimal=12)
 
     # Test correct dimensions
-    alpha = np.array([1., 2., 3.])
+    alpha = np.array([1.0, 2.0, 3.0])
     m_nb = MultinomialNB(alpha=alpha)
     expected_msg = re.escape(
-        'alpha should be a scalar or a numpy array with shape [n_features]'
+        "alpha should be a scalar or a numpy array with shape [n_features]"
     )
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)

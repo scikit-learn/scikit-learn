@@ -30,8 +30,9 @@ def _log_dirichlet_norm(dirichlet_concentration):
     log_dirichlet_norm : float
         The log normalization of the Dirichlet distribution.
     """
-    return (gammaln(np.sum(dirichlet_concentration)) -
-            np.sum(gammaln(dirichlet_concentration)))
+    return gammaln(np.sum(dirichlet_concentration)) - np.sum(
+        gammaln(dirichlet_concentration)
+    )
 
 
 def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
@@ -55,10 +56,14 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
         The log normalization of the Wishart distribution.
     """
     # To simplify the computation we have removed the np.log(np.pi) term
-    return -(degrees_of_freedom * log_det_precisions_chol +
-             degrees_of_freedom * n_features * .5 * math.log(2.) +
-             np.sum(gammaln(.5 * (degrees_of_freedom -
-                                  np.arange(n_features)[:, np.newaxis])), 0))
+    return -(
+        degrees_of_freedom * log_det_precisions_chol
+        + degrees_of_freedom * n_features * 0.5 * math.log(2.0)
+        + np.sum(
+            gammaln(0.5 * (degrees_of_freedom - np.arange(n_features)[:, np.newaxis])),
+            0,
+        )
+    )
 
 
 class BayesianGaussianMixture(BaseMixture):
@@ -324,19 +329,40 @@ class BayesianGaussianMixture(BaseMixture):
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
        <https://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
     """
-    def __init__(self, *, n_components=1, covariance_type='full', tol=1e-3,
-                 reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
-                 weight_concentration_prior_type='dirichlet_process',
-                 weight_concentration_prior=None,
-                 mean_precision_prior=None, mean_prior=None,
-                 degrees_of_freedom_prior=None, covariance_prior=None,
-                 random_state=None, warm_start=False, verbose=0,
-                 verbose_interval=10):
+
+    def __init__(
+        self,
+        *,
+        n_components=1,
+        covariance_type="full",
+        tol=1e-3,
+        reg_covar=1e-6,
+        max_iter=100,
+        n_init=1,
+        init_params="kmeans",
+        weight_concentration_prior_type="dirichlet_process",
+        weight_concentration_prior=None,
+        mean_precision_prior=None,
+        mean_prior=None,
+        degrees_of_freedom_prior=None,
+        covariance_prior=None,
+        random_state=None,
+        warm_start=False,
+        verbose=0,
+        verbose_interval=10
+    ):
         super().__init__(
-            n_components=n_components, tol=tol, reg_covar=reg_covar,
-            max_iter=max_iter, n_init=n_init, init_params=init_params,
-            random_state=random_state, warm_start=warm_start,
-            verbose=verbose, verbose_interval=verbose_interval)
+            n_components=n_components,
+            tol=tol,
+            reg_covar=reg_covar,
+            max_iter=max_iter,
+            n_init=n_init,
+            init_params=init_params,
+            random_state=random_state,
+            warm_start=warm_start,
+            verbose=verbose,
+            verbose_interval=verbose_interval,
+        )
 
         self.covariance_type = covariance_type
         self.weight_concentration_prior_type = weight_concentration_prior_type
@@ -353,19 +379,23 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         X : array-like of shape (n_samples, n_features)
         """
-        if self.covariance_type not in ['spherical', 'tied', 'diag', 'full']:
-            raise ValueError("Invalid value for 'covariance_type': %s "
-                             "'covariance_type' should be in "
-                             "['spherical', 'tied', 'diag', 'full']"
-                             % self.covariance_type)
+        if self.covariance_type not in ["spherical", "tied", "diag", "full"]:
+            raise ValueError(
+                "Invalid value for 'covariance_type': %s "
+                "'covariance_type' should be in "
+                "['spherical', 'tied', 'diag', 'full']" % self.covariance_type
+            )
 
-        if (self.weight_concentration_prior_type not in
-                ['dirichlet_process', 'dirichlet_distribution']):
+        if self.weight_concentration_prior_type not in [
+            "dirichlet_process",
+            "dirichlet_distribution",
+        ]:
             raise ValueError(
                 "Invalid value for 'weight_concentration_prior_type': %s "
                 "'weight_concentration_prior_type' should be in "
                 "['dirichlet_process', 'dirichlet_distribution']"
-                % self.weight_concentration_prior_type)
+                % self.weight_concentration_prior_type
+            )
 
         self._check_weights_parameters()
         self._check_means_parameters(X)
@@ -375,14 +405,15 @@ class BayesianGaussianMixture(BaseMixture):
     def _check_weights_parameters(self):
         """Check the parameter of the Dirichlet distribution."""
         if self.weight_concentration_prior is None:
-            self.weight_concentration_prior_ = 1. / self.n_components
-        elif self.weight_concentration_prior > 0.:
-            self.weight_concentration_prior_ = (
-                self.weight_concentration_prior)
+            self.weight_concentration_prior_ = 1.0 / self.n_components
+        elif self.weight_concentration_prior > 0.0:
+            self.weight_concentration_prior_ = self.weight_concentration_prior
         else:
-            raise ValueError("The parameter 'weight_concentration_prior' "
-                             "should be greater than 0., but got %.3f."
-                             % self.weight_concentration_prior)
+            raise ValueError(
+                "The parameter 'weight_concentration_prior' "
+                "should be greater than 0., but got %.3f."
+                % self.weight_concentration_prior
+            )
 
     def _check_means_parameters(self, X):
         """Check the parameters of the Gaussian distribution.
@@ -394,21 +425,22 @@ class BayesianGaussianMixture(BaseMixture):
         _, n_features = X.shape
 
         if self.mean_precision_prior is None:
-            self.mean_precision_prior_ = 1.
-        elif self.mean_precision_prior > 0.:
+            self.mean_precision_prior_ = 1.0
+        elif self.mean_precision_prior > 0.0:
             self.mean_precision_prior_ = self.mean_precision_prior
         else:
-            raise ValueError("The parameter 'mean_precision_prior' should be "
-                             "greater than 0., but got %.3f."
-                             % self.mean_precision_prior)
+            raise ValueError(
+                "The parameter 'mean_precision_prior' should be "
+                "greater than 0., but got %.3f." % self.mean_precision_prior
+            )
 
         if self.mean_prior is None:
             self.mean_prior_ = X.mean(axis=0)
         else:
-            self.mean_prior_ = check_array(self.mean_prior,
-                                           dtype=[np.float64, np.float32],
-                                           ensure_2d=False)
-            _check_shape(self.mean_prior_, (n_features, ), 'means')
+            self.mean_prior_ = check_array(
+                self.mean_prior, dtype=[np.float64, np.float32], ensure_2d=False
+            )
+            _check_shape(self.mean_prior_, (n_features,), "means")
 
     def _check_precision_parameters(self, X):
         """Check the prior parameters of the precision distribution.
@@ -421,12 +453,14 @@ class BayesianGaussianMixture(BaseMixture):
 
         if self.degrees_of_freedom_prior is None:
             self.degrees_of_freedom_prior_ = n_features
-        elif self.degrees_of_freedom_prior > n_features - 1.:
+        elif self.degrees_of_freedom_prior > n_features - 1.0:
             self.degrees_of_freedom_prior_ = self.degrees_of_freedom_prior
         else:
-            raise ValueError("The parameter 'degrees_of_freedom_prior' "
-                             "should be greater than %d, but got %.3f."
-                             % (n_features - 1, self.degrees_of_freedom_prior))
+            raise ValueError(
+                "The parameter 'degrees_of_freedom_prior' "
+                "should be greater than %d, but got %.3f."
+                % (n_features - 1, self.degrees_of_freedom_prior)
+            )
 
     def _checkcovariance_prior_parameter(self, X):
         """Check the `covariance_prior_`.
@@ -439,35 +473,40 @@ class BayesianGaussianMixture(BaseMixture):
 
         if self.covariance_prior is None:
             self.covariance_prior_ = {
-                'full': np.atleast_2d(np.cov(X.T)),
-                'tied': np.atleast_2d(np.cov(X.T)),
-                'diag': np.var(X, axis=0, ddof=1),
-                'spherical': np.var(X, axis=0, ddof=1).mean()
+                "full": np.atleast_2d(np.cov(X.T)),
+                "tied": np.atleast_2d(np.cov(X.T)),
+                "diag": np.var(X, axis=0, ddof=1),
+                "spherical": np.var(X, axis=0, ddof=1).mean(),
             }[self.covariance_type]
 
-        elif self.covariance_type in ['full', 'tied']:
+        elif self.covariance_type in ["full", "tied"]:
             self.covariance_prior_ = check_array(
-                self.covariance_prior, dtype=[np.float64, np.float32],
-                ensure_2d=False)
-            _check_shape(self.covariance_prior_, (n_features, n_features),
-                         '%s covariance_prior' % self.covariance_type)
-            _check_precision_matrix(self.covariance_prior_,
-                                    self.covariance_type)
-        elif self.covariance_type == 'diag':
+                self.covariance_prior, dtype=[np.float64, np.float32], ensure_2d=False
+            )
+            _check_shape(
+                self.covariance_prior_,
+                (n_features, n_features),
+                "%s covariance_prior" % self.covariance_type,
+            )
+            _check_precision_matrix(self.covariance_prior_, self.covariance_type)
+        elif self.covariance_type == "diag":
             self.covariance_prior_ = check_array(
-                self.covariance_prior, dtype=[np.float64, np.float32],
-                ensure_2d=False)
-            _check_shape(self.covariance_prior_, (n_features,),
-                         '%s covariance_prior' % self.covariance_type)
-            _check_precision_positivity(self.covariance_prior_,
-                                        self.covariance_type)
+                self.covariance_prior, dtype=[np.float64, np.float32], ensure_2d=False
+            )
+            _check_shape(
+                self.covariance_prior_,
+                (n_features,),
+                "%s covariance_prior" % self.covariance_type,
+            )
+            _check_precision_positivity(self.covariance_prior_, self.covariance_type)
         # spherical case
-        elif self.covariance_prior > 0.:
+        elif self.covariance_prior > 0.0:
             self.covariance_prior_ = self.covariance_prior
         else:
-            raise ValueError("The parameter 'spherical covariance_prior' "
-                             "should be greater than 0., but got %.3f."
-                             % self.covariance_prior)
+            raise ValueError(
+                "The parameter 'spherical covariance_prior' "
+                "should be greater than 0., but got %.3f." % self.covariance_prior
+            )
 
     def _initialize(self, X, resp):
         """Initialization of the mixture parameters.
@@ -478,8 +517,9 @@ class BayesianGaussianMixture(BaseMixture):
 
         resp : array-like of shape (n_samples, n_components)
         """
-        nk, xk, sk = _estimate_gaussian_parameters(X, resp, self.reg_covar,
-                                                   self.covariance_type)
+        nk, xk, sk = _estimate_gaussian_parameters(
+            X, resp, self.reg_covar, self.covariance_type
+        )
 
         self._estimate_weights(nk)
         self._estimate_means(nk, xk)
@@ -492,13 +532,16 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         nk : array-like of shape (n_components,)
         """
-        if self.weight_concentration_prior_type == 'dirichlet_process':
+        if self.weight_concentration_prior_type == "dirichlet_process":
             # For dirichlet process weight_concentration will be a tuple
             # containing the two parameters of the beta distribution
             self.weight_concentration_ = (
-                1. + nk,
-                (self.weight_concentration_prior_ +
-                 np.hstack((np.cumsum(nk[::-1])[-2::-1], 0))))
+                1.0 + nk,
+                (
+                    self.weight_concentration_prior_
+                    + np.hstack((np.cumsum(nk[::-1])[-2::-1], 0))
+                ),
+            )
         else:
             # case Variationnal Gaussian mixture with dirichlet distribution
             self.weight_concentration_ = self.weight_concentration_prior_ + nk
@@ -513,9 +556,9 @@ class BayesianGaussianMixture(BaseMixture):
         xk : array-like of shape (n_components, n_features)
         """
         self.mean_precision_ = self.mean_precision_prior_ + nk
-        self.means_ = ((self.mean_precision_prior_ * self.mean_prior_ +
-                        nk[:, np.newaxis] * xk) /
-                       self.mean_precision_[:, np.newaxis])
+        self.means_ = (
+            self.mean_precision_prior_ * self.mean_prior_ + nk[:, np.newaxis] * xk
+        ) / self.mean_precision_[:, np.newaxis]
 
     def _estimate_precisions(self, nk, xk, sk):
         """Estimate the precisions parameters of the precision distribution.
@@ -533,14 +576,16 @@ class BayesianGaussianMixture(BaseMixture):
             'diag' : (n_components, n_features)
             'spherical' : (n_components,)
         """
-        {"full": self._estimate_wishart_full,
-         "tied": self._estimate_wishart_tied,
-         "diag": self._estimate_wishart_diag,
-         "spherical": self._estimate_wishart_spherical
-         }[self.covariance_type](nk, xk, sk)
+        {
+            "full": self._estimate_wishart_full,
+            "tied": self._estimate_wishart_tied,
+            "diag": self._estimate_wishart_diag,
+            "spherical": self._estimate_wishart_spherical,
+        }[self.covariance_type](nk, xk, sk)
 
         self.precisions_cholesky_ = _compute_precision_cholesky(
-            self.covariances_, self.covariance_type)
+            self.covariances_, self.covariance_type
+        )
 
     def _estimate_wishart_full(self, nk, xk, sk):
         """Estimate the full Wishart distribution parameters.
@@ -562,19 +607,21 @@ class BayesianGaussianMixture(BaseMixture):
         # the correct formula
         self.degrees_of_freedom_ = self.degrees_of_freedom_prior_ + nk
 
-        self.covariances_ = np.empty((self.n_components, n_features,
-                                      n_features))
+        self.covariances_ = np.empty((self.n_components, n_features, n_features))
 
         for k in range(self.n_components):
             diff = xk[k] - self.mean_prior_
-            self.covariances_[k] = (self.covariance_prior_ + nk[k] * sk[k] +
-                                    nk[k] * self.mean_precision_prior_ /
-                                    self.mean_precision_[k] * np.outer(diff,
-                                                                       diff))
+            self.covariances_[k] = (
+                self.covariance_prior_
+                + nk[k] * sk[k]
+                + nk[k]
+                * self.mean_precision_prior_
+                / self.mean_precision_[k]
+                * np.outer(diff, diff)
+            )
 
         # Contrary to the original bishop book, we normalize the covariances
-        self.covariances_ /= (
-            self.degrees_of_freedom_[:, np.newaxis, np.newaxis])
+        self.covariances_ /= self.degrees_of_freedom_[:, np.newaxis, np.newaxis]
 
     def _estimate_wishart_tied(self, nk, xk, sk):
         """Estimate the tied Wishart distribution parameters.
@@ -595,13 +642,17 @@ class BayesianGaussianMixture(BaseMixture):
         # `degrees_of_freedom_k = degrees_of_freedom_0 + Nk`
         # is the correct formula
         self.degrees_of_freedom_ = (
-            self.degrees_of_freedom_prior_ + nk.sum() / self.n_components)
+            self.degrees_of_freedom_prior_ + nk.sum() / self.n_components
+        )
 
         diff = xk - self.mean_prior_
         self.covariances_ = (
-            self.covariance_prior_ + sk * nk.sum() / self.n_components +
-            self.mean_precision_prior_ / self.n_components * np.dot(
-                (nk / self.mean_precision_) * diff.T, diff))
+            self.covariance_prior_
+            + sk * nk.sum() / self.n_components
+            + self.mean_precision_prior_
+            / self.n_components
+            * np.dot((nk / self.mean_precision_) * diff.T, diff)
+        )
 
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_
@@ -627,10 +678,11 @@ class BayesianGaussianMixture(BaseMixture):
         self.degrees_of_freedom_ = self.degrees_of_freedom_prior_ + nk
 
         diff = xk - self.mean_prior_
-        self.covariances_ = (
-            self.covariance_prior_ + nk[:, np.newaxis] * (
-                sk + (self.mean_precision_prior_ /
-                      self.mean_precision_)[:, np.newaxis] * np.square(diff)))
+        self.covariances_ = self.covariance_prior_ + nk[:, np.newaxis] * (
+            sk
+            + (self.mean_precision_prior_ / self.mean_precision_)[:, np.newaxis]
+            * np.square(diff)
+        )
 
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_[:, np.newaxis]
@@ -656,10 +708,12 @@ class BayesianGaussianMixture(BaseMixture):
         self.degrees_of_freedom_ = self.degrees_of_freedom_prior_ + nk
 
         diff = xk - self.mean_prior_
-        self.covariances_ = (
-            self.covariance_prior_ + nk * (
-                sk + self.mean_precision_prior_ / self.mean_precision_ *
-                np.mean(np.square(diff), 1)))
+        self.covariances_ = self.covariance_prior_ + nk * (
+            sk
+            + self.mean_precision_prior_
+            / self.mean_precision_
+            * np.mean(np.square(diff), 1)
+        )
 
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_
@@ -678,38 +732,47 @@ class BayesianGaussianMixture(BaseMixture):
         n_samples, _ = X.shape
 
         nk, xk, sk = _estimate_gaussian_parameters(
-            X, np.exp(log_resp), self.reg_covar, self.covariance_type)
+            X, np.exp(log_resp), self.reg_covar, self.covariance_type
+        )
         self._estimate_weights(nk)
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
 
     def _estimate_log_weights(self):
-        if self.weight_concentration_prior_type == 'dirichlet_process':
-            digamma_sum = digamma(self.weight_concentration_[0] +
-                                  self.weight_concentration_[1])
+        if self.weight_concentration_prior_type == "dirichlet_process":
+            digamma_sum = digamma(
+                self.weight_concentration_[0] + self.weight_concentration_[1]
+            )
             digamma_a = digamma(self.weight_concentration_[0])
             digamma_b = digamma(self.weight_concentration_[1])
-            return (digamma_a - digamma_sum +
-                    np.hstack((0, np.cumsum(digamma_b - digamma_sum)[:-1])))
+            return (
+                digamma_a
+                - digamma_sum
+                + np.hstack((0, np.cumsum(digamma_b - digamma_sum)[:-1]))
+            )
         else:
             # case Variationnal Gaussian mixture with dirichlet distribution
-            return (digamma(self.weight_concentration_) -
-                    digamma(np.sum(self.weight_concentration_)))
+            return digamma(self.weight_concentration_) - digamma(
+                np.sum(self.weight_concentration_)
+            )
 
     def _estimate_log_prob(self, X):
         _, n_features = X.shape
         # We remove `n_features * np.log(self.degrees_of_freedom_)` because
         # the precision matrix is normalized
-        log_gauss = (_estimate_log_gaussian_prob(
-            X, self.means_, self.precisions_cholesky_, self.covariance_type) -
-            .5 * n_features * np.log(self.degrees_of_freedom_))
+        log_gauss = _estimate_log_gaussian_prob(
+            X, self.means_, self.precisions_cholesky_, self.covariance_type
+        ) - 0.5 * n_features * np.log(self.degrees_of_freedom_)
 
-        log_lambda = n_features * np.log(2.) + np.sum(digamma(
-            .5 * (self.degrees_of_freedom_ -
-                  np.arange(0, n_features)[:, np.newaxis])), 0)
+        log_lambda = n_features * np.log(2.0) + np.sum(
+            digamma(
+                0.5
+                * (self.degrees_of_freedom_ - np.arange(0, n_features)[:, np.newaxis])
+            ),
+            0,
+        )
 
-        return log_gauss + .5 * (log_lambda -
-                                 n_features / self.mean_precision_)
+        return log_gauss + 0.5 * (log_lambda - n_features / self.mean_precision_)
 
     def _compute_lower_bound(self, log_resp, log_prob_norm):
         """Estimate the lower bound of the model.
@@ -735,63 +798,90 @@ class BayesianGaussianMixture(BaseMixture):
         """
         # Contrary to the original formula, we have done some simplification
         # and removed all the constant terms.
-        n_features, = self.mean_prior_.shape
+        (n_features,) = self.mean_prior_.shape
 
         # We removed `.5 * n_features * np.log(self.degrees_of_freedom_)`
         # because the precision matrix is normalized.
-        log_det_precisions_chol = (_compute_log_det_cholesky(
-            self.precisions_cholesky_, self.covariance_type, n_features) -
-            .5 * n_features * np.log(self.degrees_of_freedom_))
+        log_det_precisions_chol = _compute_log_det_cholesky(
+            self.precisions_cholesky_, self.covariance_type, n_features
+        ) - 0.5 * n_features * np.log(self.degrees_of_freedom_)
 
-        if self.covariance_type == 'tied':
-            log_wishart = self.n_components * np.float64(_log_wishart_norm(
-                self.degrees_of_freedom_, log_det_precisions_chol, n_features))
+        if self.covariance_type == "tied":
+            log_wishart = self.n_components * np.float64(
+                _log_wishart_norm(
+                    self.degrees_of_freedom_, log_det_precisions_chol, n_features
+                )
+            )
         else:
-            log_wishart = np.sum(_log_wishart_norm(
-                self.degrees_of_freedom_, log_det_precisions_chol, n_features))
+            log_wishart = np.sum(
+                _log_wishart_norm(
+                    self.degrees_of_freedom_, log_det_precisions_chol, n_features
+                )
+            )
 
-        if self.weight_concentration_prior_type == 'dirichlet_process':
-            log_norm_weight = -np.sum(betaln(self.weight_concentration_[0],
-                                             self.weight_concentration_[1]))
+        if self.weight_concentration_prior_type == "dirichlet_process":
+            log_norm_weight = -np.sum(
+                betaln(self.weight_concentration_[0], self.weight_concentration_[1])
+            )
         else:
             log_norm_weight = _log_dirichlet_norm(self.weight_concentration_)
 
-        return (-np.sum(np.exp(log_resp) * log_resp) -
-                log_wishart - log_norm_weight -
-                0.5 * n_features * np.sum(np.log(self.mean_precision_)))
+        return (
+            -np.sum(np.exp(log_resp) * log_resp)
+            - log_wishart
+            - log_norm_weight
+            - 0.5 * n_features * np.sum(np.log(self.mean_precision_))
+        )
 
     def _get_parameters(self):
-        return (self.weight_concentration_,
-                self.mean_precision_, self.means_,
-                self.degrees_of_freedom_, self.covariances_,
-                self.precisions_cholesky_)
+        return (
+            self.weight_concentration_,
+            self.mean_precision_,
+            self.means_,
+            self.degrees_of_freedom_,
+            self.covariances_,
+            self.precisions_cholesky_,
+        )
 
     def _set_parameters(self, params):
-        (self.weight_concentration_, self.mean_precision_, self.means_,
-         self.degrees_of_freedom_, self.covariances_,
-         self.precisions_cholesky_) = params
+        (
+            self.weight_concentration_,
+            self.mean_precision_,
+            self.means_,
+            self.degrees_of_freedom_,
+            self.covariances_,
+            self.precisions_cholesky_,
+        ) = params
 
         # Weights computation
         if self.weight_concentration_prior_type == "dirichlet_process":
-            weight_dirichlet_sum = (self.weight_concentration_[0] +
-                                    self.weight_concentration_[1])
+            weight_dirichlet_sum = (
+                self.weight_concentration_[0] + self.weight_concentration_[1]
+            )
             tmp = self.weight_concentration_[1] / weight_dirichlet_sum
             self.weights_ = (
-                self.weight_concentration_[0] / weight_dirichlet_sum *
-                np.hstack((1, np.cumprod(tmp[:-1]))))
+                self.weight_concentration_[0]
+                / weight_dirichlet_sum
+                * np.hstack((1, np.cumprod(tmp[:-1])))
+            )
             self.weights_ /= np.sum(self.weights_)
         else:
-            self. weights_ = (self.weight_concentration_ /
-                              np.sum(self.weight_concentration_))
+            self.weights_ = self.weight_concentration_ / np.sum(
+                self.weight_concentration_
+            )
 
         # Precisions matrices computation
-        if self.covariance_type == 'full':
-            self.precisions_ = np.array([
-                np.dot(prec_chol, prec_chol.T)
-                for prec_chol in self.precisions_cholesky_])
+        if self.covariance_type == "full":
+            self.precisions_ = np.array(
+                [
+                    np.dot(prec_chol, prec_chol.T)
+                    for prec_chol in self.precisions_cholesky_
+                ]
+            )
 
-        elif self.covariance_type == 'tied':
-            self.precisions_ = np.dot(self.precisions_cholesky_,
-                                      self.precisions_cholesky_.T)
+        elif self.covariance_type == "tied":
+            self.precisions_ = np.dot(
+                self.precisions_cholesky_, self.precisions_cholesky_.T
+            )
         else:
             self.precisions_ = self.precisions_cholesky_ ** 2

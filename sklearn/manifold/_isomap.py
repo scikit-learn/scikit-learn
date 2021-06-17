@@ -127,10 +127,22 @@ class Isomap(TransformerMixin, BaseEstimator):
     .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
-    def __init__(self, *, n_neighbors=5, n_components=2, eigen_solver='auto',
-                 tol=0, max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
-                 p=2, metric_params=None):
+
+    def __init__(
+        self,
+        *,
+        n_neighbors=5,
+        n_components=2,
+        eigen_solver="auto",
+        tol=0,
+        max_iter=None,
+        path_method="auto",
+        neighbors_algorithm="auto",
+        n_jobs=None,
+        metric="minkowski",
+        p=2,
+        metric_params=None
+    ):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.eigen_solver = eigen_solver
@@ -144,28 +156,39 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.metric_params = metric_params
 
     def _fit_transform(self, X):
-        self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                      algorithm=self.neighbors_algorithm,
-                                      metric=self.metric, p=self.p,
-                                      metric_params=self.metric_params,
-                                      n_jobs=self.n_jobs)
+        self.nbrs_ = NearestNeighbors(
+            n_neighbors=self.n_neighbors,
+            algorithm=self.neighbors_algorithm,
+            metric=self.metric,
+            p=self.p,
+            metric_params=self.metric_params,
+            n_jobs=self.n_jobs,
+        )
         self.nbrs_.fit(X)
         self.n_features_in_ = self.nbrs_.n_features_in_
 
-        self.kernel_pca_ = KernelPCA(n_components=self.n_components,
-                                     kernel="precomputed",
-                                     eigen_solver=self.eigen_solver,
-                                     tol=self.tol, max_iter=self.max_iter,
-                                     n_jobs=self.n_jobs)
+        self.kernel_pca_ = KernelPCA(
+            n_components=self.n_components,
+            kernel="precomputed",
+            eigen_solver=self.eigen_solver,
+            tol=self.tol,
+            max_iter=self.max_iter,
+            n_jobs=self.n_jobs,
+        )
 
-        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                               metric=self.metric, p=self.p,
-                               metric_params=self.metric_params,
-                               mode='distance', n_jobs=self.n_jobs)
+        kng = kneighbors_graph(
+            self.nbrs_,
+            self.n_neighbors,
+            metric=self.metric,
+            p=self.p,
+            metric_params=self.metric_params,
+            mode="distance",
+            n_jobs=self.n_jobs,
+        )
 
-        self.dist_matrix_ = graph_shortest_path(kng,
-                                                method=self.path_method,
-                                                directed=False)
+        self.dist_matrix_ = graph_shortest_path(
+            kng, method=self.path_method, directed=False
+        )
         G = self.dist_matrix_ ** 2
         G *= -0.5
 
@@ -266,8 +289,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         n_queries = distances.shape[0]
         G_X = np.zeros((n_queries, n_samples_fit))
         for i in range(n_queries):
-            G_X[i] = np.min(self.dist_matrix_[indices[i]] +
-                            distances[i][:, None], 0)
+            G_X[i] = np.min(self.dist_matrix_[indices[i]] + distances[i][:, None], 0)
 
         G_X **= 2
         G_X *= -0.5
