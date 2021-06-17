@@ -14,22 +14,42 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 
 """
 # %%
+# Bike Sharing Demand Data Exploration
+# ------------------------------------
+#
+# We start by loading the data from the OpenML repository.
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, return_X_y=True
-)
+bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
+df = bike_sharing.frame
+
 # %%
-y.max()
+# To get a quick understanding of the periodic patterns of the data, let us
+# have at the average weekly demand.
+#
+# Note that the week starts on a Sunday, during the week-end. We can clearly
+# distinguish the commute patterns in the morning and evenings of the work days
+# and the leisure use of the bikes on the weekends with a more spread peak
+# demand around the middle of the days:
+average_week_demand = df.groupby(["weekday", "hour"]).mean()["count"]
+average_week_demand.plot(figsize=(12, 4))
+
+
+# %%
+#
+# The target of the prediction problem is the absolute count of bike rentals on
+# a hourly basis:
+df["count"].max()
 
 # %% [markdown]
 #
 # Let's rescale the target variable (absolute value of the demand) to predict a
 # relative demand so that the mean absolute error is more easily interpreted as
-# a fraction of the maximum demand and avoid numerical issues.
+# a fraction of the maximum demand and avoid numerical issues with least
+# squares regression.
 
 # %%
-y /= 1000
+y = df["count"] / 1000
 y.hist(bins=30)
 
 # %%
@@ -38,6 +58,7 @@ y.hist(bins=30)
 # variables. Note that the time information has already been expanded into
 # several complementary columns.
 #
+X = df.drop("count", axis="columns")
 X
 # %%
 # We first introspect the distribution of the categorical variables, starting
@@ -55,14 +76,23 @@ X["weather"][X["weather"] == "heavy_rain"] = "rain"
 X["weather"].value_counts()
 
 # %%
-# The season variable is well behaved:
+# As expected season variable is well balanced:
 #
 X["season"].value_counts()
 
 # %%
+# Time-based Cross-Validation Splits
+# ----------------------------------
+#
 # Since the dataset is a time-ordered event log (hourly demand), we will use a
 # time-sensitive cross-validation splitter to evaluate our demand forecasting
-# model as realistically as possible:
+# model as realistically as possible. We use a gap of 2 days between the train
+# and test side of the splits. We also limit the training set size to make the
+# performance of the CV folds more stable.
+#
+# 1000 test datapoints should be enough to quantify the performance of the
+# model. This reprent a bit less than a month and a half of contiguous test
+# data:
 
 from sklearn.model_selection import TimeSeriesSplit
 
@@ -70,6 +100,9 @@ ts_cv = TimeSeriesSplit(
     n_splits=5, gap=48, max_train_size=10000, test_size=1000,
 )
 
+# %%
+# Let us manually inspect the various splits to check that the
+# `TimeSeriesSplit` works as we expect, starting with the first split:
 all_splits = list(ts_cv.split(X, y))
 train_0, test_0 = all_splits[0]
 
@@ -80,6 +113,7 @@ X.iloc[test_0]
 X.iloc[train_0]
 
 # %%
+# We now inspect the last split:
 train_4, test_4 = all_splits[4]
 
 # %%
@@ -89,6 +123,8 @@ X.iloc[test_4]
 X.iloc[train_4]
 
 # %%
+# All is well. We are now ready to do some predictive modeling!
+#
 # Gradient Boosting
 # -----------------
 #
@@ -198,7 +234,7 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 # The performance is a not good: around 15% of the max demand on average. This
 # is three times higher than the gradient boosting model. We can suspect that
 # the non-monotonic original encoding of the periodic time-related features
-# might prevent the linear regression model to preperly leverage the time
+# might prevent the linear regression model to properly leverage the time
 # information.
 #
 # Trigonometric Features
@@ -355,10 +391,8 @@ _ = plt.legend()
 
 plt.figure(figsize=(12, 4))
 last_hours = slice(-96, None)
-plt.plot(y.iloc[test_0].values[last_hours], "x-", label="True")
+plt.plot(y.iloc[test_0].values[last_hours], "x-", label="True demand")
 plt.plot(gbrt_predictions[last_hours], "x-", label="GBDT predictions")
 plt.plot(cyclic_spline_poly_predictions[last_hours], "x-",
          label="Spline poly predictions")
 _ = plt.legend()
-
-# %%
