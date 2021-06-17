@@ -155,7 +155,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         p=2,
         metric="minkowski",
         metric_params=None,
-        n_jobs=None
+        n_jobs=None,
     ):
         super().__init__(
             n_neighbors=n_neighbors,
@@ -373,7 +373,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         p=2,
         metric="minkowski",
         metric_params=None,
-        n_jobs=None
+        n_jobs=None,
     ):
         super().__init__(
             radius=radius,

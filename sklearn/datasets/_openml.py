@@ -551,7 +551,7 @@ def _download_data_to_bunch(
     data_columns: List[int],
     target_columns: List,
     shape: Optional[Tuple[int, int]],
-    md5_checksum: str
+    md5_checksum: str,
 ):
     """Download OpenML ARFF and convert to Bunch of data"""
     # NB: this function is long in order to handle retry for any failure
@@ -724,7 +724,7 @@ def fetch_openml(
     target_column: Optional[Union[str, List]] = "default-target",
     cache: bool = True,
     return_X_y: bool = False,
-    as_frame: Union[str, bool] = "auto"
+    as_frame: Union[str, bool] = "auto",
 ):
     """Fetch dataset from openml by name or dataset id.
 

@@ -132,7 +132,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         assume_centered=False,
         support_fraction=None,
         contamination=0.1,
-        random_state=None
+        random_state=None,
     ):
         super().__init__(
             store_precision=store_precision,

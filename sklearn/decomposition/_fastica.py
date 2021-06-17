@@ -161,7 +161,7 @@ def fastica(
     random_state=None,
     return_X_mean=False,
     compute_sources=True,
-    return_n_iter=False
+    return_n_iter=False,
 ):
     """Perform Fast Independent Component Analysis.
 
@@ -426,7 +426,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         max_iter=200,
         tol=1e-4,
         w_init=None,
-        random_state=None
+        random_state=None,
     ):
         super().__init__()
         if max_iter < 1:

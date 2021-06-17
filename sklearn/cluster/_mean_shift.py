@@ -116,7 +116,7 @@ def mean_shift(
     min_bin_freq=1,
     cluster_all=True,
     max_iter=300,
-    n_jobs=None
+    n_jobs=None,
 ):
     """Perform mean shift clustering of data using a flat kernel.
 
@@ -380,7 +380,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         min_bin_freq=1,
         cluster_all=True,
         n_jobs=None,
-        max_iter=300
+        max_iter=300,
     ):
         self.bandwidth = bandwidth
         self.seeds = seeds

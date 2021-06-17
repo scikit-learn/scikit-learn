@@ -186,7 +186,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         random_state=None,
         warm_start=False,
         class_weight=None,
-        average=False
+        average=False,
     ):
         super().__init__(
             penalty=None,
@@ -450,7 +450,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         epsilon=DEFAULT_EPSILON,
         random_state=None,
         warm_start=False,
-        average=False
+        average=False,
     ):
         super().__init__(
             penalty=None,

@@ -154,7 +154,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         max_iter_predict=100,
         warm_start=False,
         copy_X_train=True,
-        random_state=None
+        random_state=None,
     ):
         self.kernel = kernel
         self.optimizer = optimizer
@@ -635,7 +635,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         copy_X_train=True,
         random_state=None,
         multi_class="one_vs_rest",
-        n_jobs=None
+        n_jobs=None,
     ):
         self.kernel = kernel
         self.optimizer = optimizer

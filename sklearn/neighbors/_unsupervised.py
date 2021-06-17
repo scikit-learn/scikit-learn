@@ -123,7 +123,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         metric="minkowski",
         p=2,
         metric_params=None,
-        n_jobs=None
+        n_jobs=None,
     ):
         super().__init__(
             n_neighbors=n_neighbors,

@@ -31,7 +31,7 @@ def dbscan(
     leaf_size=30,
     p=2,
     sample_weight=None,
-    n_jobs=None
+    n_jobs=None,
 ):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
@@ -301,7 +301,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         algorithm="auto",
         leaf_size=30,
         p=None,
-        n_jobs=None
+        n_jobs=None,
     ):
         self.eps = eps
         self.min_samples = min_samples

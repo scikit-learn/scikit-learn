@@ -148,7 +148,7 @@ def spectral_embedding(
     random_state=None,
     eigen_tol=0.0,
     norm_laplacian=True,
-    drop_first=True
+    drop_first=True,
 ):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
@@ -497,7 +497,7 @@ class SpectralEmbedding(BaseEstimator):
         random_state=None,
         eigen_solver=None,
         n_neighbors=None,
-        n_jobs=None
+        n_jobs=None,
     ):
         self.n_components = n_components
         self.affinity = affinity

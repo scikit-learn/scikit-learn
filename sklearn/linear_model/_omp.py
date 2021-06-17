@@ -289,7 +289,7 @@ def orthogonal_mp(
     precompute=False,
     copy_X=True,
     return_path=False,
-    return_n_iter=False
+    return_n_iter=False,
 ):
     r"""Orthogonal Matching Pursuit (OMP).
 
@@ -448,7 +448,7 @@ def orthogonal_mp_gram(
     copy_Gram=True,
     copy_Xy=True,
     return_path=False,
-    return_n_iter=False
+    return_n_iter=False,
 ):
     """Gram Orthogonal Matching Pursuit (OMP).
 
@@ -684,7 +684,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         tol=None,
         fit_intercept=True,
         normalize=True,
-        precompute="auto"
+        precompute="auto",
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
@@ -960,7 +960,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         max_iter=None,
         cv=None,
         n_jobs=None,
-        verbose=False
+        verbose=False,
     ):
         self.copy = copy
         self.fit_intercept = fit_intercept

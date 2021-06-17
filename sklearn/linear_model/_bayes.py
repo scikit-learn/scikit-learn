@@ -180,7 +180,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         fit_intercept=True,
         normalize="deprecated",
         copy_X=True,
-        verbose=False
+        verbose=False,
     ):
         self.n_iter = n_iter
         self.tol = tol
@@ -559,7 +559,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         fit_intercept=True,
         normalize="deprecated",
         copy_X=True,
-        verbose=False
+        verbose=False,
     ):
         self.n_iter = n_iter
         self.tol = tol

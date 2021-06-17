@@ -737,7 +737,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         binary=False,
         norm="l2",
         alternate_sign=True,
-        dtype=np.float64
+        dtype=np.float64,
     ):
         self.input = input
         self.encoding = encoding
@@ -1079,7 +1079,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         max_features=None,
         vocabulary=None,
         binary=False,
-        dtype=np.int64
+        dtype=np.int64,
     ):
         self.input = input
         self.encoding = encoding
@@ -1838,7 +1838,7 @@ class TfidfVectorizer(CountVectorizer):
         norm="l2",
         use_idf=True,
         smooth_idf=True,
-        sublinear_tf=False
+        sublinear_tf=False,
     ):
 
         super().__init__(

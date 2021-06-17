@@ -141,7 +141,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         n_jobs=None,
         metric="minkowski",
         p=2,
-        metric_params=None
+        metric_params=None,
     ):
         self.n_neighbors = n_neighbors
         self.n_components = n_components

@@ -220,7 +220,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         warm_start=False,
         n_jobs=None,
         random_state=None,
-        verbose=0
+        verbose=0,
     ):
         super().__init__(base_estimator=base_estimator, n_estimators=n_estimators)
 
@@ -648,7 +648,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         warm_start=False,
         n_jobs=None,
         random_state=None,
-        verbose=0
+        verbose=0,
     ):
 
         super().__init__(
@@ -1062,7 +1062,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         warm_start=False,
         n_jobs=None,
         random_state=None,
-        verbose=0
+        verbose=0,
     ):
         super().__init__(
             base_estimator,

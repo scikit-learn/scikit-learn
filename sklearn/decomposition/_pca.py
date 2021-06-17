@@ -345,7 +345,7 @@ class PCA(_BasePCA):
         svd_solver="auto",
         tol=0.0,
         iterated_power="auto",
-        random_state=None
+        random_state=None,
     ):
         self.n_components = n_components
         self.copy = copy

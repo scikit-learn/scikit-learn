@@ -319,7 +319,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         tol=1.0e-3,
         random_state=None,
         n_jobs=None,
-        verbose=False
+        verbose=False,
     ):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X

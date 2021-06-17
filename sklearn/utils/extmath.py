@@ -255,7 +255,7 @@ def randomized_svd(
     power_iteration_normalizer="auto",
     transpose="auto",
     flip_sign=True,
-    random_state="warn"
+    random_state="warn",
 ):
     """Computes a truncated randomized SVD.
 
@@ -432,7 +432,7 @@ def _randomized_eigsh(
     n_iter="auto",
     power_iteration_normalizer="auto",
     selection="module",
-    random_state=None
+    random_state=None,
 ):
     """Computes a truncated eigendecomposition using randomized methods
 

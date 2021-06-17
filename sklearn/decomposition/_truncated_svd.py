@@ -134,7 +134,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         algorithm="randomized",
         n_iter=5,
         random_state=None,
-        tol=0.0
+        tol=0.0,
     ):
         self.algorithm = algorithm
         self.n_components = n_components
