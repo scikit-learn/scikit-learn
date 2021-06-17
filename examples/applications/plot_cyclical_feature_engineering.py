@@ -89,6 +89,19 @@ X.iloc[test_4]
 X.iloc[train_4]
 
 # %%
+# Gradient Boosting
+# -----------------
+#
+# Gradient Boosting Regression with decision trees is often flexible enough
+# to efficiently handle heteorogenous tabular data with a mix of categorical
+# and numerical features as long as the number of samples is large enough.
+#
+# Here we do minimal ordinal encoding for the categorical variables and then
+# let the model know that it should treat those a categorical variables using
+# a dedicated split rule.
+#
+# The numerical variable need no preprocessing and for the sake of simplicity
+# we only try the default hyper-parameeters for this model:
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.compose import ColumnTransformer
@@ -153,15 +166,20 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 #
 # This is not the case for linear regression model as we will see in the
 # following.
-
-# %%
-# As usual for linear models, categorical variables need to be one-hot encoded:
+#
+# Naive Linear Regression
+# -----------------------
+#
+# As usual for linear models, categorical variables need to be one-hot encoded.
+# As the numerical features are all approximately on similar scales, we let
+# them go through unscaled:
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import RidgeCV
 import numpy as np
 
 
 one_hot_encoder = OneHotEncoder(handle_unknown="ignore")
+alphas = np.logspace(-6, 6, 25)
 naive_linear_pipeline = make_pipeline(
     ColumnTransformer(
         transformers=[
@@ -169,14 +187,66 @@ naive_linear_pipeline = make_pipeline(
         ],
         remainder="passthrough",
     ),
-    RidgeCV(alphas=np.logspace(-6, 6, 24)),
+    RidgeCV(alphas=alphas),
 )
 
 
 evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 
+# %%
+#
+# The performance is a not good: around 15% of the max demand on average. This
+# is three times higher than the gradient boosting model. We can suspect that
+# the non-monotonic original encoding of the periodic time-related features
+# might prevent the linear regression model to preperly leverage the time
+# information.
+#
+# Trigonometric Features
+# ----------------------
+#
+# As a first attempt, we can try to encode each of those periodic features
+# using a sine and cosine transform with the matching period.
+from sklearn.preprocessing import FunctionTransformer
+
+
+def sin_transformer(period):
+    return FunctionTransformer(lambda x: np.sin(x / period * 2 * np.pi))
+
+
+def cos_transformer(period):
+    return FunctionTransformer(lambda x: np.sin(x / period * 2 * np.pi))
+
+
+cyclic_cossin_transformer = ColumnTransformer(
+    transformers=[
+        ("categorical", one_hot_encoder, categorical_columns),
+        ("month_sin", sin_transformer(12), ["month"]),
+        ("month_cos", cos_transformer(12), ["month"]),
+        ("weekday_sin", sin_transformer(7), ["weekday"]),
+        ("weekday_cos", cos_transformer(7), ["weekday"]),
+        ("hour_sin", sin_transformer(24), ["hour"]),
+        ("hour_cos", cos_transformer(24), ["hour"]),
+    ],
+    remainder="passthrough",
+)
+cyclic_cossin_linear_pipeline = make_pipeline(
+    cyclic_cossin_transformer,
+    RidgeCV(alphas=alphas),
+)
+evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
+
 
 # %%
+#
+# Unfortunately this simple feature engineering does not seem to significantly
+# improve the performance of our linear regression model.
+#
+# Periodic Spline Features
+# ------------------------
+#
+# Instead we can try an alternative encoding of the periodic time-related
+# features using spline transformations with a large-enough number of knots,
+# and as a result a larger number of expanded features:
 from sklearn.preprocessing import SplineTransformer
 
 # one knot for each month in year
@@ -212,12 +282,21 @@ cyclic_spline_transformer = ColumnTransformer(
 )
 cyclic_spline_linear_pipeline = make_pipeline(
     cyclic_spline_transformer,
-    RidgeCV(alphas=np.logspace(-6, 6, 24)),
+    RidgeCV(alphas=alphas),
 )
 evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 
 
 # %%
+# Spline features make it possible for the linear model to successfully
+# leverage the periodic time-related features. However such linear models
+# cannot capture interactions between features (for instance the impact of rain
+# might not be the same during the work days and the week-ends).
+#
+# To capture such interaction we could either use a partial polynomial
+# expansion `PolynomicalFeatures(degree=2, interaction_only=True)` or use the
+# Nystroem method to compute an approximate polynomial kernel expansion. Let
+# try the latter for computational reasons:
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.kernel_approximation import Nystroem
 
@@ -226,9 +305,21 @@ cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,
     MinMaxScaler(),
     Nystroem(kernel="poly", degree=2, n_components=300),
-    RidgeCV(alphas=np.logspace(-6, 6, 24)),
+    RidgeCV(alphas=alphas),
 )
 evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
+
+# %%
+# We observe that this model performance can almost rival the performance of
+# the gradient boosted trees.
+#
+# Note that while the final step of this pipeline is a linear regression model,
+# the intermediate steps such as the spline feature extraction and the Nyström
+# kernel approximation are highly non-linear. As the result the compound model
+# is much more expressive than a simple linear model.
+#
+# Let have a qualitative look at the predictions of this model and the gradient
+# boosted trees:
 
 # %%
 gbrt_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
