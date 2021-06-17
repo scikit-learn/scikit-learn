@@ -31,5 +31,6 @@ exclude = '''
   | doc/_build
   | doc/auto_examples
   | sklearn/externals
+  | asv_benchmarks/env
 )/
 '''
