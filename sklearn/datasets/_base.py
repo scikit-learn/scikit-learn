@@ -21,6 +21,8 @@ from ..utils import check_pandas_support
 import numpy as np
 
 from urllib.request import urlretrieve
+from importlib import resources
+
 
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
@@ -348,7 +350,8 @@ def load_wine(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['class_0', 'class_1', 'class_2']
     """
-    module_path = dirname(__file__)
+    with resources.path('sklearn.datasets', '__init__.py') as f:
+        module_path = dirname(f)
     data, target, target_names = load_data(module_path, 'wine_data.csv')
 
     with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
@@ -758,7 +761,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
     Features         real, -.2 < x < .2
     Targets          integer 25 - 346
     ==============   ==================
-    
+
     .. note::
        The meaning of each feature (i.e. `feature_names`) might be unclear
        (especially for `ltg`) as the documentation of the original dataset is
