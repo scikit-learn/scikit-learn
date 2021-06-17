@@ -761,7 +761,6 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
     Features         real, -.2 < x < .2
     Targets          integer 25 - 346
     ==============   ==================
-
     .. note::
        The meaning of each feature (i.e. `feature_names`) might be unclear
        (especially for `ltg`) as the documentation of the original dataset is
