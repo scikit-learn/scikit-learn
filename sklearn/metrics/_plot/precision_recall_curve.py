@@ -68,7 +68,8 @@ class PrecisionRecallDisplay:
     >>> predictions = clf.predict(X_test)
     >>> precision, recall, _ = precision_recall_curve(y_test, predictions)
     >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)
-    >>> disp.plot() # doctest: +SKIP
+    >>> disp.plot()
+    <...>
     """
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None, pos_label=None):

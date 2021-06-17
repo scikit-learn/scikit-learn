@@ -79,6 +79,9 @@ def test_docstring_parameters():
 
     incorrect = []
     for name in PUBLIC_MODULES:
+        if name.endswith(".conftest"):
+            # pytest tooling, not part of the scikit-learn API
+            continue
         if name == 'sklearn.utils.fixes':
             # We cannot always control these docstrings
             continue
