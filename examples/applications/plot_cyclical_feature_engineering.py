@@ -259,9 +259,27 @@ def sin_transformer(period):
 
 
 def cos_transformer(period):
-    return FunctionTransformer(lambda x: np.sin(x / period * 2 * np.pi))
+    return FunctionTransformer(lambda x: np.cos(x / period * 2 * np.pi))
 
 
+# %%
+#
+# Let us visualize the effect of this feature expansion on some synthetic hour
+# data with a bit of extrapolation beyond hour=23:
+import pandas as pd
+
+hour_df = pd.DataFrame(
+    np.linspace(0, 26, 1000).reshape(-1, 1),
+    columns=["hour"],
+)
+hour_df["hour_sin"] = sin_transformer(24).fit_transform(hour_df)["hour"]
+hour_df["hour_cos"] = cos_transformer(24).fit_transform(hour_df)["hour"]
+hour_df.plot(x="hour")
+_ = plt.title("Trigonometric encoding for the 'hour' feature")
+
+# %%
+#
+# We can now build a feature extraction pipeline using this strategy:
 cyclic_cossin_transformer = ColumnTransformer(
     transformers=[
         ("categorical", one_hot_encoder, categorical_columns),
@@ -283,9 +301,10 @@ evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 
 # %%
 #
-# Unfortunately this simple feature engineering does not seem to significantly
+# Unfortunately this simple feature engineering does not seem to drastically
 # improve the performance of our linear regression model. We will further
-# analyze possible reasons for this bad outcome at the end of this notebook.
+# analyze possible reasons for this disappointing outcome at the end of this
+# notebook.
 #
 # Periodic Spline Features
 # ------------------------
@@ -308,6 +327,26 @@ def periodic_spline_transformer(period, n_knots=None, degree=3):
 
 
 # %%
+#
+# Again, let us visualize the effect of this feature expansion on some synthetic hour
+# data with a bit of extrapolation beyond hour=23:
+hour_df = pd.DataFrame(
+    np.linspace(0, 26, 1000).reshape(-1, 1),
+    columns=["hour"],
+)
+splines = periodic_spline_transformer(24, n_knots=12).fit_transform(hour_df)
+splines_df = pd.DataFrame(
+    splines,
+    columns=[f"spline_{i}" for i in range(splines.shape[1])],
+)
+pd.concat([hour_df, splines_df], axis="columns").plot(x="hour")
+_ = plt.title("Periodic spline-based encoding for the 'hour' feature")
+
+
+# %%
+# We can now build a predictive pipeline using this alternative periodic
+# feature engineering strategy.
+#
 # For the "hours" columns we use only 12 knots for a period of 24 hours to
 # avoid over-representing this feature compared to months (12 natural knots)
 # and weekday (7 natural knots).
@@ -352,7 +391,7 @@ from sklearn.kernel_approximation import Nystroem
 cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,
     MinMaxScaler(),
-    Nystroem(kernel="poly", degree=2, n_components=300),
+    Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
     RidgeCV(alphas=alphas),
 )
 evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
