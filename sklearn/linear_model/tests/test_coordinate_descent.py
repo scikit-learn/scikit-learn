@@ -6,7 +6,9 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
+import contextlib
 import joblib
+import warnings
 
 from sklearn.base import is_classifier
 from sklearn.base import clone
@@ -112,7 +114,10 @@ def test_lasso_zero():
     # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
     y = [0, 0, 0]
-    clf = Lasso(alpha=0.1).fit(X, y)
+    # _cd_fast.pyx tests for gap < tol, but here we get 0.0 < 0.0
+    # should probably be changed to gap <= tol ?
+    with ignore_warnings(category=ConvergenceWarning):
+        clf = Lasso(alpha=0.1).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
@@ -387,10 +392,39 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
     _scale_alpha_inplace(pipeline[1], X_train.shape[0])
 
-    model_normalize.fit(X_train, y_train)
-    y_pred_normalize = model_normalize.predict(X_test)
+    # The following fit calls might produce two different warnings:
+    # - UserWarning: Coordinate descent with l1_reg=0 may lead
+    #   to unexpected results and is discouraged.
+    # - ConvergenceWarning
+    # To catch both, we cannot use ignore_warnings or pytest.warns
+    # because both only work with one type of warning.
+    # Catch all warnings and filter out those which are harmless
+    # This includes also the FutureWarning about normalize set above
+    # via @pytest.mark.filterwarnings
+    with pytest.warns(None) as warn_records:
+        model_normalize.fit(X_train, y_train)
+        pipeline.fit(X_train, y_train)
 
-    pipeline.fit(X_train, y_train)
+    not_ignored_warnings = []
+    for wr in warn_records:
+        if (
+            (
+                wr.category == FutureWarning and
+                str(wr.message).startswith("'normalize' was deprecated")
+            ) or (
+                wr.category == UserWarning and
+                LinearModel.__name__ == "MultiTaskElasticNet"
+            ) or (
+                wr.category == ConvergenceWarning and
+                LinearModel.__name__ in ['ElasticNet', 'MultiTaskElasticNet']
+            )
+        ):
+            continue
+        not_ignored_warnings.append(wr)
+    for wr in not_ignored_warnings:
+        warnings.warn(wr.message, wr.category)
+
+    y_pred_normalize = model_normalize.predict(X_test)
     y_pred_standardize = pipeline.predict(X_test)
 
     assert_allclose(
@@ -459,7 +493,14 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # linear estimator with built-in feature normalization
     reg_with_normalize = estimator(normalize=True, fit_intercept=True,
                                    **params)
-    reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
+
+    if model_name in ['Lasso', 'ElasticNet']:
+        ctxmgr = ignore_warnings(category=ConvergenceWarning)
+    else:
+        ctxmgr = contextlib.nullcontext()
+
+    with ctxmgr:
+        reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
 
     # linear estimator in a pipeline with a StandardScaler, normalize=False
     linear_regressor = estimator(normalize=False, fit_intercept=True, **params)
@@ -479,7 +520,14 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         "linear_regressor__sample_weight": sample_weight,
     }
 
-    reg_with_scaler.fit(X_train, y_train, **fit_params)
+    # Strange enough, here the warnings do not disappear - whatever I do.
+    if (model_name == 'ElasticNet' and params["l1_ratio"] == 0):
+        ctxmgr = ignore_warnings(category=ConvergenceWarning)
+    else:
+        ctxmgr = contextlib.nullcontext()
+
+    with ctxmgr:
+        reg_with_scaler.fit(X_train, y_train, **fit_params)
 
     # Check that the 2 regressions models are exactly equivalent in the
     # sense that they predict exactly the same outcome.
@@ -542,8 +590,16 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     if is_classifier(model_dense):
         y = np.sign(y)
 
-    model_dense.fit(X, y)
-    model_sparse.fit(X_sparse, y)
+    if (
+        (LinearModel.__name__ == "ElasticNet" and params["l1_ratio"] == 0) or
+        LinearModel.__name__ == "LassoCV"
+    ):
+        ctxmgr = ignore_warnings(category=ConvergenceWarning)
+    else:
+        ctxmgr = contextlib.nullcontext()
+    with ctxmgr:
+        model_dense.fit(X, y)
+        model_sparse.fit(X_sparse, y)
 
     assert_allclose(model_sparse[1].coef_, model_dense[1].coef_)
     y_pred_dense = model_dense.predict(X)
@@ -731,14 +787,18 @@ def test_uniform_targets():
     for model in models_single_task:
         for y_values in (0, 5):
             y1.fill(y_values)
-            assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
+            with ignore_warnings(category=ConvergenceWarning):
+                pred = model.fit(X_train, y1).predict(X_test)
+            assert_array_equal(pred, y1)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
 
     for model in models_multi_task:
         for y_values in (0, 5):
             y2[:, 0].fill(y_values)
             y2[:, 1].fill(2 * y_values)
-            assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
+            with ignore_warnings(category=ConvergenceWarning):
+                pred = model.fit(X_train, y2).predict(X_test)
+            assert_array_equal(pred, y2)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
 
 
@@ -819,7 +879,7 @@ def test_multitask_enet_and_lasso_cv():
     assert_almost_equal(clf.alpha_, 0.00278, 3)
 
     X, y, _, _ = build_dataset(n_targets=3)
-    clf = MultiTaskElasticNetCV(n_alphas=10, eps=1e-3, max_iter=100,
+    clf = MultiTaskElasticNetCV(n_alphas=10, eps=1e-3, max_iter=500,
                                 l1_ratio=[0.3, 0.5], tol=1e-3, cv=3)
     clf.fit(X, y)
     assert 0.5 == clf.l1_ratio_
@@ -829,7 +889,7 @@ def test_multitask_enet_and_lasso_cv():
     assert (2, 10) == clf.alphas_.shape
 
     X, y, _, _ = build_dataset(n_targets=3)
-    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3, cv=3)
+    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=500, tol=1e-3, cv=3)
     clf.fit(X, y)
     assert (3, X.shape[1]) == clf.coef_.shape
     assert (3, ) == clf.intercept_.shape
@@ -1066,7 +1126,8 @@ def test_check_input_false():
     # dtype is still cast in _preprocess_data to X's dtype. So the test should
     # pass anyway
     X = check_array(X, order='F', dtype='float32')
-    clf.fit(X, y, check_input=False)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
@@ -1232,7 +1293,6 @@ def test_warm_start_multitask_lasso():
 @pytest.mark.parametrize('klass, n_classes, kwargs',
                          [(Lasso, 1, dict(precompute=True)),
                           (Lasso, 1, dict(precompute=False)),
-                          (MultiTaskLasso, 2, dict()),
                           (MultiTaskLasso, 2, dict())])
 def test_enet_coordinate_descent(klass, n_classes, kwargs):
     """Test that a warning is issued if model does not converge"""
