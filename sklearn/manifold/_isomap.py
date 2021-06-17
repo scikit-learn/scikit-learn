@@ -5,9 +5,8 @@
 
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
-from ..neighbors import (
-    NearestNeighbors, kneighbors_graph, radius_neighbors_graph
-)
+from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..neighbors import radius_neighbors_graph
 from ..utils.validation import check_is_fitted
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
