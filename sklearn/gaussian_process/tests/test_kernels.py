@@ -367,3 +367,41 @@ def test_rational_quadratic_kernel():
     )
     with pytest.raises(AttributeError, match=message):
         kernel(X)
+
+
+def test_xxx():
+    from sklearn.gaussian_process import GaussianProcessRegressor
+    rng = np.random.RandomState(0)
+
+    # Generate sample data
+    X = 15 * rng.rand(10, 1)
+    y = np.sin(X).ravel()
+    y += 3 * (0.5 - rng.rand(X.shape[0]))  # add noise
+
+    gp_kernel = (
+        ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e1)) +
+        WhiteKernel(1e-1)
+    )
+    gpr = GaussianProcessRegressor(kernel=gp_kernel, normalize_y=True)
+    gpr.fit(X, y)
+
+
+def test_yyy():
+    import numpy as np
+    from sklearn.gaussian_process.kernels import ExpSineSquared
+
+    L = 1.0
+
+    # create some train/test data on a grid
+    train_len = 4
+    r = np.linspace(0, L, train_len)
+    train_x, train_y = np.meshgrid(r, r)
+    train_in = np.stack((train_x.flatten(), train_y.flatten()), axis=-1)
+
+    # get the kernel
+    kernel = ExpSineSquared()
+
+    K = kernel(train_in) + 1e-4 * np.eye(train_len**2)
+
+    print(np.sort(np.linalg.eigh(K)[0]))
+    print()
