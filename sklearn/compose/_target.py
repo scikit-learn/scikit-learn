@@ -12,7 +12,7 @@ from ..utils import check_array, _safe_indexing
 from ..preprocessing import FunctionTransformer
 from ..exceptions import NotFittedError
 
-__all__ = ['TransformedTargetRegressor']
+__all__ = ["TransformedTargetRegressor"]
 
 
 class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
@@ -114,8 +114,16 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
 
     """
-    def __init__(self, regressor=None, *, transformer=None,
-                 func=None, inverse_func=None, check_inverse=True):
+
+    def __init__(
+        self,
+        regressor=None,
+        *,
+        transformer=None,
+        func=None,
+        inverse_func=None,
+        check_inverse=True
+    ):
         self.regressor = regressor
         self.transformer = transformer
         self.func = func
@@ -129,19 +137,26 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         check on a subset (optional).
 
         """
-        if (self.transformer is not None and
-                (self.func is not None or self.inverse_func is not None)):
-            raise ValueError("'transformer' and functions 'func'/"
-                             "'inverse_func' cannot both be set.")
+        if self.transformer is not None and (
+            self.func is not None or self.inverse_func is not None
+        ):
+            raise ValueError(
+                "'transformer' and functions 'func'/"
+                "'inverse_func' cannot both be set."
+            )
         elif self.transformer is not None:
             self.transformer_ = clone(self.transformer)
         else:
             if self.func is not None and self.inverse_func is None:
-                raise ValueError("When 'func' is provided, 'inverse_func' must"
-                                 " also be provided")
+                raise ValueError(
+                    "When 'func' is provided, 'inverse_func' must" " also be provided"
+                )
             self.transformer_ = FunctionTransformer(
-                func=self.func, inverse_func=self.inverse_func, validate=True,
-                check_inverse=self.check_inverse)
+                func=self.func,
+                inverse_func=self.inverse_func,
+                validate=True,
+                check_inverse=self.check_inverse,
+            )
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
@@ -151,12 +166,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             idx_selected = slice(None, None, max(1, y.shape[0] // 10))
             y_sel = _safe_indexing(y, idx_selected)
             y_sel_t = self.transformer_.transform(y_sel)
-            if not np.allclose(y_sel,
-                               self.transformer_.inverse_transform(y_sel_t)):
-                warnings.warn("The provided functions or transformer are"
-                              " not strictly inverse of each other. If"
-                              " you are sure you want to proceed regardless"
-                              ", set 'check_inverse=False'", UserWarning)
+            if not np.allclose(y_sel, self.transformer_.inverse_transform(y_sel_t)):
+                warnings.warn(
+                    "The provided functions or transformer are"
+                    " not strictly inverse of each other. If"
+                    " you are sure you want to proceed regardless"
+                    ", set 'check_inverse=False'",
+                    UserWarning,
+                )
 
     def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
@@ -179,8 +196,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         -------
         self : object
         """
-        y = check_array(y, accept_sparse=False, force_all_finite=True,
-                        ensure_2d=False, dtype='numeric', allow_nd=True)
+        y = check_array(
+            y,
+            accept_sparse=False,
+            force_all_finite=True,
+            ensure_2d=False,
+            dtype="numeric",
+            allow_nd=True,
+        )
 
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
@@ -204,6 +227,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         if self.regressor is None:
             from ..linear_model import LinearRegression
+
             self.regressor_ = LinearRegression()
         else:
             self.regressor_ = clone(self.regressor)
@@ -232,18 +256,20 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         check_is_fitted(self)
         pred = self.regressor_.predict(X)
         if pred.ndim == 1:
-            pred_trans = self.transformer_.inverse_transform(
-                pred.reshape(-1, 1))
+            pred_trans = self.transformer_.inverse_transform(pred.reshape(-1, 1))
         else:
             pred_trans = self.transformer_.inverse_transform(pred)
-        if (self._training_dim == 1 and
-                pred_trans.ndim == 2 and pred_trans.shape[1] == 1):
+        if (
+            self._training_dim == 1
+            and pred_trans.ndim == 2
+            and pred_trans.shape[1] == 1
+        ):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
 
     def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+        return {"poor_score": True, "no_validation": True}
 
     @property
     def n_features_in_(self):
@@ -253,8 +279,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__
+                )
             ) from nfe
 
         return self.regressor_.n_features_in_

@@ -49,7 +49,7 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
         coefficient, intercept and the scale as a vector.
     """
     _, n_features = X.shape
-    fit_intercept = (n_features + 2 == w.shape[0])
+    fit_intercept = n_features + 2 == w.shape[0]
     if fit_intercept:
         intercept = w[-2]
     sigma = w[-1]
@@ -74,8 +74,10 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     # num_outliers is just the number of outliers.
     outliers_sw = sample_weight[outliers_mask]
     n_sw_outliers = np.sum(outliers_sw)
-    outlier_loss = (2. * epsilon * np.sum(outliers_sw * outliers) -
-                    sigma * n_sw_outliers * epsilon ** 2)
+    outlier_loss = (
+        2.0 * epsilon * np.sum(outliers_sw * outliers)
+        - sigma * n_sw_outliers * epsilon ** 2
+    )
 
     # Calculate the quadratic loss due to the non-outliers.-
     # This is equal to |(y - X'w - c)**2 / sigma**2| * sigma
@@ -92,7 +94,8 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     # Gradient due to the squared loss.
     X_non_outliers = -axis0_safe_slice(X, ~outliers_mask, n_non_outliers)
     grad[:n_features] = (
-        2. / sigma * safe_sparse_dot(weighted_non_outliers, X_non_outliers))
+        2.0 / sigma * safe_sparse_dot(weighted_non_outliers, X_non_outliers)
+    )
 
     # Gradient due to the linear loss.
     signed_outliers = np.ones_like(outliers)
@@ -100,11 +103,10 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     signed_outliers[signed_outliers_mask] = -1.0
     X_outliers = axis0_safe_slice(X, outliers_mask, num_outliers)
     sw_outliers = sample_weight[outliers_mask] * signed_outliers
-    grad[:n_features] -= 2. * epsilon * (
-        safe_sparse_dot(sw_outliers, X_outliers))
+    grad[:n_features] -= 2.0 * epsilon * (safe_sparse_dot(sw_outliers, X_outliers))
 
     # Gradient due to the penalty.
-    grad[:n_features] += alpha * 2. * w
+    grad[:n_features] += alpha * 2.0 * w
 
     # Gradient due to sigma.
     grad[-1] = n_samples
@@ -113,8 +115,8 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
 
     # Gradient due to the intercept.
     if fit_intercept:
-        grad[-2] = -2. * np.sum(weighted_non_outliers) / sigma
-        grad[-2] -= 2. * epsilon * np.sum(sw_outliers)
+        grad[-2] = -2.0 * np.sum(weighted_non_outliers) / sigma
+        grad[-2] -= 2.0 * epsilon * np.sum(sw_outliers)
 
     loss = n_samples * sigma + squared_loss + outlier_loss
     loss += alpha * np.dot(w, w)
@@ -227,8 +229,17 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
            https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
-    def __init__(self, *, epsilon=1.35, max_iter=100, alpha=0.0001,
-                 warm_start=False, fit_intercept=True, tol=1e-05):
+
+    def __init__(
+        self,
+        *,
+        epsilon=1.35,
+        max_iter=100,
+        alpha=0.0001,
+        warm_start=False,
+        fit_intercept=True,
+        tol=1e-05
+    ):
         self.epsilon = epsilon
         self.max_iter = max_iter
         self.alpha = alpha
@@ -256,19 +267,23 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
         """
         X, y = self._validate_data(
-            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,
-            dtype=[np.float64, np.float32])
+            X,
+            y,
+            copy=False,
+            accept_sparse=["csr"],
+            y_numeric=True,
+            dtype=[np.float64, np.float32],
+        )
 
         sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.epsilon < 1.0:
             raise ValueError(
-                "epsilon should be greater than or equal to 1.0, got %f"
-                % self.epsilon)
+                "epsilon should be greater than or equal to 1.0, got %f" % self.epsilon
+            )
 
-        if self.warm_start and hasattr(self, 'coef_'):
-            parameters = np.concatenate(
-                (self.coef_, [self.intercept_, self.scale_]))
+        if self.warm_start and hasattr(self, "coef_"):
+            parameters = np.concatenate((self.coef_, [self.intercept_, self.scale_]))
         else:
             if self.fit_intercept:
                 parameters = np.zeros(X.shape[1] + 2)
@@ -285,26 +300,30 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         bounds[-1][0] = np.finfo(np.float64).eps * 10
 
         opt_res = optimize.minimize(
-            _huber_loss_and_gradient, parameters, method="L-BFGS-B", jac=True,
+            _huber_loss_and_gradient,
+            parameters,
+            method="L-BFGS-B",
+            jac=True,
             args=(X, y, self.epsilon, self.alpha, sample_weight),
             options={"maxiter": self.max_iter, "gtol": self.tol, "iprint": -1},
-            bounds=bounds)
+            bounds=bounds,
+        )
 
         parameters = opt_res.x
 
         if opt_res.status == 2:
-            raise ValueError("HuberRegressor convergence failed:"
-                             " l-BFGS-b solver terminated with %s"
-                             % opt_res.message)
+            raise ValueError(
+                "HuberRegressor convergence failed:"
+                " l-BFGS-b solver terminated with %s" % opt_res.message
+            )
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
         self.scale_ = parameters[-1]
         if self.fit_intercept:
             self.intercept_ = parameters[-2]
         else:
             self.intercept_ = 0.0
-        self.coef_ = parameters[:X.shape[1]]
+        self.coef_ = parameters[: X.shape[1]]
 
-        residual = np.abs(
-            y - safe_sparse_dot(X, self.coef_) - self.intercept_)
+        residual = np.abs(y - safe_sparse_dot(X, self.coef_) - self.intercept_)
         self.outliers_ = residual > self.scale_ * self.epsilon
         return self

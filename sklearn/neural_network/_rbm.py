@@ -111,8 +111,17 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         Approximations to the Likelihood Gradient. International Conference
         on Machine Learning (ICML) 2008
     """
-    def __init__(self, n_components=256, *, learning_rate=0.1, batch_size=10,
-                 n_iter=10, verbose=0, random_state=None):
+
+    def __init__(
+        self,
+        n_components=256,
+        *,
+        learning_rate=0.1,
+        batch_size=10,
+        n_iter=10,
+        verbose=0,
+        random_state=None
+    ):
         self.n_components = n_components
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -135,8 +144,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse='csr', reset=False,
-                                dtype=(np.float64, np.float32))
+        X = self._validate_data(
+            X, accept_sparse="csr", reset=False, dtype=(np.float64, np.float32)
+        )
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -173,7 +183,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
-        return (rng.random_sample(size=p.shape) < p)
+        return rng.random_sample(size=p.shape) < p
 
     def _sample_visibles(self, h, rng):
         """Sample from the distribution P(v|h).
@@ -194,7 +204,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         p = np.dot(h, self.components_)
         p += self.intercept_visible_
         expit(p, out=p)
-        return (rng.random_sample(size=p.shape) < p)
+        return rng.random_sample(size=p.shape) < p
 
     def _free_energy(self, v):
         """Computes the free energy F(v) = - log sum_h exp(-E(v,h)).
@@ -209,9 +219,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         free_energy : ndarray of shape (n_samples,)
             The value of the free energy.
         """
-        return (- safe_sparse_dot(v, self.intercept_visible_)
-                - np.logaddexp(0, safe_sparse_dot(v, self.components_.T)
-                               + self.intercept_hidden_).sum(axis=1))
+        return -safe_sparse_dot(v, self.intercept_visible_) - np.logaddexp(
+            0, safe_sparse_dot(v, self.components_.T) + self.intercept_hidden_
+        ).sum(axis=1)
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
@@ -248,24 +258,26 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        first_pass = not hasattr(self, 'components_')
-        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64,
-                                reset=first_pass)
-        if not hasattr(self, 'random_state_'):
+        first_pass = not hasattr(self, "components_")
+        X = self._validate_data(
+            X, accept_sparse="csr", dtype=np.float64, reset=first_pass
+        )
+        if not hasattr(self, "random_state_"):
             self.random_state_ = check_random_state(self.random_state)
-        if not hasattr(self, 'components_'):
+        if not hasattr(self, "components_"):
             self.components_ = np.asarray(
-                self.random_state_.normal(
-                    0,
-                    0.01,
-                    (self.n_components, X.shape[1])
-                ),
-                order='F')
-        if not hasattr(self, 'intercept_hidden_'):
-            self.intercept_hidden_ = np.zeros(self.n_components, )
-        if not hasattr(self, 'intercept_visible_'):
-            self.intercept_visible_ = np.zeros(X.shape[1], )
-        if not hasattr(self, 'h_samples_'):
+                self.random_state_.normal(0, 0.01, (self.n_components, X.shape[1])),
+                order="F",
+            )
+        if not hasattr(self, "intercept_hidden_"):
+            self.intercept_hidden_ = np.zeros(
+                self.n_components,
+            )
+        if not hasattr(self, "intercept_visible_"):
+            self.intercept_visible_ = np.zeros(
+                X.shape[1],
+            )
+        if not hasattr(self, "h_samples_"):
             self.h_samples_ = np.zeros((self.batch_size, self.n_components))
 
         self._fit(X, self.random_state_)
@@ -293,9 +305,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         update -= np.dot(h_neg.T, v_neg)
         self.components_ += lr * update
         self.intercept_hidden_ += lr * (h_pos.sum(axis=0) - h_neg.sum(axis=0))
-        self.intercept_visible_ += lr * (np.asarray(
-                                         v_pos.sum(axis=0)).squeeze() -
-                                         v_neg.sum(axis=0))
+        self.intercept_visible_ += lr * (
+            np.asarray(v_pos.sum(axis=0)).squeeze() - v_neg.sum(axis=0)
+        )
 
         h_neg[rng.uniform(size=h_neg.shape) < h_neg] = 1.0  # sample binomial
         self.h_samples_ = np.floor(h_neg, h_neg)
@@ -321,12 +333,11 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        v = check_array(X, accept_sparse='csr')
+        v = check_array(X, accept_sparse="csr")
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
-        ind = (np.arange(v.shape[0]),
-               rng.randint(0, v.shape[1], v.shape[0]))
+        ind = (np.arange(v.shape[0]), rng.randint(0, v.shape[1], v.shape[0]))
         if sp.issparse(v):
             data = -2 * v[ind] + 1
             v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
@@ -351,24 +362,23 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = self._validate_data(
-            X, accept_sparse='csr', dtype=(np.float64, np.float32)
-        )
+        X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='F',
-            dtype=X.dtype)
+            order="F",
+            dtype=X.dtype,
+        )
         self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
         self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
-        self.h_samples_ = np.zeros((self.batch_size, self.n_components),
-                                   dtype=X.dtype)
+        self.h_samples_ = np.zeros((self.batch_size, self.n_components), dtype=X.dtype)
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
-        batch_slices = list(gen_even_slices(n_batches * self.batch_size,
-                                            n_batches, n_samples=n_samples))
+        batch_slices = list(
+            gen_even_slices(n_batches * self.batch_size, n_batches, n_samples=n_samples)
+        )
         verbose = self.verbose
         begin = time.time()
         for iteration in range(1, self.n_iter + 1):
@@ -377,20 +387,28 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
             if verbose:
                 end = time.time()
-                print("[%s] Iteration %d, pseudo-likelihood = %.2f,"
-                      " time = %.2fs"
-                      % (type(self).__name__, iteration,
-                         self.score_samples(X).mean(), end - begin))
+                print(
+                    "[%s] Iteration %d, pseudo-likelihood = %.2f,"
+                    " time = %.2fs"
+                    % (
+                        type(self).__name__,
+                        iteration,
+                        self.score_samples(X).mean(),
+                        end - begin,
+                    )
+                )
                 begin = end
 
         return self
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_methods_subset_invariance':
-                ('fails for the decision_function method'),
-                'check_methods_sample_order_invariance':
-                ('fails for the score_samples method'),
+            "_xfail_checks": {
+                "check_methods_subset_invariance": (
+                    "fails for the decision_function method"
+                ),
+                "check_methods_sample_order_invariance": (
+                    "fails for the score_samples method"
+                ),
             }
         }
