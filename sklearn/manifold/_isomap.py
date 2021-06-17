@@ -32,7 +32,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         when radius is set to ``None``.
 
     n_components : int, default=2
-        Number of coordinates for the manifold
+        Number of coordinates for the manifold.
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         'auto' : Attempt to choose the most efficient solver
