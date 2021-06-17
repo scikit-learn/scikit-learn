@@ -34,7 +34,6 @@ dependent_packages = {
     'pytest': (PYTEST_MIN_VERSION, 'tests'),
     'pytest-cov': ('2.9.0', 'tests'),
     'flake8': ('3.8.2', 'tests'),
-    'black': ('21.6b0', 'tests'),
     'mypy': ('0.770', 'tests'),
     'pyamg': ('4.0.0', 'tests'),
     'sphinx': ('3.2.0', 'docs'),
