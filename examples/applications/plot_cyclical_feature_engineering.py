@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 
 average_week_demand = df.groupby(["weekday", "hour"]).mean()["count"]
 average_week_demand.plot(figsize=(12, 4))
-plt.title("Average number of bike rentals during the week")
+_ = plt.title("Average number of bike rentals during the week")
 
 
 # %%
@@ -141,7 +141,7 @@ X.iloc[train_4]
 # a dedicated split rule.
 #
 # The numerical variable need no preprocessing and for the sake of simplicity
-# we only try the default hyper-parameeters for this model:
+# we only try the default hyper-parameters for this model:
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.compose import ColumnTransformer
@@ -198,11 +198,11 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 
 # %%
 # This models has an average error around 4 to 5% of the maximum demand. This
-# is quite good for a model with default hyper-parameter that just required to
-# make the categorical variables explicit. Note that the time related features
-# are passed as such but this not much of a problem for tree-based models as
-# they can learn a non-monotonic relationship between ordinal input features
-# and the target.
+# is quite good for a first trial without any hyper-parameters tuning! We just
+# had to make the categorical variables explicit. Note that the time related
+# features are passed as such but this not much of a problem for tree-based
+# models as they can learn a non-monotonic relationship between ordinal input
+# features and the target.
 #
 # This is not the case for linear regression model as we will see in the
 # following.
@@ -236,16 +236,21 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 # %%
 #
 # The performance is a not good: around 14% of the max demand on average. This
-# is three times higher than the gradient boosting model. We can suspect that
-# the non-monotonic original encoding of the periodic time-related features
-# might prevent the linear regression model to properly leverage the time
-# information.
+# is more than three times higher than the average error of the gradient
+# boosting model. We can suspect that the naive original encoding of the
+# periodic time-related features might prevent the linear regression model to
+# properly leverage the time information: linear regression cannot model a
+# non-monotonic relationship between the input features and the target.
 #
 # Trigonometric Features
 # ----------------------
 #
 # As a first attempt, we can try to encode each of those periodic features
 # using a sine and cosine transform with the matching period.
+#
+# Each ordinal time feature is transformed into 2 features that together encode
+# equivalent information in a non-monotonic way, and more importantly without
+# jump between the first and the last value of the periodic range.
 from sklearn.preprocessing import FunctionTransformer
 
 
@@ -279,7 +284,8 @@ evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 # %%
 #
 # Unfortunately this simple feature engineering does not seem to significantly
-# improve the performance of our linear regression model.
+# improve the performance of our linear regression model. We will further
+# analyze possible reasons for this bad outcome at the end of this notebook.
 #
 # Periodic Spline Features
 # ------------------------
@@ -324,7 +330,7 @@ evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 # %%
 # Spline features make it possible for the linear model to successfully
 # leverage the periodic time-related features and reduce the error from ~14% to
-# ~10%.
+# ~10% of the maximum demand.
 #
 # However linear models cannot capture non-linear interactions between features
 # even if the features them-selves are marginally non-linear as is the case
@@ -394,8 +400,8 @@ _ = plt.legend()
 # average by gradient boosting while the spline polynomial regression pipeline
 # seems to systematic over-estimate demand in that regime.
 #
-# We can confirm this global analysis by zooming on the last 96 hours (4 days)
-# of the test set:
+# We can qualitatively confirm this global analysis by zooming on the last 96
+# hours (4 days) of the test set:
 
 last_hours = slice(-96, None)
 plt.figure(figsize=(12, 4))
@@ -465,16 +471,17 @@ _ = plt.legend()
 # %%
 # We can draw the following conclusions from the above plot:
 #
-# - the raw ordinal time features are problematic because they do not capture
-#   the natural periodicity: we observe a big jump in the predictions at the
-#   end of each day when the hour features goes from 23 back to 0. We can
-#   expect similar artifacts at the end of each weak or each year.
+# - the raw ordinal time-related features are problematic because they do not
+#   capture the natural periodicity: we observe a big jump in the predictions
+#   at the end of each day when the hour features goes from 23 back to 0. We
+#   can expect similar artifacts at the end of each week or each year.
 #
 # - as expected, the trigonometric features (sine and cosine) do not have this
-#   end-of-day discontinuties but the linear regression model fails to leverage
-#   those features to properly model intra-day variations. Using higher
-#   frequency trigonmetric features or additional phased trigonometric features
-#   could potentially fix this problem.
+#   discontinuties at midnight but the linear regression model still fails to
+#   leverage those features to properly model intra-day variations. Using
+#   trigonmetric features for higher harmonics or additional trigonometric
+#   features for the natural period with different phases could potentially fix
+#   this problem.
 #
 # - the periodic spline-based features fix those two problems at a time: they
 #   give more expressivity to the linear model by making it possible to focus
