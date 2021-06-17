@@ -13,7 +13,7 @@ import re
 import numpy as np
 
 from . import __version__
-from .utils import _IS_32BIT, _empty_metadata_request
+from .utils import _IS_32BIT
 from .utils import _standardize_metadata_request
 from ._config import get_config
 from .utils._tags import (
@@ -24,6 +24,7 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
+from .utils.metadata_requests import MetadataRequest
 
 
 @_deprecate_positional_args
@@ -146,71 +147,48 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-class _MetadataRequest:
-    def _validate_defaults(self, attr_name):
-        """Validate the defaults present in self.attr_name.
-
-        The defaults values follow the same structure as other
-        metadata_request, but only True, False, None, and strings with the same
-        value as indicated in the attribute name are allowed. For instance,
-        `_metadata_request__sample_weight` can only have `"sample_weight"` as a
-        value in the dict.
-
-        Returns
-        -------
-        None
-        """
-        defaults = getattr(self, attr_name)
-        defaults = _standardize_metadata_request(defaults)
-        metadata_name = attr_name.split("__")[1]
-        for method, values in defaults.items():
-            for key, value in values.items():
-                if (key != metadata_name or
-                        (value is not None and value != {metadata_name})):
-                    raise ValueError(
-                        "The default values can only be None, or "
-                        "a string with the same value as the name of the "
-                        "metadata variable. E.g.: "
-                        "`_metadata_request__sample_weight = {'fit': "
-                        "'sample_weight'")
-
-    def _add_defaults(self, metadata_request, defaults):
-        metadata_request = _standardize_metadata_request(
-            metadata_request)
-        defaults = _standardize_metadata_request(defaults)
-        for method in defaults:
-            for key in defaults[method]:
-                for value in metadata_request[method]:
-                    if key in value:
-                        # this means the user has explicitly set routing for
-                        # this parameter
-                        break
-                else:
-                    metadata_request[method][key] = defaults[method][key]
-        return metadata_request
-
-    def get_metadata_request(self):
+class _MetadataConsumer:
+    def get_metadata_request(self, output="dict"):
         """Get requested data properties.
 
+        Parameters
+        ----------
+        output : {"dict", "MetadataRequest}
+            Whether the output should be a MetadataRequest instance, or a dict
+            representing that instance.
+
         Returns
         -------
-        request : Bunch of dict of {str: str}
-            The key to the top level dict is the method for which the prop is
-            used. Under each key, there is a dict of the form
-            ``{input_param_name: required_param_name}``.
+        request : MetadataRequest, or dict
+            If dict, it will be a deserialized version of the underlying
+            MetadataRequest object: dict of dict of str->value. The key to the
+            first dict is the name of the method, and the key to the second
+            dict is the name of the argument requested by the method.
         """
-        if hasattr(self, '_metadata_request'):
-            return _standardize_metadata_request(self._metadata_request)
+        if output not in {"dict", "MetadataRequest"}:
+            raise ValueError(
+                "output can be one of {'dict', 'MetadataRequest'}."
+            )
+        if hasattr(self, "_metadata_request"):
+            requests = MetadataRequest(self._metadata_request)
+        else:
+            requests = MetadataRequest()
 
-        metadata_request = _empty_metadata_request()
+            defaults = sorted(
+                [x for x in dir(self) if x.startswith("_metadata_request__")]
+            )
+            for attr in defaults:
+                requests.add_requests(
+                    getattr(self, attr),
+                    expected_metadata="__".join(attr.split("__")[1:])
+                )
 
-        defaults = {x for x in dir(self)
-                    if x.startswith('_metadata_request__')}
-        for attr in defaults:
-            self._validate_defaults(attr)
-            metadata_request = self._add_defaults(
-                metadata_request, getattr(self, attr))
-        return _standardize_metadata_request(metadata_request)
+            self._metadata_request = requests
+
+        if output == "dict":
+            return requests.to_dict()
+        else:
+            return requests
 
 
 class MetadataConsumer:
@@ -224,10 +202,11 @@ class MetadataConsumer:
     def _request_key_for_method(self, *, method, param, user_provides):
         if user_provides is None:
             return
-        if not hasattr(self, '_metadata_request'):
+        if not hasattr(self, "_metadata_request"):
             self._metadata_request = self.get_metadata_request()
         self._metadata_request = _standardize_metadata_request(
-            self._metadata_request)
+            self._metadata_request
+        )
 
         if user_provides == param:
             user_provides = True
@@ -260,7 +239,8 @@ class MetadataConsumer:
 
 class SampleWeightConsumer(MetadataConsumer):
     _metadata_request__sample_weight = {
-        'fit': {'sample_weight': None}
+        "fit": {"sample_weight": None},
+        "score": {"sample_weight": None},
     }
 
     def request_sample_weight(self, *, fit=None, score=None):
@@ -322,16 +302,16 @@ class SampleWeightConsumer(MetadataConsumer):
         ...        score_sample_weight=score_sample_weight)
         GridSearchCV(...)
         """
-        self._request_key_for_method(method='fit',
-                                     param='sample_weight',
-                                     user_provides=fit)
-        self._request_key_for_method(method='score',
-                                     param='sample_weight',
-                                     user_provides=score)
+        self._request_key_for_method(
+            method="fit", param="sample_weight", user_provides=fit
+        )
+        self._request_key_for_method(
+            method="score", param="sample_weight", user_provides=score
+        )
         return self
 
 
-class BaseEstimator(_MetadataRequest):
+class BaseEstimator(_MetadataConsumer):
     """Base class for all estimators in scikit-learn
 
     Notes

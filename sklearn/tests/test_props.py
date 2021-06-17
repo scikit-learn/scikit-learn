@@ -34,7 +34,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import PredefinedSplit
 
-from sklearn.base import _MetadataRequest
+from sklearn.base import _MetadataConsumer
 
 NonGroupCVs = [
     KFold,
@@ -82,9 +82,8 @@ class MyEst(ClassifierMixin, BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         _validate_required_props(
-            self.get_metadata_request().fit,
-            fit_params,
-            validate="both")
+            self.get_metadata_request().fit, fit_params, validate="both"
+        )
         assert set(fit_params.keys()) <= set(
             [list(x)[0] for x in self.get_metadata_request().fit.values()]
         )
@@ -213,7 +212,8 @@ def test_slep_caseA():
 
     weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
     lr = LogisticRegressionCV(
-        cv=GroupKFold(), scoring=weighted_acc,
+        cv=GroupKFold(),
+        scoring=weighted_acc,
     ).request_sample_weight(fit="sample_weight")
     cross_validate(
         lr,
@@ -236,7 +236,10 @@ def test_slep_caseB():
     # removing that request means the fitting is unweighted.
 
     weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
-    lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc,)
+    lr = LogisticRegressionCV(
+        cv=GroupKFold(),
+        scoring=weighted_acc,
+    )
     cross_validate(
         lr,
         X,
@@ -255,7 +258,8 @@ def test_slep_caseC():
 
     weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
     lr = LogisticRegressionCV(
-        cv=GroupKFold(), scoring=weighted_acc,
+        cv=GroupKFold(),
+        scoring=weighted_acc,
     ).request_sample_weight(fit=True)
     sel = SelectKBest(k=2)
     pipe = make_pipeline(sel, lr)
@@ -280,7 +284,8 @@ def test_slep_caseD():
         accuracy_score, request_props={"scoring_weight": "sample_weight"}
     )
     lr = LogisticRegressionCV(
-        cv=GroupKFold(), scoring=weighted_acc,
+        cv=GroupKFold(),
+        scoring=weighted_acc,
     ).request_sample_weight(fit="fitting_weight")
     cross_validate(
         lr,
@@ -357,48 +362,54 @@ def test_invalid_arg_given():
 
     with pytest.raises(ValueError, match="Requested properties are"):
         gs.fit(
-            X, y, sample_weigh=my_weights, groups=my_groups,
+            X,
+            y,
+            sample_weigh=my_weights,
+            groups=my_groups,
         )
 
 
-def test_MetadataRequest():
-    class TestDefaults(_MetadataRequest, SampleWeightConsumer):
+def test_get_metadata_request():
+    class TestDefaults(_MetadataConsumer, SampleWeightConsumer):
         _metadata_request__my_param = {
-            "score": ["my_param"],
-            # the following method would be ignored
-            "other_method": "my_param",
+            "score": {"my_param": True},
+            # the following method raise an error
+            "other_method": {"my_param": True},
         }
 
         _metadata_request__my_other_param = {
-            "score": ["my_other_param"],
+            "score": "my_other_param",
+            # this should raise since the name is different than the metadata
             "fit": "my_param",
         }
 
-        def request_my_param(self, *, fit=None, score=None):
-            self._request_key_for_method(
-                method="fit", param="my_param", user_provides=fit
-            )
-            self._request_key_for_method(
-                method="score", param="my_param", user_provides=score
-            )
-            return self
-
-    with pytest.raises(ValueError,
-                       match="The default values can only be None"):
+    with pytest.raises(ValueError, match="Expected all metadata to be called"):
         TestDefaults().get_metadata_request()
 
     TestDefaults._metadata_request__my_other_param = {
-        'score': 'my_other_param',
-        'fit': 'my_other_param'
+        "score": "my_other_param",
+        "fit": "my_other_param",
     }
+
+    with pytest.raises(
+        ValueError, match="other_method is not supported as a method"
+    ):
+        TestDefaults().get_metadata_request()
+
+    TestDefaults._metadata_request__my_param = {
+        "score": {"my_param": True},
+        "predict": {"my_param": True},
+    }
+
     expected = {
         "score": {
-            "my_param": {"my_param"},
-            "my_other_param": {"my_other_param"}
+            "my_param": "my_param",
+            "my_other_param": None,
+            "sample_weight": None,
         },
-        "fit": {"my_other_param": {"my_other_param"}},
+        "fit": {"my_other_param": None, "sample_weight": None},
         "partial_fit": {},
-        "predict": {},
+        "predict": {"my_param": "my_param"},
         "transform": {},
         "inverse_transform": {},
         "split": {},
@@ -409,7 +420,7 @@ def test_MetadataRequest():
     expected = {
         "score": {
             "other_param": {"my_param"},
-            "my_other_param": {"my_other_param"}
+            "my_other_param": {"my_other_param"},
         },
         "fit": {"my_other_param": {"my_other_param"}},
         "partial_fit": {},
@@ -424,11 +435,12 @@ def test_MetadataRequest():
     expected = {
         "score": {
             "my_param": {"my_param"},
-            "my_other_param": {"my_other_param"}
+            "my_other_param": {"my_other_param"},
         },
         "fit": {
             "my_other_param": {"my_other_param"},
-            "sample_weight": {"sample_weight"}},
+            "sample_weight": {"sample_weight"},
+        },
         "partial_fit": {},
         "predict": {},
         "transform": {},
