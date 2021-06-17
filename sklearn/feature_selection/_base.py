@@ -88,9 +88,11 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         )
         mask = self.get_support()
         if not mask.any():
-            warn("No features were selected: either the data is"
-                 " too noisy or the selection test too strict.",
-                 UserWarning)
+            warn(
+                "No features were selected: either the data is"
+                " too noisy or the selection test too strict.",
+                UserWarning,
+            )
             return np.empty(0).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
@@ -119,8 +121,11 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             it = self.inverse_transform(np.diff(X.indptr).reshape(1, -1))
             col_nonzeros = it.ravel()
             indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
-            Xt = csc_matrix((X.data, X.indices, indptr),
-                            shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
+            Xt = csc_matrix(
+                (X.data, X.indices, indptr),
+                shape=(X.shape[0], len(indptr) - 1),
+                dtype=X.dtype,
+            )
             return Xt
 
         support = self.get_support()
@@ -135,8 +140,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         return Xt
 
 
-def _get_feature_importances(estimator, getter, transform_func=None,
-                             norm_order=1):
+def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):
     """
     Retrieve and aggregate (ndim > 1)  the feature importances
     from an estimator. Also optionally applies transformation.
@@ -165,11 +169,11 @@ def _get_feature_importances(estimator, getter, transform_func=None,
         The features importances, optionally transformed.
     """
     if isinstance(getter, str):
-        if getter == 'auto':
-            if hasattr(estimator, 'coef_'):
-                getter = attrgetter('coef_')
-            elif hasattr(estimator, 'feature_importances_'):
-                getter = attrgetter('feature_importances_')
+        if getter == "auto":
+            if hasattr(estimator, "coef_"):
+                getter = attrgetter("coef_")
+            elif hasattr(estimator, "feature_importances_"):
+                getter = attrgetter("feature_importances_")
             else:
                 raise ValueError(
                     f"when `importance_getter=='auto'`, the underlying "
@@ -181,9 +185,7 @@ def _get_feature_importances(estimator, getter, transform_func=None,
         else:
             getter = attrgetter(getter)
     elif not callable(getter):
-        raise ValueError(
-            '`importance_getter` has to be a string or `callable`'
-        )
+        raise ValueError("`importance_getter` has to be a string or `callable`")
     importances = getter(estimator)
 
     if transform_func is None:
@@ -192,16 +194,17 @@ def _get_feature_importances(estimator, getter, transform_func=None,
         if importances.ndim == 1:
             importances = np.abs(importances)
         else:
-            importances = np.linalg.norm(importances, axis=0,
-                                         ord=norm_order)
+            importances = np.linalg.norm(importances, axis=0, ord=norm_order)
     elif transform_func == "square":
         if importances.ndim == 1:
             importances = safe_sqr(importances)
         else:
             importances = safe_sqr(importances).sum(axis=0)
     else:
-        raise ValueError("Valid values for `transform_func` are " +
-                         "None, 'norm' and 'square'. Those two " +
-                         "transformation are only supported now")
+        raise ValueError(
+            "Valid values for `transform_func` are "
+            + "None, 'norm' and 'square'. Those two "
+            + "transformation are only supported now"
+        )
 
     return importances
