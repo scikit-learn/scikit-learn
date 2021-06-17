@@ -5,6 +5,7 @@ import warnings
 from pickle import loads
 from pickle import dumps
 from functools import partial
+from importlib import resources as importlib_resources
 
 import pytest
 
@@ -21,6 +22,11 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
+from sklearn.datasets._base import (
+    DATA_MODULE,
+    load_csv_data,
+    load_gzip_compressed_csv_data,
+)
 from sklearn.utils import Bunch
 from sklearn.datasets.tests.test_common import check_as_frame
 
@@ -122,6 +128,39 @@ def test_load_files_wo_load_content(
     assert res.get("data") is None
 
 
+@pytest.mark.parametrize(
+    "filename, expected_n_samples, expected_n_features, expected_target_names",
+    [
+        ("wine_data.csv", 178, 13, ["class_0", "class_1", "class_2"]),
+        ("iris.csv", 150, 4, ["setosa", "versicolor", "virginica"]),
+        ("breast_cancer.csv", 569, 30, ["malignant", "benign"]),
+    ],
+)
+def test_load_csv_data(
+    filename, expected_n_samples, expected_n_features, expected_target_names
+):
+    actual_data, actual_target, actual_target_names = load_csv_data(
+        data_module=DATA_MODULE, data_file_name=filename
+    )
+    assert actual_data.shape[0] == expected_n_samples
+    assert actual_data.shape[1] == expected_n_features
+    assert actual_target.shape[0] == expected_n_samples
+    np.testing.assert_array_equal(actual_target_names, expected_target_names)
+
+
+@pytest.mark.parametrize(
+    "filename, kwargs, expected_shape",
+    [
+        ("diabetes_data.csv.gz", {}, [442, 10]),
+        ("diabetes_target.csv.gz", {}, [442]),
+        ("digits.csv.gz", {"delimiter": ","}, [1797, 65]),
+    ],
+)
+def test_load_gzip_compressed_csv_data(filename, kwargs, expected_shape):
+    actual_data = load_gzip_compressed_csv_data(DATA_MODULE, filename, **kwargs)
+    assert actual_data.shape == tuple(expected_shape)
+
+
 def test_load_sample_images():
     try:
         res = load_sample_images()
@@ -188,7 +227,14 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
     if has_descr:
         assert bunch.DESCR
     if filenames:
-        assert all([os.path.exists(bunch.get(f, False)) for f in filenames])
+        assert all(
+            [
+                f in bunch
+                and "file_module" in bunch
+                and importlib_resources.is_resource(bunch["file_module"], bunch[f])
+                for f in filenames
+            ]
+        )
 
 
 @pytest.mark.parametrize(

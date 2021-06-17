@@ -8,11 +8,12 @@ Base IO code for all datasets
 # License: BSD 3 clause
 import csv
 import hashlib
-import os
+import gzip
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
-from os.path import dirname, expanduser, isdir, join, splitext
+from os.path import expanduser, isdir, join, splitext
+from importlib import resources as importlib_resources
 
 from ..utils import Bunch
 from ..utils import check_random_state
@@ -21,6 +22,10 @@ from ..utils import check_pandas_support
 import numpy as np
 
 from urllib.request import urlretrieve
+
+DATA_MODULE = "sklearn.datasets.data"
+DESCR_MODULE = "sklearn.datasets.descr"
+IMAGES_MODULE = "sklearn.datasets.images"
 
 RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
@@ -238,17 +243,17 @@ def load_files(
     )
 
 
-def load_data(module_path, data_file_name):
-    """Loads data from module_path/data/data_file_name.
+def load_csv_data(data_module, data_file_name):
+    """Loads data_file_name from data_module with importlib.resources.
 
     Parameters
     ----------
-    module_path : string
-        The module path.
+    data_module : string or module
+        module where data lives;
 
     data_file_name : string
         Name of csv file to be loaded from
-        module_path/data/data_file_name. For example 'wine_data.csv'.
+        data_module/data_file_name. For example 'wine_data.csv'.
 
     Returns
     -------
@@ -264,7 +269,7 @@ def load_data(module_path, data_file_name):
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
     """
-    with open(join(module_path, "data", data_file_name)) as csv_file:
+    with importlib_resources.open_text(data_module, data_file_name) as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -278,6 +283,67 @@ def load_data(module_path, data_file_name):
             target[i] = np.asarray(ir[-1], dtype=int)
 
     return data, target, target_names
+
+
+def load_gzip_compressed_csv_data(data_module, data_file_name, **kwargs):
+    """Loads data_file_name from data_module with importlib.resources and np.loadtxt
+
+    1) Open resource file with `importlib.resources.open_binary`
+    2) Decompress file obj with `gzip.open`
+    3) Load decompressed data with `np.loadtxt`
+
+    Parameters
+    ----------
+    data_module : string or module
+        module where data lives;
+
+    data_file_name : string
+        Name of gzip-compressed csv (.csv.gz) file to be loaded from
+        data_module/data_file_name. For example 'diabetes_data.csv.gz'.
+
+    **kwargs : dict
+        Keyword arguments to be passed to `np.loadtxt`;
+        e.g. delimiter=","
+
+    Returns
+    -------
+    data : Numpy array
+        A 2D array with each row representing one sample and each column
+            representing the features and/or target of a given sample.
+    """
+    with importlib_resources.open_binary(
+        data_module, data_file_name
+    ) as compressed_file:
+        # GH20297: The following handling of the `encoding` kwarg
+        # should follow that in `np.loadtxt`
+        gzip_encoding = None
+        if "encoding" in kwargs and kwargs["encoding"] != "bytes":
+            gzip_encoding = kwargs["encoding"]
+
+        compressed_file = gzip.open(compressed_file, mode="rt", encoding=gzip_encoding)
+        data = np.loadtxt(compressed_file, **kwargs)
+    return data
+
+
+def load_descr(descr_module, descr_file_name):
+    """Loads descr_file_name from descr_module with importlib.resources.
+
+    Parameters
+    ----------
+    descr_module : string or module
+        module where descr_file_name lives;
+
+    descr_file_name : string
+        Name of rst file to be loaded from
+        descr_module/descr_file_name. For example 'wine_data.rst'.
+
+    Returns
+    -------
+    string; content of descr_file_name
+    """
+    fdescr = importlib_resources.read_text(descr_module, descr_file_name)
+
+    return fdescr
 
 
 def load_wine(*, return_X_y=False, as_frame=False):
@@ -354,11 +420,9 @@ def load_wine(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['class_0', 'class_1', 'class_2']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, "wine_data.csv")
 
-    with open(join(module_path, "descr", "wine_data.rst")) as rst_file:
-        fdescr = rst_file.read()
+    data, target, target_names = load_csv_data(DATA_MODULE, "wine_data.csv")
+    fdescr = load_descr(DESCR_MODULE, "wine_data.rst")
 
     feature_names = [
         "alcohol",
@@ -481,12 +545,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, "iris.csv")
-    iris_csv_filename = join(module_path, "data", "iris.csv")
-
-    with open(join(module_path, "descr", "iris.rst")) as rst_file:
-        fdescr = rst_file.read()
+    data_file_name = "iris.csv"
+    data, target, target_names = load_csv_data(DATA_MODULE, data_file_name)
+    fdescr = load_descr(DESCR_MODULE, "iris.rst")
 
     feature_names = [
         "sepal length (cm)",
@@ -514,7 +575,8 @@ def load_iris(*, return_X_y=False, as_frame=False):
         target_names=target_names,
         DESCR=fdescr,
         feature_names=feature_names,
-        filename=iris_csv_filename,
+        filename=data_file_name,
+        file_module=DATA_MODULE,
     )
 
 
@@ -598,12 +660,9 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['malignant', 'benign']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, "breast_cancer.csv")
-    csv_filename = join(module_path, "data", "breast_cancer.csv")
-
-    with open(join(module_path, "descr", "breast_cancer.rst")) as rst_file:
-        fdescr = rst_file.read()
+    data_file_name = "breast_cancer.csv"
+    data, target, target_names = load_csv_data(DATA_MODULE, data_file_name)
+    fdescr = load_descr(DESCR_MODULE, "breast_cancer.rst")
 
     feature_names = np.array(
         [
@@ -659,7 +718,8 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         target_names=target_names,
         DESCR=fdescr,
         feature_names=feature_names,
-        filename=csv_filename,
+        filename=data_file_name,
+        file_module=DATA_MODULE,
     )
 
 
@@ -747,10 +807,10 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         <...>
         >>> plt.show()
     """
-    module_path = dirname(__file__)
-    data = np.loadtxt(join(module_path, "data", "digits.csv.gz"), delimiter=",")
-    with open(join(module_path, "descr", "digits.rst")) as f:
-        descr = f.read()
+
+    data = load_gzip_compressed_csv_data(DATA_MODULE, "digits.csv.gz", delimiter=",")
+    fdescr = load_descr(DESCR_MODULE, "digits.rst")
+
     target = data[:, -1].astype(int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
@@ -786,7 +846,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         feature_names=feature_names,
         target_names=np.arange(10),
         images=images,
-        DESCR=descr,
+        DESCR=fdescr,
     )
 
 
@@ -854,15 +914,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
     """
-    module_path = dirname(__file__)
-    base_dir = join(module_path, "data")
-    data_filename = join(base_dir, "diabetes_data.csv.gz")
-    data = np.loadtxt(data_filename)
-    target_filename = join(base_dir, "diabetes_target.csv.gz")
-    target = np.loadtxt(target_filename)
+    data_filename = "diabetes_data.csv.gz"
+    target_filename = "diabetes_target.csv.gz"
+    data = load_gzip_compressed_csv_data(DATA_MODULE, data_filename)
+    target = load_gzip_compressed_csv_data(DATA_MODULE, target_filename)
 
-    with open(join(module_path, "descr", "diabetes.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr(DESCR_MODULE, "diabetes.rst")
 
     feature_names = ["age", "sex", "bmi", "bp", "s1", "s2", "s3", "s4", "s5", "s6"]
 
@@ -886,6 +943,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
         feature_names=feature_names,
         data_filename=data_filename,
         target_filename=target_filename,
+        file_module=DATA_MODULE,
     )
 
 
@@ -953,22 +1011,21 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
     """
-    base_dir = join(dirname(__file__), "data/")
-    data_filename = join(base_dir, "linnerud_exercise.csv")
-    target_filename = join(base_dir, "linnerud_physiological.csv")
+    data_filename = "linnerud_exercise.csv"
+    target_filename = "linnerud_physiological.csv"
 
-    # Read data
-    data_exercise = np.loadtxt(data_filename, skiprows=1)
-    data_physiological = np.loadtxt(target_filename, skiprows=1)
-
-    # Read header
-    with open(data_filename) as f:
+    # Read header and data
+    with importlib_resources.open_text(DATA_MODULE, data_filename) as f:
         header_exercise = f.readline().split()
-    with open(target_filename) as f:
-        header_physiological = f.readline().split()
+        f.seek(0)  # reset file obj
+        data_exercise = np.loadtxt(f, skiprows=1)
 
-    with open(dirname(__file__) + "/descr/linnerud.rst") as f:
-        descr = f.read()
+    with importlib_resources.open_text(DATA_MODULE, target_filename) as f:
+        header_physiological = f.readline().split()
+        f.seek(0)  # reset file obj
+        data_physiological = np.loadtxt(f, skiprows=1)
+
+    fdescr = load_descr(DESCR_MODULE, "linnerud.rst")
 
     frame = None
     if as_frame:
@@ -988,9 +1045,10 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         target=data_physiological,
         target_names=header_physiological,
         frame=frame,
-        DESCR=descr,
+        DESCR=fdescr,
         data_filename=data_filename,
         target_filename=target_filename,
+        file_module=DATA_MODULE,
     )
 
 
@@ -1049,14 +1107,11 @@ def load_boston(*, return_X_y=False):
     >>> print(X.shape)
     (506, 13)
     """
-    module_path = dirname(__file__)
 
-    fdescr_name = join(module_path, "descr", "boston_house_prices.rst")
-    with open(fdescr_name) as f:
-        descr_text = f.read()
+    descr_text = load_descr(DESCR_MODULE, "boston_house_prices.rst")
 
-    data_file_name = join(module_path, "data", "boston_house_prices.csv")
-    with open(data_file_name) as f:
+    data_file_name = "boston_house_prices.csv"
+    with importlib_resources.open_text(DATA_MODULE, data_file_name) as f:
         data_file = csv.reader(f)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -1080,6 +1135,7 @@ def load_boston(*, return_X_y=False):
         feature_names=feature_names[:-1],
         DESCR=descr_text,
         filename=data_file_name,
+        file_module=DATA_MODULE,
     )
 
 
@@ -1119,16 +1175,16 @@ def load_sample_images():
     # import PIL only when needed
     from ..externals._pilutil import imread
 
-    module_path = join(dirname(__file__), "images")
-    with open(join(module_path, "README.txt")) as f:
-        descr = f.read()
-    filenames = [
-        join(module_path, filename)
-        for filename in sorted(os.listdir(module_path))
-        if filename.endswith(".jpg")
-    ]
-    # Load image data for each image in the source folder.
-    images = [imread(filename) for filename in filenames]
+    descr = load_descr(IMAGES_MODULE, "README.txt")
+
+    filenames = list()
+    images = list()
+    for filename in sorted(importlib_resources.contents(IMAGES_MODULE)):
+        if filename.endswith(".jpg"):
+            filenames.append(filename)
+            with importlib_resources.open_binary(IMAGES_MODULE, filename) as image_file:
+                image = imread(image_file)
+            images.append(image)
 
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
