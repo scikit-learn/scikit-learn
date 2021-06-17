@@ -84,19 +84,23 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     if node < n_leaves:
         return ind
     descendent = []
+    explored = set()
 
     # It is actually faster to do the accounting of the number of
     # elements is the list ourselves: len is a lengthy operation on a
     # chained list
     cdef INTP i, n_indices = 1
 
-    while n_indices:
+    while n_indices and len(ind) > 0:
         i = ind.pop()
         if i < n_leaves:
             descendent.append(i)
             n_indices -= 1
         else:
-            ind.extend(children[i - n_leaves])
+            for child in children[i - n_leaves]:
+                if child not in explored:
+                    explored.add(child)
+                    ind.append(child)
             n_indices += 1
     return descendent
 
@@ -236,8 +240,8 @@ def max_merge(IntFloatDict a, IntFloatDict b,
 def average_merge(IntFloatDict a, IntFloatDict b,
               np.ndarray[ITYPE_t, ndim=1] mask,
               ITYPE_t n_a, ITYPE_t n_b):
-    """Merge two IntFloatDicts with the average strategy: when the 
-    same key is present in the two dicts, the weighted average of the two 
+    """Merge two IntFloatDicts with the average strategy: when the
+    same key is present in the two dicts, the weighted average of the two
     values is used.
 
     Parameters
@@ -290,13 +294,13 @@ def average_merge(IntFloatDict a, IntFloatDict b,
 
 
 ###############################################################################
-# An edge object for fast comparisons 
+# An edge object for fast comparisons
 
 cdef class WeightedEdge:
     cdef public ITYPE_t a
     cdef public ITYPE_t b
     cdef public DTYPE_t weight
-    
+
     def __init__(self, DTYPE_t weight, ITYPE_t a, ITYPE_t b):
         self.weight = weight
         self.a = a
@@ -326,7 +330,7 @@ cdef class WeightedEdge:
             return self.weight > other.weight
         elif op == 5:
             return self.weight >= other.weight
-        
+
     def __repr__(self):
         return "%s(weight=%f, a=%i, b=%i)" % (self.__class__.__name__,
                                               self.weight,
@@ -534,4 +538,3 @@ def mst_linkage_core(
         current_node = new_node
 
     return np.array(result)
-

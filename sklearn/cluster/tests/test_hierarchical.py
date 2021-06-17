@@ -835,3 +835,12 @@ def test_invalid_shape_precomputed_dist_matrix():
     with pytest.raises(ValueError, match="Distance matrix should be square, "):
         AgglomerativeClustering(affinity='precomputed',
                                 linkage='complete').fit(X)
+
+
+def test_single_linkage_with_large_values():
+    # Check that the single linkage hierarchical clustering
+    # does not get caught in an infinite loop, eventually
+    # causing a MemoryError
+    X = (10e+305)*np.random.rand(50, 2)
+    clusterer = AgglomerativeClustering(linkage="single")
+    assert(isinstance(clusterer.fit(X), AgglomerativeClustering))
