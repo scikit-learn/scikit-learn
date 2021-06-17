@@ -218,6 +218,11 @@ latest up-to-date workflow.
   `Transcript
   <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
 
+- 3 Components of Reviewing a Pull Request:
+  `Video <https://youtu.be/dyxS9KKCNzA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
+  
 .. note::
   In January 2021, the default branch name changed from ``master`` to ``main``
   for the scikit-learn GitHub repository to use more inclusive terms.
