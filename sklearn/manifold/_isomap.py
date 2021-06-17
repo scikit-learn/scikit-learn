@@ -4,6 +4,8 @@
 # License: BSD 3 clause (C) 2011
 
 import numpy as np
+import warnings
+
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..neighbors import radius_neighbors_graph
@@ -151,6 +153,11 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.metric_params = metric_params
 
     def _fit_transform(self, X):
+        if self.n_neighbors is not None and self.radius is not None:
+            warnings.warn("Radius is ignored when both n_neighbor and radius "
+                          "are provided, n_neighbors should be set to None "
+                          "explicitly when radius is passed")
+
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       radius=self.radius,
                                       algorithm=self.neighbors_algorithm,

@@ -14,24 +14,24 @@ from scipy.sparse import rand as sparse_rand
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
 
-N_per_side = 5
-Npts = N_per_side ** 2
+N_PER_SIDE = 5
+NPTS = N_PER_SIDE ** 2
 
 
 def create_sample_data(add_noise=False):
     # grid of equidistant points in 2D, n_components = n_dim
-    X = np.array(list(product(range(N_per_side), repeat=2)))
+    X = np.array(list(product(range(N_PER_SIDE), repeat=2)))
     if add_noise:
         # add noise in a third dimension
         rng = np.random.RandomState(0)
-        noise = 0.1 * rng.randn(Npts, 1)
+        noise = 0.1 * rng.randn(NPTS, 1)
         X = np.concatenate((X, noise), 1)
     return X
 
 
 @pytest.mark.parametrize(
     "n_neighbors, radius",
-    [(Npts-1, None),
+    [(NPTS-1, None),
      (None, np.inf)]
 )
 def test_isomap_simple_grid(n_neighbors, radius):
@@ -69,7 +69,7 @@ def test_isomap_simple_grid(n_neighbors, radius):
 
 @pytest.mark.parametrize(
     "n_neighbors, radius",
-    [(Npts-1, None),
+    [(NPTS-1, None),
      (None, np.inf)]
 )
 def test_isomap_reconstruction_error(n_neighbors, radius):
@@ -109,7 +109,7 @@ def test_isomap_reconstruction_error(n_neighbors, radius):
             K_iso = centerer.fit_transform(-0.5 * G_iso ** 2)
 
             # make sure error agrees
-            reconstruction_error = np.linalg.norm(K - K_iso) / Npts
+            reconstruction_error = np.linalg.norm(K - K_iso) / NPTS
             assert_almost_equal(reconstruction_error,
                                 clf.reconstruction_error())
 
@@ -241,3 +241,11 @@ def test_isomap_fit_precomputed_radius_graph():
                              radius=5.5,
                              metric="precomputed")
     isomap.fit(g)
+    precomputed_result = isomap.embedding_
+
+    isomap = manifold.Isomap(n_neighbors=None,
+                             radius=5.5,
+                             metric="minkowski")
+    result = isomap.fit_transform(X)
+    # test fit_transform yields similar result as using precomputed distance matrix
+    assert np.allclose(precomputed_result, result)
