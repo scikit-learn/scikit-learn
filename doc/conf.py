@@ -62,6 +62,10 @@ else:
     mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
                     'tex-chtml.js')
 
+rst_prolog = r"""
+.. include:: /includes/prolog.rst
+"""
+
 autodoc_default_options = {
     'members': True,
     'inherited-members': True
@@ -462,7 +466,6 @@ def generate_min_dependency_substitutions(app):
 
 # we use the issues path for PRs since the issues URL will forward
 issues_github_path = 'scikit-learn/scikit-learn'
-
 
 def setup(app):
     app.connect('builder-inited', generate_min_dependency_table)
