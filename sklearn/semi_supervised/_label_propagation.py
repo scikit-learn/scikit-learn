@@ -74,39 +74,48 @@ from ..exceptions import ConvergenceWarning
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for label propagation module.
 
-    Parameters
-    ----------
-    kernel : {'knn', 'rbf'} or callable, default='rbf'
-        String identifier for kernel function to use or the kernel function
-        itself. Only 'rbf' and 'knn' strings are valid inputs. The function
-        passed should take two inputs, each of shape (n_samples, n_features),
-        and return a (n_samples, n_samples) shaped weight matrix.
+     Parameters
+     ----------
+     kernel : {'knn', 'rbf'} or callable, default='rbf'
+         String identifier for kernel function to use or the kernel function
+         itself. Only 'rbf' and 'knn' strings are valid inputs. The function
+         passed should take two inputs, each of shape (n_samples, n_features),
+         and return a (n_samples, n_samples) shaped weight matrix.
 
-    gamma : float, default=20
-        Parameter for rbf kernel.
+     gamma : float, default=20
+         Parameter for rbf kernel.
 
-    n_neighbors : int, default=7
-        Parameter for knn kernel. Need to be strictly positive.
+     n_neighbors : int, default=7
+         Parameter for knn kernel. Need to be strictly positive.
 
-    alpha : float, default=1.0
-        Clamping factor.
+     alpha : float, default=1.0
+         Clamping factor.
 
-    max_iter : int, default=30
-        Change maximum number of iterations allowed.
+     max_iter : int, default=30
+         Change maximum number of iterations allowed.
 
-    tol : float, default=1e-3
-        Convergence tolerance: threshold to consider the system at steady
-        state.
+     tol : float, default=1e-3
+         Convergence tolerance: threshold to consider the system at steady
+         state.
 
-   n_jobs : int, default=None
-        The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+    n_jobs : int, default=None
+         The number of parallel jobs to run.
+         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+         for more details.
     """
 
-    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7,
-                 alpha=1, max_iter=30, tol=1e-3, n_jobs=None):
+    def __init__(
+        self,
+        kernel="rbf",
+        *,
+        gamma=20,
+        n_neighbors=7,
+        alpha=1,
+        max_iter=30,
+        tol=1e-3,
+        n_jobs=None
+    ):
 
         self.max_iter = max_iter
         self.tol = tol
@@ -129,12 +138,13 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 return rbf_kernel(X, y, gamma=self.gamma)
         elif self.kernel == "knn":
             if self.nn_fit is None:
-                self.nn_fit = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                               n_jobs=self.n_jobs).fit(X)
+                self.nn_fit = NearestNeighbors(
+                    n_neighbors=self.n_neighbors, n_jobs=self.n_jobs
+                ).fit(X)
             if y is None:
-                return self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
-                                                    self.n_neighbors,
-                                                    mode='connectivity')
+                return self.nn_fit.kneighbors_graph(
+                    self.nn_fit._fit_X, self.n_neighbors, mode="connectivity"
+                )
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
         elif callable(self.kernel):
@@ -143,14 +153,18 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 return self.kernel(X, y)
         else:
-            raise ValueError("%s is not a valid kernel. Only rbf and knn"
-                             " or an explicit function "
-                             " are supported at this time." % self.kernel)
+            raise ValueError(
+                "%s is not a valid kernel. Only rbf and knn"
+                " or an explicit function "
+                " are supported at this time." % self.kernel
+            )
 
     @abstractmethod
     def _build_graph(self):
-        raise NotImplementedError("Graph construction must be implemented"
-                                  " to fit a label propagation model.")
+        raise NotImplementedError(
+            "Graph construction must be implemented"
+            " to fit a label propagation model."
+        )
 
     def predict(self, X):
         """Performs inductive inference across the model.
@@ -189,17 +203,21 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         X_2d = self._validate_data(
-            X, accept_sparse=['csc', 'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'],
-            reset=False)
+            X,
+            accept_sparse=["csc", "csr", "coo", "dok", "bsr", "lil", "dia"],
+            reset=False,
+        )
         weight_matrices = self._get_kernel(self.X_, X_2d)
-        if self.kernel == 'knn':
-            probabilities = np.array([
-                np.sum(self.label_distributions_[weight_matrix], axis=0)
-                for weight_matrix in weight_matrices])
+        if self.kernel == "knn":
+            probabilities = np.array(
+                [
+                    np.sum(self.label_distributions_[weight_matrix], axis=0)
+                    for weight_matrix in weight_matrices
+                ]
+            )
         else:
             weight_matrices = weight_matrices.T
-            probabilities = safe_sparse_dot(
-                    weight_matrices, self.label_distributions_)
+            probabilities = safe_sparse_dot(weight_matrices, self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
         probabilities /= normalizer
         return probabilities
@@ -234,16 +252,19 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         # label construction
         # construct a categorical distribution for classification only
         classes = np.unique(y)
-        classes = (classes[classes != -1])
+        classes = classes[classes != -1]
         self.classes_ = classes
 
         n_samples, n_classes = len(y), len(classes)
 
         alpha = self.alpha
-        if self._variant == 'spreading' and \
-                (alpha is None or alpha <= 0.0 or alpha >= 1.0):
-            raise ValueError('alpha=%s is invalid: it must be inside '
-                             'the open interval (0, 1)' % alpha)
+        if self._variant == "spreading" and (
+            alpha is None or alpha <= 0.0 or alpha >= 1.0
+        ):
+            raise ValueError(
+                "alpha=%s is invalid: it must be inside "
+                "the open interval (0, 1)" % alpha
+            )
         y = np.asarray(y)
         unlabeled = y == -1
 
@@ -253,7 +274,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             self.label_distributions_[y == label, classes == label] = 1
 
         y_static = np.copy(self.label_distributions_)
-        if self._variant == 'propagation':
+        if self._variant == "propagation":
             # LabelPropagation
             y_static[unlabeled] = 0
         else:
@@ -272,24 +293,25 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
-                graph_matrix, self.label_distributions_)
+                graph_matrix, self.label_distributions_
+            )
 
-            if self._variant == 'propagation':
-                normalizer = np.sum(
-                    self.label_distributions_, axis=1)[:, np.newaxis]
+            if self._variant == "propagation":
+                normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
                 normalizer[normalizer == 0] = 1
                 self.label_distributions_ /= normalizer
-                self.label_distributions_ = np.where(unlabeled,
-                                                     self.label_distributions_,
-                                                     y_static)
+                self.label_distributions_ = np.where(
+                    unlabeled, self.label_distributions_, y_static
+                )
             else:
                 # clamp
-                self.label_distributions_ = np.multiply(
-                    alpha, self.label_distributions_) + y_static
+                self.label_distributions_ = (
+                    np.multiply(alpha, self.label_distributions_) + y_static
+                )
         else:
             warnings.warn(
-                'max_iter=%d was reached without convergence.' % self.max_iter,
-                category=ConvergenceWarning
+                "max_iter=%d was reached without convergence." % self.max_iter,
+                category=ConvergenceWarning,
             )
             self.n_iter_ += 1
 
@@ -298,8 +320,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.label_distributions_ /= normalizer
 
         # set the transduction item
-        transduction = self.classes_[np.argmax(self.label_distributions_,
-                                               axis=1)]
+        transduction = self.classes_[np.argmax(self.label_distributions_, axis=1)]
         self.transduction_ = transduction.ravel()
         return self
 
@@ -383,13 +404,27 @@ class LabelPropagation(BaseLabelPropagation):
     LabelSpreading : Alternate label propagation strategy more robust to noise.
     """
 
-    _variant = 'propagation'
+    _variant = "propagation"
 
-    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7,
-                 max_iter=1000, tol=1e-3, n_jobs=None):
-        super().__init__(kernel=kernel, gamma=gamma,
-                         n_neighbors=n_neighbors, max_iter=max_iter,
-                         tol=tol, n_jobs=n_jobs, alpha=None)
+    def __init__(
+        self,
+        kernel="rbf",
+        *,
+        gamma=20,
+        n_neighbors=7,
+        max_iter=1000,
+        tol=1e-3,
+        n_jobs=None
+    ):
+        super().__init__(
+            kernel=kernel,
+            gamma=gamma,
+            n_neighbors=n_neighbors,
+            max_iter=max_iter,
+            tol=tol,
+            n_jobs=n_jobs,
+            alpha=None,
+        )
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -397,7 +432,7 @@ class LabelPropagation(BaseLabelPropagation):
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired).
         """
-        if self.kernel == 'knn':
+        if self.kernel == "knn":
             self.nn_fit = None
         affinity_matrix = self._get_kernel(self.X_)
         normalizer = affinity_matrix.sum(axis=0)
@@ -501,28 +536,43 @@ class LabelSpreading(BaseLabelPropagation):
     LabelPropagation : Unregularized graph based semi-supervised learning.
     """
 
-    _variant = 'spreading'
+    _variant = "spreading"
 
-    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iter=30, tol=1e-3, n_jobs=None):
+    def __init__(
+        self,
+        kernel="rbf",
+        *,
+        gamma=20,
+        n_neighbors=7,
+        alpha=0.2,
+        max_iter=30,
+        tol=1e-3,
+        n_jobs=None
+    ):
 
         # this one has different base parameters
-        super().__init__(kernel=kernel, gamma=gamma,
-                         n_neighbors=n_neighbors, alpha=alpha,
-                         max_iter=max_iter, tol=tol, n_jobs=n_jobs)
+        super().__init__(
+            kernel=kernel,
+            gamma=gamma,
+            n_neighbors=n_neighbors,
+            alpha=alpha,
+            max_iter=max_iter,
+            tol=tol,
+            n_jobs=n_jobs,
+        )
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""
         # compute affinity matrix (or gram matrix)
-        if self.kernel == 'knn':
+        if self.kernel == "knn":
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
         laplacian = csgraph.laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
         if sparse.isspmatrix(laplacian):
-            diag_mask = (laplacian.row == laplacian.col)
+            diag_mask = laplacian.row == laplacian.col
             laplacian.data[diag_mask] = 0.0
         else:
-            laplacian.flat[::n_samples + 1] = 0.0  # set diag to 0.0
+            laplacian.flat[:: n_samples + 1] = 0.0  # set diag to 0.0
         return laplacian

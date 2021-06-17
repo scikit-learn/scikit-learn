@@ -21,22 +21,20 @@ from .validation import check_array, _assert_all_finite
 
 
 def _unique_multiclass(y):
-    if hasattr(y, '__array__'):
+    if hasattr(y, "__array__"):
         return np.unique(np.asarray(y))
     else:
         return set(y)
 
 
 def _unique_indicator(y):
-    return np.arange(
-        check_array(y, accept_sparse=['csr', 'csc', 'coo']).shape[1]
-    )
+    return np.arange(check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1])
 
 
 _FN_UNIQUE_LABELS = {
-    'binary': _unique_multiclass,
-    'multiclass': _unique_multiclass,
-    'multilabel-indicator': _unique_indicator,
+    "binary": _unique_multiclass,
+    "multiclass": _unique_multiclass,
+    "multilabel-indicator": _unique_indicator,
 }
 
 
@@ -72,7 +70,7 @@ def unique_labels(*ys):
     array([ 1,  2,  5, 10, 11])
     """
     if not ys:
-        raise ValueError('No argument has been passed.')
+        raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
 
     ys_types = set(type_of_target(x) for x in ys)
@@ -85,12 +83,18 @@ def unique_labels(*ys):
     label_type = ys_types.pop()
 
     # Check consistency for the indicator format
-    if (label_type == "multilabel-indicator" and
-            len(set(check_array(y,
-                                accept_sparse=['csr', 'csc', 'coo']).shape[1]
-                    for y in ys)) > 1):
-        raise ValueError("Multi-label binary indicator input with "
-                         "different numbers of labels")
+    if (
+        label_type == "multilabel-indicator"
+        and len(
+            set(
+                check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1] for y in ys
+            )
+        )
+        > 1
+    ):
+        raise ValueError(
+            "Multi-label binary indicator input with " "different numbers of labels"
+        )
 
     # Get the unique set of labels
     _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
@@ -100,18 +104,18 @@ def unique_labels(*ys):
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
     # Check that we don't mix string type with number type
-    if (len(set(isinstance(label, str) for label in ys_labels)) > 1):
+    if len(set(isinstance(label, str) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
 
     return np.array(sorted(ys_labels))
 
 
 def _is_integral_float(y):
-    return y.dtype.kind == 'f' and np.all(y.astype(int) == y)
+    return y.dtype.kind == "f" and np.all(y.astype(int) == y)
 
 
 def is_multilabel(y):
-    """ Check if ``y`` is in a multilabel format.
+    """Check if ``y`` is in a multilabel format.
 
     Parameters
     ----------
@@ -138,11 +142,11 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, '__array__') or isinstance(y, Sequence):
+    if hasattr(y, "__array__") or isinstance(y, Sequence):
         # DeprecationWarning will be replaced by ValueError, see NEP 34
         # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
         with warnings.catch_warnings():
-            warnings.simplefilter('error', np.VisibleDeprecationWarning)
+            warnings.simplefilter("error", np.VisibleDeprecationWarning)
             try:
                 y = np.asarray(y)
             except np.VisibleDeprecationWarning:
@@ -156,14 +160,20 @@ def is_multilabel(y):
     if issparse(y):
         if isinstance(y, (dok_matrix, lil_matrix)):
             y = y.tocsr()
-        return (len(y.data) == 0 or np.unique(y.data).size == 1 and
-                (y.dtype.kind in 'biu' or  # bool, int, uint
-                 _is_integral_float(np.unique(y.data))))
+        return (
+            len(y.data) == 0
+            or np.unique(y.data).size == 1
+            and (
+                y.dtype.kind in "biu"
+                or _is_integral_float(np.unique(y.data))  # bool, int, uint
+            )
+        )
     else:
         labels = np.unique(y)
 
-        return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
-                                    _is_integral_float(labels))
+        return len(labels) < 3 and (
+            y.dtype.kind in "biu" or _is_integral_float(labels)  # bool, int, uint
+        )
 
 
 def check_classification_targets(y):
@@ -178,8 +188,13 @@ def check_classification_targets(y):
     y : array-like
     """
     y_type = type_of_target(y)
-    if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
-                      'multilabel-indicator', 'multilabel-sequences']:
+    if y_type not in [
+        "binary",
+        "multiclass",
+        "multiclass-multioutput",
+        "multilabel-indicator",
+        "multilabel-sequences",
+    ]:
         raise ValueError("Unknown label type: %r" % y_type)
 
 
@@ -247,24 +262,26 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
-             and not isinstance(y, str))
+    valid = (
+        isinstance(y, (Sequence, spmatrix)) or hasattr(y, "__array__")
+    ) and not isinstance(y, str)
 
     if not valid:
-        raise ValueError('Expected array-like (array or non-string sequence), '
-                         'got %r' % y)
+        raise ValueError(
+            "Expected array-like (array or non-string sequence), " "got %r" % y
+        )
 
-    sparse_pandas = (y.__class__.__name__ in ['SparseSeries', 'SparseArray'])
+    sparse_pandas = y.__class__.__name__ in ["SparseSeries", "SparseArray"]
     if sparse_pandas:
         raise ValueError("y cannot be class 'SparseSeries' or 'SparseArray'")
 
     if is_multilabel(y):
-        return 'multilabel-indicator'
+        return "multilabel-indicator"
 
     # DeprecationWarning will be replaced by ValueError, see NEP 34
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
     with warnings.catch_warnings():
-        warnings.simplefilter('error', np.VisibleDeprecationWarning)
+        warnings.simplefilter("error", np.VisibleDeprecationWarning)
         try:
             y = np.asarray(y)
         except np.VisibleDeprecationWarning:
@@ -274,23 +291,27 @@ def type_of_target(y):
 
     # The old sequence of sequences format
     try:
-        if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
-                and not isinstance(y[0], str)):
-            raise ValueError('You appear to be using a legacy multi-label data'
-                             ' representation. Sequence of sequences are no'
-                             ' longer supported; use a binary array or sparse'
-                             ' matrix instead - the MultiLabelBinarizer'
-                             ' transformer can convert to this format.')
+        if (
+            not hasattr(y[0], "__array__")
+            and isinstance(y[0], Sequence)
+            and not isinstance(y[0], str)
+        ):
+            raise ValueError(
+                "You appear to be using a legacy multi-label data"
+                " representation. Sequence of sequences are no"
+                " longer supported; use a binary array or sparse"
+                " matrix instead - the MultiLabelBinarizer"
+                " transformer can convert to this format."
+            )
     except IndexError:
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], str)):
-        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
+    if y.ndim > 2 or (y.dtype == object and len(y) and not isinstance(y.flat[0], str)):
+        return "unknown"  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:
-        return 'unknown'  # [[]]
+        return "unknown"  # [[]]
 
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = "-multioutput"  # [[1, 2], [1, 2]]
@@ -298,15 +319,15 @@ def type_of_target(y):
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
     # check float and contains non-integer float values
-    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
+    if y.dtype.kind == "f" and np.any(y != y.astype(int)):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         _assert_all_finite(y)
-        return 'continuous' + suffix
+        return "continuous" + suffix
 
     if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
-        return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+        return "multiclass" + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
     else:
-        return 'binary'  # [1, 2] or [["a"], ["b"]]
+        return "binary"  # [1, 2] or [["a"], ["b"]]
 
 
 def _check_partial_fit_first_call(clf, classes=None):
@@ -323,16 +344,16 @@ def _check_partial_fit_first_call(clf, classes=None):
     set on ``clf``.
 
     """
-    if getattr(clf, 'classes_', None) is None and classes is None:
-        raise ValueError("classes must be passed on the first call "
-                         "to partial_fit.")
+    if getattr(clf, "classes_", None) is None and classes is None:
+        raise ValueError("classes must be passed on the first call " "to partial_fit.")
 
     elif classes is not None:
-        if getattr(clf, 'classes_', None) is not None:
+        if getattr(clf, "classes_", None) is not None:
             if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
-                    "to partial_fit, was: %r" % (classes, clf.classes_))
+                    "to partial_fit, was: %r" % (classes, clf.classes_)
+                )
 
         else:
             # This is the first call to partial_fit
@@ -380,18 +401,18 @@ def class_distribution(y, sample_weight=None):
         y_nnz = np.diff(y.indptr)
 
         for k in range(n_outputs):
-            col_nonzero = y.indices[y.indptr[k]:y.indptr[k + 1]]
+            col_nonzero = y.indices[y.indptr[k] : y.indptr[k + 1]]
             # separate sample weights for zero and non-zero elements
             if sample_weight is not None:
                 nz_samp_weight = sample_weight[col_nonzero]
-                zeros_samp_weight_sum = (np.sum(sample_weight) -
-                                         np.sum(nz_samp_weight))
+                zeros_samp_weight_sum = np.sum(sample_weight) - np.sum(nz_samp_weight)
             else:
                 nz_samp_weight = None
                 zeros_samp_weight_sum = y.shape[0] - y_nnz[k]
 
-            classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k + 1]],
-                                       return_inverse=True)
+            classes_k, y_k = np.unique(
+                y.data[y.indptr[k] : y.indptr[k + 1]], return_inverse=True
+            )
             class_prior_k = np.bincount(y_k, weights=nz_samp_weight)
 
             # An explicit zero was found, combine its weight with the weight
@@ -403,8 +424,7 @@ def class_distribution(y, sample_weight=None):
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)
-                class_prior_k = np.insert(class_prior_k, 0,
-                                          zeros_samp_weight_sum)
+                class_prior_k = np.insert(class_prior_k, 0, zeros_samp_weight_sum)
 
             classes.append(classes_k)
             n_classes.append(classes_k.shape[0])
@@ -459,6 +479,7 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     # The motivation is to use confidence levels as a way to break ties in
     # the votes without switching any decision made based on a difference
     # of 1 vote.
-    transformed_confidences = (sum_of_confidences /
-                               (3 * (np.abs(sum_of_confidences) + 1)))
+    transformed_confidences = sum_of_confidences / (
+        3 * (np.abs(sum_of_confidences) + 1)
+    )
     return votes + transformed_confidences

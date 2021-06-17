@@ -158,17 +158,45 @@ class Perceptron(BaseSGDClassifier):
 
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
-    def __init__(self, *, penalty=None, alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True,
-                 max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,
-                 n_jobs=None, random_state=0, early_stopping=False,
-                 validation_fraction=0.1, n_iter_no_change=5,
-                 class_weight=None, warm_start=False):
+
+    def __init__(
+        self,
+        *,
+        penalty=None,
+        alpha=0.0001,
+        l1_ratio=0.15,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        eta0=1.0,
+        n_jobs=None,
+        random_state=0,
+        early_stopping=False,
+        validation_fraction=0.1,
+        n_iter_no_change=5,
+        class_weight=None,
+        warm_start=False
+    ):
         super().__init__(
-            loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
-            fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
-            shuffle=shuffle, verbose=verbose, random_state=random_state,
-            learning_rate="constant", eta0=eta0, early_stopping=early_stopping,
+            loss="perceptron",
+            penalty=penalty,
+            alpha=alpha,
+            l1_ratio=l1_ratio,
+            fit_intercept=fit_intercept,
+            max_iter=max_iter,
+            tol=tol,
+            shuffle=shuffle,
+            verbose=verbose,
+            random_state=random_state,
+            learning_rate="constant",
+            eta0=eta0,
+            early_stopping=early_stopping,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, power_t=0.5,
-            warm_start=warm_start, class_weight=class_weight, n_jobs=n_jobs)
+            n_iter_no_change=n_iter_no_change,
+            power_t=0.5,
+            warm_start=warm_start,
+            class_weight=class_weight,
+            n_jobs=n_jobs,
+        )
