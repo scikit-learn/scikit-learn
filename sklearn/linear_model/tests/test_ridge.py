@@ -1481,6 +1481,52 @@ def test_ridge_positive_error_test(solver):
                                 solver=solver, return_intercept=False)
 
 
+@pytest.mark.parametrize('alpha', [1e-3, 1e-2, 0.1, 1.])
+def test_positive_ridge_loss(alpha):
+    # Check ridge loss consistency when positive argument is enabled
+    X, y = make_regression(n_samples=300,
+                           n_features=300,
+                           random_state=42)
+    alpha = 0.10
+    n_check = 100
+
+    rng = np.random.RandomState(42)
+
+    def ridge_loss(model, with_positive_noise=False, noise_scale=1e-8):
+        intercept = model.intercept_
+        if with_positive_noise:
+            coef = (
+                model.coef_ +
+                rng.uniform(0, noise_scale, size=model.coef_.shape)
+            )
+        else:
+            coef = model.coef_
+
+        return (
+            0.5 * np.sum((y - X.dot(coef) - intercept) ** 2) +
+            0.5 * alpha * np.sum(coef ** 2)
+        )
+
+    model = Ridge(alpha=alpha).fit(X, y)
+    model_positive = Ridge(alpha=alpha, positive=True).fit(X, y)
+
+    # Check 1:
+    #   Loss for solution found by Ridge(positive=False)
+    #   is lower than that for solution found by Ridge(positive=True)
+    loss = ridge_loss(model)
+    loss_positive = ridge_loss(model_positive)
+    assert loss <= loss_positive
+
+    # Check 2:
+    #   Loss for solution found by Ridge(positive=True)
+    #   is lower than that for small random positive perturbation
+    #   of the positive solution.
+    for _ in range(n_check):
+        loss_perturbed = ridge_loss(model_positive,
+                                    with_positive_noise=True)
+        assert loss_positive <= loss_perturbed
+
+
 def test_trf_solver_error():
     X = np.array([[1, 1], [1, 1]])
     y = np.array([-1e10, -1e10])
