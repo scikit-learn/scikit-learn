@@ -91,7 +91,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         accept_sparse=False,
         check_inverse=True,
         kw_args=None,
-        inv_kw_args=None
+        inv_kw_args=None,
     ):
         self.func = func
         self.inverse_func = inverse_func

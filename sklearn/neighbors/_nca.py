@@ -176,7 +176,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         tol=1e-5,
         callback=None,
         verbose=0,
-        random_state=None
+        random_state=None,
     ):
         self.n_components = n_components
         self.init = init

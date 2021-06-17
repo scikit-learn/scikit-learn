@@ -126,7 +126,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         gamma=None,
         degree=3,
         coef0=1,
-        kernel_params=None
+        kernel_params=None,
     ):
         self.alpha = alpha
         self.kernel = kernel

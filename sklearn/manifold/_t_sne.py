@@ -737,7 +737,7 @@ class TSNE(BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
-        square_distances="legacy"
+        square_distances="legacy",
     ):
         self.n_components = n_components
         self.perplexity = perplexity

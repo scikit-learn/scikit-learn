@@ -255,7 +255,7 @@ def ridge_regression(
     random_state=None,
     return_n_iter=False,
     return_intercept=False,
-    check_input=True
+    check_input=True,
 ):
     """Solve the ridge equation by the method of normal equations.
 
@@ -585,7 +585,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         max_iter=None,
         tol=1e-3,
         solver="auto",
-        random_state=None
+        random_state=None,
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -686,7 +686,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 return_n_iter=True,
                 return_intercept=False,
                 check_input=False,
-                **params
+                **params,
             )
             self._set_intercept(X_offset, y_offset, X_scale)
 
@@ -843,7 +843,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         max_iter=None,
         tol=1e-3,
         solver="auto",
-        random_state=None
+        random_state=None,
     ):
         super().__init__(
             alpha=alpha,
@@ -1025,7 +1025,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         tol=1e-3,
         class_weight=None,
         solver="auto",
-        random_state=None
+        random_state=None,
     ):
         super().__init__(
             alpha=alpha,
@@ -1268,7 +1268,7 @@ class _RidgeGCV(LinearModel):
         gcv_mode=None,
         store_cv_values=False,
         is_clf=False,
-        alpha_per_target=False
+        alpha_per_target=False,
     ):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
@@ -1762,7 +1762,7 @@ class _BaseRidgeCV(LinearModel):
         cv=None,
         gcv_mode=None,
         store_cv_values=False,
-        alpha_per_target=False
+        alpha_per_target=False,
     ):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
@@ -2124,7 +2124,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         scoring=None,
         cv=None,
         class_weight=None,
-        store_cv_values=False
+        store_cv_values=False,
     ):
         super().__init__(
             alphas=alphas,

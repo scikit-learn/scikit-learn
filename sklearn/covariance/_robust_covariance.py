@@ -687,7 +687,7 @@ class MinCovDet(EmpiricalCovariance):
         store_precision=True,
         assume_centered=False,
         support_fraction=None,
-        random_state=None
+        random_state=None,
     ):
         self.store_precision = store_precision
         self.assume_centered = assume_centered

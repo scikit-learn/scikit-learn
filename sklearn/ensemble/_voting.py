@@ -263,7 +263,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         weights=None,
         n_jobs=None,
         flatten_transform=True,
-        verbose=False
+        verbose=False,
     ):
         super().__init__(estimators=estimators)
         self.voting = voting

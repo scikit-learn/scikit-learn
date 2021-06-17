@@ -107,7 +107,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         random_state,
         min_impurity_decrease,
         class_weight=None,
-        ccp_alpha=0.0
+        ccp_alpha=0.0,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -875,7 +875,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         class_weight=None,
-        ccp_alpha=0.0
+        ccp_alpha=0.0,
     ):
         super().__init__(
             criterion=criterion,
@@ -1246,7 +1246,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         random_state=None,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
-        ccp_alpha=0.0
+        ccp_alpha=0.0,
     ):
         super().__init__(
             criterion=criterion,
@@ -1573,7 +1573,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         class_weight=None,
-        ccp_alpha=0.0
+        ccp_alpha=0.0,
     ):
         super().__init__(
             criterion=criterion,
@@ -1803,7 +1803,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         random_state=None,
         min_impurity_decrease=0.0,
         max_leaf_nodes=None,
-        ccp_alpha=0.0
+        ccp_alpha=0.0,
     ):
         super().__init__(
             criterion=criterion,

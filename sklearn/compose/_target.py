@@ -122,7 +122,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         transformer=None,
         func=None,
         inverse_func=None,
-        check_inverse=True
+        check_inverse=True,
     ):
         self.regressor = regressor
         self.transformer = transformer

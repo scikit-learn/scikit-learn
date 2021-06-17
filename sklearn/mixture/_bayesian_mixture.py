@@ -349,7 +349,7 @@ class BayesianGaussianMixture(BaseMixture):
         random_state=None,
         warm_start=False,
         verbose=0,
-        verbose_interval=10
+        verbose_interval=10,
     ):
         super().__init__(
             n_components=n_components,

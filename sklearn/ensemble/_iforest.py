@@ -197,7 +197,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
-        warm_start=False
+        warm_start=False,
     ):
         super().__init__(
             base_estimator=ExtraTreeRegressor(

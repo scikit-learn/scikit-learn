@@ -194,7 +194,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         class_weight=None,
         verbose=0,
         random_state=None,
-        max_iter=1000
+        max_iter=1000,
     ):
         self.dual = dual
         self.tol = tol
@@ -420,7 +420,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         dual=True,
         verbose=0,
         random_state=None,
-        max_iter=1000
+        max_iter=1000,
     ):
         self.tol = tol
         self.C = C
@@ -728,7 +728,7 @@ class SVC(BaseSVC):
         max_iter=-1,
         decision_function_shape="ovr",
         break_ties=False,
-        random_state=None
+        random_state=None,
     ):
 
         super().__init__(
@@ -977,7 +977,7 @@ class NuSVC(BaseSVC):
         max_iter=-1,
         decision_function_shape="ovr",
         break_ties=False,
-        random_state=None
+        random_state=None,
     ):
 
         super().__init__(
@@ -1170,7 +1170,7 @@ class SVR(RegressorMixin, BaseLibSVM):
         shrinking=True,
         cache_size=200,
         verbose=False,
-        max_iter=-1
+        max_iter=-1,
     ):
 
         super().__init__(
@@ -1352,7 +1352,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         tol=1e-3,
         cache_size=200,
         verbose=False,
-        max_iter=-1
+        max_iter=-1,
     ):
 
         super().__init__(
@@ -1519,7 +1519,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         shrinking=True,
         cache_size=200,
         verbose=False,
-        max_iter=-1
+        max_iter=-1,
     ):
 
         super().__init__(

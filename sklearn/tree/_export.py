@@ -89,7 +89,7 @@ def plot_tree(
     rounded=False,
     precision=3,
     ax=None,
-    fontsize=None
+    fontsize=None,
 ):
     """Plot a decision tree.
 
@@ -755,7 +755,7 @@ def export_graphviz(
     rounded=False,
     special_characters=False,
     precision=3,
-    fontname="helvetica"
+    fontname="helvetica",
 ):
     """Export a decision tree in DOT format.
 
@@ -927,7 +927,7 @@ def export_text(
     max_depth=10,
     spacing=3,
     decimals=2,
-    show_weights=False
+    show_weights=False,
 ):
     """Build a text report showing the rules of a decision tree.
 

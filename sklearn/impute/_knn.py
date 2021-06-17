@@ -109,7 +109,7 @@ class KNNImputer(_BaseImputer):
         weights="uniform",
         metric="nan_euclidean",
         copy=True,
-        add_indicator=False
+        add_indicator=False,
     ):
         super().__init__(missing_values=missing_values, add_indicator=add_indicator)
         self.n_neighbors = n_neighbors

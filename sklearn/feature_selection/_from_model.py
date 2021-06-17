@@ -181,7 +181,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         prefit=False,
         norm_order=1,
         max_features=None,
-        importance_getter="auto"
+        importance_getter="auto",
     ):
         self.estimator = estimator
         self.threshold = threshold

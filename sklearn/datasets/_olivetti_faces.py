@@ -41,7 +41,7 @@ def fetch_olivetti_faces(
     shuffle=False,
     random_state=0,
     download_if_missing=True,
-    return_X_y=False
+    return_X_y=False,
 ):
     """Load the Olivetti faces data-set from AT&T (classification).
 

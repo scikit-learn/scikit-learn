@@ -350,7 +350,7 @@ def test_normal_ridge_comparison(
         normalize=False,
         random_state=42,
         fit_intercept=fit_intercept,
-        **ridge_params
+        **ridge_params,
     )
     ridge.fit(X_train, y_train, sample_weight=sw_train)
 

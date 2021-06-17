@@ -280,7 +280,7 @@ def setup_package():
         python_requires=">=3.7",
         install_requires=min_deps.tag_to_packages["install"],
         package_data={"": ["*.pxd"]},
-        **extra_setuptools_args
+        **extra_setuptools_args,
     )
 
     commands = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
