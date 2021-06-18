@@ -189,8 +189,7 @@ def _construct_compose_pipeline_instance(Estimator):
     elif Estimator.__name__ == "Pipeline":
         return Estimator(steps=[("clf", LogisticRegression())])
     elif Estimator.__name__ == "FeatureUnion":
-        return Estimator(transformer_list=[("transformer",
-                                            FunctionTransformer())])
+        return Estimator(transformer_list=[("transformer", FunctionTransformer())])
 
 
 def _construct_sparse_coder(Estimator):
