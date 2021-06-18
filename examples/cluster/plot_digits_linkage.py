@@ -41,10 +41,9 @@ def nudge_images(X, y):
     # methods, but we multiply the size of the dataset only by 2, as the
     # cost of the hierarchical clustering methods are strongly
     # super-linear in n_samples
-    def shift(x): return ndimage.shift(x.reshape((8, 8)),
-                                       .3 * np.random.normal(size=2),
-                                       mode='constant',
-                                       ).ravel()
+    shift = lambda x: ndimage.shift(x.reshape((8, 8)),
+                                    .3 * np.random.normal(size=2),
+                                    mode='constant').ravel()
     X = np.concatenate([X, np.apply_along_axis(shift, 1, X)])
     Y = np.concatenate([y, y], axis=0)
     return X, Y
