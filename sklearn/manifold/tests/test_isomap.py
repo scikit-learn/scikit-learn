@@ -249,3 +249,10 @@ def test_isomap_fit_precomputed_radius_graph():
     result = isomap.fit_transform(X)
     # test fit_transform yields similar result as using precomputed distance matrix
     assert np.allclose(precomputed_result, result)
+
+
+def test_isomap_raise_warning_with_neighbor_and_raidus_argument():
+    X, _ = datasets.load_digits(return_X_y=True)
+    isomap = manifold.Isomap(n_neighbors=5, radius=5.5)
+    with pytest.warns(UserWarning):
+        isomap.fit_transform(X)
