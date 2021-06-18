@@ -255,4 +255,6 @@ def test_isomap_raise_warning_with_neighbor_and_raidus_argument():
     X, _ = datasets.load_digits(return_X_y=True)
     isomap = manifold.Isomap(n_neighbors=5, radius=5.5)
     with pytest.warns(UserWarning):
+        isomap.fit(X)
+    with pytest.warns(UserWarning):
         isomap.fit_transform(X)
