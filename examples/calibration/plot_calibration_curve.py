@@ -80,9 +80,9 @@ def plot_calibration_curve(est, name, fig_index):
     # Logistic regression with no calibration as baseline
     lr = LogisticRegression(C=1.)
 
-    plt.figure(fig_index, figsize=(10, 10))
-    ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
-    ax2 = plt.subplot2grid((3, 1), (2, 0))
+    fig = plt.figure(fig_index, figsize=(10, 10))
+    ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2, fig=fig)
+    ax2 = plt.subplot2grid((3, 1), (2, 0), fig=fig)
 
     ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
     for clf, name in [(lr, 'Logistic'),
