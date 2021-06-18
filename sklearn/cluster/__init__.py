@@ -34,7 +34,7 @@ __all__ = [
     "cluster_optics_xi",
     "compute_optics_graph",
     "KMeans",
-    'BisectKMeans',
+    "BisectKMeans",
     "FeatureAgglomeration",
     "MeanShift",
     "MiniBatchKMeans",

@@ -28,7 +28,7 @@ from ..utils.validation import check_random_state
 
 
 def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
-    """ Compute the labels of the given samples and centers.
+    """Compute the labels of the given samples and centers.
 
     Parameters
     ----------
@@ -68,25 +68,34 @@ def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
     else:
         _labels = lloyd_iter_chunked_dense
 
-    _labels(X, sample_weight, x_squared_norms, centers, centers,
-            weight_in_clusters, labels, center_shift, n_threads,
-            update_centers=False)
+    _labels(
+        X,
+        sample_weight,
+        x_squared_norms,
+        centers,
+        centers,
+        weight_in_clusters,
+        labels,
+        center_shift,
+        n_threads,
+        update_centers=False,
+    )
 
     return labels
 
 
-def _check_labels_threadpool_limit(X, sample_weight, x_squared_norms,
-                                   centers, n_threads=1):
+def _check_labels_threadpool_limit(
+    X, sample_weight, x_squared_norms, centers, n_threads=1
+):
     """Same as _check_labels but in a threadpool_limits context."""
     with threadpool_limits(limits=1, user_api="blas"):
-        labels = _check_labels(X, sample_weight, x_squared_norms,
-                               centers, n_threads)
+        labels = _check_labels(X, sample_weight, x_squared_norms, centers, n_threads)
 
     return labels
 
 
 class BisectKMeans(KMeans):
-    """ Bisecting K-Means clustering
+    """Bisecting K-Means clustering
     K-Means variant that splits consecutively data with two centroids.
     Centroids with lower SSE (inertia) are kept as new cluster centers.
     Centroids with higher SSE are further split until the desired
@@ -213,15 +222,32 @@ class BisectKMeans(KMeans):
            [10.,  2.],
            [10.,  8.]])
     """
-    def __init__(self,  n_clusters=8, init='k-means++', n_init=10,
-                 random_state=None, max_iter=30, verbose=0,
-                 tol=1e-4, copy_x=True, algorithm='auto',
-                 bisect_strategy='biggest_sse'):
+
+    def __init__(
+        self,
+        n_clusters=8,
+        init="k-means++",
+        n_init=10,
+        random_state=None,
+        max_iter=30,
+        verbose=0,
+        tol=1e-4,
+        copy_x=True,
+        algorithm="auto",
+        bisect_strategy="biggest_sse",
+    ):
 
         super().__init__(
-            n_clusters=n_clusters, init=init, max_iter=max_iter,
-            verbose=verbose, random_state=random_state, tol=tol,
-            n_init=n_init, copy_x=copy_x, algorithm=algorithm)
+            n_clusters=n_clusters,
+            init=init,
+            max_iter=max_iter,
+            verbose=verbose,
+            random_state=random_state,
+            tol=tol,
+            n_init=n_init,
+            copy_x=copy_x,
+            algorithm=algorithm,
+        )
 
         self.bisect_strategy = bisect_strategy
 
@@ -254,15 +280,16 @@ class BisectKMeans(KMeans):
         _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
 
         for value in range(centers.shape[0]):
-            indexes = (labels == value)
+            indexes = labels == value
 
             data = X[indexes]
             weights = sample_weight[indexes]
             center = centers[value][np.newaxis, :]
             label = np.zeros(data.shape[0], dtype=np.intc)
 
-            errors_by_label[value] = _inertia(data, weights, center,
-                                              label, self._n_threads)
+            errors_by_label[value] = _inertia(
+                data, weights, center, label, self._n_threads
+            )
 
         return errors_by_label
 
@@ -270,30 +297,33 @@ class BisectKMeans(KMeans):
         super()._check_params(X)
 
         # bisect_strategy
-        if self.bisect_strategy not in \
-                ["biggest_sse", "largest_cluster"]:
-            raise ValueError(f"Bisect Strategy must be 'biggest_sse', "
-                             f"or 'largest_cluster' "
-                             f"got {self.bisect_strategy} instead.")
+        if self.bisect_strategy not in ["biggest_sse", "largest_cluster"]:
+            raise ValueError(
+                f"Bisect Strategy must be 'biggest_sse', "
+                f"or 'largest_cluster' "
+                f"got {self.bisect_strategy} instead."
+            )
 
         # Regular K-Means should do less computations when there are only
         # less than 3 clusters
         if self.n_clusters < 3:
-            warnings.warn("BisectKMeans might be inefficient for n_cluster "
-                          "smaller than 3  "
-                          "- Use Normal KMeans from sklearn.cluster instead.",
-                          EfficiencyWarning)
+            warnings.warn(
+                "BisectKMeans might be inefficient for n_cluster "
+                "smaller than 3  "
+                "- Use Normal KMeans from sklearn.cluster instead.",
+                EfficiencyWarning,
+            )
 
         if X.shape[0] <= 1:
-            raise ValueError("BisectKMeans needs more than one sample "
-                             "to perform bisection.")
+            raise ValueError(
+                "BisectKMeans needs more than one sample " "to perform bisection."
+            )
 
-        if hasattr(self.init, '__array__'):
-            raise ValueError("BisectKMeans does not support "
-                             "init as array.")
+        if hasattr(self.init, "__array__"):
+            raise ValueError("BisectKMeans does not support " "init as array.")
 
     def _bisect(self, X, sample_weight, random_state):
-        """ Bisection of data
+        """Bisection of data
         Attempts to get best bisection of data by performing regular K-Means
         for different pairs of centroids
 
@@ -327,13 +357,19 @@ class BisectKMeans(KMeans):
         best_inertia = None
 
         for i in range(self.n_init):
-            centers_init = self._init_centroids(X, x_squared_norms, init,
-                                                random_state, n_centroids=2)
+            centers_init = self._init_centroids(
+                X, x_squared_norms, init, random_state, n_centroids=2
+            )
 
             labels, inertia, centers, _ = self._kmeans_single(
-                X, sample_weight, centers_init, max_iter=self.max_iter,
-                verbose=self.verbose, tol=self.tol,
-                x_squared_norms=x_squared_norms, n_threads=self._n_threads
+                X,
+                sample_weight,
+                centers_init,
+                max_iter=self.max_iter,
+                verbose=self.verbose,
+                tol=self.tol,
+                x_squared_norms=x_squared_norms,
+                n_threads=self._n_threads,
             )
 
             if best_inertia is None or inertia < best_inertia:
@@ -347,7 +383,9 @@ class BisectKMeans(KMeans):
                 "Number of distinct clusters ({}) found smaller than "
                 "n_clusters ({}). Possibly due to duplicate points "
                 "in X.".format(distinct_clusters, 2),
-                ConvergenceWarning, stacklevel=2)
+                ConvergenceWarning,
+                stacklevel=2,
+            )
 
         return best_centers, best_labels
 
@@ -376,10 +414,14 @@ class BisectKMeans(KMeans):
         self
             Fitted estimator.
         """
-        X = self._validate_data(X, accept_sparse='csr',
-                                dtype=[np.float64, np.float32],
-                                order='C', copy=self.copy_x,
-                                accept_large_sparse=False)
+        X = self._validate_data(
+            X,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+            order="C",
+            copy=self.copy_x,
+            accept_large_sparse=False,
+        )
 
         self._check_params(X)
         random_state = check_random_state(self.random_state)
@@ -389,8 +431,8 @@ class BisectKMeans(KMeans):
         # Validate init array
         init = self.init
 
-        if hasattr(init, '__array__'):
-            init = check_array(init, dtype=X.dtype, copy=True, order='C')
+        if hasattr(init, "__array__"):
+            init = check_array(init, dtype=X.dtype, copy=True, order="C")
             self._validate_center_shape(X, init)
 
         if self._algorithm == "full":
@@ -417,19 +459,21 @@ class BisectKMeans(KMeans):
         if self.n_clusters == 1:
             x_squared_norms = row_norms(X, squared=True)
 
-            clusters = self._init_centroids(X, x_squared_norms,
-                                            init, random_state,
-                                            n_centroids=1)
-            warnings.warn("Bisection won't be performed - "
-                          "needs at least two clusters to run.")
+            clusters = self._init_centroids(
+                X, x_squared_norms, init, random_state, n_centroids=1
+            )
+            warnings.warn(
+                "Bisection won't be performed - " "needs at least two clusters to run."
+            )
 
             self.labels_ = np.zeros(X.shape[0], dtype=np.intc)
 
         else:
             # Run proper bisection to gather
             # self.cluster_centers_ and self.labels_
-            clusters, self.labels_ = self._run_bisect_kmeans(X, sample_weight,
-                                                             random_state)
+            clusters, self.labels_ = self._run_bisect_kmeans(
+                X, sample_weight, random_state
+            )
 
         # Restore original data
         if not sp.issparse(X):
@@ -438,8 +482,9 @@ class BisectKMeans(KMeans):
 
         self.cluster_centers_ = clusters
 
-        self.inertia_ = _inertia(X, sample_weight, self.cluster_centers_,
-                                 self.labels_, self._n_threads)
+        self.inertia_ = _inertia(
+            X, sample_weight, self.cluster_centers_, self.labels_, self._n_threads
+        )
 
         # number of iterations will always be equal to
         # (number of clusters - 1)
@@ -448,7 +493,7 @@ class BisectKMeans(KMeans):
         return self
 
     def _run_bisect_kmeans(self, X, sample_weight, random_state):
-        """ Performs Bisecting K-Means, which splits always cluster depending
+        """Performs Bisecting K-Means, which splits always cluster depending
         on 'bisect_strategy' attribute:
 
         - "biggest sse": Picks cluster with biggest SSE (Sum of Squared Errors)
@@ -500,8 +545,7 @@ class BisectKMeans(KMeans):
             picked_weights = sample_weight[picked_labels]
 
             # Perform Bisection
-            _centers, _ = self._bisect(picked_data, picked_weights,
-                                       random_state)
+            _centers, _ = self._bisect(picked_data, picked_weights, random_state)
 
             if self.verbose:
                 print(f"Centroid Found: {_centers[0]}")
@@ -519,15 +563,13 @@ class BisectKMeans(KMeans):
 
             # Recalculate labels for all centers
             # That is made to be sure that all data is split to proper clusters
-            labels = _check_labels_threadpool_limit(X, sample_weight,
-                                                    x_squared_norms,
-                                                    centers,
-                                                    self._n_threads)
+            labels = _check_labels_threadpool_limit(
+                X, sample_weight, x_squared_norms, centers, self._n_threads
+            )
 
             if strategy == "biggest_sse":
                 # Compute SSE (Sum of Squared Errors) for each cluster
-                errors = self._compute_bisect_errors(X, centers, labels,
-                                                     sample_weight)
+                errors = self._compute_bisect_errors(X, centers, labels, sample_weight)
 
                 # Pick cluster with biggest SSE
                 biggest_label, _ = max(errors.items(), key=lambda x: x[1])
@@ -539,7 +581,7 @@ class BisectKMeans(KMeans):
                 biggest_label = np.argmax(labels_occurrences)
 
             # Pick indexes of data for further split
-            picked_labels = (labels == biggest_label)
+            picked_labels = labels == biggest_label
 
             # Pick id of cluster for further split
             biggest_id = list(centers_dict.keys())[biggest_label]

@@ -189,7 +189,8 @@ def _construct_compose_pipeline_instance(Estimator):
     elif Estimator.__name__ == "Pipeline":
         return Estimator(steps=[("clf", LogisticRegression())])
     elif Estimator.__name__ == "FeatureUnion":
-        return Estimator(transformer_list=[("transformer", FunctionTransformer())])
+        return Estimator(transformer_list=[("transformer",
+                                            FunctionTransformer())])
 
 
 def _construct_sparse_coder(Estimator):
@@ -299,7 +300,7 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    if Estimator.__name__ == 'BisectKMeans':
+    if Estimator.__name__ == "BisectKMeans":
         skipped_attributes.add("n_features_in_")
         # BisectKMeans don't have attribute 'n_features_in'
 

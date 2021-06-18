@@ -1043,8 +1043,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                         f"OMP_NUM_THREADS={active_threads}"
                     )
 
-    def _init_centroids(self, X, x_squared_norms, init, random_state,
-                        init_size=None, n_centroids=None):
+    def _init_centroids(
+        self, X, x_squared_norms, init, random_state, init_size=None, n_centroids=None
+    ):
         """Compute the initial centroids.
 
         Parameters
