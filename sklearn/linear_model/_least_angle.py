@@ -945,9 +945,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Lars(n_nonzero_coefs=1)
+    >>> reg = linear_model.Lars(n_nonzero_coefs=1, normalize=False)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    Lars(n_nonzero_coefs=1)
+    Lars(n_nonzero_coefs=1, normalize=False)
     >>> print(reg.coef_)
     [ 0. -1.11...]
 
@@ -1256,11 +1256,11 @@ class LassoLars(Lars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLars(alpha=0.01)
+    >>> reg = linear_model.LassoLars(alpha=0.01, normalize=False)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLars(alpha=0.01)
+    LassoLars(alpha=0.01, normalize=False)
     >>> print(reg.coef_)
-    [ 0.         -0.963257...]
+    [ 0.         -0.955...]
 
     See Also
     --------
@@ -1567,13 +1567,13 @@ class LarsCV(Lars):
     >>> from sklearn.linear_model import LarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
-    >>> reg = LarsCV(cv=5).fit(X, y)
+    >>> reg = LarsCV(cv=5, normalize=False).fit(X, y)
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
-    0.0254...
+    0.2961...
     >>> reg.predict(X[:1,])
-    array([154.0842...])
+    array([154.3996...])
 
     See Also
     --------
@@ -1846,13 +1846,13 @@ class LassoLarsCV(LarsCV):
     >>> from sklearn.linear_model import LassoLarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4.0, random_state=0)
-    >>> reg = LassoLarsCV(cv=5).fit(X, y)
+    >>> reg = LassoLarsCV(cv=5, normalize=False).fit(X, y)
     >>> reg.score(X, y)
-    0.9992...
+    0.9993...
     >>> reg.alpha_
-    0.0484...
+    0.3972...
     >>> reg.predict(X[:1,])
-    array([-77.8723...])
+    array([-78.4831...])
 
     Notes
     -----
@@ -2009,9 +2009,9 @@ class LassoLarsIC(LassoLars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLarsIC(criterion='bic')
+    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    LassoLarsIC(criterion='bic')
+    LassoLarsIC(criterion='bic', normalize=False)
     >>> print(reg.coef_)
     [ 0.  -1.11...]
 
