@@ -4,12 +4,12 @@ from .glm import (
     GeneralizedLinearRegressor,
     PoissonRegressor,
     GammaRegressor,
-    TweedieRegressor
+    TweedieRegressor,
 )
 
 __all__ = [
     "GeneralizedLinearRegressor",
     "PoissonRegressor",
     "GammaRegressor",
-    "TweedieRegressor"
+    "TweedieRegressor",
 ]

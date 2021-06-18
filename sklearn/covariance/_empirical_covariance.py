@@ -42,9 +42,9 @@ def log_likelihood(emp_cov, precision):
         Sample mean of the log-likelihood.
     """
     p = precision.shape[0]
-    log_likelihood_ = - np.sum(emp_cov * precision) + fast_logdet(precision)
+    log_likelihood_ = -np.sum(emp_cov * precision) + fast_logdet(precision)
     log_likelihood_ -= p * np.log(2 * np.pi)
-    log_likelihood_ /= 2.
+    log_likelihood_ /= 2.0
     return log_likelihood_
 
 
@@ -84,8 +84,9 @@ def empirical_covariance(X, *, assume_centered=False):
         X = np.reshape(X, (1, -1))
 
     if X.shape[0] == 1:
-        warnings.warn("Only one sample available. "
-                      "You may want to reshape your data array")
+        warnings.warn(
+            "Only one sample available. " "You may want to reshape your data array"
+        )
 
     if assume_centered:
         covariance = np.dot(X.T, X) / X.shape[0]
@@ -149,6 +150,7 @@ class EmpiricalCovariance(BaseEstimator):
     array([0.0622..., 0.0193...])
 
     """
+
     def __init__(self, *, store_precision=True, assume_centered=False):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
@@ -210,8 +212,7 @@ class EmpiricalCovariance(BaseEstimator):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        covariance = empirical_covariance(
-            X, assume_centered=self.assume_centered)
+        covariance = empirical_covariance(X, assume_centered=self.assume_centered)
         self._set_covariance(covariance)
 
         return self
@@ -239,15 +240,13 @@ class EmpiricalCovariance(BaseEstimator):
         """
         X_test = self._validate_data(X_test, reset=False)
         # compute empirical covariance of the test set
-        test_cov = empirical_covariance(
-            X_test - self.location_, assume_centered=True)
+        test_cov = empirical_covariance(X_test - self.location_, assume_centered=True)
         # compute log likelihood
         res = log_likelihood(test_cov, self.get_precision())
 
         return res
 
-    def error_norm(self, comp_cov, norm='frobenius', scaling=True,
-                   squared=True):
+    def error_norm(self, comp_cov, norm="frobenius", scaling=True, squared=True):
         """Computes the Mean Squared Error between two covariance estimators.
         (In the sense of the Frobenius norm).
 
@@ -286,7 +285,8 @@ class EmpiricalCovariance(BaseEstimator):
             squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error)))
         else:
             raise NotImplementedError(
-                "Only spectral and frobenius norms are implemented")
+                "Only spectral and frobenius norms are implemented"
+            )
         # optionally scale the error norm
         if scaling:
             squared_norm = squared_norm / error.shape[0]
@@ -318,7 +318,8 @@ class EmpiricalCovariance(BaseEstimator):
         precision = self.get_precision()
         with config_context(assume_finite=True):
             # compute mahalanobis distances
-            dist = pairwise_distances(X, self.location_[np.newaxis, :],
-                                      metric='mahalanobis', VI=precision)
+            dist = pairwise_distances(
+                X, self.location_[np.newaxis, :], metric="mahalanobis", VI=precision
+            )
 
         return np.reshape(dist, (len(X),)) ** 2

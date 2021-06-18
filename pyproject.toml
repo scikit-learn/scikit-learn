@@ -19,25 +19,19 @@ requires = [
 
 [tool.black]
 line-length = 88
+target_version = ['py37', 'py38', 'py39']
 exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.mypy_cache
-    | examples
-    | build
-    | dist
-    | doc
-    | sklearn/externals
-  )/
-)
-'''
-include = '''
-(
-  /(
-      doc/conf.py
-  )/
-)
+/(
+    \.eggs         # exclude a few common directories in the
+  | \.git          # root of the project
+  | \.mypy_cache
+  | examples
+  | build
+  | dist
+  | doc/tutorial
+  | doc/_build
+  | doc/auto_examples
+  | sklearn/externals
+  | asv_benchmarks/env
+)/
 '''
