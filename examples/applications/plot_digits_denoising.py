@@ -42,7 +42,7 @@ X = MinMaxScaler().fit_transform(X)
 
 # %%
 # The idea will be to learn a PCA basis (with and without a kernel) on
-# noisy images and then used these models to reconstruct and denoise these
+# noisy images and then use these models to reconstruct and denoise these
 # images.
 #
 # Thus, we split our dataset into a training and testing set composed of 1,000
