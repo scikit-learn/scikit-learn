@@ -51,8 +51,7 @@ def load_files_root(tmpdir_factory):
 @pytest.fixture
 def test_category_dir_1(load_files_root):
     test_category_dir1 = tempfile.mkdtemp(dir=load_files_root)
-    sample_file = tempfile.NamedTemporaryFile(dir=test_category_dir1,
-                                              delete=False)
+    sample_file = tempfile.NamedTemporaryFile(dir=test_category_dir1, delete=False)
     sample_file.write(b"Hello World!\n")
     sample_file.close()
     yield str(test_category_dir1)
@@ -88,10 +87,9 @@ def test_default_empty_load_files(load_files_root):
     assert res.DESCR is None
 
 
-def test_default_load_files(test_category_dir_1, test_category_dir_2,
-                            load_files_root):
+def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files_root):
     if IS_PYPY:
-        pytest.xfail('[PyPy] fails due to string containing NUL characters')
+        pytest.xfail("[PyPy] fails due to string containing NUL characters")
     res = load_files(load_files_root)
     assert len(res.filenames) == 1
     assert len(res.target_names) == 2
@@ -100,12 +98,14 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2,
 
 
 def test_load_files_w_categories_desc_and_encoding(
-        test_category_dir_1, test_category_dir_2, load_files_root):
+    test_category_dir_1, test_category_dir_2, load_files_root
+):
     if IS_PYPY:
-        pytest.xfail('[PyPy] fails due to string containing NUL characters')
-    category = os.path.abspath(test_category_dir_1).split('/').pop()
-    res = load_files(load_files_root, description="test",
-                     categories=category, encoding="utf-8")
+        pytest.xfail("[PyPy] fails due to string containing NUL characters")
+    category = os.path.abspath(test_category_dir_1).split("/").pop()
+    res = load_files(
+        load_files_root, description="test", categories=category, encoding="utf-8"
+    )
     assert len(res.filenames) == 1
     assert len(res.target_names) == 1
     assert res.DESCR == "test"
@@ -113,12 +113,13 @@ def test_load_files_w_categories_desc_and_encoding(
 
 
 def test_load_files_wo_load_content(
-        test_category_dir_1, test_category_dir_2, load_files_root):
+    test_category_dir_1, test_category_dir_2, load_files_root
+):
     res = load_files(load_files_root, load_content=False)
     assert len(res.filenames) == 1
     assert len(res.target_names) == 2
     assert res.DESCR is None
-    assert res.get('data') is None
+    assert res.get("data") is None
 
 
 def test_load_sample_images():
@@ -129,11 +130,9 @@ def test_load_sample_images():
         images = res.images
 
         # assert is china image
-        assert np.all(images[0][0, 0, :] ==
-                      np.array([174, 201, 231], dtype=np.uint8))
+        assert np.all(images[0][0, 0, :] == np.array([174, 201, 231], dtype=np.uint8))
         # assert is flower image
-        assert np.all(images[1][0, 0, :] ==
-                      np.array([2, 19, 13], dtype=np.uint8))
+        assert np.all(images[1][0, 0, :] == np.array([2, 19, 13], dtype=np.uint8))
         assert res.DESCR
     except ImportError:
         warnings.warn("Could not load sample images, PIL is not available.")
@@ -141,8 +140,8 @@ def test_load_sample_images():
 
 def test_load_sample_image():
     try:
-        china = load_sample_image('china.jpg')
-        assert china.dtype == 'uint8'
+        china = load_sample_image("china.jpg")
+        assert china.dtype == "uint8"
         assert china.shape == (427, 640, 3)
     except ImportError:
         warnings.warn("Could not load sample images, PIL is not available.")
@@ -151,25 +150,32 @@ def test_load_sample_image():
 def test_load_missing_sample_image_error():
     if pillow_installed:
         with pytest.raises(AttributeError):
-            load_sample_image('blop.jpg')
+            load_sample_image("blop.jpg")
     else:
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
 @pytest.mark.parametrize(
     "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
-    [(load_breast_cancer, (569, 30), (569,), 2, True, ["filename"]),
-     (load_wine, (178, 13), (178,), 3, True, []),
-     (load_iris, (150, 4), (150,), 3, True, ["filename"]),
-     (load_linnerud, (20, 3), (20, 3), 3, True,
-      ["data_filename", "target_filename"]),
-     (load_diabetes, (442, 10), (442,), None, True, []),
-     (load_digits, (1797, 64), (1797,), 10, True, []),
-     (partial(load_digits, n_class=9), (1617, 64), (1617,), 10, True, []),
-     (load_boston, (506, 13), (506,), None, True, ["filename"])]
+    [
+        (load_breast_cancer, (569, 30), (569,), 2, True, ["filename"]),
+        (load_wine, (178, 13), (178,), 3, True, []),
+        (load_iris, (150, 4), (150,), 3, True, ["filename"]),
+        (
+            load_linnerud,
+            (20, 3),
+            (20, 3),
+            3,
+            True,
+            ["data_filename", "target_filename"],
+        ),
+        (load_diabetes, (442, 10), (442,), None, True, []),
+        (load_digits, (1797, 64), (1797,), 10, True, []),
+        (partial(load_digits, n_class=9), (1617, 64), (1617,), 10, True, []),
+        (load_boston, (506, 13), (506,), None, True, ["filename"]),
+    ],
 )
-def test_loader(loader_func, data_shape, target_shape, n_target, has_descr,
-                filenames):
+def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, filenames):
     bunch = loader_func()
 
     assert isinstance(bunch, Bunch)
@@ -185,30 +191,36 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr,
         assert all([os.path.exists(bunch.get(f, False)) for f in filenames])
 
 
-@pytest.mark.parametrize("loader_func, data_dtype, target_dtype", [
-    (load_breast_cancer, np.float64, int),
-    (load_diabetes, np.float64, np.float64),
-    (load_digits, np.float64, int),
-    (load_iris, np.float64, int),
-    (load_linnerud, np.float64, np.float64),
-    (load_wine, np.float64, int),
-])
+@pytest.mark.parametrize(
+    "loader_func, data_dtype, target_dtype",
+    [
+        (load_breast_cancer, np.float64, int),
+        (load_diabetes, np.float64, np.float64),
+        (load_digits, np.float64, int),
+        (load_iris, np.float64, int),
+        (load_linnerud, np.float64, np.float64),
+        (load_wine, np.float64, int),
+    ],
+)
 def test_toy_dataset_frame_dtype(loader_func, data_dtype, target_dtype):
     default_result = loader_func()
-    check_as_frame(default_result, loader_func,
-                   expected_data_dtype=data_dtype,
-                   expected_target_dtype=target_dtype)
+    check_as_frame(
+        default_result,
+        loader_func,
+        expected_data_dtype=data_dtype,
+        expected_target_dtype=target_dtype,
+    )
 
 
 def test_loads_dumps_bunch():
     bunch = Bunch(x="x")
     bunch_from_pkl = loads(dumps(bunch))
     bunch_from_pkl.x = "y"
-    assert bunch_from_pkl['x'] == bunch_from_pkl.x
+    assert bunch_from_pkl["x"] == bunch_from_pkl.x
 
 
 def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
-    bunch = Bunch(key='original')
+    bunch = Bunch(key="original")
     # This reproduces a problem when Bunch pickles have been created
     # with scikit-learn 0.16 and are read with 0.17. Basically there
     # is a surprising behaviour because reading bunch.key uses
@@ -216,16 +228,16 @@ def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
     # whereas assigning into bunch.key uses bunch.__setattr__. See
     # https://github.com/scikit-learn/scikit-learn/issues/6196 for
     # more details
-    bunch.__dict__['key'] = 'set from __dict__'
+    bunch.__dict__["key"] = "set from __dict__"
     bunch_from_pkl = loads(dumps(bunch))
     # After loading from pickle the __dict__ should have been ignored
-    assert bunch_from_pkl.key == 'original'
-    assert bunch_from_pkl['key'] == 'original'
+    assert bunch_from_pkl.key == "original"
+    assert bunch_from_pkl["key"] == "original"
     # Making sure that changing the attr does change the value
     # associated with __getitem__ as well
-    bunch_from_pkl.key = 'changed'
-    assert bunch_from_pkl.key == 'changed'
-    assert bunch_from_pkl['key'] == 'changed'
+    bunch_from_pkl.key = "changed"
+    assert bunch_from_pkl.key == "changed"
+    assert bunch_from_pkl["key"] == "changed"
 
 
 def test_bunch_dir():
