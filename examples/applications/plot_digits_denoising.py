@@ -131,9 +131,9 @@ plot_digits(X_reconstructed_kernel_pca,
             f"MSE: {np.mean((X_test - X_reconstructed_kernel_pca) ** 2):.2f}")
 
 # %%
-# PCA has a lower MSE than kernel PCA. However, the qualitative might not favor
-# PCA instead of kernel PCA. We observe that kernel PCA is able to remove
-# background noise and provide a smoother image.
+# PCA has a lower MSE than kernel PCA. However, the qualitative analysis might
+# not favor PCA instead of kernel PCA. We observe that kernel PCA is able to 
+# remove background noise and provide a smoother image.
 #
 # However, it should be noted that the results of the denoising with kernel PCA
 # will depend of the parameters `n_components`, `gamma`, and `alpha`.
