@@ -302,7 +302,7 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == 'BisectKMeans':
         skipped_attributes.add("n_features_in_")
         # BisectKMeans don't have attribute 'n_features_in'
-        
+
     for attr in attributes:
         if attr.name in skipped_attributes:
             continue

@@ -2056,13 +2056,10 @@ Cluster to split is picked depending on parameter ``bisect_strategy``:
 - Cluster with biggest SSE (Sum of Squared Errors) (with ``biggest_sse``)
 
 Cluster to split is always picked from all clusters obtained from previous
-iterations of algorithm.
+iterations of algorithm. This leads to more balanced split of data.
 
 Picking by largest amount of data points in most cases produce result as
-accurate as picking by SSE and sometimes may be faster.
-
-If the number of clusters is large and if refinement is not used, then
-Bisecting K-Means is more efficient than the regular K-Means algorithm.
+accurate as picking by SSE and be faster (especially for larger amount of data points, where calculating error may be costly).
 
 .. topic:: References:
 
