@@ -40,29 +40,35 @@ def check_clusterings(labels_true, labels_pred):
         The predicted labels.
     """
     labels_true = check_array(
-        labels_true, ensure_2d=False, ensure_min_samples=0, dtype=None,
+        labels_true,
+        ensure_2d=False,
+        ensure_min_samples=0,
+        dtype=None,
     )
 
     labels_pred = check_array(
-        labels_pred, ensure_2d=False, ensure_min_samples=0, dtype=None,
+        labels_pred,
+        ensure_2d=False,
+        ensure_min_samples=0,
+        dtype=None,
     )
 
     type_label = type_of_target(labels_true)
     type_pred = type_of_target(labels_pred)
 
-    if 'continuous' in (type_pred, type_label):
-        msg = f'Clustering metrics expects discrete values but received' \
-              f' {type_label} values for label, and {type_pred} values ' \
-              f'for target'
+    if "continuous" in (type_pred, type_label):
+        msg = (
+            f"Clustering metrics expects discrete values but received"
+            f" {type_label} values for label, and {type_pred} values "
+            f"for target"
+        )
         warnings.warn(msg, UserWarning)
 
     # input checks
     if labels_true.ndim != 1:
-        raise ValueError(
-            "labels_true must be 1D: shape is %r" % (labels_true.shape,))
+        raise ValueError("labels_true must be 1D: shape is %r" % (labels_true.shape,))
     if labels_pred.ndim != 1:
-        raise ValueError(
-            "labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
+        raise ValueError("labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
     check_consistent_length(labels_true, labels_pred)
 
     return labels_true, labels_pred
@@ -79,12 +85,14 @@ def _generalized_average(U, V, average_method):
     elif average_method == "max":
         return max(U, V)
     else:
-        raise ValueError("'average_method' must be 'min', 'geometric', "
-                         "'arithmetic', or 'max'")
+        raise ValueError(
+            "'average_method' must be 'min', 'geometric', " "'arithmetic', or 'max'"
+        )
 
 
-def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
-                       dtype=np.int64):
+def contingency_matrix(
+    labels_true, labels_pred, *, eps=None, sparse=False, dtype=np.int64
+):
     """Build a contingency matrix describing the relationship between labels.
 
     Parameters
@@ -132,10 +140,11 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
     # Using coo_matrix to accelerate simple histogram calculation,
     # i.e. bins are consecutive integers
     # Currently, coo_matrix is faster than histogram2d for simple cases
-    contingency = sp.coo_matrix((np.ones(class_idx.shape[0]),
-                                 (class_idx, cluster_idx)),
-                                shape=(n_classes, n_clusters),
-                                dtype=dtype)
+    contingency = sp.coo_matrix(
+        (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
+        shape=(n_classes, n_clusters),
+        dtype=dtype,
+    )
     if sparse:
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
@@ -148,6 +157,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
 
 
 # clustering measures
+
 
 def pair_confusion_matrix(labels_true, labels_pred):
     """Pair confusion matrix arising from two clusterings.
@@ -384,8 +394,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     if fn == 0 and fp == 0:
         return 1.0
 
-    return 2. * (tp * tn - fn * fp) / ((tp + fn) * (fn + tn) +
-                                       (tp + fp) * (fp + tn))
+    return 2.0 * (tp * tn - fn * fp) / ((tp + fn) * (fn + tn) + (tp + fp) * (fp + tn))
 
 
 def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
@@ -464,8 +473,12 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     if homogeneity + completeness == 0.0:
         v_measure_score = 0.0
     else:
-        v_measure_score = ((1 + beta) * homogeneity * completeness
-                           / (beta * homogeneity + completeness))
+        v_measure_score = (
+            (1 + beta)
+            * homogeneity
+            * completeness
+            / (beta * homogeneity + completeness)
+        )
 
     return homogeneity, completeness, v_measure_score
 
@@ -703,8 +716,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
       0.0...
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred,
-                                              beta=beta)[2]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
 
 
 def mutual_info_score(labels_true, labels_pred, *, contingency=None):
@@ -764,9 +776,11 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     else:
-        contingency = check_array(contingency,
-                                  accept_sparse=['csr', 'csc', 'coo'],
-                                  dtype=[int, np.int32, np.int64])
+        contingency = check_array(
+            contingency,
+            accept_sparse=["csr", "csc", "coo"],
+            dtype=[int, np.int32, np.int64],
+        )
 
     if isinstance(contingency, np.ndarray):
         # For an array
@@ -776,8 +790,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         # For a sparse matrix
         nzx, nzy, nz_val = sp.find(contingency)
     else:
-        raise ValueError("Unsupported type for 'contingency': %s" %
-                         type(contingency))
+        raise ValueError("Unsupported type for 'contingency': %s" % type(contingency))
 
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
@@ -785,17 +798,21 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
-    outer = (pi.take(nzx).astype(np.int64, copy=False)
-             * pj.take(nzy).astype(np.int64, copy=False))
+    outer = pi.take(nzx).astype(np.int64, copy=False) * pj.take(nzy).astype(
+        np.int64, copy=False
+    )
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
-    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
-          contingency_nm * log_outer)
+    mi = (
+        contingency_nm * (log_contingency_nm - log(contingency_sum))
+        + contingency_nm * log_outer
+    )
     mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
     return np.clip(mi.sum(), 0.0, None)
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred, *,
-                               average_method='arithmetic'):
+def adjusted_mutual_info_score(
+    labels_true, labels_pred, *, average_method="arithmetic"
+):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -887,15 +904,15 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     clusters = np.unique(labels_pred)
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
-    if (classes.shape[0] == clusters.shape[0] == 1 or
-            classes.shape[0] == clusters.shape[0] == 0):
+    if (
+        classes.shape[0] == clusters.shape[0] == 1
+        or classes.shape[0] == clusters.shape[0] == 0
+    ):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64,
-                                     **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
     # Calculate the MI for the two clusterings
-    mi = mutual_info_score(labels_true, labels_pred,
-                           contingency=contingency)
+    mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labeling
@@ -907,15 +924,16 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     # representation, sometimes emi is slightly larger. Correct this
     # by preserving the sign.
     if denominator < 0:
-        denominator = min(denominator, -np.finfo('float64').eps)
+        denominator = min(denominator, -np.finfo("float64").eps)
     else:
-        denominator = max(denominator, np.finfo('float64').eps)
+        denominator = max(denominator, np.finfo("float64").eps)
     ami = (mi - emi) / denominator
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred, *,
-                                 average_method='arithmetic'):
+def normalized_mutual_info_score(
+    labels_true, labels_pred, *, average_method="arithmetic"
+):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is a normalization of the Mutual
@@ -995,21 +1013,21 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
 
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
-    if (classes.shape[0] == clusters.shape[0] == 1 or
-            classes.shape[0] == clusters.shape[0] == 0):
+    if (
+        classes.shape[0] == clusters.shape[0] == 1
+        or classes.shape[0] == clusters.shape[0] == 0
+    ):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64,
-                                     **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
     # Calculate the MI for the two clusterings
-    mi = mutual_info_score(labels_true, labels_pred,
-                           contingency=contingency)
+    mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
     # Avoid 0.0 / 0.0 when either entropy is zero.
-    normalizer = max(normalizer, np.finfo('float64').eps)
+    normalizer = max(normalizer, np.finfo("float64").eps)
     nmi = mi / normalizer
     return nmi
 
@@ -1082,15 +1100,14 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
            <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-    n_samples, = labels_true.shape
+    (n_samples,) = labels_true.shape
 
-    c = contingency_matrix(labels_true, labels_pred,
-                           sparse=True)
+    c = contingency_matrix(labels_true, labels_pred, sparse=True)
     c = c.astype(np.int64, **_astype_copy_false(c))
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0. else 0.
+    return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
 
 
 def entropy(labels):

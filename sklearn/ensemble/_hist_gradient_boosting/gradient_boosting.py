@@ -7,12 +7,13 @@ import warnings
 
 import numpy as np
 from timeit import default_timer as time
-from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
-                     is_classifier)
+from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
 from ...utils import check_random_state, resample
-from ...utils.validation import (check_is_fitted,
-                                 check_consistent_length,
-                                 _check_sample_weight)
+from ...utils.validation import (
+    check_is_fitted,
+    check_consistent_length,
+    _check_sample_weight,
+)
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -30,12 +31,28 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     """Base class for histogram-based gradient boosting estimators."""
 
     @abstractmethod
-    def __init__(self, loss, *, learning_rate, max_iter, max_leaf_nodes,
-                 max_depth, min_samples_leaf, l2_regularization, max_bins,
-                 categorical_features, monotonic_cst,
-                 warm_start, early_stopping, scoring,
-                 validation_fraction, n_iter_no_change, tol, verbose,
-                 random_state):
+    def __init__(
+        self,
+        loss,
+        *,
+        learning_rate,
+        max_iter,
+        max_leaf_nodes,
+        max_depth,
+        min_samples_leaf,
+        l2_regularization,
+        max_bins,
+        categorical_features,
+        monotonic_cst,
+        warm_start,
+        early_stopping,
+        scoring,
+        validation_fraction,
+        n_iter_no_change,
+        tol,
+        verbose,
+        random_state,
+    ):
         self.loss = loss
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -61,40 +78,46 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         The parameters that are directly passed to the grower are checked in
         TreeGrower."""
 
-        if (self.loss not in self._VALID_LOSSES and
-                not isinstance(self.loss, BaseLoss)):
+        if self.loss not in self._VALID_LOSSES and not isinstance(self.loss, BaseLoss):
             raise ValueError(
                 "Loss {} is not supported for {}. Accepted losses: "
-                "{}.".format(self.loss, self.__class__.__name__,
-                             ', '.join(self._VALID_LOSSES)))
+                "{}.".format(
+                    self.loss, self.__class__.__name__, ", ".join(self._VALID_LOSSES)
+                )
+            )
 
         if self.learning_rate <= 0:
-            raise ValueError('learning_rate={} must '
-                             'be strictly positive'.format(self.learning_rate))
-        if self.max_iter < 1:
-            raise ValueError('max_iter={} must not be smaller '
-                             'than 1.'.format(self.max_iter))
-        if self.n_iter_no_change < 0:
-            raise ValueError('n_iter_no_change={} must be '
-                             'positive.'.format(self.n_iter_no_change))
-        if (self.validation_fraction is not None and
-                self.validation_fraction <= 0):
             raise ValueError(
-                'validation_fraction={} must be strictly '
-                'positive, or None.'.format(self.validation_fraction))
+                "learning_rate={} must "
+                "be strictly positive".format(self.learning_rate)
+            )
+        if self.max_iter < 1:
+            raise ValueError(
+                "max_iter={} must not be smaller " "than 1.".format(self.max_iter)
+            )
+        if self.n_iter_no_change < 0:
+            raise ValueError(
+                "n_iter_no_change={} must be " "positive.".format(self.n_iter_no_change)
+            )
+        if self.validation_fraction is not None and self.validation_fraction <= 0:
+            raise ValueError(
+                "validation_fraction={} must be strictly "
+                "positive, or None.".format(self.validation_fraction)
+            )
         if self.tol < 0:
-            raise ValueError('tol={} '
-                             'must not be smaller than 0.'.format(self.tol))
+            raise ValueError("tol={} " "must not be smaller than 0.".format(self.tol))
 
         if not (2 <= self.max_bins <= 255):
-            raise ValueError('max_bins={} should be no smaller than 2 '
-                             'and no larger than 255.'.format(self.max_bins))
+            raise ValueError(
+                "max_bins={} should be no smaller than 2 "
+                "and no larger than 255.".format(self.max_bins)
+            )
 
         if self.monotonic_cst is not None and self.n_trees_per_iteration_ != 1:
             raise ValueError(
-                'monotonic constraints are not supported for '
-                'multiclass classification.'
-                )
+                "monotonic constraints are not supported for "
+                "multiclass classification."
+            )
 
     def _check_categories(self, X):
         """Check and validate categorical features in X
@@ -118,25 +141,33 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if categorical_features.size == 0:
             return None, None
 
-        if categorical_features.dtype.kind not in ('i', 'b'):
-            raise ValueError("categorical_features must be an array-like of "
-                             "bools or array-like of ints.")
+        if categorical_features.dtype.kind not in ("i", "b"):
+            raise ValueError(
+                "categorical_features must be an array-like of "
+                "bools or array-like of ints."
+            )
 
         n_features = X.shape[1]
 
         # check for categorical features as indices
-        if categorical_features.dtype.kind == 'i':
-            if (np.max(categorical_features) >= n_features
-                    or np.min(categorical_features) < 0):
-                raise ValueError("categorical_features set as integer "
-                                 "indices must be in [0, n_features - 1]")
+        if categorical_features.dtype.kind == "i":
+            if (
+                np.max(categorical_features) >= n_features
+                or np.min(categorical_features) < 0
+            ):
+                raise ValueError(
+                    "categorical_features set as integer "
+                    "indices must be in [0, n_features - 1]"
+                )
             is_categorical = np.zeros(n_features, dtype=bool)
             is_categorical[categorical_features] = True
         else:
             if categorical_features.shape[0] != n_features:
-                raise ValueError("categorical_features set as a boolean mask "
-                                 "must have shape (n_features,), got: "
-                                 f"{categorical_features.shape}")
+                raise ValueError(
+                    "categorical_features set as a boolean mask "
+                    "must have shape (n_features,), got: "
+                    f"{categorical_features.shape}"
+                )
             is_categorical = categorical_features
 
         if not np.any(is_categorical):
@@ -194,20 +225,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self : object
         """
         fit_start_time = time()
-        acc_find_split_time = 0.  # time spent finding the best splits
-        acc_apply_split_time = 0.  # time spent splitting nodes
-        acc_compute_hist_time = 0.  # time spent computing histograms
+        acc_find_split_time = 0.0  # time spent finding the best splits
+        acc_apply_split_time = 0.0  # time spent splitting nodes
+        acc_compute_hist_time = 0.0  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
-        acc_prediction_time = 0.
-        X, y = self._validate_data(X, y, dtype=[X_DTYPE],
-                                   force_all_finite=False)
+        acc_prediction_time = 0.0
+        X, y = self._validate_data(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
         check_consistent_length(X, y)
         # Do not create unit sample weights by default to later skip some
         # computation
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X,
-                                                 dtype=np.float64)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
             # TODO: remove when PDP suports sample weights
             self._fitted_with_sw = True
 
@@ -217,8 +246,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # the first time fit was called (e.g. for subsampling or for the
         # train/val split).
         if not (self.warm_start and self._is_fitted()):
-            self._random_seed = rng.randint(np.iinfo(np.uint32).max,
-                                            dtype='u8')
+            self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
 
         self._validate_parameters()
 
@@ -242,7 +270,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         elif isinstance(self.loss, BaseLoss):
             self._loss = self.loss
 
-        if self.early_stopping == 'auto':
+        if self.early_stopping == "auto":
             self.do_early_stopping_ = n_samples > 10000
         else:
             self.do_early_stopping_ = self.early_stopping
@@ -251,7 +279,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._use_validation_data = self.validation_fraction is not None
         if self.do_early_stopping_ and self._use_validation_data:
             # stratify for classification
-            stratify = y if hasattr(self._loss, 'predict_proba') else None
+            stratify = y if hasattr(self._loss, "predict_proba") else None
 
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
@@ -259,18 +287,31 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             if sample_weight is None:
                 X_train, X_val, y_train, y_val = train_test_split(
-                    X, y, test_size=self.validation_fraction,
+                    X,
+                    y,
+                    test_size=self.validation_fraction,
                     stratify=stratify,
-                    random_state=self._random_seed)
+                    random_state=self._random_seed,
+                )
                 sample_weight_train = sample_weight_val = None
             else:
                 # TODO: incorporate sample_weight in sampling here, as well as
                 # stratify
-                (X_train, X_val, y_train, y_val, sample_weight_train,
-                 sample_weight_val) = train_test_split(
-                    X, y, sample_weight, test_size=self.validation_fraction,
+                (
+                    X_train,
+                    X_val,
+                    y_train,
+                    y_val,
+                    sample_weight_train,
+                    sample_weight_val,
+                ) = train_test_split(
+                    X,
+                    y,
+                    sample_weight,
+                    test_size=self.validation_fraction,
                     stratify=stratify,
-                    random_state=self._random_seed)
+                    random_state=self._random_seed,
+                )
         else:
             X_train, y_train, sample_weight_train = X, y, sample_weight
             X_val = y_val = sample_weight_val = None
@@ -288,7 +329,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             n_bins=n_bins,
             is_categorical=self.is_categorical_,
             known_categories=known_categories,
-            random_state=self._random_seed)
+            random_state=self._random_seed,
+        )
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
             X_binned_val = self._bin_data(X_val, is_training_data=False)
@@ -297,8 +339,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # Uses binned data to check for missing values
         has_missing_values = (
-            X_binned_train == self._bin_mapper.missing_values_bin_idx_).any(
-                axis=0).astype(np.uint8)
+            (X_binned_train == self._bin_mapper.missing_values_bin_idx_)
+            .any(axis=0)
+            .astype(np.uint8)
+        )
 
         if self.verbose:
             print("Fitting gradient boosted rounds:")
@@ -320,7 +364,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
             raw_predictions = np.zeros(
                 shape=(self.n_trees_per_iteration_, n_samples),
-                dtype=self._baseline_prediction.dtype
+                dtype=self._baseline_prediction.dtype,
             )
             raw_predictions += self._baseline_prediction
 
@@ -338,7 +382,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # populate train_score and validation_score with the
                 # predictions of the initial model (before the first tree)
 
-                if self.scoring == 'loss':
+                if self.scoring == "loss":
                     # we're going to compute scoring w.r.t the loss. As losses
                     # take raw predictions as input (unlike the scorers), we
                     # can optimize a bit and avoid repeating computing the
@@ -350,17 +394,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                     if self._use_validation_data:
                         raw_predictions_val = np.zeros(
-                            shape=(self.n_trees_per_iteration_,
-                                   X_binned_val.shape[0]),
-                            dtype=self._baseline_prediction.dtype
+                            shape=(self.n_trees_per_iteration_, X_binned_val.shape[0]),
+                            dtype=self._baseline_prediction.dtype,
                         )
 
                         raw_predictions_val += self._baseline_prediction
 
-                    self._check_early_stopping_loss(raw_predictions, y_train,
-                                                    sample_weight_train,
-                                                    raw_predictions_val, y_val,
-                                                    sample_weight_val)
+                    self._check_early_stopping_loss(
+                        raw_predictions,
+                        y_train,
+                        sample_weight_train,
+                        raw_predictions_val,
+                        y_val,
+                        sample_weight_val,
+                    )
                 else:
                     self._scorer = check_scoring(self, self.scoring)
                     # _scorer is a callable with signature (est, X, y) and
@@ -371,16 +418,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # the training set to compute train scores.
 
                     # Compute the subsample set
-                    (X_binned_small_train,
-                     y_small_train,
-                     sample_weight_small_train) = self._get_small_trainset(
-                        X_binned_train, y_train, sample_weight_train,
-                        self._random_seed)
+                    (
+                        X_binned_small_train,
+                        y_small_train,
+                        sample_weight_small_train,
+                    ) = self._get_small_trainset(
+                        X_binned_train, y_train, sample_weight_train, self._random_seed
+                    )
 
                     self._check_early_stopping_scorer(
-                        X_binned_small_train, y_small_train,
+                        X_binned_small_train,
+                        y_small_train,
                         sample_weight_small_train,
-                        X_binned_val, y_val, sample_weight_val,
+                        X_binned_val,
+                        y_val,
+                        sample_weight_val,
                     )
             begin_at_stage = 0
 
@@ -390,9 +442,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # than the number of iterations from the previous fit
             if self.max_iter < self.n_iter_:
                 raise ValueError(
-                    'max_iter=%d must be larger than or equal to '
-                    'n_iter_=%d when warm_start==True'
-                    % (self.max_iter, self.n_iter_)
+                    "max_iter=%d must be larger than or equal to "
+                    "n_iter_=%d when warm_start==True" % (self.max_iter, self.n_iter_)
                 )
 
             # Convert array attributes to lists
@@ -406,13 +457,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             else:
                 raw_predictions_val = None
 
-            if self.do_early_stopping_ and self.scoring != 'loss':
+            if self.do_early_stopping_ and self.scoring != "loss":
                 # Compute the subsample set
-                (X_binned_small_train,
-                 y_small_train,
-                 sample_weight_small_train) = self._get_small_trainset(
-                    X_binned_train, y_train, sample_weight_train,
-                    self._random_seed)
+                (
+                    X_binned_small_train,
+                    y_small_train,
+                    sample_weight_small_train,
+                ) = self._get_small_trainset(
+                    X_binned_train, y_train, sample_weight_train, self._random_seed
+                )
 
             # Get the predictors from the previous fit
             predictors = self._predictors
@@ -424,20 +477,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         gradients, hessians = self._loss.init_gradients_and_hessians(
             n_samples=n_samples,
             prediction_dim=self.n_trees_per_iteration_,
-            sample_weight=sample_weight_train
+            sample_weight=sample_weight_train,
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
 
             if self.verbose:
                 iteration_start_time = time()
-                print("[{}/{}] ".format(iteration + 1, self.max_iter),
-                      end='', flush=True)
+                print(
+                    "[{}/{}] ".format(iteration + 1, self.max_iter), end="", flush=True
+                )
 
             # Update gradients and hessians, inplace
-            self._loss.update_gradients_and_hessians(gradients, hessians,
-                                                     y_train, raw_predictions,
-                                                     sample_weight_train)
+            self._loss.update_gradients_and_hessians(
+                gradients, hessians, y_train, raw_predictions, sample_weight_train
+            )
 
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
@@ -445,7 +499,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Build `n_trees_per_iteration` trees.
             for k in range(self.n_trees_per_iteration_):
                 grower = TreeGrower(
-                    X_binned_train, gradients[k, :], hessians[k, :],
+                    X_binned_train,
+                    gradients[k, :],
+                    hessians[k, :],
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
@@ -455,7 +511,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
-                    shrinkage=self.learning_rate)
+                    shrinkage=self.learning_rate,
+                )
                 grower.grow()
 
                 acc_apply_split_time += grower.total_apply_split_time
@@ -463,9 +520,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_compute_hist_time += grower.total_compute_hist_time
 
                 if self._loss.need_update_leaves_values:
-                    self._loss.update_leaves_values(grower, y_train,
-                                                    raw_predictions[k, :],
-                                                    sample_weight_train)
+                    self._loss.update_leaves_values(
+                        grower, y_train, raw_predictions[k, :], sample_weight_train
+                    )
 
                 predictor = grower.make_predictor(
                     binning_thresholds=self._bin_mapper.bin_thresholds_
@@ -481,27 +538,31 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             should_early_stop = False
             if self.do_early_stopping_:
-                if self.scoring == 'loss':
+                if self.scoring == "loss":
                     # Update raw_predictions_val with the newest tree(s)
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
-                            raw_predictions_val[k, :] += (
-                                pred.predict_binned(
-                                    X_binned_val,
-                                    self._bin_mapper.missing_values_bin_idx_
-                                )
+                            raw_predictions_val[k, :] += pred.predict_binned(
+                                X_binned_val, self._bin_mapper.missing_values_bin_idx_
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
-                        raw_predictions, y_train, sample_weight_train,
-                        raw_predictions_val, y_val, sample_weight_val
+                        raw_predictions,
+                        y_train,
+                        sample_weight_train,
+                        raw_predictions_val,
+                        y_val,
+                        sample_weight_val,
                     )
 
                 else:
                     should_early_stop = self._check_early_stopping_scorer(
-                        X_binned_small_train, y_small_train,
+                        X_binned_small_train,
+                        y_small_train,
                         sample_weight_small_train,
-                        X_binned_val, y_val, sample_weight_val
+                        X_binned_val,
+                        y_val,
+                        sample_weight_val,
                     )
 
             if self.verbose:
@@ -520,17 +581,31 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
             n_predictors = sum(
                 len(predictors_at_ith_iteration)
-                for predictors_at_ith_iteration in self._predictors)
-            print("Fit {} trees in {:.3f} s, ({} total leaves)".format(
-                n_predictors, duration, n_total_leaves))
-            print("{:<32} {:.3f}s".format('Time spent computing histograms:',
-                                          acc_compute_hist_time))
-            print("{:<32} {:.3f}s".format('Time spent finding best splits:',
-                                          acc_find_split_time))
-            print("{:<32} {:.3f}s".format('Time spent applying splits:',
-                                          acc_apply_split_time))
-            print("{:<32} {:.3f}s".format('Time spent predicting:',
-                                          acc_prediction_time))
+                for predictors_at_ith_iteration in self._predictors
+            )
+            print(
+                "Fit {} trees in {:.3f} s, ({} total leaves)".format(
+                    n_predictors, duration, n_total_leaves
+                )
+            )
+            print(
+                "{:<32} {:.3f}s".format(
+                    "Time spent computing histograms:", acc_compute_hist_time
+                )
+            )
+            print(
+                "{:<32} {:.3f}s".format(
+                    "Time spent finding best splits:", acc_find_split_time
+                )
+            )
+            print(
+                "{:<32} {:.3f}s".format(
+                    "Time spent applying splits:", acc_apply_split_time
+                )
+            )
+            print(
+                "{:<32} {:.3f}s".format("Time spent predicting:", acc_prediction_time)
+            )
 
         self.train_score_ = np.asarray(self.train_score_)
         self.validation_score_ = np.asarray(self.validation_score_)
@@ -538,16 +613,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return self
 
     def _is_fitted(self):
-        return len(getattr(self, '_predictors', [])) > 0
+        return len(getattr(self, "_predictors", [])) > 0
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
-        for var in ('train_score_', 'validation_score_'):
+        for var in ("train_score_", "validation_score_"):
             if hasattr(self, var):
                 delattr(self, var)
 
-    def _get_small_trainset(self, X_binned_train, y_train, sample_weight_train,
-                            seed):
+    def _get_small_trainset(self, X_binned_train, y_train, sample_weight_train, seed):
         """Compute the indices of the subsample set and return this set.
 
         For efficiency, we need to subsample the training set to compute scores
@@ -558,9 +632,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if X_binned_train.shape[0] > subsample_size:
             indices = np.arange(X_binned_train.shape[0])
             stratify = y_train if is_classifier(self) else None
-            indices = resample(indices, n_samples=subsample_size,
-                               replace=False, random_state=seed,
-                               stratify=stratify)
+            indices = resample(
+                indices,
+                n_samples=subsample_size,
+                replace=False,
+                random_state=seed,
+                stratify=stratify,
+            )
             X_binned_small_train = X_binned_train[indices]
             y_small_train = y_train[indices]
             if sample_weight_train is not None:
@@ -568,14 +646,19 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             else:
                 sample_weight_small_train = None
             X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
-            return (X_binned_small_train, y_small_train,
-                    sample_weight_small_train)
+            return (X_binned_small_train, y_small_train, sample_weight_small_train)
         else:
             return X_binned_train, y_train, sample_weight_train
 
-    def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
-                                     sample_weight_small_train,
-                                     X_binned_val, y_val, sample_weight_val):
+    def _check_early_stopping_scorer(
+        self,
+        X_binned_small_train,
+        y_small_train,
+        sample_weight_small_train,
+        X_binned_val,
+        y_val,
+        sample_weight_val,
+    ):
         """Check if fitting should be early-stopped based on scorer.
 
         Scores are computed on validation data or on training data.
@@ -589,33 +672,38 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         else:
             self.train_score_.append(
-                self._scorer(self, X_binned_small_train, y_small_train,
-                             sample_weight=sample_weight_small_train)
+                self._scorer(
+                    self,
+                    X_binned_small_train,
+                    y_small_train,
+                    sample_weight=sample_weight_small_train,
+                )
             )
 
         if self._use_validation_data:
             if is_classifier(self):
                 y_val = self.classes_[y_val.astype(int)]
             if sample_weight_val is None:
-                self.validation_score_.append(
-                    self._scorer(self, X_binned_val, y_val)
-                )
+                self.validation_score_.append(self._scorer(self, X_binned_val, y_val))
             else:
                 self.validation_score_.append(
-                    self._scorer(self, X_binned_val, y_val,
-                                 sample_weight=sample_weight_val)
+                    self._scorer(
+                        self, X_binned_val, y_val, sample_weight=sample_weight_val
+                    )
                 )
             return self._should_stop(self.validation_score_)
         else:
             return self._should_stop(self.train_score_)
 
-    def _check_early_stopping_loss(self,
-                                   raw_predictions,
-                                   y_train,
-                                   sample_weight_train,
-                                   raw_predictions_val,
-                                   y_val,
-                                   sample_weight_val):
+    def _check_early_stopping_loss(
+        self,
+        raw_predictions,
+        y_train,
+        sample_weight_train,
+        raw_predictions_val,
+        y_val,
+        sample_weight_val,
+    ):
         """Check if fitting should be early-stopped based on loss.
 
         Scores are computed on validation data or on training data.
@@ -647,9 +735,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # the reference score, and therefore it is more likely to early stop
         # because of the lack of significant improvement.
         reference_score = scores[-reference_position] + self.tol
-        recent_scores = scores[-reference_position + 1:]
-        recent_improvements = [score > reference_score
-                               for score in recent_scores]
+        recent_scores = scores[-reference_position + 1 :]
+        recent_improvements = [score > reference_score for score in recent_scores]
         return not any(recent_improvements)
 
     def _bin_data(self, X, is_training_data):
@@ -659,10 +746,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         Else, the binned data is converted to a C-contiguous array.
         """
 
-        description = 'training' if is_training_data else 'validation'
+        description = "training" if is_training_data else "validation"
         if self.verbose:
-            print("Binning {:.3f} GB of {} data: ".format(
-                X.nbytes / 1e9, description), end="", flush=True)
+            print(
+                "Binning {:.3f} GB of {} data: ".format(X.nbytes / 1e9, description),
+                end="",
+                flush=True,
+            )
         tic = time()
         if is_training_data:
             X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
@@ -680,38 +770,41 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     def _print_iteration_stats(self, iteration_start_time):
         """Print info about the current fitting iteration."""
-        log_msg = ''
+        log_msg = ""
 
         predictors_of_ith_iteration = [
-            predictors_list for predictors_list in self._predictors[-1]
+            predictors_list
+            for predictors_list in self._predictors[-1]
             if predictors_list
         ]
         n_trees = len(predictors_of_ith_iteration)
-        max_depth = max(predictor.get_max_depth()
-                        for predictor in predictors_of_ith_iteration)
-        n_leaves = sum(predictor.get_n_leaf_nodes()
-                       for predictor in predictors_of_ith_iteration)
+        max_depth = max(
+            predictor.get_max_depth() for predictor in predictors_of_ith_iteration
+        )
+        n_leaves = sum(
+            predictor.get_n_leaf_nodes() for predictor in predictors_of_ith_iteration
+        )
 
         if n_trees == 1:
-            log_msg += ("{} tree, {} leaves, ".format(n_trees, n_leaves))
+            log_msg += "{} tree, {} leaves, ".format(n_trees, n_leaves)
         else:
-            log_msg += ("{} trees, {} leaves ".format(n_trees, n_leaves))
-            log_msg += ("({} on avg), ".format(int(n_leaves / n_trees)))
+            log_msg += "{} trees, {} leaves ".format(n_trees, n_leaves)
+            log_msg += "({} on avg), ".format(int(n_leaves / n_trees))
 
         log_msg += "max depth = {}, ".format(max_depth)
 
         if self.do_early_stopping_:
-            if self.scoring == 'loss':
+            if self.scoring == "loss":
                 factor = -1  # score_ arrays contain the negative loss
-                name = 'loss'
+                name = "loss"
             else:
                 factor = 1
-                name = 'score'
-            log_msg += "train {}: {:.5f}, ".format(name, factor *
-                                                   self.train_score_[-1])
+                name = "score"
+            log_msg += "train {}: {:.5f}, ".format(name, factor * self.train_score_[-1])
             if self._use_validation_data:
                 log_msg += "val {}: {:.5f}, ".format(
-                    name, factor * self.validation_score_[-1])
+                    name, factor * self.validation_score_[-1]
+                )
 
         iteration_time = time() - iteration_start_time
         log_msg += "in {:0.3f}s".format(iteration_time)
@@ -731,45 +824,45 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_trees_per_iteration, n_samples)
             The raw predicted values.
         """
-        is_binned = getattr(self, '_in_fit', False)
+        is_binned = getattr(self, "_in_fit", False)
         dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
-        X = self._validate_data(X, dtype=dtype, force_all_finite=False,
-                                reset=False)
+        X = self._validate_data(X, dtype=dtype, force_all_finite=False, reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
-                'X has {} features but this estimator was trained with '
-                '{} features.'.format(X.shape[1], self._n_features)
+                "X has {} features but this estimator was trained with "
+                "{} features.".format(X.shape[1], self._n_features)
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
             shape=(self.n_trees_per_iteration_, n_samples),
-            dtype=self._baseline_prediction.dtype
+            dtype=self._baseline_prediction.dtype,
         )
         raw_predictions += self._baseline_prediction
-        self._predict_iterations(
-            X, self._predictors, raw_predictions, is_binned
-        )
+        self._predict_iterations(X, self._predictors, raw_predictions, is_binned)
         return raw_predictions
 
     def _predict_iterations(self, X, predictors, raw_predictions, is_binned):
         """Add the predictions of the predictors to raw_predictions."""
         if not is_binned:
-            known_cat_bitsets, f_idx_map = (
-                self._bin_mapper.make_known_categories_bitsets())
+            (
+                known_cat_bitsets,
+                f_idx_map,
+            ) = self._bin_mapper.make_known_categories_bitsets()
 
         for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
                 if is_binned:
                     predict = partial(
                         predictor.predict_binned,
-                        missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_  # noqa
+                        missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_,  # noqa
                     )
                 else:
                     predict = partial(
                         predictor.predict,
                         known_cat_bitsets=known_cat_bitsets,
-                        f_idx_map=f_idx_map)
+                        f_idx_map=f_idx_map,
+                    )
                 raw_predictions[k, :] += predict(X)
 
     def _staged_raw_predict(self, X):
@@ -790,26 +883,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predictions of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
-        X = self._validate_data(X, dtype=X_DTYPE, force_all_finite=False,
-                                reset=False)
+        X = self._validate_data(X, dtype=X_DTYPE, force_all_finite=False, reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
-                'X has {} features but this estimator was trained with '
-                '{} features.'.format(X.shape[1], self._n_features)
+                "X has {} features but this estimator was trained with "
+                "{} features.".format(X.shape[1], self._n_features)
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
             shape=(self.n_trees_per_iteration_, n_samples),
-            dtype=self._baseline_prediction.dtype
+            dtype=self._baseline_prediction.dtype,
         )
         raw_predictions += self._baseline_prediction
         for iteration in range(len(self._predictors)):
             self._predict_iterations(
                 X,
-                self._predictors[iteration:iteration + 1],
+                self._predictors[iteration : iteration + 1],
                 raw_predictions,
-                is_binned=False
+                is_binned=False,
             )
             yield raw_predictions.copy()
 
@@ -832,27 +924,31 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The value of the partial dependence function on each grid point.
         """
 
-        if getattr(self, '_fitted_with_sw', False):
-            raise NotImplementedError("{} does not support partial dependence "
-                                      "plots with the 'recursion' method when "
-                                      "sample weights were given during fit "
-                                      "time.".format(self.__class__.__name__))
+        if getattr(self, "_fitted_with_sw", False):
+            raise NotImplementedError(
+                "{} does not support partial dependence "
+                "plots with the 'recursion' method when "
+                "sample weights were given during fit "
+                "time.".format(self.__class__.__name__)
+            )
 
-        grid = np.asarray(grid, dtype=X_DTYPE, order='C')
+        grid = np.asarray(grid, dtype=X_DTYPE, order="C")
         averaged_predictions = np.zeros(
-            (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE)
+            (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE
+        )
 
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
-                predictor.compute_partial_dependence(grid, target_features,
-                                                     averaged_predictions[k])
+                predictor.compute_partial_dependence(
+                    grid, target_features, averaged_predictions[k]
+                )
         # Note that the learning rate is already accounted for in the leaves
         # values.
 
         return averaged_predictions
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}
 
     @abstractmethod
     def _get_loss(self, sample_weight):
@@ -1045,29 +1141,56 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
-    _VALID_LOSSES = ('squared_error', 'least_squares', 'absolute_error',
-                     'least_absolute_deviation', 'poisson')
+    _VALID_LOSSES = (
+        "squared_error",
+        "least_squares",
+        "absolute_error",
+        "least_absolute_deviation",
+        "poisson",
+    )
 
-    def __init__(self, loss='squared_error', *, learning_rate=0.1,
-                 max_iter=100, max_leaf_nodes=31, max_depth=None,
-                 min_samples_leaf=20, l2_regularization=0., max_bins=255,
-                 categorical_features=None, monotonic_cst=None,
-                 warm_start=False, early_stopping='auto',
-                 scoring='loss', validation_fraction=0.1,
-                 n_iter_no_change=10, tol=1e-7,
-                 verbose=0, random_state=None):
+    def __init__(
+        self,
+        loss="squared_error",
+        *,
+        learning_rate=0.1,
+        max_iter=100,
+        max_leaf_nodes=31,
+        max_depth=None,
+        min_samples_leaf=20,
+        l2_regularization=0.0,
+        max_bins=255,
+        categorical_features=None,
+        monotonic_cst=None,
+        warm_start=False,
+        early_stopping="auto",
+        scoring="loss",
+        validation_fraction=0.1,
+        n_iter_no_change=10,
+        tol=1e-7,
+        verbose=0,
+        random_state=None,
+    ):
         super(HistGradientBoostingRegressor, self).__init__(
-            loss=loss, learning_rate=learning_rate, max_iter=max_iter,
-            max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
+            loss=loss,
+            learning_rate=learning_rate,
+            max_iter=max_iter,
+            max_leaf_nodes=max_leaf_nodes,
+            max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
-            l2_regularization=l2_regularization, max_bins=max_bins,
+            l2_regularization=l2_regularization,
+            max_bins=max_bins,
             monotonic_cst=monotonic_cst,
             categorical_features=categorical_features,
             early_stopping=early_stopping,
-            warm_start=warm_start, scoring=scoring,
+            warm_start=warm_start,
+            scoring=scoring,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            random_state=random_state)
+            n_iter_no_change=n_iter_no_change,
+            tol=tol,
+            verbose=verbose,
+            random_state=random_state,
+        )
 
     def predict(self, X):
         """Predict values for X.
@@ -1112,11 +1235,12 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
         y = y.astype(Y_DTYPE, copy=False)
-        if self.loss == 'poisson':
+        if self.loss == "poisson":
             # Ensure y >= 0 and sum(y) > 0
             if not (np.all(y >= 0) and np.sum(y) > 0):
-                raise ValueError("loss='poisson' requires non-negative y and "
-                                 "sum(y) > 0.")
+                raise ValueError(
+                    "loss='poisson' requires non-negative y and " "sum(y) > 0."
+                )
         return y
 
     def _get_loss(self, sample_weight):
@@ -1126,21 +1250,22 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 "The loss 'least_squares' was deprecated in v1.0 and will be "
                 "removed in version 1.2. Use 'squared_error' which is "
                 "equivalent.",
-                FutureWarning)
+                FutureWarning,
+            )
             return _LOSSES["squared_error"](sample_weight=sample_weight)
         elif self.loss == "least_absolute_deviation":
             warnings.warn(
                 "The loss 'least_absolute_deviation' was deprecated in v1.0 "
                 " and will be removed in version 1.2. Use 'absolute_error' "
                 "which is equivalent.",
-                FutureWarning)
+                FutureWarning,
+            )
             return _LOSSES["absolute_error"](sample_weight=sample_weight)
 
         return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
-class HistGradientBoostingClassifier(ClassifierMixin,
-                                     BaseHistGradientBoosting):
+class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     """Histogram-based Gradient Boosting Classification Tree.
 
     This estimator is much faster than
@@ -1307,28 +1432,50 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     1.0
     """
 
-    _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
-                     'auto')
+    _VALID_LOSSES = ("binary_crossentropy", "categorical_crossentropy", "auto")
 
-    def __init__(self, loss='auto', *, learning_rate=0.1, max_iter=100,
-                 max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
-                 l2_regularization=0., max_bins=255,
-                 categorical_features=None,  monotonic_cst=None,
-                 warm_start=False, early_stopping='auto', scoring='loss',
-                 validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
-                 verbose=0, random_state=None):
+    def __init__(
+        self,
+        loss="auto",
+        *,
+        learning_rate=0.1,
+        max_iter=100,
+        max_leaf_nodes=31,
+        max_depth=None,
+        min_samples_leaf=20,
+        l2_regularization=0.0,
+        max_bins=255,
+        categorical_features=None,
+        monotonic_cst=None,
+        warm_start=False,
+        early_stopping="auto",
+        scoring="loss",
+        validation_fraction=0.1,
+        n_iter_no_change=10,
+        tol=1e-7,
+        verbose=0,
+        random_state=None,
+    ):
         super(HistGradientBoostingClassifier, self).__init__(
-            loss=loss, learning_rate=learning_rate, max_iter=max_iter,
-            max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
+            loss=loss,
+            learning_rate=learning_rate,
+            max_iter=max_iter,
+            max_leaf_nodes=max_leaf_nodes,
+            max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
-            l2_regularization=l2_regularization, max_bins=max_bins,
+            l2_regularization=l2_regularization,
+            max_bins=max_bins,
             categorical_features=categorical_features,
             monotonic_cst=monotonic_cst,
             warm_start=warm_start,
-            early_stopping=early_stopping, scoring=scoring,
+            early_stopping=early_stopping,
+            scoring=scoring,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            random_state=random_state)
+            n_iter_no_change=n_iter_no_change,
+            tol=tol,
+            verbose=verbose,
+            random_state=random_state,
+        )
 
     def predict(self, X):
         """Predict classes for X.
@@ -1466,18 +1613,17 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         return encoded_y
 
     def _get_loss(self, sample_weight):
-        if (self.loss == 'categorical_crossentropy' and
-                self.n_trees_per_iteration_ == 1):
-            raise ValueError("'categorical_crossentropy' is not suitable for "
-                             "a binary classification problem. Please use "
-                             "'auto' or 'binary_crossentropy' instead.")
+        if self.loss == "categorical_crossentropy" and self.n_trees_per_iteration_ == 1:
+            raise ValueError(
+                "'categorical_crossentropy' is not suitable for "
+                "a binary classification problem. Please use "
+                "'auto' or 'binary_crossentropy' instead."
+            )
 
-        if self.loss == 'auto':
+        if self.loss == "auto":
             if self.n_trees_per_iteration_ == 1:
-                return _LOSSES['binary_crossentropy'](
-                    sample_weight=sample_weight)
+                return _LOSSES["binary_crossentropy"](sample_weight=sample_weight)
             else:
-                return _LOSSES['categorical_crossentropy'](
-                    sample_weight=sample_weight)
+                return _LOSSES["categorical_crossentropy"](sample_weight=sample_weight)
 
         return _LOSSES[self.loss](sample_weight=sample_weight)

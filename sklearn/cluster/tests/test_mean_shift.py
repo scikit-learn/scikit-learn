@@ -23,8 +23,14 @@ from sklearn.metrics import v_measure_score
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
-X, _ = make_blobs(n_samples=300, n_features=2, centers=centers,
-                  cluster_std=0.4, shuffle=True, random_state=11)
+X, _ = make_blobs(
+    n_samples=300,
+    n_features=2,
+    centers=centers,
+    cluster_std=0.4,
+    shuffle=True,
+    random_state=11,
+)
 
 
 def test_estimate_bandwidth():
@@ -37,12 +43,13 @@ def test_estimate_bandwidth_1sample():
     # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
     # n_neighbors is set to 1.
     bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
-    assert bandwidth == pytest.approx(0., abs=1e-5)
+    assert bandwidth == pytest.approx(0.0, abs=1e-5)
 
 
-@pytest.mark.parametrize("bandwidth, cluster_all, expected, "
-                         "first_cluster_label",
-                         [(1.2, True, 3, 0), (1.2, False, 4, -1)])
+@pytest.mark.parametrize(
+    "bandwidth, cluster_all, expected, " "first_cluster_label",
+    [(1.2, True, 3, 0), (1.2, False, 4, -1)],
+)
 def test_mean_shift(bandwidth, cluster_all, expected, first_cluster_label):
     # Test MeanShift algorithm
     ms = MeanShift(bandwidth=bandwidth, cluster_all=cluster_all)
@@ -62,8 +69,7 @@ def test_mean_shift(bandwidth, cluster_all, expected, first_cluster_label):
 def test_mean_shift_negative_bandwidth():
     bandwidth = -1
     ms = MeanShift(bandwidth=bandwidth)
-    msg = (r"bandwidth needs to be greater than zero or None,"
-           r" got -1\.000000")
+    msg = r"bandwidth needs to be greater than zero or None," r" got -1\.000000"
     with pytest.raises(ValueError, match=msg):
         ms.fit(X)
 
@@ -78,8 +84,14 @@ def test_estimate_bandwidth_with_sparse_matrix():
 
 def test_parallel():
     centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
-    X, _ = make_blobs(n_samples=50, n_features=2, centers=centers,
-                      cluster_std=0.4, shuffle=True, random_state=11)
+    X, _ = make_blobs(
+        n_samples=50,
+        n_features=2,
+        centers=centers,
+        cluster_std=0.4,
+        shuffle=True,
+        random_state=11,
+    )
 
     ms1 = MeanShift(n_jobs=2)
     ms1.fit(X)
@@ -104,7 +116,9 @@ def test_meanshift_all_orphans():
     ms = MeanShift(bandwidth=0.1, seeds=[[-9, -9], [-10, -10]])
     msg = "No point was within bandwidth=0.1"
     with pytest.raises(ValueError, match=msg):
-        ms.fit(X,)
+        ms.fit(
+            X,
+        )
 
 
 def test_unfitted():
@@ -115,12 +129,10 @@ def test_unfitted():
 
 
 def test_cluster_intensity_tie():
-    X = np.array([[1, 1], [2, 1], [1, 0],
-                  [4, 7], [3, 5], [3, 6]])
+    X = np.array([[1, 1], [2, 1], [1, 0], [4, 7], [3, 5], [3, 6]])
     c1 = MeanShift(bandwidth=2).fit(X)
 
-    X = np.array([[4, 7], [3, 5], [3, 6],
-                  [1, 1], [2, 1], [1, 0]])
+    X = np.array([[4, 7], [3, 5], [3, 6], [1, 1], [2, 1], [1, 0]])
     c2 = MeanShift(bandwidth=2).fit(X)
     assert_array_equal(c1.labels_, [1, 1, 1, 0, 0, 0])
     assert_array_equal(c2.labels_, [0, 0, 0, 1, 1, 1])
@@ -130,19 +142,20 @@ def test_bin_seeds():
     # Test the bin seeding technique which can be used in the mean shift
     # algorithm
     # Data is just 6 points in the plane
-    X = np.array([[1., 1.], [1.4, 1.4], [1.8, 1.2],
-                  [2., 1.], [2.1, 1.1], [0., 0.]])
+    X = np.array(
+        [[1.0, 1.0], [1.4, 1.4], [1.8, 1.2], [2.0, 1.0], [2.1, 1.1], [0.0, 0.0]]
+    )
 
     # With a bin coarseness of 1.0 and min_bin_freq of 1, 3 bins should be
     # found
-    ground_truth = {(1., 1.), (2., 1.), (0., 0.)}
+    ground_truth = {(1.0, 1.0), (2.0, 1.0), (0.0, 0.0)}
     test_bins = get_bin_seeds(X, 1, 1)
     test_result = set(tuple(p) for p in test_bins)
     assert len(ground_truth.symmetric_difference(test_result)) == 0
 
     # With a bin coarseness of 1.0 and min_bin_freq of 2, 2 bins should be
     # found
-    ground_truth = {(1., 1.), (2., 1.)}
+    ground_truth = {(1.0, 1.0), (2.0, 1.0)}
     test_bins = get_bin_seeds(X, 1, 2)
     test_result = set(tuple(p) for p in test_bins)
     assert len(ground_truth.symmetric_difference(test_result)) == 0
@@ -154,13 +167,18 @@ def test_bin_seeds():
     assert_array_almost_equal(test_bins, X)
 
     # tight clusters around [0, 0] and [1, 1], only get two bins
-    X, _ = make_blobs(n_samples=100, n_features=2, centers=[[0, 0], [1, 1]],
-                      cluster_std=0.1, random_state=0)
+    X, _ = make_blobs(
+        n_samples=100,
+        n_features=2,
+        centers=[[0, 0], [1, 1]],
+        cluster_std=0.1,
+        random_state=0,
+    )
     test_bins = get_bin_seeds(X, 1)
     assert_array_equal(test_bins, [[0, 0], [1, 1]])
 
 
-@pytest.mark.parametrize('max_iter', [1, 100])
+@pytest.mark.parametrize("max_iter", [1, 100])
 def test_max_iter(max_iter):
     clusters1, _ = mean_shift(X, max_iter=max_iter)
     ms = MeanShift(max_iter=max_iter).fit(X)

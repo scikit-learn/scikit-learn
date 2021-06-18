@@ -204,15 +204,16 @@ induces high variance:
     >>> test = np.c_[ 0, 2].T
     >>> regr = linear_model.LinearRegression()
 
-    >>> import matplotlib.pyplot as plt # doctest: +SKIP
-    >>> plt.figure() # doctest: +SKIP
-
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    <...>
     >>> np.random.seed(0)
-    >>> for _ in range(6): # doctest: +SKIP
+    >>> for _ in range(6):
     ...     this_X = .1 * np.random.normal(size=(2, 1)) + X
     ...     regr.fit(this_X, y)
-    ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...     plt.scatter(this_X, y, s=3)  # doctest: +SKIP
+    ...     plt.plot(test, regr.predict(test))
+    ...     plt.scatter(this_X, y, s=3)
+    LinearRegression...
 
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
@@ -227,14 +228,15 @@ regression:
 
     >>> regr = linear_model.Ridge(alpha=.1)
 
-    >>> plt.figure() # doctest: +SKIP
-
+    >>> plt.figure()
+    <...>
     >>> np.random.seed(0)
-    >>> for _ in range(6): # doctest: +SKIP
+    >>> for _ in range(6):
     ...     this_X = .1 * np.random.normal(size=(2, 1)) + X
     ...     regr.fit(this_X, y)
-    ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...     plt.scatter(this_X, y, s=3) # doctest: +SKIP
+    ...     plt.plot(test, regr.predict(test))
+    ...     plt.scatter(this_X, y, s=3)
+    Ridge...
 
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
