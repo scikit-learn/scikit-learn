@@ -2,12 +2,9 @@
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
-from ._base import UnsupervisedMixin
-from ..utils.validation import _deprecate_positional_args
 
 
-class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
-                       UnsupervisedMixin, NeighborsBase):
+class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -73,6 +70,11 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
     effective_metric_params_ : dict
         Parameters for the metric used to compute distances to neighbors.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -95,7 +97,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
     >>> np.asarray(nbrs[0][0])
     array(2)
 
-    See also
+    See Also
     --------
     KNeighborsClassifier
     RadiusNeighborsClassifier
@@ -108,16 +110,47 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=30, metric='minkowski',
-                 p=2, metric_params=None, n_jobs=None):
+    def __init__(
+        self,
+        *,
+        n_neighbors=5,
+        radius=1.0,
+        algorithm="auto",
+        leaf_size=30,
+        metric="minkowski",
+        p=2,
+        metric_params=None,
+        n_jobs=None,
+    ):
         super().__init__(
-              n_neighbors=n_neighbors,
-              radius=radius,
-              algorithm=algorithm,
-              leaf_size=leaf_size, metric=metric, p=p,
-              metric_params=metric_params, n_jobs=n_jobs)
+            n_neighbors=n_neighbors,
+            radius=radius,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
+
+    def fit(self, X, y=None):
+        """Fit the nearest neighbors estimator from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : NearestNeighbors
+            The fitted nearest neighbors estimator.
+        """
+        return self._fit(X)

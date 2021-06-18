@@ -34,7 +34,7 @@ References
    <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
-"""
+"""  # noqa: E501
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 #
 # License: BSD 3 clause

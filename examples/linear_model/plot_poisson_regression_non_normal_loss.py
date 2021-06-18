@@ -258,7 +258,6 @@ score_estimator(poisson_glm, df_test)
 # least-squares loss. Here we only fit trees with the Poisson loss to keep this
 # example concise.
 
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.preprocessing import OrdinalEncoder
 
@@ -477,7 +476,6 @@ def lorenz_curve(y_true, y_pred, exposure):
 
     # order samples by increasing predicted risk:
     ranking = np.argsort(y_pred)
-    ranked_exposure = exposure[ranking]
     ranked_frequencies = y_true[ranking]
     ranked_exposure = exposure[ranking]
     cumulated_claims = np.cumsum(ranked_frequencies * ranked_exposure)

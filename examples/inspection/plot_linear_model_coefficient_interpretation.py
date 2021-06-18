@@ -325,7 +325,7 @@ coefs = pd.DataFrame(
     columns=feature_names
 )
 plt.figure(figsize=(9, 7))
-sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
+sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
 plt.xlabel('Coefficient importance')
@@ -376,7 +376,7 @@ coefs = pd.DataFrame(
     columns=feature_names[:-1]
 )
 plt.figure(figsize=(9, 7))
-sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
+sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
 plt.title('Coefficient importance and its variability')
@@ -469,7 +469,7 @@ coefs = pd.DataFrame(
     columns=feature_names
 )
 plt.figure(figsize=(9, 7))
-sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
+sns.stripplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
 plt.title('Coefficient variability')
