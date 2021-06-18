@@ -369,6 +369,12 @@ Changelog
   False in 1.2 and will be removed in 1.4.
   :pr:`17750` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
+  The ``normalize`` parameter of :class:`linear_model.Lars`
+  :class:`linear_model.LarsCV` :class:`linear_model.LassoLars`
+  :class:`linear_model.LassoLarsCV` :class:`linear_model.LassoLarsIC`
+  will default to False in 1.2 and will be removed in 1.4.
+  :pr:`17769` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
 
 - |Fix| `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature
