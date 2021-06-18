@@ -46,8 +46,7 @@ def setup_loading_other_datasets():
     try:
         import pandas  # noqa
     except ImportError:
-        raise SkipTest("Skipping loading_other_datasets.rst, "
-                       "pandas not installed")
+        raise SkipTest("Skipping loading_other_datasets.rst, pandas not installed")
 
     # checks SKLEARN_SKIP_NETWORK_TESTS to see if test should run
     run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
