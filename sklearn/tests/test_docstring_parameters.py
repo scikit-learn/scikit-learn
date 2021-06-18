@@ -245,6 +245,11 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in (
         "OrthogonalMatchingPursuit",
         "OrthogonalMatchingPursuitCV",
+        "Lars",
+        "LarsCV",
+        "LassoLars",
+        "LassoLarsCV",
+        "LassoLarsIC",
     ):
         est.set_params(normalize=False)
 
