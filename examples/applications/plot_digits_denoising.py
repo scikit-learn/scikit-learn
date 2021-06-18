@@ -113,7 +113,7 @@ _ = kernel_pca.fit(X_train_noisy)
 # Now, we can transform and reconstruct the noisy test set. Since we used less
 # components than the number of original features, we will get an approximation
 # of the original set. Indeed, by dropping the components explaining the least
-# variance in PCA, we hope to remove noise. Similar thinking happen in kernel
+# variance in PCA, we hope to remove noise. Similar thinking happens in kernel
 # PCA; however, we expect a better reconstruction because we use a non-linear
 # kernel to learn the PCA basis and a kernel ridge to learn the mapping
 # function.
