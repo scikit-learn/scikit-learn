@@ -18,6 +18,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel
 
 from ._base import LinearModel
+from ._base import _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -865,6 +866,10 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
+
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -940,9 +945,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Lars(n_nonzero_coefs=1)
+    >>> reg = linear_model.Lars(n_nonzero_coefs=1, normalize=False)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    Lars(n_nonzero_coefs=1)
+    Lars(n_nonzero_coefs=1, normalize=False)
     >>> print(reg.coef_)
     [ 0. -1.11...]
 
@@ -961,7 +966,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         *,
         fit_intercept=True,
         verbose=False,
-        normalize=True,
+        normalize="deprecated",
         precompute="auto",
         n_nonzero_coefs=500,
         eps=np.finfo(float).eps,
@@ -992,12 +997,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
         return precompute
 
-    def _fit(self, X, y, max_iter, alpha, fit_path, Xy=None):
+    def _fit(self, X, y, max_iter, alpha, fit_path, normalize, Xy=None):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X
+            X, y, self.fit_intercept, normalize, self.copy_X
         )
 
         if y.ndim == 1:
@@ -1095,6 +1100,10 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
+        _normalize = _deprecate_normalize(
+            self.normalize, default=True, estimator_name=self.__class__.__name__
+        )
+
         alpha = getattr(self, "alpha", 0.0)
         if hasattr(self, "n_nonzero_coefs"):
             alpha = 0.0  # n_nonzero_coefs parametrization takes priority
@@ -1108,7 +1117,15 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             noise = rng.uniform(high=self.jitter, size=len(y))
             y = y + noise
 
-        self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path, Xy=Xy)
+        self._fit(
+            X,
+            y,
+            max_iter=max_iter,
+            alpha=alpha,
+            fit_path=self.fit_path,
+            normalize=_normalize,
+            Xy=Xy,
+        )
 
         return self
 
@@ -1148,6 +1165,10 @@ class LassoLars(Lars):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1235,11 +1256,11 @@ class LassoLars(Lars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLars(alpha=0.01)
+    >>> reg = linear_model.LassoLars(alpha=0.01, normalize=False)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLars(alpha=0.01)
+    LassoLars(alpha=0.01, normalize=False)
     >>> print(reg.coef_)
-    [ 0.         -0.963257...]
+    [ 0.         -0.955...]
 
     See Also
     --------
@@ -1261,7 +1282,7 @@ class LassoLars(Lars):
         *,
         fit_intercept=True,
         verbose=False,
-        normalize=True,
+        normalize="deprecated",
         precompute="auto",
         max_iter=500,
         eps=np.finfo(float).eps,
@@ -1363,6 +1384,10 @@ def _lars_path_residues(
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
+
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
@@ -1455,6 +1480,10 @@ class LarsCV(Lars):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
+
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
@@ -1538,13 +1567,13 @@ class LarsCV(Lars):
     >>> from sklearn.linear_model import LarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
-    >>> reg = LarsCV(cv=5).fit(X, y)
+    >>> reg = LarsCV(cv=5, normalize=False).fit(X, y)
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
-    0.0254...
+    0.2961...
     >>> reg.predict(X[:1,])
-    array([154.0842...])
+    array([154.3996...])
 
     See Also
     --------
@@ -1559,7 +1588,7 @@ class LarsCV(Lars):
         fit_intercept=True,
         verbose=False,
         max_iter=500,
-        normalize=True,
+        normalize="deprecated",
         precompute="auto",
         cv=None,
         max_n_alphas=1000,
@@ -1601,6 +1630,10 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
+        _normalize = _deprecate_normalize(
+            self.normalize, default=True, estimator_name=self.__class__.__name__
+        )
+
         X, y = self._validate_data(X, y, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
@@ -1627,7 +1660,7 @@ class LarsCV(Lars):
                 copy=False,
                 method=self.method,
                 verbose=max(0, self.verbose - 1),
-                normalize=self.normalize,
+                normalize=_normalize,
                 fit_intercept=self.fit_intercept,
                 max_iter=self.max_iter,
                 eps=self.eps,
@@ -1672,7 +1705,13 @@ class LarsCV(Lars):
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
         self._fit(
-            X, y, max_iter=self.max_iter, alpha=best_alpha, Xy=None, fit_path=True
+            X,
+            y,
+            max_iter=self.max_iter,
+            alpha=best_alpha,
+            Xy=None,
+            fit_path=True,
+            normalize=_normalize,
         )
         return self
 
@@ -1708,6 +1747,10 @@ class LassoLarsCV(LarsCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
 
     precompute : bool or 'auto' , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1803,13 +1846,13 @@ class LassoLarsCV(LarsCV):
     >>> from sklearn.linear_model import LassoLarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4.0, random_state=0)
-    >>> reg = LassoLarsCV(cv=5).fit(X, y)
+    >>> reg = LassoLarsCV(cv=5, normalize=False).fit(X, y)
     >>> reg.score(X, y)
-    0.9992...
+    0.9993...
     >>> reg.alpha_
-    0.0484...
+    0.3972...
     >>> reg.predict(X[:1,])
-    array([-77.8723...])
+    array([-78.4831...])
 
     Notes
     -----
@@ -1836,7 +1879,7 @@ class LassoLarsCV(LarsCV):
         fit_intercept=True,
         verbose=False,
         max_iter=500,
-        normalize=True,
+        normalize="deprecated",
         precompute="auto",
         cv=None,
         max_n_alphas=1000,
@@ -1895,6 +1938,10 @@ class LassoLarsIC(LassoLars):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0. It will default
+            to False in 1.2 and be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1962,9 +2009,9 @@ class LassoLarsIC(LassoLars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLarsIC(criterion='bic')
+    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    LassoLarsIC(criterion='bic')
+    LassoLarsIC(criterion='bic', normalize=False)
     >>> print(reg.coef_)
     [ 0.  -1.11...]
 
@@ -1990,7 +2037,7 @@ class LassoLarsIC(LassoLars):
         *,
         fit_intercept=True,
         verbose=False,
-        normalize=True,
+        normalize="deprecated",
         precompute="auto",
         max_iter=500,
         eps=np.finfo(float).eps,
@@ -2032,12 +2079,16 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
+        _normalize = _deprecate_normalize(
+            self.normalize, default=True, estimator_name=self.__class__.__name__
+        )
+
         if copy_X is None:
             copy_X = self.copy_X
         X, y = self._validate_data(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, copy_X
+            X, y, self.fit_intercept, _normalize, copy_X
         )
 
         Gram = self.precompute
