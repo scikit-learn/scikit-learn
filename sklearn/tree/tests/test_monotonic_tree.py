@@ -88,18 +88,18 @@ def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
     values = monotonic_sign * tree_.value
     for i in range(tree_.node_count):
         if tree_.children_left[i] > i and tree_.children_right[i] > i:
-            # Check monotonicity
+            # Check monotonicity on children
             i_left = tree_.children_left[i]
             i_right = tree_.children_right[i]
             assert values[i_left] <= values[i_right]
-            val_middle = float(values[i])
-            # Check bounds
+            val_middle = values[i]
+            # Check bounds on grand-children, filtering out leaf nodes
             if tree_.feature[i_left] >= 0:
                 i_left_right = tree_.children_right[i_left]
-                assert float(values[i_left_right]) <= val_middle
+                assert values[i_left_right] <= val_middle
             if tree_.feature[i_right] >= 0:
                 i_right_left = tree_.children_left[i_right]
-                assert val_middle <= float(values[i_right_left])
+                assert val_middle <= values[i_right_left]
 
 
 def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
@@ -122,11 +122,11 @@ def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
     #
     #       root
     #      /    \
-    #     5      10
-    #    / \    /  \
-    #   a   b  c    d
+    #     a      b
+    #    / \    / \
+    #   c   d  e   f
     #
-    # a <= b <= root <= c <= d
+    # c <= d <= root <= e <= f
 
     rng = np.random.RandomState(seed)
     n_samples = 1000
@@ -173,8 +173,8 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
             else:
                 # constrained feature
                 # check montonicity
-                assert float(monotonic_cst[feature] * tree_.value[i_left]) \
-                       <= float(monotonic_cst[feature] * tree_.value[i_right])
+                assert monotonic_cst[feature] * tree_.value[i_left] \
+                       <= monotonic_cst[feature] * tree_.value[i_right]
                 # update and propagate bounds down the tree
                 if monotonic_cst[feature] == 1:
                     upper_bound[i_left] = tree_.value[i]
