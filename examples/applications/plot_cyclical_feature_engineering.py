@@ -54,7 +54,7 @@ df["count"].max()
 
 # %%
 y = df["count"] / 1000
-y.hist(bins=30)
+_ = y.hist(bins=30)
 
 # %%
 # The input feature data frame is a time annotated hourly log of variables
