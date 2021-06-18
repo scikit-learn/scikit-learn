@@ -29,7 +29,7 @@ print(__doc__)
 # Load the dataset via OpenML
 # ---------------------------
 #
-# The USPS digits datasets in available in OpenML. We use
+# The USPS digits datasets is available in OpenML. We use
 # :func:`~sklearn.datasets.fetch_openml` to get this dataset. In addition, we
 # normalize the dataset such that all pixel values are in the range (0, 1).
 import numpy as np
