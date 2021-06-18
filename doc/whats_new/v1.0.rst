@@ -358,11 +358,17 @@ Changelog
   LinearRegression was deprecated in:
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-  Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV were deprecated in:
+  The ``normalize`` parameter in Ridge, RidgeClassifier, RidgeCV or
+  RidgeClassifierCV were deprecated and will be removed in 1.2.
   :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-  BayesianRidge, ARDRegression were deprecated in:
+  Same for BayesianRidge, ARDRegression in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
+  The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
+  :class:`linear_model.OrthogonalMatchingPursuitCV` will default to
+  False in 1.2 and will be removed in 1.4.
+  :pr:`17750` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
 
 - |Fix| `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature

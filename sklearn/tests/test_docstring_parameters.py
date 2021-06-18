@@ -241,6 +241,13 @@ def test_fit_docstring_attributes(name, Estimator):
         # default="auto" raises an error with the shape of `X`
         est.set_params(n_components=2)
 
+    # FIXME: TO BE REMOVED in 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in (
+        "OrthogonalMatchingPursuit",
+        "OrthogonalMatchingPursuitCV",
+    ):
+        est.set_params(normalize=False)
+
     # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == "NMF":
         est.set_params(init="nndsvda")
