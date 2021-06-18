@@ -31,7 +31,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
 
 
-_STOCHASTIC_SOLVERS = ['sgd', 'adam']
+_STOCHASTIC_SOLVERS = ["sgd", "adam"]
 
 
 def _pack(coefs_, intercepts_):
@@ -49,12 +49,33 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, hidden_layer_sizes, activation, solver,
-                 alpha, batch_size, learning_rate, learning_rate_init, power_t,
-                 max_iter, loss, shuffle, random_state, tol, verbose,
-                 warm_start, momentum, nesterovs_momentum, early_stopping,
-                 validation_fraction, beta_1, beta_2, epsilon,
-                 n_iter_no_change, max_fun):
+    def __init__(
+        self,
+        hidden_layer_sizes,
+        activation,
+        solver,
+        alpha,
+        batch_size,
+        learning_rate,
+        learning_rate_init,
+        power_t,
+        max_iter,
+        loss,
+        shuffle,
+        random_state,
+        tol,
+        verbose,
+        warm_start,
+        momentum,
+        nesterovs_momentum,
+        early_stopping,
+        validation_fraction,
+        beta_1,
+        beta_2,
+        epsilon,
+        n_iter_no_change,
+        max_fun,
+    ):
         self.activation = activation
         self.solver = solver
         self.alpha = alpha
@@ -101,8 +122,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         hidden_activation = ACTIVATIONS[self.activation]
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 1):
-            activations[i + 1] = safe_sparse_dot(activations[i],
-                                                 self.coefs_[i])
+            activations[i + 1] = safe_sparse_dot(activations[i], self.coefs_[i])
             activations[i + 1] += self.intercepts_[i]
 
             # For the hidden layers
@@ -131,7 +151,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        X = self._validate_data(X, accept_sparse=['csr', 'csc'], reset=False)
+        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
 
         # Initialize first layer
         activation = X
@@ -148,22 +168,23 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         return activation
 
-    def _compute_loss_grad(self, layer, n_samples, activations, deltas,
-                           coef_grads, intercept_grads):
+    def _compute_loss_grad(
+        self, layer, n_samples, activations, deltas, coef_grads, intercept_grads
+    ):
         """Compute the gradient of loss with respect to coefs and intercept for
         specified layer.
 
         This function does backpropagation for the specified one layer.
         """
-        coef_grads[layer] = safe_sparse_dot(activations[layer].T,
-                                            deltas[layer])
-        coef_grads[layer] += (self.alpha * self.coefs_[layer])
+        coef_grads[layer] = safe_sparse_dot(activations[layer].T, deltas[layer])
+        coef_grads[layer] += self.alpha * self.coefs_[layer]
         coef_grads[layer] /= n_samples
 
         intercept_grads[layer] = np.mean(deltas[layer], 0)
 
-    def _loss_grad_lbfgs(self, packed_coef_inter, X, y, activations, deltas,
-                         coef_grads, intercept_grads):
+    def _loss_grad_lbfgs(
+        self, packed_coef_inter, X, y, activations, deltas, coef_grads, intercept_grads
+    ):
         """Compute the MLP loss function and its corresponding derivatives
         with respect to the different parameters given in the initialization.
 
@@ -206,12 +227,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         """
         self._unpack(packed_coef_inter)
         loss, coef_grads, intercept_grads = self._backprop(
-            X, y, activations, deltas, coef_grads, intercept_grads)
+            X, y, activations, deltas, coef_grads, intercept_grads
+        )
         grad = _pack(coef_grads, intercept_grads)
         return loss, grad
 
-    def _backprop(self, X, y, activations, deltas, coef_grads,
-                  intercept_grads):
+    def _backprop(self, X, y, activations, deltas, coef_grads, intercept_grads):
         """Compute the MLP loss function and its corresponding derivatives
         with respect to each parameter: weights and bias vectors.
 
@@ -254,8 +275,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         # Get loss
         loss_func_name = self.loss
-        if loss_func_name == 'log_loss' and self.out_activation_ == 'logistic':
-            loss_func_name = 'binary_log_loss'
+        if loss_func_name == "log_loss" and self.out_activation_ == "logistic":
+            loss_func_name = "binary_log_loss"
         loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1])
         # Add L2 regularization term to loss
         values = 0
@@ -275,7 +296,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         # Compute gradient for the last layer
         self._compute_loss_grad(
-            last, n_samples, activations, deltas, coef_grads, intercept_grads)
+            last, n_samples, activations, deltas, coef_grads, intercept_grads
+        )
 
         inplace_derivative = DERIVATIVES[self.activation]
         # Iterate over the hidden layers
@@ -284,8 +306,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             inplace_derivative(activations[i], deltas[i - 1])
 
             self._compute_loss_grad(
-                i - 1, n_samples, activations, deltas, coef_grads,
-                intercept_grads)
+                i - 1, n_samples, activations, deltas, coef_grads, intercept_grads
+            )
 
         return loss, coef_grads, intercept_grads
 
@@ -301,22 +323,22 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         # Output for regression
         if not is_classifier(self):
-            self.out_activation_ = 'identity'
+            self.out_activation_ = "identity"
         # Output for multi class
-        elif self._label_binarizer.y_type_ == 'multiclass':
-            self.out_activation_ = 'softmax'
+        elif self._label_binarizer.y_type_ == "multiclass":
+            self.out_activation_ = "softmax"
         # Output for binary class and multi-label
         else:
-            self.out_activation_ = 'logistic'
+            self.out_activation_ = "logistic"
 
         # Initialize coefficient and intercept layers
         self.coefs_ = []
         self.intercepts_ = []
 
         for i in range(self.n_layers_ - 1):
-            coef_init, intercept_init = self._init_coef(layer_units[i],
-                                                        layer_units[i + 1],
-                                                        dtype)
+            coef_init, intercept_init = self._init_coef(
+                layer_units[i], layer_units[i + 1], dtype
+            )
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
 
@@ -332,16 +354,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     def _init_coef(self, fan_in, fan_out, dtype):
         # Use the initialization method recommended by
         # Glorot et al.
-        factor = 6.
-        if self.activation == 'logistic':
-            factor = 2.
+        factor = 6.0
+        if self.activation == "logistic":
+            factor = 2.0
         init_bound = np.sqrt(factor / (fan_in + fan_out))
 
         # Generate weights and bias:
-        coef_init = self._random_state.uniform(-init_bound, init_bound,
-                                               (fan_in, fan_out))
-        intercept_init = self._random_state.uniform(-init_bound, init_bound,
-                                                    fan_out)
+        coef_init = self._random_state.uniform(
+            -init_bound, init_bound, (fan_in, fan_out)
+        )
+        intercept_init = self._random_state.uniform(-init_bound, init_bound, fan_out)
         coef_init = coef_init.astype(dtype, copy=False)
         intercept_init = intercept_init.astype(dtype, copy=False)
         return coef_init, intercept_init
@@ -356,10 +378,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # Validate input parameters.
         self._validate_hyperparameters()
         if np.any(np.array(hidden_layer_sizes) <= 0):
-            raise ValueError("hidden_layer_sizes must be > 0, got %s." %
-                             hidden_layer_sizes)
-        first_pass = (not hasattr(self, 'coefs_') or
-                      (not self.warm_start and not incremental))
+            raise ValueError(
+                "hidden_layer_sizes must be > 0, got %s." % hidden_layer_sizes
+            )
+        first_pass = not hasattr(self, "coefs_") or (
+            not self.warm_start and not incremental
+        )
 
         X, y = self._validate_input(X, y, incremental, reset=first_pass)
 
@@ -371,8 +395,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         self.n_outputs_ = y.shape[1]
 
-        layer_units = ([n_features] + hidden_layer_sizes +
-                       [self.n_outputs_])
+        layer_units = [n_features] + hidden_layer_sizes + [self.n_outputs_]
 
         # check random state
         self._random_state = check_random_state(self.random_state)
@@ -385,80 +408,99 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         activations = [X] + [None] * (len(layer_units) - 1)
         deltas = [None] * (len(activations) - 1)
 
-        coef_grads = [np.empty((n_fan_in_, n_fan_out_), dtype=X.dtype)
-                      for n_fan_in_,
-                      n_fan_out_ in zip(layer_units[:-1],
-                                        layer_units[1:])]
+        coef_grads = [
+            np.empty((n_fan_in_, n_fan_out_), dtype=X.dtype)
+            for n_fan_in_, n_fan_out_ in zip(layer_units[:-1], layer_units[1:])
+        ]
 
-        intercept_grads = [np.empty(n_fan_out_, dtype=X.dtype)
-                           for n_fan_out_ in
-                           layer_units[1:]]
+        intercept_grads = [
+            np.empty(n_fan_out_, dtype=X.dtype) for n_fan_out_ in layer_units[1:]
+        ]
 
         # Run the Stochastic optimization solver
         if self.solver in _STOCHASTIC_SOLVERS:
-            self._fit_stochastic(X, y, activations, deltas, coef_grads,
-                                 intercept_grads, layer_units, incremental)
+            self._fit_stochastic(
+                X,
+                y,
+                activations,
+                deltas,
+                coef_grads,
+                intercept_grads,
+                layer_units,
+                incremental,
+            )
 
         # Run the LBFGS solver
-        elif self.solver == 'lbfgs':
-            self._fit_lbfgs(X, y, activations, deltas, coef_grads,
-                            intercept_grads, layer_units)
+        elif self.solver == "lbfgs":
+            self._fit_lbfgs(
+                X, y, activations, deltas, coef_grads, intercept_grads, layer_units
+            )
         return self
 
     def _validate_hyperparameters(self):
         if not isinstance(self.shuffle, bool):
-            raise ValueError("shuffle must be either True or False, got %s." %
-                             self.shuffle)
+            raise ValueError(
+                "shuffle must be either True or False, got %s." % self.shuffle
+            )
         if self.max_iter <= 0:
             raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
         if self.max_fun <= 0:
             raise ValueError("max_fun must be > 0, got %s." % self.max_fun)
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0, got %s." % self.alpha)
-        if (self.learning_rate in ["constant", "invscaling", "adaptive"] and
-                self.learning_rate_init <= 0.0):
-            raise ValueError("learning_rate_init must be > 0, got %s." %
-                             self.learning_rate)
+        if (
+            self.learning_rate in ["constant", "invscaling", "adaptive"]
+            and self.learning_rate_init <= 0.0
+        ):
+            raise ValueError(
+                "learning_rate_init must be > 0, got %s." % self.learning_rate
+            )
         if self.momentum > 1 or self.momentum < 0:
-            raise ValueError("momentum must be >= 0 and <= 1, got %s" %
-                             self.momentum)
+            raise ValueError("momentum must be >= 0 and <= 1, got %s" % self.momentum)
         if not isinstance(self.nesterovs_momentum, bool):
-            raise ValueError("nesterovs_momentum must be either True or False,"
-                             " got %s." % self.nesterovs_momentum)
+            raise ValueError(
+                "nesterovs_momentum must be either True or False,"
+                " got %s." % self.nesterovs_momentum
+            )
         if not isinstance(self.early_stopping, bool):
-            raise ValueError("early_stopping must be either True or False,"
-                             " got %s." % self.early_stopping)
+            raise ValueError(
+                "early_stopping must be either True or False,"
+                " got %s." % self.early_stopping
+            )
         if self.validation_fraction < 0 or self.validation_fraction >= 1:
-            raise ValueError("validation_fraction must be >= 0 and < 1, "
-                             "got %s" % self.validation_fraction)
+            raise ValueError(
+                "validation_fraction must be >= 0 and < 1, "
+                "got %s" % self.validation_fraction
+            )
         if self.beta_1 < 0 or self.beta_1 >= 1:
-            raise ValueError("beta_1 must be >= 0 and < 1, got %s" %
-                             self.beta_1)
+            raise ValueError("beta_1 must be >= 0 and < 1, got %s" % self.beta_1)
         if self.beta_2 < 0 or self.beta_2 >= 1:
-            raise ValueError("beta_2 must be >= 0 and < 1, got %s" %
-                             self.beta_2)
+            raise ValueError("beta_2 must be >= 0 and < 1, got %s" % self.beta_2)
         if self.epsilon <= 0.0:
             raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
         if self.n_iter_no_change <= 0:
-            raise ValueError("n_iter_no_change must be > 0, got %s."
-                             % self.n_iter_no_change)
+            raise ValueError(
+                "n_iter_no_change must be > 0, got %s." % self.n_iter_no_change
+            )
 
         # raise ValueError if not registered
         if self.activation not in ACTIVATIONS:
-            raise ValueError("The activation '%s' is not supported. Supported "
-                             "activations are %s."
-                             % (self.activation, list(sorted(ACTIVATIONS))))
+            raise ValueError(
+                "The activation '%s' is not supported. Supported "
+                "activations are %s." % (self.activation, list(sorted(ACTIVATIONS)))
+            )
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
-            raise ValueError("learning rate %s is not supported. " %
-                             self.learning_rate)
+            raise ValueError("learning rate %s is not supported. " % self.learning_rate)
         supported_solvers = _STOCHASTIC_SOLVERS + ["lbfgs"]
         if self.solver not in supported_solvers:
-            raise ValueError("The solver %s is not supported. "
-                             " Expected one of: %s" %
-                             (self.solver, ", ".join(supported_solvers)))
+            raise ValueError(
+                "The solver %s is not supported. "
+                " Expected one of: %s" % (self.solver, ", ".join(supported_solvers))
+            )
 
-    def _fit_lbfgs(self, X, y, activations, deltas, coef_grads,
-                   intercept_grads, layer_units):
+    def _fit_lbfgs(
+        self, X, y, activations, deltas, coef_grads, intercept_grads, layer_units
+    ):
         # Store meta information for the parameters
         self._coef_indptr = []
         self._intercept_indptr = []
@@ -479,8 +521,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             start = end
 
         # Run LBFGS
-        packed_coef_inter = _pack(self.coefs_,
-                                  self.intercepts_)
+        packed_coef_inter = _pack(self.coefs_, self.intercepts_)
 
         if self.verbose is True or self.verbose >= 1:
             iprint = 1
@@ -488,33 +529,54 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             iprint = -1
 
         opt_res = scipy.optimize.minimize(
-                self._loss_grad_lbfgs, packed_coef_inter,
-                method="L-BFGS-B", jac=True,
-                options={
-                    "maxfun": self.max_fun,
-                    "maxiter": self.max_iter,
-                    "iprint": iprint,
-                    "gtol": self.tol
-                },
-                args=(X, y, activations, deltas, coef_grads, intercept_grads))
+            self._loss_grad_lbfgs,
+            packed_coef_inter,
+            method="L-BFGS-B",
+            jac=True,
+            options={
+                "maxfun": self.max_fun,
+                "maxiter": self.max_iter,
+                "iprint": iprint,
+                "gtol": self.tol,
+            },
+            args=(X, y, activations, deltas, coef_grads, intercept_grads),
+        )
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
         self.loss_ = opt_res.fun
         self._unpack(opt_res.x)
 
-    def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
-                        intercept_grads, layer_units, incremental):
+    def _fit_stochastic(
+        self,
+        X,
+        y,
+        activations,
+        deltas,
+        coef_grads,
+        intercept_grads,
+        layer_units,
+        incremental,
+    ):
 
-        if not incremental or not hasattr(self, '_optimizer'):
+        if not incremental or not hasattr(self, "_optimizer"):
             params = self.coefs_ + self.intercepts_
 
-            if self.solver == 'sgd':
+            if self.solver == "sgd":
                 self._optimizer = SGDOptimizer(
-                    params, self.learning_rate_init, self.learning_rate,
-                    self.momentum, self.nesterovs_momentum, self.power_t)
-            elif self.solver == 'adam':
+                    params,
+                    self.learning_rate_init,
+                    self.learning_rate,
+                    self.momentum,
+                    self.nesterovs_momentum,
+                    self.power_t,
+                )
+            elif self.solver == "adam":
                 self._optimizer = AdamOptimizer(
-                    params, self.learning_rate_init, self.beta_1, self.beta_2,
-                    self.epsilon)
+                    params,
+                    self.learning_rate_init,
+                    self.beta_1,
+                    self.beta_2,
+                    self.epsilon,
+                )
 
         # early_stopping in partial_fit doesn't make sense
         early_stopping = self.early_stopping and not incremental
@@ -523,9 +585,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             should_stratify = is_classifier(self) and self.n_outputs_ == 1
             stratify = y if should_stratify else None
             X, X_val, y, y_val = train_test_split(
-                X, y, random_state=self._random_state,
+                X,
+                y,
+                random_state=self._random_state,
                 test_size=self.validation_fraction,
-                stratify=stratify)
+                stratify=stratify,
+            )
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
         else:
@@ -535,12 +600,14 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         n_samples = X.shape[0]
         sample_idx = np.arange(n_samples, dtype=int)
 
-        if self.batch_size == 'auto':
+        if self.batch_size == "auto":
             batch_size = min(200, n_samples)
         else:
             if self.batch_size < 1 or self.batch_size > n_samples:
-                warnings.warn("Got `batch_size` less than 1 or larger than "
-                              "sample size. It is going to be clipped")
+                warnings.warn(
+                    "Got `batch_size` less than 1 or larger than "
+                    "sample size. It is going to be clipped"
+                )
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
@@ -549,8 +616,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     # Only shuffle the sample indices instead of X and y to
                     # reduce the memory footprint. These indices will be used
                     # to slice the X and y.
-                    sample_idx = shuffle(sample_idx,
-                                         random_state=self._random_state)
+                    sample_idx = shuffle(sample_idx, random_state=self._random_state)
 
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
@@ -563,10 +629,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
                     activations[0] = X_batch
                     batch_loss, coef_grads, intercept_grads = self._backprop(
-                        X_batch, y_batch, activations, deltas,
-                        coef_grads, intercept_grads)
-                    accumulated_loss += batch_loss * (batch_slice.stop -
-                                                      batch_slice.start)
+                        X_batch,
+                        y_batch,
+                        activations,
+                        deltas,
+                        coef_grads,
+                        intercept_grads,
+                    )
+                    accumulated_loss += batch_loss * (
+                        batch_slice.stop - batch_slice.start
+                    )
 
                     # update weights
                     grads = coef_grads + intercept_grads
@@ -578,8 +650,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 self.t_ += n_samples
                 self.loss_curve_.append(self.loss_)
                 if self.verbose:
-                    print("Iteration %d, loss = %.8f" % (self.n_iter_,
-                                                         self.loss_))
+                    print("Iteration %d, loss = %.8f" % (self.n_iter_, self.loss_))
 
                 # update no_improvement_count based on training loss or
                 # validation score according to early_stopping
@@ -592,16 +663,19 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     # not better than last `n_iter_no_change` iterations by tol
                     # stop or decrease learning rate
                     if early_stopping:
-                        msg = ("Validation score did not improve more than "
-                               "tol=%f for %d consecutive epochs." % (
-                                   self.tol, self.n_iter_no_change))
+                        msg = (
+                            "Validation score did not improve more than "
+                            "tol=%f for %d consecutive epochs."
+                            % (self.tol, self.n_iter_no_change)
+                        )
                     else:
-                        msg = ("Training loss did not improve more than tol=%f"
-                               " for %d consecutive epochs." % (
-                                   self.tol, self.n_iter_no_change))
+                        msg = (
+                            "Training loss did not improve more than tol=%f"
+                            " for %d consecutive epochs."
+                            % (self.tol, self.n_iter_no_change)
+                        )
 
-                    is_stopping = self._optimizer.trigger_stopping(
-                        msg, self.verbose)
+                    is_stopping = self._optimizer.trigger_stopping(msg, self.verbose)
                     if is_stopping:
                         break
                     else:
@@ -614,7 +688,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     warnings.warn(
                         "Stochastic Optimizer: Maximum iterations (%d) "
                         "reached and the optimization hasn't converged yet."
-                        % self.max_iter, ConvergenceWarning)
+                        % self.max_iter,
+                        ConvergenceWarning,
+                    )
         except KeyboardInterrupt:
             warnings.warn("Training interrupted by user.")
 
@@ -635,8 +711,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # let's hope no-one overloads .score with mse
             last_valid_score = self.validation_scores_[-1]
 
-            if last_valid_score < (self.best_validation_score_ +
-                                   self.tol):
+            if last_valid_score < (self.best_validation_score_ + self.tol):
                 self._no_improvement_count += 1
             else:
                 self._no_improvement_count = 0
@@ -644,8 +719,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if last_valid_score > self.best_validation_score_:
                 self.best_validation_score_ = last_valid_score
                 self._best_coefs = [c.copy() for c in self.coefs_]
-                self._best_intercepts = [i.copy()
-                                         for i in self.intercepts_]
+                self._best_intercepts = [i.copy() for i in self.intercepts_]
         else:
             if self.loss_curve_[-1] > self.best_loss_ - self.tol:
                 self._no_improvement_count += 1
@@ -689,9 +763,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : returns a trained MLP model.
         """
         if self.solver not in _STOCHASTIC_SOLVERS:
-            raise AttributeError("partial_fit is only available for stochastic"
-                                 " optimizers. %s is not stochastic."
-                                 % self.solver)
+            raise AttributeError(
+                "partial_fit is only available for stochastic"
+                " optimizers. %s is not stochastic." % self.solver
+            )
         return self._partial_fit
 
     def _partial_fit(self, X, y):
@@ -948,34 +1023,70 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
-                 solver='adam', alpha=0.0001,
-                 batch_size='auto', learning_rate="constant",
-                 learning_rate_init=0.001, power_t=0.5, max_iter=200,
-                 shuffle=True, random_state=None, tol=1e-4,
-                 verbose=False, warm_start=False, momentum=0.9,
-                 nesterovs_momentum=True, early_stopping=False,
-                 validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8, n_iter_no_change=10, max_fun=15000):
+
+    def __init__(
+        self,
+        hidden_layer_sizes=(100,),
+        activation="relu",
+        *,
+        solver="adam",
+        alpha=0.0001,
+        batch_size="auto",
+        learning_rate="constant",
+        learning_rate_init=0.001,
+        power_t=0.5,
+        max_iter=200,
+        shuffle=True,
+        random_state=None,
+        tol=1e-4,
+        verbose=False,
+        warm_start=False,
+        momentum=0.9,
+        nesterovs_momentum=True,
+        early_stopping=False,
+        validation_fraction=0.1,
+        beta_1=0.9,
+        beta_2=0.999,
+        epsilon=1e-8,
+        n_iter_no_change=10,
+        max_fun=15000,
+    ):
         super().__init__(
             hidden_layer_sizes=hidden_layer_sizes,
-            activation=activation, solver=solver, alpha=alpha,
-            batch_size=batch_size, learning_rate=learning_rate,
-            learning_rate_init=learning_rate_init, power_t=power_t,
-            max_iter=max_iter, loss='log_loss', shuffle=shuffle,
-            random_state=random_state, tol=tol, verbose=verbose,
-            warm_start=warm_start, momentum=momentum,
+            activation=activation,
+            solver=solver,
+            alpha=alpha,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            learning_rate_init=learning_rate_init,
+            power_t=power_t,
+            max_iter=max_iter,
+            loss="log_loss",
+            shuffle=shuffle,
+            random_state=random_state,
+            tol=tol,
+            verbose=verbose,
+            warm_start=warm_start,
+            momentum=momentum,
             nesterovs_momentum=nesterovs_momentum,
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
-            beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
-            n_iter_no_change=n_iter_no_change, max_fun=max_fun)
+            beta_1=beta_1,
+            beta_2=beta_2,
+            epsilon=epsilon,
+            n_iter_no_change=n_iter_no_change,
+            max_fun=max_fun,
+        )
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
-                                   multi_output=True,
-                                   dtype=(np.float64, np.float32),
-                                   reset=reset)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            multi_output=True,
+            dtype=(np.float64, np.float32),
+            reset=reset,
+        )
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
@@ -997,10 +1108,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         #
         # Note the reliance on short-circuiting here, so that the second
         # or part implies that classes_ is defined.
-        if (
-            (not hasattr(self, "classes_")) or
-            (not self.warm_start and not incremental)
-        ):
+        if (not hasattr(self, "classes_")) or (not self.warm_start and not incremental):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
@@ -1070,15 +1178,16 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         self : returns a trained MLP model.
         """
         if self.solver not in _STOCHASTIC_SOLVERS:
-            raise AttributeError("partial_fit is only available for stochastic"
-                                 " optimizer. %s is not stochastic"
-                                 % self.solver)
+            raise AttributeError(
+                "partial_fit is only available for stochastic"
+                " optimizer. %s is not stochastic" % self.solver
+            )
         return self._partial_fit
 
     def _partial_fit(self, X, y, classes=None):
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
-            if type_of_target(y).startswith('multilabel'):
+            if type_of_target(y).startswith("multilabel"):
                 self._label_binarizer.fit(y)
             else:
                 self._label_binarizer.fit(classes)
@@ -1375,29 +1484,60 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
-                 solver='adam', alpha=0.0001,
-                 batch_size='auto', learning_rate="constant",
-                 learning_rate_init=0.001,
-                 power_t=0.5, max_iter=200, shuffle=True,
-                 random_state=None, tol=1e-4,
-                 verbose=False, warm_start=False, momentum=0.9,
-                 nesterovs_momentum=True, early_stopping=False,
-                 validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8, n_iter_no_change=10, max_fun=15000):
+
+    def __init__(
+        self,
+        hidden_layer_sizes=(100,),
+        activation="relu",
+        *,
+        solver="adam",
+        alpha=0.0001,
+        batch_size="auto",
+        learning_rate="constant",
+        learning_rate_init=0.001,
+        power_t=0.5,
+        max_iter=200,
+        shuffle=True,
+        random_state=None,
+        tol=1e-4,
+        verbose=False,
+        warm_start=False,
+        momentum=0.9,
+        nesterovs_momentum=True,
+        early_stopping=False,
+        validation_fraction=0.1,
+        beta_1=0.9,
+        beta_2=0.999,
+        epsilon=1e-8,
+        n_iter_no_change=10,
+        max_fun=15000,
+    ):
         super().__init__(
             hidden_layer_sizes=hidden_layer_sizes,
-            activation=activation, solver=solver, alpha=alpha,
-            batch_size=batch_size, learning_rate=learning_rate,
-            learning_rate_init=learning_rate_init, power_t=power_t,
-            max_iter=max_iter, loss='squared_error', shuffle=shuffle,
-            random_state=random_state, tol=tol, verbose=verbose,
-            warm_start=warm_start, momentum=momentum,
+            activation=activation,
+            solver=solver,
+            alpha=alpha,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            learning_rate_init=learning_rate_init,
+            power_t=power_t,
+            max_iter=max_iter,
+            loss="squared_error",
+            shuffle=shuffle,
+            random_state=random_state,
+            tol=tol,
+            verbose=verbose,
+            warm_start=warm_start,
+            momentum=momentum,
             nesterovs_momentum=nesterovs_momentum,
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
-            beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
-            n_iter_no_change=n_iter_no_change, max_fun=max_fun)
+            beta_1=beta_1,
+            beta_2=beta_2,
+            epsilon=epsilon,
+            n_iter_no_change=n_iter_no_change,
+            max_fun=max_fun,
+        )
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.
@@ -1419,10 +1559,15 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return y_pred
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
-                                   multi_output=True, y_numeric=True,
-                                   dtype=(np.float64, np.float32),
-                                   reset=reset)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            multi_output=True,
+            y_numeric=True,
+            dtype=(np.float64, np.float32),
+            reset=reset,
+        )
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y

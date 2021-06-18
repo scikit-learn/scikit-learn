@@ -24,14 +24,14 @@ from ..utils.validation import check_array, check_is_fitted
 from ..utils.fixes import delayed
 
 
-__all__ = [
-    'ColumnTransformer', 'make_column_transformer', 'make_column_selector'
-]
+__all__ = ["ColumnTransformer", "make_column_transformer", "make_column_selector"]
 
 
-_ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
-                     "Try to specify the column selection as a list of one "
-                     "item instead of a scalar.")
+_ERR_MSG_1DCOLUMN = (
+    "1D data passed to a transformer that expects 2D data. "
+    "Try to specify the column selection as a list of one "
+    "item instead of a scalar."
+)
 
 
 class ColumnTransformer(TransformerMixin, _BaseComposition):
@@ -182,15 +182,19 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
            [0.5, 0.5, 0. , 1. ]])
 
     """
-    _required_parameters = ['transformers']
 
-    def __init__(self,
-                 transformers, *,
-                 remainder='drop',
-                 sparse_threshold=0.3,
-                 n_jobs=None,
-                 transformer_weights=None,
-                 verbose=False):
+    _required_parameters = ["transformers"]
+
+    def __init__(
+        self,
+        transformers,
+        *,
+        remainder="drop",
+        sparse_threshold=0.3,
+        n_jobs=None,
+        transformer_weights=None,
+        verbose=False,
+    ):
         self.transformers = transformers
         self.remainder = remainder
         self.sparse_threshold = sparse_threshold
@@ -211,8 +215,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers = [
-            (name, trans, col) for ((name, trans), (_, _, col))
-            in zip(value, self.transformers)]
+            (name, trans, col)
+            for ((name, trans), (_, _, col)) in zip(value, self.transformers)
+        ]
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -232,7 +237,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         params : dict
             Parameter names mapped to their values.
         """
-        return self._get_params('_transformers', deep=deep)
+        return self._get_params("_transformers", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -245,11 +250,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         -------
         self
         """
-        self._set_params('_transformers', **kwargs)
+        self._set_params("_transformers", **kwargs)
         return self
 
-    def _iter(self, fitted=False, replace_strings=False,
-              column_as_strings=False):
+    def _iter(self, fitted=False, replace_strings=False, column_as_strings=False):
         """
         Generate (name, trans, column, weight) tuples.
 
@@ -263,8 +267,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             # interleave the validated column specifiers
             transformers = [
-                (name, trans, column) for (name, trans, _), column
-                in zip(self.transformers, self._columns)
+                (name, trans, column)
+                for (name, trans, _), column in zip(self.transformers, self._columns)
             ]
             # add transformer tuple for remainder
             if self._remainder[2]:
@@ -275,11 +279,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if replace_strings:
                 # replace 'passthrough' with identity transformer and
                 # skip in case of 'drop'
-                if trans == 'passthrough':
-                    trans = FunctionTransformer(
-                        accept_sparse=True, check_inverse=False
-                    )
-                elif trans == 'drop':
+                if trans == "passthrough":
+                    trans = FunctionTransformer(accept_sparse=True, check_inverse=False)
+                elif trans == "drop":
                     continue
                 elif _is_empty_column_selection(columns):
                     continue
@@ -308,14 +310,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            if t in ('drop', 'passthrough'):
+            if t in ("drop", "passthrough"):
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
-                    hasattr(t, "transform")):
-                raise TypeError("All estimators should implement fit and "
-                                "transform, or can be 'drop' or 'passthrough' "
-                                "specifiers. '%s' (type %s) doesn't." %
-                                (t, type(t)))
+            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
+                t, "transform"
+            ):
+                raise TypeError(
+                    "All estimators should implement fit and "
+                    "transform, or can be 'drop' or 'passthrough' "
+                    "specifiers. '%s' (type %s) doesn't." % (t, type(t))
+                )
 
     def _validate_column_callables(self, X):
         """
@@ -327,8 +331,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if callable(columns):
                 columns = columns(X)
             all_columns.append(columns)
-            transformer_to_input_indices[name] = _get_column_indices(X,
-                                                                     columns)
+            transformer_to_input_indices[name] = _get_column_indices(X, columns)
 
         self._columns = all_columns
         self._transformer_to_input_indices = transformer_to_input_indices
@@ -338,21 +341,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Validates ``remainder`` and defines ``_remainder`` targeting
         the remaining columns.
         """
-        is_transformer = ((hasattr(self.remainder, "fit")
-                           or hasattr(self.remainder, "fit_transform"))
-                          and hasattr(self.remainder, "transform"))
-        if (self.remainder not in ('drop', 'passthrough')
-                and not is_transformer):
+        is_transformer = (
+            hasattr(self.remainder, "fit") or hasattr(self.remainder, "fit_transform")
+        ) and hasattr(self.remainder, "transform")
+        if self.remainder not in ("drop", "passthrough") and not is_transformer:
             raise ValueError(
                 "The remainder keyword needs to be one of 'drop', "
-                "'passthrough', or estimator. '%s' was passed instead" %
-                self.remainder)
+                "'passthrough', or estimator. '%s' was passed instead" % self.remainder
+            )
 
         self._n_features = X.shape[1]
         cols = set(chain(*self._transformer_to_input_indices.values()))
         remaining = sorted(set(range(self._n_features)) - cols)
-        self._remainder = ('remainder', self.remainder, remaining)
-        self._transformer_to_input_indices['remainder'] = remaining
+        self._remainder = ("remainder", self.remainder, remaining)
+        self._transformer_to_input_indices["remainder"] = remaining
 
     @property
     def named_transformers_(self):
@@ -364,8 +366,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**{name: trans for name, trans, _
-                        in self.transformers_})
+        return Bunch(**{name: trans for name, trans, _ in self.transformers_})
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -378,25 +379,26 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         check_is_fitted(self)
         feature_names = []
         for name, trans, column, _ in self._iter(fitted=True):
-            if trans == 'drop' or _is_empty_column_selection(column):
+            if trans == "drop" or _is_empty_column_selection(column):
                 continue
-            if trans == 'passthrough':
+            if trans == "passthrough":
                 if self._feature_names_in is not None:
-                    if ((not isinstance(column, slice))
-                            and all(isinstance(col, str) for col in column)):
+                    if (not isinstance(column, slice)) and all(
+                        isinstance(col, str) for col in column
+                    ):
                         feature_names.extend(column)
                     else:
                         feature_names.extend(self._feature_names_in[column])
                 else:
                     indices = np.arange(self._n_features)
-                    feature_names.extend(['x%d' % i for i in indices[column]])
+                    feature_names.extend(["x%d" % i for i in indices[column]])
                 continue
-            if not hasattr(trans, 'get_feature_names'):
-                raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names."
-                                     % (str(name), type(trans).__name__))
-            feature_names.extend([f"{name}__{f}" for f in
-                                  trans.get_feature_names()])
+            if not hasattr(trans, "get_feature_names"):
+                raise AttributeError(
+                    "Transformer %s (type %s) does not "
+                    "provide get_feature_names." % (str(name), type(trans).__name__)
+                )
+            feature_names.extend([f"{name}__{f}" for f in trans.get_feature_names()])
         return feature_names
 
     def _update_fitted_transformers(self, transformers):
@@ -405,13 +407,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformers_ = []
 
         for name, old, column, _ in self._iter():
-            if old == 'drop':
-                trans = 'drop'
-            elif old == 'passthrough':
+            if old == "drop":
+                trans = "drop"
+            elif old == "passthrough":
                 # FunctionTransformer is present in list of transformers,
                 # so get next transformer, but save original string
                 next(fitted_transformers)
-                trans = 'passthrough'
+                trans = "passthrough"
             elif _is_empty_column_selection(column):
                 trans = old
             else:
@@ -427,13 +429,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Ensure that the output of each transformer is 2D. Otherwise
         hstack can raise an error or produce incorrect results.
         """
-        names = [name for name, _, _, _ in self._iter(fitted=True,
-                                                      replace_strings=True)]
+        names = [
+            name for name, _, _, _ in self._iter(fitted=True, replace_strings=True)
+        ]
         for Xs, name in zip(result, names):
-            if not getattr(Xs, 'ndim', 0) == 2:
+            if not getattr(Xs, "ndim", 0) == 2:
                 raise ValueError(
                     "The output of the '{0}' transformer should be 2D (scipy "
-                    "matrix, array, or pandas DataFrame).".format(name))
+                    "matrix, array, or pandas DataFrame).".format(name)
+                )
 
     def _record_output_indices(self, Xs):
         """
@@ -452,7 +456,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # `_iter` only generates transformers that have a non empty
         # selection. Here we set empty slices for transformers that
         # generate no output, which are safe for indexing
-        all_names = [t[0] for t in self.transformers] + ['remainder']
+        all_names = [t[0] for t in self.transformers] + ["remainder"]
         for name in all_names:
             if name not in self.output_indices_:
                 self.output_indices_[name] = slice(0, 0)
@@ -460,10 +464,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return '(%d of %d) Processing %s' % (idx, total, name)
+        return "(%d of %d) Processing %s" % (idx, total, name)
 
-    def _fit_transform(self, X, y, func, fitted=False,
-                       column_as_strings=False):
+    def _fit_transform(self, X, y, func, fitted=False, column_as_strings=False):
         """
         Private function to fit and/or transform on demand.
 
@@ -473,8 +476,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         transformers = list(
             self._iter(
-                fitted=fitted, replace_strings=True,
-                column_as_strings=column_as_strings))
+                fitted=fitted, replace_strings=True, column_as_strings=column_as_strings
+            )
+        )
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
@@ -482,10 +486,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     X=_safe_indexing(X, column, axis=1),
                     y=y,
                     weight=weight,
-                    message_clsname='ColumnTransformer',
-                    message=self._log_message(name, idx, len(transformers)))
-                for idx, (name, trans, column, weight) in enumerate(
-                    transformers, 1))
+                    message_clsname="ColumnTransformer",
+                    message=self._log_message(name, idx, len(transformers)),
+                )
+                for idx, (name, trans, column, weight) in enumerate(transformers, 1)
+            )
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN) from e
@@ -540,8 +545,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # TODO: this should be `feature_names_in_` when we start having it
         if hasattr(X, "columns"):
             self._feature_names_in = np.asarray(X.columns)
-            self._only_str_columns = all(isinstance(col, str)
-                                         for col in self._feature_names_in)
+            self._only_str_columns = all(
+                isinstance(col, str) for col in self._feature_names_in
+            )
         else:
             self._feature_names_in = None
         X = _check_X(X)
@@ -563,8 +569,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # determine if concatenated output will be sparse or not
         if any(sparse.issparse(X) for X in Xs):
             nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
-            total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
-                        else X.size for X in Xs)
+            total = sum(
+                X.shape[0] * X.shape[1] if sparse.issparse(X) else X.size for X in Xs
+            )
             density = nnz / total
             self.sparse_output_ = density < self.sparse_threshold
         else:
@@ -598,17 +605,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         X = _check_X(X)
 
         fit_dataframe_and_transform_dataframe = (
-            self._feature_names_in is not None and hasattr(X, "columns"))
+            self._feature_names_in is not None and hasattr(X, "columns")
+        )
 
         if fit_dataframe_and_transform_dataframe:
             named_transformers = self.named_transformers_
             # check that all names seen in fit are in transform, unless
             # they were dropped
             non_dropped_indices = [
-                ind for name, ind in self._transformer_to_input_indices.items()
-                if name in named_transformers and
-                isinstance(named_transformers[name], str) and
-                named_transformers[name] != 'drop']
+                ind
+                for name, ind in self._transformer_to_input_indices.items()
+                if name in named_transformers
+                and isinstance(named_transformers[name], str)
+                and named_transformers[name] != "drop"
+            ]
 
             all_indices = set(chain(*non_dropped_indices))
             all_names = set(self._feature_names_in[ind] for ind in all_indices)
@@ -622,8 +632,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             self._check_n_features(X, reset=False)
 
         Xs = self._fit_transform(
-            X, None, _transform_one, fitted=True,
-            column_as_strings=fit_dataframe_and_transform_dataframe)
+            X,
+            None,
+            _transform_one,
+            fitted=True,
+            column_as_strings=fit_dataframe_and_transform_dataframe,
+        )
         self._validate_output(Xs)
 
         if not Xs:
@@ -647,10 +661,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 # since all columns should be numeric before stacking them
                 # in a sparse matrix, `check_array` is used for the
                 # dtype conversion if necessary.
-                converted_Xs = [check_array(X,
-                                            accept_sparse=True,
-                                            force_all_finite=False)
-                                for X in Xs]
+                converted_Xs = [
+                    check_array(X, accept_sparse=True, force_all_finite=False)
+                    for X in Xs
+                ]
             except ValueError as e:
                 raise ValueError(
                     "For a sparse output, all columns should "
@@ -663,33 +677,33 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        if isinstance(self.remainder, str) and self.remainder == 'drop':
+        if isinstance(self.remainder, str) and self.remainder == "drop":
             transformers = self.transformers
         elif hasattr(self, "_remainder"):
             remainder_columns = self._remainder[2]
-            if (self._feature_names_in is not None and
-                    remainder_columns and
-                    not all(isinstance(col, str)
-                            for col in remainder_columns)):
-                remainder_columns = (
-                    self._feature_names_in[remainder_columns].tolist())
-            transformers = chain(self.transformers,
-                                 [('remainder', self.remainder,
-                                   remainder_columns)])
+            if (
+                self._feature_names_in is not None
+                and remainder_columns
+                and not all(isinstance(col, str) for col in remainder_columns)
+            ):
+                remainder_columns = self._feature_names_in[remainder_columns].tolist()
+            transformers = chain(
+                self.transformers, [("remainder", self.remainder, remainder_columns)]
+            )
         else:
-            transformers = chain(self.transformers,
-                                 [('remainder', self.remainder, '')])
+            transformers = chain(self.transformers, [("remainder", self.remainder, "")])
 
         names, transformers, name_details = zip(*transformers)
-        return _VisualBlock('parallel', transformers,
-                            names=names, name_details=name_details)
+        return _VisualBlock(
+            "parallel", transformers, names=names, name_details=name_details
+        )
 
 
 def _check_X(X):
     """Use check_array only on lists and other non-array-likes / sparse"""
-    if hasattr(X, '__array__') or sparse.issparse(X):
+    if hasattr(X, "__array__") or sparse.issparse(X):
         return X
-    return check_array(X, force_all_finite='allow-nan', dtype=object)
+    return check_array(X, force_all_finite="allow-nan", dtype=object)
 
 
 def _is_empty_column_selection(column):
@@ -698,12 +712,14 @@ def _is_empty_column_selection(column):
     boolean array).
 
     """
-    if hasattr(column, 'dtype') and np.issubdtype(column.dtype, np.bool_):
+    if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
-    elif hasattr(column, '__len__'):
-        return (len(column) == 0 or
-                all(isinstance(col, bool) for col in column)
-                and not any(column))
+    elif hasattr(column, "__len__"):
+        return (
+            len(column) == 0
+            or all(isinstance(col, bool) for col in column)
+            and not any(column)
+        )
     else:
         return False
 
@@ -720,11 +736,9 @@ def _get_transformer_list(estimators):
     return transformer_list
 
 
-def make_column_transformer(*transformers,
-                            remainder='drop',
-                            sparse_threshold=0.3,
-                            n_jobs=None,
-                            verbose=False):
+def make_column_transformer(
+    *transformers, remainder="drop", sparse_threshold=0.3, n_jobs=None, verbose=False
+):
     """Construct a ColumnTransformer from the given transformers.
 
     This is a shorthand for the ColumnTransformer constructor; it does not
@@ -812,10 +826,13 @@ def make_column_transformer(*transformers,
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
     transformer_list = _get_transformer_list(transformers)
-    return ColumnTransformer(transformer_list, n_jobs=n_jobs,
-                             remainder=remainder,
-                             sparse_threshold=sparse_threshold,
-                             verbose=verbose)
+    return ColumnTransformer(
+        transformer_list,
+        n_jobs=n_jobs,
+        remainder=remainder,
+        sparse_threshold=sparse_threshold,
+        verbose=verbose,
+    )
 
 
 class make_column_selector:
@@ -871,8 +888,8 @@ class make_column_selector:
            [-0.30151134,  0.        ,  1.        ,  0.        ],
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
-    def __init__(self, pattern=None, *, dtype_include=None,
-                 dtype_exclude=None):
+
+    def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude
@@ -886,13 +903,15 @@ class make_column_selector:
         df : dataframe of shape (n_features, n_samples)
             DataFrame to select columns from.
         """
-        if not hasattr(df, 'iloc'):
-            raise ValueError("make_column_selector can only be applied to "
-                             "pandas dataframes")
+        if not hasattr(df, "iloc"):
+            raise ValueError(
+                "make_column_selector can only be applied to " "pandas dataframes"
+            )
         df_row = df.iloc[:1]
         if self.dtype_include is not None or self.dtype_exclude is not None:
-            df_row = df_row.select_dtypes(include=self.dtype_include,
-                                          exclude=self.dtype_exclude)
+            df_row = df_row.select_dtypes(
+                include=self.dtype_include, exclude=self.dtype_exclude
+            )
         cols = df_row.columns
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
