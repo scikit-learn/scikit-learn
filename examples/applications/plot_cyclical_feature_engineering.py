@@ -75,7 +75,7 @@ X["weather"].value_counts()
 # to train machine learning models. Instead it we simplify the representation
 # by collapsing those into the `"rain"` category.
 #
-X["weather"][X["weather"] == "heavy_rain"] = "rain"
+X['weather'].replace(to_replace='heavy_rain', value="rain", inplace=True)
 # %%
 X["weather"].value_counts()
 
