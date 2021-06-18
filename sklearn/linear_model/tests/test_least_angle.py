@@ -26,25 +26,19 @@ n_samples = y.size
 
 
 # FIXME: 'normalize' to be removed in 1.4
-@pytest.mark.parametrize('LeastAngleModel', [Lars,
-                                             LassoLars,
-                                             LarsCV,
-                                             LassoLarsCV,
-                                             LassoLarsIC])
 @pytest.mark.parametrize(
-    'normalize, n_warnings',
-    [(True, 0),
-     (False, 0),
-     ("deprecated", 1)]
+    "LeastAngleModel", [Lars, LassoLars, LarsCV, LassoLarsCV, LassoLarsIC]
 )
-def test_assure_warning_when_normalize(LeastAngleModel,
-                                       normalize, n_warnings):
+@pytest.mark.parametrize(
+    "normalize, n_warnings", [(True, 0), (False, 0), ("deprecated", 1)]
+)
+def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     # check that we issue a FutureWarning when normalize was set
     rng = check_random_state(0)
     n_samples = 200
     n_features = 2
     X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.
+    X[X < 0.1] = 0.0
     y = rng.rand(n_samples)
 
     model = LeastAngleModel(normalize=normalize)
@@ -517,8 +511,7 @@ def test_lars_cv_max_iter(recwarn):
     # FIXME: when 'normalize' is removed set exchange below for:
     # assert len(recorded_warnings) == []
     assert len(recorded_warnings) == 1
-    assert ('normalize\' will be set to False in version 1.2'
-            in recorded_warnings[0])
+    assert "normalize' will be set to False in version 1.2" in recorded_warnings[0]
 
 
 # FIXME: 'normalize' to be removed in 1.4
