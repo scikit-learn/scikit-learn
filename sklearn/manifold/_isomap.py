@@ -156,7 +156,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         if self.n_neighbors is not None and self.radius is not None:
             warnings.warn("Radius is ignored when both n_neighbors and radius "
                           "are provided, n_neighbors should be set to None "
-                          "explicitly when radius is passed")
+                          "explicitly when radius is passed.")
 
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       radius=self.radius,
