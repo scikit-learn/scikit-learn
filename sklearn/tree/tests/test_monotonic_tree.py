@@ -91,19 +91,19 @@ def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
             # Check monotonicity
             i_left = tree_.children_left[i]
             i_right = tree_.children_right[i]
-            assert(float(values[i_left]) <= float(values[i_right]))
+            assert values[i_left] <= values[i_right]
             val_middle = float(values[i])
             # Check bounds
             if tree_.feature[i_left] >= 0:
                 i_left_right = tree_.children_right[i_left]
-                assert(float(values[i_left_right]) <= val_middle)
+                assert float(values[i_left_right]) <= val_middle
             if tree_.feature[i_right] >= 0:
                 i_right_left = tree_.children_left[i_right]
-                assert(val_middle <= float(values[i_right_left]))
+                assert val_middle <= float(values[i_right_left])
 
 
 def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
-    X_grid = np.arange(min_x, max_x, (max_x-min_x)/n_steps).reshape(-1, 1)
+    X_grid = np.linspace(min_x, max_x, n_steps).reshape(-1, 1)
     y_pred_grid = clf.predict(X_grid)
     assert (monotonic_sign * np.diff(y_pred_grid) >= 0.0).all()
 

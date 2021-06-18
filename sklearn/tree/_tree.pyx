@@ -256,8 +256,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 else:
                     # Classification
                     with gil:
-                        middle_value = (tree._get_value_ndarray()[node_id][0][0]
-                                    / np.sum(tree._get_value_ndarray()[node_id][0]))
+                        middle_value = (
+                            tree._get_value_ndarray()[node_id][0][0]
+                            / np.sum(tree._get_value_ndarray()[node_id][0])
+                        )
 
                 if not is_leaf:
                     if splitter.monotonic_cst[split.feature] == 0:
@@ -285,7 +287,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                     # Push left child on stack
                     rc = stack.push(start, split.pos, depth + 1, node_id, 1,
-                                    split.impurity_left, n_constant_features, left_child_min, left_child_max)
+                                    split.impurity_left, n_constant_features, left_child_min,
+                                    left_child_max)
                     if rc == -1:
                         break
 
@@ -413,7 +416,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     else:
                         # Classification
                         with gil:
-                            middle_value = (tree._get_value_ndarray()[record.node_id][0][0] / np.sum(tree._get_value_ndarray()[record.node_id][0]))
+                            middle_value = (
+                                tree._get_value_ndarray()[record.node_id][0][0]
+                                / np.sum(tree._get_value_ndarray()[record.node_id][0])
+                            )
                     if splitter.monotonic_cst[node.feature] == 0:
                         left_child_min = record.lower_bound
                         left_child_max = record.upper_bound
