@@ -275,7 +275,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "in v1.2. Use `max_features=None` to avoid this "
                         "warning and keep the current behavior. Use "
                         "`max_features='sqrt'` to get the future behavior.",
-                        category=FutureWarning
+                        category=FutureWarning,
                     )
                     max_features = self.n_features_in_
             elif self.max_features == "sqrt":

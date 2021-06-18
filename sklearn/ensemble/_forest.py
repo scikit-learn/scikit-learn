@@ -404,7 +404,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "in v1.2. Use `max_features=None` to avoid this "
                     "warning and keep the current behavior. Use "
                     "`max_features='sqrt'` to get the future behavior.",
-                    category=FutureWarning
+                    category=FutureWarning,
                 )
 
         if not self.bootstrap and self.oob_score:
