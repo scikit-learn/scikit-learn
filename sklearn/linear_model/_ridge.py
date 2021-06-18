@@ -254,7 +254,7 @@ def _solve_trf(
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
     Xa_shape = (n_samples + n_features, n_features)
     if positive:
-        bounds = [[0] * n_features, [np.inf] * n_features]
+        bounds = (0, np.inf)
     else:
         bounds = (-np.inf, np.inf)
     sqrt_alpha = np.sqrt(alpha)
