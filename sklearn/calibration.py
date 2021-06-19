@@ -1005,6 +1005,7 @@ class CalibrationDisplay:
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
     >>> disp.plot() # doctest: +SKIP
     """
+
     def __init__(self, prob_true, prob_pred, y_prob, *, name=None):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
@@ -1052,27 +1053,34 @@ class CalibrationDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        existing_ref_line = ('Perfectly calibrated' in
-                             ax.get_legend_handles_labels()[1])
+        existing_ref_line = "Perfectly calibrated" in ax.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
             ax.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-",
-                             **line_kwargs)[0]
+        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
 
         if "label" in line_kwargs:
             ax.legend(loc="lower right")
 
-        ax.set(xlabel="Mean predicted probability",
-               ylabel="Fraction of positives")
+        ax.set(xlabel="Mean predicted probability", ylabel="Fraction of positives")
 
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
 
     @classmethod
-    def from_estimator(cls, estimator, X, y, *,
-                       n_bins=5, strategy='uniform', name=None,
-                       ref_line=True, ax=None, **kwargs):
+    def from_estimator(
+        cls,
+        estimator,
+        X,
+        y,
+        *,
+        n_bins=5,
+        strategy="uniform",
+        name=None,
+        ref_line=True,
+        ax=None,
+        **kwargs,
+    ):
         """Plot calibration curve, also known as reliability diagrams, for
         binary classifiers, using an estimator and data.
 
@@ -1161,7 +1169,7 @@ class CalibrationDisplay:
             raise ValueError("'estimator' should be a fitted classifier.")
 
         prediction_method = _check_classifier_response_method(
-            estimator, response_method='predict_proba'
+            estimator, response_method="predict_proba"
         )
         y_prob = prediction_method(X)
 
@@ -1169,8 +1177,7 @@ class CalibrationDisplay:
         if not len(estimator.classes_) == 2:
             raise ValueError(binary_error)
         if y_prob.ndim == 1:
-            raise ValueError("'estimator.predict_proba' needs to return a 2d "
-                             "array.")
+            raise ValueError("'estimator.predict_proba' needs to return a 2d " "array.")
         else:
             if y_prob.shape[1] != 2:
                 raise ValueError(binary_error)
@@ -1179,14 +1186,29 @@ class CalibrationDisplay:
 
         name = name if name is not None else estimator.__class__.__name__
         return cls.from_predictions(
-            y, y_prob, n_bins=n_bins, strategy=strategy, name=name,
-            ref_line=ref_line, ax=ax, **kwargs
+            y,
+            y_prob,
+            n_bins=n_bins,
+            strategy=strategy,
+            name=name,
+            ref_line=ref_line,
+            ax=ax,
+            **kwargs,
         )
 
     @classmethod
-    def from_predictions(cls, y_true, y_prob, *,
-                         n_bins=5, strategy='uniform', name=None,
-                         ref_line=True, ax=None, **kwargs):
+    def from_predictions(
+        cls,
+        y_true,
+        y_prob,
+        *,
+        n_bins=5,
+        strategy="uniform",
+        name=None,
+        ref_line=True,
+        ax=None,
+        **kwargs,
+    ):
         """Plot calibration curve, also known as reliability diagrams, for
         binary classifiers, using true and predicted labels.
 
@@ -1270,6 +1292,5 @@ class CalibrationDisplay:
             y_true, y_prob, n_bins=n_bins, strategy=strategy
         )
 
-        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob,
-                   name=name)
+        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob, name=name)
         return disp.plot(ax=ax, ref_line=ref_line, **kwargs)

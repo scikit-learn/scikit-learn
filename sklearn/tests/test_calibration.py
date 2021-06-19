@@ -660,9 +660,7 @@ def test_calibration_display_not_fitted(pyplot, iris_data_binary):
         CalibrationDisplay.from_estimator(clf, X, y)
 
 
-@pytest.mark.parametrize(
-    "constructor_name", ["from_estimator", "from_predictions"]
-)
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     X, y = iris_data
     clf = DecisionTreeClassifier()
@@ -670,11 +668,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     y_prob = clf.predict_proba(X)
 
     constructor = getattr(CalibrationDisplay, constructor_name)
-    params = (
-        (clf, X, y)
-        if constructor_name == "from_estimator"
-        else (y, y_prob)
-    )
+    params = (clf, X, y) if constructor_name == "from_estimator" else (y, y_prob)
 
     msg = (
         "Only binary classification is supported."
@@ -687,8 +681,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
 
 @pytest.mark.parametrize("n_bins", [5, 10])
 @pytest.mark.parametrize("strategy", ["uniform", "quantile"])
-def test_calibration_display_compute(pyplot, iris_data_binary, n_bins,
-                                     strategy):
+def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy):
     # Ensure `CalibrationDisplay.from_predictions` and `calibration_curve`
     # compute the same results. Also checks attributes of the
     # CalibrationDisplay object.
@@ -713,6 +706,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins,
 
     # cannot fail thanks to pyplot fixture
     import matplotlib as mpl  # noqa
+
     assert isinstance(viz.line_, mpl.lines.Line2D)
     assert viz.line_.get_alpha() == 0.8
     assert isinstance(viz.ax_, mpl.axes.Axes)
@@ -734,12 +728,9 @@ def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
 
 
 @pytest.mark.parametrize(
-    "name, expected_label",
-    [(None, "_line1"),
-     ("my_est", "my_est")]
+    "name, expected_label", [(None, "_line1"), ("my_est", "my_est")]
 )
-def test_calibration_display_default_labels(pyplot, name,
-                                            expected_label):
+def test_calibration_display_default_labels(pyplot, name, expected_label):
     prob_true = np.array([0, 1, 1, 0])
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
@@ -765,9 +756,7 @@ def test_calibration_display_label_class_plot(pyplot):
     assert viz.line_.get_label() == name
 
 
-@pytest.mark.parametrize(
-    "constructor_name", ["from_estimator", "from_predictions"]
-)
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_calibration_display_name_multiple_calls(
     constructor_name, pyplot, iris_data_binary
 ):
@@ -781,11 +770,7 @@ def test_calibration_display_name_multiple_calls(
     y_prob = clf.predict_proba(X)[:, 1]
 
     constructor = getattr(CalibrationDisplay, constructor_name)
-    params = (
-        (clf, X, y)
-        if constructor_name == "from_estimator"
-        else (y, y_prob)
-    )
+    params = (clf, X, y) if constructor_name == "from_estimator" else (y, y_prob)
 
     viz = constructor(*params, name=clf_name)
     assert viz.name == clf_name
@@ -808,4 +793,4 @@ def test_calibration_display_ref_line(pyplot, iris_data_binary):
     viz2 = CalibrationDisplay.from_estimator(dt, X, y, ax=viz.ax_)
 
     labels = viz2.ax_.get_legend_handles_labels()[1]
-    assert labels.count('Perfectly calibrated') == 1
+    assert labels.count("Perfectly calibrated") == 1
