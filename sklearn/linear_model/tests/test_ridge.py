@@ -1567,16 +1567,15 @@ def test_positive_ridge_loss(alpha):
     alpha = 0.10
     n_checks = 100
 
-    rng = np.random.RandomState(42)
-
-    def ridge_loss(model, with_positive_noise=False, noise_scale=1e-8):
+    def ridge_loss(model, random_state=None, noise_scale=1e-8):
         intercept = model.intercept_
-        if with_positive_noise:
+        if random_state is not None:
+            rng = np.random.RandomState(random_state)
             coef = model.coef_ + rng.uniform(0, noise_scale, size=model.coef_.shape)
         else:
             coef = model.coef_
 
-        return 0.5 * np.sum((y - X.dot(coef) - intercept) ** 2) + 0.5 * alpha * np.sum(
+        return 0.5 * np.sum((y - X @ coef - intercept) ** 2) + 0.5 * alpha * np.sum(
             coef ** 2
         )
 
@@ -1594,8 +1593,8 @@ def test_positive_ridge_loss(alpha):
     #   Loss for solution found by Ridge(positive=True)
     #   is lower than that for small random positive perturbation
     #   of the positive solution.
-    for _ in range(n_checks):
-        loss_perturbed = ridge_loss(model_positive, with_positive_noise=True)
+    for random_state in range(n_checks):
+        loss_perturbed = ridge_loss(model_positive, random_state=random_state)
         assert loss_positive <= loss_perturbed
 
 
