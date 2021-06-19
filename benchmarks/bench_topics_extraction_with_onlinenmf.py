@@ -52,7 +52,7 @@ with zp.ZipFile("/home/cmarmo/software/test/blogs.zip") as myzip:
         if not (zipfile.is_dir()):
             filename = zipfile.filename
             myzip.extract(filename)
-            with open(filename, encoding='LATIN-1') as fp:
+            with open(filename, encoding="LATIN-1") as fp:
                 soup = BeautifulSoup(fp, "lxml")
                 text = ""
                 for post in soup.descendants:
@@ -63,8 +63,7 @@ print("done in %0.3fs." % (time() - t0))
 
 fig = plt.figure(constrained_layout=True, figsize=(22, 13))
 
-spec = gridspec.GridSpec(ncols=len(n_features), nrows=len(n_components),
-                         figure=fig)
+spec = gridspec.GridSpec(ncols=len(n_features), nrows=len(n_components), figure=fig)
 
 ylabel = "Convergence time"
 xlabel = "n_samples"
@@ -81,41 +80,54 @@ for bj in range(len(n_components)):
         lossmbKL = np.zeros(len(n_samples))
 
         for i in range(len(n_samples)):
-            data_samples = data[:n_samples[i]]
+            data_samples = data[: n_samples[i]]
             # Use tf-idf features for NMF.
             print("Extracting tf-idf features for NMF...")
-            tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2,
-                                               max_features=n_features[j],
-                                               stop_words='english')
+            tfidf_vectorizer = TfidfVectorizer(
+                max_df=0.95, min_df=2, max_features=n_features[j], stop_words="english"
+            )
             t0 = time()
             tfidf = tfidf_vectorizer.fit_transform(data_samples)
             print("done in %0.3fs." % (time() - t0))
 
             # Fit the NMF model with Kullback-Leibler divergence
-            print("Fitting the NMF model "
-                  "(generalized Kullback-Leibler divergence) "
-                  "with tf-idf features, n_samples=%d and n_features=%d..."
-                  % (n_samples[i], n_features[j]))
+            print(
+                "Fitting the NMF model "
+                "(generalized Kullback-Leibler divergence) "
+                "with tf-idf features, n_samples=%d and n_features=%d..."
+                % (n_samples[i], n_features[j])
+            )
             t0 = time()
-            nmf = NMF(n_components=n_components[bj], random_state=1,
-                      beta_loss='kullback-leibler', solver='mu',
-                      max_iter=1000, alpha=.1, l1_ratio=.5).fit(tfidf)
+            nmf = NMF(
+                n_components=n_components[bj],
+                random_state=1,
+                beta_loss="kullback-leibler",
+                solver="mu",
+                max_iter=1000,
+                alpha=0.1,
+                l1_ratio=0.5,
+            ).fit(tfidf)
             timesKL[i] = time() - t0
             print("done in %0.3fs." % (timesKL[i]))
             lossKL[i] = nmf.reconstruction_err_
 
             # Fit the NMF model KL
-            print("Fitting the online NMF model (generalized Kullback-Leibler "
-                  "divergence) with "
-                  "tf-idf features, n_samples=%d and n_features=%d..."
-                  % (n_samples[i], n_features[j]))
+            print(
+                "Fitting the online NMF model (generalized Kullback-Leibler "
+                "divergence) with "
+                "tf-idf features, n_samples=%d and n_features=%d..."
+                % (n_samples[i], n_features[j])
+            )
             t0 = time()
             minibatch_nmf = MiniBatchNMF(
                 n_components=n_components[bj],
                 batch_size=batch_size,
-                random_state=1, beta_loss='kullback-leibler',
-                solver='mu', max_iter=1000, alpha=.1,
-                l1_ratio=.5
+                random_state=1,
+                beta_loss="kullback-leibler",
+                solver="mu",
+                max_iter=1000,
+                alpha=0.1,
+                l1_ratio=0.5,
             ).fit(tfidf)
             timesmbKL[i] = time() - t0
             print("done in %0.3fs." % (timesmbKL[i]))
@@ -129,15 +141,15 @@ for bj in range(len(n_components)):
         str3 = "loss NMF"
         str4 = "loss Online NMF"
 
-        ax_index = j+bj*len(n_features)
-        ax[ax_index].plot(n_samples, timesKL, marker='o', label=str1)
-        ax[ax_index].plot(n_samples, timesmbKL, marker='o', label=str2)
+        ax_index = j + bj * len(n_features)
+        ax[ax_index].plot(n_samples, timesKL, marker="o", label=str1)
+        ax[ax_index].plot(n_samples, timesmbKL, marker="o", label=str2)
 
         ax2 = ax[ax_index].twinx()
-        ax2.set_ylabel('loss')
+        ax2.set_ylabel("loss")
 
-        ax2.plot(n_samples, lossKL, marker='x', ls='dashed', label=str3)
-        ax2.plot(n_samples, lossmbKL, marker='x', ls='dashed', label=str4)
+        ax2.plot(n_samples, lossKL, marker="x", ls="dashed", label=str3)
+        ax2.plot(n_samples, lossmbKL, marker="x", ls="dashed", label=str4)
 
         ax[ax_index].xaxis.set_major_formatter(ticker.EngFormatter())
         ax2.yaxis.set_major_formatter(ticker.EngFormatter())
@@ -150,18 +162,19 @@ for bj in range(len(n_components)):
         ax[ax_index].set_title(strdesc)
 
     for j in range(len(n_features)):
-        ax_index = j+bj*len(n_features)
-        ax[ax_index].set_ylim(miny-10, maxy+10)
+        ax_index = j + bj * len(n_features)
+        ax[ax_index].set_ylim(miny - 10, maxy + 10)
 
-    ax[(bj+1)*len(n_features)-1].legend(bbox_to_anchor=(1.2, 1),
-                                        loc='upper left', borderaxespad=0.)
-    ax2.legend(bbox_to_anchor=(1.2, 1),
-               loc='lower left', borderaxespad=0.)
-    strbatch = "batch size:\n" + str(batch_size) + \
-               "\nn_components:\n" + str(n_components[bj])
-    ax[(bj+1)*len(n_features)-1].annotate(strbatch, (1.2, 0.7),
-                                          xycoords='axes fraction',
-                                          va='center')
+    ax[(bj + 1) * len(n_features) - 1].legend(
+        bbox_to_anchor=(1.2, 1), loc="upper left", borderaxespad=0.0
+    )
+    ax2.legend(bbox_to_anchor=(1.2, 1), loc="lower left", borderaxespad=0.0)
+    strbatch = (
+        "batch size:\n" + str(batch_size) + "\nn_components:\n" + str(n_components[bj])
+    )
+    ax[(bj + 1) * len(n_features) - 1].annotate(
+        strbatch, (1.2, 0.7), xycoords="axes fraction", va="center"
+    )
 
-plt.savefig('bench_topics.png')
+plt.savefig("bench_topics.png")
 # plt.show()
