@@ -141,6 +141,7 @@ class Controller:
 
 class View:
     """Test docstring. """
+
     def __init__(self, root, controller):
         f = Figure()
         ax = f.add_subplot(111)
@@ -332,6 +333,7 @@ def main(argv):
 
     if opts.output:
         model.dump_svmlight_file(opts.output)
+
 
 if __name__ == "__main__":
     main(sys.argv)

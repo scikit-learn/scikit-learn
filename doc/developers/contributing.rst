@@ -1228,6 +1228,15 @@ use, and so can respond critically about whether the PR meets your needs. While
 each pull request needs to be signed off by two core developers, you can speed
 up this process by providing your feedback.
 
+.. note::
+
+  The difference between an objective improvement and a subjective nit isn't
+  always clear. Reviewers should recall that code review is primarily about
+  reducing risk in the project. When reviewing code, one should aim at
+  preventing situations which may require a bug fix, a deprecation, or a
+  retraction. Regarding docs: typos, grammar issues and disambiguations are
+  better addressed immediately.
+
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
@@ -1293,8 +1302,8 @@ contributor to keep involved in the project. [1]_
   understood. Resist the temptation to immediately go line by line, or to open
   with small pervasive issues.
 - Do not let perfect be the enemy of the good. If you find yourself making
-  many small suggestions that are a matter of subjective taste rather than
-  somewhat objective, the following approaches are suggested:
+  many small suggestions that don't fall into the :ref:`code_review`, consider
+  the following approaches:
 
   - refrain from submitting these;
   - prefix them as "Nit" so that the contributor knows it's OK not to address;
