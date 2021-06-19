@@ -27,6 +27,8 @@ from sklearn.ensemble import (
     RandomForestRegressor,
     VotingClassifier,
 )
+from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler

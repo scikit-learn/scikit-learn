@@ -25,6 +25,7 @@ from .base import (
     RegressorMixin,
     clone,
     MetaEstimatorMixin,
+    is_classifier,
 )
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
@@ -42,6 +43,7 @@ from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
+from .metrics._plot.base import _check_classifier_response_method
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
