@@ -2630,8 +2630,8 @@ def test_minmax_scaler_clip(feature_range):
     X_transformed = scaler.transform(X_test)
     assert_allclose(
         X_transformed,
-        [[feature_range[0], feature_range[0],
-          feature_range[1], feature_range[1]]])
+        [[feature_range[0], feature_range[0], feature_range[1], feature_range[1]]],
+    )
 
 
 def test_standard_scaler_raise_error_for_1d_input():
