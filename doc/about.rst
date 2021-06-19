@@ -226,33 +226,6 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-..........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-Andreas Müller received a grant to improve scikit-learn from the
-`Alfred P. Sloan Foundation <https://sloan.org>`_ .
-This grant supports the position of Nicolas Hug and Thomas J. Fan.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/sloan_banner.png
-   :width: 100pt
-   :align: center
-   :target: https://sloan.org/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 ...........
 
 .. raw:: html
@@ -307,6 +280,33 @@ August 2020.
 
 Past Sponsors
 .............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+Andreas Müller received a grant to improve scikit-learn from the
+`Alfred P. Sloan Foundation <https://sloan.org>`_ .
+This grant supports the position of Nicolas Hug and Thomas J. Fan.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sloan_banner.png
+   :width: 100pt
+   :align: center
+   :target: https://sloan.org/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+..........
 
 .. raw:: html
 
