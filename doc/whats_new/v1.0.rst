@@ -369,7 +369,7 @@ Changelog
   :class:`linear_model.MultiTaskLasso`, :class:`linear_model.MultiTaskLassoCV`,
   :class:`linear_model.MultiTaskElasticNet`,
   :class:`linear_model.MultiTaskElasticNetCV`, in:
-  :pr:`17746` by :user:`Maria Telenczuk <maikia>` and
+  :pr:`17785` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
   The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
   :class:`linear_model.OrthogonalMatchingPursuitCV` will default to

@@ -167,7 +167,7 @@ def _sparse_encode(
         clf = Lasso(
             alpha=alpha,
             fit_intercept=False,
-            normalize=False,
+            normalize="deprecated",  # as it was False by default
             precompute=gram,
             max_iter=max_iter,
             warm_start=True,
