@@ -1304,8 +1304,8 @@ def _path_residuals(
                 # for read-only memmaps (cf. numpy#14132).
                 array.setflags(write=True)
 
-    fit_intercept = path_params['fit_intercept']
-    _normalize = path_params['_normalize']
+    fit_intercept = path_params["fit_intercept"]
+    _normalize = path_params["_normalize"]
 
     if y.ndim == 1:
         precompute = path_params["precompute"]
@@ -1510,10 +1510,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         path_params = self.get_params()
 
         # FIXME: 'normalize' to be removed in 0.26
-        path_params['_normalize'] = _normalize
+        path_params["_normalize"] = _normalize
 
-        if 'l1_ratio' in path_params:
-            l1_ratios = np.atleast_1d(path_params['l1_ratio'])
+        if "l1_ratio" in path_params:
+            l1_ratios = np.atleast_1d(path_params["l1_ratio"])
             # For the first path, we need to set l1_ratio
             path_params["l1_ratio"] = l1_ratios[0]
         else:
