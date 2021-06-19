@@ -394,6 +394,12 @@ Changelog
   :user:`Oliver Grisel <ogrisel>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Feature| Added new solver `trf` (available with `solver="trf") and
+  `positive` argument to class:`linear_model.Ridge`.
+  When `positive` is set to True, forces the coefficients to be positive
+  (only supported by `trf`).
+  :pr:`20231` by :user:`Toshihiro Nakae <tnakae>`.
+
 :mod:`sklearn.manifold`
 .......................
 
