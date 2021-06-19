@@ -17,15 +17,12 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..base import is_classifier
 
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
 from . import DecisionTreeClassifier
-
-import warnings
 
 
 def _color_brew(n):
@@ -78,12 +75,10 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
-@_deprecate_positional_args
 def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
-              class_names=None, label='all', filled=False,
-              impurity=True, node_ids=False,
-              proportion=False, rotate='deprecated', rounded=False,
-              precision=3, ax=None, fontsize=None):
+              class_names=None, label='all', filled=False, impurity=True,
+              node_ids=False, proportion=False, rounded=False, precision=3,
+              ax=None, fontsize=None):
     """Plot a decision tree.
 
     The sample counts that are shown are weighted with any sample_weights that
@@ -135,14 +130,6 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
 
-    rotate : bool, default=False
-        This parameter has no effect on the matplotlib tree visualisation and
-        it is kept here for backward compatibility.
-
-        .. deprecated:: 0.23
-           ``rotate`` is deprecated in 0.23 and will be removed in 1.0
-           (renaming of 0.25).
-
     rounded : bool, default=False
         When set to ``True``, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
@@ -173,23 +160,17 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.plot_tree(clf)  # doctest: +SKIP
-    [Text(251.5,345.217,'X[3] <= 0.8...
+    >>> tree.plot_tree(clf)
+    [...]
 
     """
 
     check_is_fitted(decision_tree)
 
-    if rotate != 'deprecated':
-        warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
-                       "It will be removed in 1.0 (renaming of 0.25)."),
-                      FutureWarning)
-
     exporter = _MPLTreeExporter(
         max_depth=max_depth, feature_names=feature_names,
-        class_names=class_names, label=label, filled=filled,
-        impurity=impurity, node_ids=node_ids,
-        proportion=proportion, rotate=rotate, rounded=rounded,
+        class_names=class_names, label=label, filled=filled, impurity=impurity,
+        node_ids=node_ids, proportion=proportion, rounded=rounded,
         precision=precision, fontsize=fontsize)
     return exporter.export(decision_tree, ax=ax)
 
@@ -198,7 +179,7 @@ class _BaseTreeExporter:
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
-                 proportion=False, rotate=False, rounded=False,
+                 proportion=False, rounded=False,
                  precision=3, fontsize=None):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -208,7 +189,6 @@ class _BaseTreeExporter:
         self.impurity = impurity
         self.node_ids = node_ids
         self.proportion = proportion
-        self.rotate = rotate
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
@@ -380,11 +360,12 @@ class _DOTTreeExporter(_BaseTreeExporter):
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity, node_ids=node_ids, proportion=proportion,
-            rotate=rotate, rounded=rounded, precision=precision)
+            rounded=rounded, precision=precision)
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
         self.fontname = fontname
+        self.rotate = rotate
 
         # PostScript compatibility for special characters
         if special_characters:
@@ -410,13 +391,13 @@ class _DOTTreeExporter(_BaseTreeExporter):
     def export(self, decision_tree):
         # Check length of feature_names before getting into the tree node
         # Raise error if length of feature_names does not match
-        # n_features_ in the decision_tree
+        # n_features_in_ in the decision_tree
         if self.feature_names is not None:
-            if len(self.feature_names) != decision_tree.n_features_:
+            if len(self.feature_names) != decision_tree.n_features_in_:
                 raise ValueError("Length of feature_names, %d "
                                  "does not match number of features, %d"
                                  % (len(self.feature_names),
-                                    decision_tree.n_features_))
+                                    decision_tree.n_features_in_))
         # each part writes to out_file
         self.head()
         # Now recurse the tree and add node & edge attributes
@@ -531,14 +512,14 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
-                 proportion=False, rotate=False, rounded=False,
+                 proportion=False, rounded=False,
                  precision=3, fontsize=None):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity, node_ids=node_ids, proportion=proportion,
-            rotate=rotate, rounded=rounded, precision=precision)
+            rounded=rounded, precision=precision)
         self.fontsize = fontsize
 
         # validate
@@ -630,7 +611,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
         import matplotlib.pyplot as plt
         kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
-                      zorder=100 - 10 * depth, xycoords='axes pixels',
+                      zorder=100 - 10 * depth, xycoords='axes points',
                       arrowprops=self.arrow_args.copy())
         kwargs['arrowprops']['edgecolor'] = plt.rcParams['text.color']
 
@@ -665,7 +646,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
-@_deprecate_positional_args
 def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
@@ -821,7 +801,6 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
-@_deprecate_positional_args
 def export_text(decision_tree, *, feature_names=None, max_depth=10,
                 spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.

@@ -9,6 +9,7 @@ from copy import deepcopy
 import joblib
 
 from sklearn.base import is_classifier
+from sklearn.base import clone
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
@@ -17,11 +18,12 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import _convert_container
+
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.sparsefuncs import mean_variance_axis
@@ -48,6 +50,7 @@ from sklearn.linear_model import (
     OrthogonalMatchingPursuit,
     Ridge,
     RidgeClassifier,
+    RidgeClassifierCV,
     RidgeCV,
 )
 
@@ -303,9 +306,13 @@ def _scale_alpha_inplace(estimator, n_samples):
     normalize set to True to when it is evoked in a Pipeline with normalize set
     to False and with a StandardScaler.
     """
-    if 'alpha' not in estimator.get_params():
+    if (('alpha' not in estimator.get_params()) and
+            ('alphas' not in estimator.get_params())):
         return
 
+    if isinstance(estimator, (RidgeCV, RidgeClassifierCV)):
+        alphas = estimator.alphas * n_samples
+        return estimator.set_params(alphas=alphas)
     if isinstance(estimator, (Lasso, LassoLars, MultiTaskLasso)):
         alpha = estimator.alpha * np.sqrt(n_samples)
     if isinstance(estimator, (Ridge, RidgeClassifier)):
@@ -342,7 +349,9 @@ def _scale_alpha_inplace(estimator, n_samples):
      (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
      (Lars, {}),
      (LinearRegression, {}),
-     (LassoLarsIC, {})]
+     (LassoLarsIC, {}),
+     (RidgeCV, {"alphas": [0.1, 0.4]}),
+     (RidgeClassifierCV, {"alphas": [0.1, 0.4]})]
 )
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # Test that linear models (LinearModel) set with normalize set to True are
@@ -404,6 +413,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
          (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
          (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
          (LinearRegression, {}),
+         (RidgeCV, {"alphas": [0.1, 0.4]}),
+         (RidgeClassifierCV, {"alphas": [0.1, 0.4]})
      ]
 )
 @pytest.mark.parametrize(
@@ -443,7 +454,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         X_train = sparse.csr_matrix(X_train)
         X_test = _convert_container(X_train, 'sparse')
 
-    sample_weight = rng.rand(X_train.shape[0])
+    sample_weight = rng.uniform(low=0.1, high=100, size=X_train.shape[0])
 
     # linear estimator with built-in feature normalization
     reg_with_normalize = estimator(normalize=True, fit_intercept=True,
@@ -452,7 +463,12 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
 
     # linear estimator in a pipeline with a StandardScaler, normalize=False
     linear_regressor = estimator(normalize=False, fit_intercept=True, **params)
-    _scale_alpha_inplace(linear_regressor, X_train.shape[0])  # rescale alpha
+
+    # rescale alpha
+    if model_name in ["Lasso", "ElasticNet"]:
+        _scale_alpha_inplace(linear_regressor, y_test.shape[0])
+    else:
+        _scale_alpha_inplace(linear_regressor, sample_weight.sum())
     reg_with_scaler = Pipeline([
         ("scaler", StandardScaler(with_mean=with_mean)),
         ("linear_regressor", linear_regressor)
@@ -469,7 +485,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # sense that they predict exactly the same outcome.
     y_pred_normalize = reg_with_normalize.predict(X_test)
     y_pred_scaler = reg_with_scaler.predict(X_test)
-    assert_allclose(y_pred_normalize,  y_pred_scaler)
+    assert_allclose(y_pred_normalize, y_pred_scaler)
+
     # Check intercept computation when normalize is True
     y_train_mean = np.average(y_train, weights=sample_weight)
     if is_sparse:
@@ -494,7 +511,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.01}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
      (LinearRegression, {}),
-     (RidgeCV, {})]
+     (RidgeCV, {}),
+     (RidgeClassifierCV, {})]
  )
 def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     # Test that linear model preceeded by StandardScaler in the pipeline and
@@ -657,11 +675,11 @@ def test_lasso_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, positive=True)
+    lasso = Lasso(alpha=0.1, positive=True)
     lasso.fit(X, y)
     assert min(lasso.coef_) >= 0
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True)
+    lasso = Lasso(alpha=0.1, precompute=True, positive=True)
     lasso.fit(X, y)
     assert min(lasso.coef_) >= 0
 
@@ -670,7 +688,7 @@ def test_enet_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True)
+    enet = ElasticNet(alpha=0.1, positive=True)
     enet.fit(X, y)
     assert min(enet.coef_) >= 0
 
@@ -1244,7 +1262,7 @@ def test_convergence_warnings():
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
-        MultiTaskElasticNet(max_iter=1000).fit(X, y)
+        MultiTaskElasticNet().fit(X, y)
 
     assert not record.list
 
@@ -1258,7 +1276,7 @@ def test_sparse_input_convergence_warning():
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
-        Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
+        Lasso().fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
 
@@ -1421,6 +1439,8 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("ridge_alpha", [1e-1, 1., 1e6])
 @pytest.mark.parametrize("normalize", [True, False])
 def test_enet_ridge_consistency(normalize, ridge_alpha):
@@ -1433,39 +1453,78 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
     # effective_rank are more problematic in particular.
 
     rng = np.random.RandomState(42)
+    n_samples = 300
     X, y = make_regression(
-        n_samples=100,
-        n_features=300,
-        effective_rank=100,
+        n_samples=n_samples,
+        n_features=100,
+        effective_rank=10,
         n_informative=50,
         random_state=rng,
     )
-    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
-
-    ridge = Ridge(
-        alpha=ridge_alpha,
+    sw = rng.uniform(low=0.01, high=10, size=X.shape[0])
+    alpha = 1.
+    common_params = dict(
         normalize=normalize,
-    ).fit(X, y, sample_weight=sw)
-
-    enet = ElasticNet(
-        alpha=ridge_alpha / sw.sum(),
-        normalize=normalize,
-        l1_ratio=0.,
-        max_iter=1000,
+        tol=1e-12,
     )
-    # Even when the ElasticNet model has actually converged, the duality gap
-    # convergence criterion is never met when l1_ratio is 0 and for any value
-    # of the `tol` parameter. The convergence message should point the user to
-    # Ridge instead:
-    expected_msg = (
-        r"Objective did not converge\. .* "
-        r"Linear regression models with null weight for the "
-        r"l1 regularization term are more efficiently fitted "
-        r"using one of the solvers implemented in "
-        r"sklearn\.linear_model\.Ridge/RidgeCV instead\."
+    ridge = Ridge(alpha=alpha, **common_params).fit(
+        X, y, sample_weight=sw
     )
-    with pytest.warns(ConvergenceWarning, match=expected_msg):
-        enet.fit(X, y, sample_weight=sw)
-
+    if normalize:
+        alpha_enet = alpha / n_samples
+    else:
+        alpha_enet = alpha / sw.sum()
+    enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, **common_params).fit(
+        X, y, sample_weight=sw
+    )
     assert_allclose(ridge.coef_, enet.coef_)
     assert_allclose(ridge.intercept_, enet.intercept_)
+
+
+@pytest.mark.parametrize(
+    "estimator", [
+        Lasso(alpha=1.),
+        ElasticNet(alpha=1., l1_ratio=0.1),
+    ]
+)
+def test_sample_weight_invariance(estimator):
+    rng = np.random.RandomState(42)
+    X, y = make_regression(
+        n_samples=100,
+        n_features=300,
+        effective_rank=10,
+        n_informative=50,
+        random_state=rng,
+    )
+    normalize = False  # These tests don't work for normalize=True.
+    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    params = dict(normalize=normalize, tol=1e-12)
+
+    # Check that setting some weights to 0 is equivalent to trimming the
+    # samples:
+    cutoff = X.shape[0] // 3
+    sw_with_null = sw.copy()
+    sw_with_null[:cutoff] = 0.
+    X_trimmed, y_trimmed = X[cutoff:, :], y[cutoff:]
+    sw_trimmed = sw[cutoff:]
+
+    reg_trimmed = clone(estimator).set_params(**params).fit(
+        X_trimmed, y_trimmed, sample_weight=sw_trimmed)
+    reg_null_weighted = clone(estimator).set_params(**params).fit(
+        X, y, sample_weight=sw_with_null)
+    assert_allclose(reg_null_weighted.coef_, reg_trimmed.coef_)
+    assert_allclose(reg_null_weighted.intercept_, reg_trimmed.intercept_)
+
+    # Check that duplicating the training dataset is equivalent to multiplying
+    # the weights by 2:
+    X_dup = np.concatenate([X, X], axis=0)
+    y_dup = np.concatenate([y, y], axis=0)
+    sw_dup = np.concatenate([sw, sw], axis=0)
+
+    reg_2sw = clone(estimator).set_params(**params).fit(
+        X, y, sample_weight=2 * sw)
+    reg_dup = clone(estimator).set_params(**params).fit(
+        X_dup, y_dup, sample_weight=sw_dup)
+
+    assert_allclose(reg_2sw.coef_, reg_dup.coef_)
+    assert_allclose(reg_2sw.intercept_, reg_dup.intercept_)

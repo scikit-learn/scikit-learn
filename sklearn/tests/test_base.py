@@ -294,26 +294,24 @@ def test_set_params_updates_valid_params():
     assert gscv.estimator.C == 42.0
 
 
-def test_score_sample_weight():
-
+@pytest.mark.parametrize("tree,dataset", [
+    (DecisionTreeClassifier(max_depth=2, random_state=0),
+     datasets.make_classification(random_state=0)),
+    (DecisionTreeRegressor(max_depth=2, random_state=0),
+     datasets.make_regression(random_state=0)),
+])
+def test_score_sample_weight(tree, dataset):
     rng = np.random.RandomState(0)
+    # check that the score with and without sample weights are different
+    X, y = dataset
 
-    # test both ClassifierMixin and RegressorMixin
-    estimators = [DecisionTreeClassifier(max_depth=2),
-                  DecisionTreeRegressor(max_depth=2)]
-    sets = [datasets.load_iris(),
-            datasets.load_boston()]
-
-    for est, ds in zip(estimators, sets):
-        est.fit(ds.data, ds.target)
-        # generate random sample weights
-        sample_weight = rng.randint(1, 10, size=len(ds.target))
-        # check that the score with and without sample weights are different
-        assert (est.score(ds.data, ds.target) !=
-                est.score(ds.data, ds.target,
-                          sample_weight=sample_weight)), (
-                              "Unweighted and weighted scores "
-                              "are unexpectedly equal")
+    tree.fit(X, y)
+    # generate random sample weights
+    sample_weight = rng.randint(1, 10, size=len(y))
+    score_unweighted = tree.score(X, y)
+    score_weighted = tree.score(X, y, sample_weight=sample_weight)
+    msg = "Unweighted and weighted scores are unexpectedly equal"
+    assert score_unweighted != score_weighted, msg
 
 
 def test_clone_pandas_dataframe():

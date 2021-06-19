@@ -10,7 +10,6 @@ from scipy import linalg, sparse
 from ._base import _BasePCA
 from ..utils import gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
-from ..utils.validation import _deprecate_positional_args
 
 
 class IncrementalPCA(_BasePCA):
@@ -108,6 +107,11 @@ class IncrementalPCA(_BasePCA):
     batch_size_ : int
         Inferred batch size from ``batch_size``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -164,7 +168,6 @@ class IncrementalPCA(_BasePCA):
     SparsePCA
     TruncatedSVD
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, whiten=False, copy=True,
                  batch_size=None):
         self.n_components = n_components

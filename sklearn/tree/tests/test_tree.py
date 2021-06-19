@@ -26,8 +26,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_32bit
@@ -51,7 +49,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("squared_error", "mae", "friedman_mse", "poisson")
+REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -63,7 +61,7 @@ REG_TREES = {
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
-ALL_TREES = dict()
+ALL_TREES: dict = dict()
 ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
@@ -294,7 +292,7 @@ def test_diabetes_overfit(name, Tree, criterion):
 @pytest.mark.parametrize(
     "criterion, max_depth, metric, max_loss",
     [("squared_error", 15, mean_squared_error, 60),
-     ("mae", 20, mean_squared_error, 60),
+     ("absolute_error", 20, mean_squared_error, 60),
      ("friedman_mse", 15, mean_squared_error, 60),
      ("poisson", 15, mean_poisson_deviance, 30)]
 )
@@ -554,10 +552,6 @@ def test_error():
             TreeEstimator(max_depth=-1).fit(X, y)
         with pytest.raises(ValueError):
             TreeEstimator(max_features=42).fit(X, y)
-        # min_impurity_split warning
-        with ignore_warnings(category=FutureWarning):
-            with pytest.raises(ValueError):
-                TreeEstimator(min_impurity_split=-1.0).fit(X, y)
         with pytest.raises(ValueError):
             TreeEstimator(min_impurity_decrease=-1.0).fit(X, y)
 
@@ -820,59 +814,6 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_dense_input(name):
 def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(name):
     check_min_weight_fraction_leaf_with_min_samples_leaf(
             name, "multilabel", True)
-
-
-def test_min_impurity_split():
-    # test if min_impurity_split creates leaves with impurity
-    # [0, min_impurity_split) when min_samples_leaf = 1 and
-    # min_samples_split = 2.
-    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
-    y = iris.target
-
-    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
-    # by setting max_leaf_nodes
-    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
-        TreeEstimator = ALL_TREES[name]
-        min_impurity_split = .5
-
-        # verify leaf nodes without min_impurity_split less than
-        # impurity 1e-7
-        est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                            random_state=0)
-        assert est.min_impurity_split is None, (
-            "Failed, min_impurity_split = {0} != None".format(
-                est.min_impurity_split))
-        try:
-            assert_warns(FutureWarning, est.fit, X, y)
-        except AssertionError:
-            pass
-        for node in range(est.tree_.node_count):
-            if (est.tree_.children_left[node] == TREE_LEAF or
-                    est.tree_.children_right[node] == TREE_LEAF):
-                assert est.tree_.impurity[node] == 0., (
-                    "Failed with {0} min_impurity_split={1}".format(
-                        est.tree_.impurity[node],
-                        est.min_impurity_split))
-
-        # verify leaf nodes have impurity [0,min_impurity_split] when using
-        # min_impurity_split
-        est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                            min_impurity_split=min_impurity_split,
-                            random_state=0)
-        assert_warns_message(FutureWarning,
-                             "Use the min_impurity_decrease",
-                             est.fit, X, y)
-        for node in range(est.tree_.node_count):
-            if (est.tree_.children_left[node] == TREE_LEAF or
-                    est.tree_.children_right[node] == TREE_LEAF):
-                assert est.tree_.impurity[node] >= 0, (
-                    "Failed with {0}, min_impurity_split={1}".format(
-                        est.tree_.impurity[node],
-                        est.min_impurity_split))
-                assert est.tree_.impurity[node] <= min_impurity_split, (
-                    "Failed with {0}, min_impurity_split={1}".format(
-                        est.tree_.impurity[node],
-                        est.min_impurity_split))
 
 
 def test_min_impurity_decrease():
@@ -1772,7 +1713,7 @@ def test_mae():
             = 0.75
             ------
     """
-    dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
+    dt_mae = DecisionTreeRegressor(random_state=0, criterion="absolute_error",
                                    max_leaf_nodes=2)
 
     # Test MAE where sample weights are non-uniform (as illustrated above):
@@ -2121,12 +2062,27 @@ def test_X_idx_sorted_deprecated(TreeEstimator):
 
 # TODO: Remove in v1.2
 @pytest.mark.parametrize("Tree", REG_TREES.values())
-def test_mse_deprecated(Tree):
-    tree = Tree(criterion="mse")
+@pytest.mark.parametrize("old_criterion, new_criterion", [
+    ("mse", "squared_error"),
+    ("mae", "absolute_error"),
+])
+def test_criterion_deprecated(Tree, old_criterion, new_criterion):
+    tree = Tree(criterion=old_criterion)
 
     with pytest.warns(FutureWarning,
-                      match="Criterion 'mse' was deprecated"):
+                      match=f"Criterion '{old_criterion}' was deprecated"):
         tree.fit(X, y)
 
-    tree_sqer = Tree(criterion="squared_error").fit(X, y)
-    assert_allclose(tree.predict(X), tree_sqer.predict(X))
+    tree_new = Tree(criterion=new_criterion).fit(X, y)
+    assert_allclose(tree.predict(X), tree_new.predict(X))
+
+
+@pytest.mark.parametrize("Tree", ALL_TREES.values())
+def test_n_features_deprecated(Tree):
+    # check that we raise a deprecation warning when accessing `n_features_`.
+    # FIXME: remove in 1.2
+    depr_msg = ("The attribute 'n_features_' is deprecated in 1.0 and will be "
+                "removed in 1.2. Use 'n_features_in_' instead.")
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        Tree().fit(X, y).n_features_

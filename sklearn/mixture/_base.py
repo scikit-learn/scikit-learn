@@ -15,7 +15,7 @@ from .. import cluster
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_array, check_random_state
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 
 
@@ -34,32 +34,6 @@ def _check_shape(param, param_shape, name):
     if param.shape != param_shape:
         raise ValueError("The parameter '%s' should have the shape of %s, "
                          "but got %s" % (name, param_shape, param.shape))
-
-
-def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
-    """Check the input data X.
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-
-    n_components : int
-
-    Returns
-    -------
-    X : array, shape (n_samples, n_features)
-    """
-    X = check_array(X, dtype=[np.float64, np.float32],
-                    ensure_min_samples=ensure_min_samples)
-    if n_components is not None and X.shape[0] < n_components:
-        raise ValueError('Expected n_samples >= n_components '
-                         'but got n_components = %d, n_samples = %d'
-                         % (n_components, X.shape[0]))
-    if n_features is not None and X.shape[1] != n_features:
-        raise ValueError("Expected the input data X have %d features, "
-                         "but got %d features"
-                         % (n_features, X.shape[1]))
-    return X
 
 
 class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
@@ -217,15 +191,19 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        X = _check_X(X, self.n_components, ensure_min_samples=2)
-        self._check_n_features(X, reset=True)
+        X = self._validate_data(X, dtype=[np.float64, np.float32],
+                                ensure_min_samples=2)
+        if X.shape[0] < self.n_components:
+            raise ValueError("Expected n_samples >= n_components "
+                             f"but got n_components = {self.n_components}, "
+                             f"n_samples = {X.shape[0]}")
         self._check_initial_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation
         do_init = not(self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
 
-        max_lower_bound = -np.infty
+        max_lower_bound = -np.inf
         self.converged_ = False
 
         random_state = check_random_state(self.random_state)
@@ -237,7 +215,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             if do_init:
                 self._initialize_parameters(X, random_state)
 
-            lower_bound = (-np.infty if do_init else self.lower_bound_)
+            lower_bound = (-np.inf if do_init else self.lower_bound_)
 
             for n_iter in range(1, self.max_iter + 1):
                 prev_lower_bound = lower_bound
@@ -256,7 +234,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
             self._print_verbose_msg_init_end(lower_bound)
 
-            if lower_bound > max_lower_bound:
+            if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
                 max_lower_bound = lower_bound
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
@@ -335,7 +313,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Log probabilities of each data point in X.
         """
         check_is_fitted(self)
-        X = _check_X(X, None, self.means_.shape[1])
+        X = self._validate_data(X, reset=False)
 
         return logsumexp(self._estimate_weighted_log_prob(X), axis=1)
 
@@ -370,7 +348,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         check_is_fitted(self)
-        X = _check_X(X, None, self.means_.shape[1])
+        X = self._validate_data(X, reset=False)
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
@@ -389,7 +367,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             the model given each sample.
         """
         check_is_fitted(self)
-        X = _check_X(X, None, self.means_.shape[1])
+        X = self._validate_data(X, reset=False)
         _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
 

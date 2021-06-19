@@ -7,8 +7,6 @@ import numpy as np
 from threadpoolctl import threadpool_limits
 import sklearn
 from sklearn.model_selection import train_test_split
-# To use this experimental feature, we need to explicitly ask for it:
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.datasets import make_classification
