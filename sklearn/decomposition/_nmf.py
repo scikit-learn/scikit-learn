@@ -206,41 +206,6 @@ def _compute_regularization(alpha, l1_ratio, regularization):
     return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
 
-def _check_string_param(solver, regularization, beta_loss, init):
-    allowed_solver = ("cd", "mu")
-    if solver not in allowed_solver:
-        raise ValueError(
-            "Invalid solver parameter: got %r instead of one of %r"
-            % (solver, allowed_solver)
-        )
-
-    allowed_regularization = ("both", "components", "transformation", None)
-    if regularization not in allowed_regularization:
-        raise ValueError(
-            "Invalid regularization parameter: got %r instead of one of %r"
-            % (regularization, allowed_regularization)
-        )
-
-    # 'mu' is the only solver that handles other beta losses than 'frobenius'
-    if solver != "mu" and beta_loss not in (2, "frobenius"):
-        raise ValueError(
-            "Invalid beta_loss parameter: solver %r does not handle beta_loss"
-            " = %r" % (solver, beta_loss)
-        )
-
-    if solver == "mu" and init == "nndsvd":
-        warnings.warn(
-            "The multiplicative update ('mu') solver cannot update "
-            "zeros present in the initialization, and so leads to "
-            "poorer results when used jointly with init='nndsvd'. "
-            "You may try init='nndsvda' or init='nndsvdar' instead.",
-            UserWarning,
-        )
-
-    beta_loss = _beta_loss_to_float(beta_loss)
-    return beta_loss
-
-
 def _beta_loss_to_float(beta_loss):
     """Convert string beta_loss to float."""
     allowed_beta_loss = {"frobenius": 2, "kullback-leibler": 1, "itakura-saito": 0}
@@ -805,7 +770,6 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H, gamma
         denominator = denominator + l2_reg_H * H
     denominator[denominator == 0] = EPSILON
 
-<<<<<<< HEAD
     if A is not None and B is not None:
         if gamma != 1:
             H **= 1 / gamma
@@ -826,31 +790,17 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H, gamma
         H *= delta_H
 
     return H, A, B
-=======
-    numerator /= denominator
-    delta_H = numerator
-
-    # gamma is in ]0, 1]
-    if gamma != 1:
-        delta_H **= gamma
-
-    return delta_H
->>>>>>> main
 
 
 def _fit_multiplicative_update(
     X,
     W,
     H,
-<<<<<<< HEAD
     A,
     B,
     beta_loss="frobenius",
     batch_size=None,
     iter_offset=0,
-=======
-    beta_loss="frobenius",
->>>>>>> main
     max_iter=200,
     tol=1e-4,
     l1_reg_W=0,
@@ -859,10 +809,7 @@ def _fit_multiplicative_update(
     l2_reg_H=0,
     update_H=True,
     verbose=0,
-<<<<<<< HEAD
     forget_factor=None,
-=======
->>>>>>> main
 ):
     """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
@@ -1002,7 +949,6 @@ def _fit_multiplicative_update(
         # update W
         # H_sum, HHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-<<<<<<< HEAD
             X[batch],
             W[batch],
             H,
@@ -1026,22 +972,6 @@ def _fit_multiplicative_update(
             H, A, B = _multiplicative_update_h(
                 X[batch], W[batch], H, A, B, beta_loss, l1_reg_H, l2_reg_H, gamma, rho
             )
-=======
-            X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma, H_sum, HHt, XHt, update_H
-        )
-        W *= delta_W
-
-        # necessary for stability with beta_loss < 1
-        if beta_loss < 1:
-            W[W < np.finfo(np.float64).eps] = 0.0
-
-        # update H
-        if update_H:
-            delta_H = _multiplicative_update_h(
-                X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma
-            )
-            H *= delta_H
->>>>>>> main
 
             # These values will be recomputed since H changed
             H_sum, HHt, XHt = None, None, None
@@ -1049,13 +979,10 @@ def _fit_multiplicative_update(
             # necessary for stability with beta_loss < 1
             if beta_loss <= 1:
                 H[H < np.finfo(np.float64).eps] = 0.0
-<<<<<<< HEAD
 
         # XHt is updated if batch_size is smaller than n_samples
         if batch_size < n_samples:
             XHt = None
-=======
->>>>>>> main
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_i % (10 * n_batches) == 0:
@@ -1064,11 +991,7 @@ def _fit_multiplicative_update(
                 iter_time = time.time()
                 print(
                     "Epoch %02d reached after %.3f seconds, error: %f"
-<<<<<<< HEAD
                     % (n_i, iter_time - start_time, error)
-=======
-                    % (n_iter, iter_time - start_time, error)
->>>>>>> main
                 )
 
             if (previous_error - error) / error_at_init < tol:
@@ -1078,7 +1001,6 @@ def _fit_multiplicative_update(
     # do not print if we have already printed in the convergence test
     if verbose and (tol == 0 or n_i % (10 * n_batches) != 0):
         end_time = time.time()
-<<<<<<< HEAD
         print("Epoch %02d reached after %.3f seconds." % (n_i, end_time - start_time))
 
     if forget_factor is None:
@@ -1090,15 +1012,6 @@ def _fit_multiplicative_update(
         return W, H, n_iter, iter_offset, A, B
 
 
-=======
-        print(
-            "Epoch %02d reached after %.3f seconds." % (n_iter, end_time - start_time)
-        )
-
-    return W, H, n_iter
-
-
->>>>>>> main
 def non_negative_factorization(
     X,
     W=None,
@@ -1108,10 +1021,7 @@ def non_negative_factorization(
     init="warn",
     update_H=True,
     solver="cd",
-<<<<<<< HEAD
     batch_size=None,
-=======
->>>>>>> main
     beta_loss="frobenius",
     tol=1e-4,
     max_iter=200,
@@ -1121,10 +1031,7 @@ def non_negative_factorization(
     random_state=None,
     verbose=0,
     shuffle=False,
-<<<<<<< HEAD
     forget_factor=None,
-=======
->>>>>>> main
 ):
     """Compute Non-negative Matrix Factorization (NMF).
 
@@ -1313,7 +1220,6 @@ def non_negative_factorization(
     """
     X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
-<<<<<<< HEAD
     if batch_size is None:
         est = NMF(
             n_components=n_components,
@@ -1332,22 +1238,6 @@ def non_negative_factorization(
 
         with config_context(assume_finite=True):
             W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
-=======
-    est = NMF(
-        n_components=n_components,
-        init=init,
-        solver=solver,
-        beta_loss=beta_loss,
-        tol=tol,
-        max_iter=max_iter,
-        random_state=random_state,
-        alpha=alpha,
-        l1_ratio=l1_ratio,
-        verbose=verbose,
-        shuffle=shuffle,
-        regularization=regularization,
-    )
->>>>>>> main
 
         return W, H, n_iter
     else:
@@ -1602,7 +1492,6 @@ class NMF(TransformerMixin, BaseEstimator):
                 "Tolerance for stopping criteria must be "
                 "positive; got (tol=%r)" % self.tol
             )
-<<<<<<< HEAD
         allowed_solver = ("cd", "mu")
         if self.solver not in allowed_solver:
             raise ValueError(
@@ -1637,8 +1526,6 @@ class NMF(TransformerMixin, BaseEstimator):
 
         self._beta_loss = _beta_loss_to_float(self.beta_loss)
 
-=======
->>>>>>> main
         return self
 
     def _check_w_h(self, X, W, H, update_H):
@@ -1701,7 +1588,6 @@ class NMF(TransformerMixin, BaseEstimator):
         with config_context(assume_finite=True):
             W, H, n_iter = self._fit_transform(X, W=W, H=H)
 
-<<<<<<< HEAD
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
@@ -1709,8 +1595,6 @@ class NMF(TransformerMixin, BaseEstimator):
                 ConvergenceWarning,
             )
 
-=======
->>>>>>> main
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
         )
@@ -1756,14 +1640,8 @@ class NMF(TransformerMixin, BaseEstimator):
             Actual number of iterations.
         """
         check_non_negative(X, "NMF (input X)")
-<<<<<<< HEAD
         # check parameters
         self._check_params(X)
-=======
-        self._beta_loss = _check_string_param(
-            self.solver, self.regularization, self.beta_loss, self.init
-        )
->>>>>>> main
 
         if X.min() == 0 and self._beta_loss <= 0:
             raise ValueError(
@@ -1771,11 +1649,8 @@ class NMF(TransformerMixin, BaseEstimator):
                 "the solver may diverge. Please add small values "
                 "to X, or use a positive beta_loss."
             )
-<<<<<<< HEAD
 
         n_samples, n_features = X.shape
-=======
->>>>>>> main
 
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
@@ -1801,7 +1676,6 @@ class NMF(TransformerMixin, BaseEstimator):
                 random_state=self.random_state,
             )
         elif self.solver == "mu":
-<<<<<<< HEAD
             W, H, n_iter, *_ = _fit_multiplicative_update(
                 X,
                 W,
@@ -1811,33 +1685,19 @@ class NMF(TransformerMixin, BaseEstimator):
                 self._beta_loss,
                 None,
                 0,
-=======
-            W, H, n_iter = _fit_multiplicative_update(
-                X,
-                W,
-                H,
-                self._beta_loss,
->>>>>>> main
                 self.max_iter,
                 self.tol,
                 l1_reg_W,
                 l1_reg_H,
                 l2_reg_W,
                 l2_reg_H,
-<<<<<<< HEAD
                 update_H,
                 self.verbose,
                 None,
-=======
-                update_H=update_H,
-                verbose=self.verbose,
->>>>>>> main
             )
         else:
             raise ValueError("Invalid solver parameter '%s'." % self.solver)
 
-<<<<<<< HEAD
-=======
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
@@ -1845,7 +1705,6 @@ class NMF(TransformerMixin, BaseEstimator):
                 ConvergenceWarning,
             )
 
->>>>>>> main
         return W, H, n_iter
 
     def fit(self, X, y=None, **params):
