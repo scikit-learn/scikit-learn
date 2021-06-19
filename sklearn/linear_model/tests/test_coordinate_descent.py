@@ -94,6 +94,7 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
         y = np.stack((y, y), axis=1)
 
     if "CV" in CoordinateDescentModel.__name__ and normalize is True:
+        # XXX : I need to fix this hack
         n_warnings += 1
 
     model = CoordinateDescentModel(normalize=normalize)

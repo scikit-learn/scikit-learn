@@ -1305,7 +1305,7 @@ def _path_residuals(
                 array.setflags(write=True)
 
     fit_intercept = path_params["fit_intercept"]
-    _normalize = path_params["_normalize"]
+    normalize = path_params["normalize"]
 
     if y.ndim == 1:
         precompute = path_params["precompute"]
@@ -1315,7 +1315,7 @@ def _path_residuals(
         precompute = False
 
     X_train, y_train, X_offset, y_offset, X_scale, precompute, Xy = _pre_fit(
-        X_train, y_train, None, precompute, _normalize, fit_intercept, copy=False
+        X_train, y_train, None, precompute, normalize, fit_intercept, copy=False
     )
 
     path_params = path_params.copy()
@@ -1341,7 +1341,7 @@ def _path_residuals(
         y_offset = np.atleast_1d(y_offset)
         y_test = y_test[:, np.newaxis]
 
-    if _normalize:
+    if normalize:
         nonzeros = np.flatnonzero(X_scale)
         coefs[:, nonzeros] /= X_scale[nonzeros][:, np.newaxis]
 
@@ -1510,7 +1510,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         path_params = self.get_params()
 
         # FIXME: 'normalize' to be removed in 0.26
-        path_params["_normalize"] = _normalize
+        path_params["normalize"] = _normalize
 
         if "l1_ratio" in path_params:
             l1_ratios = np.atleast_1d(path_params["l1_ratio"])
