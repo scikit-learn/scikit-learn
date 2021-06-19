@@ -273,7 +273,11 @@ def _solve_trf(
         result = sp_optimize.lsq_linear(Xa, y_column, bounds=bounds, **lsq_config)
 
         if not result["success"]:
-            warnings.warn("trf solver did not converge.", ConvergenceWarning)
+            warnings.warn(
+                "trf solver did not converge. "
+                "Set a low `tol` and a high `max_iter`.",
+                ConvergenceWarning,
+            )
         coefs[i] = result["x"]
 
     return coefs

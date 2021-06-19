@@ -1519,7 +1519,7 @@ def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
-    # Test whether Ridge converge to the same solution
+    # Test whether Ridge converges to the same solution
     # with positive=True and positive=False
     # when the ground truth coefs are all positive
     rng = np.random.RandomState(42)
@@ -1527,9 +1527,9 @@ def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
     b = rng.uniform(0.1, 1.0, size=X.shape[1])
     if fit_intercept:
         intercept = 1
-        y = X.dot(b) + intercept
+        y = X @ b + intercept
     else:
-        y = X.dot(b)
+        y = X @ b
     y += rng.normal(size=X.shape[0]) * 0.1
 
     results = []
@@ -1548,7 +1548,7 @@ def test_ridge_positive_error_test(solver):
     alpha = 0.1
     X = np.array([[1, 2], [3, 4]])
     b = np.array([1, -1])
-    y = X.dot(b)
+    y = X @ b
 
     model = Ridge(alpha=alpha, positive=True, solver=solver, fit_intercept=False)
     with pytest.raises(ValueError, match="does not support positive"):
@@ -1565,7 +1565,7 @@ def test_positive_ridge_loss(alpha):
     # Check ridge loss consistency when positive argument is enabled
     X, y = make_regression(n_samples=300, n_features=300, random_state=42)
     alpha = 0.10
-    n_check = 100
+    n_checks = 100
 
     rng = np.random.RandomState(42)
 
@@ -1594,7 +1594,7 @@ def test_positive_ridge_loss(alpha):
     #   Loss for solution found by Ridge(positive=True)
     #   is lower than that for small random positive perturbation
     #   of the positive solution.
-    for _ in range(n_check):
+    for _ in range(n_checks):
         loss_perturbed = ridge_loss(model_positive, with_positive_noise=True)
         assert loss_positive <= loss_perturbed
 
