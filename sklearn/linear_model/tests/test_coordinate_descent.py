@@ -1185,7 +1185,7 @@ def test_lasso_non_float_y(model):
     assert_array_equal(clf.coef_, clf_float.coef_)
 
 
-# FIXME: 'normalize' to be removed in 0.26
+# FIXME: 'normalize' to be removed in 11.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_enet_float_precision():
     # Generate dataset

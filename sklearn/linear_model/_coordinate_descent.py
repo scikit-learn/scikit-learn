@@ -131,7 +131,7 @@ def _alpha_grid(
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 0.24 and will be removed in
+            ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
     copy_X : bool, default=True
@@ -717,7 +717,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 0.24 and will be removed in
+            ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
     precompute : bool or array-like of shape (n_features, n_features),\
@@ -1670,7 +1670,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 0.24 and will be removed in
+            ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
@@ -1886,7 +1886,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 0.24 and will be removed in
+            ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
@@ -2128,7 +2128,7 @@ class MultiTaskElasticNet(Lasso):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 0.24 and will be removed in
+            ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
     copy_X : bool, default=True
@@ -2373,7 +2373,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 0.24 and will be removed in
+            ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
     copy_X : bool, default=True
@@ -2544,7 +2544,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 0.24 and will be removed in
+            ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
     max_iter : int, default=1000
@@ -2750,7 +2750,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 0.24 and will be removed in
+            ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
     max_iter : int, default=1000
