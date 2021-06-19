@@ -137,11 +137,8 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
-<<<<<<< HEAD
-=======
 # FIXME: 'normalize' to be removed in 1.4
 @filterwarnings_normalize
->>>>>>> main
 @pytest.mark.filterwarnings("ignore: `rcond` parameter will change")
 # numpy deprecation
 def test_lars_lstsq():
