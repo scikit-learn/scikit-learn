@@ -63,9 +63,9 @@ jobs:
       displayName: 'Test Soft Dependency'
       condition: eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true')
       - script: |
-          pytest maint_tools/test_docstrings.py
-        displayName: "Numpydoc validation"
-      condition: eq(variables['TEST_SOFT_DEPENDENCY'], 'true')
+        build_tools/azure/test_docstring.sh
+      displayName: "Numpydoc validation"
+      condition: eq(variables['TEST_DOCSTRINGS'], 'true')
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
