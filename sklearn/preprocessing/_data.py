@@ -1004,6 +1004,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
+
         copy = copy if copy is not None else self.copy
         X = check_array(
             X,
