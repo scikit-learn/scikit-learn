@@ -5,6 +5,7 @@ Feature importances with a forest of trees
 
 This example shows the use of a forest of trees to evaluate the importance of
 features on an artificial classification task.
+
 We show two strategies to estimate the feature importances: (i) the
 impurity-based feature importances and (ii) the permutation feature
 importances on out-of-bag (OOB) samples.
@@ -109,11 +110,13 @@ fig.tight_layout()
 plt.show()
 
 # %%
-# As in the impurity-based, the three most important features are detected.
+# As in the impurity-based case, the three most important features are detected.
 # We see that non-important features have a mean decrease accuracy of zeros.
-# Indeed, permuted these features did not have an impact on the score.
+# Hence, permuting these features did not have an impact on the score.
+#
 # Another difference between the two feature importances is the scale of the
-# reported values. The permutation importances corresponds to a difference of
-# scores and it is not further normalized. With impurity-based feature
-# importances reported are normalized: they sum of the importances across
-# features will sum to 1.
+# reported values:
+#  - the permutation feature importances are not normalized and simply 
+# correspond to a difference of scores;
+#  - the impurity-based feature importances reported are normalized so that
+# they sum to 1.

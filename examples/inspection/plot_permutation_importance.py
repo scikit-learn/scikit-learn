@@ -114,10 +114,9 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
 # We plot the feature importances computed across all trees of the forest.
-# We use a box plot representation to show the information. The mean is in the
-# box plot would corresponds to the value reported by the fitted attribute
-# `feature_importances_`. The variance is computed by taking the standard
-# deviation of the feature importances across trees.
+# using a box plot. The mean corresponds to the value reported by the fitted
+# attribute `feature_importances_`. The variance is computed on  the feature
+# importances across trees.
 import pandas as pd
 
 ohe = (rf.named_steps['preprocess']
@@ -166,12 +165,13 @@ plt.show()
 #
 # Alternative to MDI using Feature Permutation Importance
 # -------------------------------------------------------
-# The limitations of MDI pointed out in the previous section can be bypassed
-# using an alternative strategy to estimate the feature importances. This
-# strategy relies on monitoring the decrease (or not) of a given performance
-# metric by randomly permutting the value of a given feature. In short, a
+# The limitations of MDI pointed out in the previous section can be mitigated
+# using an alternative strategy: Feature Permutation Importance. 
+# 
+# This strategy relies on monitoring the decrease of a given performance
+# metric by randomly permuting the value of a given feature. In short, a
 # predictive feature will negatively impact the score when it is randomly
-# permuted while a non-predictive feature will not change the score.
+# permuted whilst a non-predictive feature will not have its score changed.
 #
 # This feature permutation importance estimate can be computed in two different
 # way: (i) by using the out-of-bag (OOB) samples in the ensemble to perform the
@@ -190,11 +190,13 @@ rf = Pipeline(steps=[
 ]).fit(X_train, y_train)
 
 # %%
-# Once the forest has been train, the permutation importances have been
-# estimated internally on the OOB samples. Thus, the fitted attribute
-# `importances_` is now displaying the score decrease among all
-# trees of the forest for each feature. Thus, we can plot this feature
-# importances and compared it with the MDI estimates.
+# Once the forest has been trained, the permutation importances will be
+# estimated internally on the OOB samples. In this case, the fitted
+# attribute `importances_` is now gathering the score decreases
+# among all trees of the forest for each feature.
+# 
+# Thus, we can plot those feature importances and compared them with 
+# the MDI estimates.
 tree_feature_importances = pd.DataFrame(
     rf.named_steps['classifier'].importances_.importances.T,
     columns=feature_names)
@@ -216,13 +218,13 @@ plt.show()
 # importances.
 #
 # However, we still observe that these two anti-correlated features are
-# suffering from a high standard deviation.
+# prone to a high standard deviation.
 #
 # Feature Permutation Importance on train-test sets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In the previous section, we show how one can leverage the OOB samples to
 # compute the permutation importance. However, this is also possible to use
-# the same strategy but manipulating a train and a test sets.
+# the same strategy but using a train and a test sets.
 #
 # We illustrate such strategy by using the function
 # :func:`~sklearn.inspection.permutation_importance`. Note that this way of
@@ -274,7 +276,7 @@ plt.show()
 # %%
 # Final words
 # -----------
-# As presented, the feature permutation importances can be computed either
+# As presented, the permutation feature importances can be computed either
 # on the OOB samples or on separated datasets.
 #
 # While they are similar, it should be noted that the variations of the

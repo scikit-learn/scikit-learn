@@ -298,15 +298,15 @@ the default values.
 
   - Firstly, they are computed on statistics derived from the training
     dataset and therefore **do not necessarily inform us on which features are
-    most important to make good predictions on held-out dataset**.
+    most important to make good predictions on held-out dataset**. [Strobl07]_
   - Secondly, they favor **high cardinality features**, that is features with
-    many unique values.
+    many unique values. [White94]_
 
   Features importances estimated through feature permutation is an alternative
   that does not suffer from these flaws. We give more details regarding this
   alternative in the next section.
 
-Feature permutation importances on out-of-bag (OOB) samples
+Permutation feature importances on out-of-bag (OOB) samples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 An alternative to MDI is the feature importances that uses feature permutation.
@@ -351,7 +351,14 @@ MDI and the permutation feature importances are explored in:
  * :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
 
 .. topic:: References
-
+ .. [Strobl07] `Strobl, C., Boulesteix, AL., Zeileis, A. et al. 
+ Bias in random forest variable importance measures: Illustrations, 
+ sources and a solution. BMC Bioinformatics 8, 25 (2007). 
+ <https://doi.org/10.1186/1471-2105-8-25>`_
+ .. [White94] `White, A.P., Liu, W.Z. Technical Note: 
+ Bias in Information-Based Measures in Decision Tree Induction. 
+ Machine Learning 15, 321–329 (1994). 
+ <https://doi.org/10.1023/A:1022694010754>`_
  .. [L2014] G. Louppe,
          "Understanding Random Forests: From Theory to Practice",
          PhD Thesis, U. of Liege, 2014.
