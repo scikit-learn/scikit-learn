@@ -51,7 +51,12 @@ def test_initialize_nn_output():
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = "spam"
+<<<<<<< HEAD
     init = "nndsvda"  # FIXME : should be removed in 1.1
+=======
+    # FIXME : should be removed in 1.1
+    init = "nndsvda"
+>>>>>>> main
     msg = "Invalid solver parameter: got 'spam' instead of one of"
     with pytest.raises(ValueError, match=msg):
         NMF(solver=name, init=init).fit(A)
@@ -74,6 +79,11 @@ def test_parameter_checking():
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
         NMF(init=init).fit(-A)
+<<<<<<< HEAD
+=======
+    with pytest.raises(ValueError, match=msg):
+        nmf._initialize_nmf(-A, 2, "nndsvd")
+>>>>>>> main
     clf = NMF(2, tol=0.1, init=init).fit(A)
     with pytest.raises(ValueError, match=msg):
         clf.transform(-A)
@@ -125,17 +135,28 @@ def test_initialize_variants():
 
 # ignore UserWarning raised when both solver='mu' and init='nndsvd'
 @ignore_warnings(category=UserWarning)
+<<<<<<< HEAD
 @pytest.mark.parametrize(
     ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
 )
+=======
+@pytest.mark.parametrize("solver", ("cd", "mu"))
+>>>>>>> main
 @pytest.mark.parametrize("init", (None, "nndsvd", "nndsvda", "nndsvdar", "random"))
 @pytest.mark.parametrize(
     "regularization", (None, "both", "components", "transformation")
 )
+<<<<<<< HEAD
 def test_nmf_fit_nn_output(Estimator, solver, init, regularization):
     # Test that the decomposition does not contain negative values
     A = np.c_[5.0 - np.arange(1, 6), 5.0 + np.arange(1, 6)]
     model = Estimator(
+=======
+def test_nmf_fit_nn_output(solver, init, regularization):
+    # Test that the decomposition does not contain negative values
+    A = np.c_[5.0 - np.arange(1, 6), 5.0 + np.arange(1, 6)]
+    model = NMF(
+>>>>>>> main
         n_components=2,
         solver=solver,
         init=init,
@@ -146,6 +167,7 @@ def test_nmf_fit_nn_output(Estimator, solver, init, regularization):
     assert not ((model.components_ < 0).any() or (transf < 0).any())
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize(
     ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
 )
@@ -156,6 +178,16 @@ def test_nmf_fit_close(Estimator, solver, regularization):
     rng = np.random.mtrand.RandomState(42)
     # Test that the fit is not too far away
     pnmf = Estimator(
+=======
+@pytest.mark.parametrize("solver", ("cd", "mu"))
+@pytest.mark.parametrize(
+    "regularization", (None, "both", "components", "transformation")
+)
+def test_nmf_fit_close(solver, regularization):
+    rng = np.random.mtrand.RandomState(42)
+    # Test that the fit is not too far away
+    pnmf = NMF(
+>>>>>>> main
         5,
         solver=solver,
         init="nndsvdar",
@@ -167,6 +199,7 @@ def test_nmf_fit_close(Estimator, solver, regularization):
     assert pnmf.fit(X).reconstruction_err_ < 0.1
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize(
     "regularization", (None, "both", "components", "transformation")
 )
@@ -236,12 +269,27 @@ def test_nmf_transform(Estimator, solver, regularization):
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     m = Estimator(
+=======
+@pytest.mark.parametrize("solver", ("cd", "mu"))
+@pytest.mark.parametrize(
+    "regularization", (None, "both", "components", "transformation")
+)
+def test_nmf_transform(solver, regularization):
+    # Test that NMF.transform returns close values
+    rng = np.random.mtrand.RandomState(42)
+    A = np.abs(rng.randn(6, 5))
+    m = NMF(
+>>>>>>> main
         solver=solver,
         n_components=3,
         init="random",
         regularization=regularization,
         random_state=0,
+<<<<<<< HEAD
         tol=1e-6,
+=======
+        tol=1e-5,
+>>>>>>> main
     )
     ft = m.fit_transform(A)
     t = m.transform(A)
@@ -258,11 +306,16 @@ def test_nmf_transform_custom_init(Estimator):
     H_init = np.abs(avg * random_state.randn(n_components, 5))
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
+<<<<<<< HEAD
     m = Estimator(solver="mu", n_components=n_components, init="custom", random_state=0)
+=======
+    m = NMF(solver="cd", n_components=n_components, init="custom", random_state=0)
+>>>>>>> main
     m.fit_transform(A, W=W_init, H=H_init)
     m.transform(A)
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize(
     ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
 )
@@ -274,13 +327,28 @@ def test_nmf_inverse_transform(Estimator, solver, regularization):
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
     m = Estimator(
+=======
+@pytest.mark.parametrize("solver", ("cd", "mu"))
+@pytest.mark.parametrize(
+    "regularization", (None, "both", "components", "transformation")
+)
+def test_nmf_inverse_transform(solver, regularization):
+    # Test that NMF.inverse_transform returns close values
+    random_state = np.random.RandomState(0)
+    A = np.abs(random_state.randn(6, 4))
+    m = NMF(
+>>>>>>> main
         solver=solver,
         n_components=4,
         init="random",
         random_state=0,
         regularization=regularization,
+<<<<<<< HEAD
         max_iter=5000,
         tol=1e-6,
+=======
+        max_iter=1000,
+>>>>>>> main
     )
     ft = m.fit_transform(A)
     A_new = m.inverse_transform(ft)
@@ -292,6 +360,7 @@ def test_n_components_greater_n_features(Estimator):
     # Smoke test for the case of more components than features.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(30, 10))
+<<<<<<< HEAD
     init = "random"  # FIXME : should be removed in 1.1
     Estimator(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
@@ -303,6 +372,18 @@ def test_n_components_greater_n_features(Estimator):
     "regularization", [None, "both", "components", "transformation"]
 )
 def test_nmf_sparse_input(Estimator, solver, regularization):
+=======
+    # FIXME : should be removed in 1.1
+    init = "random"
+    NMF(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
+
+
+@pytest.mark.parametrize("solver", ["cd", "mu"])
+@pytest.mark.parametrize(
+    "regularization", [None, "both", "components", "transformation"]
+)
+def test_nmf_sparse_input(solver, regularization):
+>>>>>>> main
     # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
 
@@ -311,7 +392,11 @@ def test_nmf_sparse_input(Estimator, solver, regularization):
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
+<<<<<<< HEAD
     est1 = Estimator(
+=======
+    est1 = NMF(
+>>>>>>> main
         solver=solver,
         n_components=5,
         init="random",
@@ -340,6 +425,7 @@ def test_nmf_sparse_transform(Estimator, solver):
     A[1, 1] = 0
     A = csc_matrix(A)
 
+<<<<<<< HEAD
     init = "nndsvd"  # FIXME : should be removed in 1.1
 
     model = Estimator(
@@ -361,6 +447,23 @@ def test_nmf_sparse_transform(Estimator, solver):
 def test_non_negative_factorization_consistency(
     Estimator, init, solver, regularization, batch_size, forget_factor
 ):
+=======
+    for solver in ("cd", "mu"):
+        model = NMF(
+            solver=solver, random_state=0, n_components=2, max_iter=400, init="nndsvd"
+        )
+        A_fit_tr = model.fit_transform(A)
+        A_tr = model.transform(A)
+        assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
+
+
+@pytest.mark.parametrize("init", ["random", "nndsvd"])
+@pytest.mark.parametrize("solver", ("cd", "mu"))
+@pytest.mark.parametrize(
+    "regularization", (None, "both", "components", "transformation")
+)
+def test_non_negative_factorization_consistency(init, solver, regularization):
+>>>>>>> main
     # Test that the function is called in the same way, either directly
     # or through the NMF class
     max_iter = 500
@@ -368,6 +471,7 @@ def test_non_negative_factorization_consistency(
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
+<<<<<<< HEAD
     W_nmf, H, *_ = non_negative_factorization(
         A,
         init=init,
@@ -380,24 +484,45 @@ def test_non_negative_factorization_consistency(
         forget_factor=forget_factor,
     )
     W_nmf_2, *_ = non_negative_factorization(
+=======
+    W_nmf, H, _ = non_negative_factorization(
+        A,
+        init=init,
+        solver=solver,
+        regularization=regularization,
+        random_state=1,
+        tol=1e-2,
+    )
+    W_nmf_2, _, _ = non_negative_factorization(
+>>>>>>> main
         A,
         H=H,
         update_H=False,
         init=init,
         solver=solver,
+<<<<<<< HEAD
         max_iter=max_iter,
         batch_size=batch_size,
         forget_factor=forget_factor,
+=======
+>>>>>>> main
         regularization=regularization,
         random_state=1,
         tol=1e-2,
     )
 
+<<<<<<< HEAD
     model_class = Estimator(
         init=init,
         solver=solver,
         regularization=regularization,
         max_iter=max_iter,
+=======
+    model_class = NMF(
+        init=init,
+        solver=solver,
+        regularization=regularization,
+>>>>>>> main
         random_state=1,
         tol=1e-2,
     )
@@ -431,6 +556,7 @@ def test_non_negative_factorization_checking():
     msg = re.escape("Array passed to NMF (input H) is full of zeros")
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, 0 * A, 2, init="custom")
+<<<<<<< HEAD
     msg = re.escape("Invalid regularization parameter: got 'spam' instead of one of")
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, 0 * A, 2, init="custom", regularization="spam")
@@ -447,6 +573,11 @@ def test_non_negative_factorization_checking():
     )
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, A, 2, batch_size="3", init=init, solver="mu", beta_loss=1)
+=======
+    msg = "Invalid regularization parameter: got 'spam' instead of one of"
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, A, 0 * A, 2, init="custom", regularization="spam")
+>>>>>>> main
 
 
 def _beta_divergence_dense(X, W, H, beta):
@@ -551,7 +682,11 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
     for beta_loss in (-1.2, 0, 0.2, 1.0, 2.0, 2.5):
         # Reference with dense array X
         W, H = W0.copy(), H0.copy()
+<<<<<<< HEAD
         W1, H1, *_ = non_negative_factorization(
+=======
+        W1, H1, _ = non_negative_factorization(
+>>>>>>> main
             X,
             W,
             H,
@@ -565,12 +700,19 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
             l1_ratio=l1_ratio,
             regularization="both",
             random_state=42,
+<<<<<<< HEAD
             forget_factor=forget_factor,
+=======
+>>>>>>> main
         )
 
         # Compare with sparse X
         W, H = W0.copy(), H0.copy()
+<<<<<<< HEAD
         W2, H2, *_ = non_negative_factorization(
+=======
+        W2, H2, _ = non_negative_factorization(
+>>>>>>> main
             X_csr,
             W,
             H,
@@ -584,7 +726,10 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
             l1_ratio=l1_ratio,
             regularization="both",
             random_state=42,
+<<<<<<< HEAD
             forget_factor=forget_factor,
+=======
+>>>>>>> main
         )
 
         assert_allclose(W1, W2, atol=1e-7)
@@ -594,7 +739,11 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
         # behavior, but the results should be continuous w.r.t beta_loss
         beta_loss -= 1.0e-5
         W, H = W0.copy(), H0.copy()
+<<<<<<< HEAD
         W3, H3, *_ = non_negative_factorization(
+=======
+        W3, H3, _ = non_negative_factorization(
+>>>>>>> main
             X_csr,
             W,
             H,
@@ -608,7 +757,10 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
             l1_ratio=l1_ratio,
             regularization="both",
             random_state=42,
+<<<<<<< HEAD
             forget_factor=forget_factor,
+=======
+>>>>>>> main
         )
 
         assert_allclose(W1, W3, atol=1e-4)
@@ -629,7 +781,11 @@ def test_nmf_negative_beta_loss(forget_factor):
     X_csr = sp.csr_matrix(X)
 
     def _assert_nmf_no_nan(X, beta_loss):
+<<<<<<< HEAD
         W, H, *_ = non_negative_factorization(
+=======
+        W, H, _ = non_negative_factorization(
+>>>>>>> main
             X,
             init="random",
             n_components=n_components,
@@ -637,7 +793,10 @@ def test_nmf_negative_beta_loss(forget_factor):
             beta_loss=beta_loss,
             random_state=0,
             max_iter=1000,
+<<<<<<< HEAD
             forget_factor=forget_factor,
+=======
+>>>>>>> main
         )
         assert not np.any(np.isnan(W))
         assert not np.any(np.isnan(H))
@@ -665,6 +824,7 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
+<<<<<<< HEAD
     init = "nndsvdar"
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.0
@@ -725,6 +885,63 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
         init=init,
         max_iter=max_iter,
     )
+=======
+    # FIXME : should be removed in 1.1
+    init = "nndsvda"
+    # L1 regularization should increase the number of zeros
+    l1_ratio = 1.0
+    for solver in ["cd", "mu"]:
+        regul = nmf.NMF(
+            n_components=n_components,
+            solver=solver,
+            alpha=0.5,
+            l1_ratio=l1_ratio,
+            random_state=42,
+            init=init,
+        )
+        model = nmf.NMF(
+            n_components=n_components,
+            solver=solver,
+            alpha=0.0,
+            l1_ratio=l1_ratio,
+            random_state=42,
+            init=init,
+        )
+
+        W_regul = regul.fit_transform(X)
+        W_model = model.fit_transform(X)
+
+        H_regul = regul.components_
+        H_model = model.components_
+
+        W_regul_n_zeros = W_regul[W_regul == 0].size
+        W_model_n_zeros = W_model[W_model == 0].size
+        H_regul_n_zeros = H_regul[H_regul == 0].size
+        H_model_n_zeros = H_model[H_model == 0].size
+
+        assert W_regul_n_zeros > W_model_n_zeros
+        assert H_regul_n_zeros > H_model_n_zeros
+
+    # L2 regularization should decrease the mean of the coefficients
+    l1_ratio = 0.0
+    for solver in ["cd", "mu"]:
+        regul = nmf.NMF(
+            n_components=n_components,
+            solver=solver,
+            alpha=0.5,
+            l1_ratio=l1_ratio,
+            random_state=42,
+            init=init,
+        )
+        model = nmf.NMF(
+            n_components=n_components,
+            solver=solver,
+            alpha=0.0,
+            l1_ratio=l1_ratio,
+            random_state=42,
+            init=init,
+        )
+>>>>>>> main
 
     W_regul = regul.fit_transform(X)
     W_model = model.fit_transform(X)
@@ -732,9 +949,15 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
     H_regul = regul.components_
     H_model = model.components_
 
+<<<<<<< HEAD
     assert (linalg.norm(W_model)) ** 2.0 + (linalg.norm(H_model)) ** 2.0 > (
         linalg.norm(W_regul)
     ) ** 2.0 + (linalg.norm(H_regul)) ** 2.0
+=======
+        assert (linalg.norm(W_model)) ** 2.0 + (linalg.norm(H_model)) ** 2.0 > (
+            linalg.norm(W_regul)
+        ) ** 2.0 + (linalg.norm(H_regul)) ** 2.0
+>>>>>>> main
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -766,13 +989,20 @@ def test_nmf_decreasing(forget_factor):
             previous_loss = None
             for _ in range(30):
                 # one more iteration starting from the previous results
+<<<<<<< HEAD
                 W, H, *_ = non_negative_factorization(
+=======
+                W, H, _ = non_negative_factorization(
+>>>>>>> main
                     X,
                     W,
                     H,
                     beta_loss=beta_loss,
                     init="custom",
+<<<<<<< HEAD
                     forget_factor=forget_factor,
+=======
+>>>>>>> main
                     n_components=n_components,
                     max_iter=1,
                     alpha=alpha,
@@ -815,6 +1045,7 @@ def test_nmf_underflow():
         (np.int64, np.float64),
     ],
 )
+<<<<<<< HEAD
 @pytest.mark.parametrize(
     ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
 )
@@ -827,12 +1058,26 @@ def test_nmf_dtype_match(Estimator, dtype_in, dtype_out, solver, regularization)
     np.abs(X, out=X)
     init = "nndsvda"  # FIXME : should be removed in 1.1
     nmf = Estimator(solver=solver, regularization=regularization, init=init)
+=======
+@pytest.mark.parametrize("solver", ["cd", "mu"])
+@pytest.mark.parametrize(
+    "regularization", (None, "both", "components", "transformation")
+)
+def test_nmf_dtype_match(dtype_in, dtype_out, solver, regularization):
+    # Check that NMF preserves dtype (float32 and float64)
+    X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
+    np.abs(X, out=X)
+    # FIXME : should be removed in 1.1
+    init = "nndsvda"
+    nmf = NMF(solver=solver, regularization=regularization, init=init)
+>>>>>>> main
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
     assert nmf.fit_transform(X).dtype == dtype_out
     assert nmf.components_.dtype == dtype_out
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize(
     ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
 )
@@ -852,6 +1097,21 @@ def test_nmf_float32_float64_consistency(Estimator, solver, regularization):
     nmf64 = Estimator(
         solver=solver, regularization=regularization, random_state=0, init=init, tol=tol
     )
+=======
+@pytest.mark.parametrize("solver", ["cd", "mu"])
+@pytest.mark.parametrize(
+    "regularization", (None, "both", "components", "transformation")
+)
+def test_nmf_float32_float64_consistency(solver, regularization):
+    # Check that the result of NMF is the same between float32 and float64
+    X = np.random.RandomState(0).randn(50, 7)
+    np.abs(X, out=X)
+    # FIXME : should be removed in 1.1
+    init = "nndsvda"
+    nmf32 = NMF(solver=solver, regularization=regularization, random_state=0, init=init)
+    W32 = nmf32.fit_transform(X.astype(np.float32))
+    nmf64 = NMF(solver=solver, regularization=regularization, random_state=0, init=init)
+>>>>>>> main
     W64 = nmf64.fit_transform(X)
 
     assert_allclose(W32, W64, rtol=1e-6, atol=1e-4)
@@ -867,7 +1127,11 @@ def test_nmf_custom_init_dtype_error(Estimator):
     W = rng.random_sample((20, 15))
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
+<<<<<<< HEAD
         Estimator(init="custom").fit(X, H=H, W=W)
+=======
+        NMF(init="custom").fit(X, H=H, W=W)
+>>>>>>> main
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
         non_negative_factorization(X, H=H, update_H=False)

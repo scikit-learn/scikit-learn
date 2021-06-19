@@ -1009,7 +1009,7 @@ class MinimalTransformer:
         return self
 
     def fit(self, X, y=None):
-        X = check_array(X)
+        check_array(X)
         self.is_fitted_ = True
         return self
 

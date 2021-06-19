@@ -278,10 +278,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     n_features, self.degree, self.interaction_only, self.include_bias
                 )
                 columns = []
-                for comb in combinations:
-                    if comb:
+                for combination in combinations:
+                    if combination:
                         out_col = 1
-                        for col_idx in comb:
+                        for col_idx in combination:
                             out_col = X[:, col_idx].multiply(out_col)
                         columns.append(out_col)
                     else:
