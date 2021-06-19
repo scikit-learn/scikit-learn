@@ -543,6 +543,14 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     array_converted : object
         The converted and validated array.
     """
+    if isinstance(array, np.matrix):
+        warnings.warn(
+            "np.matrix usage is deprecated in 1.0 and will raise a TypeError "
+            "in 1.2. Please convert to a numpy array with np.asarray. For "
+            "more information see: "
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
+            FutureWarning)
+
     # store reference to original array to check if copy is needed when
     # function returns
     array_orig = array
@@ -872,18 +880,27 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
                     ensure_min_samples=ensure_min_samples,
                     ensure_min_features=ensure_min_features,
                     estimator=estimator)
+
+    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric)
+
+    check_consistent_length(X, y)
+
+    return X, y
+
+
+def _check_y(y, multi_output=False, y_numeric=False):
+    """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
         y = check_array(y, accept_sparse='csr', force_all_finite=True,
                         ensure_2d=False, dtype=None)
     else:
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)
+        _ensure_no_complex_data(y)
     if y_numeric and y.dtype.kind == 'O':
         y = y.astype(np.float64)
 
-    check_consistent_length(X, y)
-
-    return X, y
+    return y
 
 
 def column_or_1d(y, *, warn=False):

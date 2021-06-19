@@ -537,6 +537,11 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     estimators_ : list of estimators
         The collection of fitted base estimators.
 
@@ -927,6 +932,11 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     estimators_ : list of estimators
         The collection of fitted sub-estimators.

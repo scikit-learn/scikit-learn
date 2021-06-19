@@ -54,7 +54,7 @@ class RocCurveDisplay:
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn import metrics
     >>> y = np.array([0, 0, 1, 1])
@@ -63,8 +63,9 @@ class RocCurveDisplay:
     >>> roc_auc = metrics.auc(fpr, tpr)
     >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,\
                                           estimator_name='example estimator')
-    >>> display.plot()  # doctest: +SKIP
-    >>> plt.show()      # doctest: +SKIP
+    >>> display.plot()
+    <...>
+    >>> plt.show()
     """
     def __init__(self, *, fpr, tpr,
                  roc_auc=None, estimator_name=None, pos_label=None):
@@ -192,7 +193,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn import datasets, metrics, model_selection, svm
     >>> X, y = datasets.make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = model_selection.train_test_split(
@@ -200,8 +201,9 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     >>> clf = svm.SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
     SVC(random_state=0)
-    >>> metrics.plot_roc_curve(clf, X_test, y_test)  # doctest: +SKIP
-    >>> plt.show()                                   # doctest: +SKIP
+    >>> metrics.plot_roc_curve(clf, X_test, y_test)
+    <...>
+    >>> plt.show()
     """
     check_matplotlib_support('plot_roc_curve')
 

@@ -717,6 +717,11 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         .. versionadded:: 0.17
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     RidgeClassifier : Ridge classifier.
@@ -876,6 +881,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     See Also
     --------
@@ -1793,6 +1803,11 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
         .. versionadded:: 0.23
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
@@ -1908,6 +1923,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -1984,6 +2004,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
