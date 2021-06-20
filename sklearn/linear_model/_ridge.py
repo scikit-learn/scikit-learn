@@ -274,8 +274,8 @@ def _solve_trf(
 
         if not result["success"]:
             warnings.warn(
-                "trf solver did not converge. "
-                "Set a low `tol` and a high `max_iter`.",
+                f"The trf solver did not converge. Try increasing max_iter "
+                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
                 ConvergenceWarning,
             )
         coefs[i] = result["x"]
