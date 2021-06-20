@@ -1421,9 +1421,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             Target values.
         """
 
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
+        # Do as _deprecate_normalize but without warning as it's raised
+        # below during the refitting on the best alpha.
+        _normalize = self.normalize
+        if _normalize == 'deprecated':
+            _normalize = False
 
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1616,9 +1618,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         precompute = getattr(self, "precompute", None)
         if isinstance(precompute, str) and precompute == "auto":
             model.precompute = False
-        if model.normalize is False:
-            # to avoid having 2 identical warnings
-            model.normalize = "deprecated"
 
         model.fit(X, y)
         if not hasattr(self, "l1_ratio"):
