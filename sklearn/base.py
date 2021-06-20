@@ -9,8 +9,8 @@ from collections import defaultdict
 import platform
 import inspect
 import re
-
 import numpy as np
+from typing import Union, Optional
 
 from . import __version__
 from .utils import _IS_32BIT
@@ -25,6 +25,9 @@ from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
 from .utils.metadata_requests import MetadataRequest
+from .utils.metadata_requests import metadata_request_factory
+from .utils.metadata_requests import UNCHANGED
+from .utils.metadata_requests import RequestType
 
 
 @_deprecate_positional_args
@@ -147,7 +150,130 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
+class RequestMethod:
+    """
+    A descriptor to create a function to be set as request methods.
+
+    Parameters
+    ----------
+    name : str
+        The name of the method for which the request function should be
+        created, e.g. ``"fit"`` would create a ``fit_requests`` function.
+
+    keys : list of str
+        A list of strings which are accepted parameters by the created
+        function, e.g. ``["sample_weight"]`` if the corresponding method
+        accepts it as a metadata.
+
+    Notes
+    -----
+    This class is a descriptor [1]_ and uses PEP-362 to set the signature of
+    the returned function [2]_.
+
+    References
+    ----------
+    .. [1] https://docs.python.org/3/howto/descriptor.html
+
+    .. [2] https://www.python.org/dev/peps/pep-0362/
+    """
+    def __init__(self, name, keys):
+        self.name = name
+        self.keys = keys
+
+    def __get__(self, instance, owner):
+        # we would want to have a method which accepts only the expected args
+        def func(**kw):
+            if set(kw) - set(self.keys):
+                raise TypeError(f"Unexpected args: {set(kw) - set(self.keys)}")
+
+            requests = metadata_request_factory(instance)
+
+            try:
+                method_metadata_request = getattr(requests, self.name)
+            except AttributeError:
+                raise ValueError(f"{self.name} is not a supported method.")
+
+            for prop, alias in kw.items():
+                if alias is not UNCHANGED:
+                    method_metadata_request.add_request(prop=prop, alias=alias)
+            instance._metadata_request = requests.to_dict()
+
+            return instance
+
+        # Now we set the relevant attributes of the function so that it seems
+        # like a normal method to the end user, with known expected arguments.
+        func.__name__ = f"{self.name}_requests"
+        func.__signature__ = inspect.Signature([
+            inspect.Parameter(k,
+                              inspect.Parameter.KEYWORD_ONLY,
+                              default=UNCHANGED,
+                              annotation=Optional[Union[RequestType, str]])
+            for k in self.keys
+        ], return_annotation=type(instance))
+        func.__doc__ = "Something useful"
+        return func
+
+
 class _MetadataConsumer:
+    def __init_subclass__(cls, **kwargs):
+        """Set the ``{method}_requests`` methods.
+
+        This uses PEP-487 [1]_ to set the ``{method}_requests`` methods. It
+        looks for the information available in the set default values which are
+        set using ``_metadata_request__*`` class attributes.
+
+        References
+        ----------
+        .. [1] https://www.python.org/dev/peps/pep-0487
+        """
+        try:
+            requests = cls._get_default_requests().to_dict()
+        except Exception:
+            # if there are any issues in the default values, it will be raised
+            # when ``get_metadata_request`` is called. Here we are going to
+            # ignore all the issues such as bad defaults etc.`
+            super().__init_subclass__(**kwargs)
+            return
+
+        for request_method, request_keys in requests.items():
+            # set ``{method}_requests``` methods
+            if not len(request_keys):
+                continue
+            setattr(
+                cls,
+                f"{request_method}_requests",
+                RequestMethod(request_method, sorted(request_keys))
+            )
+        super().__init_subclass__(**kwargs)
+
+    @classmethod
+    def _get_default_requests(cls):
+        """Collect default request values.
+
+        This method combines the information present in ``metadata_request__*``
+        class attributes.
+        """
+        requests = MetadataRequest()
+
+        # need to go through the MRO since this is a class attribute and
+        # ``vars`` doesn't report the parent class attributes. We go through
+        # the reverse of the MRO since cls is the first in the tuple and object
+        # is the last.
+        defaults = defaultdict()
+        for klass in reversed(inspect.getmro(cls)):
+            klass_defaults = {
+                attr: value for attr, value in vars(klass).items()
+                if attr.startswith("_metadata_request__")
+            }
+            defaults.update(klass_defaults)
+        defaults = dict(sorted(defaults.items()))
+        for attr, value in defaults.items():
+            requests.add_requests(
+                value,
+                expected_metadata="__".join(attr.split("__")[1:])
+            )
+        return requests
+
     def get_metadata_request(self, output="dict"):
         """Get requested data properties.
 
@@ -172,17 +298,7 @@ class _MetadataConsumer:
         if hasattr(self, "_metadata_request"):
             requests = MetadataRequest(self._metadata_request)
         else:
-            requests = MetadataRequest()
-
-            defaults = sorted(
-                [x for x in dir(self) if x.startswith("_metadata_request__")]
-            )
-            for attr in defaults:
-                requests.add_requests(
-                    getattr(self, attr),
-                    expected_metadata="__".join(attr.split("__")[1:])
-                )
-
+            requests = self._get_default_requests()
             self._metadata_request = requests
 
         if output == "dict":
@@ -237,7 +353,7 @@ class MetadataConsumer:
         return self
 
 
-class SampleWeightConsumer(MetadataConsumer):
+class SampleWeightConsumer:
     _metadata_request__sample_weight = {
         "fit": {"sample_weight": None},
         "score": {"sample_weight": None},

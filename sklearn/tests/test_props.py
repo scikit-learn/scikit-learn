@@ -370,7 +370,7 @@ def test_invalid_arg_given():
 
 
 def test_get_metadata_request():
-    class TestDefaults(_MetadataConsumer, SampleWeightConsumer):
+    class TestDefaultsBadMetadataName(SampleWeightConsumer, _MetadataConsumer):
         _metadata_request__my_param = {
             "score": {"my_param": True},
             # the following method raise an error
@@ -383,23 +383,36 @@ def test_get_metadata_request():
             "fit": "my_param",
         }
 
-    with pytest.raises(ValueError, match="Expected all metadata to be called"):
-        TestDefaults().get_metadata_request()
+    class TestDefaultsBadMethodName(SampleWeightConsumer, _MetadataConsumer):
+        _metadata_request__my_param = {
+            "score": {"my_param": True},
+            # the following method raise an error
+            "other_method": {"my_param": True},
+        }
 
-    TestDefaults._metadata_request__my_other_param = {
-        "score": "my_other_param",
-        "fit": "my_other_param",
-    }
+        _metadata_request__my_other_param = {
+            "score": "my_other_param",
+            "fit": "my_other_param",
+        }
+
+    class TestDefaults(_MetadataConsumer, SampleWeightConsumer):
+        _metadata_request__my_param = {
+            "score": {"my_param": True},
+            "predict": {"my_param": True},
+        }
+
+        _metadata_request__my_other_param = {
+            "score": "my_other_param",
+            "fit": "my_other_param",
+        }
+
+    with pytest.raises(ValueError, match="Expected all metadata to be called"):
+        TestDefaultsBadMetadataName().get_metadata_request()
 
     with pytest.raises(
         ValueError, match="other_method is not supported as a method"
     ):
-        TestDefaults().get_metadata_request()
-
-    TestDefaults._metadata_request__my_param = {
-        "score": {"my_param": True},
-        "predict": {"my_param": True},
-    }
+        TestDefaultsBadMethodName().get_metadata_request()
 
     expected = {
         "score": {
@@ -416,33 +429,32 @@ def test_get_metadata_request():
     }
     assert TestDefaults().get_metadata_request() == expected
 
-    est = TestDefaults().request_my_param(score="other_param")
+    est = TestDefaults().score_requests(my_param="other_param")
     expected = {
         "score": {
-            "other_param": {"my_param"},
-            "my_other_param": {"my_other_param"},
+            "my_param": "other_param",
+            "my_other_param": None,
+            "sample_weight": None,
         },
-        "fit": {"my_other_param": {"my_other_param"}},
+        "fit": {"my_other_param": None, "sample_weight": None},
         "partial_fit": {},
-        "predict": {},
+        "predict": {"my_param": "my_param"},
         "transform": {},
         "inverse_transform": {},
         "split": {},
     }
     assert est.get_metadata_request() == expected
 
-    est = TestDefaults().request_sample_weight(fit=True)
+    est = TestDefaults().fit_requests(sample_weight=True)
     expected = {
         "score": {
-            "my_param": {"my_param"},
-            "my_other_param": {"my_other_param"},
+            "my_param": "my_param",
+            "my_other_param": None,
+            "sample_weight": None,
         },
-        "fit": {
-            "my_other_param": {"my_other_param"},
-            "sample_weight": {"sample_weight"},
-        },
+        "fit": {"my_other_param": None, "sample_weight": "sample_weight"},
         "partial_fit": {},
-        "predict": {},
+        "predict": {"my_param": "my_param"},
         "transform": {},
         "inverse_transform": {},
         "split": {},

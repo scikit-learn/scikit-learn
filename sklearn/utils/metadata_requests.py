@@ -1,4 +1,15 @@
 # from copy import deepcopy
+from enum import Enum
+from ..externals._sentinels import sentinel # type: ignore # mypy error!!!
+
+
+class RequestType(Enum):
+    UNREQUESTED = False
+    REQUESTED = True
+    ERROR_IF_PASSED = None
+
+
+UNCHANGED = sentinel("UNCHANGED")
 
 
 class MethodMetadataRequest:
@@ -127,6 +138,12 @@ class MethodMetadataRequest:
                 prop=prop, alias=alias, allow_aliasing=allow_aliasing
             )
 
+    def __repr__(self):
+        return self.to_dict()
+
+    def __str__(self):
+        return str(self.to_dict())
+
 
 class MetadataRequest:
     """Contains the metadata request info of an object."""
@@ -209,10 +226,16 @@ class MetadataRequest:
         output["partial_fit"] = self.partial_fit.to_dict()
         output["predict"] = self.predict.to_dict()
         output["score"] = self.score.to_dict()
-        output["split"] = self.split = self.split.to_dict()
+        output["split"] = self.split.to_dict()
         output["transform"] = self.transform.to_dict()
         output["inverse_transform"] = self.inverse_transform.to_dict()
         return output
+
+    def __repr__(self):
+        return self.to_dict()
+
+    def __str__(self):
+        return str(self.to_dict())
 
 
 def metadata_request_factory(obj=None):
