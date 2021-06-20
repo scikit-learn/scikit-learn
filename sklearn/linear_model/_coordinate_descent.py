@@ -1424,7 +1424,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         # Do as _deprecate_normalize but without warning as it's raised
         # below during the refitting on the best alpha.
         _normalize = self.normalize
-        if _normalize == 'deprecated':
+        if _normalize == "deprecated":
             _normalize = False
 
         # This makes sure that there is no duplication in memory.
