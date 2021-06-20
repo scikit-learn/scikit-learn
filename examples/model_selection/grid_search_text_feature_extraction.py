@@ -71,7 +71,7 @@ categories = [
     'talk.religion.misc',
 ]
 # Uncomment the following to do the analysis on all the categories
-#categories = None
+# categories = None
 
 print("Loading 20 newsgroups dataset for categories:")
 print(categories)
