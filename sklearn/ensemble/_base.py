@@ -21,8 +21,9 @@ from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
 
-def _fit_single_estimator(estimator, X, y, sample_weight=None,
-                          message_clsname=None, message=None):
+def _fit_single_estimator(
+    estimator, X, y, sample_weight=None, message_clsname=None, message=None
+):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
         try:
@@ -31,8 +32,9 @@ def _fit_single_estimator(estimator, X, y, sample_weight=None,
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
-                    "Underlying estimator {} does not support sample weights."
-                    .format(estimator.__class__.__name__)
+                    "Underlying estimator {} does not support sample weights.".format(
+                        estimator.__class__.__name__
+                    )
                 ) from exc
             raise
     else:
@@ -72,7 +74,7 @@ def _set_random_states(estimator, random_state=None):
     random_state = check_random_state(random_state)
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
-        if key == 'random_state' or key.endswith('__random_state'):
+        if key == "random_state" or key.endswith("__random_state"):
             to_set[key] = random_state.randint(np.iinfo(np.int32).max)
 
     if to_set:
@@ -110,8 +112,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, *, n_estimators=10,
-                 estimator_params=tuple()):
+    def __init__(self, base_estimator, *, n_estimators=10, estimator_params=tuple()):
         # Set parameters
         self.base_estimator = base_estimator
         self.n_estimators = n_estimators
@@ -127,12 +128,16 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Sets the base_estimator_` attributes.
         """
         if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError("n_estimators must be an integer, "
-                             "got {0}.".format(type(self.n_estimators)))
+            raise ValueError(
+                "n_estimators must be an integer, "
+                "got {0}.".format(type(self.n_estimators))
+            )
 
         if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than zero, "
-                             "got {0}.".format(self.n_estimators))
+            raise ValueError(
+                "n_estimators must be greater than zero, "
+                "got {0}.".format(self.n_estimators)
+            )
 
         if self.base_estimator is not None:
             self.base_estimator_ = self.base_estimator
@@ -149,8 +154,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**{p: getattr(self, p)
-                                for p in self.estimator_params})
+        estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         # TODO: Remove in v1.2
         # criterion "mse" and "mae" would cause warnings in every call to
@@ -188,16 +192,16 @@ def _partition_estimators(n_estimators, n_jobs):
     n_jobs = min(effective_n_jobs(n_jobs), n_estimators)
 
     # Partition estimators between jobs
-    n_estimators_per_job = np.full(n_jobs, n_estimators // n_jobs,
-                                   dtype=int)
-    n_estimators_per_job[:n_estimators % n_jobs] += 1
+    n_estimators_per_job = np.full(n_jobs, n_estimators // n_jobs, dtype=int)
+    n_estimators_per_job[: n_estimators % n_jobs] += 1
     starts = np.cumsum(n_estimators_per_job)
 
     return n_jobs, n_estimators_per_job.tolist(), [0] + starts.tolist()
 
 
-class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
-                                 metaclass=ABCMeta):
+class _BaseHeterogeneousEnsemble(
+    MetaEstimatorMixin, _BaseComposition, metaclass=ABCMeta
+):
     """Base class for heterogeneous ensemble of learners.
 
     Parameters
@@ -216,7 +220,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         appear in `estimators_`.
     """
 
-    _required_parameters = ['estimators']
+    _required_parameters = ["estimators"]
 
     @property
     def named_estimators(self):
@@ -236,18 +240,17 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         # defined by MetaEstimatorMixin
         self._validate_names(names)
 
-        has_estimator = any(est != 'drop' for est in estimators)
+        has_estimator = any(est != "drop" for est in estimators)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
                 "to be an estimator."
             )
 
-        is_estimator_type = (is_classifier if is_classifier(self)
-                             else is_regressor)
+        is_estimator_type = is_classifier if is_classifier(self) else is_regressor
 
         for est in estimators:
-            if est != 'drop' and not is_estimator_type(est):
+            if est != "drop" and not is_estimator_type(est):
                 raise ValueError(
                     "The estimator {} should be a {}.".format(
                         est.__class__.__name__, is_estimator_type.__name__[3:]
@@ -273,7 +276,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
             estimators can also be set, or can be removed by setting them to
             'drop'.
         """
-        super()._set_params('estimators', **params)
+        super()._set_params("estimators", **params)
         return self
 
     def get_params(self, deep=True):
@@ -289,4 +292,4 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
             Setting it to True gets the various estimators and the parameters
             of the estimators as well.
         """
-        return super()._get_params('estimators', deep=deep)
+        return super()._get_params("estimators", deep=deep)
