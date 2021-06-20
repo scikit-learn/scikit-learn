@@ -160,25 +160,27 @@ plt.show()
 # variables to make a split because both variable carry the exact same
 # information. Thus, one tree could use the feature `sex_male` and ignore
 # `sex_female` to create split while another tree could could make the opposite
-# choice. We will see that the permutation feature importance does not solve
-# this issue.
+# choice.
 #
-# Alternative to MDI using Feature Permutation Importance
+# We will see that the permutation feature importance does not alleviate this
+# issue.
+#
+# Alternative to MDI using Permutation Feature Importance
 # -------------------------------------------------------
 # The limitations of MDI pointed out in the previous section can be mitigated
-# using an alternative strategy: Feature Permutation Importance. 
-# 
+# using an alternative strategy: Feature Permutation Importance.
+#
 # This strategy relies on monitoring the decrease of a given performance
 # metric by randomly permuting the value of a given feature. In short, a
 # predictive feature will negatively impact the score when it is randomly
 # permuted whilst a non-predictive feature will not have its score changed.
 #
-# This feature permutation importance estimate can be computed in two different
+# This permutation feature importance estimate can be computed in two different
 # way: (i) by using the out-of-bag (OOB) samples in the ensemble to perform the
 # permutation and the scoring or (ii) by manually splitting and handling a
 # train and test set where the latter will be used with permutations.
 #
-# Feature Permutation Importance on Out-Of-Bag (OOB) samples
+# Permutation Feature Importance on Out-Of-Bag (OOB) samples
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Random-forest exposes a parameter `feature_importances` that allows to switch
 # from the MDI to the permutation importance on the OOB samples. The parameter
@@ -194,8 +196,8 @@ rf = Pipeline(steps=[
 # estimated internally on the OOB samples. In this case, the fitted
 # attribute `importances_` is now gathering the score decreases
 # among all trees of the forest for each feature.
-# 
-# Thus, we can plot those feature importances and compared them with 
+#
+# Thus, we can plot those feature importances and compared them with
 # the MDI estimates.
 tree_feature_importances = pd.DataFrame(
     rf.named_steps['classifier'].importances_.importances.T,
@@ -279,8 +281,8 @@ plt.show()
 # As presented, the permutation feature importances can be computed either
 # on the OOB samples or on separated datasets.
 #
-# While they are similar, it should be noted that the variations of the
-# importances is estimated differently: the variance of the decrease of the
+# While those two cases are similar, it should be noted that the variations of the
+# importances are estimated differently: the variance of the decrease of the
 # score is estimated across the number of trees (i.e. `n_estimators` parameter)
 # in the forest while it is estimated via the number of repeated permutation
 # (i.e. `n_repeats`) in the other strategy.

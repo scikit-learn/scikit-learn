@@ -309,14 +309,18 @@ the default values.
 Permutation feature importances on out-of-bag (OOB) samples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An alternative to MDI is the feature importances that uses feature permutation.
+An alternative to MDI is the feature importances that uses feature permutation,
+referred to as **permutation feature importances**.
+
 Each tree in the ensemble can be evaluated using the out-of-bag samples
 [B2001]_. To know the importance of a feature, one can compute the difference
 between the tree score with the original OOB sample and an OOB sample for which
-the feature of interest will be permuted. When a feature is predictive, one
-expects the score to decrease. If instead the score remains unchanged, the
-feature is not important at predictive the target. Thus, the feature
-importances corresponds to the average of the decrease of the tree score.
+the feature of interest will be permuted. Thus, the permutation feature importance
+corresponds to the average of the decrease of the tree score.
+
+When a feature has significant predictive power, one expects the score to
+decrease. If instead the score remains unchanged, the feature is not important
+for predicting the target.
 
 This strategy can be selected by setting
 `feature_importances="permutation_oob"`.
@@ -351,13 +355,13 @@ MDI and the permutation feature importances are explored in:
  * :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
 
 .. topic:: References
- .. [Strobl07] `Strobl, C., Boulesteix, AL., Zeileis, A. et al. 
- Bias in random forest variable importance measures: Illustrations, 
- sources and a solution. BMC Bioinformatics 8, 25 (2007). 
+ .. [Strobl07] `Strobl, C., Boulesteix, AL., Zeileis, A. et al.
+ Bias in random forest variable importance measures: Illustrations,
+ sources and a solution. BMC Bioinformatics 8, 25 (2007).
  <https://doi.org/10.1186/1471-2105-8-25>`_
- .. [White94] `White, A.P., Liu, W.Z. Technical Note: 
- Bias in Information-Based Measures in Decision Tree Induction. 
- Machine Learning 15, 321–329 (1994). 
+ .. [White94] `White, A.P., Liu, W.Z. Technical Note:
+ Bias in Information-Based Measures in Decision Tree Induction.
+ Machine Learning 15, 321–329 (1994).
  <https://doi.org/10.1023/A:1022694010754>`_
  .. [L2014] G. Louppe,
          "Understanding Random Forests: From Theory to Practice",
