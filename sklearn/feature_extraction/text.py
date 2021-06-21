@@ -1570,8 +1570,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
 
-        n_samples, n_features = X.shape
-
         if self.sublinear_tf:
             np.log(X.data, X.data)
             X.data += 1

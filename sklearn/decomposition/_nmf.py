@@ -1450,8 +1450,6 @@ class NMF(TransformerMixin, BaseEstimator):
                 "to X, or use a positive beta_loss."
             )
 
-        n_samples, n_features = X.shape
-
         # check parameters
         self._check_params(X)
 
