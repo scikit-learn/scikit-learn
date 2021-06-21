@@ -92,7 +92,7 @@ def fetch_rcv1(
     download_if_missing=True,
     random_state=None,
     shuffle=False,
-    return_X_y=False
+    return_X_y=False,
 ):
     """Load the RCV1 multilabel dataset (classification).
 

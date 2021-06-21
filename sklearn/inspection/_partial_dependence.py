@@ -215,7 +215,7 @@ def partial_dependence(
     percentiles=(0.05, 0.95),
     grid_resolution=100,
     method="auto",
-    kind="legacy"
+    kind="legacy",
 ):
     """Partial dependence of ``features``.
 

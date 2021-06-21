@@ -548,14 +548,14 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 X,
                 self.leaf_size,
                 metric=self.effective_metric_,
-                **self.effective_metric_params_
+                **self.effective_metric_params_,
             )
         elif self._fit_method == "kd_tree":
             self._tree = KDTree(
                 X,
                 self.leaf_size,
                 metric=self.effective_metric_,
-                **self.effective_metric_params_
+                **self.effective_metric_params_,
             )
         elif self._fit_method == "brute":
             self._tree = None
@@ -754,7 +754,7 @@ class KNeighborsMixin:
                     reduce_func=reduce_func,
                     metric=self.effective_metric_,
                     n_jobs=n_jobs,
-                    **kwds
+                    **kwds,
                 )
             )
 
@@ -1065,7 +1065,7 @@ class RadiusNeighborsMixin:
                 reduce_func=reduce_func,
                 metric=self.effective_metric_,
                 n_jobs=self.n_jobs,
-                **kwds
+                **kwds,
             )
             if return_distance:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)

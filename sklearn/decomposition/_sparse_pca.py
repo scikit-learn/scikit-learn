@@ -129,7 +129,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         U_init=None,
         V_init=None,
         verbose=False,
-        random_state=None
+        random_state=None,
     ):
         self.n_components = n_components
         self.alpha = alpha
@@ -342,7 +342,7 @@ class MiniBatchSparsePCA(SparsePCA):
         shuffle=True,
         n_jobs=None,
         method="lars",
-        random_state=None
+        random_state=None,
     ):
         super().__init__(
             n_components=n_components,

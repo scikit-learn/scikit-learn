@@ -597,7 +597,7 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warni
         ("ABCDEF", string.ascii_lowercase, False),
         ("ABC", string.ascii_lowercase * 3, True),
         ("ABC" * 10, string.ascii_lowercase, True),
-        ("ABC", string.ascii_lowercase + u"\u1048", False),
+        ("ABC", string.ascii_lowercase + "\u1048", False),
     ],
 )
 @pytest.mark.parametrize(

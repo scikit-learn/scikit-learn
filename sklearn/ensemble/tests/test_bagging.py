@@ -122,7 +122,7 @@ def test_sparse_classification(sparse_format, params, method):
     sparse_classifier = BaggingClassifier(
         base_estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
         random_state=1,
-        **params
+        **params,
     ).fit(X_train_sparse, y_train)
     sparse_results = getattr(sparse_classifier, method)(X_test_sparse)
 
@@ -130,7 +130,7 @@ def test_sparse_classification(sparse_format, params, method):
     dense_classifier = BaggingClassifier(
         base_estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
         random_state=1,
-        **params
+        **params,
     ).fit(X_train, y_train)
     dense_results = getattr(dense_classifier, method)(X_test)
     assert_array_almost_equal(sparse_results, dense_results)

@@ -177,7 +177,7 @@ class Perceptron(BaseSGDClassifier):
         validation_fraction=0.1,
         n_iter_no_change=5,
         class_weight=None,
-        warm_start=False
+        warm_start=False,
     ):
         super().__init__(
             loss="perceptron",

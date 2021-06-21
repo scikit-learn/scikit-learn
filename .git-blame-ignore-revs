@@ -10,3 +10,6 @@
 
 # PR 18948: Migrate code style to Black
 82df48934eba1df9a1ed3be98aaace8eada59e6e
+
+# PR 20294: Use target_version >= 3.7 in Black
+351ace7935a4ea685171cc6d174890f08facd561

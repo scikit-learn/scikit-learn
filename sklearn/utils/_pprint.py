@@ -173,7 +173,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         *,
         compact=False,
         indent_at_name=True,
-        n_max_elements_to_show=None
+        n_max_elements_to_show=None,
     ):
         super().__init__(indent, width, depth, stream, compact=compact)
         self._indent_at_name = indent_at_name

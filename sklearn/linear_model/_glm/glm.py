@@ -137,7 +137,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         max_iter=100,
         tol=1e-4,
         warm_start=False,
-        verbose=0
+        verbose=0,
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -506,7 +506,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         max_iter=100,
         tol=1e-4,
         warm_start=False,
-        verbose=0
+        verbose=0,
     ):
 
         super().__init__(
@@ -611,7 +611,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
         max_iter=100,
         tol=1e-4,
         warm_start=False,
-        verbose=0
+        verbose=0,
     ):
 
         super().__init__(
@@ -747,7 +747,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         max_iter=100,
         tol=1e-4,
         warm_start=False,
-        verbose=0
+        verbose=0,
     ):
 
         super().__init__(

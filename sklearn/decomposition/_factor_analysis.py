@@ -164,7 +164,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         svd_method="randomized",
         iterated_power=3,
         rotation=None,
-        random_state=0
+        random_state=0,
     ):
         self.n_components = n_components
         self.copy = copy

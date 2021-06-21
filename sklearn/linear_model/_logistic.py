@@ -1405,7 +1405,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         verbose=0,
         warm_start=False,
         n_jobs=None,
-        l1_ratio=None
+        l1_ratio=None,
     ):
 
         self.penalty = penalty
@@ -1584,7 +1584,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         fold_coefs_ = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(prefer=prefer)
+            **_joblib_parallel_args(prefer=prefer),
         )(
             path_func(
                 X,
@@ -1976,7 +1976,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         intercept_scaling=1.0,
         multi_class="auto",
         random_state=None,
-        l1_ratios=None
+        l1_ratios=None,
     ):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
@@ -2140,7 +2140,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         fold_coefs_ = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(prefer=prefer)
+            **_joblib_parallel_args(prefer=prefer),
         )(
             path_func(
                 X,

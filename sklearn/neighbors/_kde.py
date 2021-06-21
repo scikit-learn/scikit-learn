@@ -116,7 +116,7 @@ class KernelDensity(BaseEstimator):
         rtol=0,
         breadth_first=True,
         leaf_size=40,
-        metric_params=None
+        metric_params=None,
     ):
         self.algorithm = algorithm
         self.bandwidth = bandwidth
@@ -198,7 +198,7 @@ class KernelDensity(BaseEstimator):
             metric=self.metric,
             leaf_size=self.leaf_size,
             sample_weight=sample_weight,
-            **kwargs
+            **kwargs,
         )
         return self
 

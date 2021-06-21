@@ -3,6 +3,7 @@
 
 import os
 import re
+import platform
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,9 @@ def test_min_dependencies_readme():
     # Test that the minimum dependencies in the README.rst file are
     # consistent with the minimum dependencies defined at the file:
     # sklearn/_min_dependencies.py
+
+    if platform.python_implementation() == "PyPy":
+        pytest.skip("PyPy does not always share the same minimum deps")
 
     pattern = re.compile(
         r"(\.\. \|)"

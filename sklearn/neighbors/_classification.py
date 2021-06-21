@@ -156,7 +156,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         p=2,
         metric="minkowski",
         metric_params=None,
-        n_jobs=None
+        n_jobs=None,
     ):
         super().__init__(
             n_neighbors=n_neighbors,
@@ -434,7 +434,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         outlier_label=None,
         metric_params=None,
         n_jobs=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             radius=radius,

@@ -120,7 +120,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         batch_size=10,
         n_iter=10,
         verbose=0,
-        random_state=None
+        random_state=None,
     ):
         self.n_components = n_components
         self.learning_rate = learning_rate

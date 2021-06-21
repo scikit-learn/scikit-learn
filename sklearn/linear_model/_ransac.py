@@ -231,7 +231,7 @@ class RANSACRegressor(
         stop_score=np.inf,
         stop_probability=0.99,
         loss="absolute_error",
-        random_state=None
+        random_state=None,
     ):
 
         self.base_estimator = base_estimator

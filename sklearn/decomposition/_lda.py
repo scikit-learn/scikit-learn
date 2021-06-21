@@ -325,7 +325,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         max_doc_update_iter=100,
         n_jobs=None,
         verbose=0,
-        random_state=None
+        random_state=None,
     ):
         self.n_components = n_components
         self.doc_topic_prior = doc_topic_prior

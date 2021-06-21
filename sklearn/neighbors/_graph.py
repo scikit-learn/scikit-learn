@@ -44,7 +44,7 @@ def kneighbors_graph(
     p=2,
     metric_params=None,
     include_self=False,
-    n_jobs=None
+    n_jobs=None,
 ):
     """Computes the (weighted) graph of k-Neighbors for points in X
 
@@ -133,7 +133,7 @@ def radius_neighbors_graph(
     p=2,
     metric_params=None,
     include_self=False,
-    n_jobs=None
+    n_jobs=None,
 ):
     """Computes the (weighted) graph of Neighbors for points in X
 
@@ -337,7 +337,7 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         metric="minkowski",
         p=2,
         metric_params=None,
-        n_jobs=1
+        n_jobs=1,
     ):
         super(KNeighborsTransformer, self).__init__(
             n_neighbors=n_neighbors,
@@ -538,7 +538,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
         metric="minkowski",
         p=2,
         metric_params=None,
-        n_jobs=1
+        n_jobs=1,
     ):
         super(RadiusNeighborsTransformer, self).__init__(
             n_neighbors=None,

@@ -152,7 +152,7 @@ def smacof(
     verbose=0,
     eps=1e-3,
     random_state=None,
-    return_n_iter=False
+    return_n_iter=False,
 ):
     """Computes multidimensional scaling using the SMACOF algorithm.
 
@@ -419,7 +419,7 @@ class MDS(BaseEstimator):
         eps=1e-3,
         n_jobs=None,
         random_state=None,
-        dissimilarity="euclidean"
+        dissimilarity="euclidean",
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity

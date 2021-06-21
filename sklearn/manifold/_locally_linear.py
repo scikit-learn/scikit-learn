@@ -203,7 +203,7 @@ def locally_linear_embedding(
     hessian_tol=1e-4,
     modified_tol=1e-12,
     random_state=None,
-    n_jobs=None
+    n_jobs=None,
 ):
     """Perform a Locally Linear Embedding analysis on the data.
 
@@ -675,7 +675,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         modified_tol=1e-12,
         neighbors_algorithm="auto",
         random_state=None,
-        n_jobs=None
+        n_jobs=None,
     ):
         self.n_neighbors = n_neighbors
         self.n_components = n_components

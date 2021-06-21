@@ -238,7 +238,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         alpha=0.0001,
         warm_start=False,
         fit_intercept=True,
-        tol=1e-05
+        tol=1e-05,
     ):
         self.epsilon = epsilon
         self.max_iter = max_iter

@@ -1441,7 +1441,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         with_scaling=True,
         quantile_range=(25.0, 75.0),
         copy=True,
-        unit_variance=False
+        unit_variance=False,
     ):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
@@ -1595,7 +1595,7 @@ def robust_scale(
     with_scaling=True,
     quantile_range=(25.0, 75.0),
     copy=True,
-    unit_variance=False
+    unit_variance=False,
 ):
     """Standardize a dataset along any axis
 
@@ -2408,7 +2408,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         ignore_implicit_zeros=False,
         subsample=int(1e5),
         random_state=None,
-        copy=True
+        copy=True,
     ):
         self.n_quantiles = n_quantiles
         self.output_distribution = output_distribution
@@ -2739,7 +2739,7 @@ def quantile_transform(
     ignore_implicit_zeros=False,
     subsample=int(1e5),
     random_state=None,
-    copy=True
+    copy=True,
 ):
     """Transform features using quantiles information.
 

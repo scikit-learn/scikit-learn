@@ -1,4 +1,3 @@
-import os
 from os import environ
 from functools import wraps
 import platform
@@ -193,11 +192,12 @@ def pytest_runtest_setup(item):
     item : pytest item
         item to be processed
     """
-    try:
-        xdist_worker_count = int(os.environ["PYTEST_XDIST_WORKER_COUNT"])
-    except KeyError:
-        # raises when pytest-xdist is not installed
+    xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
+    if xdist_worker_count is None:
+        # returns if pytest-xdist is not installed
         return
+    else:
+        xdist_worker_count = int(xdist_worker_count)
 
     openmp_threads = _openmp_effective_n_threads()
     threads_per_worker = max(openmp_threads // xdist_worker_count, 1)

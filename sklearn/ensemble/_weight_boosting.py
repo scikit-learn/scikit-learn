@@ -63,7 +63,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_estimators=50,
         estimator_params=tuple(),
         learning_rate=1.0,
-        random_state=None
+        random_state=None,
     ):
 
         super().__init__(
@@ -429,7 +429,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         n_estimators=50,
         learning_rate=1.0,
         algorithm="SAMME.R",
-        random_state=None
+        random_state=None,
     ):
 
         super().__init__(
@@ -1004,7 +1004,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         n_estimators=50,
         learning_rate=1.0,
         loss="linear",
-        random_state=None
+        random_state=None,
     ):
 
         super().__init__(
