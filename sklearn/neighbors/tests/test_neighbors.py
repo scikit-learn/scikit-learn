@@ -1848,15 +1848,11 @@ def test_fast_sqeuclidean_correctness(
 @pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
 @pytest.mark.parametrize("d", [5, 10, 100, 500])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
-@pytest.mark.parametrize("strategy", ["chunk_on_train", "chunk_on_test"])
-@pytest.mark.parametrize("chunk_size", [2 ** i for i in range(8, 13)])
 @pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 def test_fast_sqeuclidean_translation_invariance(
     n,
     d,
     n_neighbors,
-    strategy,
-    chunk_size,
     translation,
     dtype=np.float64,
 ):
