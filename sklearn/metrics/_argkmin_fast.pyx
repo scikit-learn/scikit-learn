@@ -6,14 +6,9 @@
 # cython: linetrace=False
 # cython: binding=False
 # distutils: define_macros=CYTHON_TRACE_NOGIL=0
-import os
 
 import numpy as np
-
 cimport numpy as np
-cimport openmp
-
-from joblib import cpu_count
 
 from libc.math cimport floor, sqrt
 from libc.stdlib cimport free, malloc
@@ -27,7 +22,7 @@ DEF MIN_CHUNK_SAMPLES = 20
 
 DEF FLOAT_INF = 1e36
 
-from ..neighbors._neighbors_heap cimport NeighborsHeap, _simultaneous_sort, _push
+from ..neighbors._neighbors_heap cimport _simultaneous_sort, _push
 from ..utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
@@ -251,7 +246,7 @@ cdef int _argkmin_on_Y(
 
         # As chunks of X are shared across threads, so must their
         # heaps. To solve this, each thread has its own locals
-        # heaps which are then synchronised back in the main ones. 
+        # heaps which are then synchronised back in the main ones.
         integral *heaps_indices_chunks
 
     for X_chunk_idx in range(X_n_chunks):
@@ -324,7 +319,7 @@ cdef int _argkmin_on_Y(
                 k,
             )
         # end: prange
-    
+
     # end: for X_chunk_idx
     return Y_n_chunks
 
@@ -388,9 +383,9 @@ def _argkmin(
     str strategy = "auto",
     bint return_distance = False,
 ):
-    """Computes the argkmin of vectors (rows) of X on Y for 
+    """Computes the argkmin of vectors (rows) of X on Y for
     the euclidean distance.
-    
+
     The implementation is parallelised on chunks whose size can
     be set using ``chunk_size``.
 
@@ -399,7 +394,7 @@ def _argkmin(
     X: ndarray of shape (n, d)
         Rows represent vectors
 
-    Y: ndarray of shape (m, d)  
+    Y: ndarray of shape (m, d)
         Rows represent vectors
 
     chunk_size: int
@@ -409,7 +404,7 @@ def _argkmin(
         The chunking strategy defining which dataset
         parallelisation are made on.
 
-         - 'chunk_on_X' is embarassingly parallel but 
+         - 'chunk_on_X' is embarassingly parallel but
         is less used in practice.
          - 'chunk_on_Y' comes with synchronisation but
         is more useful in practice.
@@ -464,14 +459,14 @@ def _argkmin(
         raise RuntimeError(f"strategy '{strategy}' not supported.")
 
     if return_distance:
-        # We need to recompute distances because we relied on 
+        # We need to recompute distances because we relied on
         # reduced distances using _gemm, which are missing a
-        # term for squarred norms and which are not the most 
+        # term for squarred norms and which are not the most
         # precise (catastrophic cancellation might have happened).
-        _exact_euclidean_dist(X, Y, argkmin_indices, 
+        _exact_euclidean_dist(X, Y, argkmin_indices,
                               effective_n_threads,
                               argkmin_distances)
-        return (np.asarray(argkmin_distances), 
+        return (np.asarray(argkmin_distances),
                 np.asarray(argkmin_indices))
 
     return np.asarray(argkmin_indices)
