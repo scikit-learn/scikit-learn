@@ -66,10 +66,11 @@ def _partial_fit_estimator(
 
 def _available_if_base_estimator_has(attr):
     def _check(self):
-        return ((hasattr(self, 'base_estimator') and
-                 hasattr(self.base_estimator, attr)) or
-                hasattr(self.estimator, attr) or
-                all(hasattr(est, attr) for est in self.estimators_))
+        return (
+            (hasattr(self, "base_estimator") and hasattr(self.base_estimator, attr))
+            or hasattr(self.estimator, attr)
+            or all(hasattr(est, attr) for est in self.estimators_)
+        )
 
     return available_if(_check)
 

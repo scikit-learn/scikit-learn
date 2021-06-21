@@ -106,9 +106,11 @@ class _AvailableIfDescriptor:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
             if not self.check(obj):
-                raise AttributeError(f"This {repr(owner.__name__)}"
-                                     f" has no attribute"
-                                     f" {repr(self.attribute_name)}")
+                raise AttributeError(
+                    f"This {repr(owner.__name__)}"
+                    f" has no attribute"
+                    f" {repr(self.attribute_name)}"
+                )
 
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
@@ -127,8 +129,7 @@ def available_if(check):
         a truthy value if the attribute is available, and either return False
         or raise an AttributeError if not available.
     """
-    return lambda fn: _AvailableIfDescriptor(fn, check,
-                                             attribute_name=fn.__name__)
+    return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
 
 
 class _IffHasAttrDescriptor(_AvailableIfDescriptor):
@@ -146,6 +147,7 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
+
     def __init__(self, fn, delegate_names, attribute_name):
         super().__init__(fn, self._check, attribute_name)
         self.delegate_names = delegate_names

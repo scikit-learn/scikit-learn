@@ -551,8 +551,9 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].predict_log_proba(Xt, **predict_log_proba_params)
 
     def _can_transform(self):
-        return (self._final_estimator == "passthrough" or
-                hasattr(self._final_estimator, "transform"))
+        return self._final_estimator == "passthrough" or hasattr(
+            self._final_estimator, "transform"
+        )
 
     @available_if(_can_transform)
     def transform(self, X):
@@ -577,7 +578,7 @@ class Pipeline(_BaseComposition):
         return Xt
 
     def _can_inverse_transform(self):
-        return all(hasattr(t, 'inverse_transform') for _, _, t in self._iter())
+        return all(hasattr(t, "inverse_transform") for _, _, t in self._iter())
 
     @available_if(_can_inverse_transform)
     def inverse_transform(self, Xt):
