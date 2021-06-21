@@ -9,13 +9,13 @@ from sklearn.utils.deprecation import deprecated
 from sklearn.utils._testing import assert_warns_message
 
 
-@deprecated('qwerty')
+@deprecated("qwerty")
 class MockClass1:
     pass
 
 
 class MockClass2:
-    @deprecated('mockclass2_method')
+    @deprecated("mockclass2_method")
     def method(self):
         pass
 
@@ -36,12 +36,10 @@ def mock_function():
 
 
 def test_deprecated():
-    assert_warns_message(FutureWarning, 'qwerty', MockClass1)
-    assert_warns_message(FutureWarning, 'mockclass2_method',
-                         MockClass2().method)
-    assert_warns_message(FutureWarning, 'deprecated', MockClass3)
-    val = assert_warns_message(FutureWarning, 'deprecated',
-                               mock_function)
+    assert_warns_message(FutureWarning, "qwerty", MockClass1)
+    assert_warns_message(FutureWarning, "mockclass2_method", MockClass2().method)
+    assert_warns_message(FutureWarning, "deprecated", MockClass3)
+    val = assert_warns_message(FutureWarning, "deprecated", mock_function)
     assert val == 10
 
 

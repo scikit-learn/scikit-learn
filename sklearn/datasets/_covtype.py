@@ -34,33 +34,41 @@ from ..utils import check_random_state
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
 ARCHIVE = RemoteFileMetadata(
-    filename='covtype.data.gz',
-    url='https://ndownloader.figshare.com/files/5976039',
-    checksum=('614360d0257557dd1792834a85a1cdeb'
-              'fadc3c4f30b011d56afee7ffb5b15771'))
+    filename="covtype.data.gz",
+    url="https://ndownloader.figshare.com/files/5976039",
+    checksum=("614360d0257557dd1792834a85a1cdeb" "fadc3c4f30b011d56afee7ffb5b15771"),
+)
 
 logger = logging.getLogger(__name__)
 
 # Column names reference:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
-FEATURE_NAMES = ["Elevation",
-                 "Aspect",
-                 "Slope",
-                 "Horizontal_Distance_To_Hydrology",
-                 "Vertical_Distance_To_Hydrology",
-                 "Horizontal_Distance_To_Roadways",
-                 "Hillshade_9am",
-                 "Hillshade_Noon",
-                 "Hillshade_3pm",
-                 "Horizontal_Distance_To_Fire_Points"]
+FEATURE_NAMES = [
+    "Elevation",
+    "Aspect",
+    "Slope",
+    "Horizontal_Distance_To_Hydrology",
+    "Vertical_Distance_To_Hydrology",
+    "Horizontal_Distance_To_Roadways",
+    "Hillshade_9am",
+    "Hillshade_Noon",
+    "Hillshade_3pm",
+    "Horizontal_Distance_To_Fire_Points",
+]
 FEATURE_NAMES += [f"Wilderness_Area_{i}" for i in range(4)]
 FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
 TARGET_NAMES = ["Cover_Type"]
 
 
-def fetch_covtype(*, data_home=None, download_if_missing=True,
-                  random_state=None, shuffle=False, return_X_y=False,
-                  as_frame=False):
+def fetch_covtype(
+    *,
+    data_home=None,
+    download_if_missing=True,
+    random_state=None,
+    shuffle=False,
+    return_X_y=False,
+    as_frame=False,
+):
     """Load the covertype dataset (classification).
 
     Download it if necessary.
@@ -145,7 +153,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         logger.info("Downloading %s" % ARCHIVE.url)
 
         archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
-        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
+        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
         # delete archive
         remove(archive_path)
 
@@ -171,22 +179,26 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         y = y[ind]
 
     module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
+    with open(join(module_path, "descr", "covtype.rst")) as rst_file:
         fdescr = rst_file.read()
 
     frame = None
     if as_frame:
-        frame, X, y = _convert_data_dataframe(caller_name="fetch_covtype",
-                                              data=X,
-                                              target=y,
-                                              feature_names=FEATURE_NAMES,
-                                              target_names=TARGET_NAMES)
+        frame, X, y = _convert_data_dataframe(
+            caller_name="fetch_covtype",
+            data=X,
+            target=y,
+            feature_names=FEATURE_NAMES,
+            target_names=TARGET_NAMES,
+        )
     if return_X_y:
         return X, y
 
-    return Bunch(data=X,
-                 target=y,
-                 frame=frame,
-                 target_names=TARGET_NAMES,
-                 feature_names=FEATURE_NAMES,
-                 DESCR=fdescr)
+    return Bunch(
+        data=X,
+        target=y,
+        frame=frame,
+        target_names=TARGET_NAMES,
+        feature_names=FEATURE_NAMES,
+        DESCR=fdescr,
+    )

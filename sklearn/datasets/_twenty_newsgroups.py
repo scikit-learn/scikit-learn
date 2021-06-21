@@ -52,10 +52,10 @@ logger = logging.getLogger(__name__)
 # The original data can be found at:
 # https://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz
 ARCHIVE = RemoteFileMetadata(
-    filename='20news-bydate.tar.gz',
-    url='https://ndownloader.figshare.com/files/5975967',
-    checksum=('8f1b2514ca22a5ade8fbb9cfa5727df9'
-              '5fa587f4c87b786e15c759fa66d95610'))
+    filename="20news-bydate.tar.gz",
+    url="https://ndownloader.figshare.com/files/5975967",
+    checksum=("8f1b2514ca22a5ade8fbb9cfa5727df9" "5fa587f4c87b786e15c759fa66d95610"),
+)
 
 CACHE_NAME = "20news-bydate.pkz"
 TRAIN_FOLDER = "20news-bydate-train"
@@ -78,10 +78,12 @@ def _download_20newsgroups(target_dir, cache_path):
     os.remove(archive_path)
 
     # Store a zipped pickle
-    cache = dict(train=load_files(train_path, encoding='latin1'),
-                 test=load_files(test_path, encoding='latin1'))
-    compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
-    with open(cache_path, 'wb') as f:
+    cache = dict(
+        train=load_files(train_path, encoding="latin1"),
+        test=load_files(test_path, encoding="latin1"),
+    )
+    compressed_content = codecs.encode(pickle.dumps(cache), "zlib_codec")
+    with open(cache_path, "wb") as f:
         f.write(compressed_content)
 
     shutil.rmtree(target_dir)
@@ -98,12 +100,13 @@ def strip_newsgroup_header(text):
     text : str
         The text from which to remove the signature block.
     """
-    _before, _blankline, after = text.partition('\n\n')
+    _before, _blankline, after = text.partition("\n\n")
     return after
 
 
-_QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
-                       r'|^In article|^Quoted from|^\||^>)')
+_QUOTE_RE = re.compile(
+    r"(writes in|writes:|wrote:|says:|said:" r"|^In article|^Quoted from|^\||^>)"
+)
 
 
 def strip_newsgroup_quoting(text):
@@ -117,9 +120,8 @@ def strip_newsgroup_quoting(text):
     text : str
         The text from which to remove the signature block.
     """
-    good_lines = [line for line in text.split('\n')
-                  if not _QUOTE_RE.search(line)]
-    return '\n'.join(good_lines)
+    good_lines = [line for line in text.split("\n") if not _QUOTE_RE.search(line)]
+    return "\n".join(good_lines)
 
 
 def strip_newsgroup_footer(text):
@@ -135,22 +137,29 @@ def strip_newsgroup_footer(text):
     text : str
         The text from which to remove the signature block.
     """
-    lines = text.strip().split('\n')
+    lines = text.strip().split("\n")
     for line_num in range(len(lines) - 1, -1, -1):
         line = lines[line_num]
-        if line.strip().strip('-') == '':
+        if line.strip().strip("-") == "":
             break
 
     if line_num > 0:
-        return '\n'.join(lines[:line_num])
+        return "\n".join(lines[:line_num])
     else:
         return text
 
 
-def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
-                       shuffle=True, random_state=42,
-                       remove=(),
-                       download_if_missing=True, return_X_y=False):
+def fetch_20newsgroups(
+    *,
+    data_home=None,
+    subset="train",
+    categories=None,
+    shuffle=True,
+    random_state=42,
+    remove=(),
+    download_if_missing=True,
+    return_X_y=False,
+):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
 
@@ -239,33 +248,32 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
     cache = None
     if os.path.exists(cache_path):
         try:
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 compressed_content = f.read()
-            uncompressed_content = codecs.decode(
-                compressed_content, 'zlib_codec')
+            uncompressed_content = codecs.decode(compressed_content, "zlib_codec")
             cache = pickle.loads(uncompressed_content)
         except Exception as e:
-            print(80 * '_')
-            print('Cache loading failed')
-            print(80 * '_')
+            print(80 * "_")
+            print("Cache loading failed")
+            print(80 * "_")
             print(e)
 
     if cache is None:
         if download_if_missing:
-            logger.info("Downloading 20news dataset. "
-                        "This may take a few minutes.")
-            cache = _download_20newsgroups(target_dir=twenty_home,
-                                           cache_path=cache_path)
+            logger.info("Downloading 20news dataset. " "This may take a few minutes.")
+            cache = _download_20newsgroups(
+                target_dir=twenty_home, cache_path=cache_path
+            )
         else:
-            raise IOError('20Newsgroups dataset not found')
+            raise IOError("20Newsgroups dataset not found")
 
-    if subset in ('train', 'test'):
+    if subset in ("train", "test"):
         data = cache[subset]
-    elif subset == 'all':
+    elif subset == "all":
         data_lst = list()
         target = list()
         filenames = list()
-        for subset in ('train', 'test'):
+        for subset in ("train", "test"):
             data = cache[subset]
             data_lst.extend(data.data)
             target.extend(data.target)
@@ -276,19 +284,20 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
         data.filenames = np.array(filenames)
     else:
         raise ValueError(
-            "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
+            "subset can only be 'train', 'test' or 'all', got '%s'" % subset
+        )
 
     module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
+    with open(join(module_path, "descr", "twenty_newsgroups.rst")) as rst_file:
         fdescr = rst_file.read()
 
     data.DESCR = fdescr
 
-    if 'headers' in remove:
+    if "headers" in remove:
         data.data = [strip_newsgroup_header(text) for text in data.data]
-    if 'footers' in remove:
+    if "footers" in remove:
         data.data = [strip_newsgroup_footer(text) for text in data.data]
-    if 'quotes' in remove:
+    if "quotes" in remove:
         data.data = [strip_newsgroup_quoting(text) for text in data.data]
 
     if categories is not None:
@@ -324,9 +333,16 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
     return data
 
 
-def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
-                                  download_if_missing=True, return_X_y=False,
-                                  normalize=True, as_frame=False):
+def fetch_20newsgroups_vectorized(
+    *,
+    subset="train",
+    remove=(),
+    data_home=None,
+    download_if_missing=True,
+    return_X_y=False,
+    normalize=True,
+    as_frame=False,
+):
     """Load and vectorize the 20 newsgroups dataset (classification).
 
     Download it if necessary.
@@ -425,27 +441,31 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
-    filebase = '20newsgroup_vectorized'
+    filebase = "20newsgroup_vectorized"
     if remove:
-        filebase += 'remove-' + ('-'.join(remove))
+        filebase += "remove-" + ("-".join(remove))
     target_file = _pkl_filepath(data_home, filebase + ".pkl")
 
     # we shuffle but use a fixed seed for the memoization
-    data_train = fetch_20newsgroups(data_home=data_home,
-                                    subset='train',
-                                    categories=None,
-                                    shuffle=True,
-                                    random_state=12,
-                                    remove=remove,
-                                    download_if_missing=download_if_missing)
+    data_train = fetch_20newsgroups(
+        data_home=data_home,
+        subset="train",
+        categories=None,
+        shuffle=True,
+        random_state=12,
+        remove=remove,
+        download_if_missing=download_if_missing,
+    )
 
-    data_test = fetch_20newsgroups(data_home=data_home,
-                                   subset='test',
-                                   categories=None,
-                                   shuffle=True,
-                                   random_state=12,
-                                   remove=remove,
-                                   download_if_missing=download_if_missing)
+    data_test = fetch_20newsgroups(
+        data_home=data_home,
+        subset="test",
+        categories=None,
+        shuffle=True,
+        random_state=12,
+        remove=remove,
+        download_if_missing=download_if_missing,
+    )
 
     if os.path.exists(target_file):
         try:
@@ -485,15 +505,17 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
     else:
-        raise ValueError("%r is not a valid subset: should be one of "
-                         "['train', 'test', 'all']" % subset)
+        raise ValueError(
+            "%r is not a valid subset: should be one of "
+            "['train', 'test', 'all']" % subset
+        )
 
     module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
+    with open(join(module_path, "descr", "twenty_newsgroups.rst")) as rst_file:
         fdescr = rst_file.read()
 
     frame = None
-    target_name = ['category_class']
+    target_name = ["category_class"]
 
     if as_frame:
         frame, data, target = _convert_data_dataframe(
@@ -502,15 +524,17 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
             target,
             feature_names,
             target_names=target_name,
-            sparse_data=True
+            sparse_data=True,
         )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 target_names=target_names,
-                 feature_names=feature_names,
-                 DESCR=fdescr)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        feature_names=feature_names,
+        DESCR=fdescr,
+    )
