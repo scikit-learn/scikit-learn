@@ -114,6 +114,11 @@ class LinearSVC(LinearClassifierMixin,
     classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
@@ -246,7 +251,7 @@ class LinearSVC(LinearClassifierMixin,
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -330,6 +335,11 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     intercept_ : ndarray of shape (1) if n_classes == 2 else (n_classes)
         Constants in decision function.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         Maximum number of iterations run across all classes.
@@ -431,7 +441,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -583,6 +593,11 @@ class SVC(BaseSVC):
     intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
@@ -662,7 +677,7 @@ class SVC(BaseSVC):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -803,6 +818,11 @@ class NuSVC(BaseSVC):
     intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
@@ -881,10 +901,10 @@ class NuSVC(BaseSVC):
         return {
             '_xfail_checks': {
                 'check_methods_subset_invariance':
-                'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored.',
+                ('fails for the decision_function method'),
+                'check_class_weight_classifiers': ('class_weight is ignored.'),
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -981,6 +1001,11 @@ class SVR(RegressorMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1042,7 +1067,7 @@ class SVR(RegressorMixin, BaseLibSVM):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1133,6 +1158,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1194,7 +1224,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1280,6 +1310,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     intercept_ : ndarray of shape (1,)
         Constant in the decision function.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1414,6 +1449,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }

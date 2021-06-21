@@ -85,6 +85,11 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         where batch_size in the number of examples per minibatch and
         n_components is the number of hidden units.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
 
@@ -384,8 +389,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         return {
             '_xfail_checks': {
                 'check_methods_subset_invariance':
-                'fails for the decision_function method',
+                ('fails for the decision_function method'),
                 'check_methods_sample_order_invariance':
-                'fails for the score_samples method',
+                ('fails for the score_samples method'),
             }
         }
