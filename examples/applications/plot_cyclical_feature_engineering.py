@@ -197,9 +197,9 @@ def evaluate(model, X, y, cv):
 evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 
 # %%
-# This models has an average error around 4 to 5% of the maximum demand. This
-# is quite good for a first trial without any hyper-parameters tuning! We just
-# had to make the categorical variables explicit. Note that the time related
+# This model has an average error around 4 to 5% of the maximum demand. This is
+# quite good for a first trial without any hyper-parameters tuning! We just had
+# to make the categorical variables explicit. Note that the time related
 # features are passed as such but this not much of a problem for tree-based
 # models as they can learn a non-monotonic relationship between ordinal input
 # features and the target.
