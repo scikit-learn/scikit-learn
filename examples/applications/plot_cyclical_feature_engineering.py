@@ -14,8 +14,8 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 
 """
 # %%
-# Bike Sharing Demand Data Exploration
-# ------------------------------------
+# Data exploration on the Bike Sharing Demand dataset
+# ---------------------------------------------------
 #
 # We start by loading the data from the OpenML repository.
 from sklearn.datasets import fetch_openml
@@ -85,8 +85,8 @@ X["weather"].value_counts()
 X["season"].value_counts()
 
 # %%
-# Time-based Cross-Validation Splits
-# ----------------------------------
+# Time-based cross-validation
+# ---------------------------
 #
 # Since the dataset is a time-ordered event log (hourly demand), we will use a
 # time-sensitive cross-validation splitter to evaluate our demand forecasting
@@ -207,7 +207,7 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 # This is not the case for linear regression model as we will see in the
 # following.
 #
-# Naive Linear Regression
+# Naive linear regression
 # -----------------------
 #
 # As usual for linear models, categorical variables need to be one-hot encoded.
@@ -293,7 +293,7 @@ evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
 # monotonic encoding that locally preserve the relative ordering of time
 # features.
 #
-# Trigonometric Features
+# Trigonometric features
 # ----------------------
 #
 # As a first attempt, we can try to encode each of those periodic features
@@ -357,7 +357,7 @@ evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 # worse than using the one-hot encoded time features. We will further analyze
 # possible reasons for this disappointing outcome at the end of this notebook.
 #
-# Periodic Spline Features
+# Periodic spline features
 # ------------------------
 #
 # We can try an alternative encoding of the periodic time-related features
@@ -426,74 +426,13 @@ evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 # ~10% of the maximum demand, which is similar to what we observed with the
 # one-hot encoded features.
 #
-# However linear models cannot capture non-linear interactions between features
-# even if the features them-selves are marginally non-linear as is the case
-# with features constructed by `SplineTransformer` (or one-hot encoding or
-# binning).
-#
-# An example of a such a non-linear interaction that we would like to model
-# could be the impact of the rain that might not be the same during the working
-# days and the week-ends and holidays for instance.
-#
-# To capture such interactions we could either use a partial polynomial
-# expansion `PolynomicalFeatures(degree=2, interaction_only=True)` or use the
-# Nystroem method to compute an approximate polynomial kernel expansion.
-#
-# Let us try the latter for computational reasons:
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.kernel_approximation import Nystroem
-
-
-cyclic_spline_poly_pipeline = make_pipeline(
-    cyclic_spline_transformer,
-    MinMaxScaler(),
-    Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
-    RidgeCV(alphas=alphas),
-)
-evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
-
-# %%
-# We observe that this model can almost rival the performance of the gradient
-# boosted trees with an average error around 6% of the maximum demand.
-#
-# Note that while the final step of this pipeline is a linear regression model,
-# the intermediate steps such as the spline feature extraction and the Nyström
-# kernel approximation are highly non-linear. As a result the compound pipeline
-# is much more expressive than a simple linear regression model.
-#
-# For sake of completeness, we also evaluate the combination of one-hot
-# encoding and kernel approximation:
-
-one_hot_poly_pipeline = make_pipeline(
-    ColumnTransformer(
-        transformers=[
-            ("categorical", one_hot_encoder, categorical_columns),
-            ("one_hot_time", one_hot_encoder, ["hour", "weekday", "month"]),
-        ],
-        remainder="passthrough",
-    ),
-    Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
-    RidgeCV(alphas=alphas),
-)
-evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
-
-# %%
-# While one-hot features were competitive with spline-based features when using
-# linear models, this is no longer the case when using a low-rank approximation
-# of a non-linear kernel: this can be explained by the fact that spline
-# features are smoother and allow the kernel approximation to find a more
-# expressive decision function.
-#
-# Qualitative Analysis of the Models Predictions
-# ----------------------------------------------
-#
-# Let us first compare the predictions of the linear models (without kernel
-# approximation).
+# Qualitative analysis of the impact of features on linear models predictions
+# ---------------------------------------------------------------------------
 #
 # Here we want to visualize the impact of the feature engineering choices on
 # the time related-shape of the predictions.
 #
-# To do so we consider a specific time-based split to compare the predictions
+# To do so we consider an arbitrary time-based split to compare the predictions
 # on a range of held out data points.
 naive_linear_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 naive_linear_predictions = naive_linear_pipeline.predict(X.iloc[test_0])
@@ -557,7 +496,7 @@ _ = plt.legend()
 #   features for the natural period with different phases could potentially fix
 #   this problem.
 #
-# - the periodic spline-based features fix those two problems at a time: they
+# - the periodic spline-based features fix those two problems at once: they
 #   give more expressivity to the linear model by making it possible to focus
 #   on a specific hours thanks to the use of 12 knots. Furthermore the
 #   `extrapolation="periodic"` option enforces a smooth representation between
@@ -569,19 +508,84 @@ _ = plt.legend()
 #   remember that what can be an advantage for linear models is not necessarily
 #   one for kernel models.
 #
-# Finally the lack of non-additive modeling of interactions between features
-# seems to be a problem as none of the linear models can approximate the true
-# bike rentals demands, especially for the peaks that can be very sharp at rush
+# Finally we observe that none of the linear models can approximate the true
+# bike rentals demand, especially for the peaks that can be very sharp at rush
 # hours during the working days but much flatter during the week-ends: the most
 # accurate linear models based on splines or one-hot encoding tend to forecast
-# peak of commuting-related bike rentals even on the week-ends and
+# peaks of commuting-related bike rentals even on the week-ends and
 # under-estimate the commuting-related events during the working days.
+#
+# These systematic prediction errors reveal a form of under-fitting and can be
+# explained by the lack of non-additive modeling of the interactions between
+# features (in this case "workingday" and features derived from "hours"). This
+# issue will be addressed in the following section.
+#
+# Modeling non-linear feature interactions with kernels
+# -----------------------------------------------------
+#
+# The previous analysis highlighted the need to model the interactions between
+# "workingday" and "hours". Another example of a such a non-linear interactions
+# that we would like to model could be the impact of the rain that might not be
+# the same during the working days and the week-ends and holidays for instance.
+#
+# Linear models cannot capture non-linear interactions between features even if
+# the features them-selves are marginally non-linear as is the case with
+# features constructed by `SplineTransformer` (or one-hot encoding or binning).
+#
+# To capture such interactions we could either use a partial polynomial
+# expansion `PolynomicalFeatures(degree=2, interaction_only=True)` or use the
+# Nyström method to compute an approximate polynomial kernel expansion.
+#
+# Let us try the latter for computational reasons:
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.kernel_approximation import Nystroem
+
+
+cyclic_spline_poly_pipeline = make_pipeline(
+    cyclic_spline_transformer,
+    MinMaxScaler(),
+    Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
+    RidgeCV(alphas=alphas),
+)
+evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
+
+# %%
+#
+# We observe that this model can almost rival the performance of the gradient
+# boosted trees with an average error around 6% of the maximum demand.
+#
+# Note that while the final step of this pipeline is a linear regression model,
+# the intermediate steps such as the spline feature extraction and the Nyström
+# kernel approximation are highly non-linear. As a result the compound pipeline
+# is much more expressive than a simple linear regression model.
+#
+# For the sake of completeness, we also evaluate the combination of one-hot
+# encoding and kernel approximation:
+
+one_hot_poly_pipeline = make_pipeline(
+    ColumnTransformer(
+        transformers=[
+            ("categorical", one_hot_encoder, categorical_columns),
+            ("one_hot_time", one_hot_encoder, ["hour", "weekday", "month"]),
+        ],
+        remainder="passthrough",
+    ),
+    Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
+    RidgeCV(alphas=alphas),
+)
+evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
+
+
+# %%
+# While one-hot features were competitive with spline-based features when using
+# linear models, this is no longer the case when using a low-rank approximation
+# of a non-linear kernel: this can be explained by the fact that spline
+# features are smoother and allow the kernel approximation to find a more
+# expressive decision function.
 #
 # Let us now have a qualitative look at the predictions of the kernel models
 # and of the gradient boosted trees that should be able to better model
 # non-linear interactions between features:
-
-# %%
 gbrt_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 gbrt_predictions = gbrt_pipeline.predict(X.iloc[test_0])
 
@@ -623,25 +627,27 @@ _ = plt.legend()
 
 
 # %%
+# First note that trees can naturally model non-linear feature interactions
+# since by default decision trees are allowed to grow beyond a depth of 2
+# levels.
 #
 # Here we can observe that the combinations of spline features and non-linear
 # kernels works quite well and can almost rival the accuracy of the gradient
 # boosting regression trees.
 #
-# On the contrary, one-hot time features do not perform that well with the
-# kernel model. In particular they significantly over-estimate the low demand
-# hours more than the competing models.
+# On the contrary, one-hot time features do not perform that well with the low
+# rank kernel model. In particular they significantly over-estimate the low
+# demand hours more than the competing models.
 #
 # We also observe than none of the models can successully predict some of the
 # peak rentals at the rush hours during the working days. It is possible that
-# access to additional features would be required to further refine the
-# predictions. For instance, it could be useful to have access to the
-# geographical repartition of the fleet at any point in time or the fraction of
-# bikes that are immobilized because they need servicing.
-
-# %%
-# Let us finally get a more quantative look at the prediction errors using the
-# true vs predicted demand scatter plots for those last three models:
+# access to additional features would be required to further improve the
+# accuracy of the predictions. For instance, it could be useful to have access
+# to the geographical repartition of the fleet at any point in time or the
+# fraction of bikes that are immobilized because they need servicing.
+#
+# Let us finally get a more quantative look at the prediction errors of those
+# three models using the true vs predicted demand scatter plots:
 fig, axes = plt.subplots(ncols=3, figsize=(12, 4), sharey=True)
 plt.suptitle("Non-linear regression models")
 predictions = [
@@ -677,7 +683,10 @@ for ax, pred, label in zip(axes, predictions, labels):
 # for the kernel models.
 #
 # Finally, we note that we could have obtained slightly better results for
-# kernel models by using more components (at the cost of longer fit and
-# prediction times). Also, the `Nystroem` + `RidgeCV` classifier could have
-# been replaced by `sklearn.neural_network.MLPRegressor` with one or two hidden
-# layers and we would have obtained quite similar results.
+# kernel models by using more components (higher rank kernel approximation) at
+# the cost of longer fit and prediction times. For `n_components`, the
+# performance of the one-hot features would even match the spline features.
+#
+# The `Nystroem` + `RidgeCV` classifier could also have been replaced by
+# `sklearn.neural_network.MLPRegressor` with one or two hidden layers and we
+# would have obtained quite similar results.
