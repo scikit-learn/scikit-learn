@@ -71,8 +71,16 @@ class PrecisionRecallDisplay:
     >>> disp.plot()
     <...>
     """
-    def __init__(self, precision, recall, *,
-                 average_precision=None, estimator_name=None, pos_label=None):
+
+    def __init__(
+        self,
+        precision,
+        recall,
+        *,
+        average_precision=None,
+        estimator_name=None,
+        pos_label=None,
+    ):
         self.estimator_name = estimator_name
         self.precision = precision
         self.recall = recall
@@ -108,11 +116,9 @@ class PrecisionRecallDisplay:
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
-            line_kwargs["label"] = (f"{name} (AP = "
-                                    f"{self.average_precision:0.2f})")
+            line_kwargs["label"] = f"{name} (AP = " f"{self.average_precision:0.2f})"
         elif self.average_precision is not None:
-            line_kwargs["label"] = (f"AP = "
-                                    f"{self.average_precision:0.2f}")
+            line_kwargs["label"] = f"AP = " f"{self.average_precision:0.2f}"
         elif name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
@@ -122,9 +128,10 @@ class PrecisionRecallDisplay:
         if ax is None:
             fig, ax = plt.subplots()
 
-        self.line_, = ax.plot(self.recall, self.precision, **line_kwargs)
-        info_pos_label = (f" (Positive label: {self.pos_label})"
-                          if self.pos_label is not None else "")
+        (self.line_,) = ax.plot(self.recall, self.precision, **line_kwargs)
+        info_pos_label = (
+            f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
+        )
 
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
@@ -138,9 +145,18 @@ class PrecisionRecallDisplay:
         return self
 
 
-def plot_precision_recall_curve(estimator, X, y, *,
-                                sample_weight=None, response_method="auto",
-                                name=None, ax=None, pos_label=None, **kwargs):
+def plot_precision_recall_curve(
+    estimator,
+    X,
+    y,
+    *,
+    sample_weight=None,
+    response_method="auto",
+    name=None,
+    ax=None,
+    pos_label=None,
+    **kwargs,
+):
     """Plot Precision Recall Curve for binary classifiers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -200,14 +216,15 @@ def plot_precision_recall_curve(estimator, X, y, *,
     check_matplotlib_support("plot_precision_recall_curve")
 
     y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label)
+        X, estimator, response_method, pos_label=pos_label
+    )
 
-    precision, recall, _ = precision_recall_curve(y, y_pred,
-                                                  pos_label=pos_label,
-                                                  sample_weight=sample_weight)
-    average_precision = average_precision_score(y, y_pred,
-                                                pos_label=pos_label,
-                                                sample_weight=sample_weight)
+    precision, recall, _ = precision_recall_curve(
+        y, y_pred, pos_label=pos_label, sample_weight=sample_weight
+    )
+    average_precision = average_precision_score(
+        y, y_pred, pos_label=pos_label, sample_weight=sample_weight
+    )
 
     name = name if name is not None else estimator.__class__.__name__
 
