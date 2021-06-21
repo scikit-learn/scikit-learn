@@ -46,6 +46,7 @@ from . import (
     brier_score_loss,
     jaccard_score,
     mean_absolute_percentage_error,
+    root_mean_squared_log_error,
 )
 
 from .cluster import adjusted_rand_score
@@ -585,6 +586,10 @@ def make_scorer(
     needs_threshold=False,
     **kwargs,
 ):
+    
+def root_mean_squared_log_error(y_true, y_preds):
+    return np.sqrt(mean_squared_log_error(y_test, y_preds))
+
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in
@@ -689,6 +694,9 @@ neg_mean_absolute_error_scorer = make_scorer(
 )
 neg_mean_absolute_percentage_error_scorer = make_scorer(
     mean_absolute_percentage_error, greater_is_better=False
+)
+neg_root_mean_squared_log_error_scorer = make_scorer(
+    root_mean_squared_log_error, greater_is_better=False
 )
 neg_median_absolute_error_scorer = make_scorer(
     median_absolute_error, greater_is_better=False
