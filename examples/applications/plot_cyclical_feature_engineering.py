@@ -233,6 +233,7 @@ naive_linear_pipeline = make_pipeline(
 
 evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 
+
 # %%
 #
 # The performance is a not good: the everage error is around 14% of the maximum
@@ -259,7 +260,6 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 # Using one-hot encoding for the time features gives the linear model a lot
 # more flexibility as we introduce one additional feature per discrete time
 # level.
-
 one_hot_linear_pipeline = make_pipeline(
     ColumnTransformer(
         transformers=[
@@ -273,6 +273,7 @@ one_hot_linear_pipeline = make_pipeline(
 
 evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
 
+# %%
 # The average error rate of this model is 10% which is much better than using
 # the original ordinal encoding of the time feature, confirming our intuition
 # that the linear regression model benefit from the added flexibility to not
