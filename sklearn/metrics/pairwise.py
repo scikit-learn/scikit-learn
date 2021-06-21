@@ -1437,12 +1437,23 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
     X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
 
+    X_is_sparse = issparse(X)
+    Y_is_sparse = issparse(Y)
+
+    def _metric(X_i, Y_j, **kwds):
+        # Scipy 1.7 metrics expects 1d arrays and sliced sparse matrices, X[i],
+        # are thread as 0d arrays. Forcing the sliced sparse matrix into a 1d object
+        # arrray reproduces the behavior from scipy < 1.7.
+        X_i = np.atleast_1d(X_i) if X_is_sparse else X_i
+        Y_j = np.atleast_1d(Y_j) if Y_is_sparse else Y_j
+        return metric(X_i, Y_j, **kwds)
+
     if X is Y:
         # Only calculate metric for upper triangle
         out = np.zeros((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            out[i, j] = _metric(X[i], Y[j], **kwds)
 
         # Make symmetric
         # NB: out += out.T will produce incorrect results
@@ -1452,14 +1463,14 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
             x = X[i]
-            out[i, i] = metric(x, x, **kwds)
+            out[i, i] = _metric(x, x, **kwds)
 
     else:
         # Calculate all cells
         out = np.empty((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            out[i, j] = _metric(X[i], Y[j], **kwds)
 
     return out
 
