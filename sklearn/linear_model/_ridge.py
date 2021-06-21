@@ -36,28 +36,28 @@ from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
 
 
-def _get_rescaled_operator(X, X_offset, X_scale):
-    X_offset_scale = X_offset / X_scale
-
-    def matvec(b):
-        return X.dot(b) - b.dot(X_offset_scale)
-
-    def rmatvec(b):
-        return X.T.dot(b) - X_offset_scale * np.sum(b)
-
-    X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
-    return X1
-
-
 def _solve_sparse_cg(
     X, y, alpha, max_iter=None, tol=1e-3, verbose=0, X_offset=None, X_scale=None
 ):
+    def _get_rescaled_operator(X):
+
+        X_offset_scale = X_offset / X_scale
+
+        def matvec(b):
+            return X.dot(b) - b.dot(X_offset_scale)
+
+        def rmatvec(b):
+            return X.T.dot(b) - X_offset_scale * np.sum(b)
+
+        X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
+        return X1
+
     n_samples, n_features = X.shape
 
     if X_offset is None or X_scale is None:
         X1 = sp_linalg.aslinearoperator(X)
     else:
-        X1 = _get_rescaled_operator(X, X_offset, X_scale)
+        X1 = _get_rescaled_operator(X)
 
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
@@ -239,46 +239,48 @@ def _solve_svd(X, y, alpha):
 def _solve_trf(
     X, y, alpha, positive=False, max_iter=None, tol=1e-3, X_offset=None, X_scale=None
 ):
-    lsq_config = {
-        "method": "trf",
-        "max_iter": max_iter,
-        "tol": tol,
-    }
     n_samples, n_features = X.shape
 
-    if X_offset is None or X_scale is None:
-        X1 = sp_linalg.aslinearoperator(X)
+    optimizer_config = {"pgtol": 1e-20}
+    if max_iter is not None:
+        optimizer_config["maxiter"] = max_iter
+    if tol is not None:
+        optimizer_config["factr"] = tol / np.finfo(float).eps
+
+    if positive:
+        optimizer_config["bounds"] = [(0, np.inf)] * n_features
     else:
-        X1 = _get_rescaled_operator(X, X_offset, X_scale)
+        optimizer_config["bounds"] = [(-np.inf, np.inf)] * n_features
+
+    if X_offset is not None and X_scale is not None:
+        X_offset_scale = X_offset / X_scale
+    else:
+        X_offset_scale = None
 
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
-    Xa_shape = (n_samples + n_features, n_features)
-    if positive:
-        bounds = (0, np.inf)
-    else:
-        bounds = (-np.inf, np.inf)
-    sqrt_alpha = np.sqrt(alpha)
 
     for i in range(y.shape[1]):
+        x0 = np.zeros((n_features,))
+        y_column = y[:, i]
 
-        def mv(b):
-            return np.hstack([X1.matvec(b), sqrt_alpha[i] * b])
+        def func(w):
+            residual = X.dot(w) - y_column
+            if X_offset_scale is not None:
+                residual -= w.dot(X_offset_scale)
+            f = 0.5 * residual.dot(residual) + 0.5 * alpha * w.dot(w)
+            grad = X.T @ residual + alpha * w
+            if X_offset_scale is not None:
+                grad -= X_offset_scale * np.sum(residual)
 
-        def rmv(b):
-            return X1.rmatvec(b[:n_samples]) + sqrt_alpha[i] * b[n_samples:]
+            return f, grad
 
-        Xa = sp_linalg.LinearOperator(shape=Xa_shape, matvec=mv, rmatvec=rmv)
-        y_zeros = np.zeros(n_features, dtype=X.dtype)
-        y_column = np.hstack([y[:, i], y_zeros])
-        result = sp_optimize.lsq_linear(Xa, y_column, bounds=bounds, **lsq_config)
+        w, _, _ = sp_optimize.fmin_l_bfgs_b(
+            func,
+            x0,
+            **optimizer_config,
+        )
 
-        if not result["success"]:
-            warnings.warn(
-                f"The trf solver did not converge. Try increasing max_iter "
-                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
-                ConvergenceWarning,
-            )
-        coefs[i] = result["x"]
+        coefs[i] = w
 
     return coefs
 
