@@ -79,7 +79,9 @@ def test_multiclass_raises():
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": 0})
 
-        with pytest.raises(ValueError):
+        msg = "Monotonic constraints are not supported with multiclass " \
+              "classification"
+        with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
 
 
