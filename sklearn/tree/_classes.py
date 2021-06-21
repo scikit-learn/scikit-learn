@@ -173,7 +173,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError(
-                        "No support for np.int64 index based " "sparse matrices"
+                        "No support for np.int64 index based sparse matrices"
                     )
 
             if self.criterion == "poisson":
@@ -385,14 +385,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             if self.n_outputs_ > 1:
                 raise ValueError(
-                    "Monotonic constraints are not supported with" " multiple output"
+                    "Monotonic constraints are not supported with multiple output"
                 )
-            if is_classifier(self) and self.n_classes_[0] > 2:
-                raise ValueError(
-                    "Monotonic constraints are not supported with"
-                    " multiclass classification"
-                )
-            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
+            if is_classifier(self):
+                if self.n_classes_[0] > 2:
+                    raise ValueError(
+                        "Monotonic constraints are not supported with multiclass classification"
+                    )
+                # Imposing the constraint on the probability of the positive class
+                monotonic_cst = -np.asarray(self.monotonic_cst, dtype=np.int32)
+            else:
+                monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
+
 
         if monotonic_cst.shape[0] != X.shape[1]:
             raise ValueError(
@@ -800,7 +804,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
         and 0 respectively correspond to a positive constraint, negative
-        constraint and no constraint.
+        constraint and no constraint. The constraints are only valid for
+        binary classifications and hold over the probability of the positive
+        class.
 
     Attributes
     ----------
@@ -1522,7 +1528,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
         and 0 respectively correspond to a positive constraint, negative
-        constraint and no constraint.
+        constraint and no constraint. The constraints are only valid for
+        binary classifications and hold over the probability of the positive
+        class.
 
     Attributes
     ----------

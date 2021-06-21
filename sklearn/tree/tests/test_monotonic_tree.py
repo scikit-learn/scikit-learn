@@ -3,7 +3,7 @@ import pytest
 from sklearn import datasets
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
-
+from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 
 @pytest.mark.parametrize("seed", range(4))
 @pytest.mark.parametrize("depth_first", (True, False))
@@ -25,7 +25,7 @@ def test_montonic_constraints(seed, depth_first):
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
 
-    for name, TreeRegressor in REG_TREES.items():
+    for _, TreeRegressor in REG_TREES.items():
         if depth_first:
             est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
         else:
@@ -48,7 +48,11 @@ def test_montonic_constraints(seed, depth_first):
         # y_decr should always be lower than y
         assert np.all(y_decr <= y)
 
-    for name, TreeClassifier in CLF_TREES.items():
+    classifiers = CLF_TREES.copy()
+    # TODO: GradientBoostingClassifier
+    classifiers.update({"RandomForestClassifier": RandomForestClassifier,
+                        "ExtraTreesClassifier": ExtraTreesClassifier})
+    for _, TreeClassifier in classifiers.items():
         if depth_first:
             est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
         else:
@@ -59,16 +63,18 @@ def test_montonic_constraints(seed, depth_first):
             )
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": seed})
+        if hasattr(est, "n_estimators"):
+            est.set_params(**{"n_estimators": 10})
         est.fit(X_train, y_train)
-        y = est.predict_proba(X_test)[:, 0]
+        y = est.predict_proba(X_test)[:, 1]
 
         # increasing constraint
-        y_incr = est.predict_proba(X_test_incr)[:, 0]
+        y_incr = est.predict_proba(X_test_incr)[:, 1]
         # y_incr should always be greater than y
         assert np.all(y_incr >= y)
 
         # decreasing constraint
-        y_decr = est.predict_proba(X_test_decr)[:, 0]
+        y_decr = est.predict_proba(X_test_decr)[:, 1]
         # y_decr should always be lower than y
         assert np.all(y_decr <= y)
 
