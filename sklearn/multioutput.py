@@ -65,7 +65,7 @@ def _partial_fit_estimator(
     return estimator
 
 
-def available_if_base_estimator_has(attr):
+def _available_if_base_estimator_has(attr):
     def _check(self):
         return ((hasattr(self, 'base_estimator') and
                  hasattr(self.base_estimator, attr)) or
@@ -81,7 +81,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    @available_if_base_estimator_has("partial_fit")
+    @_available_if_base_estimator_has("partial_fit")
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
@@ -291,7 +291,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    @available_if_base_estimator_has("partial_fit")
+    @_available_if_base_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
@@ -711,7 +711,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         ]
         return self
 
-    @available_if_base_estimator_has("predict_proba")
+    @_available_if_base_estimator_has("predict_proba")
     def predict_proba(self, X):
         """Predict probability estimates.
 
@@ -740,7 +740,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         return Y_prob
 
-    @available_if_base_estimator_has("decision_function")
+    @_available_if_base_estimator_has("decision_function")
     def decision_function(self, X):
         """Evaluate the decision_function of the models in the chain.
 
