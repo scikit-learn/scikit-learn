@@ -504,9 +504,9 @@ _ = plt.legend()
 #
 # - the one-hot encoded features behave similarly to the periodic spline-based
 #   features but are more spiky: for instance they can better model the morning
-#   peak during the weak days since this peak last fewer than an hour. But
-#   remember that what can be an advantage for linear models is not necessarily
-#   one for kernel models.
+#   peak during the weak days since this peak last fewer than an hour. However
+#   we will see in the following that what can be an advantage for linear
+#   models is not necessarily one for more expressive models.
 #
 # Finally we observe that none of the linear models can approximate the true
 # bike rentals demand, especially for the peaks that can be very sharp at rush
