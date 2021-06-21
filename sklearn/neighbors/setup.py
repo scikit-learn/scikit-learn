@@ -52,6 +52,13 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
     )
 
+    config.add_extension(
+        "_neighbors_heap",
+        sources=["_neighbors_heap.pyx"],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+    )
+
     config.add_subpackage("tests")
 
     return config
