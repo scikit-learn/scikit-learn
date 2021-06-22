@@ -25,7 +25,7 @@ def test_sgd_optimizer_no_momentum():
 
     for lr in [10 ** i for i in range(-3, 4)]:
         optimizer = SGDOptimizer(params, lr, momentum=0, nesterov=False)
-        grads = [rng.random(shape) for shape in shapes]
+        grads = [rng.random_sample(shape) for shape in shapes]
         expected = [param - lr * grad for param, grad in zip(params, grads)]
         optimizer.update_params(grads)
 
