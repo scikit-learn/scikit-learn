@@ -320,7 +320,7 @@ class BisectKMeans(KMeans):
             )
 
         if hasattr(self.init, "__array__"):
-            raise ValueError("BisectKMeans does not support " "init as array.")
+            raise ValueError("BisectKMeans does not support init as array.")
 
     def _bisect(self, X, sample_weight, random_state):
         """Bisection of data
