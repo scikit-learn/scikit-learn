@@ -21,6 +21,7 @@ the lower the better.
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
 #          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
+#          Uttam Kumar <bajiraouttamsinha@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
