@@ -854,7 +854,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         return {
             '_xfail_checks': {
                 'check_transformer_preserve_dtypes':
-                'dtypes are preserved but not at a close enough precision',
+                ('dtypes are preserved but not at a close enough precision')
             },
             'preserves_dtype': [np.float64, np.float32]
         }

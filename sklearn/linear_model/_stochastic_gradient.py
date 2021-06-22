@@ -1103,7 +1103,7 @@ class SGDClassifier(BaseSGDClassifier):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1590,7 +1590,7 @@ class SGDRegressor(BaseSGDRegressor):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -2040,7 +2040,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                'check_sample_weights_invariance': (
+                    'zero sample_weight is not equivalent to removing samples'
+                )
             }
         }

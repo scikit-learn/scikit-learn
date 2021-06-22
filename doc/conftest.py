@@ -126,3 +126,12 @@ def pytest_runtest_setup(item):
         setup_preprocessing()
     elif fname.endswith('statistical_inference/unsupervised_learning.rst'):
         setup_unsupervised_learning()
+
+
+def pytest_configure(config):
+    # Use matplotlib agg backend during the tests including doctests
+    try:
+        import matplotlib
+        matplotlib.use('agg')
+    except ImportError:
+        pass

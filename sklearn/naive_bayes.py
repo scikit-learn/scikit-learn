@@ -674,16 +674,18 @@ class _BaseDiscreteNB(_BaseNB):
                                        dtype=np.float64)
 
     # mypy error: Decorated property not supported
-    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute coef_ was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def coef_(self):
         return (self.feature_log_prob_[1:]
                 if len(self.classes_) == 2 else self.feature_log_prob_)
 
     # mypy error: Decorated property not supported
-    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute intercept_ was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def intercept_(self):
         return (self.class_log_prior_[1:]

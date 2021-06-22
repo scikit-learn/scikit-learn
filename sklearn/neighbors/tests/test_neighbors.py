@@ -1754,9 +1754,14 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
 
 
 # TODO: Remove in 1.1
-@pytest.mark.parametrize("NearestNeighbors", [neighbors.KNeighborsClassifier,
-                                              neighbors.KNeighborsRegressor,
-                                              neighbors.NearestNeighbors])
+@pytest.mark.parametrize(
+    "NearestNeighbors",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.NearestNeighbors,
+    ],  # type: ignore
+)
 def test_pairwise_deprecated(NearestNeighbors):
     nn = NearestNeighbors(metric='precomputed')
     msg = r"Attribute _pairwise was deprecated in version 0\.24"

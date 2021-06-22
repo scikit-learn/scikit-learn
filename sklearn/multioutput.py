@@ -22,7 +22,7 @@ from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
-from .utils import check_array, check_X_y, check_random_state
+from .utils import check_random_state
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
                                _check_fit_params)
@@ -100,10 +100,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         -------
         self : object
         """
-        X, y = check_X_y(X, y,
-                         force_all_finite=False,
-                         multi_output=True,
-                         accept_sparse=True)
+        first_time = not hasattr(self, 'estimators_')
+        y = self._validate_data(X='no_validation', y=y, multi_output=True)
 
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
@@ -122,6 +120,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
                 X, y[:, i],
                 classes[i] if classes is not None else None,
                 sample_weight, first_time) for i in range(y.shape[1]))
+
+        if first_time and hasattr(self.estimators_[0], "n_features_in_"):
+            self.n_features_in_ = self.estimators_[0].n_features_in_
+
         return self
 
     def fit(self, X, y, sample_weight=None, **fit_params):
@@ -156,9 +158,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        X, y = self._validate_data(X, y,
-                                   force_all_finite=False,
-                                   multi_output=True, accept_sparse=True)
+        y = self._validate_data(X='no_validation', y=y, multi_output=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -179,6 +179,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
                 self.estimator, X, y[:, i], sample_weight,
                 **fit_params_validated)
             for i in range(y.shape[1]))
+
+        if hasattr(self.estimators_[0], "n_features_in_"):
+            self.n_features_in_ = self.estimators_[0].n_features_in_
+
         return self
 
     def predict(self, X):
@@ -200,8 +204,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         if not hasattr(self.estimators_[0], "predict"):
             raise ValueError("The base estimator should implement"
                              " a predict method")
-
-        X = check_array(X, force_all_finite=False, accept_sparse=True)
 
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X)
@@ -247,6 +249,12 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying `estimator` exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -324,6 +332,12 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying `estimator` exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -530,7 +544,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=True)
+        X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -614,6 +628,12 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     order_ : list
         The order of labels in the classifier chain.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying `base_estimator` exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.datasets import make_multilabel_classification
@@ -681,7 +701,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         -------
         Y_prob : array-like of shape (n_samples, n_classes)
         """
-        X = check_array(X, accept_sparse=True)
+        X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -793,6 +813,12 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     order_ : list
         The order of labels in the classifier chain.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying `base_estimator` exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
