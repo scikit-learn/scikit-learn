@@ -491,10 +491,16 @@ def mean_squared_log_error(
     >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
     >>> mean_squared_log_error(y_true, y_pred)
     0.044...
+    >>> mean_squared_log_error(y_true, y_pred, squared=False)
+    0.210...
     >>> mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
     array([0.00462428, 0.08377444])
+    >>> mean_squared_log_error(y_true, y_pred, multioutput='raw_values',squared=False)
+    array([0.06800207, 0.28943815]))
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
+    >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7], squared=False)
+    0.245...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
