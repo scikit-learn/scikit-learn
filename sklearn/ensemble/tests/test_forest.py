@@ -43,9 +43,9 @@ from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.ensemble import ExtraTreesRegressor as ExtraTreesRegressorOriginal
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor as RandomForestRegressorOriginal
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -57,8 +57,29 @@ from sklearn.metrics import mean_squared_error
 from sklearn.tree._classes import SPARSE_SPLITTERS
 
 
-# TODO: Remove filterwarning in 1.2
-pytestmark = pytest.mark.filterwarnings("ignore:Option 'auto'.*in v1.2.*:FutureWarning")
+# TODO: Remove in 1.2, as it is a temporary fix to test the then new default behaviour.
+class RandomForestRegressor(RandomForestRegressorOriginal):
+    def __init__(self, n_estimators=100, **params):
+        if params.get("max_features", "auto") == "auto":
+            params["max_features"] = "sqrt"
+        super().__init__(n_estimators=n_estimators, **params)
+
+    @classmethod
+    def _get_param_names(cls):
+        return RandomForestRegressorOriginal._get_param_names()
+
+
+# TODO: Remove in 1.2, as it is a temporary fix to test the then new default behaviour.
+class ExtraTreesRegressor(ExtraTreesRegressorOriginal):
+    def __init__(self, n_estimators=100, **params):
+        if params.get("max_features", "auto") == "auto":
+            params["max_features"] = "sqrt"
+        super().__init__(n_estimators=n_estimators, **params)
+
+    @classmethod
+    def _get_param_names(cls):
+        return ExtraTreesRegressorOriginal._get_param_names()
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -174,8 +195,8 @@ def check_regression_criterion(name, criterion):
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
     assert (
-        score > 0.93
-    ), "Failed with max_features=None, criterion %s " "and score = %f" % (
+        score > 0.92
+    ), "Failed with max_features='auto', criterion %s and score = %f" % (
         criterion,
         score,
     )
@@ -185,9 +206,10 @@ def check_regression_criterion(name, criterion):
     )
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
-    assert (
-        score > 0.92
-    ), "Failed with max_features=6, criterion %s " "and score = %f" % (criterion, score)
+    assert score > 0.92, "Failed with max_features=6, criterion %s and score = %f" % (
+        criterion,
+        score,
+    )
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -549,7 +571,7 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
             *datasets.make_regression(
                 n_samples=500, n_features=10, n_targets=1, random_state=0
             ),
-            0.7,
+            0.64,
         ),
         (
             *datasets.make_regression(
@@ -1797,11 +1819,13 @@ def test_mse_criterion_object_segfault_smoke_test(Forest):
 
 
 # TODO: Remove in v.1.2
-@pytest.mark.parametrize("Forest", FOREST_REGRESSORS)
+@pytest.mark.parametrize(
+    "Forest", [ExtraTreesRegressorOriginal, RandomForestRegressorOriginal]
+)
 def test_max_features_auto_deprecated(Forest):
     """Check that max_features="auto" is deprecated for regression forests."""
     with pytest.warns(
         FutureWarning,
         match=r"Option 'auto' will behave as `sqrt\(n_features\)` in " r"v1.2.",
     ):
-        FOREST_REGRESSORS[Forest](max_features="auto").fit(X, y)
+        Forest(max_features="auto").fit(X, y)
