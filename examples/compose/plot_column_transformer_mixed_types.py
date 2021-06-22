@@ -180,7 +180,7 @@ grid_search
 #
 grid_search.fit(X_train, y_train)
 
-print(f"Best params:")
+print("Best params:")
 print(grid_search.best_params_)
 
 # %%

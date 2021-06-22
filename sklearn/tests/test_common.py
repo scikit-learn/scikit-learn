@@ -54,25 +54,35 @@ from sklearn.utils.estimator_checks import (
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
     for name, Estimator in all_estimators():
-        msg = ("Base estimators such as {0} should not be included"
-               " in all_estimators").format(name)
-        assert not name.lower().startswith('base'), msg
+        msg = (
+            "Base estimators such as {0} should not be included" " in all_estimators"
+        ).format(name)
+        assert not name.lower().startswith("base"), msg
 
 
 def _sample_func(x, y=1):
     pass
 
 
-@pytest.mark.parametrize("val, expected", [
-    (partial(_sample_func, y=1), "_sample_func(y=1)"),
-    (_sample_func, "_sample_func"),
-    (partial(_sample_func, 'world'), "_sample_func"),
-    (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
-    (LogisticRegression(random_state=1, solver='newton-cg',
-                        class_weight='balanced', warm_start=True),
-     "LogisticRegression(class_weight='balanced',random_state=1,"
-     "solver='newton-cg',warm_start=True)")
-])
+@pytest.mark.parametrize(
+    "val, expected",
+    [
+        (partial(_sample_func, y=1), "_sample_func(y=1)"),
+        (_sample_func, "_sample_func"),
+        (partial(_sample_func, "world"), "_sample_func"),
+        (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+        (
+            LogisticRegression(
+                random_state=1,
+                solver="newton-cg",
+                class_weight="balanced",
+                warm_start=True,
+            ),
+            "LogisticRegression(class_weight='balanced',random_state=1,"
+            "solver='newton-cg',warm_start=True)",
+        ),
+    ],
+)
 def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
@@ -90,16 +100,15 @@ def _tested_estimators():
 @parametrize_with_checks(list(_tested_estimators()))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
-    with ignore_warnings(category=(FutureWarning,
-                                   ConvergenceWarning,
-                                   UserWarning, FutureWarning)):
+    with ignore_warnings(
+        category=(FutureWarning, ConvergenceWarning, UserWarning, FutureWarning)
+    ):
         _set_checking_parameters(estimator)
         check(estimator)
 
 
 def test_check_estimator_generate_only():
-    all_instance_gen_checks = check_estimator(LogisticRegression(),
-                                              generate_only=True)
+    all_instance_gen_checks = check_estimator(LogisticRegression(), generate_only=True)
     assert isgenerator(all_instance_gen_checks)
 
 
@@ -113,29 +122,29 @@ def test_configure():
     # is installed in editable mode by pip build isolation enabled.
     pytest.importorskip("Cython")
     cwd = os.getcwd()
-    setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
-    setup_filename = os.path.join(setup_path, 'setup.py')
+    setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
+    setup_filename = os.path.join(setup_path, "setup.py")
     if not os.path.exists(setup_filename):
-        pytest.skip('setup.py not available')
+        pytest.skip("setup.py not available")
     # XXX unreached code as of v0.22
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
-        sys.argv = ['setup.py', 'config']
+        sys.argv = ["setup.py", "config"]
 
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
-            warnings.simplefilter('ignore', UserWarning)
-            with open('setup.py') as f:
-                exec(f.read(), dict(__name__='__main__'))
+            warnings.simplefilter("ignore", UserWarning)
+            with open("setup.py") as f:
+                exec(f.read(), dict(__name__="__main__"))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
 
 
 def _tested_linear_classifiers():
-    classifiers = all_estimators(type_filter='classifier')
+    classifiers = all_estimators(type_filter="classifier")
 
     with warnings.catch_warnings(record=True):
         for name, clazz in classifiers:
@@ -144,13 +153,13 @@ def _tested_linear_classifiers():
                 # FIXME
                 continue
 
-            if ('class_weight' in clazz().get_params().keys() and
-                    issubclass(clazz, LinearClassifierMixin)):
+            if "class_weight" in clazz().get_params().keys() and issubclass(
+                clazz, LinearClassifierMixin
+            ):
                 yield name, clazz
 
 
-@pytest.mark.parametrize("name, Classifier",
-                         _tested_linear_classifiers())
+@pytest.mark.parametrize("name, Classifier", _tested_linear_classifiers())
 def test_class_weight_balanced_linear_classifiers(name, Classifier):
     check_class_weight_balanced_linear_classifier(name, Classifier)
 
@@ -159,26 +168,31 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
-    pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
-                                 onerror=lambda _: None)
+    pkgs = pkgutil.walk_packages(
+        path=sklearn.__path__, prefix="sklearn.", onerror=lambda _: None
+    )
     submods = [modname for _, modname, _ in pkgs]
-    for modname in submods + ['sklearn']:
+    for modname in submods + ["sklearn"]:
         if ".tests." in modname:
             continue
-        if IS_PYPY and ('_svmlight_format_io' in modname or
-                        'feature_extraction._hashing_fast' in modname):
+        if IS_PYPY and (
+            "_svmlight_format_io" in modname
+            or "feature_extraction._hashing_fast" in modname
+        ):
             continue
         package = __import__(modname, fromlist="dummy")
-        for name in getattr(package, '__all__', ()):
-            assert hasattr(package, name),\
-                "Module '{0}' has no attribute '{1}'".format(modname, name)
+        for name in getattr(package, "__all__", ()):
+            assert hasattr(package, name), "Module '{0}' has no attribute '{1}'".format(
+                modname, name
+            )
 
 
 def test_root_import_all_completeness():
-    EXCEPTIONS = ('utils', 'tests', 'base', 'setup', 'conftest')
-    for _, modname, _ in pkgutil.walk_packages(path=sklearn.__path__,
-                                               onerror=lambda _: None):
-        if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
+    EXCEPTIONS = ("utils", "tests", "base", "setup", "conftest")
+    for _, modname, _ in pkgutil.walk_packages(
+        path=sklearn.__path__, onerror=lambda _: None
+    ):
+        if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
             continue
         assert modname in sklearn.__all__
 
@@ -187,23 +201,31 @@ def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(r'''(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(
+        r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      ''')
-    lookup = {name: ispkg
-              for _, name, ispkg
-              in pkgutil.walk_packages(sklearn.__path__, prefix='sklearn.')}
-    missing_tests = [name for name, ispkg in lookup.items()
-                     if ispkg
-                     and not HAS_TESTS_EXCEPTIONS.search(name)
-                     and name + '.tests' not in lookup]
-    assert missing_tests == [], ('{0} do not have `tests` subpackages. '
-                                 'Perhaps they require '
-                                 '__init__.py or an add_subpackage directive '
-                                 'in the parent '
-                                 'setup.py'.format(missing_tests))
+                                      """
+    )
+    lookup = {
+        name: ispkg
+        for _, name, ispkg in pkgutil.walk_packages(sklearn.__path__, prefix="sklearn.")
+    }
+    missing_tests = [
+        name
+        for name, ispkg in lookup.items()
+        if ispkg
+        and not HAS_TESTS_EXCEPTIONS.search(name)
+        and name + ".tests" not in lookup
+    ]
+    assert missing_tests == [], (
+        "{0} do not have `tests` subpackages. "
+        "Perhaps they require "
+        "__init__.py or an add_subpackage directive "
+        "in the parent "
+        "setup.py".format(missing_tests)
+    )
 
 
 def test_class_support_removed():
@@ -233,9 +255,7 @@ def _generate_search_cv_instances():
     ):
         init_params = signature(SearchCV).parameters
         extra_params = (
-            {"min_resources": "smallest"}
-            if "min_resources" in init_params
-            else {}
+            {"min_resources": "smallest"} if "min_resources" in init_params else {}
         )
         search_cv = SearchCV(Estimator(), param_grid, cv=2, **extra_params)
         set_random_state(search_cv)
@@ -255,9 +275,7 @@ def _generate_search_cv_instances():
     ):
         init_params = signature(SearchCV).parameters
         extra_params = (
-            {"min_resources": "smallest"}
-            if "min_resources" in init_params
-            else {}
+            {"min_resources": "smallest"} if "min_resources" in init_params else {}
         )
         search_cv = SearchCV(
             make_pipeline(PCA(), Estimator()), param_grid, cv=2, **extra_params
