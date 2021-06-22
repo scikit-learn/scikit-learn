@@ -505,19 +505,16 @@ def mean_squared_log_error(
             "Mean Squared Logarithmic Error cannot be used when "
             "targets contain negative values."
         )
-    if not squared:
-        return np.sqrt( mean_squared_error(
-            np.log1p(y_true),
-            np.log1p(y_pred),
-            sample_weight=sample_weight,
-            multioutput=multioutput,)
-    else:
-        return mean_squared_error(
+    msle = mean_squared_error(
             np.log1p(y_true),
             np.log1p(y_pred),
             sample_weight=sample_weight,
             multioutput=multioutput,
         )
+    if squared:
+        return msle
+    else:
+        return np.sqrt(msle)
 
 
 def median_absolute_error(
