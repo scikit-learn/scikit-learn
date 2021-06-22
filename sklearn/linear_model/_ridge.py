@@ -241,16 +241,20 @@ def _solve_trf(
 ):
     n_samples, n_features = X.shape
 
-    optimizer_config = {"pgtol": 1e-20}
+    options = {}
     if max_iter is not None:
-        optimizer_config["maxiter"] = max_iter
-    if tol is not None:
-        optimizer_config["factr"] = tol / np.finfo(float).eps
-
+        options["maxiter"] = max_iter
     if positive:
-        optimizer_config["bounds"] = [(0, np.inf)] * n_features
+        bounds = [(0, np.inf)] * n_features
     else:
-        optimizer_config["bounds"] = [(-np.inf, np.inf)] * n_features
+        bounds = [(-np.inf, np.inf)] * n_features
+    config = {
+        "method": "L-BFGS-B",
+        "tol": tol,
+        "jac": True,
+        "bounds": bounds,
+        "options": options,
+    }
 
     if X_offset is not None and X_scale is not None:
         X_offset_scale = X_offset / X_scale
@@ -267,20 +271,21 @@ def _solve_trf(
             residual = X.dot(w) - y_column
             if X_offset_scale is not None:
                 residual -= w.dot(X_offset_scale)
-            f = 0.5 * residual.dot(residual) + 0.5 * alpha * w.dot(w)
-            grad = X.T @ residual + alpha * w
+            f = 0.5 * residual.dot(residual) + 0.5 * alpha[i] * w.dot(w)
+            grad = X.T @ residual + alpha[i] * w
             if X_offset_scale is not None:
                 grad -= X_offset_scale * np.sum(residual)
 
             return f, grad
 
-        w, _, _ = sp_optimize.fmin_l_bfgs_b(
-            func,
-            x0,
-            **optimizer_config,
-        )
-
-        coefs[i] = w
+        result = sp_optimize.minimize(func, x0, **config)
+        if not result["success"]:
+            warnings.warn(
+                f"The trf solver did not converge. Try increasing max_iter "
+                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
+                ConvergenceWarning,
+            )
+        coefs[i] = result["x"]
 
     return coefs
 

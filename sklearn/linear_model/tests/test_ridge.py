@@ -191,7 +191,7 @@ def test_ridge_sample_weights():
         for (alpha, intercept, solver) in param_grid:
 
             # Ridge with explicit sample_weight
-            est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver, tol=1e-6)
+            est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver, tol=1e-12)
             est.fit(X, y, sample_weight=sample_weight)
             coefs = est.coef_
             inter = est.intercept_
@@ -323,7 +323,7 @@ def test_ridge_individual_penalties():
     )
 
     coefs_indiv_pen = [
-        Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
+        Ridge(alpha=penalties, solver=solver, tol=1e-12).fit(X, y).coef_
         for solver in ["svd", "sparse_cg", "lsqr", "cholesky", "sag", "saga", "trf"]
     ]
     for coef_indiv_pen in coefs_indiv_pen:
@@ -1530,7 +1530,7 @@ def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
         y = X @ b + intercept
     else:
         y = X @ b
-    y += rng.normal(size=X.shape[0]) * 0.1
+    y += rng.normal(size=X.shape[0]) * 0.01
 
     results = []
     for positive in [True, False]:
@@ -1604,7 +1604,6 @@ def test_trf_solver_error():
 
     model = Ridge(
         alpha=0.01,
-        positive=True,
         solver="trf",
         fit_intercept=False,
         tol=1e-12,
