@@ -19,7 +19,6 @@ from joblib import Memory
 
 from ._base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import parse_version
 
 logger = logging.getLogger(__name__)
@@ -216,7 +215,6 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     return faces, target, target_names
 
 
-@_deprecate_positional_args
 def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
                      min_faces_per_person=0, color=False,
                      slice_=(slice(70, 195), slice(78, 172)),
@@ -387,7 +385,6 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
-@_deprecate_positional_args
 def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
                     resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),

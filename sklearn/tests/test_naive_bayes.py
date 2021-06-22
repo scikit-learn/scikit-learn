@@ -1,3 +1,4 @@
+import re
 
 import numpy as np
 import scipy.sparse
@@ -11,10 +12,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
@@ -118,7 +115,10 @@ def test_gnb_sample_weight():
 def test_gnb_neg_priors():
     """Test whether an error is raised in case of negative priors"""
     clf = GaussianNB(priors=np.array([-1., 2.]))
-    assert_raises(ValueError, clf.fit, X, y)
+
+    msg = 'Priors must be non-negative'
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_gnb_priors():
@@ -146,13 +146,19 @@ def test_gnb_wrong_nb_priors():
     """ Test whether an error is raised if the number of prior is different
     from the number of class"""
     clf = GaussianNB(priors=np.array([.25, .25, .25, .25]))
-    assert_raises(ValueError, clf.fit, X, y)
+
+    msg = 'Number of priors must match number of classes'
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_gnb_prior_greater_one():
     """Test if an error is raised if the sum of prior greater than one"""
     clf = GaussianNB(priors=np.array([2., 1.]))
-    assert_raises(ValueError, clf.fit, X, y)
+
+    msg = 'The sum of the priors should be 1'
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_gnb_prior_large_bias():
@@ -339,9 +345,13 @@ def test_discretenb_provide_prior(DiscreteNaiveBayes):
     assert_array_almost_equal(prior, np.array([.5, .5]))
 
     # Inconsistent number of classes with prior
-    assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2])
-    assert_raises(ValueError, clf.partial_fit, [[0], [1]], [0, 1],
-                  classes=[0, 1, 1])
+    msg = 'Number of priors must match number of classes'
+    with pytest.raises(ValueError, match=msg):
+        clf.fit([[0], [1], [2]], [0, 1, 2])
+
+    msg = 'is not the same as on last call to partial_fit'
+    with pytest.raises(ValueError, match=msg):
+        clf.partial_fit([[0], [1]], [0, 1], classes=[0, 1, 1])
 
 
 @pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
@@ -470,7 +480,10 @@ def test_mnnb(kind):
 
     # Check the ability to predict the learning set.
     clf = MultinomialNB()
-    assert_raises(ValueError, clf.fit, -X, y2)
+
+    msg = 'Negative values in data passed to'
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(-X, y2)
     y_pred = clf.fit(X, y2).predict(X)
 
     assert_array_equal(y_pred, y2)
@@ -518,18 +531,18 @@ def test_mnb_prior_unobserved_targets():
 
     clf = MultinomialNB()
 
-    assert_no_warnings(
-        clf.partial_fit, X, y, classes=[0, 1, 2]
-    )
+    with pytest.warns(None) as record:
+        clf.partial_fit(X, y, classes=[0, 1, 2])
+    assert len(record) == 0
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
     assert clf.predict([[1, 1]]) == 0
 
     # add a training example with previously unobserved class
-    assert_no_warnings(
-        clf.partial_fit, [[1, 1]], [2]
-    )
+    with pytest.warns(None) as record:
+        clf.partial_fit([[1, 1]], [2])
+    assert len(record) == 0
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
@@ -666,7 +679,10 @@ def test_cnb():
 
     # Verify inputs are nonnegative.
     clf = ComplementNB(alpha=1.0)
-    assert_raises(ValueError, clf.fit, -X, Y)
+
+    msg = re.escape('Negative values in data passed to ComplementNB (input X)')
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(-X, Y)
 
     clf.fit(X, Y)
 
@@ -700,9 +716,13 @@ def test_categoricalnb():
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
     y = np.array([1])
-    error_msg = "Negative values in data passed to CategoricalNB (input X)"
-    assert_raise_message(ValueError, error_msg, clf.predict, X)
-    assert_raise_message(ValueError, error_msg, clf.fit, X, y)
+    error_msg = re.escape(
+        "Negative values in data passed to CategoricalNB (input X)"
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        clf.predict(X)
+    with pytest.raises(ValueError, match=error_msg):
+        clf.fit(X, y)
 
     # Test alpha
     X3_test = np.array([[2, 5]])
@@ -794,52 +814,67 @@ def test_alpha():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
     nb = BernoulliNB(alpha=0.)
-    assert_warns(UserWarning, nb.partial_fit, X, y, classes=[0, 1])
-    assert_warns(UserWarning, nb.fit, X, y)
+    msg = (
+        "alpha too small will result in numeric errors,"
+        " setting alpha = 1.0e-10"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        nb.partial_fit(X, y, classes=[0, 1])
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     nb = MultinomialNB(alpha=0.)
-    assert_warns(UserWarning, nb.partial_fit, X, y, classes=[0, 1])
-    assert_warns(UserWarning, nb.fit, X, y)
+    with pytest.warns(UserWarning, match=msg):
+        nb.partial_fit(X, y, classes=[0, 1])
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
     prob = np.array([[2. / 3, 1. / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     nb = CategoricalNB(alpha=0.)
-    assert_warns(UserWarning, nb.fit, X, y)
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
     prob = np.array([[1., 0.], [0., 1.]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test sparse X
     X = scipy.sparse.csr_matrix(X)
     nb = BernoulliNB(alpha=0.)
-    assert_warns(UserWarning, nb.fit, X, y)
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     nb = MultinomialNB(alpha=0.)
-    assert_warns(UserWarning, nb.fit, X, y)
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
     prob = np.array([[2. / 3, 1. / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test for alpha < 0
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
-    expected_msg = ('Smoothing parameter alpha = -1.0e-01. '
-                    'alpha should be > 0.')
+    expected_msg = re.escape(
+        'Smoothing parameter alpha = -1.0e-01. alpha should be > 0.'
+    )
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
     c_nb = CategoricalNB(alpha=-0.1)
-    assert_raise_message(ValueError, expected_msg, b_nb.fit, X, y)
-    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
-    assert_raise_message(ValueError, expected_msg, c_nb.fit, X, y)
+    with pytest.raises(ValueError, match=expected_msg):
+        b_nb.fit(X, y)
+    with pytest.raises(ValueError, match=expected_msg):
+        m_nb.fit(X, y)
+    with pytest.raises(ValueError, match=expected_msg):
+        c_nb.fit(X, y)
 
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
-    assert_raise_message(ValueError, expected_msg, b_nb.partial_fit,
-                         X, y, classes=[0, 1])
-    assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
-                         X, y, classes=[0, 1])
+    with pytest.raises(ValueError, match=expected_msg):
+        b_nb.partial_fit(X, y, classes=[0, 1])
+    with pytest.raises(ValueError, match=expected_msg):
+        m_nb.partial_fit(X, y, classes=[0, 1])
 
 
 def test_alpha_vector():
@@ -862,10 +897,12 @@ def test_alpha_vector():
 
     # Test alpha non-negative
     alpha = np.array([1., -0.1])
-    expected_msg = ('Smoothing parameter alpha = -1.0e-01. '
-                    'alpha should be > 0.')
     m_nb = MultinomialNB(alpha=alpha)
-    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
+    expected_msg = (
+        'Smoothing parameter alpha = -1.0e-01. alpha should be > 0.'
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        m_nb.fit(X, y)
 
     # Test that too small pseudo-counts are replaced
     ALPHA_MIN = 1e-10
@@ -879,9 +916,11 @@ def test_alpha_vector():
     # Test correct dimensions
     alpha = np.array([1., 2., 3.])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = ('alpha should be a scalar or a numpy array '
-                    'with shape [n_features]')
-    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
+    expected_msg = re.escape(
+        'alpha should be a scalar or a numpy array with shape [n_features]'
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        m_nb.fit(X, y)
 
 
 def test_check_accuracy_on_digits():

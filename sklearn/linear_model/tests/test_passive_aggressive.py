@@ -165,16 +165,16 @@ def test_equal_class_weight():
     X2 = [[1, 0], [1, 0], [0, 1], [0, 1]]
     y2 = [0, 0, 1, 1]
     clf = PassiveAggressiveClassifier(
-        C=0.1, max_iter=1000, tol=None, class_weight=None)
+        C=0.1, tol=None, class_weight=None)
     clf.fit(X2, y2)
 
     # Already balanced, so "balanced" weights should have no effect
     clf_balanced = PassiveAggressiveClassifier(
-        C=0.1, max_iter=1000, tol=None, class_weight="balanced")
+        C=0.1, tol=None, class_weight="balanced")
     clf_balanced.fit(X2, y2)
 
     clf_weighted = PassiveAggressiveClassifier(
-        C=0.1, max_iter=1000, tol=None, class_weight={0: 0.5, 1: 0.5})
+        C=0.1, tol=None, class_weight={0: 0.5, 1: 0.5})
     clf_weighted.fit(X2, y2)
 
     # should be similar up to some epsilon due to learning rate schedule
@@ -270,17 +270,3 @@ def test_regressor_undefined_methods():
     for meth in ("transform",):
         with pytest.raises(AttributeError):
             getattr(reg, meth)
-
-
-# TODO: remove in 1.0
-@pytest.mark.parametrize('klass', [PassiveAggressiveClassifier,
-                                   PassiveAggressiveRegressor])
-def test_passive_aggressive_deprecated_attr(klass):
-    est = klass(average=True)
-    est.fit(X, y)
-
-    msg = "Attribute {} was deprecated"
-    for att in ['average_coef_', 'average_intercept_',
-                'standard_coef_', 'standard_intercept_']:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(est, att)

@@ -1095,7 +1095,7 @@ with a svm classifier in a multiclass problem::
   LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
-  >>> hinge_loss(y_true, pred_decision, labels)
+  >>> hinge_loss(y_true, pred_decision, labels=labels)
   0.56...
 
 .. _log_loss:
@@ -2405,7 +2405,7 @@ quantile regressor via cross-validation:
   ...     random_state=0,
   ... )
   >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
-  array([11.1..., 10.4... , 24.4...,  9.2..., 12.9...])
+  array([13.6..., 9.7..., 23.3..., 9.5..., 10.4...])
 
 It is also possible to build scorer objects for hyper-parameter tuning. The
 sign of the loss must be switched to ensure that greater means better as

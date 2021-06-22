@@ -11,9 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     KBinsDiscretizer, PolynomialFeatures, SplineTransformer
 )
-from sklearn.utils.fixes import linspace, sp_version
-
-from pkg_resources import parse_version
+from sklearn.utils.fixes import linspace, sp_version, parse_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -98,9 +96,9 @@ def test_spline_transformer_manual_knot_input():
     """
     X = np.arange(20).reshape(10, 2)
     knots = [[0.5, 1], [1.5, 2], [5, 10]]
-    st1 = SplineTransformer(degree=3, knots=knots).fit(X)
+    st1 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
     knots = np.asarray(knots)
-    st2 = SplineTransformer(degree=3, knots=knots).fit(X)
+    st2 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
     for i in range(X.shape[1]):
         assert_allclose(st1.bsplines_[i].t, st2.bsplines_[i].t)
 
@@ -218,7 +216,7 @@ def test_spline_transformer_linear_regression(bias, intercept):
     ("uniform", 12, 8),
     (
         [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
-        100,  # this gets ignored.
+        None,
         3
     )
 ])
@@ -481,7 +479,7 @@ def test_polynomial_features():
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
     assert interact.powers_.shape == (interact.n_output_features_,
-                                      interact.n_input_features_)
+                                      interact.n_features_in_)
 
 
 def test_polynomial_feature_names():
@@ -550,6 +548,27 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
+@pytest.mark.parametrize("n_features", [1, 4, 5])
+@pytest.mark.parametrize("degree", range(1, 5))
+@pytest.mark.parametrize("interaction_only", [True, False])
+@pytest.mark.parametrize("include_bias", [True, False])
+def test_num_combinations(n_features, degree, interaction_only, include_bias):
+    """
+    Test that n_output_features_ is calculated correctly.
+    """
+    x = sparse.csr_matrix(([1], ([0], [n_features - 1])))
+    est = PolynomialFeatures(
+        degree, interaction_only=interaction_only, include_bias=include_bias
+    )
+    est.fit(x)
+    num_combos = est.n_output_features_
+
+    combos = PolynomialFeatures._combinations(
+        n_features, degree, interaction_only, include_bias
+    )
+    assert num_combos == sum([1 for _ in combos])
 
 
 @pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
@@ -634,3 +653,14 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
+def test_polynomial_features_deprecated_n_input_features():
+    # check that we raise a deprecation warning when accessing
+    # `n_input_features_`. FIXME: remove in 1.2
+    depr_msg = ("The attribute n_input_features_ was deprecated in version "
+                "1.0 and will be removed in 1.2.")
+    X = np.arange(10).reshape(5, 2)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        PolynomialFeatures().fit(X).n_input_features_

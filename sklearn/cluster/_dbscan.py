@@ -14,13 +14,12 @@ import warnings
 from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils.validation import _check_sample_weight, _deprecate_positional_args
+from ..utils.validation import _check_sample_weight
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
 
 
-@_deprecate_positional_args
 def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
            metric_params=None, algorithm='auto', leaf_size=30, p=2,
            sample_weight=None, n_jobs=None):
@@ -218,6 +217,11 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.cluster import DBSCAN
@@ -269,7 +273,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
-    @_deprecate_positional_args
     def __init__(self, eps=0.5, *, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
                  n_jobs=None):

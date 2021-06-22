@@ -433,6 +433,11 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Actual number of iterations used in the solver.
 
@@ -516,6 +521,11 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         Actual number of iterations used in the solver.
@@ -632,6 +642,11 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     ----------

@@ -12,7 +12,6 @@ from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.validation import _deprecate_positional_args
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -128,6 +127,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         This is stored only when a non-fitted estimator is passed to the
         ``SelectFromModel``, i.e when prefit is False.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     threshold_ : float
         The threshold value used for feature selection.
 
@@ -165,7 +170,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     SequentialFeatureSelector : Sequential cross-validation based feature
         selection. Does not rely on importance weights.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, threshold=None, prefit=False,
                  norm_order=1, max_features=None,
                  importance_getter='auto'):

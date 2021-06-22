@@ -159,7 +159,6 @@ def test_error_on_wrong_normalize():
     error_msg = "Leave 'normalize' to its default"
     with pytest.raises(ValueError, match=error_msg):
         _deprecate_normalize(normalize, default, 'estimator')
-    ValueError
 
 
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
@@ -220,33 +219,6 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
 
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
-
-
-@pytest.mark.parametrize(
-    'normalize, n_warnings, warning',
-    [(True, 1, FutureWarning),
-     (False, 1, FutureWarning),
-     ("deprecated", 0, None)]
-)
-# FIXME remove test in 1.4
-def test_linear_regression_normalize_deprecation(
-     normalize, n_warnings, warning
-):
-    # check that we issue a FutureWarning when normalize was set in
-    # LinearRegression
-    rng = check_random_state(0)
-    n_samples = 200
-    n_features = 2
-    X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.0
-    y = rng.rand(n_samples)
-
-    model = LinearRegression(normalize=normalize)
-    with pytest.warns(warning) as record:
-        model.fit(X, y)
-    assert len(record) == n_warnings
-    if n_warnings:
-        assert "'normalize' was deprecated" in str(record[0].message)
 
 
 # FIXME: 'normalize' to be removed in 1.2 in LinearRegression
@@ -495,7 +467,9 @@ def test_preprocess_data_weighted(is_sparse):
                                      axis=0)
     constant_mask = X_sample_weight_var < 10 * np.finfo(X.dtype).eps
     assert_array_equal(constant_mask, [0, 0, 1, 1])
-    expected_X_scale = np.sqrt(X_sample_weight_var) * np.sqrt(n_samples)
+    expected_X_scale = (
+        np.sqrt(X_sample_weight_var) * np.sqrt(sample_weight.sum())
+    )
 
     # near constant features should not be scaled
     expected_X_scale[constant_mask] = 1
@@ -538,14 +512,16 @@ def test_preprocess_data_weighted(is_sparse):
     # _preprocess_data with normalize=True scales the data by the feature-wise
     # euclidean norms while StandardScaler scales the data by the feature-wise
     # standard deviations.
-    # The two are equivalent up to a ratio of np.sqrt(n_samples).
+    # The two are equivalent up to a ratio of np.sqrt(n_samples) if unweighted
+    # or np.sqrt(sample_weight.sum()) if weighted.
     if is_sparse:
         scaler = StandardScaler(with_mean=False).fit(
             X, sample_weight=sample_weight)
 
         # Non-constant features are scaled similarly with np.sqrt(n_samples)
         assert_array_almost_equal(
-            scaler.transform(X).toarray()[:, :2] / np.sqrt(n_samples),
+            scaler.transform(X).toarray()[:, :2]
+            / np.sqrt(sample_weight.sum()),
             Xt.toarray()[:, :2]
         )
 
@@ -558,7 +534,10 @@ def test_preprocess_data_weighted(is_sparse):
         scaler = StandardScaler(with_mean=True).fit(
             X, sample_weight=sample_weight)
         assert_array_almost_equal(scaler.mean_, X_mean)
-        assert_array_almost_equal(scaler.transform(X) / np.sqrt(n_samples), Xt)
+        assert_array_almost_equal(
+            scaler.transform(X) / np.sqrt(sample_weight.sum()),
+            Xt,
+        )
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 

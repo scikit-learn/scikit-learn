@@ -28,6 +28,8 @@ import joblib
 from numpy.testing import assert_allclose
 
 from sklearn.utils._testing import assert_allclose
+from sklearn.dummy import DummyRegressor
+from sklearn.metrics import mean_poisson_deviance
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -52,6 +54,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
+
+from sklearn.metrics import mean_squared_error
 
 from sklearn.tree._classes import SPARSE_SPLITTERS
 
@@ -179,9 +183,81 @@ def check_regression_criterion(name, criterion):
 
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
-@pytest.mark.parametrize('criterion', ("squared_error", "mae", "friedman_mse"))
+@pytest.mark.parametrize('criterion', (
+    "squared_error", "absolute_error", "friedman_mse"
+))
 def test_regression(name, criterion):
     check_regression_criterion(name, criterion)
+
+
+def test_poisson_vs_mse():
+    """Test that random forest with poisson criterion performs better than
+    mse for a poisson target."""
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 500, 10
+    X = datasets.make_low_rank_matrix(n_samples=n_train + n_test,
+                                      n_features=n_features, random_state=rng)
+    X = np.abs(X)
+    X /= np.max(np.abs(X), axis=0)
+    # We create a log-linear Poisson model
+    coef = rng.uniform(low=-4, high=1, size=n_features)
+    y = rng.poisson(lam=np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
+                                                        random_state=rng)
+
+    forest_poi = RandomForestRegressor(
+        criterion="poisson",
+        min_samples_leaf=10,
+        max_features="sqrt",
+        random_state=rng)
+    forest_mse = RandomForestRegressor(
+        criterion="squared_error",
+        min_samples_leaf=10,
+        max_features="sqrt",
+        random_state=rng)
+
+    forest_poi.fit(X_train, y_train)
+    forest_mse.fit(X_train, y_train)
+    dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
+
+    for X, y, val in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
+        metric_poi = mean_poisson_deviance(y, forest_poi.predict(X))
+        # squared_error forest might produce non-positive predictions => clip
+        # If y = 0 for those, the poisson deviance gets too good.
+        # If we drew more samples, we would eventually get y > 0 and the
+        # poisson deviance would explode, i.e. be undefined. Therefore, we do
+        # not clip to a tiny value like 1e-15, but to 0.1. This acts like a
+        # mild penalty to the non-positive predictions.
+        metric_mse = mean_poisson_deviance(
+            y,
+            np.clip(forest_mse.predict(X), 1e-6, None))
+        metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
+        # As squared_error might correctly predict 0 in train set, its train
+        # score can be better than Poisson. This is no longer the case for the
+        # test set. But keep the above comment for clipping in mind.
+        if val == "test":
+            assert metric_poi < metric_mse
+        assert metric_poi < metric_dummy
+
+
+@pytest.mark.parametrize('criterion', ('poisson', 'squared_error'))
+def test_balance_property_random_forest(criterion):
+    """"Test that sum(y_pred)==sum(y_true) on the training set."""
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 500, 10
+    X = datasets.make_low_rank_matrix(n_samples=n_train + n_test,
+                                      n_features=n_features, random_state=rng)
+
+    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
+    y = rng.poisson(lam=np.exp(X @ coef))
+
+    reg = RandomForestRegressor(criterion=criterion,
+                                n_estimators=10,
+                                bootstrap=False,
+                                random_state=rng)
+    reg.fit(X, y)
+
+    assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
 
 
 def check_regressor_attributes(name):
@@ -264,10 +340,14 @@ def check_importances(name, criterion, dtype, tolerance):
         itertools.chain(product(FOREST_CLASSIFIERS,
                                 ["gini", "entropy"]),
                         product(FOREST_REGRESSORS,
-                                ["squared_error", "friedman_mse", "mae"])))
+                                [
+                                 "squared_error",
+                                 "friedman_mse",
+                                 "absolute_error"
+                                 ])))
 def test_importances(dtype, name, criterion):
     tolerance = 0.01
-    if name in FOREST_REGRESSORS and criterion == "mae":
+    if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
     check_importances(name, criterion, dtype, tolerance)
 
@@ -1536,21 +1616,6 @@ def test_decision_path(name):
     check_decision_path(name)
 
 
-def test_min_impurity_split():
-    # Test if min_impurity_split of base estimators is set
-    # Regression test for #8006
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    all_estimators = [RandomForestClassifier, RandomForestRegressor,
-                      ExtraTreesClassifier, ExtraTreesRegressor]
-
-    for Estimator in all_estimators:
-        est = Estimator(min_impurity_split=0.1)
-        with pytest.warns(FutureWarning, match="min_impurity_decrease"):
-            est = est.fit(X, y)
-        for tree in est.estimators_:
-            assert tree.min_impurity_split == 0.1
-
-
 def test_min_impurity_decrease():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     all_estimators = [RandomForestClassifier, RandomForestRegressor,
@@ -1563,6 +1628,23 @@ def test_min_impurity_decrease():
             # Simply check if the parameter is passed on correctly. Tree tests
             # will suffice for the actual working of this param
             assert tree.min_impurity_decrease == 0.1
+
+
+def test_poisson_y_positive_check():
+    est = RandomForestRegressor(criterion="poisson")
+    X = np.zeros((3, 3))
+
+    y = [-1, 1, 3]
+    err_msg = (r"Some value\(s\) of y are negative which is "
+               r"not allowed for Poisson regression.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y)
+
+    y = [0, 0, 0]
+    err_msg = (r"Sum of y is not strictly positive which "
+               r"is necessary for Poisson regression.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y)
 
 
 # mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
@@ -1619,16 +1701,14 @@ def test_forest_degenerate_feature_importances():
     'max_samples, exc_type, exc_msg',
     [(int(1e9), ValueError,
       "`max_samples` must be in range 1 to 6 but got value 1000000000"),
-     (1.0, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value 1.0"),
      (2.0, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value 2.0"),
+      r"`max_samples` must be in range \(0.0, 1.0\] but got value 2.0"),
      (0.0, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value 0.0"),
+      r"`max_samples` must be in range \(0.0, 1.0\] but got value 0.0"),
      (np.nan, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value nan"),
+      r"`max_samples` must be in range \(0.0, 1.0\] but got value nan"),
      (np.inf, ValueError,
-      r"`max_samples` must be in range \(0, 1\) but got value inf"),
+      r"`max_samples` must be in range \(0.0, 1.0\] but got value inf"),
      ('str max_samples?!', TypeError,
       r"`max_samples` should be int or float, but got "
       r"type '\<class 'str'\>'"),
@@ -1641,6 +1721,37 @@ def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
     with pytest.raises(exc_type, match=exc_msg):
         est.fit(X, y)
+
+
+@pytest.mark.parametrize('name', FOREST_REGRESSORS)
+def test_max_samples_boundary_regressors(name):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_reg, y_reg, train_size=0.7, test_size=0.3, random_state=0)
+
+    ms_1_model = FOREST_REGRESSORS[name](max_samples=1.0, random_state=0)
+    ms_1_predict = ms_1_model.fit(X_train, y_train).predict(X_test)
+
+    ms_None_model = FOREST_REGRESSORS[name](max_samples=None, random_state=0)
+    ms_None_predict = ms_None_model.fit(X_train, y_train).predict(X_test)
+
+    ms_1_ms = mean_squared_error(ms_1_predict, y_test)
+    ms_None_ms = mean_squared_error(ms_None_predict, y_test)
+
+    assert ms_1_ms == pytest.approx(ms_None_ms)
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_max_samples_boundary_classifiers(name):
+    X_train, X_test, y_train, _ = train_test_split(
+        X_large, y_large, random_state=0, stratify=y_large)
+
+    ms_1_model = FOREST_CLASSIFIERS[name](max_samples=1.0, random_state=0)
+    ms_1_proba = ms_1_model.fit(X_train, y_train).predict_proba(X_test)
+
+    ms_None_model = FOREST_CLASSIFIERS[name](max_samples=None, random_state=0)
+    ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
+
+    np.testing.assert_allclose(ms_1_proba, ms_None_proba)
 
 
 def test_forest_y_sparse():
@@ -1704,14 +1815,18 @@ def test_n_features_deprecation(Estimator):
 
 
 # TODO: Remove in v1.2
-def test_mse_deprecated():
-    est1 = RandomForestRegressor(criterion="mse", random_state=0)
+@pytest.mark.parametrize("old_criterion, new_criterion", [
+    ("mse", "squared_error"),
+    ("mae", "absolute_error"),
+])
+def test_criterion_deprecated(old_criterion, new_criterion):
+    est1 = RandomForestRegressor(criterion=old_criterion, random_state=0)
 
     with pytest.warns(FutureWarning,
-                      match="Criterion 'mse' was deprecated"):
+                      match=f"Criterion '{old_criterion}' was deprecated"):
         est1.fit(X, y)
 
-    est2 = RandomForestRegressor(criterion="squared_error", random_state=0)
+    est2 = RandomForestRegressor(criterion=new_criterion, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 
