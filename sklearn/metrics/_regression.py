@@ -437,7 +437,7 @@ def mean_squared_error(
 
 
 def mean_squared_log_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
 ):
     """Mean squared logarithmic error regression loss.
 
@@ -466,6 +466,9 @@ def mean_squared_log_error(
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+            
+        'squared' : bool, default=True
+        If True returns MSLE(mean squared log error) value, if False returns RMSLE(root mean squared log error) value.
 
     Returns
     -------
@@ -488,6 +491,8 @@ def mean_squared_log_error(
     array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
+    >>> mean_squared_log_error(y_true, y_pred, squared=False)
+    0.197...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -499,13 +504,19 @@ def mean_squared_log_error(
             "Mean Squared Logarithmic Error cannot be used when "
             "targets contain negative values."
         )
-
-    return mean_squared_error(
-        np.log1p(y_true),
-        np.log1p(y_pred),
-        sample_weight=sample_weight,
-        multioutput=multioutput,
-    )
+    if not squared:
+        return np.sqrt( mean_squared_error(
+            np.log1p(y_true),
+            np.log1p(y_pred),
+            sample_weight=sample_weight,
+            multioutput=multioutput,)
+    else:
+        return mean_squared_error(
+            np.log1p(y_true),
+            np.log1p(y_pred),
+            sample_weight=sample_weight,
+            multioutput=multioutput,
+        )
 
 
 def median_absolute_error(
