@@ -2058,8 +2058,9 @@ Cluster to split is picked depending on parameter ``bisect_strategy``:
 Cluster to split is always picked from all clusters obtained from previous
 iterations of algorithm. This leads to more balanced split of data.
 
-Picking by largest amount of data points in most cases produce result as
-accurate as picking by SSE and be faster (especially for larger amount of data points, where calculating error may be costly).
+Picking by largest amount of data points in most cases produces result as
+accurate as picking by SSE and is faster (especially for larger amount of data
+points, where calculating error may be costly).
 
 .. topic:: References:
 
