@@ -513,16 +513,13 @@ def mean_squared_log_error(
             "targets contain negative values."
         )
 
-    msle = mean_squared_error(
+    return mean_squared_error(
         np.log1p(y_true),
         np.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
+        squared=squared,
     )
-    if squared:
-        return msle
-    else:
-        return np.sqrt(msle)
 
 
 def median_absolute_error(
