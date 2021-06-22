@@ -12,17 +12,6 @@ cimport numpy as np
 np.import_array()  # required in order to use C-API
 
 
-######################################################################
-# Numpy 1.3-1.4 compatibility utilities
-cdef DTYPE_t* get_vec_ptr(np.ndarray[DTYPE_t, ndim=1, mode='c'] vec):
-    return &vec[0]
-
-
-cdef DTYPE_t* get_mat_ptr(np.ndarray[DTYPE_t, ndim=2, mode='c'] mat):
-    return &mat[0, 0]
-######################################################################
-
-
 # First, define a function to get an ndarray from a memory bufffer
 cdef extern from "arrayobject.h":
     object PyArray_SimpleNewFromData(int nd, np.npy_intp* dims,
@@ -209,8 +198,6 @@ cdef class DistanceMetric:
         self.p = 2
         self.vec = np.zeros(1, dtype=DTYPE, order='c')
         self.mat = np.zeros((1, 1), dtype=DTYPE, order='c')
-        self.vec_ptr = get_vec_ptr(self.vec)
-        self.mat_ptr = get_mat_ptr(self.mat)
         self.size = 1
 
     def __reduce__(self):
@@ -224,8 +211,8 @@ cdef class DistanceMetric:
         get state for pickling
         """
         if self.__class__.__name__ == "PyFuncDistance":
-            return (float(self.p), self.vec, self.mat, self.func, self.kwargs)
-        return (float(self.p), self.vec, self.mat)
+            return (float(self.p), np.asarray(self.vec), np.asarray(self.mat), self.func, self.kwargs)
+        return (float(self.p), np.asarray(self.vec), np.asarray(self.mat))
 
     def __setstate__(self, state):
         """
@@ -237,8 +224,6 @@ cdef class DistanceMetric:
         if self.__class__.__name__ == "PyFuncDistance":
             self.func = state[3]
             self.kwargs = state[4]
-        self.vec_ptr = get_vec_ptr(self.vec)
-        self.mat_ptr = get_mat_ptr(self.mat)
         self.size = self.vec.shape[0]
 
     @classmethod
@@ -447,7 +432,6 @@ cdef class SEuclideanDistance(DistanceMetric):
     """
     def __init__(self, V):
         self.vec = np.asarray(V, dtype=DTYPE)
-        self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
         self.p = 2
 
@@ -461,7 +445,7 @@ cdef class SEuclideanDistance(DistanceMetric):
         cdef np.intp_t j
         for j in range(size):
             tmp = x1[j] - x2[j]
-            d += tmp * tmp / self.vec_ptr[j]
+            d += tmp * tmp / self.vec[j]
         return d
 
     cdef inline DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
@@ -609,7 +593,6 @@ cdef class WMinkowskiDistance(DistanceMetric):
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
         self.vec = np.asarray(w, dtype=DTYPE)
-        self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
 
     def _validate_data(self, X):
@@ -622,7 +605,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
         cdef DTYPE_t d=0
         cdef np.intp_t j
         for j in range(size):
-            d += pow(self.vec_ptr[j] * fabs(x1[j] - x2[j]), self.p)
+            d += pow(self.vec[j] * fabs(x1[j] - x2[j]), self.p)
         return d
 
     cdef inline DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
@@ -670,13 +653,11 @@ cdef class MahalanobisDistance(DistanceMetric):
             raise ValueError("V/VI must be square")
 
         self.mat = np.asarray(VI, dtype=float, order='C')
-        self.mat_ptr = get_mat_ptr(self.mat)
 
         self.size = self.mat.shape[0]
 
         # we need vec as a work buffer
         self.vec = np.zeros(self.size, dtype=DTYPE)
-        self.vec_ptr = get_vec_ptr(self.vec)
 
     def _validate_data(self, X):
         if X.shape[1] != self.size:
@@ -689,13 +670,13 @@ cdef class MahalanobisDistance(DistanceMetric):
 
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
-            self.vec_ptr[i] = x1[i] - x2[i]
+            self.vec[i] = x1[i] - x2[i]
 
         for i in range(size):
             tmp = 0
             for j in range(size):
-                tmp += self.mat_ptr[i * size + j] * self.vec_ptr[j]
-            d += tmp * self.vec_ptr[i]
+                tmp += self.mat[i, j] * self.vec[j]
+            d += tmp * self.vec[i]
         return d
 
     cdef inline DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
