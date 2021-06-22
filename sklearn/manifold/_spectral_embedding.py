@@ -203,7 +203,7 @@ def spectral_embedding(
         when using arpack eigen_solver.
 
     norm_laplacian : bool, default=True
-        If True, then compute normalized Laplacian.
+        If True, then compute symmetric normalized Laplacian.
 
     drop_first : bool, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
@@ -302,6 +302,7 @@ def spectral_embedding(
             )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
+                # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
@@ -334,11 +335,13 @@ def spectral_embedding(
         laplacian -= diag_shift
 
         M = ml.aspreconditioner()
+        # Create initial approximation X to eigenvectors
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.0e-5, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
+            # recover u = D^-1/2 x from the eigenvector output x
             embedding = embedding / dd
         if embedding.shape[0] == 1:
             raise ValueError
@@ -355,11 +358,13 @@ def spectral_embedding(
             _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
+                # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
         else:
             laplacian = _set_diag(laplacian, 1, norm_laplacian)
             # We increase the number of eigenvectors requested, as lobpcg
-            # doesn't behave well in low dimension
+            # doesn't behave well in low dimension and create initial
+            # approximation X to eigenvectors
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
             _, diffusion_map = lobpcg(
@@ -367,6 +372,7 @@ def spectral_embedding(
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
+                # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
             if embedding.shape[0] == 1:
                 raise ValueError

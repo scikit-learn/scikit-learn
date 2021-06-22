@@ -187,8 +187,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.classes_
 
     def fit(self, X, y):
-        """Fit the RFE model and then the underlying estimator on the selected
-           features.
+        """Fit the RFE model and then the underlying estimator on the selected features.
 
         Parameters
         ----------
@@ -299,8 +298,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @if_delegate_has_method(delegate="estimator")
     def predict(self, X):
-        """Reduce X to the selected features and then predict using the
-           underlying estimator.
+        """Reduce X to the selected features and then predict using the underlying estimator.
 
         Parameters
         ----------
@@ -317,8 +315,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @if_delegate_has_method(delegate="estimator")
     def score(self, X, y):
-        """Reduce X to the selected features and then return the score of the
-           underlying estimator.
+        """Reduce X to the selected features and return the score of the underlying estimator.
 
         Parameters
         ----------
@@ -579,8 +576,7 @@ class RFECV(RFE):
         self.min_features_to_select = min_features_to_select
 
     def fit(self, X, y, groups=None):
-        """Fit the RFE model and automatically tune the number of selected
-           features.
+        """Fit the RFE model and automatically tune the number of selected features.
 
         Parameters
         ----------
