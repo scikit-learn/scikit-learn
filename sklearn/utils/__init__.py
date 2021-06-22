@@ -26,11 +26,18 @@ from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
-from .validation import (as_float_array,
-                         assert_all_finite,
-                         check_random_state, column_or_1d, check_array,
-                         check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar)
+from .validation import (
+    as_float_array,
+    assert_all_finite,
+    check_random_state,
+    column_or_1d,
+    check_array,
+    check_consistent_length,
+    check_X_y,
+    indexable,
+    check_symmetric,
+    check_scalar,
+)
 from .. import get_config
 
 
@@ -42,18 +49,33 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
-__all__ = ["murmurhash3_32", "as_float_array",
-           "assert_all_finite", "check_array",
-           "check_random_state",
-           "compute_class_weight", "compute_sample_weight",
-           "column_or_1d",
-           "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
-           "check_symmetric", "indices_to_mask", "deprecated",
-           "parallel_backend", "register_parallel_backend",
-           "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_html_repr"]
+__all__ = [
+    "murmurhash3_32",
+    "as_float_array",
+    "assert_all_finite",
+    "check_array",
+    "check_random_state",
+    "compute_class_weight",
+    "compute_sample_weight",
+    "column_or_1d",
+    "check_consistent_length",
+    "check_X_y",
+    "check_scalar",
+    "indexable",
+    "check_symmetric",
+    "indices_to_mask",
+    "deprecated",
+    "parallel_backend",
+    "register_parallel_backend",
+    "resample",
+    "shuffle",
+    "check_matplotlib_support",
+    "all_estimators",
+    "DataConversionWarning",
+    "estimator_html_repr",
+]
 
-IS_PYPY = platform.python_implementation() == 'PyPy'
+IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
@@ -168,10 +190,10 @@ def axis0_safe_slice(X, mask, len_mask):
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    if np_version < parse_version('1.12') or issparse(array):
+    if np_version < parse_version("1.12") or issparse(array):
         # FIXME: Remove the check for NumPy when using >= 1.12
         # check if we have an boolean array-likes to make the proper indexing
-        if key_dtype == 'bool':
+        if key_dtype == "bool":
             key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
@@ -180,7 +202,7 @@ def _array_indexing(array, key, key_dtype, axis):
 
 def _pandas_indexing(X, key, key_dtype, axis):
     """Index a pandas dataframe or a series."""
-    if hasattr(key, 'shape'):
+    if hasattr(key, "shape"):
         # Work-around for indexing with read-only key in pandas
         # FIXME: solved in pandas 0.25
         key = np.asarray(key)
@@ -188,7 +210,7 @@ def _pandas_indexing(X, key, key_dtype, axis):
     elif isinstance(key, tuple):
         key = list(key)
     # check whether we should index with loc or iloc
-    indexer = X.iloc if key_dtype == 'int' else X.loc
+    indexer = X.iloc if key_dtype == "int" else X.loc
     return indexer[:, key] if axis else indexer[key]
 
 
@@ -197,7 +219,7 @@ def _list_indexing(X, key, key_dtype):
     if np.isscalar(key) or isinstance(key, slice):
         # key is a slice or a scalar
         return X[key]
-    if key_dtype == 'bool':
+    if key_dtype == "bool":
         # key is a boolean array-like
         return list(compress(X, key))
     # key is a integer array-like of key
@@ -220,13 +242,21 @@ def _determine_key_type(key, accept_slice=True):
     dtype : {'int', 'str', 'bool', None}
         Returns the data type of key.
     """
-    err_msg = ("No valid specification of the columns. Only a scalar, list or "
-               "slice of all integers or all strings, or boolean mask is "
-               "allowed")
+    err_msg = (
+        "No valid specification of the columns. Only a scalar, list or "
+        "slice of all integers or all strings, or boolean mask is "
+        "allowed"
+    )
 
-    dtype_to_str = {int: 'int', str: 'str', bool: 'bool', np.bool_: 'bool'}
-    array_dtype_to_str = {'i': 'int', 'u': 'int', 'b': 'bool', 'O': 'str',
-                          'U': 'str', 'S': 'str'}
+    dtype_to_str = {int: "int", str: "str", bool: "bool", np.bool_: "bool"}
+    array_dtype_to_str = {
+        "i": "int",
+        "u": "int",
+        "b": "bool",
+        "O": "str",
+        "U": "str",
+        "S": "str",
+    }
 
     if key is None:
         return None
@@ -238,8 +268,7 @@ def _determine_key_type(key, accept_slice=True):
     if isinstance(key, slice):
         if not accept_slice:
             raise TypeError(
-                'Only array-like or scalar are supported. '
-                'A Python slice was given.'
+                "Only array-like or scalar are supported. " "A Python slice was given."
             )
         if key.start is None and key.stop is None:
             return None
@@ -259,7 +288,7 @@ def _determine_key_type(key, accept_slice=True):
         if len(key_type) != 1:
             raise ValueError(err_msg)
         return key_type.pop()
-    if hasattr(key, 'dtype'):
+    if hasattr(key, "dtype"):
         try:
             return array_dtype_to_str[key.dtype.kind]
         except KeyError:
@@ -319,10 +348,8 @@ def _safe_indexing(X, indices, *, axis=0):
 
     indices_dtype = _determine_key_type(indices)
 
-    if axis == 0 and indices_dtype == 'str':
-        raise ValueError(
-            "String indexing is not supported with 'axis=0'"
-        )
+    if axis == 0 and indices_dtype == "str":
+        raise ValueError("String indexing is not supported with 'axis=0'")
 
     if axis == 1 and X.ndim != 2:
         raise ValueError(
@@ -331,7 +358,7 @@ def _safe_indexing(X, indices, *, axis=0):
             "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
         )
 
-    if axis == 1 and indices_dtype == 'str' and not hasattr(X, 'loc'):
+    if axis == 1 and indices_dtype == "str" and not hasattr(X, "loc"):
         raise ValueError(
             "Specifying the columns using strings is only supported for "
             "pandas DataFrames"
@@ -358,22 +385,25 @@ def _get_column_indices(X, key):
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
-    elif key_dtype in ('bool', 'int'):
+    elif key_dtype in ("bool", "int"):
         # Convert key into positive indexes
         try:
             idx = _safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
-                'all features must be in [0, {}] or [-{}, 0]'
-                .format(n_columns - 1, n_columns)
+                "all features must be in [0, {}] or [-{}, 0]".format(
+                    n_columns - 1, n_columns
+                )
             ) from e
         return np.atleast_1d(idx).tolist()
-    elif key_dtype == 'str':
+    elif key_dtype == "str":
         try:
             all_columns = X.columns
         except AttributeError:
-            raise ValueError("Specifying the columns using strings is only "
-                             "supported for pandas DataFrames")
+            raise ValueError(
+                "Specifying the columns using strings is only "
+                "supported for pandas DataFrames"
+            )
         if isinstance(key, str):
             columns = [key]
         elif isinstance(key, slice):
@@ -394,27 +424,24 @@ def _get_column_indices(X, key):
             for col in columns:
                 col_idx = all_columns.get_loc(col)
                 if not isinstance(col_idx, numbers.Integral):
-                    raise ValueError(f"Selected columns, {columns}, are not "
-                                     "unique in dataframe")
+                    raise ValueError(
+                        f"Selected columns, {columns}, are not " "unique in dataframe"
+                    )
                 column_indices.append(col_idx)
 
         except KeyError as e:
-            raise ValueError(
-                "A given column is not a column of the dataframe"
-            ) from e
+            raise ValueError("A given column is not a column of the dataframe") from e
 
         return column_indices
     else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
+        raise ValueError(
+            "No valid specification of the columns. Only a "
+            "scalar, list or slice of all integers or all "
+            "strings, or boolean mask is allowed"
+        )
 
 
-def resample(*arrays,
-             replace=True,
-             n_samples=None,
-             random_state=None,
-             stratify=None):
+def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None):
     """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
@@ -505,14 +532,15 @@ def resample(*arrays,
         return None
 
     first = arrays[0]
-    n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
+    n_samples = first.shape[0] if hasattr(first, "shape") else len(first)
 
     if max_n_samples is None:
         max_n_samples = n_samples
     elif (max_n_samples > n_samples) and (not replace):
-        raise ValueError("Cannot sample %d out of arrays with dim %d "
-                         "when replace is False" % (max_n_samples,
-                                                    n_samples))
+        raise ValueError(
+            "Cannot sample %d out of arrays with dim %d "
+            "when replace is False" % (max_n_samples, n_samples)
+        )
 
     check_consistent_length(*arrays)
 
@@ -529,7 +557,7 @@ def resample(*arrays,
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
-            y = np.array([' '.join(row.astype('str')) for row in y])
+            y = np.array([" ".join(row.astype("str")) for row in y])
 
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
@@ -538,16 +566,16 @@ def resample(*arrays,
 
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
-        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
-                                 np.cumsum(class_counts)[:-1])
+        class_indices = np.split(
+            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+        )
 
         n_i = _approximate_mode(class_counts, max_n_samples, random_state)
 
         indices = []
 
         for i in range(n_classes):
-            indices_i = random_state.choice(class_indices[i], n_i[i],
-                                            replace=replace)
+            indices_i = random_state.choice(class_indices[i], n_i[i], replace=replace)
             indices.extend(indices_i)
 
         indices = random_state.permutation(indices)
@@ -627,8 +655,9 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     --------
     resample
     """
-    return resample(*arrays, replace=False, n_samples=n_samples,
-                    random_state=random_state)
+    return resample(
+        *arrays, replace=False, n_samples=n_samples, random_state=random_state
+    )
 
 
 def safe_sqr(X, *, copy=True):
@@ -646,7 +675,7 @@ def safe_sqr(X, *, copy=True):
     -------
     X ** 2 : element wise square
     """
-    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
+    X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
     if issparse(X):
         if copy:
             X = X.copy()
@@ -707,11 +736,13 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     [slice(0, 3, None), slice(3, 7, None)]
     """
     if not isinstance(batch_size, numbers.Integral):
-        raise TypeError("gen_batches got batch_size=%s, must be an"
-                        " integer" % batch_size)
+        raise TypeError(
+            "gen_batches got batch_size=%s, must be an" " integer" % batch_size
+        )
     if batch_size <= 0:
-        raise ValueError("gen_batches got batch_size=%s, must be"
-                         " positive" % batch_size)
+        raise ValueError(
+            "gen_batches got batch_size=%s, must be" " positive" % batch_size
+        )
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
@@ -759,8 +790,7 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     """
     start = 0
     if n_packs < 1:
-        raise ValueError("gen_even_slices got n_packs=%s, must be >=1"
-                         % n_packs)
+        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:
@@ -879,8 +909,8 @@ def _message_with_time(source, message, time):
     else:
         time_str = " %5.1fs" % time
     end_message = " %s, total=%s" % (message, time_str)
-    dots_len = (70 - len(start_message) - len(end_message))
-    return "%s%s%s" % (start_message, dots_len * '.', end_message)
+    dots_len = 70 - len(start_message) - len(end_message)
+    return "%s%s%s" % (start_message, dots_len * ".", end_message)
 
 
 @contextmanager
@@ -905,9 +935,7 @@ def _print_elapsed_time(source, message=None):
     else:
         start = timeit.default_timer()
         yield
-        print(
-            _message_with_time(source, message,
-                               timeit.default_timer() - start))
+        print(_message_with_time(source, message, timeit.default_timer() - start))
 
 
 def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
@@ -935,15 +963,17 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     """
 
     if working_memory is None:
-        working_memory = get_config()['working_memory']
+        working_memory = get_config()["working_memory"]
 
     chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
     if max_n_rows is not None:
         chunk_n_rows = min(chunk_n_rows, max_n_rows)
     if chunk_n_rows < 1:
-        warnings.warn('Could not adhere to working_memory config. '
-                      'Currently %.0fMiB, %.0fMiB required.' %
-                      (working_memory, np.ceil(row_bytes * 2 ** -20)))
+        warnings.warn(
+            "Could not adhere to working_memory config. "
+            "Currently %.0fMiB, %.0fMiB required."
+            % (working_memory, np.ceil(row_bytes * 2 ** -20))
+        )
         chunk_n_rows = 1
     return chunk_n_rows
 
@@ -1035,7 +1065,7 @@ def _approximate_mode(class_counts, n_draws, rng):
         # add according to remainder, but break ties
         # randomly to avoid biases
         for value in values:
-            inds, = np.where(remainder == value)
+            (inds,) = np.where(remainder == value)
             # if we need_to_add less than what's in inds
             # we draw randomly from them.
             # if we need to add more, we add them all and
@@ -1083,11 +1113,10 @@ def check_pandas_support(caller_name):
     """
     try:
         import pandas  # noqa
+
         return pandas
     except ImportError as e:
-        raise ImportError(
-            "{} requires pandas.".format(caller_name)
-        ) from e
+        raise ImportError("{} requires pandas.".format(caller_name)) from e
 
 
 def all_estimators(type_filter=None):
@@ -1115,11 +1144,16 @@ def all_estimators(type_filter=None):
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings
-    from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
-                        TransformerMixin, ClusterMixin)
+    from ..base import (
+        BaseEstimator,
+        ClassifierMixin,
+        RegressorMixin,
+        TransformerMixin,
+        ClusterMixin,
+    )
 
     def is_abstract(c):
-        if not(hasattr(c, '__abstractmethods__')):
+        if not (hasattr(c, "__abstractmethods__")):
             return False
         if not len(c.__abstractmethods__):
             return False
@@ -1132,29 +1166,35 @@ def all_estimators(type_filter=None):
     # packages
     with ignore_warnings(category=FutureWarning):
         for importer, modname, ispkg in pkgutil.walk_packages(
-                path=[root], prefix='sklearn.'):
+            path=[root], prefix="sklearn."
+        ):
             mod_parts = modname.split(".")
-            if (any(part in modules_to_ignore for part in mod_parts)
-                    or '._' in modname):
+            if any(part in modules_to_ignore for part in mod_parts) or "._" in modname:
                 continue
             module = import_module(modname)
             classes = inspect.getmembers(module, inspect.isclass)
-            classes = [(name, est_cls) for name, est_cls in classes
-                       if not name.startswith("_")]
+            classes = [
+                (name, est_cls) for name, est_cls in classes if not name.startswith("_")
+            ]
 
             # TODO: Remove when FeatureHasher is implemented in PYPY
             # Skips FeatureHasher for PYPY
-            if IS_PYPY and 'feature_extraction' in modname:
-                classes = [(name, est_cls) for name, est_cls in classes
-                           if name == "FeatureHasher"]
+            if IS_PYPY and "feature_extraction" in modname:
+                classes = [
+                    (name, est_cls)
+                    for name, est_cls in classes
+                    if name == "FeatureHasher"
+                ]
 
             all_classes.extend(classes)
 
     all_classes = set(all_classes)
 
-    estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator) and
-                      c[0] != 'BaseEstimator')]
+    estimators = [
+        c
+        for c in all_classes
+        if (issubclass(c[1], BaseEstimator) and c[0] != "BaseEstimator")
+    ]
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
@@ -1164,21 +1204,26 @@ def all_estimators(type_filter=None):
         else:
             type_filter = list(type_filter)  # copy
         filtered_estimators = []
-        filters = {'classifier': ClassifierMixin,
-                   'regressor': RegressorMixin,
-                   'transformer': TransformerMixin,
-                   'cluster': ClusterMixin}
+        filters = {
+            "classifier": ClassifierMixin,
+            "regressor": RegressorMixin,
+            "transformer": TransformerMixin,
+            "cluster": ClusterMixin,
+        }
         for name, mixin in filters.items():
             if name in type_filter:
                 type_filter.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], mixin)])
+                filtered_estimators.extend(
+                    [est for est in estimators if issubclass(est[1], mixin)]
+                )
         estimators = filtered_estimators
         if type_filter:
-            raise ValueError("Parameter type_filter must be 'classifier', "
-                             "'regressor', 'transformer', 'cluster' or "
-                             "None, got"
-                             " %s." % repr(type_filter))
+            raise ValueError(
+                "Parameter type_filter must be 'classifier', "
+                "'regressor', 'transformer', 'cluster' or "
+                "None, got"
+                " %s." % repr(type_filter)
+            )
 
     # drop duplicates, sort for reproducibility
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
