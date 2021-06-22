@@ -355,6 +355,7 @@ MDI and the permutation feature importances are explored in:
  * :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
 
 .. topic:: References
+
   .. [Strobl07] `Strobl, C., Boulesteix, AL., Zeileis, A. et al.
      Bias in random forest variable importance measures: Illustrations,
      sources and a solution.
@@ -364,6 +365,9 @@ MDI and the permutation feature importances are explored in:
      Bias in Information-Based Measures in Decision Tree Induction.
      Machine Learning 15, 321–329 (1994).
      <https://doi.org/10.1023/A:1022694010754>`_
+  .. [L2014] G. Louppe,
+     "Understanding Random Forests: From Theory to Practice",
+     PhD Thesis, U. of Liege, 2014.
 
 .. _random_trees_embedding:
 
