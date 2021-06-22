@@ -36,11 +36,13 @@ X_train, X_test, y_train, y_test = train_test_split(
 from sklearn.ensemble import RandomForestClassifier
 
 feature_names = [f'feature {i}' for i in range(X.shape[1])]
-forest = RandomForestClassifier(random_state=0)
-forest.fit(X_train, y_train)
+
+# MDI-based feature importance ("impurity") is the default
+forest = RandomForestClassifier(feature_importances="impurity",
+                                random_state=0)
 
 # %%
-# Feature importance based on mean decrease in impurity
+# Feature importance based on Mean Decrease in Impurity (MDI)
 # -----------------------------------------------------
 # Feature importances are provided by the fitted attribute
 # `feature_importances_` and they are computed as the mean and standard
@@ -54,12 +56,13 @@ import time
 import numpy as np
 
 start_time = time.time()
+forest.fit(X_train, y_train)
 importances = forest.feature_importances_
 std = np.std([
     tree.feature_importances_ for tree in forest.estimators_], axis=0)
 elapsed_time = time.time() - start_time
 
-print(f"Elapsed time to compute the importances: "
+print(f"Elapsed time to train and compute the importances: "
       f"{elapsed_time:.3f} seconds")
 
 # %%
@@ -76,7 +79,7 @@ fig.tight_layout()
 # %%
 # We observe that, as expected, the three first features are found important.
 #
-# Feature permutation importances on OOB samples
+# Permutation Feature Importances on OOB samples
 # ----------------------------------------------
 # We will an alternative to the impurity-based feature importances based on
 # feature permutation using the OOB samples. We fit a new random-forest where
@@ -88,14 +91,14 @@ start_time = time.time()
 forest.fit(X_train, y_train)
 elapsed_time = time.time() - start_time
 
-print(f"Elapsed time to compute the importances: "
+print(f"Elapsed time to train and compute the importances: "
       f"{elapsed_time:.3f} seconds")
 
 forest_importances = pd.Series(forest.feature_importances_,
                                index=feature_names)
 
 # %%
-# The permutation importances is more computationally costly. Indeed, it
+# The permutation importance is more computationally costly. Indeed, it
 # requires to fit the tree and to make additional processing: each tree will
 # be evaluated on its OOB sample as well as an OOB sample where features will
 # be permuted. This step is costly and explains the time fitting difference
@@ -116,7 +119,7 @@ plt.show()
 #
 # Another difference between the two feature importances is the scale of the
 # reported values:
-#  - the permutation feature importances are not normalized and simply 
-# correspond to a difference of scores;
+#  - the permutation feature importances are not normalized and simply
+#    correspond to a difference of scores;
 #  - the impurity-based feature importances reported are normalized so that
-# they sum to 1.
+#    they sum to 1.

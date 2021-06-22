@@ -81,7 +81,8 @@ preprocessing = ColumnTransformer(
 
 rf = Pipeline([
     ('preprocess', preprocessing),
-    ('classifier', RandomForestClassifier(random_state=42))
+    ('classifier', RandomForestClassifier(feature_importances="impurity",
+                                          random_state=42))
 ])
 rf.fit(X_train, y_train)
 
@@ -168,7 +169,7 @@ plt.show()
 # Alternative to MDI using Permutation Feature Importance
 # -------------------------------------------------------
 # The limitations of MDI pointed out in the previous section can be mitigated
-# using an alternative strategy: Feature Permutation Importance.
+# using an alternative strategy: Permutation Feature Importance.
 #
 # This strategy relies on monitoring the decrease of a given performance
 # metric by randomly permuting the value of a given feature. In short, a
@@ -222,7 +223,7 @@ plt.show()
 # However, we still observe that these two anti-correlated features are
 # prone to a high standard deviation.
 #
-# Feature Permutation Importance on train-test sets
+# Permutation Feature Importance on train-test sets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In the previous section, we show how one can leverage the OOB samples to
 # compute the permutation importance. However, this is also possible to use
