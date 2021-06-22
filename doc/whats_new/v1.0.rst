@@ -583,6 +583,11 @@ Changelog
   :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
+:mod: `sklearn.metrics`
+.........................
+- |Feature|  :func:`~sklearn.metrics.mean_square_log_error` now supports
+  `squared='False'`. :pr:`20322` by :user: `Uttam kumar <helper-uttam>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
