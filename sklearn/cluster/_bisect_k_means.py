@@ -316,7 +316,7 @@ class BisectKMeans(KMeans):
 
         if X.shape[0] <= 1:
             raise ValueError(
-                "BisectKMeans needs more than one sample " "to perform bisection."
+                "BisectKMeans needs more than one sample to perform bisection."
             )
 
         if hasattr(self.init, "__array__"):
