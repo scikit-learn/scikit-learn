@@ -32,16 +32,8 @@ from ..utils._cython_blas cimport (
   Trans,
   _gemm,
 )
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 
-cpdef int _openmp_effective_n_threads(n_threads=None):
-    # Taken and adapted from sklearn.utils._openmp_helpers
-    if os.getenv("OMP_NUM_THREADS"):
-        # Fall back to user provided number of threads making it possible
-        # to exceed the number of cpus.
-        return openmp.omp_get_max_threads()
-    else:
-        return min(openmp.omp_get_max_threads(),
-                   cpu_count(only_physical_cores=True))
 
 ### argkmin helpers
 
