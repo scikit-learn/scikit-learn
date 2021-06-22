@@ -1968,17 +1968,19 @@ class MiniBatchNMF(NMF):
         super()._check_params(X)
 
         # solver
-        if not isinstance(self.solver, str) or self.solver != 'mu':
-            raise ValueError(f"Invalid solver parameter '{self.solver}'. "
-                             f"Only solver='mu' is accepted.")
+        if not isinstance(self.solver, str) or self.solver != "mu":
+            raise ValueError(
+                f"Invalid solver parameter '{self.solver}'. "
+                f"Only solver='mu' is accepted."
+            )
 
         # batch_size
         self._batch_size = self.batch_size
-        if not isinstance(
-            self._batch_size, numbers.Integral
-        ) or self._batch_size <= 0:
-            raise ValueError(f"batch_size must be a positive integer, got "
-                             f"{self._batch_size!r} instead.")
+        if not isinstance(self._batch_size, numbers.Integral) or self._batch_size <= 0:
+            raise ValueError(
+                f"batch_size must be a positive integer, got "
+                f"{self._batch_size!r} instead."
+            )
         self._batch_size = min(self._batch_size, X.shape[0])
 
         # forget_factor
@@ -1987,11 +1989,11 @@ class MiniBatchNMF(NMF):
 
         # gamma for Maximization-Minimization (MM) algorithm [Fevotte 2011]
         if self._beta_loss < 1:
-            self._gamma = 1. / (2. - self._beta_loss)
+            self._gamma = 1.0 / (2.0 - self._beta_loss)
         elif self._beta_loss > 2:
-            self._gamma = 1. / (self._beta_loss - 1.)
+            self._gamma = 1.0 / (self._beta_loss - 1.0)
         else:
-            self._gamma = 1.
+            self._gamma = 1.0
 
         return self
 
@@ -2120,23 +2122,39 @@ class MiniBatchNMF(NMF):
         for i, batch in zip(range(n_steps), batches):
             # update W
             delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-                X[batch], W[batch], H, self._beta_loss, l1_reg_W, l2_reg_W,
-                self._gamma, update_H=update_H)
+                X[batch],
+                W[batch],
+                H,
+                self._beta_loss,
+                l1_reg_W,
+                l2_reg_W,
+                self._gamma,
+                update_H=update_H,
+            )
             W[batch] *= delta_W
 
             # necessary for stability with beta_loss < 1
             if self._beta_loss < 1:
-                W[batch][W[batch] < np.finfo(np.float64).eps] = 0.
+                W[batch][W[batch] < np.finfo(np.float64).eps] = 0.0
 
             # update H
             if update_H:
                 H, A, B = _multiplicative_update_h(
-                    X[batch], W[batch], H, A, B, self._beta_loss,
-                    l1_reg_H, l2_reg_H, self._gamma, self._rho)
+                    X[batch],
+                    W[batch],
+                    H,
+                    A,
+                    B,
+                    self._beta_loss,
+                    l1_reg_H,
+                    l2_reg_H,
+                    self._gamma,
+                    self._rho,
+                )
 
                 # necessary for stability with beta_loss < 1
                 if self._beta_loss <= 1:
-                    H[H < np.finfo(np.float64).eps] = 0.
+                    H[H < np.finfo(np.float64).eps] = 0.0
 
         n_steps = i + 1
         n_iter = int(np.ceil((i + 1) / n_steps_per_epoch))
