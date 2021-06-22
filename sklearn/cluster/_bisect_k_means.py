@@ -172,10 +172,12 @@ class BisectKMeans(KMeans):
     bisect_strategy : {"biggest_sse", "largest_cluster"},
         default="biggest_sse"
         Defines how should bisection by performed:
+
         - "biggest_sse" means that Bisect K-Means will always check
         all calculated cluster for cluster with biggest SSE
         (Sum of squared errors) and bisect it. That way calculated clusters
         will be more balanced.
+
         - "largest_cluster" - Bisect K-Means will always split cluster with
         largest amount of points assigned to it from all clusters
         previously calculated. That should work faster than picking by SSE
@@ -195,9 +197,6 @@ class BisectKMeans(KMeans):
     inertia_ : float
         Sum of squared distances of samples to their closest cluster center,
         weighted by the sample weights if provided.
-
-    n_iter_ : int
-        Number of iterations run.
 
     Notes
     -----
@@ -486,10 +485,6 @@ class BisectKMeans(KMeans):
             X, sample_weight, self.cluster_centers_, self.labels_, self._n_threads
         )
 
-        # number of iterations will always be equal to
-        # (number of clusters - 1)
-        self.n_iter_ = self.n_clusters - 1
-
         return self
 
     def _run_bisect_kmeans(self, X, sample_weight, random_state):
@@ -532,7 +527,7 @@ class BisectKMeans(KMeans):
             0: None,
         }
         # Boolean mask for picking data to bisect
-        picked_labels = np.ones(X.shape[0], dtype=bool)
+        picked_samples = np.ones(X.shape[0], dtype=bool)
 
         # ID of biggest center stored in centers_dict
         biggest_id = 0
@@ -541,8 +536,8 @@ class BisectKMeans(KMeans):
 
         for n_iter in range(self.n_clusters - 1):
             # Pick data and weights to bisect
-            picked_data = X[picked_labels]
-            picked_weights = sample_weight[picked_labels]
+            picked_data = X[picked_samples]
+            picked_weights = sample_weight[picked_samples]
 
             # Perform Bisection
             _centers, _ = self._bisect(picked_data, picked_weights, random_state)
@@ -581,7 +576,7 @@ class BisectKMeans(KMeans):
                 biggest_label = np.argmax(labels_occurrences)
 
             # Pick indexes of data for further split
-            picked_labels = labels == biggest_label
+            picked_samples = labels == biggest_label
 
             # Pick id of cluster for further split
             biggest_id = list(centers_dict.keys())[biggest_label]
