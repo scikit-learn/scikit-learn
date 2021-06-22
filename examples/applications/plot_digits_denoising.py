@@ -112,8 +112,8 @@ _ = kernel_pca.fit(X_train_noisy)
 #
 # Now, we can transform and reconstruct the noisy test set. Since we used less
 # components than the number of original features, we will get an approximation
-# of the original set. Indeed, by dropping the components explaining the least
-# variance in PCA, we hope to remove noise. Similar thinking happens in kernel
+# of the original set. Indeed, by dropping the components explaining variance
+# in PCA the least, we hope to remove noise. Similar thinking happens in kernel
 # PCA; however, we expect a better reconstruction because we use a non-linear
 # kernel to learn the PCA basis and a kernel ridge to learn the mapping
 # function.
@@ -132,7 +132,7 @@ plot_digits(X_reconstructed_kernel_pca,
 
 # %%
 # PCA has a lower MSE than kernel PCA. However, the qualitative analysis might
-# not favor PCA instead of kernel PCA. We observe that kernel PCA is able to 
+# not favor PCA instead of kernel PCA. We observe that kernel PCA is able to
 # remove background noise and provide a smoother image.
 #
 # However, it should be noted that the results of the denoising with kernel PCA
