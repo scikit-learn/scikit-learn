@@ -1792,17 +1792,33 @@ class MiniBatchNMF(NMF):
 
     def _check_params(self, X):
         super()._check_params(X)
+
+        # solver
+        if not isinstance(self.solver, str) or self.solver != 'mu':
+            raise ValueError(f"Invalid solver parameter '{self.solver}'. "
+                             f"Only solver='mu' is accepted.")
+
+        # batch_size
         self._batch_size = self.batch_size
         if not isinstance(
             self._batch_size, numbers.Integral
         ) or self._batch_size <= 0:
-            raise ValueError("Number of samples per batch must be a positive "
-                             "integer; got (batch_size=%r)" % self._batch_size)
-        if self._batch_size > X.shape[0]:
-            self._batch_size = X.shape[0]
-        if self._batch_size is not None and self.solver == 'cd':
-            raise ValueError("Invalid solver 'cd' not supported "
-                             "when batch_size is not None.")
+            raise ValueError(f"batch_size must be a positive integer, got "
+                             f"{self._batch_size!r} instead.")
+        self._batch_size = min(self._batch_size, X.shape[0])
+
+        # forget_factor
+        # TODO
+        self._rho = self.forget_factor ** (self._batch_size / X.shape[0])
+
+        # gamma for Maximization-Minimization (MM) algorithm [Fevotte 2011]
+        if self._beta_loss < 1:
+            self._gamma = 1. / (2. - self._beta_loss)
+        elif self._beta_loss > 2:
+            self._gamma = 1. / (self._beta_loss - 1.)
+        else:
+            self._gamma = 1.
+
         return self
 
     def fit_transform(self, X, y=None, W=None, H=None):
@@ -1832,7 +1848,7 @@ class MiniBatchNMF(NMF):
                                 dtype=[np.float64, np.float32])
 
         with config_context(assume_finite=True):
-            W, H, n_iter, iter_offset, A, B = self._fit_transform(X, W=W, H=H)
+            W, H, n_iter, n_steps, A, B = self._fit_transform(X, W=W, H=H)
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn("Maximum number of iterations %d reached. Increase "
@@ -1845,7 +1861,7 @@ class MiniBatchNMF(NMF):
         self.n_components_ = H.shape[0]
         self.components_ = H
         self.n_iter_ = n_iter
-        self.iter_offset_ = iter_offset
+        self.n_steps_ = n_steps
         self._components_numerator = A
         self._components_denominator = B
 
@@ -1897,7 +1913,6 @@ class MiniBatchNMF(NMF):
             Initial guess for the denominator auxiliary function
         """
         check_non_negative(X, "NMF (input X)")
-        # check parameters
         self._check_params(X)
 
         if X.min() == 0 and self._beta_loss <= 0:
@@ -1916,16 +1931,36 @@ class MiniBatchNMF(NMF):
         A = H.copy()
         B = np.ones(H.shape, dtype=H.dtype)
 
-        if self.solver == 'mu':
-            W, H, n_iter, iter_offset, A, B = _fit_multiplicative_update(
-                X, W, H, A, B, self._beta_loss, self._batch_size, 0,
-                self.max_iter, self.tol,
-                l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
-                update_H, self.verbose, self.forget_factor)
-        else:
-            raise ValueError("Invalid solver parameter '%s'." % self.solver)
+        batches = gen_batches(n_samples, self._batch_size)
+        batches = itertools.cycle(batches)
+        n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
+        n_steps = self.max_iter * n_steps_per_epoch
 
-        return W, H, n_iter, iter_offset, A, B
+        for i, batch in zip(range(n_steps), batches):
+            # update W
+            delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+                X[batch], W[batch], H, self._beta_loss, l1_reg_W, l2_reg_W,
+                self._gamma, update_H=update_H)
+            W[batch] *= delta_W
+
+            # necessary for stability with beta_loss < 1
+            if self._beta_loss < 1:
+                W[batch][W[batch] < np.finfo(np.float64).eps] = 0.
+
+            # update H
+            if update_H:
+                H, A, B = _multiplicative_update_h(
+                    X[batch], W[batch], H, A, B, self._beta_loss,
+                    l1_reg_H, l2_reg_H, self._gamma, self._rho)
+
+                # necessary for stability with beta_loss < 1
+                if self._beta_loss <= 1:
+                    H[H < np.finfo(np.float64).eps] = 0.
+
+        n_steps = i + 1
+        n_iter = int(np.ceil((i + 1) / n_steps_per_epoch))
+
+        return W, H, n_iter, n_steps, A, B
 
     def partial_fit(self, X, y=None, **params):
         has_components = hasattr(self, 'components_')

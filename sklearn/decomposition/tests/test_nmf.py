@@ -71,10 +71,6 @@ def test_parameter_checking():
            "beta_loss = 1.0")
     with pytest.raises(ValueError, match=msg):
         NMF(solver='cd', init=init, beta_loss=1.0).fit(A)
-    msg = ("Invalid solver 'cd' not supported "
-           "when batch_size is not None.")
-    with pytest.raises(ValueError, match=msg):
-        MiniBatchNMF(solver='cd', beta_loss='frobenius').fit(A)
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
         NMF(init=init).fit(-A)
@@ -88,10 +84,6 @@ def test_parameter_checking():
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
     with pytest.raises(ValueError, match=msg):
         MiniBatchNMF(solver='mu', beta_loss=name).fit(A)
-    msg = ("Invalid solver 'cd' not supported "
-           "when batch_size is not None.")
-    with pytest.raises(ValueError, match=msg):
-        MiniBatchNMF(solver='cd', beta_loss='frobenius').fit(A)
 
     for init in ['nndsvd', 'nndsvda', 'nndsvdar']:
         msg = re.escape(
@@ -383,12 +375,10 @@ def test_non_negative_factorization_checking():
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, 0 * A, 2, init='custom', regularization='spam')
     init = 'nndsvda'  # FIXME : should be removed in 1.1
-    msg = ("Number of samples per batch must be a positive integer; "
-           "got (batch_size=0.5)")
+    msg = ("batch_size must be a positive integer, got 0.5 instead.")
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, A, 2, batch_size=0.5, init=init, solver='mu', beta_loss=1)
-    msg = ("Number of samples per batch must be a positive integer; "
-           "got (batch_size='3')")
+    msg = ("batch_size must be a positive integer, got '3' instead.")
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, A, 2, batch_size='3', init=init, solver='mu', beta_loss=1)
 
@@ -742,9 +732,9 @@ def test_nmf_minibatchnmf_equivalence():
     max_iter = 1
     init = 'nndsvda'  # FIXME : should be removed in 1.1
     nmf = NMF(5, solver='mu', init=init, random_state=0,
-              max_iter=max_iter,)
+              max_iter=max_iter, tol=0)
     mbnmf = MiniBatchNMF(5, solver='mu', init=init, random_state=0,
-                         max_iter=max_iter,
+                         max_iter=max_iter, tol=0,
                          batch_size=X.shape[0], forget_factor=0.0)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
