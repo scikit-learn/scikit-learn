@@ -22,6 +22,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
     def get_covariance(self):
         """Compute data covariance with the generative model.
 
@@ -38,9 +39,9 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
         cov = np.dot(components_.T * exp_var_diff, components_)
-        cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
+        cov.flat[:: len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
     def get_precision(self):
@@ -67,13 +68,12 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
         precision = np.dot(components_, components_.T) / self.noise_variance_
-        precision.flat[::len(precision) + 1] += 1. / exp_var_diff
-        precision = np.dot(components_.T,
-                           np.dot(linalg.inv(precision), components_))
+        precision.flat[:: len(precision) + 1] += 1.0 / exp_var_diff
+        precision = np.dot(components_.T, np.dot(linalg.inv(precision), components_))
         precision /= -(self.noise_variance_ ** 2)
-        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        precision.flat[:: len(precision) + 1] += 1.0 / self.noise_variance_
         return precision
 
     @abstractmethod
@@ -109,17 +109,6 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-
-        Examples
-        --------
-
-        >>> import numpy as np
-        >>> from sklearn.decomposition import IncrementalPCA
-        >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-        >>> ipca = IncrementalPCA(n_components=2, batch_size=3)
-        >>> ipca.fit(X)
-        IncrementalPCA(batch_size=3, n_components=2)
-        >>> ipca.transform(X) # doctest: +SKIP
         """
         check_is_fitted(self)
 
@@ -152,7 +141,12 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         exact inverse operation, which includes reversing whitening.
         """
         if self.whiten:
-            return np.dot(X, np.sqrt(self.explained_variance_[:, np.newaxis]) *
-                            self.components_) + self.mean_
+            return (
+                np.dot(
+                    X,
+                    np.sqrt(self.explained_variance_[:, np.newaxis]) * self.components_,
+                )
+                + self.mean_
+            )
         else:
             return np.dot(X, self.components_) + self.mean_

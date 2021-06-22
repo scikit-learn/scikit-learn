@@ -196,6 +196,9 @@ Helper Functions
   to ``n``.  Used in :func:`~sklearn.decomposition.dict_learning` and
   :func:`~sklearn.cluster.k_means`.
 
+- :class:`gen_batches`: generator to create slices containing batch size elements 
+  from 0 to ``n``
+
 - :func:`safe_mask`: Helper function to convert a mask to the format expected
   by the numpy array or scipy sparse matrix on which to use it (sparse
   matrices support integer indices only while numpy arrays support both

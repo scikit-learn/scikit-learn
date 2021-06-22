@@ -134,7 +134,6 @@ display.figure_.subplots_adjust(hspace=0.3)
 # Let's now fit a :class:`~sklearn.ensemble.HistGradientBoostingRegressor` and
 # compute the partial dependence on the same features.
 
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 print("Training HistGradientBoostingRegressor...")

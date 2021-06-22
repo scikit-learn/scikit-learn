@@ -17,13 +17,9 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
-from ..utils import check_array
-from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsClassifier(KNeighborsMixin,
-                           ClassifierMixin,
-                           NeighborsBase):
+class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
 
     Read more in the :ref:`User Guide <classification>`.
@@ -103,6 +99,11 @@ class KNeighborsClassifier(KNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -145,18 +146,28 @@ class KNeighborsClassifier(KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
-    def __init__(self, n_neighbors=5, *,
-                 weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+    def __init__(
+        self,
+        n_neighbors=5,
+        *,
+        weights="uniform",
+        algorithm="auto",
+        leaf_size=30,
+        p=2,
+        metric="minkowski",
+        metric_params=None,
+        n_jobs=None,
+    ):
         super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
-            leaf_size=leaf_size, metric=metric, p=p,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
             metric_params=metric_params,
-            n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+            n_jobs=n_jobs,
+        )
+        self.weights = weights
 
     def fit(self, X, y):
         """Fit the k-nearest neighbors classifier from the training dataset.
@@ -176,6 +187,8 @@ class KNeighborsClassifier(KNeighborsMixin,
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
+        self.weights = _check_weights(self.weights)
+
         return self._fit(X, y)
 
     def predict(self, X):
@@ -192,7 +205,7 @@ class KNeighborsClassifier(KNeighborsMixin,
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
@@ -236,7 +249,7 @@ class KNeighborsClassifier(KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -275,9 +288,7 @@ class KNeighborsClassifier(KNeighborsMixin,
         return probabilities
 
 
-class RadiusNeighborsClassifier(RadiusNeighborsMixin,
-                                ClassifierMixin,
-                                NeighborsBase):
+class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, NeighborsBase):
     """Classifier implementing a vote among neighbors within a given radius
 
     Read more in the :ref:`User Guide <classification>`.
@@ -367,6 +378,11 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -406,18 +422,30 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
-    def __init__(self, radius=1.0, *, weights='uniform',
-                 algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label=None, metric_params=None, n_jobs=None,
-                 **kwargs):
+    def __init__(
+        self,
+        radius=1.0,
+        *,
+        weights="uniform",
+        algorithm="auto",
+        leaf_size=30,
+        p=2,
+        metric="minkowski",
+        outlier_label=None,
+        metric_params=None,
+        n_jobs=None,
+        **kwargs,
+    ):
         super().__init__(
-              radius=radius,
-              algorithm=algorithm,
-              leaf_size=leaf_size,
-              metric=metric, p=p, metric_params=metric_params,
-              n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+            radius=radius,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
+        self.weights = weights
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
@@ -438,6 +466,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
+        self.weights = _check_weights(self.weights)
+
         self._fit(X, y)
 
         classes_ = self.classes_
@@ -449,7 +479,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
         if self.outlier_label is None:
             outlier_label_ = None
 
-        elif self.outlier_label == 'most_frequent':
+        elif self.outlier_label == "most_frequent":
             outlier_label_ = []
             # iterate over multi-output, get the most frequent label for each
             # output.
@@ -458,29 +488,34 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
                 outlier_label_.append(classes_k[label_count.argmax()])
 
         else:
-            if (_is_arraylike(self.outlier_label) and
-               not isinstance(self.outlier_label, str)):
+            if _is_arraylike(self.outlier_label) and not isinstance(
+                self.outlier_label, str
+            ):
                 if len(self.outlier_label) != len(classes_):
-                    raise ValueError("The length of outlier_label: {} is "
-                                     "inconsistent with the output "
-                                     "length: {}".format(self.outlier_label,
-                                                         len(classes_)))
+                    raise ValueError(
+                        "The length of outlier_label: {} is "
+                        "inconsistent with the output "
+                        "length: {}".format(self.outlier_label, len(classes_))
+                    )
                 outlier_label_ = self.outlier_label
             else:
                 outlier_label_ = [self.outlier_label] * len(classes_)
 
             for classes, label in zip(classes_, outlier_label_):
-                if (_is_arraylike(label) and
-                   not isinstance(label, str)):
+                if _is_arraylike(label) and not isinstance(label, str):
                     # ensure the outlier lable for each output is a scalar.
-                    raise TypeError("The outlier_label of classes {} is "
-                                    "supposed to be a scalar, got "
-                                    "{}.".format(classes, label))
+                    raise TypeError(
+                        "The outlier_label of classes {} is "
+                        "supposed to be a scalar, got "
+                        "{}.".format(classes, label)
+                    )
                 if np.append(classes, label).dtype != classes.dtype:
                     # ensure the dtype of outlier label is consistent with y.
-                    raise TypeError("The dtype of outlier_label {} is "
-                                    "inconsistent with classes {} in "
-                                    "y.".format(label, classes))
+                    raise TypeError(
+                        "The dtype of outlier_label {} is "
+                        "inconsistent with classes {} in "
+                        "y.".format(label, classes)
+                    )
 
         self.outlier_label_ = outlier_label_
 
@@ -545,7 +580,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
             by lexicographic order.
         """
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
@@ -561,11 +596,12 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
             classes_ = [self.classes_]
 
         if self.outlier_label_ is None and outliers.size > 0:
-            raise ValueError('No neighbors found for test samples %r, '
-                             'you can try using larger radius, '
-                             'giving a label for outliers, '
-                             'or considering removing them from your dataset.'
-                             % outliers)
+            raise ValueError(
+                "No neighbors found for test samples %r, "
+                "you can try using larger radius, "
+                "giving a label for outliers, "
+                "or considering removing them from your dataset." % outliers
+            )
 
         weights = _get_weights(neigh_dist, self.weights)
         if weights is not None:
@@ -583,13 +619,12 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
             # samples have different size of neighbors within the same radius
             if weights is None:
                 for i, idx in enumerate(pred_labels[inliers]):
-                    proba_inl[i, :] = np.bincount(idx,
-                                                  minlength=classes_k.size)
+                    proba_inl[i, :] = np.bincount(idx, minlength=classes_k.size)
             else:
                 for i, idx in enumerate(pred_labels[inliers]):
-                    proba_inl[i, :] = np.bincount(idx,
-                                                  weights[i],
-                                                  minlength=classes_k.size)
+                    proba_inl[i, :] = np.bincount(
+                        idx, weights[i], minlength=classes_k.size
+                    )
             proba_k[inliers, :] = proba_inl
 
             if outliers.size > 0:
@@ -598,10 +633,12 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
                 if label_index.size == 1:
                     proba_k[outliers, label_index[0]] = 1.0
                 else:
-                    warnings.warn('Outlier label {} is not in training '
-                                  'classes. All class probabilities of '
-                                  'outliers will be assigned with 0.'
-                                  ''.format(self.outlier_label_[k]))
+                    warnings.warn(
+                        "Outlier label {} is not in training "
+                        "classes. All class probabilities of "
+                        "outliers will be assigned with 0."
+                        "".format(self.outlier_label_[k])
+                    )
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
