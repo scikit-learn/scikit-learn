@@ -48,7 +48,7 @@ forest = RandomForestClassifier(feature_importances="impurity", random_state=0)
 
 # %%
 # Feature importance based on Mean Decrease in Impurity (MDI)
-# -----------------------------------------------------
+# -----------------------------------------------------------
 # Feature importances are provided by the fitted attribute
 # `feature_importances_` and they are computed as the mean and standard
 # deviation of accumulation of the impurity decrease within each tree.
