@@ -195,7 +195,12 @@ class RequestMethod:
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
-                    method_metadata_request.add_request(prop=prop, alias=alias)
+                    method_metadata_request.add_request(
+                        prop=prop,
+                        alias=alias,
+                        allow_aliasing=True,
+                        overwrite=True
+                    )
             instance._metadata_request = requests.to_dict()
 
             return instance
@@ -296,7 +301,7 @@ class _MetadataConsumer:
                 "output can be one of {'dict', 'MetadataRequest'}."
             )
         if hasattr(self, "_metadata_request"):
-            requests = MetadataRequest(self._metadata_request)
+            requests = metadata_request_factory(self._metadata_request)
         else:
             requests = self._get_default_requests()
             self._metadata_request = requests

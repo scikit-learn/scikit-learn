@@ -28,9 +28,8 @@ from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
-from .utils import (_get_props_from_objs,
-                    _validate_required_props)
-from .utils import build_method_metadata_params
+from .utils import MetadataRouter
+from .utils import metadata_request_factory
 from .utils.fixes import delayed
 from .utils.metaestimators import _BaseComposition
 
@@ -249,21 +248,40 @@ class Pipeline(_BaseComposition):
                                                   len(self.steps),
                                                   name)
 
-    def get_metadata_request(self):
+    def get_metadata_request(self, output="dict"):
         """Get requested data properties.
+
+
+        Parameters
+        ----------
+        output : {"dict", "MetadataRequest}
+            Whether the output should be a MetadataRequest instance, or a dict
+            representing that instance.
 
         Returns
         -------
-        metadata_request: dict
-            A union of the requested props by pipeline steps.
+        request : MetadataRequest, or dict
+            If dict, it will be a deserialized version of the underlying
+            MetadataRequest object: dict of dict of str->value. The key to the
+            first dict is the name of the method, and the key to the second
+            dict is the name of the argument requested by the method.
         """
+        if output not in {"dict", "MetadataRequest"}:
+            raise ValueError(
+                "output can be one of {'dict', 'MetadataRequest'}."
+            )
         _, estimators = zip(*self.steps)
-        return _get_props_from_objs(estimators, mask_values=True)
+        return MetadataRouter().add(
+            *estimators,
+            mapping="one-to-one",
+            overwrite="on-default",
+            mask=True
+        ).get_metadata_request(output=output)
 
     def _check_fit_params(self, **fit_params):
         fit_params_steps = {name: {} for name, step in self.steps
                             if step is not None}
-        # Remove old_behavior in 0.26
+        # Remove old_behavior in 1.3
         old_behavior = np.any(['__' in pname for pname in fit_params.keys()])
         if old_behavior:
             warnings.warn("It seems fit_params are using the deprecated "
@@ -283,14 +301,20 @@ class Pipeline(_BaseComposition):
                 fit_params_steps[step][param] = pval
             return fit_params_steps
 
-        required_props = self.get_metadata_request().fit
-        _validate_required_props(required_props, fit_params, validate="both")
+        self.get_metadata_request(
+            output="MetadataRequest"
+        ).fit.validate_metadata(ignore_extras=False, **fit_params)
         for _, name, transformer in self._iter(filter_passthrough=True):
-            fit_params_steps[name] = build_method_metadata_params(
-                children={'step': transformer},
-                routing=[('step', 'fit', 'fit')],
-                metadata=fit_params).fit
-
+            try:
+                fit_params_steps[name] = metadata_request_factory(
+                        transformer
+                    ).fit.get_method_input(
+                        ignore_extras=True, **fit_params
+                    )
+            except Exception as e:
+                raise ValueError(
+                    f"Error while validating fit parameters for {name}. "
+                    f"The underlying error message: {e}")
         return fit_params_steps
 
     # Estimator interface

@@ -34,6 +34,9 @@ from .validation import (as_float_array,
                          check_symmetric, check_scalar,
                          _deprecate_positional_args)
 from .. import get_config
+from .metadata_requests import MetadataRequest
+from .metadata_requests import metadata_request_factory
+from .metadata_requests import MetadataRouter
 
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
@@ -53,7 +56,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_html_repr"]
+           "DataConversionWarning", "estimator_html_repr",
+           "MetadataRequest", "metadata_request_factory", "MetadataRouter"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32

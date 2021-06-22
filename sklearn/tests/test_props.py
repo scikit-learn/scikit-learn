@@ -15,7 +15,8 @@ from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 from sklearn.utils import _standardize_metadata_request
-from sklearn.utils import _validate_required_props
+from sklearn.utils import MetadataRequest
+from sklearn.utils.metadata_requests import RequestType
 from sklearn.utils import build_method_metadata_params
 from sklearn.utils import build_router_metadata_request
 
@@ -66,27 +67,35 @@ my_other_weights = np.random.rand(N)
 
 
 def assert_request_is_empty(metadata_request, exclude=None):
+    if isinstance(metadata_request, MetadataRequest):
+        metadata_request = metadata_request.to_dict()
     if exclude is None:
         exclude = []
-    assert not any(
-        method_request
-        for method_name, method_request in metadata_request.items()
-        if method_name not in exclude
-    )
+    for method, request in metadata_request.items():
+        if method in exclude:
+            continue
+        props = [
+            prop
+            for prop, alias in request.items()
+            if isinstance(alias, str)
+            or RequestType(alias) != RequestType.ERROR_IF_PASSED
+        ]
+        assert not len(props)
 
 
 class MyEst(ClassifierMixin, BaseEstimator):
+    _metadata_request__sample_weight = {
+        "fit": {"sample_weight": RequestType.REQUESTED}  # type: ignore
+    }
+    _metadata_request__brand = {"fit": {"brand": RequestType.REQUESTED}}
+
     def __init__(self, C=1.0):
-        self._metadata_request = {"fit": ["sample_weight", "brand"]}
         self.C = C
 
     def fit(self, X, y, **fit_params):
-        _validate_required_props(
-            self.get_metadata_request().fit, fit_params, validate="both"
-        )
-        assert set(fit_params.keys()) <= set(
-            [list(x)[0] for x in self.get_metadata_request().fit.values()]
-        )
+        self.get_metadata_request(
+            output="MetadataRequest"
+        ).fit.validate_metadata(ignore_extras=False, **fit_params)
         self.svc_ = SVC(C=self.C).fit(X, y)
         return self
 
@@ -98,33 +107,17 @@ class MyEst(ClassifierMixin, BaseEstimator):
 
 
 class StuffConsumer(MetadataConsumer):
-    def request_new_param(self, *, fit=True):
-        self._request_key_for_method(
-            method="fit", param="new_param", user_provides=fit
-        )
-        return self
-
-    def request_brand(self, *, fit=True):
-        self._request_key_for_method(
-            method="fit", param="brand", user_provides=fit
-        )
-        return self
+    _metadata_request__new_param = {"fit": "new_param"}
+    _metadata_request__brand = {"fit": "brand"}
 
 
 class MyTrs(
     SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator
 ):
-    def __init__(self):
-        self._metadata_request = {"fit": ["sample_weight"]}
-
     def fit(self, X, y=None, **fit_params):
-        # extract the values from the metadata requests. Since this is not a
-        # meta-estimator, the values will always have exactly 1 member in the
-        # corresponding set.
-        req_props = [
-            list(x)[0] for x in self.get_metadata_request().fit.values()
-        ]
-        assert set(fit_params.keys()) <= set(req_props)
+        self.get_metadata_request(
+            output="MetadataRequest"
+        ).fit.validate_metadata(ignore_extras=False, **fit_params)
         self._estimator = SelectKBest().fit(X, y)
         return self
 
@@ -139,16 +132,18 @@ def my_metric(y, y_pred, new_param):
 def test_defaults():
     assert_request_is_empty(LogisticRegression().get_metadata_request())
     # check default requests for dummy estimators
-    trs = MyTrs()
-    trs_request = _standardize_metadata_request(trs.get_metadata_request())
-    assert trs_request.fit == {"sample_weight": {"sample_weight"}}
-    assert_request_is_empty(trs_request, exclude={"fit"})
+    trs_request = MyTrs().get_metadata_request(output="MetadataRequest")
+    assert trs_request.fit.requests == {
+        "sample_weight": RequestType(None),
+        "brand": RequestType(None),
+        "new_param": RequestType(None),
+    }
+    assert_request_is_empty(trs_request)
 
-    est = MyEst()
-    est_request = _standardize_metadata_request(est.get_metadata_request())
-    assert est_request.fit == {
-        "sample_weight": {"sample_weight"},
-        "brand": {"brand"},
+    est_request = MyEst().get_metadata_request(output="MetadataRequest")
+    assert est_request.fit.requests == {
+        "sample_weight": RequestType(True),
+        "brand": RequestType(True),
     }
     assert_request_is_empty(est_request, exclude={"fit"})
 
@@ -159,29 +154,55 @@ def test_pipeline():
     my_data = [5, 6]
     brand = ["my brand"]
 
-    clf = make_pipeline(MyTrs(), MyEst())
-    clf.fit(X, y, sample_weight=sw, brand=brand)
+    # MyEst is requesting "brand" but MyTrs has it as ERROR_IF_PASSED
     with pytest.raises(
-        ValueError, match="Requested properties are.*other_param"
+        ValueError,
+        match=(
+            "brand is passed but is not explicitly set as requested or not."
+        ),
+    ):
+        clf = make_pipeline(MyTrs(), MyEst())
+        clf.fit(X, y, sample_weight=sw, brand=brand)
+
+    clf = make_pipeline(
+        MyTrs().fit_requests(brand=True, sample_weight=True), MyEst()
+    )
+    clf.fit(X, y, sample_weight=sw, brand=brand)
+
+    with pytest.raises(
+        ValueError, match="Metadata passed which is not understood"
     ):
         clf.fit(X, y, sample_weight=sw, brand=brand, other_param=sw)
 
-    trs = MyTrs().request_new_param(fit="my_sw")
-    trs.request_sample_weight(fit=False)
+    trs = MyTrs().fit_requests(new_param="my_sw", sample_weight=False)
 
-    trs_request = _standardize_metadata_request(trs.get_metadata_request())
-    assert trs_request.fit == {"my_sw": {"new_param"}}
+    trs_request = trs.get_metadata_request(output="MetadataRequest")
+    assert trs_request.fit.requests == {
+        "new_param": "my_sw",
+        "brand": RequestType.ERROR_IF_PASSED,
+        "sample_weight": RequestType.UNREQUESTED,
+    }
     assert_request_is_empty(trs_request, exclude={"fit"})
 
     clf = make_pipeline(trs, MyEst())
-    pipe_request = _standardize_metadata_request(clf.get_metadata_request())
-    print(pipe_request.fit)
-    assert pipe_request.fit == {
-        "my_sw": {"my_sw"},
-        "sample_weight": {"sample_weight"},
-        "brand": {"brand"},
+    pipe_request = clf.get_metadata_request(output="MetadataRequest")
+    assert pipe_request.fit.to_dict() == {
+        "my_sw": RequestType.REQUESTED,
+        "sample_weight": RequestType.REQUESTED,
+        "brand": RequestType.REQUESTED,
     }
     assert_request_is_empty(pipe_request, exclude={"fit"})
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Error while validating fit parameters for mytrs. The underlying "
+            "error message: brand is passed but is not explicitly set as "
+            "requested or not."
+        ),
+    ):
+        clf.fit(X, y, sample_weight=sw, brand=brand, my_sw=my_data)
+
+    clf.named_steps["mytrs"].fit_requests(brand=True)
     clf.fit(X, y, sample_weight=sw, brand=brand, my_sw=my_data)
 
     # TODO: assert that trs did *not* receive sample_weight, but did receive
@@ -196,9 +217,7 @@ def test_pipeline():
 
     param_grid = {"myest__C": [0.1, 1]}
 
-    print("@" * 150 + " GS")
     gs = GridSearchCV(clf, param_grid=param_grid, scoring=scorer)
-    print("GS props request: ", gs.get_metadata_request())
     gs.fit(X, y, new_param=brand, sample_weight=sw, my_sw=sw, brand=brand)
 
 
@@ -416,13 +435,16 @@ def test_get_metadata_request():
 
     expected = {
         "score": {
-            "my_param": "my_param",
-            "my_other_param": None,
-            "sample_weight": None,
+            "my_param": RequestType(True),
+            "my_other_param": RequestType(None),
+            "sample_weight": RequestType(None),
         },
-        "fit": {"my_other_param": None, "sample_weight": None},
+        "fit": {
+            "my_other_param": RequestType(None),
+            "sample_weight": RequestType(None),
+        },
         "partial_fit": {},
-        "predict": {"my_param": "my_param"},
+        "predict": {"my_param": RequestType(True)},
         "transform": {},
         "inverse_transform": {},
         "split": {},
@@ -433,12 +455,15 @@ def test_get_metadata_request():
     expected = {
         "score": {
             "my_param": "other_param",
-            "my_other_param": None,
-            "sample_weight": None,
+            "my_other_param": RequestType(None),
+            "sample_weight": RequestType(None),
         },
-        "fit": {"my_other_param": None, "sample_weight": None},
+        "fit": {
+            "my_other_param": RequestType(None),
+            "sample_weight": RequestType(None),
+        },
         "partial_fit": {},
-        "predict": {"my_param": "my_param"},
+        "predict": {"my_param": RequestType(True)},
         "transform": {},
         "inverse_transform": {},
         "split": {},
@@ -448,13 +473,16 @@ def test_get_metadata_request():
     est = TestDefaults().fit_requests(sample_weight=True)
     expected = {
         "score": {
-            "my_param": "my_param",
-            "my_other_param": None,
-            "sample_weight": None,
+            "my_param": RequestType(True),
+            "my_other_param": RequestType(None),
+            "sample_weight": RequestType(None),
         },
-        "fit": {"my_other_param": None, "sample_weight": "sample_weight"},
+        "fit": {
+            "my_other_param": RequestType(None),
+            "sample_weight": RequestType(True),
+        },
         "partial_fit": {},
-        "predict": {"my_param": "my_param"},
+        "predict": {"my_param": RequestType(True)},
         "transform": {},
         "inverse_transform": {},
         "split": {},
