@@ -236,7 +236,7 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
-def _solve_trf(
+def _solve_lbfgs(
     X, y, alpha, positive=False, max_iter=None, tol=1e-3, X_offset=None, X_scale=None
 ):
     n_samples, n_features = X.shape
@@ -281,7 +281,7 @@ def _solve_trf(
         result = sp_optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
-                f"The trf solver did not converge. Try increasing max_iter "
+                f"The lbfgs solver did not converge. Try increasing max_iter "
                 f"or tol. Currently: max_iter={max_iter} and tol={tol}",
                 ConvergenceWarning,
             )
@@ -344,7 +344,7 @@ def ridge_regression(
         .. versionadded:: 0.17
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
-            'sag', 'saga', 'trf'}, default='auto'
+            'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -373,11 +373,11 @@ def ridge_regression(
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
-        - 'trf' uses Trust Region Reflective algorithm adapted for a linear
-          least-squares problem implemented in `scipy.optimize.lsq_linear`.
+        - 'lbfgs' uses L-BFGS-B algorithm implemented in
+          `scipy.optimize.minimize`.
 
         All last six solvers support both dense and sparse data. However, only
-        'sag', 'sparse_cg', and 'trf' support sparse input when `fit_intercept`
+        'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
         is True.
 
         .. versionadded:: 0.17
@@ -389,7 +389,7 @@ def ridge_regression(
         Maximum number of iterations for conjugate gradient solver.
         For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
-        1000. For 'trf' solver, the default value is 100.
+        1000. For 'lbfgs' solver, the default value is 15000.
 
     tol : float, default=1e-3
         Precision of the solution.
@@ -400,7 +400,7 @@ def ridge_regression(
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
-        Only 'trf' solver is supported.
+        Only 'lbfgs' solver is supported.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -485,7 +485,7 @@ def _ridge_regression(
 
     if solver == "auto":
         if positive:
-            solver = "trf"
+            solver = "lbfgs"
         elif return_intercept:
             # sag supports fitting intercept directly
             solver = "sag"
@@ -494,16 +494,16 @@ def _ridge_regression(
         else:
             solver = "sparse_cg"
 
-    if solver not in ("sparse_cg", "cholesky", "svd", "lsqr", "sag", "saga", "trf"):
+    if solver not in ("sparse_cg", "cholesky", "svd", "lsqr", "sag", "saga", "lbfgs"):
         raise ValueError(
             "Known solvers are 'sparse_cg', 'cholesky', 'svd'"
-            " 'lsqr', 'sag', 'saga' or 'trf'. Got %s." % solver
+            " 'lsqr', 'sag', 'saga' or 'lbfgs'. Got %s." % solver
         )
 
-    if positive and solver != "trf":
+    if positive and solver != "lbfgs":
         raise ValueError(
-            "When positive=True, only 'trf' solver can fit. "
-            f"Please change solver {solver} to 'trf' "
+            "When positive=True, only 'lbfgs' solver can fit. "
+            f"Please change solver {solver} to 'lbfgs' "
             "or set positive=False."
         )
 
@@ -629,8 +629,8 @@ def _ridge_regression(
             intercept = intercept[0]
         coef = np.asarray(coef)
 
-    elif solver == "trf":
-        coef = _solve_trf(
+    elif solver == "lbfgs":
+        coef = _solve_lbfgs(
             X,
             y,
             alpha,
@@ -702,24 +702,24 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             y_numeric=True,
         )
         if self.positive:
-            if self.solver not in ["auto", "trf"]:
+            if self.solver not in ["auto", "lbfgs"]:
                 raise ValueError(
                     "solver='{}' does not support positive fitting."
-                    " Please set the solver to 'auto' or 'trf',"
+                    " Please set the solver to 'auto' or 'lbfgs',"
                     " or set `positive=False`".format(self.solver)
                 )
             else:
                 solver = self.solver
         elif sparse.issparse(X) and self.fit_intercept:
-            if self.solver not in ["auto", "sparse_cg", "sag", "trf"]:
+            if self.solver not in ["auto", "sparse_cg", "sag", "lbfgs"]:
                 raise ValueError(
                     "solver='{}' does not support fitting the intercept "
                     "on sparse data. Please set the solver to 'auto' or "
-                    "'sparse_cg', 'sag', 'trf' "
+                    "'sparse_cg', 'sag', 'lbfgs' "
                     "or set `fit_intercept=False`".format(self.solver)
                 )
-            if self.solver == "trf":
-                solver = "trf"
+            if self.solver == "lbfgs":
+                solver = "lbfgs"
             elif self.solver == "sag" and self.max_iter is None and self.tol > 1e-4:
                 warnings.warn(
                     '"sag" solver requires many iterations to fit '
@@ -845,13 +845,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         For 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
-        For 'trf' solver, the default value is 100.
+        For 'lbfgs' solver, the default value is 15000.
 
     tol : float, default=1e-3
         Precision of the solution.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
-            'sag', 'saga', 'trf'}, default='auto'
+            'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -879,11 +879,11 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
-        - 'trf' uses Trust Region Reflective algorithm adapted for a linear
-          least-squares problem implemented in `scipy.optimize.lsq_linear`.
+        - 'lbfgs' uses L-BFGS-B algorithm implemented in
+          `scipy.optimize.minimize`.
 
         All last six solvers support both dense and sparse data. However, only
-        'sag', 'sparse_cg', and 'trf' support sparse input when `fit_intercept`
+        'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
         is True.
 
         .. versionadded:: 0.17
@@ -893,7 +893,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
-        Only 'trf' solver is supported.
+        Only 'lbfgs' solver is supported.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -1044,7 +1044,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         as ``n_samples / (n_classes * np.bincount(y))``.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
-            'sag', 'saga', 'trf'}, default='auto'
+            'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -1077,12 +1077,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           .. versionadded:: 0.19
            SAGA solver.
 
-        - 'trf' uses Trust Region Reflective algorithm adapted for a linear
-          least-squares problem implemented in `scipy.optimize.lsq_linear`.
+        - 'lbfgs' uses L-BFGS-B algorithm implemented in
+          `scipy.optimize.minimize`.
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
-        Only 'trf' solver is supported.
+        Only 'lbfgs' solver is supported.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.

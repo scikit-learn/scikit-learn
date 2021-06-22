@@ -75,7 +75,7 @@ def _mean_squared_error_callable(y_test, y_pred):
 
 
 @pytest.mark.parametrize(
-    "solver", ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "trf")
+    "solver", ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "lbfgs")
 )
 def test_ridge(solver):
     # Ridge regression convergence test using score
@@ -179,7 +179,7 @@ def test_ridge_sample_weights():
 
     rng = np.random.RandomState(0)
     param_grid = product(
-        (1.0, 1e-2), (True, False), ("svd", "cholesky", "lsqr", "sparse_cg", "trf")
+        (1.0, 1e-2), (True, False), ("svd", "cholesky", "lsqr", "sparse_cg", "lbfgs")
     )
 
     for n_samples, n_features in ((6, 5), (5, 10)):
@@ -324,7 +324,7 @@ def test_ridge_individual_penalties():
 
     coefs_indiv_pen = [
         Ridge(alpha=penalties, solver=solver, tol=1e-12).fit(X, y).coef_
-        for solver in ["svd", "sparse_cg", "lsqr", "cholesky", "sag", "saga", "trf"]
+        for solver in ["svd", "sparse_cg", "lsqr", "cholesky", "sag", "saga", "lbfgs"]
     ]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
@@ -437,7 +437,7 @@ def _make_sparse_offset_regression(
     (
         (solver, sparse_X)
         for (solver, sparse_X) in product(
-            ["cholesky", "sag", "sparse_cg", "lsqr", "saga", "ridgecv", "trf"],
+            ["cholesky", "sag", "sparse_cg", "lsqr", "saga", "ridgecv", "lbfgs"],
             [False, True],
         )
         if not (sparse_X and solver not in ["sparse_cg", "ridgecv"])
@@ -1270,12 +1270,12 @@ def test_n_iter():
         assert reg.n_iter_ is None
 
 
-@pytest.mark.parametrize("solver", ["sparse_cg", "trf", "auto"])
+@pytest.mark.parametrize("solver", ["sparse_cg", "lbfgs", "auto"])
 def test_ridge_fit_intercept_sparse(solver):
     X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
 
-    # for now only sparse_cg  and trf can correctly fit an intercept
+    # for now only sparse_cg  and lbfgs can correctly fit an intercept
     # with sparse X with default tol and max_iter.
     # sag is tested separately in test_ridge_fit_intercept_sparse_sag
     # because it requires more iterations and should raise a warning if default
@@ -1332,7 +1332,7 @@ def test_ridge_fit_intercept_sparse_sag():
 @pytest.mark.parametrize("sample_weight", [None, np.ones(1000)])
 @pytest.mark.parametrize("arr_type", [np.array, sp.csr_matrix])
 @pytest.mark.parametrize(
-    "solver", ["auto", "sparse_cg", "cholesky", "lsqr", "sag", "saga", "trf"]
+    "solver", ["auto", "sparse_cg", "cholesky", "lsqr", "sag", "saga", "lbfgs"]
 )
 def test_ridge_regression_check_arguments_validity(
     return_intercept, sample_weight, arr_type, solver
@@ -1392,7 +1392,7 @@ def test_ridge_classifier_no_support_multilabel():
 
 
 @pytest.mark.parametrize(
-    "solver", ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga", "trf"]
+    "solver", ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga", "lbfgs"]
 )
 def test_dtype_match(solver):
     rng = np.random.RandomState(0)
@@ -1454,7 +1454,7 @@ def test_dtype_match_cholesky():
 
 
 @pytest.mark.parametrize(
-    "solver", ["svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "trf"]
+    "solver", ["svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"]
 )
 @pytest.mark.parametrize("seed", range(1))
 def test_ridge_regression_dtype_stability(solver, seed):
@@ -1497,7 +1497,7 @@ def test_ridge_sag_with_X_fortran():
     Ridge(solver="sag").fit(X, y)
 
 
-@pytest.mark.parametrize("solver", ["auto", "trf"])
+@pytest.mark.parametrize("solver", ["auto", "lbfgs"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
@@ -1554,7 +1554,7 @@ def test_ridge_positive_error_test(solver):
     with pytest.raises(ValueError, match="does not support positive"):
         model.fit(X, y)
 
-    with pytest.raises(ValueError, match="only 'trf' solver can fit"):
+    with pytest.raises(ValueError, match="only 'lbfgs' solver can fit"):
         _, _ = ridge_regression(
             X, y, alpha, positive=True, solver=solver, return_intercept=False
         )
@@ -1598,18 +1598,18 @@ def test_positive_ridge_loss(alpha):
         assert loss_positive <= loss_perturbed
 
 
-def test_trf_solver_error():
+def test_lbfgs_solver_error():
     X = np.array([[1, 1], [1, 1]])
     y = np.array([-1e10, -1e10])
 
     model = Ridge(
         alpha=0.01,
-        solver="trf",
+        solver="lbfgs",
         fit_intercept=False,
         tol=1e-12,
         max_iter=1,
     )
-    with pytest.warns(ConvergenceWarning, match="trf solver did not converge"):
+    with pytest.warns(ConvergenceWarning, match="lbfgs solver did not converge"):
         model.fit(X, y)
 
 
@@ -1617,7 +1617,7 @@ def test_trf_solver_error():
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize(
-    "solver", ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga", "trf"]
+    "solver", ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga", "lbfgs"]
 )
 def test_ridge_sample_weight_invariance(normalize, solver):
     """Test that Ridge fulfils sample weight invariance.
