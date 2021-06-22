@@ -236,7 +236,7 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 
 # %%
 #
-# The performance is a not good: the everage error is around 14% of the maximum
+# The performance is a not good: the average error is around 14% of the maximum
 # demand. This is more than three times higher than the average error of the
 # gradient boosting model. We can suspect that the naive original encoding of
 # the periodic time-related features might prevent the linear regression model
@@ -447,7 +447,7 @@ cyclic_cossin_linear_predictions = cyclic_cossin_linear_pipeline.predict(
 )
 
 cyclic_spline_linear_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-cyclic_spline_linear_preictions = cyclic_spline_linear_pipeline.predict(
+cyclic_spline_linear_predictions = cyclic_spline_linear_pipeline.predict(
     X.iloc[test_0]
 )
 
@@ -468,7 +468,7 @@ plt.plot(
     label="Trigonometric time features"
 )
 plt.plot(
-    cyclic_spline_linear_preictions[last_hours],
+    cyclic_spline_linear_predictions[last_hours],
     "x-",
     label="Spline-based time features"
 )
