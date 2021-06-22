@@ -413,12 +413,10 @@ def ridge_regression(
         .. versionadded:: 0.17
 
     return_intercept : bool, default=False
-        If True and if X is sparse and if positive is False,
-        the method also returns the intercept, and the solver is
-        automatically changed to 'sag'. This is only a temporary fix
-        for fitting the intercept with sparse data.
-        For dense data, use sklearn.linear_model._preprocess_data
-        before your regression.
+        If True and if X is sparse, the method also returns the intercept,
+        and the solver is automatically changed to 'sag'. This is only a
+        temporary fix for fitting the intercept with sparse data. For dense
+        data, use sklearn.linear_model._preprocess_data before your regression.
 
         .. versionadded:: 0.17
 
