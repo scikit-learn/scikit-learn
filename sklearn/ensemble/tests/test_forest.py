@@ -27,7 +27,6 @@ import pytest
 import joblib
 from numpy.testing import assert_allclose
 
-from sklearn.utils._testing import assert_allclose
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.utils._testing import assert_almost_equal
