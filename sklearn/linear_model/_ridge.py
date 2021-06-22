@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy import sparse
-from scipy import optimize as sp_optimize
+from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
@@ -237,22 +237,21 @@ def _solve_svd(X, y, alpha):
 
 
 def _solve_lbfgs(
-    X, y, alpha, positive=False, max_iter=None, tol=1e-3, X_offset=None, X_scale=None
+    X, y, alpha, positive=True, max_iter=None, tol=1e-3, X_offset=None, X_scale=None
 ):
+    # this function accepts positive=True
+    assert positive
+
     n_samples, n_features = X.shape
 
     options = {}
     if max_iter is not None:
         options["maxiter"] = max_iter
-    if positive:
-        bounds = [(0, np.inf)] * n_features
-    else:
-        bounds = [(-np.inf, np.inf)] * n_features
     config = {
         "method": "L-BFGS-B",
         "tol": tol,
         "jac": True,
-        "bounds": bounds,
+        "bounds": [(0, np.inf)] * n_features,
         "options": options,
     }
 
@@ -278,7 +277,7 @@ def _solve_lbfgs(
 
             return f, grad
 
-        result = sp_optimize.minimize(func, x0, **config)
+        result = optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
                 f"The lbfgs solver did not converge. Try increasing max_iter "
@@ -374,7 +373,8 @@ def ridge_regression(
           scaler from sklearn.preprocessing.
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
-          `scipy.optimize.minimize`.
+          `scipy.optimize.minimize`. It can be used only when `positive`
+          is True.
 
         All last six solvers support both dense and sparse data. However, only
         'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
@@ -503,6 +503,11 @@ def _ridge_regression(
             "When positive=True, only 'lbfgs' solver can fit. "
             f"Please change solver {solver} to 'lbfgs' "
             "or set positive=False."
+        )
+
+    if solver == "lbfgs" and not positive:
+        raise ValueError(
+            "'lbfgs' solver can be used when positive=True. " "Please use other solver."
         )
 
     if return_intercept and solver != "sag":
@@ -699,6 +704,12 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             multi_output=True,
             y_numeric=True,
         )
+        if self.solver == "lbfgs" and not self.positive:
+            raise ValueError(
+                "'lbfgs' solver can be used when positive=True. "
+                "Please use other solver."
+            )
+
         if self.positive:
             if self.solver not in ["auto", "lbfgs"]:
                 raise ValueError(
@@ -878,7 +889,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           scaler from sklearn.preprocessing.
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
-          `scipy.optimize.minimize`.
+          `scipy.optimize.minimize`. It can be used only when `positive`
+          is True.
 
         All last six solvers support both dense and sparse data. However, only
         'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
@@ -1076,7 +1088,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
            SAGA solver.
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
-          `scipy.optimize.minimize`.
+          `scipy.optimize.minimize`. It can be used only when `positive`
+          is True.
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
