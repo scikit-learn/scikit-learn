@@ -9,8 +9,8 @@ from ._plot.partial_dependence import PartialDependenceDisplay
 
 
 __all__ = [
-    'partial_dependence',
-    'plot_partial_dependence',
-    'permutation_importance',
-    'PartialDependenceDisplay'
+    "partial_dependence",
+    "plot_partial_dependence",
+    "permutation_importance",
+    "PartialDependenceDisplay",
 ]

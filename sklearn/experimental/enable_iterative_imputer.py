@@ -16,5 +16,5 @@ from ..impute._iterative import IterativeImputer
 from .. import impute
 
 # use settattr to avoid mypy errors when monkeypatching
-setattr(impute, 'IterativeImputer', IterativeImputer)
-impute.__all__ += ['IterativeImputer']
+setattr(impute, "IterativeImputer", IterativeImputer)
+impute.__all__ += ["IterativeImputer"]

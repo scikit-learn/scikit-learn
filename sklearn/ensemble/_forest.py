@@ -161,7 +161,8 @@ def _parallel_build_trees(
     class_weight=None,
     n_samples_bootstrap=None,
 ):
-    """Private function used to fit a single tree in parallel."""
+    """
+    Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
