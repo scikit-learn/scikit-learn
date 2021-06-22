@@ -26,20 +26,25 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
 X, y = make_classification(
-    n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
-    n_repeated=0, n_classes=2, random_state=0, shuffle=False)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, stratify=y, random_state=42)
+    n_samples=1000,
+    n_features=10,
+    n_informative=3,
+    n_redundant=0,
+    n_repeated=0,
+    n_classes=2,
+    random_state=0,
+    shuffle=False,
+)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 
 # %%
 # A random forest classifier will be fitted to compute the feature importances.
 from sklearn.ensemble import RandomForestClassifier
 
-feature_names = [f'feature {i}' for i in range(X.shape[1])]
+feature_names = [f"feature {i}" for i in range(X.shape[1])]
 
 # MDI-based feature importance ("impurity") is the default
-forest = RandomForestClassifier(feature_importances="impurity",
-                                random_state=0)
+forest = RandomForestClassifier(feature_importances="impurity", random_state=0)
 
 # %%
 # Feature importance based on Mean Decrease in Impurity (MDI)
@@ -58,16 +63,17 @@ import numpy as np
 start_time = time.time()
 forest.fit(X_train, y_train)
 importances = forest.feature_importances_
-std = np.std([
-    tree.feature_importances_ for tree in forest.estimators_], axis=0)
+std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
 elapsed_time = time.time() - start_time
 
-print(f"Elapsed time to train and compute the importances: "
-      f"{elapsed_time:.3f} seconds")
+print(
+    f"Elapsed time to train and compute the importances: " f"{elapsed_time:.3f} seconds"
+)
 
 # %%
 # Let's plot the impurity-based importance.
 import pandas as pd
+
 forest_importances = pd.Series(importances, index=feature_names)
 
 fig, ax = plt.subplots()
@@ -84,18 +90,17 @@ fig.tight_layout()
 # We will an alternative to the impurity-based feature importances based on
 # feature permutation using the OOB samples. We fit a new random-forest where
 # we explicitely specify to compute the permutation feature importances on OOB.
-feature_names = [f'feature {i}' for i in range(X.shape[1])]
-forest = RandomForestClassifier(feature_importances="permutation_oob",
-                                random_state=0)
+feature_names = [f"feature {i}" for i in range(X.shape[1])]
+forest = RandomForestClassifier(feature_importances="permutation_oob", random_state=0)
 start_time = time.time()
 forest.fit(X_train, y_train)
 elapsed_time = time.time() - start_time
 
-print(f"Elapsed time to train and compute the importances: "
-      f"{elapsed_time:.3f} seconds")
+print(
+    f"Elapsed time to train and compute the importances: " f"{elapsed_time:.3f} seconds"
+)
 
-forest_importances = pd.Series(forest.feature_importances_,
-                               index=feature_names)
+forest_importances = pd.Series(forest.feature_importances_, index=feature_names)
 
 # %%
 # The permutation importance is more computationally costly. Indeed, it

@@ -28,6 +28,7 @@ can mitigate those limitations.
 print(__doc__)
 import matplotlib.pyplot as plt
 import sklearn
+
 sklearn.set_config(display="diagram")
 
 # %%
@@ -48,18 +49,18 @@ import numpy as np
 
 X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 rng = np.random.RandomState(seed=42)
-X['random_cat'] = rng.randint(3, size=X.shape[0])
-X['random_num'] = rng.randn(X.shape[0])
+X["random_cat"] = rng.randint(3, size=X.shape[0])
+X["random_num"] = rng.randn(X.shape[0])
 
 # %%
 from sklearn.model_selection import train_test_split
-categorical_columns = ['pclass', 'sex', 'embarked', 'random_cat']
-numerical_columns = ['age', 'sibsp', 'parch', 'fare', 'random_num']
+
+categorical_columns = ["pclass", "sex", "embarked", "random_cat"]
+numerical_columns = ["age", "sibsp", "parch", "fare", "random_num"]
 
 X = X[categorical_columns + numerical_columns]
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, stratify=y, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 
 # %%
 # The following shows how to apply separate preprocessing on numerical and
@@ -70,20 +71,25 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-categorical_encoder = OneHotEncoder(handle_unknown='ignore')
-numerical_pipe = Pipeline([
-    ('imputer', SimpleImputer(strategy='mean'))
-])
+categorical_encoder = OneHotEncoder(handle_unknown="ignore")
+numerical_pipe = Pipeline([("imputer", SimpleImputer(strategy="mean"))])
 
 preprocessing = ColumnTransformer(
-    [('cat', categorical_encoder, categorical_columns),
-     ('num', numerical_pipe, numerical_columns)])
+    [
+        ("cat", categorical_encoder, categorical_columns),
+        ("num", numerical_pipe, numerical_columns),
+    ]
+)
 
-rf = Pipeline([
-    ('preprocess', preprocessing),
-    ('classifier', RandomForestClassifier(feature_importances="impurity",
-                                          random_state=42))
-])
+rf = Pipeline(
+    [
+        ("preprocess", preprocessing),
+        (
+            "classifier",
+            RandomForestClassifier(feature_importances="impurity", random_state=42),
+        ),
+    ]
+)
 rf.fit(X_train, y_train)
 
 # %%
@@ -120,18 +126,17 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 # importances across trees.
 import pandas as pd
 
-ohe = (rf.named_steps['preprocess']
-         .named_transformers_['cat'])
+ohe = rf.named_steps["preprocess"].named_transformers_["cat"]
 feature_names = ohe.get_feature_names(input_features=categorical_columns)
 feature_names = np.r_[feature_names, numerical_columns]
 
 tree_feature_importances = pd.DataFrame(
-    rf.named_steps['classifier'].importances_.importances.T,
-    columns=feature_names)
+    rf.named_steps["classifier"].importances_.importances.T, columns=feature_names
+)
 # sort (reorder columns) the DataFrame for the plotting
 tree_feature_importances = tree_feature_importances.reindex(
-    tree_feature_importances.mean().sort_values().index,
-    axis="columns")
+    tree_feature_importances.mean().sort_values().index, axis="columns"
+)
 
 ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Random Forest Feature Importances (MDI)")
@@ -186,11 +191,17 @@ plt.show()
 # Random-forest exposes a parameter `feature_importances` that allows to switch
 # from the MDI to the permutation importance on the OOB samples. The parameter
 # need to be set to `"permutation_oob"`.
-rf = Pipeline(steps=[
-    ("preprocess", preprocessing),
-    ("classifier", RandomForestClassifier(
-        feature_importances="permutation_oob", random_state=42))
-]).fit(X_train, y_train)
+rf = Pipeline(
+    steps=[
+        ("preprocess", preprocessing),
+        (
+            "classifier",
+            RandomForestClassifier(
+                feature_importances="permutation_oob", random_state=42
+            ),
+        ),
+    ]
+).fit(X_train, y_train)
 
 # %%
 # Once the forest has been trained, the permutation importances will be
@@ -201,12 +212,12 @@ rf = Pipeline(steps=[
 # Thus, we can plot those feature importances and compared them with
 # the MDI estimates.
 tree_feature_importances = pd.DataFrame(
-    rf.named_steps['classifier'].importances_.importances.T,
-    columns=feature_names)
+    rf.named_steps["classifier"].importances_.importances.T, columns=feature_names
+)
 # sort (reorder columns) the DataFrame for the plotting
 tree_feature_importances = tree_feature_importances.reindex(
-    tree_feature_importances.mean().sort_values().index,
-    axis="columns")
+    tree_feature_importances.mean().sort_values().index, axis="columns"
+)
 
 ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Random Forest Feature Importances (OOB Permutation)")
@@ -235,14 +246,14 @@ plt.show()
 # rely on the forest models.
 from sklearn.inspection import permutation_importance
 
-result = permutation_importance(rf, X_test, y_test, n_repeats=10,
-                                random_state=42, n_jobs=2)
-tree_feature_importances = pd.DataFrame(
-    result.importances.T, columns=X_test.columns)
+result = permutation_importance(
+    rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
+)
+tree_feature_importances = pd.DataFrame(result.importances.T, columns=X_test.columns)
 # sort (reorder columns) the DataFrame for the plotting
 tree_feature_importances = tree_feature_importances.reindex(
-    tree_feature_importances.mean().sort_values().index,
-    axis="columns")
+    tree_feature_importances.mean().sort_values().index, axis="columns"
+)
 
 ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Permutation Importances (test set)")
@@ -261,14 +272,14 @@ plt.show()
 # plots is a confirmation that the RF model has enough capacity to use that
 # random numerical feature to overfit. You can further confirm this by
 # re-running this example with constrained RF with `min_samples_leaf=10`.
-result = permutation_importance(rf, X_train, y_train, n_repeats=10,
-                                random_state=42, n_jobs=2)
-tree_feature_importances = pd.DataFrame(
-    result.importances.T, columns=X_test.columns)
+result = permutation_importance(
+    rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
+)
+tree_feature_importances = pd.DataFrame(result.importances.T, columns=X_test.columns)
 # sort (reorder columns) the DataFrame for the plotting
 tree_feature_importances = tree_feature_importances.reindex(
-    tree_feature_importances.mean().sort_values().index,
-    axis="columns")
+    tree_feature_importances.mean().sort_values().index, axis="columns"
+)
 
 ax = tree_feature_importances.plot.box(vert=False)
 ax.set_title("Permutation Importances (train set)")
