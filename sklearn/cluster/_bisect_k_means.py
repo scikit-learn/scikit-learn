@@ -463,7 +463,7 @@ class BisectKMeans(KMeans):
                 X, x_squared_norms, init, random_state, n_centroids=1
             )
             warnings.warn(
-                "Bisection won't be performed - " "needs at least two clusters to run."
+                "Bisection won't be performed - needs at least two clusters to run."
             )
 
             self.labels_ = np.zeros(X.shape[0], dtype=np.intc)
