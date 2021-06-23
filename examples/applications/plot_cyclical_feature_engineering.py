@@ -457,33 +457,33 @@ cyclic_spline_linear_predictions = cyclic_spline_linear_pipeline.predict(
 # %%
 # We visualize those predictions by zooming on the last 96 hours (4 days) of
 # the test set to get some qualitative insights:
-plt.figure(figsize=(12, 4))
 last_hours = slice(-96, None)
-plt.plot(naive_linear_predictions[last_hours], "x-", label="Ordinal time features")
-plt.plot(
-    one_hot_linear_predictions[last_hours],
-    "x-",
-    label="One-hot time features"
-)
-plt.plot(
-    cyclic_cossin_linear_predictions[last_hours],
-    "x-",
-    label="Trigonometric time features"
-)
-plt.plot(
-    cyclic_spline_linear_predictions[last_hours],
-    "x-",
-    label="Spline-based time features"
-)
-plt.plot(
+fig, ax = plt.subplots(figsize=(12, 4))
+fig.suptitle("Predictions by linear models")
+ax.plot(
     y.iloc[test_0].values[last_hours],
     "x-",
     alpha=0.2,
     label="Actual demand",
     color="black",
 )
-plt.title("Predictions by linear models")
-_ = plt.legend()
+ax.plot(naive_linear_predictions[last_hours], "x-", label="Ordinal time features")
+ax.plot(
+    one_hot_linear_predictions[last_hours],
+    "x-",
+    label="One-hot time features"
+)
+ax.plot(
+    cyclic_cossin_linear_predictions[last_hours],
+    "x-",
+    label="Trigonometric time features"
+)
+ax.plot(
+    cyclic_spline_linear_predictions[last_hours],
+    "x-",
+    label="Spline-based time features"
+)
+_ = ax.legend()
 
 # %%
 # We can draw the following conclusions from the above plot:
@@ -605,31 +605,31 @@ cyclic_spline_poly_predictions = cyclic_spline_poly_pipeline.predict(X.iloc[test
 # Again we zoom on the last 4 days of the test set:
 
 last_hours = slice(-96, None)
-plt.figure(figsize=(12, 4))
-plt.plot(
-    gbrt_predictions[last_hours],
-    "x-",
-    label="Gradient Boosted Trees",
-)
-plt.plot(
-    one_hot_poly_predictions[last_hours],
-    "x-",
-    label="One-hot + polynomial kernel",
-)
-plt.plot(
-    cyclic_spline_poly_predictions[last_hours],
-    "x-",
-    label="Splines + polynomial kernel",
-)
-plt.title("Predictions by non-linear regression models")
-plt.plot(
+fig, ax = plt.subplots(figsize=(12, 4))
+fig.suptitle("Predictions by non-linear regression models")
+ax.plot(
     y.iloc[test_0].values[last_hours],
     "x-",
     alpha=0.2,
     label="Actual demand",
     color="black",
 )
-_ = plt.legend()
+ax.plot(
+    gbrt_predictions[last_hours],
+    "x-",
+    label="Gradient Boosted Trees",
+)
+ax.plot(
+    one_hot_poly_predictions[last_hours],
+    "x-",
+    label="One-hot + polynomial kernel",
+)
+ax.plot(
+    cyclic_spline_poly_predictions[last_hours],
+    "x-",
+    label="Splines + polynomial kernel",
+)
+_ = ax.legend()
 
 
 # %%
@@ -655,7 +655,7 @@ _ = plt.legend()
 # Let us finally get a more quantative look at the prediction errors of those
 # three models using the true vs predicted demand scatter plots:
 fig, axes = plt.subplots(ncols=3, figsize=(12, 4), sharey=True)
-plt.suptitle("Non-linear regression models")
+fig.suptitle("Non-linear regression models")
 predictions = [
     one_hot_poly_predictions,
     cyclic_spline_poly_predictions,
