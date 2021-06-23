@@ -51,7 +51,7 @@ from sklearn.model_selection._search import BaseSearchCV
 
 from sklearn.model_selection._validation import FitFailedWarning
 
-from sklearn.base import _MetadataConsumer
+from sklearn.base import _MetadataRequester
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -78,7 +78,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier(_MetadataConsumer):
+class MockClassifier(_MetadataRequester):
     """Dummy classifier to test the parameter search algorithms"""
 
     def __init__(self, foo_param=0):

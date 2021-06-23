@@ -34,9 +34,8 @@ from ._validation import _normalize_score_results
 from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import check_random_state
-from ..utils import build_router_metadata_request
-from ..utils import build_method_metadata_params
-from ..utils import _validate_required_props
+from ..utils import MetadataRouter
+from ..utils import metadata_request_factory
 from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
@@ -44,6 +43,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
+from ..metrics._scorer import _MultimetricScorer
 from ..metrics import check_scoring
 from ..utils import deprecated
 
@@ -716,6 +716,21 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             scorers = _check_multimetric_scoring(
                 self.estimator, self.scoring).values()
 
+        router = MetadataRouter().add(
+            *scorers,
+            mapping={"fit": "score", "score": "score"},
+            mask=True
+        ).add(
+            self.estimator,
+            mapping="one-to-one",
+            mask=True
+        ).add(
+            check_cv(self.cv),
+            mapping={"fit": "split"},
+            mask=True
+        )
+        return router.get_metadata_request()
+
         return build_router_metadata_request(
             children={"base": [self.estimator],
                       "cv": [check_cv(self.cv)],
@@ -777,30 +792,28 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         estimator = self.estimator
         refit_metric = "score"
         if callable(self.scoring):
-            scorers = self.scoring
+            scorers = score_router = self.scoring
         elif self.scoring is None or isinstance(self.scoring, str):
-            scorers = check_scoring(self.estimator, self.scoring)
+            scorers = score_router = check_scoring(
+                self.estimator, self.scoring
+            )
         else:
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
+            score_router = _MultimetricScorer(scorers)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
-        params = build_method_metadata_params(
-            children={'scorers': scorers,
-                      'estimator': estimator,
-                      'splitter': cv_orig},
-            routing=[
-                ('scorers', 'score', 'score'),
-                ('estimator', 'fit', 'fit'),
-                ('splitter', 'split', 'split')
-            ],
-            metadata=fit_params
+        _fit_params = metadata_request_factory(estimator).fit.get_method_input(
+            ignore_extras=True, **fit_params
         )
-        _fit_params = params.fit
-        _score_params = params.score
-        _cv_params = params.split
+        _score_params = metadata_request_factory(
+            score_router
+        ).score.get_method_input(ignore_extras=True, **fit_params)
+        _cv_params = metadata_request_factory(cv_orig).split.get_method_input(
+            ignore_extras=True, **fit_params
+        )
 
         _cv_param_values = _cv_params.values()
         _cv_param_names = _cv_params.keys()
@@ -809,10 +822,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         _cv_param_values = indexables[2:] if len(indexables) > 2 else []
         _cv_params = {name: value for name, value
                       in zip(_cv_param_names, _cv_param_values)}
-        _validate_required_props(
-            self.get_metadata_request().fit,
-            fit_params,
-            validate="both"
+        metadata_request_factory(self).fit.validate_metadata(
+            ignore_extras=False, **fit_params
         )
         _fit_params = _check_fit_params(X, _fit_params)
 

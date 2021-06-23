@@ -44,9 +44,10 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
-from ..base import is_regressor, _MetadataConsumer, MetadataConsumer
-from ..utils import _check_method_props
-from ..utils import _empty_metadata_request
+from ..base import is_regressor, _MetadataRequester
+from ..utils import metadata_request_factory
+from ..utils import MethodMetadataRequest
+from ..utils import MetadataRouter
 from ..utils.validation import _deprecate_positional_args
 
 
@@ -85,12 +86,18 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
+        self.get_metadata_request().score.validate_metadata(
+            ignore_extras=False, **kwargs
+        )
+
         for name, scorer in self._scorers.items():
+            params = metadata_request_factory(scorer).score.get_method_input(
+                ignore_extras=True, **kwargs
+            )
             if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator,
-                                      *args, **kwargs)
+                score = scorer._score(cached_call, estimator, *args, **params)
             else:
-                score = scorer(estimator, *args, **kwargs)
+                score = scorer(estimator, *args, **params)
             scores[name] = score
         return scores
 
@@ -124,8 +131,21 @@ class _MultimetricScorer:
                 return True
         return False
 
+    def get_metadata_request(self, output="dict"):
+        if output not in {"dict", "MetadataRequest"}:
+            raise ValueError(
+                "output can only be one of {'dict', 'MetadataRequest'}."
+            )
+        router = MetadataRouter().add(
+            *self.scorers.values(),
+            mapping={'score': 'score'},
+            mask=False,
+            overwrite='on-default'
+        )
+        return router.get_metadata_request(output=output)
 
-class _BaseScorer(_MetadataConsumer, MetadataConsumer):
+
+class _BaseScorer(_MetadataRequester):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -199,8 +219,9 @@ class _BaseScorer(_MetadataConsumer, MetadataConsumer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        kwargs = _check_method_props(self.get_metadata_request().score, kwargs)
-
+        kwargs = metadata_request_factory(self).score.get_method_input(
+            ignore_extras=False, **kwargs
+        )
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            **kwargs)
 
@@ -406,12 +427,12 @@ class _passthrough_scorer:
         return estimator.score(*args, **kwargs)
 
     def get_metadata_request(self):
-        res = _empty_metadata_request()
-        try:
-            res.score = self.estimator.get_metadata_request().score
-        except AttributeError:
-            pass
-        return res
+        router = MetadataRouter().add(
+            self.estimator,
+            mapping={"score": "score"},
+            mask=False
+        )
+        return router.get_metadata_request()
 
 
 @_deprecate_positional_args
@@ -511,12 +532,9 @@ def _check_multimetric_scoring(estimator, scoring):
     if isinstance(scoring, (list, tuple, set)):
         err_msg = ("The list/tuple elements must be unique "
                    "strings of predefined scorers. ")
-        invalid = False
         try:
             keys = set(scoring)
         except TypeError:
-            invalid = True
-        if invalid:
             raise ValueError(err_msg)
 
         if len(keys) != len(scoring):
@@ -603,7 +621,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 
     request_props : list of strings, or dict of {str: str}, default=None
         A list of required properties, or a mapping of the form
-        ``{provided_metadata: required_metadata}``, or None.
+        ``{required_metadata: provided_metadata}``, or None.
 
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.
@@ -644,8 +662,11 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs)._set_metadata_request(
-        {"score": request_props})
+    res = cls(score_func, sign, kwargs)
+    requests = metadata_request_factory(res)
+    requests.score = MethodMetadataRequest.from_dict(request_props)
+    res._metadata_request = requests
+    return res
 
 
 # Standard regression scores

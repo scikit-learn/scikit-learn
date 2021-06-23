@@ -35,7 +35,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import PredefinedSplit
 
-from sklearn.base import _MetadataConsumer
+from sklearn.base import _MetadataRequester
 
 NonGroupCVs = [
     KFold,
@@ -218,6 +218,7 @@ def test_pipeline():
     param_grid = {"myest__C": [0.1, 1]}
 
     gs = GridSearchCV(clf, param_grid=param_grid, scoring=scorer)
+    gs.get_metadata_request()
     gs.fit(X, y, new_param=brand, sample_weight=sw, my_sw=sw, brand=brand)
 
 
@@ -389,7 +390,7 @@ def test_invalid_arg_given():
 
 
 def test_get_metadata_request():
-    class TestDefaultsBadMetadataName(SampleWeightConsumer, _MetadataConsumer):
+    class TestDefaultsBadMetadataName(SampleWeightConsumer, _MetadataRequester):
         _metadata_request__my_param = {
             "score": {"my_param": True},
             # the following method raise an error
@@ -402,7 +403,7 @@ def test_get_metadata_request():
             "fit": "my_param",
         }
 
-    class TestDefaultsBadMethodName(SampleWeightConsumer, _MetadataConsumer):
+    class TestDefaultsBadMethodName(SampleWeightConsumer, _MetadataRequester):
         _metadata_request__my_param = {
             "score": {"my_param": True},
             # the following method raise an error
@@ -414,7 +415,7 @@ def test_get_metadata_request():
             "fit": "my_other_param",
         }
 
-    class TestDefaults(_MetadataConsumer, SampleWeightConsumer):
+    class TestDefaults(_MetadataRequester, SampleWeightConsumer):
         _metadata_request__my_param = {
             "score": {"my_param": True},
             "predict": {"my_param": True},

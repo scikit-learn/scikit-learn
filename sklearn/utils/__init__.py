@@ -35,6 +35,7 @@ from .validation import (as_float_array,
                          _deprecate_positional_args)
 from .. import get_config
 from .metadata_requests import MetadataRequest
+from .metadata_requests import MethodMetadataRequest
 from .metadata_requests import metadata_request_factory
 from .metadata_requests import MetadataRouter
 
@@ -57,7 +58,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
            "DataConversionWarning", "estimator_html_repr",
-           "MetadataRequest", "metadata_request_factory", "MetadataRouter"]
+           "MetadataRequest", "metadata_request_factory", "MetadataRouter",
+           "MethodMetadataRequest"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32

@@ -26,7 +26,7 @@ from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import type_of_target
-from ..base import _pprint, _MetadataConsumer, MetadataConsumer
+from ..base import _pprint, _MetadataRequester, MetadataConsumer
 
 __all__ = ['BaseCrossValidator',
            'KFold',
@@ -74,7 +74,7 @@ class GroupsConsumer(MetadataConsumer):
         return self
 
 
-class BaseCrossValidator(_MetadataConsumer, metaclass=ABCMeta):
+class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
@@ -1154,7 +1154,7 @@ class LeavePGroupsOut(GroupsConsumer, BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class _RepeatedSplits(_MetadataConsumer, metaclass=ABCMeta):
+class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1368,7 +1368,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
             n_splits=n_splits)
 
 
-class BaseShuffleSplit(_MetadataConsumer, metaclass=ABCMeta):
+class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
     @_deprecate_positional_args
     def __init__(self, n_splits=10, *, test_size=None, train_size=None,

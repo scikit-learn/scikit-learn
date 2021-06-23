@@ -270,11 +270,18 @@ class MethodMetadataRequest:
         requests: MethodMetadataRequest
             A :class:`MethodMetadataRequest` object.
         """
+        if requests is None:
+            requests = dict()
+        elif isinstance(requests, str):
+            requests = {requests: requests}
+        elif isinstance(requests, list):
+            requests = {r: r for r in requests}
         result = cls()
-        for prop, alias in requests:
+        for prop, alias in requests.items():
             result.add_request(
                 prop=prop, alias=alias, allow_aliasing=allow_aliasing
             )
+        return result
 
     def __repr__(self):
         return self.to_dict()
@@ -338,10 +345,15 @@ class MetadataRequest:
             If provided, all props should be the same as this value. It used to
             handle default values.
         """
+        if not isinstance(mapping, dict) and mapping != "one-to-one":
+            raise ValueError(
+                "mapping can only be a dict or the literal 'one-to-one'. "
+                f"Given value: {mapping}"
+            )
         if mapping == "one-to-one":
             mapping = {method: method for method in METHODS}
         other = metadata_request_factory(obj)
-        for source, destination in mapping.items():
+        for destination, source in mapping.items():
             my_method = getattr(self, destination)
             other_method = getattr(other, source)
             my_method.merge_method_request(

@@ -219,7 +219,7 @@ class RequestMethod:
         return func
 
 
-class _MetadataConsumer:
+class _MetadataRequester:
     def __init_subclass__(cls, **kwargs):
         """Set the ``{method}_requests`` methods.
 
@@ -432,7 +432,7 @@ class SampleWeightConsumer:
         return self
 
 
-class BaseEstimator(_MetadataConsumer):
+class BaseEstimator(_MetadataRequester):
     """Base class for all estimators in scikit-learn
 
     Notes
