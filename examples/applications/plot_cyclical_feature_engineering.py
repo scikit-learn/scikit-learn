@@ -71,9 +71,9 @@ X
 X["weather"].value_counts()
 
 # %%
-# Since there are only 3 `"heavy_rain"` events, we cannot use this category
-# to train machine learning models with cross validation. Instead, we simplify
-# the representation by collapsing those into the `"rain"` category.
+# Since there are only 3 `"heavy_rain"` events, we cannot use this category to
+# train machine learning models with cross validation. Instead, we simplify the
+# representation by collapsing those into the `"rain"` category.
 #
 X['weather'].replace(to_replace='heavy_rain', value="rain", inplace=True)
 # %%
@@ -132,13 +132,13 @@ X.iloc[train_4]
 # Gradient Boosting
 # -----------------
 #
-# Gradient Boosting Regression with decision trees is often flexible enough
-# to efficiently handle heteorogenous tabular data with a mix of categorical
-# and numerical features as long as the number of samples is large enough.
+# Gradient Boosting Regression with decision trees is often flexible enough to
+# efficiently handle heteorogenous tabular data with a mix of categorical and
+# numerical features as long as the number of samples is large enough.
 #
 # Here, we do minimal ordinal encoding for the categorical variables and then
-# let the model know that it should treat those as categorical variables by using
-# a dedicated tree splitting rule.
+# let the model know that it should treat those as categorical variables by
+# using a dedicated tree splitting rule.
 #
 # The numerical variable need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
@@ -200,8 +200,8 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any hyper-parameter tuning! We just had
 # to make the categorical variables explicit. Note that the time related
-# features are passed as is, i.e. without processing them. But this is not
-# much of a problem for tree-based models as they can learn a non-monotonic
+# features are passed as is, i.e. without processing them. But this is not much
+# of a problem for tree-based models as they can learn a non-monotonic
 # relationship between ordinal input features and the target.
 #
 # This is not the case for linear regression model as we will see in the
@@ -245,9 +245,9 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 # Non-linear terms have to be engineered in the input.
 #
 # For example, the raw numerical encoding of the `"hour"` feature prevents the
-# linear model from recognizing that an increase of hour in the morning from 6 to 8
-# should have a strong positive impact on the number of bike rentals while a
-# increase of similar magnitude in the evening from 18 to 20 should have a
+# linear model from recognizing that an increase of hour in the morning from 6
+# to 8 should have a strong positive impact on the number of bike rentals while
+# a increase of similar magnitude in the evening from 18 to 20 should have a
 # strong negative impact on the predicted number of bike rentals.
 #
 # Time-steps as categories
@@ -363,14 +363,15 @@ evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 # ------------------------
 #
 # We can try an alternative encoding of the periodic time-related features
-# using spline transformations with a large enough number of knots, and as a
+# using spline transformations with a large enough number of splines, and as a
 # result a larger number of expanded features:
 from sklearn.preprocessing import SplineTransformer
 
 
-def periodic_spline_transformer(period, n_knots=None, degree=3):
-    if n_knots is None:
-        n_knots = period
+def periodic_spline_transformer(period, n_splines=None, degree=3):
+    if n_splines is None:
+        n_splines = period
+    n_knots = n_splines + degree - 1
     return SplineTransformer(
         degree=degree,
         n_knots=n_knots,
@@ -388,7 +389,7 @@ hour_df = pd.DataFrame(
     np.linspace(0, 26, 1000).reshape(-1, 1),
     columns=["hour"],
 )
-splines = periodic_spline_transformer(24, n_knots=12).fit_transform(hour_df)
+splines = periodic_spline_transformer(24, n_splines=12).fit_transform(hour_df)
 splines_df = pd.DataFrame(
     splines,
     columns=[f"spline_{i}" for i in range(splines.shape[1])],
@@ -404,15 +405,15 @@ _ = plt.title("Periodic spline-based encoding for the 'hour' feature")
 # We can now build a predictive pipeline using this alternative periodic
 # feature engineering strategy.
 #
-# For the `"hours"` columns we use only 12 knots for a period of 24 hours to
-# avoid over-representing this feature compared to months (12 natural knots)
-# and weekday (7 natural knots).
+# For the `"hours"` columns we use only 12 splines for a period of 24 hours to
+# avoid over-representing this feature compared to months (12 natural splines)
+# and weekday (7 natural splines).
 cyclic_spline_transformer = ColumnTransformer(
     transformers=[
         ("categorical", one_hot_encoder, categorical_columns),
         ("cyclic_month", periodic_spline_transformer(12), ["month"]),
         ("cyclic_weekday", periodic_spline_transformer(7), ["weekday"]),
-        ("cyclic_hour", periodic_spline_transformer(24, n_knots=12), ["hour"]),
+        ("cyclic_hour", periodic_spline_transformer(24, n_splines=12), ["hour"]),
     ],
     remainder="passthrough",
 )
@@ -501,7 +502,7 @@ _ = plt.legend()
 #
 # - the periodic spline-based features fix those two problems at once: they
 #   give more expressivity to the linear model by making it possible to focus
-#   on a specific hours thanks to the use of 12 knots. Furthermore the
+#   on a specific hours thanks to the use of 12 splines. Furthermore the
 #   `extrapolation="periodic"` option enforces a smooth representation between
 #   `hour=23` and `hour=0`.
 #
@@ -527,13 +528,15 @@ _ = plt.legend()
 # -----------------------------------------------------
 #
 # The previous analysis highlighted the need to model the interactions between
-# `"workingday"` and `"hours"`. Another example of a such a non-linear interactions
-# that we would like to model could be the impact of the rain that might not be
-# the same during the working days and the week-ends and holidays for instance.
+# `"workingday"` and `"hours"`. Another example of a such a non-linear
+# interactions that we would like to model could be the impact of the rain that
+# might not be the same during the working days and the week-ends and holidays
+# for instance.
 #
-# Linear models cannot capture interaction effects between input features themselves.
-# It does not help that some features are marginally non-linear as is the case with
-# features constructed by `SplineTransformer` (or one-hot encoding or binning).
+# Linear models cannot capture interaction effects between input features
+# themselves. It does not help that some features are marginally non-linear as
+# is the case with features constructed by `SplineTransformer` (or one-hot
+# encoding or binning).
 #
 # To capture such interactions we could either use a partial polynomial
 # expansion `PolynomicalFeatures(degree=2, interaction_only=True)` or use the
