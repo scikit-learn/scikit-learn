@@ -200,9 +200,9 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any hyper-parameter tuning! We just had
 # to make the categorical variables explicit. Note that the time related
-# features are passed as is, i.e. without processing them. But this is not much of a problem for tree-based
-# models as they can learn a non-monotonic relationship between ordinal input
-# features and the target.
+# features are passed as is, i.e. without processing them. But this is not
+# much of a problem for tree-based models as they can learn a non-monotonic
+# relationship between ordinal input features and the target.
 #
 # This is not the case for linear regression model as we will see in the
 # following.
