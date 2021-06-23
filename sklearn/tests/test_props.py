@@ -93,9 +93,9 @@ class MyEst(ClassifierMixin, BaseEstimator):
         self.C = C
 
     def fit(self, X, y, **fit_params):
-        self.get_metadata_request(
-            output="MetadataRequest"
-        ).fit.validate_metadata(ignore_extras=False, **fit_params)
+        self.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
+            ignore_extras=False, **fit_params
+        )
         self.svc_ = SVC(C=self.C).fit(X, y)
         return self
 
@@ -111,13 +111,11 @@ class StuffConsumer(MetadataConsumer):
     _metadata_request__brand = {"fit": "brand"}
 
 
-class MyTrs(
-    SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator
-):
+class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator):
     def fit(self, X, y=None, **fit_params):
-        self.get_metadata_request(
-            output="MetadataRequest"
-        ).fit.validate_metadata(ignore_extras=False, **fit_params)
+        self.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
+            ignore_extras=False, **fit_params
+        )
         self._estimator = SelectKBest().fit(X, y)
         return self
 
@@ -157,21 +155,15 @@ def test_pipeline():
     # MyEst is requesting "brand" but MyTrs has it as ERROR_IF_PASSED
     with pytest.raises(
         ValueError,
-        match=(
-            "brand is passed but is not explicitly set as requested or not."
-        ),
+        match=("brand is passed but is not explicitly set as requested or not."),
     ):
         clf = make_pipeline(MyTrs(), MyEst())
         clf.fit(X, y, sample_weight=sw, brand=brand)
 
-    clf = make_pipeline(
-        MyTrs().fit_requests(brand=True, sample_weight=True), MyEst()
-    )
+    clf = make_pipeline(MyTrs().fit_requests(brand=True, sample_weight=True), MyEst())
     clf.fit(X, y, sample_weight=sw, brand=brand)
 
-    with pytest.raises(
-        ValueError, match="Metadata passed which is not understood"
-    ):
+    with pytest.raises(ValueError, match="Metadata passed which is not understood"):
         clf.fit(X, y, sample_weight=sw, brand=brand, other_param=sw)
 
     trs = MyTrs().fit_requests(new_param="my_sw", sample_weight=False)
@@ -429,9 +421,7 @@ def test_get_metadata_request():
     with pytest.raises(ValueError, match="Expected all metadata to be called"):
         TestDefaultsBadMetadataName().get_metadata_request()
 
-    with pytest.raises(
-        ValueError, match="other_method is not supported as a method"
-    ):
+    with pytest.raises(ValueError, match="other_method is not supported as a method"):
         TestDefaultsBadMethodName().get_metadata_request()
 
     expected = {
@@ -494,9 +484,7 @@ def test_get_metadata_request():
 def test_build_router_metadata_request():
     cv = GroupKFold().request_groups(split="my_groups")
     est = LogisticRegression().request_sample_weight(fit=True, score=True)
-    scorer = make_scorer(
-        accuracy_score, request_props={"my_weights": "sample_weight"}
-    )
+    scorer = make_scorer(accuracy_score, request_props={"my_weights": "sample_weight"})
     got = build_router_metadata_request(
         children={"base": est, "cv": cv, "scorer": scorer},
         routing=[
@@ -527,9 +515,7 @@ def test_build_router_metadata_request():
 def test_build_method_metadata_params():
     cv = GroupKFold().request_groups(split="my_groups")
     est = LogisticRegression().request_sample_weight(fit=True, score=True)
-    scorer = make_scorer(
-        accuracy_score, request_props={"my_weights": "sample_weight"}
-    )
+    scorer = make_scorer(accuracy_score, request_props={"my_weights": "sample_weight"})
 
     with pytest.raises(ValueError, match="Conflicting parameters"):
         build_method_metadata_params(

@@ -107,9 +107,7 @@ class MethodMetadataRequest:
                 f"which is not the same as the one given: {alias}."
             )
 
-    def merge_method_request(
-        self, other, overwrite=False, expected_metadata=None
-    ):
+    def merge_method_request(self, other, overwrite=False, expected_metadata=None):
         """Merge the metadata request info of two methods.
 
         The methods can be the same, or different. For example, merging
@@ -202,9 +200,7 @@ class MethodMetadataRequest:
             A dictionary of {prop: value} which can be given to the
             corresponding method.
         """
-        args = {
-            arg: value for arg, value in kwargs.items() if value is not None
-        }
+        args = {arg: value for arg, value in kwargs.items() if value is not None}
         res = dict()
         for prop, alias in self.requests.items():
             if not isinstance(alias, str):
@@ -278,9 +274,7 @@ class MethodMetadataRequest:
             requests = {r: r for r in requests}
         result = cls()
         for prop, alias in requests.items():
-            result.add_request(
-                prop=prop, alias=alias, allow_aliasing=allow_aliasing
-            )
+            result.add_request(prop=prop, alias=alias, allow_aliasing=allow_aliasing)
         return result
 
     def __repr__(self):
@@ -476,6 +470,4 @@ class MetadataRouter:
         elif output == "MetadataRequest":
             return self.requests
         else:
-            raise ValueError(
-                "output can be one of {'dict', 'MetadataRequest'}"
-            )
+            raise ValueError("output can be one of {'dict', 'MetadataRequest'}")
