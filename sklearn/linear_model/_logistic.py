@@ -2403,7 +2403,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             }
         }
 
-    def get_metadata_request(self):
+    def get_metadata_request(self, output="dict"):
         router = (
             MetadataRouter()
             .add(
@@ -2418,4 +2418,4 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 mask=True,
             )
         )
-        return router.get_metadata_request()
+        return router.get_metadata_request(output=output)

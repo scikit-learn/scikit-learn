@@ -305,7 +305,7 @@ def test_slep_caseD():
     # consumers.
 
     weighted_acc = make_scorer(
-        accuracy_score, request_props={"scoring_weight": "sample_weight"}
+        accuracy_score, request_props={"sample_weight": "scoring_weight"}
     )
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
