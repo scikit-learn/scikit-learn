@@ -46,8 +46,8 @@ cdef void _argkmin_on_chunk(
     floating[::1] Y_sq_norms,              # IN
     floating *dist_middle_terms,           # IN
     floating *heaps_red_distances,         # IN/OUT
-    ITYPE_t *heaps_indices,               # IN/OUT
-    ITYPE_t k,                            # IN
+    ITYPE_t *heaps_indices,                # IN/OUT
+    ITYPE_t k,                             # IN
     # ID of the first element of Y_c
     ITYPE_t Y_idx_offset,
 ) nogil:
@@ -94,9 +94,9 @@ cdef int _argkmin_on_X(
     floating[:, ::1] X,                       # IN
     floating[:, ::1] Y,                       # IN
     floating[::1] Y_sq_norms,                 # IN
-    ITYPE_t chunk_size,                      # IN
-    ITYPE_t effective_n_threads,             # IN
-    ITYPE_t[:, ::1] argkmin_indices,         # OUT
+    ITYPE_t chunk_size,                       # IN
+    ITYPE_t effective_n_threads,              # IN
+    ITYPE_t[:, ::1] argkmin_indices,          # OUT
     floating[:, ::1] argkmin_red_distances,   # OUT
 ) nogil:
     """Computes the argkmin of each vector (row) of X on Y
@@ -193,9 +193,9 @@ cdef int _argkmin_on_Y(
     floating[:, ::1] X,                       # IN
     floating[:, ::1] Y,                       # IN
     floating[::1] Y_sq_norms,                 # IN
-    ITYPE_t chunk_size,                      # IN
-    ITYPE_t effective_n_threads,             # IN
-    ITYPE_t[:, ::1] argkmin_indices,         # OUT
+    ITYPE_t chunk_size,                       # IN
+    ITYPE_t effective_n_threads,              # IN
+    ITYPE_t[:, ::1] argkmin_indices,          # OUT
     floating[:, ::1] argkmin_red_distances,   # OUT
 ) nogil:
     """Computes the argkmin of each vector (row) of X on Y
@@ -344,8 +344,8 @@ cdef inline floating _euclidean_dist(
 cdef int _exact_euclidean_dist(
     floating[:, ::1] X,                  # IN
     floating[:, ::1] Y,                  # IN
-    ITYPE_t[:, ::1] Y_indices,          # IN
-    ITYPE_t effective_n_threads,        # IN
+    ITYPE_t[:, ::1] Y_indices,           # IN
+    ITYPE_t effective_n_threads,         # IN
     floating[:, ::1] distances,          # OUT
 ) nogil:
     """
