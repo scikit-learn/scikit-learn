@@ -93,8 +93,8 @@ def test_lml_improving(kernel):
 def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert (
-        gpr.log_marginal_likelihood(gpr.kernel_.theta) == gpr.log_marginal_likelihood()
+    assert gpr.log_marginal_likelihood(gpr.kernel_.theta) == pytest.approx(
+        gpr.log_marginal_likelihood()
     )
 
 

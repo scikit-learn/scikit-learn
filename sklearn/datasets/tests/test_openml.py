@@ -143,7 +143,15 @@ def _fetch_dataset_from_openml(
     # TODO: pass in a list of expected nominal features
     for feature, categories in data_by_id.categories.items():
         feature_idx = data_by_id.feature_names.index(feature)
-        values = np.unique(data_by_id.data[:, feature_idx])
+
+        # TODO: Remove when https://github.com/numpy/numpy/issues/19300 gets fixed
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=DeprecationWarning,
+                message="elementwise comparison failed",
+            )
+            values = np.unique(data_by_id.data[:, feature_idx])
         values = values[np.isfinite(values)]
         assert set(values) <= set(range(len(categories)))
 
