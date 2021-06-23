@@ -214,8 +214,9 @@ class PCA(_BasePCA):
     ----------
     components_ : ndarray of shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
-        maximum variance in the data. The components are sorted by
-        ``explained_variance_``.
+        maximum variance in the data. Equivalently, principal axes are
+        the eigenvectors of the input data's covariance matrix. The components
+        are sorted by ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
