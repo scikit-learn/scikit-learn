@@ -333,7 +333,7 @@ def test_docstring(Estimator, method, request):
 
     import_path = ".".join(import_path)
 
-    if any(re.search(regex, import_path) for regex in DOCSTRING_IGNORE_LIST):
+    if Estimator.__name__ in DOCSTRING_IGNORE_LIST:
         request.applymarker(
             pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
         )
