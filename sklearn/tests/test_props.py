@@ -17,8 +17,6 @@ from sklearn.svm import SVC
 from sklearn.utils import _standardize_metadata_request
 from sklearn.utils import MetadataRequest
 from sklearn.utils.metadata_requests import RequestType
-from sklearn.utils import build_method_metadata_params
-from sklearn.utils import build_router_metadata_request
 
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GroupKFold
@@ -480,80 +478,3 @@ def test_get_metadata_request():
         "split": {},
     }
     assert est.get_metadata_request() == expected
-
-
-def test_build_router_metadata_request():
-    cv = GroupKFold().request_groups(split="my_groups")
-    est = LogisticRegression().request_sample_weight(fit=True, score=True)
-    scorer = make_scorer(accuracy_score, request_props={"my_weights": "sample_weight"})
-    got = build_router_metadata_request(
-        children={"base": est, "cv": cv, "scorer": scorer},
-        routing=[
-            ("base", "all", "all"),
-            ("cv", "split", "split"),
-            ("scorer", "fit", "score"),
-            ("scorer", "score", "score"),
-        ],
-    )
-    expected = {
-        "score": {
-            "my_weights": {"my_weights"},
-            "sample_weight": {"sample_weight"},
-        },
-        "fit": {
-            "sample_weight": {"sample_weight"},
-            "my_weights": {"my_weights"},
-        },
-        "partial_fit": {},
-        "predict": {},
-        "transform": {},
-        "inverse_transform": {},
-        "split": {"my_groups": {"my_groups"}},
-    }
-    assert expected == got
-
-
-def test_build_method_metadata_params():
-    cv = GroupKFold().request_groups(split="my_groups")
-    est = LogisticRegression().request_sample_weight(fit=True, score=True)
-    scorer = make_scorer(accuracy_score, request_props={"my_weights": "sample_weight"})
-
-    with pytest.raises(ValueError, match="Conflicting parameters"):
-        build_method_metadata_params(
-            children={"base": est, "cv": cv, "scorer": scorer},
-            routing=[
-                ("base", "all", "all"),
-                ("cv", "split", "split"),
-                ("scorer", "fit", "score"),
-                ("scorer", "score", "score"),
-            ],
-            metadata={
-                "my_weights": [1],
-                "sample_weight": [2],
-                "my_groups": [3],
-            },
-        )
-
-    # in fit
-    got = build_method_metadata_params(
-        children={"base": est, "scorer": scorer},
-        routing=[
-            ("base", "fit", "fit"),
-            ("scorer", "score", "score"),
-        ],
-        metadata={"my_weights": [1], "sample_weight": [2], "my_groups": [3]},
-    )
-    expected = {
-        "score": {
-            "sample_weight": [1],
-        },
-        "fit": {
-            "sample_weight": [2],
-        },
-        "partial_fit": {},
-        "predict": {},
-        "transform": {},
-        "inverse_transform": {},
-        "split": {},
-    }
-    assert expected == got
