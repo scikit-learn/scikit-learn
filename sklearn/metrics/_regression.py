@@ -468,7 +468,7 @@ def mean_squared_log_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
                         
-    'squared' : bool, default=True
+    squared : bool, default=True
         If True returns MSLE(mean squared log error) value. 
         If False returns RMSLE(root mean squared log error) value. 
 
