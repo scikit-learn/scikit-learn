@@ -284,7 +284,7 @@ def test_slep_caseC():
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
-    ).request_sample_weight(fit=True)
+    ).fit_requests(sample_weight=True)
     sel = SelectKBest(k=2)
     pipe = make_pipeline(sel, lr)
     cross_validate(
@@ -310,7 +310,7 @@ def test_slep_caseD():
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
-    ).request_sample_weight(fit="fitting_weight")
+    ).fit_requests(sample_weight="fitting_weight")
     cross_validate(
         lr,
         X,

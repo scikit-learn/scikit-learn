@@ -1115,7 +1115,7 @@ def test_ridgecv_sample_weight():
         sample_weight = 1.0 + rng.rand(n_samples)
 
         cv = KFold(5)
-        ridgecv = RidgeCV(alphas=alphas, cv=cv).request_sample_weight(fit=True)
+        ridgecv = RidgeCV(alphas=alphas, cv=cv).fit_requests(sample_weight=True)
         ridgecv.fit(X, y, sample_weight=sample_weight)
 
         # Check using GridSearchCV directly
