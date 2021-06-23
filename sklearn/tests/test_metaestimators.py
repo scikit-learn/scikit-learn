@@ -25,8 +25,9 @@ from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 
 
 class DelegatorData:
-    def __init__(self, name, construct, skip_methods=(),
-                 fit_args=make_classification()):
+    def __init__(
+        self, name, construct, skip_methods=(), fit_args=make_classification()
+    ):
         self.name = name
         self.construct = construct
         self.fit_args = fit_args
@@ -34,27 +35,38 @@ class DelegatorData:
 
 
 DELEGATING_METAESTIMATORS = [
-    DelegatorData('Pipeline', lambda est: Pipeline([('est', est)])),
-    DelegatorData('GridSearchCV',
-                  lambda est: GridSearchCV(
-                      est, param_grid={'param': [5]}, cv=2),
-                  skip_methods=['score']),
-    DelegatorData('RandomizedSearchCV',
-                  lambda est: RandomizedSearchCV(
-                      est, param_distributions={'param': [5]}, cv=2, n_iter=1),
-                  skip_methods=['score']),
-    DelegatorData('RFE', RFE,
-                  skip_methods=['transform', 'inverse_transform']),
-    DelegatorData('RFECV', RFECV,
-                  skip_methods=['transform', 'inverse_transform']),
-    DelegatorData('BaggingClassifier', BaggingClassifier,
-                  skip_methods=['transform', 'inverse_transform', 'score',
-                                'predict_proba', 'predict_log_proba',
-                                'predict']),
-    DelegatorData('SelfTrainingClassifier',
-                  lambda est: SelfTrainingClassifier(est),
-                  skip_methods=['transform', 'inverse_transform',
-                                'predict_proba']),
+    DelegatorData("Pipeline", lambda est: Pipeline([("est", est)])),
+    DelegatorData(
+        "GridSearchCV",
+        lambda est: GridSearchCV(est, param_grid={"param": [5]}, cv=2),
+        skip_methods=["score"],
+    ),
+    DelegatorData(
+        "RandomizedSearchCV",
+        lambda est: RandomizedSearchCV(
+            est, param_distributions={"param": [5]}, cv=2, n_iter=1
+        ),
+        skip_methods=["score"],
+    ),
+    DelegatorData("RFE", RFE, skip_methods=["transform", "inverse_transform"]),
+    DelegatorData("RFECV", RFECV, skip_methods=["transform", "inverse_transform"]),
+    DelegatorData(
+        "BaggingClassifier",
+        BaggingClassifier,
+        skip_methods=[
+            "transform",
+            "inverse_transform",
+            "score",
+            "predict_proba",
+            "predict_log_proba",
+            "predict",
+        ],
+    ),
+    DelegatorData(
+        "SelfTrainingClassifier",
+        lambda est: SelfTrainingClassifier(est),
+        skip_methods=["transform", "inverse_transform", "predict_proba"],
+    ),
 ]
 
 
@@ -64,8 +76,9 @@ def test_metaestimator_delegation():
         @property
         def wrapper(obj):
             if obj.hidden_method == method.__name__:
-                raise AttributeError('%r is hidden' % obj.hidden_method)
+                raise AttributeError("%r is hidden" % obj.hidden_method)
             return functools.partial(method, obj)
+
         return wrapper
 
     class SubEstimator(BaseEstimator):
@@ -116,8 +129,11 @@ def test_metaestimator_delegation():
             self._check_fit()
             return 1.0
 
-    methods = [k for k in SubEstimator.__dict__.keys()
-               if not k.startswith('_') and not k.startswith('fit')]
+    methods = [
+        k
+        for k in SubEstimator.__dict__.keys()
+        if not k.startswith("_") and not k.startswith("fit")
+    ]
     methods.sort()
 
     for delegator_data in DELEGATING_METAESTIMATORS:
@@ -127,14 +143,18 @@ def test_metaestimator_delegation():
             if method in delegator_data.skip_methods:
                 continue
             assert hasattr(delegate, method)
-            assert hasattr(delegator, method), (
-                    "%s does not have method %r when its delegate does"
-                    % (delegator_data.name, method))
+            assert hasattr(
+                delegator, method
+            ), "%s does not have method %r when its delegate does" % (
+                delegator_data.name,
+                method,
+            )
             # delegation before fit raises a NotFittedError
-            if method == 'score':
+            if method == "score":
                 with pytest.raises(NotFittedError):
-                    getattr(delegator, method)(delegator_data.fit_args[0],
-                                               delegator_data.fit_args[1])
+                    getattr(delegator, method)(
+                        delegator_data.fit_args[0], delegator_data.fit_args[1]
+                    )
             else:
                 with pytest.raises(NotFittedError):
                     getattr(delegator, method)(delegator_data.fit_args[0])
@@ -144,9 +164,10 @@ def test_metaestimator_delegation():
             if method in delegator_data.skip_methods:
                 continue
             # smoke test delegation
-            if method == 'score':
-                getattr(delegator, method)(delegator_data.fit_args[0],
-                                           delegator_data.fit_args[1])
+            if method == "score":
+                getattr(delegator, method)(
+                    delegator_data.fit_args[0], delegator_data.fit_args[1]
+                )
             else:
                 getattr(delegator, method)(delegator_data.fit_args[0])
 
@@ -156,9 +177,12 @@ def test_metaestimator_delegation():
             delegate = SubEstimator(hidden_method=method)
             delegator = delegator_data.construct(delegate)
             assert not hasattr(delegate, method)
-            assert not hasattr(delegator, method), (
-                    "%s has method %r when its delegate does not"
-                    % (delegator_data.name, method))
+            assert not hasattr(
+                delegator, method
+            ), "%s has method %r when its delegate does not" % (
+                delegator_data.name,
+                method,
+            )
 
 
 def _generate_meta_estimator_instances_with_pipeline():
@@ -175,8 +199,7 @@ def _generate_meta_estimator_instances_with_pipeline():
                 estimator = make_pipeline(TfidfVectorizer(), Ridge())
                 param_grid = {"ridge__alpha": [0.1, 1.0]}
             else:
-                estimator = make_pipeline(TfidfVectorizer(),
-                                          LogisticRegression())
+                estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
                 param_grid = {"logisticregression__C": [0.1, 1.0]}
 
             if "param_grid" in sig or "param_distributions" in sig:
@@ -192,9 +215,7 @@ def _generate_meta_estimator_instances_with_pipeline():
                 ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
                 (
                     "trans2",
-                    make_pipeline(
-                        TfidfVectorizer(), StandardScaler(with_mean=False)
-                    ),
+                    make_pipeline(TfidfVectorizer(), StandardScaler(with_mean=False)),
                 ),
             ]
             yield Estimator(transformer_list)
@@ -203,17 +224,16 @@ def _generate_meta_estimator_instances_with_pipeline():
             # stacking, voting
             if is_regressor(Estimator):
                 estimator = [
-                    ("est1", make_pipeline(TfidfVectorizer(),
-                                           Ridge(alpha=0.1))),
-                    ("est2", make_pipeline(TfidfVectorizer(),
-                                           Ridge(alpha=1))),
+                    ("est1", make_pipeline(TfidfVectorizer(), Ridge(alpha=0.1))),
+                    ("est2", make_pipeline(TfidfVectorizer(), Ridge(alpha=1))),
                 ]
             else:
                 estimator = [
-                    ("est1", make_pipeline(TfidfVectorizer(),
-                                           LogisticRegression(C=0.1))),
-                    ("est2", make_pipeline(TfidfVectorizer(),
-                                           LogisticRegression(C=1))),
+                    (
+                        "est1",
+                        make_pipeline(TfidfVectorizer(), LogisticRegression(C=0.1)),
+                    ),
+                    ("est2", make_pipeline(TfidfVectorizer(), LogisticRegression(C=1))),
                 ]
             yield Estimator(estimator)
 
@@ -237,12 +257,13 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
     "RFECV",
     "RegressorChain",  # data validation is necessary
     "SelfTrainingClassifier",
-    "SequentialFeatureSelector"  # not applicable (2D data mandatory)
+    "SequentialFeatureSelector",  # not applicable (2D data mandatory)
 ]
 
 DATA_VALIDATION_META_ESTIMATORS = [
-    est for est in _generate_meta_estimator_instances_with_pipeline() if
-    est.__class__.__name__ not in DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE
+    est
+    for est in _generate_meta_estimator_instances_with_pipeline()
+    if est.__class__.__name__ not in DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE
 ]
 
 

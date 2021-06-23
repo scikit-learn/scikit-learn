@@ -71,10 +71,7 @@ def test_weighted_percentile_2d():
     x_2d = np.vstack((x1, x2)).T
 
     w_median = _weighted_percentile(x_2d, w1)
-    p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w1)
-        for i in range(x_2d.shape[1])
-    ]
+    p_axis_0 = [_weighted_percentile(x_2d[:, i], w1) for i in range(x_2d.shape[1])]
     assert_allclose(w_median, p_axis_0)
 
     # Check when array and sample_weight boht 2D
@@ -83,7 +80,6 @@ def test_weighted_percentile_2d():
 
     w_median = _weighted_percentile(x_2d, w_2d)
     p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w_2d[:, i])
-        for i in range(x_2d.shape[1])
+        _weighted_percentile(x_2d[:, i], w_2d[:, i]) for i in range(x_2d.shape[1])
     ]
     assert_allclose(w_median, p_axis_0)

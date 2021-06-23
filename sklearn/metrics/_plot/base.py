@@ -24,23 +24,27 @@ def _check_classifier_response_method(estimator, response_method):
     """
 
     if response_method not in ("predict_proba", "decision_function", "auto"):
-        raise ValueError("response_method must be 'predict_proba', "
-                         "'decision_function' or 'auto'")
+        raise ValueError(
+            "response_method must be 'predict_proba', " "'decision_function' or 'auto'"
+        )
 
     error_msg = "response method {} is not defined in {}"
     if response_method != "auto":
         prediction_method = getattr(estimator, response_method, None)
         if prediction_method is None:
-            raise ValueError(error_msg.format(response_method,
-                                              estimator.__class__.__name__))
+            raise ValueError(
+                error_msg.format(response_method, estimator.__class__.__name__)
+            )
     else:
-        predict_proba = getattr(estimator, 'predict_proba', None)
-        decision_function = getattr(estimator, 'decision_function', None)
+        predict_proba = getattr(estimator, "predict_proba", None)
+        decision_function = getattr(estimator, "decision_function", None)
         prediction_method = predict_proba or decision_function
         if prediction_method is None:
-            raise ValueError(error_msg.format(
-                "decision_function or predict_proba",
-                estimator.__class__.__name__))
+            raise ValueError(
+                error_msg.format(
+                    "decision_function or predict_proba", estimator.__class__.__name__
+                )
+            )
 
     return prediction_method
 
@@ -78,15 +82,14 @@ def _get_response(X, estimator, response_method, pos_label=None):
         The class considered as the positive class when computing
         the metrics.
     """
-    classification_error = (
-        "{} should be a binary classifier".format(estimator.__class__.__name__)
+    classification_error = "{} should be a binary classifier".format(
+        estimator.__class__.__name__
     )
 
     if not is_classifier(estimator):
         raise ValueError(classification_error)
 
-    prediction_method = _check_classifier_response_method(
-        estimator, response_method)
+    prediction_method = _check_classifier_response_method(estimator, response_method)
 
     y_pred = prediction_method(X)
 

@@ -139,8 +139,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             alpha = np.sum(sample_weight) * self.alpha
         else:
             raise ValueError(
-                f"Penalty alpha must be a non-negative number, "
-                f"got {self.alpha}"
+                f"Penalty alpha must be a non-negative number, " f"got {self.alpha}"
             )
 
         if self.quantile >= 1.0 or self.quantile <= 0.0:
@@ -151,8 +150,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
-                f"The argument fit_intercept must be bool, "
-                f"got {self.fit_intercept}"
+                f"The argument fit_intercept must be bool, " f"got {self.fit_intercept}"
             )
 
         if self.solver not in (
@@ -162,21 +160,21 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             "interior-point",
             "revised simplex",
         ):
-            raise ValueError(
-                f"Invalid value for argument solver, got {self.solver}"
-            )
-        elif self.solver == "revised simplex" and sp_version < parse_version(
-            "1.3.0"
-        ):
+            raise ValueError(f"Invalid value for argument solver, got {self.solver}")
+        elif self.solver == "revised simplex" and sp_version < parse_version("1.3.0"):
             raise ValueError(
                 f"Solver 'revised simplex' is only available "
                 f"with scipy>=1.3.0, got {sp_version}"
             )
-        elif self.solver in (
-            "highs-ds",
-            "highs-ipm",
-            "highs",
-        ) and sp_version < parse_version("1.6.0"):
+        elif (
+            self.solver
+            in (
+                "highs-ds",
+                "highs-ipm",
+                "highs",
+            )
+            and sp_version < parse_version("1.6.0")
+        ):
             raise ValueError(
                 f"Solver {self.solver} is only available "
                 f"with scipy>=1.6.0, got {sp_version}"
@@ -265,14 +263,16 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             warnings.warn(
                 f"Linear programming for QuantileRegressor did not succeed.\n"
                 f"Status is {result.status}: "
-                + failure.setdefault(result.status, "unknown reason") + "\n"
-                + "Result message of linprog:\n" + result.message,
-                ConvergenceWarning
+                + failure.setdefault(result.status, "unknown reason")
+                + "\n"
+                + "Result message of linprog:\n"
+                + result.message,
+                ConvergenceWarning,
             )
 
         # positive slack - negative slack
         # solution is an array with (params_pos, params_neg, u, v)
-        params = solution[:n_params] - solution[n_params:2 * n_params]
+        params = solution[:n_params] - solution[n_params : 2 * n_params]
 
         self.n_iter_ = result.nit
 
