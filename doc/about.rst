@@ -201,31 +201,6 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: themes/scikit-learn/static/img/columbia.png
-   :width: 50pt
-   :align: center
-   :target: https://www.columbia.edu/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 ...........
 
 .. raw:: html
@@ -286,9 +261,35 @@ Past Sponsors
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
+`Columbia University <https://columbia.edu/>`_ funded Andreas Müller
+(2016-2020).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/columbia.png
+   :width: 50pt
+   :align: center
+   :target: https://www.columbia.edu/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+..........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
 Andreas Müller received a grant to improve scikit-learn from the
 `Alfred P. Sloan Foundation <https://sloan.org>`_ .
-This grant supports the position of Nicolas Hug and Thomas J. Fan.
+This grant supported the position of Nicolas Hug and Thomas J. Fan.
 
 .. raw:: html
 
