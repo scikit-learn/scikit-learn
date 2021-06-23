@@ -52,31 +52,7 @@ __all__ = [
 
 
 class GroupsConsumer(_MetadataRequester):
-
     _metadata_request__groups = {"split": {"groups": True}}
-
-    def request_groups(self, *, split=None):
-        """Define how to receive groups from the caller in `split` and
-        `get_n_splits`.
-
-        Parameters
-        ----------
-        split : string or bool, default=None
-            The parameter name that a meta-estimator should pass to this
-            estimator as groups when calling its `split` or `get_n_splits`
-            method.
-            If true, the name will be 'groups'.
-            If False, no score parameter will be passed.
-            If None, no change in routing.
-
-        Returns
-        -------
-        self
-        """
-        self._request_key_for_method(
-            method="split", param="groups", user_provides=split
-        )
-        return self
 
 
 class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):

@@ -14,7 +14,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
-from sklearn.utils import _standardize_metadata_request
 from sklearn.utils import MetadataRequest
 from sklearn.utils.metadata_requests import RequestType
 
@@ -332,19 +331,19 @@ def test_group_splitter_metadata_requests(Klass):
     else:
         cv = Klass()
     # check the default metadata_request
-    assert cv.get_metadata_request() == _standardize_metadata_request(
-        {"split": ["groups"]}
-    )
+    assert cv.get_metadata_request(output="MetadataRequest").split.requests == {
+        "groups": RequestType.REQUESTED
+    }
 
     # test that setting split to False empties the metadata_request
-    cv.request_groups(split=False)
+    cv.split_requests(groups=None)
     assert_request_is_empty(cv.get_metadata_request())
 
     # set a different input name and test
-    cv.request_groups(split="my_groups")
-    assert cv.get_metadata_request() == _standardize_metadata_request(
-        {"split": {"my_groups": "groups"}}
-    )
+    cv.split_requests(groups="my_groups")
+    assert cv.get_metadata_request(output="MetadataRequest").split.requests == {
+        "groups": "my_groups"
+    }
 
 
 @pytest.mark.parametrize("Klass", NonGroupCVs)
