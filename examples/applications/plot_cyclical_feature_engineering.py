@@ -8,7 +8,7 @@ This notebook introduces different strategies to leverage time-related features
 for a bike sharing demand regression task that is highly dependent on business
 cycles (days, weeks, months) and yearly season cycles.
 
-In the process we introduce how to perform periodic feature engineering using
+In the process, we introduce how to perform periodic feature engineering using
 the :class:`sklearn.preprocessing.SplineTransformer` class and its
 `extrapolation="periodic"` option.
 
@@ -25,9 +25,9 @@ df = bike_sharing.frame
 
 # %%
 # To get a quick understanding of the periodic patterns of the data, let us
-# have at the average weekly demand.
+# have a look at the average demand per hour during a week.
 #
-# Note that the week starts on a Sunday, during the week-end. We can clearly
+# Note that the week starts on a Sunday, during the weekend. We can clearly
 # distinguish the commute patterns in the morning and evenings of the work days
 # and the leisure use of the bikes on the weekends with a more spread peak
 # demand around the middle of the days:
@@ -71,16 +71,16 @@ X
 X["weather"].value_counts()
 
 # %%
-# Since there are only a few `"heavy_rain"` events, we cannot use this category
-# to train machine learning models. Instead it we simplify the representation
-# by collapsing those into the `"rain"` category.
+# Since there are only 3 `"heavy_rain"` events, we cannot use this category
+# to train machine learning models with cross validation. Instead, we simplify
+# the representation by collapsing those into the `"rain"` category.
 #
 X['weather'].replace(to_replace='heavy_rain', value="rain", inplace=True)
 # %%
 X["weather"].value_counts()
 
 # %%
-# As expected season variable is well balanced:
+# As expected, the `"season"` variable is well balanced:
 #
 X["season"].value_counts()
 
@@ -95,7 +95,7 @@ X["season"].value_counts()
 # performance of the CV folds more stable.
 #
 # 1000 test datapoints should be enough to quantify the performance of the
-# model. This reprent a bit less than a month and a half of contiguous test
+# model. This represents a bit less than a month and a half of contiguous test
 # data:
 
 from sklearn.model_selection import TimeSeriesSplit
@@ -137,10 +137,10 @@ X.iloc[train_4]
 # and numerical features as long as the number of samples is large enough.
 #
 # Here we do minimal ordinal encoding for the categorical variables and then
-# let the model know that it should treat those a categorical variables using
-# a dedicated split rule.
+# let the model know that it should treat those as categorical variables by using
+# a dedicated tree splitting rule.
 #
-# The numerical variable need no preprocessing and for the sake of simplicity
+# The numerical variable need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
@@ -198,9 +198,9 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 
 # %%
 # This model has an average error around 4 to 5% of the maximum demand. This is
-# quite good for a first trial without any hyper-parameters tuning! We just had
+# quite good for a first trial without any hyper-parameter tuning! We just had
 # to make the categorical variables explicit. Note that the time related
-# features are passed as such but this not much of a problem for tree-based
+# features are passed as is, i.e. without processing them. But this is not much of a problem for tree-based
 # models as they can learn a non-monotonic relationship between ordinal input
 # features and the target.
 #
@@ -236,7 +236,7 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 
 # %%
 #
-# The performance is a not good: the average error is around 14% of the maximum
+# The performance is not good: the average error is around 14% of the maximum
 # demand. This is more than three times higher than the average error of the
 # gradient boosting model. We can suspect that the naive original encoding of
 # the periodic time-related features might prevent the linear regression model
@@ -290,8 +290,8 @@ evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
 #
 # Finally, we also observe than one-hot encoding completely ignores the
 # ordering of the hour levels while this could be an interesting inductive bias
-# to preserve to some level. In the following we try to explore smooth, non
-# monotonic encoding that locally preserve the relative ordering of time
+# to preserve to some level. In the following we try to explore smooth,
+# non-monotonic encoding that locally preserves the relative ordering of time
 # features.
 #
 # Trigonometric features
@@ -362,7 +362,7 @@ evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 # ------------------------
 #
 # We can try an alternative encoding of the periodic time-related features
-# using spline transformations with a large-enough number of knots, and as a
+# using spline transformations with a large enough number of knots, and as a
 # result a larger number of expanded features:
 from sklearn.preprocessing import SplineTransformer
 
@@ -375,6 +375,7 @@ def periodic_spline_transformer(period, n_knots=None, degree=3):
         n_knots=n_knots,
         knots=np.linspace(0, period, n_knots).reshape(n_knots, 1),
         extrapolation="periodic",
+        include_bias=False,
     )
 
 
@@ -396,13 +397,13 @@ _ = plt.title("Periodic spline-based encoding for the 'hour' feature")
 
 
 # %%
-# Thanks for the use of the `extrapolation="periodic"` parameter, we observe
+# Thanks to the use of the `extrapolation="periodic"` parameter, we observe
 # that the feature encoding stays smooth when extrapolating beyond midnight.
 #
 # We can now build a predictive pipeline using this alternative periodic
 # feature engineering strategy.
 #
-# For the "hours" columns we use only 12 knots for a period of 24 hours to
+# For the `"hours"` columns we use only 12 knots for a period of 24 hours to
 # avoid over-representing this feature compared to months (12 natural knots)
 # and weekday (7 natural knots).
 cyclic_spline_transformer = ColumnTransformer(
@@ -430,8 +431,8 @@ evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 # Qualitative analysis of the impact of features on linear models predictions
 # ---------------------------------------------------------------------------
 #
-# Here we want to visualize the impact of the feature engineering choices on
-# the time related-shape of the predictions.
+# Here, we want to visualize the impact of the feature engineering choices on
+# the time related shape of the predictions.
 #
 # To do so we consider an arbitrary time-based split to compare the predictions
 # on a range of held out data points.
@@ -505,11 +506,11 @@ _ = plt.legend()
 #
 # - the one-hot encoded features behave similarly to the periodic spline-based
 #   features but are more spiky: for instance they can better model the morning
-#   peak during the weak days since this peak last fewer than an hour. However
+#   peak during the week days since this peak last fewer than an hour. However,
 #   we will see in the following that what can be an advantage for linear
 #   models is not necessarily one for more expressive models.
 #
-# Finally we observe that none of the linear models can approximate the true
+# Finally, we observe that none of the linear models can approximate the true
 # bike rentals demand, especially for the peaks that can be very sharp at rush
 # hours during the working days but much flatter during the week-ends: the most
 # accurate linear models based on splines or one-hot encoding tend to forecast
@@ -525,12 +526,12 @@ _ = plt.legend()
 # -----------------------------------------------------
 #
 # The previous analysis highlighted the need to model the interactions between
-# "workingday" and "hours". Another example of a such a non-linear interactions
+# `"workingday"` and `"hours"`. Another example of a such a non-linear interactions
 # that we would like to model could be the impact of the rain that might not be
 # the same during the working days and the week-ends and holidays for instance.
 #
-# Linear models cannot capture non-linear interactions between features even if
-# the features them-selves are marginally non-linear as is the case with
+# Linear models cannot capture interaction effects between input features themselves.
+# It does not help that some features are marginally non-linear as is the case with
 # features constructed by `SplineTransformer` (or one-hot encoding or binning).
 #
 # To capture such interactions we could either use a partial polynomial
@@ -558,7 +559,7 @@ evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
 # Note that while the final step of this pipeline is a linear regression model,
 # the intermediate steps such as the spline feature extraction and the Nyström
 # kernel approximation are highly non-linear. As a result the compound pipeline
-# is much more expressive than a simple linear regression model.
+# is much more expressive than a simple linear regression model with raw features.
 #
 # For the sake of completeness, we also evaluate the combination of one-hot
 # encoding and kernel approximation:
@@ -640,7 +641,7 @@ _ = plt.legend()
 # rank kernel model. In particular they significantly over-estimate the low
 # demand hours more than the competing models.
 #
-# We also observe than none of the models can successully predict some of the
+# We also observe that none of the models can successfully predict some of the
 # peak rentals at the rush hours during the working days. It is possible that
 # access to additional features would be required to further improve the
 # accuracy of the predictions. For instance, it could be useful to have access
