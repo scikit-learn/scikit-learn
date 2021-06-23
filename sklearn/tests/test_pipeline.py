@@ -510,7 +510,7 @@ def test_feature_union():
     fs.fit(X, y)
 
 
-def test_feature_union_index():
+def test_feature_union_named_estimators_():
     transf = Transf()
     noinvtransf = NoInvTransf()
     fs = FeatureUnion([("transf", transf), ("noinvtransf", noinvtransf)])
