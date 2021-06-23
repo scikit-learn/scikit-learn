@@ -39,18 +39,18 @@ def test_write_label_html(checked):
     with closing(StringIO()) as out:
         _write_label_html(out, name, tool_tip, checked=checked)
         html_label = out.getvalue()
-        assert 'LogisticRegression</label>' in html_label
+        assert "LogisticRegression</label>" in html_label
         assert html_label.startswith('<div class="sk-label-container">')
-        assert '<pre>hello-world</pre>' in html_label
+        assert "<pre>hello-world</pre>" in html_label
         if checked:
-            assert 'checked>' in html_label
+            assert "checked>" in html_label
 
 
-@pytest.mark.parametrize('est', ['passthrough', 'drop', None])
+@pytest.mark.parametrize("est", ["passthrough", "drop", None])
 def test_get_visual_block_single_str_none(est):
     # Test estimators that are represnted by strings
     est_html_info = _get_visual_block(est)
-    assert est_html_info.kind == 'single'
+    assert est_html_info.kind == "single"
     assert est_html_info.estimators == est
     assert est_html_info.names == str(est)
     assert est_html_info.name_details == str(est)
@@ -59,111 +59,124 @@ def test_get_visual_block_single_str_none(est):
 def test_get_visual_block_single_estimator():
     est = LogisticRegression(C=10.0)
     est_html_info = _get_visual_block(est)
-    assert est_html_info.kind == 'single'
+    assert est_html_info.kind == "single"
     assert est_html_info.estimators == est
     assert est_html_info.names == est.__class__.__name__
     assert est_html_info.name_details == str(est)
 
 
 def test_get_visual_block_pipeline():
-    pipe = Pipeline([
-        ('imputer', SimpleImputer()),
-        ('do_nothing', 'passthrough'),
-        ('do_nothing_more', None),
-        ('classifier', LogisticRegression())
-    ])
+    pipe = Pipeline(
+        [
+            ("imputer", SimpleImputer()),
+            ("do_nothing", "passthrough"),
+            ("do_nothing_more", None),
+            ("classifier", LogisticRegression()),
+        ]
+    )
     est_html_info = _get_visual_block(pipe)
-    assert est_html_info.kind == 'serial'
+    assert est_html_info.kind == "serial"
     assert est_html_info.estimators == tuple(step[1] for step in pipe.steps)
-    assert est_html_info.names == ['imputer: SimpleImputer',
-                                   'do_nothing: passthrough',
-                                   'do_nothing_more: passthrough',
-                                   'classifier: LogisticRegression']
+    assert est_html_info.names == [
+        "imputer: SimpleImputer",
+        "do_nothing: passthrough",
+        "do_nothing_more: passthrough",
+        "classifier: LogisticRegression",
+    ]
     assert est_html_info.name_details == [str(est) for _, est in pipe.steps]
 
 
 def test_get_visual_block_feature_union():
-    f_union = FeatureUnion([
-        ('pca', PCA()), ('svd', TruncatedSVD())
-    ])
+    f_union = FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD())])
     est_html_info = _get_visual_block(f_union)
-    assert est_html_info.kind == 'parallel'
-    assert est_html_info.names == ('pca', 'svd')
+    assert est_html_info.kind == "parallel"
+    assert est_html_info.names == ("pca", "svd")
     assert est_html_info.estimators == tuple(
-        trans[1] for trans in f_union.transformer_list)
+        trans[1] for trans in f_union.transformer_list
+    )
     assert est_html_info.name_details == (None, None)
 
 
 def test_get_visual_block_voting():
-    clf = VotingClassifier([
-        ('log_reg', LogisticRegression()),
-        ('mlp', MLPClassifier())
-    ])
+    clf = VotingClassifier(
+        [("log_reg", LogisticRegression()), ("mlp", MLPClassifier())]
+    )
     est_html_info = _get_visual_block(clf)
-    assert est_html_info.kind == 'parallel'
-    assert est_html_info.estimators == tuple(trans[1]
-                                             for trans in clf.estimators)
-    assert est_html_info.names == ('log_reg', 'mlp')
+    assert est_html_info.kind == "parallel"
+    assert est_html_info.estimators == tuple(trans[1] for trans in clf.estimators)
+    assert est_html_info.names == ("log_reg", "mlp")
     assert est_html_info.name_details == (None, None)
 
 
 def test_get_visual_block_column_transformer():
-    ct = ColumnTransformer([
-        ('pca', PCA(), ['num1', 'num2']),
-        ('svd', TruncatedSVD, [0, 3])
-    ])
+    ct = ColumnTransformer(
+        [("pca", PCA(), ["num1", "num2"]), ("svd", TruncatedSVD, [0, 3])]
+    )
     est_html_info = _get_visual_block(ct)
-    assert est_html_info.kind == 'parallel'
-    assert est_html_info.estimators == tuple(
-        trans[1] for trans in ct.transformers)
-    assert est_html_info.names == ('pca', 'svd')
-    assert est_html_info.name_details == (['num1', 'num2'], [0, 3])
+    assert est_html_info.kind == "parallel"
+    assert est_html_info.estimators == tuple(trans[1] for trans in ct.transformers)
+    assert est_html_info.names == ("pca", "svd")
+    assert est_html_info.name_details == (["num1", "num2"], [0, 3])
 
 
 def test_estimator_html_repr_pipeline():
-    num_trans = Pipeline(steps=[
-        ('pass', 'passthrough'),
-        ('imputer', SimpleImputer(strategy='median'))
-    ])
+    num_trans = Pipeline(
+        steps=[("pass", "passthrough"), ("imputer", SimpleImputer(strategy="median"))]
+    )
 
-    cat_trans = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='constant',
-                                  missing_values='empty')),
-        ('one-hot', OneHotEncoder(drop='first'))
-    ])
+    cat_trans = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="constant", missing_values="empty")),
+            ("one-hot", OneHotEncoder(drop="first")),
+        ]
+    )
 
-    preprocess = ColumnTransformer([
-        ('num', num_trans, ['a', 'b', 'c', 'd', 'e']),
-        ('cat', cat_trans, [0, 1, 2, 3])
-    ])
+    preprocess = ColumnTransformer(
+        [
+            ("num", num_trans, ["a", "b", "c", "d", "e"]),
+            ("cat", cat_trans, [0, 1, 2, 3]),
+        ]
+    )
 
-    feat_u = FeatureUnion([
-            ('pca', PCA(n_components=1)),
-            ('tsvd', Pipeline([('first', TruncatedSVD(n_components=3)),
-                               ('select', SelectPercentile())]))
-    ])
+    feat_u = FeatureUnion(
+        [
+            ("pca", PCA(n_components=1)),
+            (
+                "tsvd",
+                Pipeline(
+                    [
+                        ("first", TruncatedSVD(n_components=3)),
+                        ("select", SelectPercentile()),
+                    ]
+                ),
+            ),
+        ]
+    )
 
-    clf = VotingClassifier([
-        ('lr', LogisticRegression(solver='lbfgs', random_state=1)),
-        ('mlp', MLPClassifier(alpha=0.001))
-    ])
+    clf = VotingClassifier(
+        [
+            ("lr", LogisticRegression(solver="lbfgs", random_state=1)),
+            ("mlp", MLPClassifier(alpha=0.001)),
+        ]
+    )
 
-    pipe = Pipeline([
-        ('preprocessor', preprocess), ('feat_u', feat_u), ('classifier', clf)
-    ])
+    pipe = Pipeline(
+        [("preprocessor", preprocess), ("feat_u", feat_u), ("classifier", clf)]
+    )
     html_output = estimator_html_repr(pipe)
 
     # top level estimators show estimator with changes
     assert str(pipe) in html_output
     for _, est in pipe.steps:
-        assert (f"<div class=\"sk-toggleable__content\">"
-                f"<pre>{str(est)}") in html_output
+        assert (
+            f'<div class="sk-toggleable__content">' f"<pre>{str(est)}"
+        ) in html_output
 
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
-        assert str(num_trans['pass']) in html_output
-        assert 'passthrough</label>' in html_output
-        assert str(num_trans['imputer']) in html_output
+        assert str(num_trans["pass"]) in html_output
+        assert "passthrough</label>" in html_output
+        assert str(num_trans["imputer"]) in html_output
 
         for _, _, cols in preprocess.transformers:
             assert f"<pre>{cols}</pre>" in html_output
@@ -176,8 +189,8 @@ def test_estimator_html_repr_pipeline():
         assert f"<pre>{str(pca)}</pre>" in html_output
 
         tsvd = feat_u.transformer_list[1][1]
-        first = tsvd['first']
-        select = tsvd['select']
+        first = tsvd["first"]
+        select = tsvd["select"]
         assert f"<pre>{str(first)}</pre>" in html_output
         assert f"<pre>{str(select)}</pre>" in html_output
 
@@ -189,10 +202,11 @@ def test_estimator_html_repr_pipeline():
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
 def test_stacking_classsifer(final_estimator):
-    estimators = [('mlp', MLPClassifier(alpha=0.001)),
-                  ('tree', DecisionTreeClassifier())]
-    clf = StackingClassifier(
-        estimators=estimators, final_estimator=final_estimator)
+    estimators = [
+        ("mlp", MLPClassifier(alpha=0.001)),
+        ("tree", DecisionTreeClassifier()),
+    ]
+    clf = StackingClassifier(estimators=estimators, final_estimator=final_estimator)
 
     html_output = estimator_html_repr(clf)
 
@@ -208,7 +222,8 @@ def test_stacking_classsifer(final_estimator):
 @pytest.mark.parametrize("final_estimator", [None, LinearSVR()])
 def test_stacking_regressor(final_estimator):
     reg = StackingRegressor(
-        estimators=[('svr', LinearSVR())], final_estimator=final_estimator)
+        estimators=[("svr", LinearSVR())], final_estimator=final_estimator
+    )
     html_output = estimator_html_repr(reg)
 
     assert str(reg.estimators[0][0]) in html_output
@@ -235,7 +250,7 @@ def test_birch_duck_typing_meta():
 
 def test_ovo_classifier_duck_typing_meta():
     # Test duck typing metaestimators with OVO
-    ovo = OneVsOneClassifier(LinearSVC(penalty='l1'))
+    ovo = OneVsOneClassifier(LinearSVC(penalty="l1"))
     html_output = estimator_html_repr(ovo)
 
     # inner estimators do not show changes
@@ -257,7 +272,7 @@ def test_duck_typing_nested_estimator():
     assert f"<pre>{str(gp)}" in html_output
 
 
-@pytest.mark.parametrize('print_changed_only', [True, False])
+@pytest.mark.parametrize("print_changed_only", [True, False])
 def test_one_estimator_print_change_only(print_changed_only):
     pca = PCA(n_components=10)
 

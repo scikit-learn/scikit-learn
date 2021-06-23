@@ -3,12 +3,12 @@ version: 2
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: circleci/python:3.7.7-buster
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.6
+      - PYTHON_VERSION: 3.7
       - NUMPY_VERSION: 'min'
       - SCIPY_VERSION: 'min'
       - MATPLOTLIB_VERSION: 'min'
@@ -47,7 +47,7 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: circleci/python:3.7.7-buster
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
@@ -96,7 +96,7 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -130,7 +130,7 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
