@@ -24,8 +24,9 @@ from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
-from ..utils import build_router_metadata_request
-from ..utils import build_method_metadata_params
+from ..utils import MetadataRouter
+from ..utils import metadata_request_factory
+from ..utils.metadata_requests import METHODS
 from ..utils.extmath import log_logistic, safe_sparse_dot, softmax, squared_norm
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
@@ -2025,6 +2026,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         -------
         self : object
         """
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+        metadata_request_factory(self).fit.validate_metadata(
+            ignore_extras=False, **fit_params
+        )
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
@@ -2104,21 +2110,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
         scorer = get_scorer(self.scoring)
-        params = build_method_metadata_params(
-            children={
-                "base": super(LinearClassifierMixin),
-                "splitter": cv,
-                "scorer": scorer,
-            },
-            routing=[
-                ("base", "fit", "fit"),
-                ("splitter", "split", "split"),
-                ("scorer", "score", "score"),
-            ],
-            metadata=fit_params,
+        cv_params = metadata_request_factory(cv).split.get_method_input(
+            ignore_extras=True, **fit_params
         )
-        cv_params = params.split
-        score_params = params.score
+        score_params = metadata_request_factory(scorer).split.get_method_input(
+            ignore_extras=True, **fit_params
+        )
         folds = list(cv.split(X, y, **cv_params))
 
         # Use the label encoded classes
@@ -2407,16 +2404,18 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         }
 
     def get_metadata_request(self):
-        return build_router_metadata_request(
-            children={
-                "base": super(LinearClassifierMixin),
-                "cv": [check_cv(self.cv)],
-                "scorer": get_scorer(self.score),
-            },
-            routing=[
-                ("base", "fit", "fit"),
-                ("cv", "fit", "split"),
-                ("base", "predict", "predict"),
-                ("scorer", "score", "score"),
-            ],
+        router = (
+            MetadataRouter()
+            .add(
+                super(LogisticRegression, self),
+                mapping={m: m for m in METHODS if m != "score"},
+                mask=False,
+            )
+            .add(check_cv(self.cv), mapping={"fit": "split"}, mask=True)
+            .add(
+                get_scorer(self.score),
+                mapping={"fit": "score", "score": "score"},
+                mask=True,
+            )
         )
+        return router.get_metadata_request()

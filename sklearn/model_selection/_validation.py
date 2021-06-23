@@ -24,7 +24,7 @@ from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
-from ..utils import build_method_metadata_params
+from ..utils import metadata_request_factory
 from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
@@ -261,24 +261,22 @@ def cross_validate(
         props.update(fit_params)
 
     if callable(scoring):
-        scorers = scoring
+        scorers = score_router = scoring
     elif scoring is None or isinstance(scoring, str):
-        scorers = check_scoring(estimator, scoring)
+        scorers = score_router = check_scoring(estimator, scoring)
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
+        score_router = _MultimetricScorer(scorers)
 
-    _params = build_method_metadata_params(
-        children={"scorers": scorers, "estimator": estimator, "splitter": cv},
-        routing=[
-            ("scorers", "score", "score"),
-            ("estimator", "fit", "fit"),
-            ("splitter", "split", "split"),
-        ],
-        metadata=props,
+    _fit_params = metadata_request_factory(estimator).fit.get_method_input(
+        ignore_extras=True, **props
     )
-    _fit_params = _params.fit
-    _score_params = _params.score
-    _cv_params = _params.split
+    _score_params = metadata_request_factory(score_router).score.get_method_input(
+        ignore_extras=True, **props
+    )
+    _cv_params = metadata_request_factory(cv).split.get_method_input(
+        ignore_extras=True, **props
+    )
 
     _cv_param_values = _cv_params.values()
     _cv_param_names = _cv_params.keys()

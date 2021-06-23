@@ -224,7 +224,7 @@ def test_slep_caseA():
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
-    ).request_sample_weight(fit="sample_weight")
+    ).fit_requests(sample_weight=True)
     cross_validate(
         lr,
         X,
