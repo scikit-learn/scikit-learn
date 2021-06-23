@@ -7,6 +7,4 @@ from ._bayesian_mixture import BayesianGaussianMixture
 from ._gaussian_mixture_ic import GaussianMixtureIC
 
 
-__all__ = ['GaussianMixture',
-           'BayesianGaussianMixture',
-           'GaussianMixtureIC']
+__all__ = ['GaussianMixture', 'BayesianGaussianMixture', 'GaussianMixtureIC']
