@@ -136,7 +136,7 @@ X.iloc[train_4]
 # to efficiently handle heteorogenous tabular data with a mix of categorical
 # and numerical features as long as the number of samples is large enough.
 #
-# Here we do minimal ordinal encoding for the categorical variables and then
+# Here, we do minimal ordinal encoding for the categorical variables and then
 # let the model know that it should treat those as categorical variables by using
 # a dedicated tree splitting rule.
 #
@@ -240,11 +240,12 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 # demand. This is more than three times higher than the average error of the
 # gradient boosting model. We can suspect that the naive original encoding of
 # the periodic time-related features might prevent the linear regression model
-# to properly leverage the time information: linear regression cannot model a
-# non-monotonic relationship between the input features and the target.
+# to properly leverage the time information: linear regression does not model
+# non-monotonic relationships between the input features and the target.
+# Non-linear terms have to be engineered in the input.
 #
-# For example, the raw numerical encoding of the "hour" feature prevents the
-# linear model to model that an increase of hour in the morning from 6 to 8
+# For example, the raw numerical encoding of the `"hour"` feature prevents the
+# linear model from recognizing that an increase of hour in the morning from 6 to 8
 # should have a strong positive impact on the number of bike rentals while a
 # increase of similar magnitude in the evening from 18 to 20 should have a
 # strong negative impact on the predicted number of bike rentals.
