@@ -881,11 +881,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             name, est = self.transformer_list[ind]
         except TypeError:
             # Not an int, try get transformer by name
-            return self.named_transformer_list[ind]
+            return self.named_transformers_[ind]
         return est
 
     @property
-    def named_transformer_list(self):
+    def named_transformers_(self):
         # Use Bunch object to improve autocomplete
         return Bunch(**dict(self.transformer_list))
 

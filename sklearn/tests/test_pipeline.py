@@ -520,8 +520,8 @@ def test_feature_union_index():
     assert fs["noinvtransf"] == noinvtransf
 
     # test named attribute
-    assert fs.named_transformer_list.transf == transf
-    assert fs.named_transformer_list.noinvtransf == noinvtransf
+    assert fs.named_transformers_.transf == transf
+    assert fs.named_transformers_.noinvtransf == noinvtransf
 
     # should raise an error if index out of range
     with pytest.raises(IndexError):
