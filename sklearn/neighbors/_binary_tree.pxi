@@ -591,7 +591,6 @@ cdef class NeighborsHeap:
 
         return 0
 
-
     cdef int _sort(self) except -1:
         """simultaneously sort the distances and indices"""
         cdef DTYPE_t[:, ::1] distances = self.distances
