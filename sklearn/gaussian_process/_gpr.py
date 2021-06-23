@@ -135,17 +135,17 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     References
     ----------
     .. [1] `Rasmussen, Carl Edward.
        "Gaussian processes in machine learning."
        Summer school on machine learning. Springer, Berlin, Heidelberg, 2003
        <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
-
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     Examples
     --------
