@@ -869,21 +869,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.verbose = verbose
         self._validate_transformers()
 
-    def __getitem__(self, ind):
-        """Returns a single estimator in the feature union.
-
-        Indexing with an integer or string will return an estimator.
-        """
-        if isinstance(ind, slice):
-            raise ValueError("FeatureUnion slicing not supported")
-
-        try:
-            name, est = self.transformer_list[ind]
-        except TypeError:
-            # Not an int, try get transformer by name
-            return self.named_transformers_[ind]
-        return est
-
     @property
     def named_transformers_(self):
         # Use Bunch object to improve autocomplete
