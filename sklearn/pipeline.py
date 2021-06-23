@@ -218,7 +218,7 @@ class Pipeline(_BaseComposition):
         return len(self.steps)
 
     def __getitem__(self, ind):
-        """Returns a sub-pipeline or a single esimtator in the pipeline
+        """Returns a sub-pipeline or a single estimator in the pipeline
 
         Indexing with an integer will return an estimator; using a slice
         returns another Pipeline instance which copies a slice of this
@@ -868,6 +868,26 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
         self._validate_transformers()
+
+    def __getitem__(self, ind):
+        """Returns a single estimator in the feature union.
+
+        Indexing with an integer or string will return an estimator.
+        """
+        if isinstance(ind, slice):
+            raise ValueError("FeatureUnion slicing not supported")
+
+        try:
+            name, est = self.transformer_list[ind]
+        except TypeError:
+            # Not an int, try get transformer by name
+            return self.named_transformer_list[ind]
+        return est
+
+    @property
+    def named_transformer_list(self):
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.transformer_list))
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

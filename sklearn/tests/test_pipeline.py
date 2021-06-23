@@ -510,6 +510,32 @@ def test_feature_union():
     fs.fit(X, y)
 
 
+def test_feature_union_index():
+    transf = Transf()
+    noinvtransf = NoInvTransf()
+    fs = FeatureUnion([("transf", transf), ("noinvtransf", noinvtransf)])
+    assert fs[0] == transf
+    assert fs["transf"] == transf
+    assert fs[-1] == noinvtransf
+    assert fs["noinvtransf"] == noinvtransf
+
+    # test named attribute
+    assert fs.named_transformer_list.transf == transf
+    assert fs.named_transformer_list.noinvtransf == noinvtransf
+
+    # should raise an error if index out of range
+    with pytest.raises(IndexError):
+        fs[3]
+
+    # should raise an error if indexing with wrong element name
+    with pytest.raises(KeyError):
+        fs["foobar"]
+
+    # should raise an error with slicing
+    with pytest.raises(ValueError):
+        fs[:1]
+
+
 def test_make_union():
     pca = PCA(svd_solver="full")
     mock = Transf()
