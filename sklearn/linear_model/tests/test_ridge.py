@@ -5,12 +5,13 @@ from itertools import product
 
 import pytest
 
+from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
+from sklearn.utils.estimator_checks import check_sample_weights_invariance
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -162,10 +163,14 @@ def test_ridge_regression_convergence_fail():
     rng = np.random.RandomState(0)
     y = rng.randn(5)
     X = rng.randn(5, 10)
-
-    assert_warns(ConvergenceWarning, ridge_regression,
-                 X, y, alpha=1.0, solver="sparse_cg",
-                 tol=0., max_iter=None, verbose=1)
+    warning_message = (
+        r"sparse_cg did not converge after"
+        r" [0-9]+ iterations."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        ridge_regression(X, y,
+                         alpha=1.0, solver="sparse_cg",
+                         tol=0., max_iter=None, verbose=1)
 
 
 def test_ridge_sample_weights():
@@ -406,6 +411,8 @@ def _make_sparse_offset_regression(
     return X, y
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     'solver, sparse_X',
     ((solver, sparse_X) for
@@ -449,6 +456,8 @@ def test_solver_consistency(
         ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
@@ -501,12 +510,10 @@ def test_ridge_loo_cv_asym_scoring():
 
     alphas = [1e-3, .1, 1., 10., 1e3]
     loo_ridge = RidgeCV(cv=n_samples, fit_intercept=True,
-                        alphas=alphas, scoring=scoring,
-                        normalize=True)
+                        alphas=alphas, scoring=scoring)
 
     gcv_ridge = RidgeCV(fit_intercept=True,
-                        alphas=alphas, scoring=scoring,
-                        normalize=True)
+                        alphas=alphas, scoring=scoring)
 
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
@@ -655,6 +662,7 @@ def _test_ridge_loo(filter_):
     return ret
 
 
+# FIXME: 'normalize' to be removed in 1.2
 def _test_ridge_cv_normalize(filter_):
     ridge_cv = RidgeCV(normalize=True, cv=3)
     ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
@@ -868,6 +876,8 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
@@ -1272,7 +1282,8 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
     y += true_intercept
     X_testing = arr_type(X)
 
-    alpha, atol, tol = 1e-3, 1e-4, 1e-6
+    alpha, tol = 1e-3, 1e-6
+    atol = 1e-3 if _IS_32BIT else 1e-4
 
     if solver not in ['sag', 'auto'] and return_intercept:
         with pytest.raises(ValueError, match="In Ridge, only 'sag' solver"):
@@ -1405,3 +1416,53 @@ def test_ridge_sag_with_X_fortran():
     X = X[::2, :]
     y = y[::2]
     Ridge(solver='sag').fit(X, y)
+
+
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.parametrize("normalize", [True, False])
+@pytest.mark.parametrize(
+    "solver",
+    ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga"]
+)
+def test_ridge_sample_weight_invariance(normalize, solver):
+    """Test that Ridge fulfils sample weight invariance.
+
+    Note that this test is stricter than the common test
+    check_sample_weights_invariance alone.
+    """
+    params = dict(
+        alpha=1.,
+        normalize=normalize,
+        solver=solver,
+        tol=1e-12,
+    )
+    reg = Ridge(**params)
+    name = reg.__class__.__name__
+    check_sample_weights_invariance(name, reg, kind="ones")
+    check_sample_weights_invariance(name, reg, kind="zeros")
+
+    # Check that duplicating the training dataset is equivalent to multiplying
+    # the weights by 2:
+    if solver.startswith("sag") and normalize:
+        pytest.xfail("sag/saga diverge on the second part of this test")
+
+    rng = np.random.RandomState(42)
+    X, y = make_regression(
+        n_samples=100,
+        n_features=300,
+        effective_rank=10,
+        n_informative=50,
+        random_state=rng,
+    )
+    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    X_dup = np.concatenate([X, X], axis=0)
+    y_dup = np.concatenate([y, y], axis=0)
+    sw_dup = np.concatenate([sw, sw], axis=0)
+
+    ridge_2sw = Ridge(**params).fit(X, y, sample_weight=2 * sw)
+    ridge_dup = Ridge(**params).fit(
+        X_dup, y_dup, sample_weight=sw_dup)
+
+    assert_allclose(ridge_2sw.coef_, ridge_dup.coef_)
+    assert_allclose(ridge_2sw.intercept_, ridge_dup.intercept_)

@@ -12,7 +12,6 @@ from scipy.sparse import lil_matrix
 from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import _to_object_array
 
@@ -351,15 +350,14 @@ def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
     Y = np.array([[1, 0], [0, 1]])
-    w = 'unknown class(es) [0, 4] will be ignored'
-    matrix = assert_warns_message(UserWarning, w,
-                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
-    assert_array_equal(matrix, Y)
+    warning_message = 'unknown class.* will be ignored'
+    with pytest.warns(UserWarning, match=warning_message):
+        matrix = mlb.fit(y).transform([[4, 1], [2, 0]])
 
     Y = np.array([[1, 0, 0], [0, 1, 0]])
     mlb = MultiLabelBinarizer(classes=[1, 2, 3])
-    matrix = assert_warns_message(UserWarning, w,
-                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
+    with pytest.warns(UserWarning, match=warning_message):
+        matrix = mlb.fit(y).transform([[4, 1], [2, 0]])
     assert_array_equal(matrix, Y)
 
 
@@ -535,7 +533,7 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
                                                       output_type=y_type,
                                                       classes=classes,
                                                       threshold=((neg_label +
-                                                                 pos_label) /
+                                                                  pos_label) /
                                                                  2.))
 
         assert_array_equal(toarray(inversed), toarray(y))

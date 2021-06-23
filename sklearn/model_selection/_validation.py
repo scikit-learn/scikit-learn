@@ -24,7 +24,6 @@ from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils import build_method_metadata_params
 from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
@@ -39,7 +38,6 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-@_deprecate_positional_args
 def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    props=None,
@@ -96,7 +94,8 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`.Fold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -350,7 +349,6 @@ def _normalize_score_results(scores, scaler_score_key='score'):
     return {scaler_score_key: scores}
 
 
-@_deprecate_positional_args
 def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
                     cv=None, n_jobs=None, verbose=0, fit_params=None,
                     props=None,
@@ -399,7 +397,8 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -681,13 +680,21 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         end_msg = f"[CV{progress_msg}] END "
         result_msg = params_msg + (";" if params_msg else "")
-        if verbose > 2 and isinstance(test_scores, dict):
-            for scorer_name in sorted(test_scores):
-                result_msg += f" {scorer_name}: ("
+        if verbose > 2:
+            if isinstance(test_scores, dict):
+                for scorer_name in sorted(test_scores):
+                    result_msg += f" {scorer_name}: ("
+                    if return_train_score:
+                        scorer_scores = train_scores[scorer_name]
+                        result_msg += f"train={scorer_scores:.3f}, "
+                    result_msg += f"test={test_scores[scorer_name]:.3f})"
+            else:
+                result_msg += ", score="
                 if return_train_score:
-                    scorer_scores = train_scores[scorer_name]
-                    result_msg += f"train={scorer_scores:.3f}, "
-                result_msg += f"test={test_scores[scorer_name]:.3f})"
+                    result_msg += (f"(train={train_scores:.3f}, "
+                                   f"test={test_scores:.3f})")
+                else:
+                    result_msg += f"{test_scores:.3f}"
         result_msg += f" total time={logger.short_format_time(total_time)}"
 
         # Right align the result_msg
@@ -765,7 +772,6 @@ def _score(estimator, X_test, y_test, scorer, *, score_params,
     return scores
 
 
-@_deprecate_positional_args
 def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
                       n_jobs=None, verbose=0, fit_params=None,
                       pre_dispatch='2*n_jobs', method='predict'):
@@ -811,7 +817,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -829,7 +836,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, defualt=None
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
     pre_dispatch : int or str, default='2*n_jobs'
@@ -1101,7 +1108,6 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
-@_deprecate_positional_args
 def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None, fit_params=None):
@@ -1160,7 +1166,8 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1265,7 +1272,6 @@ def _shuffle(y, groups, random_state):
     return _safe_indexing(y, indices)
 
 
-@_deprecate_positional_args
 def learning_curve(estimator, X, y, *, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
@@ -1324,7 +1330,8 @@ def learning_curve(estimator, X, y, *, groups=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1577,7 +1584,6 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array(ret).T
 
 
-@_deprecate_positional_args
 def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
                      verbose=0, error_score=np.nan, fit_params=None):
@@ -1627,7 +1633,8 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

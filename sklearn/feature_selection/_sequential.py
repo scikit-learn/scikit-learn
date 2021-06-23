@@ -60,7 +60,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -75,6 +76,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
     Attributes
     ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     n_features_to_select_ : int
         The number of features that were selected.
 

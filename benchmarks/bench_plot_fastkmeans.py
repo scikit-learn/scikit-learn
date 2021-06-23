@@ -90,7 +90,7 @@ def compute_bench_2(chunks):
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
+    from mpl_toolkits.mplot3d import axes3d  # noqa register the 3d projection
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(50, 150, 5).astype(int)

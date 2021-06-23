@@ -2,6 +2,7 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
+import re
 import sys
 import copy
 import warnings
@@ -29,8 +30,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -105,55 +104,66 @@ def test_gaussian_mixture_attributes():
 
     n_components_bad = 0
     gmm = GaussianMixture(n_components=n_components_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'n_components': %d "
-                         "Estimation requires at least one component"
-                         % n_components_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'n_components': {n_components_bad} "
+        "Estimation requires at least one component"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     # covariance_type should be in [spherical, diag, tied, full]
     covariance_type_bad = 'bad_covariance_type'
     gmm = GaussianMixture(covariance_type=covariance_type_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'covariance_type': %s "
-                         "'covariance_type' should be in "
-                         "['spherical', 'tied', 'diag', 'full']"
-                         % covariance_type_bad,
-                         gmm.fit, X)
+    msg = (
+        f"Invalid value for 'covariance_type': {covariance_type_bad} "
+        "'covariance_type' should be in ['spherical', 'tied', 'diag', 'full']"
+    )
+    with pytest.raises(ValueError):
+        gmm.fit(X)
 
     tol_bad = -1
     gmm = GaussianMixture(tol=tol_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'tol': %.5f "
-                         "Tolerance used by the EM must be non-negative"
-                         % tol_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'tol': {tol_bad:.5f} "
+        "Tolerance used by the EM must be non-negative"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     reg_covar_bad = -1
     gmm = GaussianMixture(reg_covar=reg_covar_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'reg_covar': %.5f "
-                         "regularization on covariance must be "
-                         "non-negative" % reg_covar_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'reg_covar': {reg_covar_bad:.5f} "
+        "regularization on covariance must be non-negative"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     max_iter_bad = 0
     gmm = GaussianMixture(max_iter=max_iter_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'max_iter': %d "
-                         "Estimation requires at least one iteration"
-                         % max_iter_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'max_iter': {max_iter_bad} "
+        "Estimation requires at least one iteration"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     n_init_bad = 0
     gmm = GaussianMixture(n_init=n_init_bad)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'n_init': %d "
-                         "Estimation requires at least one run"
-                         % n_init_bad, gmm.fit, X)
+    msg = (
+        f"Invalid value for 'n_init': {n_init_bad} "
+        "Estimation requires at least one run"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     init_params_bad = 'bad_method'
     gmm = GaussianMixture(init_params=init_params_bad)
-    assert_raise_message(ValueError,
-                         "Unimplemented initialization method '%s'"
-                         % init_params_bad,
-                         gmm.fit, X)
+    msg = (
+        f"Unimplemented initialization method '{init_params_bad}'"
+    )
+    with pytest.raises(ValueError, match=msg):
+        gmm.fit(X)
 
     # test good parameters
     n_components, tol, n_init, max_iter, reg_covar = 2, 1e-4, 3, 30, 1e-1
@@ -172,30 +182,6 @@ def test_gaussian_mixture_attributes():
     assert gmm.init_params == init_params
 
 
-def test_check_X():
-    from sklearn.mixture._base import _check_X
-    rng = np.random.RandomState(0)
-
-    n_samples, n_components, n_features = 10, 2, 2
-
-    X_bad_dim = rng.rand(n_components - 1, n_features)
-    assert_raise_message(ValueError,
-                         'Expected n_samples >= n_components '
-                         'but got n_components = %d, n_samples = %d'
-                         % (n_components, X_bad_dim.shape[0]),
-                         _check_X, X_bad_dim, n_components)
-
-    X_bad_dim = rng.rand(n_components, n_features + 1)
-    assert_raise_message(ValueError,
-                         'Expected the input data X have %d features, '
-                         'but got %d features'
-                         % (n_features, X_bad_dim.shape[1]),
-                         _check_X, X_bad_dim, n_components, n_features)
-
-    X = rng.rand(n_samples, n_features)
-    assert_array_equal(X, _check_X(X, n_components, n_features))
-
-
 def test_check_weights():
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
@@ -208,31 +194,34 @@ def test_check_weights():
     # Check bad shape
     weights_bad_shape = rng.rand(n_components, 1)
     g.weights_init = weights_bad_shape
-    assert_raise_message(ValueError,
-                         "The parameter 'weights' should have the shape of "
-                         "(%d,), but got %s" %
-                         (n_components, str(weights_bad_shape.shape)),
-                         g.fit, X)
+    msg = re.escape(
+        "The parameter 'weights' should have the shape of "
+        f"({n_components},), but got {str(weights_bad_shape.shape)}"
+    )
+    with pytest.raises(ValueError, match=msg):
+        g.fit(X)
 
     # Check bad range
     weights_bad_range = rng.rand(n_components) + 1
     g.weights_init = weights_bad_range
-    assert_raise_message(ValueError,
-                         "The parameter 'weights' should be in the range "
-                         "[0, 1], but got max value %.5f, min value %.5f"
-                         % (np.min(weights_bad_range),
-                            np.max(weights_bad_range)),
-                         g.fit, X)
+    msg = re.escape(
+        "The parameter 'weights' should be in the range [0, 1], but got"
+        f" max value {np.min(weights_bad_range):.5f}, "
+        f"min value {np.max(weights_bad_range):.5f}"
+    )
+    with pytest.raises(ValueError, match=msg):
+        g.fit(X)
 
     # Check bad normalization
     weights_bad_norm = rng.rand(n_components)
     weights_bad_norm = weights_bad_norm / (weights_bad_norm.sum() + 1)
     g.weights_init = weights_bad_norm
-    assert_raise_message(ValueError,
-                         "The parameter 'weights' should be normalized, "
-                         "but got sum(weights) = %.5f"
-                         % np.sum(weights_bad_norm),
-                         g.fit, X)
+    msg = re.escape(
+        "The parameter 'weights' should be normalized, "
+        f"but got sum(weights) = {np.sum(weights_bad_norm):.5f}"
+    )
+    with pytest.raises(ValueError, match=msg):
+        g.fit(X)
 
     # Check good weights matrix
     weights = rand_data.weights
@@ -253,9 +242,9 @@ def test_check_means():
     # Check means bad shape
     means_bad_shape = rng.rand(n_components + 1, n_features)
     g.means_init = means_bad_shape
-    assert_raise_message(ValueError,
-                         "The parameter 'means' should have the shape of ",
-                         g.fit, X)
+    msg = "The parameter 'means' should have the shape of "
+    with pytest.raises(ValueError, match=msg):
+        g.fit(X)
 
     # Check good means matrix
     means = rand_data.means
@@ -302,17 +291,21 @@ def test_check_precisions():
 
         # Check precisions with bad shapes
         g.precisions_init = precisions_bad_shape[covar_type]
-        assert_raise_message(ValueError,
-                             "The parameter '%s precision' should have "
-                             "the shape of" % covar_type,
-                             g.fit, X)
+        msg = (
+            f"The parameter '{covar_type} precision' should have "
+            "the shape of"
+        )
+        with pytest.raises(ValueError, match=msg):
+            g.fit(X)
 
         # Check not positive precisions
         g.precisions_init = precisions_not_positive[covar_type]
-        assert_raise_message(ValueError,
-                             "'%s precision' should be %s"
-                             % (covar_type, not_positive_errors[covar_type]),
-                             g.fit, X)
+        msg = (
+            f"'{covar_type} precision' should be "
+            f"{not_positive_errors[covar_type]}"
+        )
+        with pytest.raises(ValueError, match=msg):
+            g.fit(X)
 
         # Check the correct init of precisions_init
         g.precisions_init = rand_data.precisions[covar_type]
@@ -556,10 +549,12 @@ def test_gaussian_mixture_predict_predict_proba():
                             covariance_type=covar_type)
 
         # Check a warning message arrive if we don't do fit
-        assert_raise_message(NotFittedError,
-                             "This GaussianMixture instance is not fitted "
-                             "yet. Call 'fit' with appropriate arguments "
-                             "before using this estimator.", g.predict, X)
+        msg = (
+            "This GaussianMixture instance is not fitted yet. Call 'fit' "
+            "with appropriate arguments before using this estimator."
+        )
+        with pytest.raises(NotFittedError, match=msg):
+            g.predict(X)
 
         g.fit(X)
         Y_pred = g.predict(X)
@@ -684,12 +679,13 @@ def test_gaussian_mixture_fit_convergence_warning():
         g = GaussianMixture(n_components=n_components, n_init=1,
                             max_iter=max_iter, reg_covar=0, random_state=rng,
                             covariance_type=covar_type)
-        assert_warns_message(ConvergenceWarning,
-                             'Initialization %d did not converge. '
-                             'Try different init parameters, '
-                             'or increase max_iter, tol '
-                             'or check for degenerate data.'
-                             % max_iter, g.fit, X)
+        msg = (
+            f"Initialization {max_iter} did not converge. Try different init "
+            "parameters, or increase max_iter, tol or check for degenerate"
+            " data."
+        )
+        with pytest.warns(ConvergenceWarning, match=msg):
+            g.fit(X)
 
 
 def test_multiple_init():
@@ -855,10 +851,12 @@ def test_score():
     gmm1 = GaussianMixture(n_components=n_components, n_init=1,
                            max_iter=1, reg_covar=0, random_state=rng,
                            covariance_type=covar_type)
-    assert_raise_message(NotFittedError,
-                         "This GaussianMixture instance is not fitted "
-                         "yet. Call 'fit' with appropriate arguments "
-                         "before using this estimator.", gmm1.score, X)
+    msg = (
+        "This GaussianMixture instance is not fitted yet. Call 'fit' with "
+        "appropriate arguments before using this estimator."
+    )
+    with pytest.raises(NotFittedError, match=msg):
+        gmm1.score(X)
 
     # Check score value
     with warnings.catch_warnings():
@@ -885,10 +883,12 @@ def test_score_samples():
     # Check the error message if we don't call fit
     gmm = GaussianMixture(n_components=n_components, n_init=1, reg_covar=0,
                           random_state=rng, covariance_type=covar_type)
-    assert_raise_message(NotFittedError,
-                         "This GaussianMixture instance is not fitted "
-                         "yet. Call 'fit' with appropriate arguments "
-                         "before using this estimator.", gmm.score_samples, X)
+    msg = (
+        "This GaussianMixture instance is not fitted yet. Call 'fit' with "
+        "appropriate arguments before using this estimator."
+    )
+    with pytest.raises(NotFittedError, match=msg):
+        gmm.score_samples(X)
 
     gmm_score_samples = gmm.fit(X).score_samples(X)
     assert gmm_score_samples.shape[0] == rand_data.n_samples
@@ -938,13 +938,14 @@ def test_regularisation():
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            assert_raise_message(ValueError,
-                                 "Fitting the mixture model failed because "
-                                 "some components have ill-defined empirical "
-                                 "covariance (for instance caused by "
-                                 "singleton or collapsed samples). Try to "
-                                 "decrease the number of components, or "
-                                 "increase reg_covar.", gmm.fit, X)
+            msg = re.escape(
+                "Fitting the mixture model failed because some components have"
+                " ill-defined empirical covariance (for instance caused by "
+                "singleton or collapsed samples). Try to decrease the number "
+                "of components, or increase reg_covar."
+            )
+            with pytest.raises(ValueError, match=msg):
+                gmm.fit(X)
 
             gmm.set_params(reg_covar=1e-6).fit(X)
 
@@ -982,12 +983,14 @@ def test_sample():
         gmm = GaussianMixture(n_components=n_components,
                               covariance_type=covar_type, random_state=rng)
         # To sample we need that GaussianMixture is fitted
-        assert_raise_message(NotFittedError, "This GaussianMixture instance "
-                             "is not fitted", gmm.sample, 0)
+        msg = "This GaussianMixture instance is not fitted"
+        with pytest.raises(NotFittedError, match=msg):
+            gmm.sample(0)
         gmm.fit(X)
 
-        assert_raise_message(ValueError, "Invalid value for 'n_samples",
-                             gmm.sample, 0)
+        msg = "Invalid value for 'n_samples'"
+        with pytest.raises(ValueError, match=msg):
+            gmm.sample(0)
 
         # Just to make sure the class samples correctly
         n_samples = 20000
@@ -1037,3 +1040,48 @@ def test_init():
                                max_iter=1, random_state=random_state).fit(X)
 
         assert gmm2.lower_bound_ >= gmm1.lower_bound_
+
+
+def test_gaussian_mixture_setting_best_params():
+    """`GaussianMixture`'s best_parameters, `n_iter_` and `lower_bound_`
+    must be set appropriately in the case of divergence.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/18216
+    """
+    rnd = np.random.RandomState(0)
+    n_samples = 30
+    X = rnd.uniform(size=(n_samples, 3))
+
+    # following initialization parameters were found to lead to divergence
+    means_init = np.array([
+            [0.670637869618158, 0.21038256107384043, 0.12892629765485303],
+            [0.09394051075844147, 0.5759464955561779, 0.929296197576212],
+            [0.5033230372781258, 0.9569852381759425, 0.08654043447295741],
+            [0.18578301420435747, 0.5531158970919143, 0.19388943970532435],
+            [0.4548589928173794, 0.35182513658825276, 0.568146063202464],
+            [0.609279894978321, 0.7929063819678847, 0.9620097270828052],
+    ])
+    precisions_init = np.array([999999.999604483, 999999.9990869573,
+                                553.7603944542167, 204.78596008931834,
+                                15.867423501783637, 85.4595728389735])
+    weights_init = [0.03333333333333341, 0.03333333333333341,
+                    0.06666666666666674, 0.06666666666666674,
+                    0.7000000000000001, 0.10000000000000007]
+
+    gmm = GaussianMixture(covariance_type="spherical", reg_covar=0,
+                          means_init=means_init, weights_init=weights_init,
+                          random_state=rnd, n_components=len(weights_init),
+                          precisions_init=precisions_init)
+    # ensure that no error is thrown during fit
+    gmm.fit(X)
+
+    # check that the fit did not converge
+    assert not gmm.converged_
+
+    # check that parameters are set for gmm
+    for attr in [
+        "weights_", "means_", "covariances_", "precisions_cholesky_",
+        "n_iter_", "lower_bound_",
+    ]:
+        assert hasattr(gmm, attr)

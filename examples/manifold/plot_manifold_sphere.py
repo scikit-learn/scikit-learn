@@ -78,9 +78,9 @@ labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']
 
 for i, method in enumerate(methods):
     t0 = time()
-    trans_data = manifold\
-        .LocallyLinearEmbedding(n_neighbors, 2,
-                                method=method).fit_transform(sphere_data).T
+    trans_data = manifold.LocallyLinearEmbedding(
+        n_neighbors=n_neighbors, n_components=2,
+        method=method).fit_transform(sphere_data).T
     t1 = time()
     print("%s: %.2g sec" % (methods[i], t1 - t0))
 
@@ -93,8 +93,8 @@ for i, method in enumerate(methods):
 
 # Perform Isomap Manifold learning.
 t0 = time()
-trans_data = manifold.Isomap(n_neighbors, n_components=2)\
-    .fit_transform(sphere_data).T
+trans_data = manifold.Isomap(n_neighbors=n_neighbors,
+                             n_components=2).fit_transform(sphere_data).T
 t1 = time()
 print("%s: %.2g sec" % ('ISO', t1 - t0))
 

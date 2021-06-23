@@ -8,7 +8,6 @@ from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 
 
@@ -80,7 +79,6 @@ def _create_importances_bunch(baseline_score, permuted_score):
                  importances=importances)
 
 
-@_deprecate_positional_args
 def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
                            n_jobs=None, random_state=None, sample_weight=None):
     """Permutation importance for feature evaluation [BRE]_.

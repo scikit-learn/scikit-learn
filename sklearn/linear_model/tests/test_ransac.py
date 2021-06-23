@@ -6,8 +6,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression, RANSACRegressor
@@ -160,7 +158,8 @@ def test_ransac_resid_thresh_no_inliers():
                                        max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 5
     assert ransac_estimator.n_skips_invalid_data_ == 0
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -176,7 +175,8 @@ def test_ransac_no_valid_data():
                                        max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 5
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -192,7 +192,8 @@ def test_ransac_no_valid_model():
                                        max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 0
     assert ransac_estimator.n_skips_invalid_model_ == 5
@@ -209,7 +210,8 @@ def test_ransac_exceed_max_skips():
                                        max_skips=3)
 
     msg = ("RANSAC skipped more iterations than `max_skips`")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 4
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -232,8 +234,14 @@ def test_ransac_warn_exceed_max_skips():
                                        is_data_valid=is_data_valid,
                                        max_skips=3,
                                        max_trials=5)
-
-    assert_warns(ConvergenceWarning, ransac_estimator.fit, X, y)
+    warning_message = (
+        "RANSAC found a valid consensus set but exited "
+        "early due to skipping more iterations than "
+        "`max_skips`. See estimator attributes for "
+        "diagnostics."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 4
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -401,7 +409,7 @@ def test_ransac_residual_loss():
                               ransac_estimator2.predict(X))
     ransac_estimator3 = RANSACRegressor(base_estimator, min_samples=2,
                                         residual_threshold=5, random_state=0,
-                                        loss="squared_loss")
+                                        loss="squared_error")
     ransac_estimator3.fit(X, y)
     assert_array_almost_equal(ransac_estimator0.predict(X),
                               ransac_estimator2.predict(X))
@@ -531,3 +539,20 @@ def test_ransac_final_model_fit_sample_weight():
     )
 
     assert_allclose(ransac.estimator_.coef_, final_model.coef_, atol=1e-12)
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("old_loss, new_loss", [
+    ("absolute_loss", "squared_error"),
+    ("squared_loss", "absolute_error"),
+])
+def test_loss_deprecated(old_loss, new_loss):
+    est1 = RANSACRegressor(loss=old_loss, random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match=f"The loss '{old_loss}' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = RANSACRegressor(loss=new_loss, random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))

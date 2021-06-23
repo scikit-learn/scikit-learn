@@ -15,7 +15,6 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils import _check_method_props
 from ..utils.fixes import delayed
 from ..base import BaseEstimator
@@ -102,11 +101,20 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only available when `estimator` is a classifier.
+
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
     n_features_ : int
         The number of selected features.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
@@ -154,7 +162,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, n_features_to_select=None, step=1,
                  verbose=0, importance_getter='auto'):
         self.estimator = estimator
@@ -468,6 +475,9 @@ class RFECV(RFE):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only available when `estimator` is a classifier.
+
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
@@ -478,6 +488,12 @@ class RFECV(RFE):
 
     n_features_ : int
         The number of selected features with cross-validation.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`
@@ -526,7 +542,6 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
     def __init__(self, estimator, *, step=1, min_features_to_select=1,
                  cv=None, scoring=None, verbose=0, n_jobs=None,
                  importance_getter='auto'):

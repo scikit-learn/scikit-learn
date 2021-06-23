@@ -3,6 +3,7 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 import warnings
 import numpy as np
+from numpy.testing import assert_allclose
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
@@ -132,7 +133,7 @@ def test_gbdt_loss_alpha_error(params, err_msg):
 @pytest.mark.parametrize(
     "GradientBoosting, loss",
     [(GradientBoostingClassifier, "ls"),
-     (GradientBoostingClassifier, "lad"),
+     (GradientBoostingClassifier, "absolute_error"),
      (GradientBoostingClassifier, "quantile"),
      (GradientBoostingClassifier, "huber"),
      (GradientBoostingRegressor, "deviance"),
@@ -170,7 +171,7 @@ def test_classification_synthetic(loss):
     assert error_rate < 0.08
 
 
-@pytest.mark.parametrize('loss', ('ls', 'lad', 'huber'))
+@pytest.mark.parametrize('loss', ('squared_error', 'absolute_error', 'huber'))
 @pytest.mark.parametrize('subsample', (1.0, 0.5))
 def test_regression_dataset(loss, subsample):
     # Check consistency on regression dataset with least squares
@@ -229,7 +230,7 @@ def test_regression_synthetic():
     random_state = check_random_state(1)
     regression_params = {'n_estimators': 100, 'max_depth': 4,
                          'min_samples_split': 2, 'learning_rate': 0.1,
-                         'loss': 'ls'}
+                         'loss': 'squared_error'}
 
     # Friedman1
     X, y = datasets.make_friedman1(n_samples=1200,
@@ -507,7 +508,7 @@ def test_degenerate_targets():
 
 
 def test_quantile_loss():
-    # Check if quantile loss with alpha=0.5 equals lad.
+    # Check if quantile loss with alpha=0.5 equals absolute_error.
     clf_quantile = GradientBoostingRegressor(n_estimators=100, loss='quantile',
                                              max_depth=4, alpha=0.5,
                                              random_state=7)
@@ -515,12 +516,12 @@ def test_quantile_loss():
     clf_quantile.fit(X_reg, y_reg)
     y_quantile = clf_quantile.predict(X_reg)
 
-    clf_lad = GradientBoostingRegressor(n_estimators=100, loss='lad',
-                                        max_depth=4, random_state=7)
+    clf_ae = GradientBoostingRegressor(n_estimators=100, loss='absolute_error',
+                                       max_depth=4, random_state=7)
 
-    clf_lad.fit(X_reg, y_reg)
-    y_lad = clf_lad.predict(X_reg)
-    assert_array_almost_equal(y_quantile, y_lad, decimal=4)
+    clf_ae.fit(X_reg, y_reg)
+    y_ae = clf_ae.predict(X_reg)
+    assert_array_almost_equal(y_quantile, y_ae, decimal=4)
 
 
 def test_symbol_labels():
@@ -1001,19 +1002,6 @@ def test_max_leaf_nodes_max_depth(GBEstimator):
 
 
 @pytest.mark.parametrize('GBEstimator', GRADIENT_BOOSTING_ESTIMATORS)
-def test_min_impurity_split(GBEstimator):
-    # Test if min_impurity_split of base estimators is set
-    # Regression test for #8006
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-
-    est = GBEstimator(min_impurity_split=0.1)
-    with pytest.warns(FutureWarning, match="min_impurity_decrease"):
-        est = est.fit(X, y)
-    for tree in est.estimators_.flat:
-        assert tree.min_impurity_split == 0.1
-
-
-@pytest.mark.parametrize('GBEstimator', GRADIENT_BOOSTING_ESTIMATORS)
 def test_min_impurity_decrease(GBEstimator):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
@@ -1066,7 +1054,7 @@ def test_non_uniform_weights_toy_edge_case_reg():
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    for loss in ('huber', 'ls', 'lad', 'quantile'):
+    for loss in ('huber', 'squared_error', 'absolute_error', 'quantile'):
         gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2,
                                        loss=loss)
         gb.fit(X, y, sample_weight=sample_weight)
@@ -1375,3 +1363,37 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
         est.n_features_
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
+def test_criterion_mse_deprecated(Estimator):
+    est1 = Estimator(criterion="mse", random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match="Criterion 'mse' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = Estimator(criterion="squared_error", random_state=0)
+    est2.fit(X, y)
+    if hasattr(est1, "predict_proba"):
+        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
+    else:
+        assert_allclose(est1.predict(X), est2.predict(X))
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("old_loss, new_loss", [
+    ("ls", "squared_error"),
+    ("lad", "absolute_error"),
+])
+def test_loss_deprecated(old_loss, new_loss):
+    est1 = GradientBoostingRegressor(loss=old_loss, random_state=0)
+
+    with pytest.warns(FutureWarning,
+                      match=f"The loss '{old_loss}' was deprecated"):
+        est1.fit(X, y)
+
+    est2 = GradientBoostingRegressor(loss=new_loss, random_state=0)
+    est2.fit(X, y)
+    assert_allclose(est1.predict(X), est2.predict(X))
