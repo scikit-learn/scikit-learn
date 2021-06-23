@@ -95,25 +95,36 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
         features encoded as columns of arbitrary data types.
     """
-    def __init__(self, *, dtype=np.float64, separator="=", sparse=True,
-                 sort=True):
+
+    def __init__(self, *, dtype=np.float64, separator="=", sparse=True, sort=True):
         self.dtype = dtype
         self.separator = separator
         self.sparse = sparse
         self.sort = sort
 
-    def _add_iterable_element(self, f, v, feature_names, vocab, *,
-                              fitting=True, transforming=False,
-                              indices=None, values=None):
+    def _add_iterable_element(
+        self,
+        f,
+        v,
+        feature_names,
+        vocab,
+        *,
+        fitting=True,
+        transforming=False,
+        indices=None,
+        values=None,
+    ):
         """Add feature names for iterable of strings"""
         for vv in v:
             if isinstance(vv, str):
                 feature_name = "%s%s%s" % (f, self.separator, vv)
                 vv = 1
             else:
-                raise TypeError(f'Unsupported type {type(vv)} in iterable '
-                                'value. Only iterables of string are '
-                                'supported.')
+                raise TypeError(
+                    f"Unsupported type {type(vv)} in iterable "
+                    "value. Only iterables of string are "
+                    "supported."
+                )
             if fitting and feature_name not in vocab:
                 vocab[feature_name] = len(feature_names)
                 feature_names.append(feature_name)
@@ -153,9 +164,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
                 elif isinstance(v, Mapping):
-                    raise TypeError(f'Unsupported value type {type(v)} '
-                                    f'for {f}: {v}.\n'
-                                    'Mapping objects are not supported.')
+                    raise TypeError(
+                        f"Unsupported value type {type(v)} "
+                        f"for {f}: {v}.\n"
+                        "Mapping objects are not supported."
+                    )
                 elif isinstance(v, Iterable):
                     feature_name = None
                     self._add_iterable_element(f, v, feature_names, vocab)
@@ -182,7 +195,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         assert array("i").itemsize == 4, (
             "sizeof(int) != 4 on your platform; please report this at"
             " https://github.com/scikit-learn/scikit-learn/issues and"
-            " include the output from platform.platform() in your bug report")
+            " include the output from platform.platform() in your bug report"
+        )
 
         dtype = self.dtype
         if fitting:
@@ -213,15 +227,23 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
                 elif isinstance(v, Mapping):
-                    raise TypeError(f'Unsupported value Type {type(v)} '
-                                    f'for {f}: {v}.\n'
-                                    'Mapping objects are not supported.')
+                    raise TypeError(
+                        f"Unsupported value Type {type(v)} "
+                        f"for {f}: {v}.\n"
+                        "Mapping objects are not supported."
+                    )
                 elif isinstance(v, Iterable):
                     feature_name = None
-                    self._add_iterable_element(f, v, feature_names, vocab,
-                                               fitting=fitting,
-                                               transforming=transforming,
-                                               indices=indices, values=values)
+                    self._add_iterable_element(
+                        f,
+                        v,
+                        feature_names,
+                        vocab,
+                        fitting=fitting,
+                        transforming=transforming,
+                        indices=indices,
+                        values=values,
+                    )
 
                 if feature_name is not None:
                     if fitting and feature_name not in vocab:
@@ -240,8 +262,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         indices = np.frombuffer(indices, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
 
-        result_matrix = sp.csr_matrix((values, indices, indptr),
-                                      shape=shape, dtype=dtype)
+        result_matrix = sp.csr_matrix(
+            (values, indices, indptr), shape=shape, dtype=dtype
+        )
 
         # Sort everything if asked
         if fitting and self.sort:
@@ -311,7 +334,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             Feature mappings for the samples in X.
         """
         # COO matrix is not subscriptable
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, accept_sparse=["csr", "csc"])
         n_samples = X.shape[0]
 
         names = self.feature_names_
@@ -396,10 +419,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
-        self.feature_names_ = [f for f, i in sorted(new_vocab.items(),
-                                                    key=itemgetter(1))]
+        self.feature_names_ = [
+            f for f, i in sorted(new_vocab.items(), key=itemgetter(1))
+        ]
 
         return self
 
     def _more_tags(self):
-        return {'X_types': ["dict"]}
+        return {"X_types": ["dict"]}

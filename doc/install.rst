@@ -142,7 +142,8 @@ purpose.
     Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
     Scikit-learn 0.21 supported Python 3.5-3.7.
     Scikit-learn 0.22 supported Python 3.5-3.8.
-    Scikit-learn now requires Python 3.6 or newer.
+    Scikit-learn 0.23 - 0.24 require Python 3.6 or newer.
+    Scikit-learn 1.0 and later requires Python 3.7 or newer.
 
 
 .. note::

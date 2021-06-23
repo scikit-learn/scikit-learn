@@ -520,11 +520,11 @@ function of the norm of its coefficients.
 ::
 
    >>> from sklearn import linear_model
-   >>> reg = linear_model.LassoLars(alpha=.1)
+   >>> reg = linear_model.LassoLars(alpha=.1, normalize=False)
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
-   LassoLars(alpha=0.1)
+   LassoLars(alpha=0.1, normalize=False)
    >>> reg.coef_
-   array([0.717157..., 0.        ])
+   array([0.6..., 0.        ])
 
 .. topic:: Examples:
 
@@ -1466,7 +1466,7 @@ normally with zero mean and constant variance. Quantile regression provides
 sensible prediction intervals even for errors with non-constant (but
 predictable) variance or non-normal distribution.
 
-.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_001.png
+.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_002.png
    :target: ../auto_examples/linear_model/plot_quantile_regression.html
    :align: center
    :scale: 50%
