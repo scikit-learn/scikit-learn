@@ -201,6 +201,10 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 @pytest.mark.filterwarnings(
     "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
 )
+# TODO: Remove when pyamg removes the use of pinv2
+@pytest.mark.filterwarnings(
+    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
+)
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
     pytest.importorskip("pyamg")
@@ -249,6 +253,10 @@ def test_spectral_embedding_amg_solver(seed=36):
 # TODO: Remove when pyamg removes the use of np.float
 @pytest.mark.filterwarnings(
     "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
+)
+# TODO: Remove when pyamg removes the use of pinv2
+@pytest.mark.filterwarnings(
+    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
 def test_spectral_embedding_amg_solver_failure():
     # Non-regression test for amg solver failure (issue #13393 on github)
