@@ -69,6 +69,7 @@ def make_data(random_state, n_samples_per_center, grid_size, scale):
 
 # Part 1: Quantitative evaluation of various init methods
 
+
 plt.figure()
 plots = []
 legends = []

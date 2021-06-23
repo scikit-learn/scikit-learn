@@ -3,8 +3,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils._testing import (assert_array_equal,
-                                    assert_allclose_dense_sparse)
+from sklearn.utils._testing import assert_array_equal, assert_allclose_dense_sparse
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -25,15 +24,22 @@ def test_delegate_to_func():
     X = np.arange(10).reshape((5, 2))
     assert_array_equal(
         FunctionTransformer(_make_func(args_store, kwargs_store)).transform(X),
-        X, 'transform should have returned X unchanged',
+        X,
+        "transform should have returned X unchanged",
     )
 
     # The function should only have received X.
-    assert args_store == [X], ('Incorrect positional arguments passed to '
-                               'func: {args}'.format(args=args_store))
+    assert args_store == [
+        X
+    ], "Incorrect positional arguments passed to " "func: {args}".format(
+        args=args_store
+    )
 
-    assert not kwargs_store, ('Unexpected keyword arguments passed to '
-                              'func: {args}'.format(args=kwargs_store))
+    assert (
+        not kwargs_store
+    ), "Unexpected keyword arguments passed to " "func: {args}".format(
+        args=kwargs_store
+    )
 
     # reset the argument stores.
     args_store[:] = []
@@ -42,15 +48,22 @@ def test_delegate_to_func():
         _make_func(args_store, kwargs_store),
     ).transform(X)
 
-    assert_array_equal(transformed, X,
-                       err_msg='transform should have returned X unchanged')
+    assert_array_equal(
+        transformed, X, err_msg="transform should have returned X unchanged"
+    )
 
     # The function should have received X
-    assert args_store == [X], ('Incorrect positional arguments passed '
-                               'to func: {args}'.format(args=args_store))
+    assert args_store == [
+        X
+    ], "Incorrect positional arguments passed " "to func: {args}".format(
+        args=args_store
+    )
 
-    assert not kwargs_store, ('Unexpected keyword arguments passed to '
-                              'func: {args}'.format(args=kwargs_store))
+    assert (
+        not kwargs_store
+    ), "Unexpected keyword arguments passed to " "func: {args}".format(
+        args=kwargs_store
+    )
 
 
 def test_np_log():
@@ -69,8 +82,7 @@ def test_kw_arg():
     F = FunctionTransformer(np.around, kw_args=dict(decimals=3))
 
     # Test that rounding is correct
-    assert_array_equal(F.transform(X),
-                       np.around(X, decimals=3))
+    assert_array_equal(F.transform(X), np.around(X, decimals=3))
 
 
 def test_kw_arg_update():
@@ -78,7 +90,7 @@ def test_kw_arg_update():
 
     F = FunctionTransformer(np.around, kw_args=dict(decimals=3))
 
-    F.kw_args['decimals'] = 1
+    F.kw_args["decimals"] = 1
 
     # Test that rounding is correct
     assert_array_equal(F.transform(X), np.around(X, decimals=1))
@@ -101,7 +113,8 @@ def test_inverse_transform():
     # Test that inverse_transform works correctly
     F = FunctionTransformer(
         func=np.sqrt,
-        inverse_func=np.around, inv_kw_args=dict(decimals=3),
+        inverse_func=np.around,
+        inv_kw_args=dict(decimals=3),
     )
     assert_array_equal(
         F.inverse_transform(F.transform(X)),
@@ -112,32 +125,36 @@ def test_inverse_transform():
 def test_check_inverse():
     X_dense = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
 
-    X_list = [X_dense,
-              sparse.csr_matrix(X_dense),
-              sparse.csc_matrix(X_dense)]
+    X_list = [X_dense, sparse.csr_matrix(X_dense), sparse.csc_matrix(X_dense)]
 
     for X in X_list:
         if sparse.issparse(X):
             accept_sparse = True
         else:
             accept_sparse = False
-        trans = FunctionTransformer(func=np.sqrt,
-                                    inverse_func=np.around,
-                                    accept_sparse=accept_sparse,
-                                    check_inverse=True,
-                                    validate=True)
-        warning_message = ("The provided functions are not strictly"
-                           " inverse of each other. If you are sure you"
-                           " want to proceed regardless, set"
-                           " 'check_inverse=False'.")
+        trans = FunctionTransformer(
+            func=np.sqrt,
+            inverse_func=np.around,
+            accept_sparse=accept_sparse,
+            check_inverse=True,
+            validate=True,
+        )
+        warning_message = (
+            "The provided functions are not strictly"
+            " inverse of each other. If you are sure you"
+            " want to proceed regardless, set"
+            " 'check_inverse=False'."
+        )
         with pytest.warns(UserWarning, match=warning_message):
             trans.fit(X)
 
-        trans = FunctionTransformer(func=np.expm1,
-                                    inverse_func=np.log1p,
-                                    accept_sparse=accept_sparse,
-                                    check_inverse=True,
-                                    validate=True)
+        trans = FunctionTransformer(
+            func=np.expm1,
+            inverse_func=np.log1p,
+            accept_sparse=accept_sparse,
+            check_inverse=True,
+            validate=True,
+        )
         with pytest.warns(None) as record:
             Xt = trans.fit_transform(X)
         assert len(record) == 0
@@ -145,21 +162,23 @@ def test_check_inverse():
 
     # check that we don't check inverse when one of the func or inverse is not
     # provided.
-    trans = FunctionTransformer(func=np.expm1, inverse_func=None,
-                                check_inverse=True, validate=True)
+    trans = FunctionTransformer(
+        func=np.expm1, inverse_func=None, check_inverse=True, validate=True
+    )
     with pytest.warns(None) as record:
         trans.fit(X_dense)
     assert len(record) == 0
-    trans = FunctionTransformer(func=None, inverse_func=np.expm1,
-                                check_inverse=True, validate=True)
+    trans = FunctionTransformer(
+        func=None, inverse_func=np.expm1, check_inverse=True, validate=True
+    )
     with pytest.warns(None) as record:
         trans.fit(X_dense)
     assert len(record) == 0
 
 
 def test_function_transformer_frame():
-    pd = pytest.importorskip('pandas')
+    pd = pytest.importorskip("pandas")
     X_df = pd.DataFrame(np.random.randn(100, 10))
     transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
-    assert hasattr(X_df_trans, 'loc')
+    assert hasattr(X_df_trans, "loc")

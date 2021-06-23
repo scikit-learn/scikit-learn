@@ -14,7 +14,7 @@ def test_olivetti_faces(fetch_olivetti_faces_fxt):
     data = fetch_olivetti_faces_fxt(shuffle=True, random_state=0)
 
     assert isinstance(data, Bunch)
-    for expected_keys in ('data', 'images', 'target', 'DESCR'):
+    for expected_keys in ("data", "images", "target", "DESCR"):
         assert expected_keys in data.keys()
 
     assert data.data.shape == (400, 4096)
