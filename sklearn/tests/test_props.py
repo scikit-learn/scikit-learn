@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
-from sklearn.base import MetadataConsumer, SampleWeightConsumer
+from sklearn.base import SampleWeightConsumer
 from sklearn.datasets import make_classification
 from sklearn.feature_selection import SelectKBest
 from sklearn.metrics import balanced_accuracy_score
@@ -106,7 +106,7 @@ class MyEst(ClassifierMixin, BaseEstimator):
         return self.svc_predict_proba(X)
 
 
-class StuffConsumer(MetadataConsumer):
+class StuffConsumer:
     _metadata_request__new_param = {"fit": "new_param"}
     _metadata_request__brand = {"fit": "brand"}
 
@@ -354,7 +354,7 @@ def test_nongroup_splitter_metadata_requests(Klass):
 def test_invalid_arg_given():
     # tests that passing an invalid argument would raise an error
     weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
-    model = LogisticRegression().request_sample_weight(fit=True)
+    model = LogisticRegression().fit_requests(sample_weight=True)
     param_grid = {"C": [0.1, 1]}
     gs = GridSearchCV(
         estimator=model,
@@ -362,8 +362,9 @@ def test_invalid_arg_given():
         scoring=weighted_acc,
         param_grid=param_grid,
     )
+    gs.get_metadata_request()
     gs.fit(X, y, sample_weight=my_weights, groups=my_groups)
-    with pytest.raises(ValueError, match="Requested properties are"):
+    with pytest.raises(ValueError, match="Metadata passed which is not understood"):
         gs.fit(
             X,
             y,
@@ -372,7 +373,7 @@ def test_invalid_arg_given():
             sample_weight=my_weights,
         )
 
-    with pytest.raises(ValueError, match="Requested properties are"):
+    with pytest.raises(ValueError, match="Metadata passed which is not understood"):
         gs.fit(
             X,
             y,

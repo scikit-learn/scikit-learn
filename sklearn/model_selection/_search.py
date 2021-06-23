@@ -36,6 +36,7 @@ from joblib import Parallel
 from ..utils import check_random_state
 from ..utils import MetadataRouter
 from ..utils import metadata_request_factory
+from ..utils.metadata_requests import METHODS
 from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
@@ -666,7 +667,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         router = (
             MetadataRouter()
             .add(*scorers, mapping={"fit": "score", "score": "score"}, mask=True)
-            .add(self.estimator, mapping="one-to-one", mask=True)
+            .add(
+                self.estimator,
+                mapping={m: m for m in METHODS if m != "score"},
+                mask=True,
+            )
             .add(check_cv(self.cv), mapping={"fit": "split"}, mask=True)
         )
         return router.get_metadata_request()

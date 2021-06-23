@@ -14,7 +14,6 @@ from typing import Union, Optional
 
 from . import __version__
 from .utils import _IS_32BIT
-from .utils import _standardize_metadata_request
 from ._config import get_config
 from .utils._tags import (
     _DEFAULT_TAGS,
@@ -316,122 +315,11 @@ class _MetadataRequester:
             return requests
 
 
-class MetadataConsumer:
-    def _remove_param(self, *, method_params, param):
-        user_provides_list = list(method_params.keys())
-        for user_provides in user_provides_list:
-            method_params[user_provides] -= {param}
-            if not len(method_params[user_provides]):
-                del method_params[user_provides]
-
-    def _request_key_for_method(self, *, method, param, user_provides):
-        if user_provides is None:
-            return
-        if not hasattr(self, "_metadata_request"):
-            self._metadata_request = self.get_metadata_request()
-        self._metadata_request = _standardize_metadata_request(self._metadata_request)
-
-        if user_provides == param:
-            user_provides = True
-
-        method_dict = self._metadata_request[method]
-        self._remove_param(method_params=method_dict, param=param)
-
-        if user_provides is True:
-            method_dict[param] = {param}
-        elif user_provides is False:
-            # the parameter is already removed, nothing to do here
-            pass
-        elif isinstance(user_provides, str):
-            routing = method_dict.get(user_provides, set())
-            method_dict[user_provides] = routing.union({param})
-        else:
-            raise TypeError
-
-    def _set_metadata_request(self, props):
-        if props is None:
-            try:
-                del self._metadata_request
-            except AttributeError:
-                pass
-            return self
-
-        self._metadata_request = _standardize_metadata_request(props)
-        return self
-
-
 class SampleWeightConsumer:
     _metadata_request__sample_weight = {
-        "fit": {"sample_weight": None},
-        "score": {"sample_weight": None},
+        "fit": "sample_weight",
+        "score": "sample_weight",
     }
-
-    def request_sample_weight(self, *, fit=None, score=None):
-        """Define how to receive sample_weight from a parent meta-estimator
-
-        Parameters
-        ----------
-        fit : string or bool, default=None
-            The fit parameter name that a meta-estimator should pass to this
-            estimator as sample_weight. If true, the name will be
-            'sample_weight'.
-            If False, no fit parameter will be passed.
-            If None, no change in routing.
-
-        score : string or bool, default=None
-            The parameter name that a meta-estimator should pass to this
-            estimator as sample_weight when calling its `score` method.
-            If true, the name will be 'sample_weight'.
-            If False, no score parameter will be passed.
-            If None, no change in routing.
-
-        Returns
-        -------
-        self
-
-        Examples
-        --------
-        >>> from sklearn.linear_model import LogisticRegression
-        >>> from sklearn.model_selection import GridSearchCV
-        >>> from sklearn.datasets import load_iris
-        >>> X, y = load_iris(return_X_y=True)
-        >>> sample_weight = np.random.rand(len(X))
-        >>> clf = LogisticRegression()
-        >>> gs = GridSearchCV(clf, {"C": [.1, 1, 10]})
-        >>> # Unweighted fitting and scoring
-        >>> gs.fit(X, y)
-        GridSearchCV(...)
-        >>> # Weighted fitting, unweighted scoring
-        >>> clf.request_sample_weight(fit=True, score=False)
-        LogisticRegression()
-        >>> gs.fit(X, y, sample_weight=sample_weight)
-        GridSearchCV(...)
-        >>> # Weighted fitting and scoring
-        >>> clf.request_sample_weight(fit=True, score=True)
-        LogisticRegression()
-        >>> gs.fit(X, y, sample_weight=sample_weight)
-        GridSearchCV(...)
-        >>> # Weighted scoring only
-        >>> clf.request_sample_weight(fit=False, score=True)
-        LogisticRegression()
-        >>> gs.fit(X, y, sample_weight=sample_weight)
-        GridSearchCV(...)
-        >>> # Distinct weights for fit and score
-        >>> score_sample_weight = np.random.rand(len(X))
-        >>> clf.request_sample_weight(fit='fit_sample_weight',
-        ...     score='score_sample_weight')
-        LogisticRegression()
-        >>> gs.fit(X, y, fit_sample_weight=sample_weight,
-        ...        score_sample_weight=score_sample_weight)
-        GridSearchCV(...)
-        """
-        self._request_key_for_method(
-            method="fit", param="sample_weight", user_provides=fit
-        )
-        self._request_key_for_method(
-            method="score", param="sample_weight", user_provides=score
-        )
-        return self
 
 
 class BaseEstimator(_MetadataRequester):

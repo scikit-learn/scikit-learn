@@ -28,7 +28,7 @@ from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..base import _pprint, _MetadataRequester, MetadataConsumer
+from ..base import _pprint, _MetadataRequester
 
 __all__ = [
     "BaseCrossValidator",
@@ -51,9 +51,9 @@ __all__ = [
 ]
 
 
-class GroupsConsumer(MetadataConsumer):
+class GroupsConsumer(_MetadataRequester):
 
-    _metadata_request__groups = {"split": ["groups"]}
+    _metadata_request__groups = {"split": {"groups": True}}
 
     def request_groups(self, *, split=None):
         """Define how to receive groups from the caller in `split` and

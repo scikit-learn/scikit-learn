@@ -25,8 +25,9 @@ METHODS = [
 class MethodMetadataRequest:
     """Contains the metadata request info for a single method."""
 
-    def __init__(self):
+    def __init__(self, name):
         self.requests = dict()
+        self.name = name
 
     def add_request(
         self,
@@ -159,7 +160,7 @@ class MethodMetadataRequest:
         if not ignore_extras and args - set(self.requests.keys()):
             raise ValueError(
                 "Metadata passed which is not understood: "
-                f"{args - set(self.requests.keys())}"
+                f"{args - set(self.requests.keys())}. In method: {self.name}"
             )
 
         for prop, alias in self.requests.items():
@@ -177,7 +178,7 @@ class MethodMetadataRequest:
                 if prop in args:
                     raise ValueError(
                         f"{prop} is passed but is not explicitly set as "
-                        "requested or not."
+                        f"requested or not. In method: {self.name}"
                     )
 
     def get_method_input(self, ignore_extras=False, **kwargs):
@@ -226,7 +227,7 @@ class MethodMetadataRequest:
         ``{'alias': True}``. This is desired in meta-estimators passing
         requests to their parent estimators.
         """
-        res = MethodMetadataRequest()
+        res = MethodMetadataRequest(name=self.name)
         for prop, alias in self.requests.items():
             if isinstance(alias, str):
                 res.add_request(
@@ -249,7 +250,7 @@ class MethodMetadataRequest:
         return self.requests
 
     @classmethod
-    def from_dict(cls, requests, allow_aliasing=True):
+    def from_dict(cls, requests, name, allow_aliasing=True):
         """Construct a MethodMetadataRequest from a given dictionary.
 
         Parameters
@@ -269,10 +270,10 @@ class MethodMetadataRequest:
         if requests is None:
             requests = dict()
         elif isinstance(requests, str):
-            requests = {requests: requests}
+            requests = {requests: RequestType.ERROR_IF_PASSED}
         elif isinstance(requests, list):
-            requests = {r: r for r in requests}
-        result = cls()
+            requests = {r: RequestType.ERROR_IF_PASSED for r in requests}
+        result = cls(name=name)
         for prop, alias in requests.items():
             result.add_request(prop=prop, alias=alias, allow_aliasing=allow_aliasing)
         return result
@@ -289,7 +290,7 @@ class MetadataRequest:
 
     def __init__(self, obj=None):
         for method in METHODS:
-            setattr(self, method, MethodMetadataRequest())
+            setattr(self, method, MethodMetadataRequest(name=method))
 
         if obj is None:
             return
@@ -300,6 +301,7 @@ class MetadataRequest:
             )
 
         for method, requests in obj.items():
+            requests = {} if requests is None else requests
             try:
                 mmr = getattr(self, method)
             except AttributeError:
