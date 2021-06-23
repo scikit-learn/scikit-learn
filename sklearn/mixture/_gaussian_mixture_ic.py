@@ -374,9 +374,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             labels_init = None
         self.label_init = labels_init
 
-        check_scalar(
-            self.n_init, name="n_init", target_type=int, min_val=1
-        )
+        check_scalar(self.n_init, name="n_init", target_type=int, min_val=1)
 
         if self.criterion not in ["aic", "bic"]:
             raise ValueError(
@@ -569,7 +567,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 X, X_subset, y, ag_params, gm_params, agg_clustering, seed
             )
 
-        if parse_version(joblib.__version__) < parse_version('0.12'):
+        if parse_version(joblib.__version__) < parse_version("0.12"):
             parallel_kwargs = {"backend": "threading"}
         else:
             parallel_kwargs = {"prefer": "threads"}

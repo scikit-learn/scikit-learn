@@ -67,13 +67,13 @@ def test_input_param():
     _test_inputs(X, ValueError, criterion="cic")
 
     # n_init is not an integer
-    _test_inputs(X, TypeError, n_init='1')
+    _test_inputs(X, TypeError, n_init="1")
 
     # n_init must be at least 1
     _test_inputs(X, ValueError, n_init=0)
 
     # max_agglom_size is not an integer
-    _test_inputs(X, TypeError, max_agglom_size='1')
+    _test_inputs(X, TypeError, max_agglom_size="1")
 
     # max_agglom_size must be at least 2
     _test_inputs(X, ValueError, max_agglom_size=1)
@@ -210,14 +210,20 @@ def test_two_class_sequential_v_parallel():
     X = np.vstack((X1, X2))
 
     gmIC_parallel = GaussianMixtureIC(
-        max_components=5, criterion="bic", n_jobs=-1,
-        affinity="all", random_state=1
+        max_components=5,
+        criterion="bic",
+        n_jobs=-1,
+        affinity="all",
+        random_state=1,
     )
     preds_parallel = gmIC_parallel.fit_predict(X)
 
     gmIC_sequential = GaussianMixtureIC(
-        max_components=5, criterion="bic", n_jobs=1,
-        affinity="all", random_state=1
+        max_components=5,
+        criterion="bic",
+        n_jobs=1,
+        affinity="all",
+        random_state=1,
     )
     preds_sequential = gmIC_sequential.fit_predict(X)
 
@@ -240,20 +246,14 @@ def test_five_class():
 
     # test BIC
     gmIC = GaussianMixtureIC(
-        min_components=3,
-        max_components=10,
-        affinity="all",
-        criterion="bic",
+        min_components=3, max_components=10, affinity="all", criterion="bic"
     )
     gmIC.fit(X)
     assert_equal(gmIC.n_components_, 5)
 
     # test AIC
     gmIC = GaussianMixtureIC(
-        min_components=3,
-        max_components=10,
-        affinity="all",
-        criterion="aic",
+        min_components=3, max_components=10, affinity="all", criterion="aic"
     )
     gmIC.fit(X)
     # AIC fails often so there is no assertion here
