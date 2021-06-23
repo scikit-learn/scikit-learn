@@ -250,6 +250,20 @@ def test_slep_caseB():
         cv=GroupKFold(),
         scoring=weighted_acc,
     )
+    with pytest.raises(
+        ValueError,
+        match="sample_weight is passed but is not explicitly set as requested or not",
+    ):
+        cross_validate(
+            lr,
+            X,
+            y,
+            cv=GroupKFold(),
+            props={"sample_weight": my_weights, "groups": my_groups},
+            scoring=weighted_acc,
+        )
+
+    lr.fit_requests(sample_weight=False)
     cross_validate(
         lr,
         X,
