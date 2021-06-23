@@ -43,6 +43,10 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
+- |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
+  of rounding errors. Previously some extra spurious splits could occur.
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -216,6 +220,10 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
   when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
 
+- |Fix| Shorten data file names in the openml tests to better support
+  installing on Windows and its default 260 character limit on file names.
+  :pr:`20209` by `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -295,6 +303,10 @@ Changelog
   :pr:`17169` by :user:`Dmytro Lituiev <DSLituiev>`
   and :user:`Julien Jerphanion <jjerphan>`.
 
+- |API| Raises an error in :class:`feature_selection.VarianceThreshold`
+  when the variance threshold is negative.
+  :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -352,7 +364,7 @@ Changelog
   BayesianRidge, ARDRegression were deprecated in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
 
-- |Fix|: `sample_weight` are now fully taken into account in linear models
+- |Fix| `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature
   scaling.
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
@@ -365,6 +377,10 @@ Changelog
 - |Enhancement| `fit` method preserves dtype for numpy.float32 in
   :class:`Lars`, :class:`LassoLars`, :class:`LassoLars`, :class:`LarsCV` and
   :class:`LassoLarsCV`. :pr:`20155` by :user:`Takeshi Oura <takoika>`.
+
+- |Fix| Sample weight invariance for class:`Ridge` was fixed in :pr:`19616` by
+  :user:`Oliver Grisel <ogrisel>` and
+  :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -517,12 +533,28 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
+- |API| The `n_input_features_` attribute of
+  :class:`preprocessing.PolynomialFeatures` is deprecated in favor of
+  `n_features_in_` and will be removed in 1.2. :pr:`20240` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.tree`
 ...................
 
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
+
+- |Fix| Fixed a bug in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor` where a node could be split whereas it
+  should not have been due to incorrect handling of rounding errors.
+  :pr:`19336` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The `n_features_` attribute of :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` is deprecated in favor of `n_features_in_`
+  and will be removed in 1.2. :pr:`20272` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.utils`
 ....................
