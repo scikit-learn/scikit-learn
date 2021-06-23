@@ -201,7 +201,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-...........
+........
 
 .. raw:: html
 
@@ -227,7 +227,7 @@ July 2017.
    </div>
    </div>
 
-...........
+..........
 
 .. raw:: html
 
@@ -280,7 +280,7 @@ Past Sponsors
    </div>
    </div>
 
-..........
+...........
 
 .. raw:: html
 
@@ -307,7 +307,7 @@ This grant supported the position of Nicolas Hug and Thomas J. Fan.
    </div>
    </div>
 
-..........
+.............
 
 .. raw:: html
 
