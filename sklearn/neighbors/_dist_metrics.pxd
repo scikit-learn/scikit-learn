@@ -3,12 +3,10 @@
 #cython: wraparound=False
 #cython: cdivision=True
 
-cimport cython
 cimport numpy as np
-from libc.math cimport fabs, sqrt, exp, cos, pow
+from libc.math cimport  sqrt, exp
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from ._typedefs import DTYPE, ITYPE
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 
 ######################################################################
 # Inline distance functions

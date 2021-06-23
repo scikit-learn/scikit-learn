@@ -43,8 +43,8 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
-from ._typedefs import DTYPE, ITYPE
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
+from ..utils._typedefs import DTYPE, ITYPE
 
 
 ######################################################################

@@ -12,13 +12,11 @@ from sklearn.neighbors._ball_tree import (
     kernel_norm,
     DTYPE,
     ITYPE,
-    NeighborsHeap as NeighborsHeapBT,
     simultaneous_sort as simultaneous_sort_bt,
     nodeheap_sort as nodeheap_sort_bt,
 )
 from sklearn.neighbors._kd_tree import (
     KDTree,
-    NeighborsHeap as NeighborsHeapKDT,
     simultaneous_sort as simultaneous_sort_kdt,
     nodeheap_sort as nodeheap_sort_kdt,
 )
@@ -155,27 +153,6 @@ def test_neighbor_tree_two_point(Cls, dualtree, n_samples=100, n_features=3):
 
     counts = tree.two_point_correlation(Y, r=r, dualtree=dualtree)
     assert_array_almost_equal(counts, counts_true)
-
-
-@pytest.mark.parametrize("NeighborsHeap", [NeighborsHeapBT, NeighborsHeapKDT])
-def test_neighbors_heap(NeighborsHeap, n_pts=5, n_nbrs=10):
-    heap = NeighborsHeap(n_pts, n_nbrs)
-    rng = check_random_state(0)
-
-    for row in range(n_pts):
-        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE, copy=False)
-        i_in = np.arange(2 * n_nbrs, dtype=ITYPE)
-        for d, i in zip(d_in, i_in):
-            heap.push(row, d, i)
-
-        ind = np.argsort(d_in)
-        d_in = d_in[ind]
-        i_in = i_in[ind]
-
-        d_heap, i_heap = heap.get_arrays(sort=True)
-
-        assert_array_almost_equal(d_in[:n_nbrs], d_heap[row])
-        assert_array_almost_equal(i_in[:n_nbrs], i_heap[row])
 
 
 @pytest.mark.parametrize("nodeheap_sort", [nodeheap_sort_bt, nodeheap_sort_kdt])

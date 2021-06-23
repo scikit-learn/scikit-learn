@@ -13,7 +13,7 @@ cimport numpy as np
 from libc.math cimport floor, sqrt
 from libc.stdlib cimport free, malloc
 
-from cython cimport floating, integral
+from cython cimport floating
 from cython.parallel cimport parallel, prange
 
 DEF CHUNK_SIZE = 256  # number of vectors
@@ -22,7 +22,6 @@ DEF MIN_CHUNK_SAMPLES = 20
 
 DEF FLOAT_INF = 1e36
 
-from ..neighbors._neighbors_heap cimport _simultaneous_sort, _push
 from ..utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
@@ -32,7 +31,11 @@ from ..utils._cython_blas cimport (
   Trans,
   _gemm,
 )
+
+from ..utils._heap cimport _simultaneous_sort, _push
 from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._typedefs cimport ITYPE_t
+from ..utils._typedefs import ITYPE
 
 
 ### argkmin helpers
@@ -43,10 +46,10 @@ cdef void _argkmin_on_chunk(
     floating[::1] Y_sq_norms,              # IN
     floating *dist_middle_terms,           # IN
     floating *heaps_red_distances,         # IN/OUT
-    integral *heaps_indices,               # IN/OUT
-    integral k,                            # IN
+    ITYPE_t *heaps_indices,               # IN/OUT
+    ITYPE_t k,                            # IN
     # ID of the first element of Y_c
-    integral Y_idx_offset,
+    ITYPE_t Y_idx_offset,
 ) nogil:
     """
     Critical part of the computation of pairwise distances.
@@ -55,7 +58,7 @@ cdef void _argkmin_on_chunk(
     on the gemm-trick.
     """
     cdef:
-        integral i, j
+        ITYPE_t i, j
     # Instead of computing the full pairwise squared distances matrix,
     # ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²,
     # we only need to store the - 2 X_c.Y_c^T + ||Y_c||²
@@ -91,44 +94,44 @@ cdef int _argkmin_on_X(
     floating[:, ::1] X,                       # IN
     floating[:, ::1] Y,                       # IN
     floating[::1] Y_sq_norms,                 # IN
-    integral chunk_size,                      # IN
-    integral effective_n_threads,             # IN
-    integral[:, ::1] argkmin_indices,         # OUT
+    ITYPE_t chunk_size,                      # IN
+    ITYPE_t effective_n_threads,             # IN
+    ITYPE_t[:, ::1] argkmin_indices,         # OUT
     floating[:, ::1] argkmin_red_distances,   # OUT
 ) nogil:
     """Computes the argkmin of each vector (row) of X on Y
     by parallelising computation on chunks of X.
     """
     cdef:
-        integral k = argkmin_indices.shape[1]
-        integral d = X.shape[1]
-        integral sf = sizeof(floating)
-        integral si = sizeof(integral)
-        integral n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
+        ITYPE_t k = argkmin_indices.shape[1]
+        ITYPE_t d = X.shape[1]
+        ITYPE_t sf = sizeof(floating)
+        ITYPE_t si = sizeof(ITYPE_t)
+        ITYPE_t n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
-        integral n_train = Y.shape[0]
-        integral Y_n_samples_chunk = min(n_train, n_samples_chunk)
-        integral Y_n_full_chunks = n_train / Y_n_samples_chunk
-        integral Y_n_samples_rem = n_train % Y_n_samples_chunk
+        ITYPE_t n_train = Y.shape[0]
+        ITYPE_t Y_n_samples_chunk = min(n_train, n_samples_chunk)
+        ITYPE_t Y_n_full_chunks = n_train / Y_n_samples_chunk
+        ITYPE_t Y_n_samples_rem = n_train % Y_n_samples_chunk
 
-        integral n_test = X.shape[0]
-        integral X_n_samples_chunk = min(n_test, n_samples_chunk)
-        integral X_n_full_chunks = n_test // X_n_samples_chunk
-        integral X_n_samples_rem = n_test % X_n_samples_chunk
+        ITYPE_t n_test = X.shape[0]
+        ITYPE_t X_n_samples_chunk = min(n_test, n_samples_chunk)
+        ITYPE_t X_n_full_chunks = n_test // X_n_samples_chunk
+        ITYPE_t X_n_samples_rem = n_test % X_n_samples_chunk
 
         # Counting remainder chunk in total number of chunks
-        integral Y_n_chunks = Y_n_full_chunks + (
+        ITYPE_t Y_n_chunks = Y_n_full_chunks + (
             n_train != (Y_n_full_chunks * Y_n_samples_chunk)
         )
 
-        integral X_n_chunks = X_n_full_chunks + (
+        ITYPE_t X_n_chunks = X_n_full_chunks + (
             n_test != (X_n_full_chunks * X_n_samples_chunk)
         )
 
-        integral num_threads = min(Y_n_chunks, effective_n_threads)
+        ITYPE_t num_threads = min(Y_n_chunks, effective_n_threads)
 
-        integral Y_start, Y_end, X_start, X_end
-        integral X_chunk_idx, Y_chunk_idx, idx, jdx
+        ITYPE_t Y_start, Y_end, X_start, X_end
+        ITYPE_t X_chunk_idx, Y_chunk_idx, idx, jdx
 
         floating *dist_middle_terms_chunks
         floating *heaps_red_distances_chunks
@@ -190,9 +193,9 @@ cdef int _argkmin_on_Y(
     floating[:, ::1] X,                       # IN
     floating[:, ::1] Y,                       # IN
     floating[::1] Y_sq_norms,                 # IN
-    integral chunk_size,                      # IN
-    integral effective_n_threads,             # IN
-    integral[:, ::1] argkmin_indices,         # OUT
+    ITYPE_t chunk_size,                      # IN
+    ITYPE_t effective_n_threads,             # IN
+    ITYPE_t[:, ::1] argkmin_indices,         # OUT
     floating[:, ::1] argkmin_red_distances,   # OUT
 ) nogil:
     """Computes the argkmin of each vector (row) of X on Y
@@ -203,35 +206,35 @@ cdef int _argkmin_on_Y(
     most contexts.
     """
     cdef:
-        integral k = argkmin_indices.shape[1]
-        integral d = X.shape[1]
-        integral sf = sizeof(floating)
-        integral si = sizeof(integral)
-        integral n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
+        ITYPE_t k = argkmin_indices.shape[1]
+        ITYPE_t d = X.shape[1]
+        ITYPE_t sf = sizeof(floating)
+        ITYPE_t si = sizeof(ITYPE_t)
+        ITYPE_t n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
-        integral n_train = Y.shape[0]
-        integral Y_n_samples_chunk = min(n_train, n_samples_chunk)
-        integral Y_n_full_chunks = n_train / Y_n_samples_chunk
-        integral Y_n_samples_rem = n_train % Y_n_samples_chunk
+        ITYPE_t n_train = Y.shape[0]
+        ITYPE_t Y_n_samples_chunk = min(n_train, n_samples_chunk)
+        ITYPE_t Y_n_full_chunks = n_train / Y_n_samples_chunk
+        ITYPE_t Y_n_samples_rem = n_train % Y_n_samples_chunk
 
-        integral n_test = X.shape[0]
-        integral X_n_samples_chunk = min(n_test, n_samples_chunk)
-        integral X_n_full_chunks = n_test // X_n_samples_chunk
-        integral X_n_samples_rem = n_test % X_n_samples_chunk
+        ITYPE_t n_test = X.shape[0]
+        ITYPE_t X_n_samples_chunk = min(n_test, n_samples_chunk)
+        ITYPE_t X_n_full_chunks = n_test // X_n_samples_chunk
+        ITYPE_t X_n_samples_rem = n_test % X_n_samples_chunk
 
         # Counting remainder chunk in total number of chunks
-        integral Y_n_chunks = Y_n_full_chunks + (
+        ITYPE_t Y_n_chunks = Y_n_full_chunks + (
             n_train != (Y_n_full_chunks * Y_n_samples_chunk)
         )
 
-        integral X_n_chunks = X_n_full_chunks + (
+        ITYPE_t X_n_chunks = X_n_full_chunks + (
             n_test != (X_n_full_chunks * X_n_samples_chunk)
         )
 
-        integral num_threads = min(Y_n_chunks, effective_n_threads)
+        ITYPE_t num_threads = min(Y_n_chunks, effective_n_threads)
 
-        integral Y_start, Y_end, X_start, X_end
-        integral X_chunk_idx, Y_chunk_idx, idx, jdx
+        ITYPE_t Y_start, Y_end, X_start, X_end
+        ITYPE_t X_chunk_idx, Y_chunk_idx, idx, jdx
 
         floating *dist_middle_terms_chunks
         floating *heaps_red_distances_chunks
@@ -239,7 +242,7 @@ cdef int _argkmin_on_Y(
         # As chunks of X are shared across threads, so must their
         # heaps. To solve this, each thread has its own locals
         # heaps which are then synchronised back in the main ones.
-        integral *heaps_indices_chunks
+        ITYPE_t *heaps_indices_chunks
 
     for X_chunk_idx in range(X_n_chunks):
         X_start = X_chunk_idx * X_n_samples_chunk
@@ -256,7 +259,7 @@ cdef int _argkmin_on_Y(
                 Y_n_samples_chunk * X_n_samples_chunk * sf)
             heaps_red_distances_chunks = <floating*> malloc(
                 X_n_samples_chunk * k * sf)
-            heaps_indices_chunks = <integral*> malloc(
+            heaps_indices_chunks = <ITYPE_t*> malloc(
                 X_n_samples_chunk * k * sf)
 
             # Initialising heaps (memset can't be used here)
@@ -318,13 +321,13 @@ cdef int _argkmin_on_Y(
 cdef inline floating _euclidean_dist(
     floating[:, ::1] X,
     floating[:, ::1] Y,
-    integral i,
-    integral j,
+    ITYPE_t i,
+    ITYPE_t j,
 ) nogil:
     cdef:
         floating dist = 0
-        integral k
-        integral upper_unrolled_idx = (X.shape[1] // 4) * 4
+        ITYPE_t k
+        ITYPE_t upper_unrolled_idx = (X.shape[1] // 4) * 4
 
     # Unrolling loop to help with vectorisation
     for k in range(0, upper_unrolled_idx, 4):
@@ -341,8 +344,8 @@ cdef inline floating _euclidean_dist(
 cdef int _exact_euclidean_dist(
     floating[:, ::1] X,                  # IN
     floating[:, ::1] Y,                  # IN
-    integral[:, ::1] Y_indices,          # IN
-    integral effective_n_threads,        # IN
+    ITYPE_t[:, ::1] Y_indices,          # IN
+    ITYPE_t effective_n_threads,        # IN
     floating[:, ::1] distances,          # OUT
 ) nogil:
     """
@@ -356,7 +359,7 @@ cdef int _exact_euclidean_dist(
     but we use a function to have a cdef nogil context.
     """
     cdef:
-        integral i, k
+        ITYPE_t i, k
 
     for i in prange(X.shape[0], schedule='static',
                     nogil=True, num_threads=effective_n_threads):
@@ -370,8 +373,8 @@ cdef int _exact_euclidean_dist(
 def _argkmin(
     floating[:, ::1] X,
     floating[:, ::1] Y,
-    integral k,
-    integral chunk_size = CHUNK_SIZE,
+    ITYPE_t k,
+    ITYPE_t chunk_size = CHUNK_SIZE,
     str strategy = "auto",
     bint return_distance = False,
 ):
@@ -419,13 +422,13 @@ def _argkmin(
     int_dtype = np.intp
     float_dtype = np.float32 if floating is float else np.float64
     cdef:
-        integral[:, ::1] argkmin_indices = np.full((X.shape[0], k), 0,
-                                               dtype=int_dtype)
+        ITYPE_t[:, ::1] argkmin_indices = np.full((X.shape[0], k), 0,
+                                               dtype=ITYPE)
         floating[:, ::1] argkmin_distances = np.full((X.shape[0], k),
                                                   FLOAT_INF,
                                                   dtype=float_dtype)
         floating[::1] Y_sq_norms = np.einsum('ij,ij->i', Y, Y)
-        integral effective_n_threads = _openmp_effective_n_threads()
+        ITYPE_t effective_n_threads = _openmp_effective_n_threads()
 
     if strategy == 'auto':
         # This is a simple heuristic whose constant for the

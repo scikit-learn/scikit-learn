@@ -3,23 +3,16 @@
 #cython: wraparound=False
 #cython: cdivision=True
 
-import numpy as np
-cimport numpy as np
-np.import_array()  # required in order to use C-API
 
-cimport cython
-cimport numpy as np
-from libc.math cimport fabs, sqrt, exp, cos, pow
 from cython cimport floating, integral, numeric
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from ._typedefs import DTYPE, ITYPE
+from ._typedefs cimport ITYPE_t
 
 
 cdef int _simultaneous_sort(
     floating* dist,
-    integral* idx,
-    integral size
+    ITYPE_t* idx,
+    ITYPE_t size
 ) nogil except -1:
     """
     Perform a recursive quicksort on the dist array, simultaneously
@@ -30,7 +23,7 @@ cdef int _simultaneous_sort(
       - heap-sort-like
     """
     cdef:
-        integral pivot_idx, i, store_idx
+        ITYPE_t pivot_idx, i, store_idx
         floating pivot_val
 
     # in the small-array case, do things efficiently
@@ -83,14 +76,14 @@ cdef int _simultaneous_sort(
 
 cdef int _push(
     floating* dist,
-    integral* idx,
-    integral size,
+    ITYPE_t* idx,
+    ITYPE_t size,
     floating val,
-    integral i_val,
+    ITYPE_t i_val,
 ) nogil except -1:
     """push (val, i_val) into the heap (dist, idx) of the given size"""
     cdef:
-        integral current_idx, left_child_idx, right_child_idx, swap_idx
+        ITYPE_t current_idx, left_child_idx, right_child_idx, swap_idx
 
     # check if val should be in heap
     if val > dist[0]:
@@ -133,71 +126,3 @@ cdef int _push(
     idx[current_idx] = i_val
 
     return 0
-
-
-cdef class NeighborsHeap:
-    """A max-heap structure to keep track of distances/indices of neighbors
-
-    This implements an efficient pre-allocated set of fixed-size heaps
-    for chasing neighbors, holding both an index and a distance.
-    When any row of the heap is full, adding an additional point will push
-    the furthest point off the heap.
-
-    Parameters
-    ----------
-    n_pts : int
-        the number of heaps to use
-    n_nbrs : int
-        the size of each heap.
-    """
-
-    def __cinit__(self):
-        self.distances_arr = np.zeros((1, 1), dtype=DTYPE, order='C')
-        self.indices_arr = np.zeros((1, 1), dtype=ITYPE, order='C')
-        self.distances = self.distances_arr
-        self.indices = self.indices_arr
-
-    def __init__(self, n_pts, n_nbrs):
-        self.distances_arr = np.full((n_pts, n_nbrs), np.inf, dtype=DTYPE,
-                                     order='C')
-        self.indices_arr = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
-        self.distances = self.distances_arr
-        self.indices = self.indices_arr
-
-    def get_arrays(self, sort=True):
-        """Get the arrays of distances and indices within the heap.
-
-        If sort=True, then simultaneously sort the indices and distances,
-        so the closer points are listed first.
-        """
-        if sort:
-            self._sort()
-        return self.distances_arr, self.indices_arr
-
-    cdef inline DTYPE_t largest(self, ITYPE_t row) nogil except -1:
-        """Return the largest distance in the given row"""
-        return self.distances[row, 0]
-
-    def push(self, ITYPE_t row, DTYPE_t val, ITYPE_t i_val):
-        return self._push(row, val, i_val)
-
-    cdef int _push(self, ITYPE_t row, DTYPE_t val,
-                   ITYPE_t i_val) nogil except -1:
-        """push (val, i_val) into the given row"""
-        cdef ITYPE_t size = self.distances.shape[1]
-        cdef DTYPE_t* dist_arr = &self.distances[row, 0]
-        cdef ITYPE_t* ind_arr = &self.indices[row, 0]
-
-        return _push(dist_arr, ind_arr, size, val, i_val)
-
-
-    cdef int _sort(self) except -1:
-        """simultaneously sort the distances and indices"""
-        cdef DTYPE_t[:, ::1] distances = self.distances
-        cdef ITYPE_t[:, ::1] indices = self.indices
-        cdef ITYPE_t row
-        for row in range(distances.shape[0]):
-            _simultaneous_sort(&distances[row, 0],
-                               &indices[row, 0],
-                               distances.shape[1])
-        return 0
