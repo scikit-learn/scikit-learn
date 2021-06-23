@@ -53,9 +53,9 @@ _ = axs[1].set_title("Testing data")
 
 # %%
 # The samples from each class cannot be linearly separated: we come with a
-# straightline that would split the samples from the inner circle to outer
-# circle. Perfectly, a potential decision function would be a circle separating
-# both circles.
+# straight line that would split the samples from the inner set to outer
+# one. Perfectly, a potential decision boundary would be a circle separating
+# both sample sets.
 #
 # Now, we will use PCA with and without a kernel to see what is the effect of
 # using such a kernel. The kernel used here is a radial basis function (RBF)
@@ -91,10 +91,9 @@ axs[2].set_title("Projection of testing data\n using KernelPCA")
 fig.subplots_adjust(wspace=0.3)
 
 # %%
-# We recall that PCA will project the data using a linear projection.
-# Intuitively, it means that the coordinate system will be rotated with an some
-# rescaling of the axis. This rescaling will depend on the variance of the
-# data.
+# We recall that PCA will project the data linearly. Intuitively, it means that
+# the coordinate system will be rotated after centering and rescaling on each
+# axis. This rescaling will depend on the variance of the data.
 #
 # Thus, looking at the projection made using PCA (i.e. the middle figure), we
 # see that there is no change regarding the scaling; indeed the data being two
@@ -108,9 +107,9 @@ fig.subplots_adjust(wspace=0.3)
 # point close in the original space should still be close in the new space.
 #
 # We observe such behaviour in the figure on the right: the samples of a given
-# class are closer to each other than the samples from the opposite class. The
-# "radial" effect make that we unrolled the circle. Now, we can use a linear
-# classifier to separate the samples from the two classes.
+# class are closer to each other than the samples from the opposite class,
+# untangling both sample sets. Now, we can use a linear classifier to separate
+# the samples from the two classes.
 #
 # Projecting into the original feature space
 # ------------------------------------------
@@ -147,12 +146,17 @@ axs[2].set_xlabel("Feature #0")
 _ = axs[2].set_title("Reconstruction via KernelPCA")
 
 # %%
-# While we see a perfect reconstruction, we observe a different results for
-# :class:`~sklearn.decomposition.KernelPCA`. Indeed,
-# :meth:`~sklearn.decomposition.KernelPCA.inverse_transform` cannot rely on an
-# analytical back-projection and thus an extact reconstruction. Instead, a
-# :class:`~sklearn.linear_model.KernelRidge` was trained to learn a projection
-# function to map a sample from the PCA basis into the original feature space.
-# This method is therefore an approximation leading to small difference. The
-# parameter `alpha` in the :class:`~sklearn.decomposition.KernelPCA` is used
-# to penalized the mapping function to fit more or less the training data.
+# While we see a perfect reconstruction with
+# :class:`~sklearn.decomposition.PCA` we observe a different results for
+# :class:`~sklearn.decomposition.KernelPCA`.
+#
+# Indeed, :meth:`~sklearn.decomposition.KernelPCA.inverse_transform` cannot
+# rely on an analytical back-projection and thus an extact reconstruction.
+# Instead, a :class:`~sklearn.kernel_ridge.KernelRidge` was internally trained
+# to learn a mapping from the PCA basis to the original feature space. This
+# method is therefore an approximation leading to small difference.
+#
+# To improve the reconstruction using
+# :meth:`~sklearn.decomposition.KernelPCA.inverse_transform`, one can tune
+# `alpha` in :class:`~sklearn.decomposition.KernelPCA`, the regularization term
+# which controls the reliance on the training data during the mapping training.
