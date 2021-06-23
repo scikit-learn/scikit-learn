@@ -830,7 +830,7 @@ follows.
      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
      IJCV 2010.
   .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
-     <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
+     <https://www.researchgate.net/profile/Mark-Goadrich/publication/215721831_The_Relationship_Between_Precision-Recall_and_ROC_Curves/links/57918c1808ae64311c11ac64/The-Relationship-Between-Precision-Recall-and-ROC-Curves.pdf>`_,
      ICML 2006.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
