@@ -898,6 +898,8 @@ def test_alpha():
 
 
 def test_check_alpha():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/10772
     # Test force_alpha if alpha < _ALPHA_MIN
     _ALPHA_MIN = 1e-10  # const
     msg1 = (
