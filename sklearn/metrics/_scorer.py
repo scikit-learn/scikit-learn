@@ -741,6 +741,15 @@ neg_root_mean_squared_error_scorer = make_scorer(
     squared=False,
     request_props=["sample_weight"],
 )
+neg_median_absolute_error_scorer = make_scorer(
+    median_absolute_error, greater_is_better=False, request_props=["sample_weight"]
+)
+neg_root_mean_squared_error_scorer = make_scorer(
+    mean_squared_error,
+    greater_is_better=False,
+    squared=False,
+    request_props=["sample_weight"],
+)
 neg_mean_poisson_deviance_scorer = make_scorer(
     mean_poisson_deviance, greater_is_better=False, request_props=["sample_weight"]
 )

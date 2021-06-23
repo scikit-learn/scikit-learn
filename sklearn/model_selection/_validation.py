@@ -1596,7 +1596,7 @@ def learning_curve(
                 train,
                 test,
                 verbose,
-                # TODO: support score_params here, hit: cross_validate
+                # TODO: support score_params here, hint: cross_validate
                 parameters=None,
                 fit_params=fit_params,
                 score_params=None,
@@ -1894,7 +1894,7 @@ def validation_curve(
             train,
             test,
             verbose,
-            # TODO: support score_params here, hit: cross_validate
+            # TODO: support score_params here, hint: cross_validate
             parameters={param_name: v},
             fit_params=fit_params,
             score_params=None,

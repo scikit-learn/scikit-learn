@@ -671,24 +671,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         )
         return router.get_metadata_request()
 
-        return build_router_metadata_request(
-            children={
-                "base": [self.estimator],
-                "cv": [check_cv(self.cv)],
-                "scorers": scorers,
-            },
-            routing=[
-                ("base", "fit", "fit"),
-                ("cv", "fit", "split"),
-                ("scorers", "fit", "score"),
-                ("scorers", "score", "score"),
-                # XXX: we might want a special way to handle 'remainder'
-                ("base", "transform", "transform"),
-                ("base", "inverse_transform", "inverse_transform"),
-                ("base", "predict", "predict"),
-            ],
-        )
-
     def _check_refit_for_multimetric(self, scores):
         """Check `refit` is compatible with `scores` is valid"""
         multimetric_refit_msg = (

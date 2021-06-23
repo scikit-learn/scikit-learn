@@ -357,8 +357,7 @@ class DummyRegressorWithExtraFitParams(DummyRegressor):
 def test_transform_target_regressor_pass_fit_parameters():
     X, y = friedman
     dummy_regr = DummyRegressorWithExtraFitParams()
-    dummy_regr.request_sample_weight(fit=True)
-    dummy_regr.request_check_input(fit=True)
+    dummy_regr.fit_requests(sample_weight=True, check_input=True)
     regr = TransformedTargetRegressor(
         regressor=dummy_regr, transformer=DummyTransformer()
     )
@@ -371,7 +370,7 @@ def test_transform_target_regressor_route_pipeline():
     X, y = friedman
 
     dummy_regr = DummyRegressorWithExtraFitParams()
-    dummy_regr.request_check_input(fit=True)
+    dummy_regr.fit_requests(check_input=True)
     regr = TransformedTargetRegressor(
         regressor=dummy_regr, transformer=DummyTransformer()
     )
