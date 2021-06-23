@@ -51,8 +51,8 @@ non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_gpr_interpolation(kernel):
-    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
-        pytest.xfail("This test may fail on 32bit Py3.6")
+    if sys.maxsize <= 2 ** 32:
+        pytest.xfail("This test may fail on 32 bit Python")
 
     # Test the interpolating property for different kernels.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
@@ -79,8 +79,8 @@ def test_gpr_interpolation_structured():
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_lml_improving(kernel):
-    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
-        pytest.xfail("This test may fail on 32bit Py3.6")
+    if sys.maxsize <= 2 ** 32:
+        pytest.xfail("This test may fail on 32 bit Python")
 
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
@@ -192,8 +192,8 @@ def test_no_optimizer():
 @pytest.mark.parametrize("kernel", kernels)
 @pytest.mark.parametrize("target", [y, np.ones(X.shape[0], dtype=np.float64)])
 def test_predict_cov_vs_std(kernel, target):
-    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
-        pytest.xfail("This test may fail on 32bit Py3.6")
+    if sys.maxsize <= 2 ** 32:
+        pytest.xfail("This test may fail on 32 bit Python")
 
     # Test that predicted std.-dev. is consistent with cov's diagonal.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
