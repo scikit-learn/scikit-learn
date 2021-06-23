@@ -589,7 +589,6 @@ Changelog
 - |Feature|  :func:`~sklearn.metrics.mean_squared_log_error` now supports
   `squared='False'`. :pr:`20326` by :user:`Uttam kumar <helper-uttam>`_.
 
-
 Code and Documentation Contributors
 -----------------------------------
 
