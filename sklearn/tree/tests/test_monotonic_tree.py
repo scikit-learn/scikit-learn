@@ -3,7 +3,8 @@ import pytest
 from sklearn import datasets
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
-from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor
 
 @pytest.mark.parametrize("seed", range(4))
 @pytest.mark.parametrize("depth_first", (True, False))
@@ -25,7 +26,12 @@ def test_montonic_constraints(seed, depth_first):
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
 
-    for _, TreeRegressor in REG_TREES.items():
+    regressors = REG_TREES.copy()
+    regressors.update({
+        "GradientBoostingRegressor": GradientBoostingRegressor
+    })
+
+    for name, TreeRegressor in regressors.items():
         if depth_first:
             est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
         else:
@@ -36,6 +42,8 @@ def test_montonic_constraints(seed, depth_first):
             )
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": seed})
+        if hasattr(est, "n_estimators"):
+            est.set_params(**{"n_estimators": 5})
         est.fit(X_train, y_train)
         y = est.predict(X_test)
         # increasing constraint
@@ -49,10 +57,10 @@ def test_montonic_constraints(seed, depth_first):
         assert np.all(y_decr <= y)
 
     classifiers = CLF_TREES.copy()
-    # TODO: GradientBoostingClassifier
-    classifiers.update({"RandomForestClassifier": RandomForestClassifier,
-                        "ExtraTreesClassifier": ExtraTreesClassifier})
-    for _, TreeClassifier in classifiers.items():
+    classifiers.update({
+        "GradientBoostingClassifier": GradientBoostingClassifier
+    })
+    for name, TreeClassifier in classifiers.items():
         if depth_first:
             est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
         else:
@@ -64,7 +72,7 @@ def test_montonic_constraints(seed, depth_first):
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": seed})
         if hasattr(est, "n_estimators"):
-            est.set_params(**{"n_estimators": 10})
+            est.set_params(**{"n_estimators": 5})
         est.fit(X_train, y_train)
         y = est.predict_proba(X_test)[:, 1]
 
