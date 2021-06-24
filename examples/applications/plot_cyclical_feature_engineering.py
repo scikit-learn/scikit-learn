@@ -336,13 +336,24 @@ def cos_transformer(period):
 import pandas as pd
 
 hour_df = pd.DataFrame(
-    np.linspace(0, 26, 1000).reshape(-1, 1),
+    np.arange(26).reshape(-1, 1),
     columns=["hour"],
 )
 hour_df["hour_sin"] = sin_transformer(24).fit_transform(hour_df)["hour"]
 hour_df["hour_cos"] = cos_transformer(24).fit_transform(hour_df)["hour"]
 hour_df.plot(x="hour")
 _ = plt.title("Trigonometric encoding for the 'hour' feature")
+
+# %%
+#
+# Let's use a 2D scatter plot with the hours encoded as colors to better see
+# how this representation maps the 24 hours of the day to a 2D space, akin to
+# some sort of 24 hour version of an analog clock. Note that the "25th" hour is
+# mapped back to the 1st hour because of the periodic nature of the sine/cosine
+# representation.
+fig, ax = plt.subplots(figsize=(7, 5))
+sp = ax.scatter(hour_df["hour_sin"], hour_df["hour_cos"], c=hour_df["hour"])
+_ = fig.colorbar(sp)
 
 # %%
 #
