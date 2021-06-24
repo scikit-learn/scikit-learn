@@ -188,10 +188,14 @@ def evaluate(model, X, y, cv):
         X,
         y,
         cv=ts_cv,
-        scoring="neg_mean_absolute_error"
+        scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"]
     )
-    scores = -cv_results["test_score"]
-    print(f"Mean Absolute Error: {scores.mean():.3f} +/- {scores.std():.3f}")
+    mae = -cv_results["test_neg_mean_absolute_error"]
+    rmse = -cv_results["test_neg_root_mean_squared_error"]
+    print(
+        f"Mean Absolute Error:     {mae.mean():.3f} +/- {mae.std():.3f}\n"
+        f"Root Mean Squared Error: {rmse.mean():.3f} +/- {rmse.std():.3f}"
+    )
 
 
 evaluate(gbrt_pipeline, X, y, cv=ts_cv)
@@ -211,9 +215,11 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 # -----------------------
 #
 # As usual for linear models, categorical variables need to be one-hot encoded.
-# As the numerical features are all approximately on similar scales, we let
-# them go through unscaled, including the time-related features:
+# For consistency, we scale the numerical features to the same 0-1 range using
+# class:`sklearn.preprocessing.MinMaxScaler`, although in this case it does not
+# impact the results much because they are already on comparable scales:
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import RidgeCV
 import numpy as np
 
@@ -225,7 +231,7 @@ naive_linear_pipeline = make_pipeline(
         transformers=[
             ("categorical", one_hot_encoder, categorical_columns),
         ],
-        remainder="passthrough",
+        remainder=MinMaxScaler(),
     ),
     RidgeCV(alphas=alphas),
 )
@@ -267,7 +273,7 @@ one_hot_linear_pipeline = make_pipeline(
             ("categorical", one_hot_encoder, categorical_columns),
             ("one_hot_time", one_hot_encoder, ["hour", "weekday", "month"]),
         ],
-        remainder="passthrough",
+        remainder=MinMaxScaler(),
     ),
     RidgeCV(alphas=alphas),
 )
@@ -343,7 +349,7 @@ cyclic_cossin_transformer = ColumnTransformer(
         ("hour_sin", sin_transformer(24), ["hour"]),
         ("hour_cos", cos_transformer(24), ["hour"]),
     ],
-    remainder="passthrough",
+    remainder=MinMaxScaler(),
 )
 cyclic_cossin_linear_pipeline = make_pipeline(
     cyclic_cossin_transformer,
@@ -415,7 +421,7 @@ cyclic_spline_transformer = ColumnTransformer(
         ("cyclic_weekday", periodic_spline_transformer(7), ["weekday"]),
         ("cyclic_hour", periodic_spline_transformer(24, n_splines=12), ["hour"]),
     ],
-    remainder="passthrough",
+    remainder=MinMaxScaler(),
 )
 cyclic_spline_linear_pipeline = make_pipeline(
     cyclic_spline_transformer,
@@ -488,29 +494,30 @@ _ = ax.legend()
 # %%
 # We can draw the following conclusions from the above plot:
 #
-# - the raw ordinal time-related features are problematic because they do not
-#   capture the natural periodicity: we observe a big jump in the predictions
-#   at the end of each day when the hour features goes from 23 back to 0. We
-#   can expect similar artifacts at the end of each week or each year.
+# - the **raw ordinal time-related features** are problematic because they do
+#   not capture the natural periodicity: we observe a big jump in the
+#   predictions at the end of each day when the hour features goes from 23 back
+#   to 0. We can expect similar artifacts at the end of each week or each year.
 #
-# - as expected, the trigonometric features (sine and cosine) do not have this
-#   discontinuities at midnight but the linear regression model still fails to
-#   leverage those features to properly model intra-day variations. Using
-#   trigonmetric features for higher harmonics or additional trigonometric
-#   features for the natural period with different phases could potentially fix
-#   this problem.
+# - as expected, the **trigonometric features** (sine and cosine) do not have
+#   this discontinuities at midnight but the linear regression model still
+#   fails to leverage those features to properly model intra-day variations.
+#   Using trigonmetric features for higher harmonics or additional
+#   trigonometric features for the natural period with different phases could
+#   potentially fix this problem.
 #
-# - the periodic spline-based features fix those two problems at once: they
+# - the **periodic spline-based features** fix those two problems at once: they
 #   give more expressivity to the linear model by making it possible to focus
 #   on a specific hours thanks to the use of 12 splines. Furthermore the
 #   `extrapolation="periodic"` option enforces a smooth representation between
 #   `hour=23` and `hour=0`.
 #
-# - the one-hot encoded features behave similarly to the periodic spline-based
-#   features but are more spiky: for instance they can better model the morning
-#   peak during the week days since this peak last fewer than an hour. However,
-#   we will see in the following that what can be an advantage for linear
-#   models is not necessarily one for more expressive models.
+# - the **one-hot encoded features** behave similarly to the periodic
+#   spline-based features but are more spiky: for instance they can better
+#   model the morning peak during the week days since this peak last fewer than
+#   an hour. However, we will see in the following that what can be an
+#   advantage for linear models is not necessarily one for more expressive
+#   models.
 #
 # Finally, we observe that none of the linear models can approximate the true
 # bike rentals demand, especially for the peaks that can be very sharp at rush
@@ -543,13 +550,11 @@ _ = ax.legend()
 # Nyström method to compute an approximate polynomial kernel expansion.
 #
 # Let us try the latter for computational reasons:
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.kernel_approximation import Nystroem
 
 
 cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,
-    MinMaxScaler(),
     Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
     RidgeCV(alphas=alphas),
 )
