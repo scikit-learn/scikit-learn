@@ -21,10 +21,11 @@ def test_base_optimizer():
 
 def test_sgd_optimizer_no_momentum():
     params = [np.zeros(shape) for shape in shapes]
+    rng = np.random.RandomState(0)
 
     for lr in [10 ** i for i in range(-3, 4)]:
         optimizer = SGDOptimizer(params, lr, momentum=0, nesterov=False)
-        grads = [np.random.random(shape) for shape in shapes]
+        grads = [rng.random_sample(shape) for shape in shapes]
         expected = [param - lr * grad for param, grad in zip(params, grads)]
         optimizer.update_params(grads)
 
@@ -35,12 +36,13 @@ def test_sgd_optimizer_no_momentum():
 def test_sgd_optimizer_momentum():
     params = [np.zeros(shape) for shape in shapes]
     lr = 0.1
+    rng = np.random.RandomState(0)
 
     for momentum in np.arange(0.5, 0.9, 0.1):
         optimizer = SGDOptimizer(params, lr, momentum=momentum, nesterov=False)
-        velocities = [np.random.random(shape) for shape in shapes]
+        velocities = [rng.random_sample(shape) for shape in shapes]
         optimizer.velocities = velocities
-        grads = [np.random.random(shape) for shape in shapes]
+        grads = [rng.random_sample(shape) for shape in shapes]
         updates = [
             momentum * velocity - lr * grad for velocity, grad in zip(velocities, grads)
         ]
@@ -63,12 +65,13 @@ def test_sgd_optimizer_trigger_stopping():
 def test_sgd_optimizer_nesterovs_momentum():
     params = [np.zeros(shape) for shape in shapes]
     lr = 0.1
+    rng = np.random.RandomState(0)
 
     for momentum in np.arange(0.5, 0.9, 0.1):
         optimizer = SGDOptimizer(params, lr, momentum=momentum, nesterov=True)
-        velocities = [np.random.random(shape) for shape in shapes]
+        velocities = [rng.random_sample(shape) for shape in shapes]
         optimizer.velocities = velocities
-        grads = [np.random.random(shape) for shape in shapes]
+        grads = [rng.random_sample(shape) for shape in shapes]
         updates = [
             momentum * velocity - lr * grad for velocity, grad in zip(velocities, grads)
         ]
@@ -86,17 +89,18 @@ def test_adam_optimizer():
     params = [np.zeros(shape) for shape in shapes]
     lr = 0.001
     epsilon = 1e-8
+    rng = np.random.RandomState(0)
 
     for beta_1 in np.arange(0.9, 1.0, 0.05):
         for beta_2 in np.arange(0.995, 1.0, 0.001):
             optimizer = AdamOptimizer(params, lr, beta_1, beta_2, epsilon)
-            ms = [np.random.random(shape) for shape in shapes]
-            vs = [np.random.random(shape) for shape in shapes]
+            ms = [rng.random_sample(shape) for shape in shapes]
+            vs = [rng.random_sample(shape) for shape in shapes]
             t = 10
             optimizer.ms = ms
             optimizer.vs = vs
             optimizer.t = t - 1
-            grads = [np.random.random(shape) for shape in shapes]
+            grads = [rng.random_sample(shape) for shape in shapes]
 
             ms = [beta_1 * m + (1 - beta_1) * grad for m, grad in zip(ms, grads)]
             vs = [beta_2 * v + (1 - beta_2) * (grad ** 2) for v, grad in zip(vs, grads)]

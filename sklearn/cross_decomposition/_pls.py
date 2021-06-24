@@ -9,17 +9,27 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from scipy.linalg import pinv2, svd
+from scipy.linalg import svd
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
+from ..utils.fixes import sp_version
+from ..utils.fixes import parse_version
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..exceptions import ConvergenceWarning
 from ..utils.deprecation import deprecated
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
+
+
+if sp_version >= parse_version("1.7"):
+    # Starting in scipy 1.7 pinv2 was deprecated in favor of pinv.
+    # pinv now uses the svd to compute the pseudo-inverse.
+    from scipy.linalg import pinv as pinv2
+else:
+    from scipy.linalg import pinv2
 
 
 def _pinv2_old(a):

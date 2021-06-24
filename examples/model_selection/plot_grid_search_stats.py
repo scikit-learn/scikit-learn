@@ -190,9 +190,9 @@ def corrected_std(differences, n_train, n_test):
     corrected_std : int
         Variance-corrected standard deviation of the set of differences.
     """
-    n = n_train + n_test
+    kr = len(differences)
     corrected_var = (
-        np.var(differences, ddof=1) * ((1 / n) + (n_test / n_train))
+        np.var(differences, ddof=1) * (1 / kr + n_test / n_train)
     )
     corrected_std = np.sqrt(corrected_var)
     return corrected_std

@@ -1,4 +1,3 @@
-import os
 from os import environ
 from functools import wraps
 import platform
@@ -134,11 +133,17 @@ def pytest_collection_modifyitems(config, items):
     # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
+        import matplotlib  # noqa
+    except ImportError:
+        skip_doctests = True
+        reason = "matplotlib is required to run the doctests"
+
+    try:
         if np_version < parse_version("1.14"):
             reason = "doctests are only run for numpy >= 1.14"
             skip_doctests = True
         elif _IS_32BIT:
-            reason = "doctest are only run when the default numpy int is " "64 bits."
+            reason = "doctest are only run when the default numpy int is 64 bits."
             skip_doctests = True
         elif sys.platform.startswith("win32"):
             reason = (
@@ -193,11 +198,12 @@ def pytest_runtest_setup(item):
     item : pytest item
         item to be processed
     """
-    try:
-        xdist_worker_count = int(os.environ["PYTEST_XDIST_WORKER_COUNT"])
-    except KeyError:
-        # raises when pytest-xdist is not installed
+    xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
+    if xdist_worker_count is None:
+        # returns if pytest-xdist is not installed
         return
+    else:
+        xdist_worker_count = int(xdist_worker_count)
 
     openmp_threads = _openmp_effective_n_threads()
     threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
