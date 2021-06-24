@@ -288,6 +288,16 @@ Changelog
   interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
   :user:`murata-yu`.
 
+- |Feature| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive/negative
+  effect on the target. :pr:`13649` by :user:`Samuel Ronsin <samronsin>` and
+  :user:`Patrick O'Reilly <pat-oreilly>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -562,6 +572,12 @@ Changelog
   :class:`tree.ExtraTreeRegressor` is deprecated in favor of `n_features_in_`
   and will be removed in 1.2. :pr:`20272` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Feature| :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive/negative
+  effect on the target. :pr:`13649` by :user:`Samuel Ronsin <samronsin>` and
+  :user:`Patrick O'Reilly <pat-oreilly>`.
 
 :mod:`sklearn.utils`
 ....................
