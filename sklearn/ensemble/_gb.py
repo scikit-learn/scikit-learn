@@ -249,6 +249,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
+            perform_line_search = self.monotonic_cst is None
             loss.update_terminal_regions(
                 tree.tree_,
                 X,
@@ -259,8 +260,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_mask,
                 learning_rate=self.learning_rate,
                 k=k,
+                perform_line_search=perform_line_search
             )
-
             # add tree to ensemble
             self.estimators_[i, k] = tree
 
@@ -1093,7 +1094,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
         and 0 respectively correspond to a positive constraint, negative
-        constraint and no constraint.
+        constraint and no constraint. The constraints are only valid for
+        binary classifications and hold over the probability of the positive
+        class.
 
     Attributes
     ----------

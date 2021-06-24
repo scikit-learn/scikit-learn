@@ -397,7 +397,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
 
-
         if monotonic_cst.shape[0] != X.shape[1]:
             raise ValueError(
                 "monotonic_cst has shape {} but the input data "
