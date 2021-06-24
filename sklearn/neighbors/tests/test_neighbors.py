@@ -29,8 +29,11 @@ from sklearn.neighbors import (
 )
 from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import sp_version, parse_version
@@ -1795,11 +1798,11 @@ def test_pairwise_deprecated(NearestNeighbors):
 
 
 @pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("d", [5, 10, 100, 500])
+@pytest.mark.parametrize("d", [5, 10, 100])
 @pytest.mark.parametrize("ratio_train_test", [10, 2, 1, 0.5])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
-@pytest.mark.parametrize("chunk_size", [2 ** i for i in range(8, 13)])
-@pytest.mark.parametrize("strategy", ["auto", "chunk_on_train", "chunk_on_test"])
+@pytest.mark.parametrize("chunk_size", [2 ** i for i in range(8, 11)])
+@pytest.mark.parametrize("strategy", ["chunk_on_train", "chunk_on_test"])
 def test_fast_sqeuclidean_correctness(
     n,
     d,
@@ -1809,14 +1812,8 @@ def test_fast_sqeuclidean_correctness(
     strategy,
     dtype=np.float64,
 ):
-    """The Fast squared euclidean strategy ("fast-sqeuclidean") is a faster
-    alternative to the squared euclidean strategy ("sqeuclidean").
-    It computed reduced squared euclidean distances of using the
-    the GEMM subroutine of BLAS, allowing high arithmetic intensity.
-
-    Yet, it can be unstable for some range of data far the origin overflowing
-    the representation for float64.
-    """
+    # The fast squared euclidean strategy must return results
+    # that are close to the ones obtained with the euclidean distance
     if n < n_neighbors:
         pytest.skip(
             f"Skipping as n (={n}) < n_neighbors (={n_neighbors})",
@@ -1824,8 +1821,12 @@ def test_fast_sqeuclidean_correctness(
         )
 
     rng = np.random.RandomState(1)
-    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d))
-    X_test = rng.rand(int(n * d / ratio_train_test)).astype(dtype).reshape((-1, d))
+
+    spread = 100
+    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
+    X_test = (
+        rng.rand(int(n * d / ratio_train_test)).astype(dtype).reshape((-1, d)) * spread
+    )
 
     neigh = NearestNeighbors(
         n_neighbors=n_neighbors, algorithm="brute", metric="euclidean"
@@ -1841,8 +1842,8 @@ def test_fast_sqeuclidean_correctness(
         X=X_test, n_neighbors=n_neighbors, return_distance=True
     )
 
-    np.testing.assert_almost_equal(eucl_dist, fse_dist)
-    np.testing.assert_array_equal(eucl_nn, fse_nn)
+    assert_allclose(eucl_dist, fse_dist)
+    assert_array_equal(eucl_nn, fse_nn)
 
 
 @pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
@@ -1856,10 +1857,17 @@ def test_fast_sqeuclidean_translation_invariance(
     translation,
     dtype=np.float64,
 ):
-    """The Fast euclidean strategy should be translation invariant."""
+    # The fast squared euclidean strategy should be translation invariant.
+    if n < n_neighbors:
+        pytest.skip(
+            f"Skipping as n (={n}) < n_neighbors (={n_neighbors})",
+            allow_module_level=True,
+        )
+
     rng = np.random.RandomState(1)
-    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d))
-    X_test = rng.rand(int(n * d)).astype(dtype).reshape((-1, d))
+    spread = 100
+    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
+    X_test = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
 
     neigh = NearestNeighbors(
         n_neighbors=n_neighbors, algorithm="brute", metric="fast_sqeuclidean"
@@ -1875,5 +1883,5 @@ def test_fast_sqeuclidean_translation_invariance(
         X=X_test + translation, n_neighbors=n_neighbors, return_distance=True
     )
 
-    np.testing.assert_array_equal(reference_nns, nns)
-    np.testing.assert_almost_equal(reference_dist, dist)
+    assert_allclose(reference_dist, dist)
+    assert_array_equal(reference_nns, nns)

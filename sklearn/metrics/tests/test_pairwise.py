@@ -1474,12 +1474,13 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
 @pytest.mark.parametrize("Y_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.parametrize("sign", [1, -1])
 def test_fast_sqeuclidean_correctness(n, d, X_translation, Y_translation, sign):
-
+    # The fast squared euclidean strategy must return results
+    # that are close to the ones obtained with the euclidean distance
     rng = np.random.RandomState(1)
 
-    # Translating to test numerical stability
-    X = X_translation + rng.rand(int(n * d)).reshape((-1, d))
-    Y = sign * Y_translation + rng.rand(int(n * d)).reshape((-1, d))
+    spread = 100
+    X = X_translation + rng.rand(int(n * d)).reshape((-1, d)) * spread
+    Y = Y_translation + rng.rand(int(n * d)).reshape((-1, d)) * spread * sign
 
     argmins, distances = pairwise_distances_argmin_min(X, Y, metric="euclidean")
     fsq_argmins, fsq_distances = pairwise_distances_argmin_min(
@@ -1487,4 +1488,4 @@ def test_fast_sqeuclidean_correctness(n, d, X_translation, Y_translation, sign):
     )
 
     np.testing.assert_array_equal(argmins, fsq_argmins)
-    np.testing.assert_almost_equal(distances, fsq_distances)
+    np.testing.assert_allclose(distances, fsq_distances, rtol=1e-5)
