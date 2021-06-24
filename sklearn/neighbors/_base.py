@@ -838,7 +838,9 @@ class KNeighborsMixin:
         mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
-            edges are Euclidean distance between points.
+            edges are distances between points, type of distance
+            depends on the selected metric parameter in
+            NearestNeighbors class.
 
         Returns
         -------
