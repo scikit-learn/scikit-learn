@@ -61,7 +61,6 @@ df["count"].max()
 #     instead choose to focus on the mean absolute error that is more
 #     intuitive than the (root) mean squared error. Note however that the best
 #     models for one metric are also the best for the other in this study.
-# %%
 y = df["count"] / 1000
 _ = y.hist(bins=30)
 
