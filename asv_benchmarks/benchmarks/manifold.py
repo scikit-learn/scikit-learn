@@ -9,21 +9,21 @@ class TSNEBenchmark(Estimator, Benchmark):
     Benchmarks for t-SNE.
     """
 
-    param_names = ['method']
-    params = (['exact', 'barnes_hut'],)
+    param_names = ["method"]
+    params = (["exact", "barnes_hut"],)
 
     def setup_cache(self):
         super().setup_cache()
 
     def make_data(self, params):
-        method, = params
+        (method,) = params
 
-        n_samples = 500 if method == 'exact' else None
+        n_samples = 500 if method == "exact" else None
 
         return _digits_dataset(n_samples=n_samples)
 
     def make_estimator(self, params):
-        method, = params
+        (method,) = params
 
         estimator = TSNE(random_state=0, method=method)
 

@@ -134,6 +134,7 @@ class ConfusionMatrixDisplay:
             values_format=values_format,
             colorbar=colorbar,
         )
+
         ax.set_ylim((n_classes - 0.5, -0.5))
 
         self.figure_ = fig

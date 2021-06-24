@@ -5,18 +5,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_openml
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble._hist_gradient_boosting.utils import (
-    get_equivalent_estimator)
+from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--n-leaf-nodes', type=int, default=31)
-parser.add_argument('--n-trees', type=int, default=100)
-parser.add_argument('--lightgbm', action="store_true", default=False)
-parser.add_argument('--learning-rate', type=float, default=.1)
-parser.add_argument('--max-bins', type=int, default=255)
-parser.add_argument('--no-predict', action="store_true", default=False)
-parser.add_argument('--verbose', action="store_true", default=False)
+parser.add_argument("--n-leaf-nodes", type=int, default=31)
+parser.add_argument("--n-trees", type=int, default=100)
+parser.add_argument("--lightgbm", action="store_true", default=False)
+parser.add_argument("--learning-rate", type=float, default=0.1)
+parser.add_argument("--max-bins", type=int, default=255)
+parser.add_argument("--no-predict", action="store_true", default=False)
+parser.add_argument("--verbose", action="store_true", default=False)
 args = parser.parse_args()
 
 n_leaf_nodes = args.n_leaf_nodes
@@ -43,8 +42,7 @@ def predict(est, data_test, target_test):
     toc = time()
     roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
     acc = accuracy_score(target_test, predicted_test)
-    print(f"predicted in {toc - tic:.3f}s, "
-          f"ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
+    print(f"predicted in {toc - tic:.3f}s, " f"ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 
 
 data = fetch_openml(data_id=179, as_frame=False)  # adult dataset
@@ -57,14 +55,13 @@ print(f"Number of features: {n_features}")
 print(f"Number of categorical features: {n_categorical_features}")
 print(f"Number of numerical features: {n_numerical_features}")
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2,
-                                                    random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
 # Note: no need to use an OrdinalEncoder because categorical features are
 # already clean
 is_categorical = [name in data.categories for name in data.feature_names]
 est = HistGradientBoostingClassifier(
-    loss='binary_crossentropy',
+    loss="binary_crossentropy",
     learning_rate=lr,
     max_iter=n_trees,
     max_bins=max_bins,
@@ -72,18 +69,17 @@ est = HistGradientBoostingClassifier(
     categorical_features=is_categorical,
     early_stopping=False,
     random_state=0,
-    verbose=verbose
+    verbose=verbose,
 )
 
-fit(est, X_train, y_train, 'sklearn')
+fit(est, X_train, y_train, "sklearn")
 predict(est, X_test, y_test)
 
 if args.lightgbm:
-    est = get_equivalent_estimator(est, lib='lightgbm')
+    est = get_equivalent_estimator(est, lib="lightgbm")
     est.set_params(max_cat_to_onehot=1)  # dont use OHE
-    categorical_features = [f_idx
-                            for (f_idx, is_cat) in enumerate(is_categorical)
-                            if is_cat]
-    fit(est, X_train, y_train, 'lightgbm',
-        categorical_feature=categorical_features)
+    categorical_features = [
+        f_idx for (f_idx, is_cat) in enumerate(is_categorical) if is_cat
+    ]
+    fit(est, X_train, y_train, "lightgbm", categorical_feature=categorical_features)
     predict(est, X_test, y_test)
