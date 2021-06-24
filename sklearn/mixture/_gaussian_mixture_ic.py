@@ -27,7 +27,8 @@ from ..base import BaseEstimator, ClusterMixin
 
 
 class GaussianMixtureIC(ClusterMixin, BaseEstimator):
-    """
+    """Gaussian mixture with BIC/AIC.
+
     Automatic Gaussian Mixture Model (GMM) selection via the
     Bayesian Information Criterion (BIC)
     or the Akaike Information Criterion (AIC).
@@ -40,21 +41,21 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
-    min_components : int, default=2.
+    min_components : int, default=2
         The minimum number of mixture components to consider.
         If ``max_components`` is not None, ``min_components`` must be
         less than or equal to ``max_components``. If ``label_init`` is given,
         ``min_components`` must match the number of unique labels
         in ``label_init``.
 
-    max_components : int or None, default=10.
+    max_components : int or None, default=10
         The maximum number of mixture components to consider.
         Must be greater than or equal to ``min_components``.
         If ``label_init`` is given, ``max_components`` must match
         the number of unique labels in ``label_init``.
 
     affinity : {'euclidean', 'manhattan', 'cosine', 'all', 'none' (default)},
-        optional
+            optional
         String or list/array describing the type of affinities to use
         in agglomeration. If a string, it must be one of:
 
@@ -78,7 +79,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         will be skipped and a warning will be thrown.
 
     linkage : {'ward', 'complete', 'average', 'single', 'all' (default)},
-        optional
+            optional
         String or list/array describing the type of linkages to use
         in agglomeration. Not used if ``affinity`` is 'none'.
         If a string, it must be one of:
@@ -98,7 +99,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         'ward', 'complete', 'average', and/or 'single'.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical', 'all' (default)},
-        optional
+            optional
         String or list/array describing the type of covariance parameters
         to use.
         If a string, it must be one of:
@@ -217,22 +218,11 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.mixture import GaussianMixtureIC
-    >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
-    >>> gmIC = GaussianMixtureIC(max_components=4, random_state=0)
-    >>> gmIC.fit_predict(X)
-    array([0, 0, 0, 1, 1, 1])
-    >>> print(gmIC.n_components_)
-    2
-
     See Also
     --------
-    GaussianMixture : fit Gaussian mixture model
+    GaussianMixture : Fit Gaussian mixture model.
     BayesianGaussianMixture : Gaussian mixture model fit with a variational
-    inference
+        inference.
 
     Notes
     -----
@@ -255,6 +245,17 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         mclust 5: Clustering, Classification and Density Estimation Using
         Gaussian Finite Mixture Models. The R journal, 8(1), 289–317.
         <https://doi.org/10.32614/RJ-2016-021>_`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.mixture import GaussianMixtureIC
+    >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
+    >>> gmIC = GaussianMixtureIC(max_components=4, random_state=0)
+    >>> gmIC.fit_predict(X)
+    array([0, 0, 0, 1, 1, 1])
+    >>> print(gmIC.n_components_)
+    2
     """
 
     def __init__(
@@ -447,8 +448,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         return results
 
     def fit(self, X, y=None):
-        """
-        Fit several Gaussian mixture models to the data.
+        """Fit several Gaussian mixture models to the data.
+
         Initialize with agglomerative clustering then
         estimate model parameters with EM algorithm.
         Select the best model according to the chosen
@@ -459,6 +460,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -572,8 +576,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        """
-        Predict clusters based on the best Gaussian mixture model.
+        """Predict clusters based on the best Gaussian mixture model.
 
         Parameters
         ----------
@@ -592,8 +595,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         return labels
 
     def fit_predict(self, X, y=None):
-        """
-        Fit the models and predict clusters based on the best model.
+        """Fit the models and predict clusters based on the best model.
 
         Parameters
         ----------
@@ -616,8 +618,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
 
 def _increase_reg(reg):
-    """
-    Scale the regularization factor by 10.
+    """Scale the regularization factor by 10.
 
     Parameters
     ----------
@@ -637,7 +638,8 @@ def _increase_reg(reg):
 
 
 def _onehot_to_initial_params(X, onehot, cov_type):
-    """
+    """Compute initial parameters.
+
     Compute cluster weights, cluster means and cluster precisions from
     a given clustering.
 
@@ -671,8 +673,7 @@ def _onehot_to_initial_params(X, onehot, cov_type):
 
 
 def _process_paramgrid(paramgrid, n_init, label_init):
-    """
-    Remove combinations of affinity and linkage that are not possible.
+    """Remove combinations of affinity and linkage that are not possible.
 
     Parameters
     ----------
@@ -754,7 +755,8 @@ def _hierarchical_labels(children, min_components, max_components):
 
 
 class _CollectResults:
-    """
+    """Collect intermediary results.
+
     Represent the intermediary results for a single GMM clustering run
     of :class:`sklearn.mixture.GaussianMixtureIC`
 
@@ -782,7 +784,6 @@ class _CollectResults:
     reg_covar : float
         Regularization factor used for the regularization of the
         GMM covariance matrices.
-
     """
 
     def __init__(self, model, criter, gm_params, ag_params):
