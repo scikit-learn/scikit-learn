@@ -16,7 +16,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 from sklearn.utils import MetadataRequest
 from sklearn.utils.metadata_requests import RequestType
-
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import StratifiedKFold
@@ -491,3 +491,18 @@ def test_get_metadata_request():
         "split": {},
     }
     assert est.get_metadata_request() == expected
+
+
+def test_GB():
+    # check that make_pipeline(est) gives same score as est
+    X, y = make_classification(
+        n_samples=30,
+        random_state=0,
+        n_features=10,
+    )
+    X -= X.min()
+    estimator = GradientBoostingClassifier(random_state=0)
+    pipeline = make_pipeline(estimator)
+    estimator.fit(X, y)
+    estimator.get_metadata_request()
+    pipeline.fit(X, y)

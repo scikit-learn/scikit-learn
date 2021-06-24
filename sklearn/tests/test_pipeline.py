@@ -1153,7 +1153,10 @@ def test_make_pipeline_memory():
 
 def test_pipeline_param_error():
     clf = make_pipeline(LogisticRegression())
-    with pytest.raises(ValueError, match="Requested properties are: "):
+    with pytest.raises(
+        ValueError,
+        match="sample_weight is passed but is not explicitly set as requested or not",
+    ):
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
 
 

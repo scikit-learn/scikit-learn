@@ -2028,9 +2028,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, **fit_params
-        )
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
@@ -2407,7 +2404,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         router = (
             MetadataRouter()
             .add(
-                super(LogisticRegression, self),
+                super(),
                 mapping={m: m for m in METHODS if m != "score"},
                 mask=False,
             )

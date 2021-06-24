@@ -1835,11 +1835,11 @@ class _BaseRidgeCV(LinearModel):
                     fit_intercept=self.fit_intercept,
                     normalize=self.normalize,
                     solver=solver,
-                ),
+                ).fit_requests(sample_weight=True),
                 parameters,
                 cv=cv,
                 scoring=self.scoring,
-            ).fit_requests(sample_weight=True)
+            )
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha

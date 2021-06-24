@@ -28,6 +28,7 @@ from ._base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
+from ..base import SampleWeightConsumer
 from ..base import is_classifier
 from ..utils import deprecated
 
@@ -54,7 +55,8 @@ from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
-from ..utils import build_method_metadata_params
+from ..utils import metadata_request_factory
+from ..utils import MetadataRouter
 
 
 class VerboseReporter:
@@ -136,7 +138,7 @@ class VerboseReporter:
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
+class BaseGradientBoosting(SampleWeightConsumer, BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting."""
 
     @abstractmethod
@@ -372,7 +374,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         self.init_ = self.init
         if self.init_ is None:
-            self.init_ = self.loss_.init_estimator()
+            self.init_ = self.loss_.init_estimator().fit_requests(sample_weight=True)
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K), dtype=object)
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
@@ -469,6 +471,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+
         if self.criterion in ("absolute_error", "mae"):
             # TODO: This should raise an error from 1.1
             self._warn_mae_for_criterion()
@@ -539,17 +544,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     shape=(X.shape[0], self.loss_.K), dtype=np.float64
                 )
             else:
-                if sample_weight is not None:
-                    fit_params["sample_weight"] = sample_weight
-                params = build_method_metadata_params(
-                    children={"init": self.init_},
-                    routing=[
-                        ("init", "fit", "fit"),
-                    ],
-                    metadata=fit_params,
-                    validate="requested-provided",
-                )
-                self.init_.fit(X, y, **params.fit)
+                init_fit_params = metadata_request_factory(
+                    self.init_
+                ).fit.get_method_input(ignore_extras=True, **fit_params)
+                self.init_.fit(X, y, **init_fit_params)
 
                 raw_predictions = self.loss_.get_init_raw_predictions(X, self.init_)
 
@@ -883,6 +881,21 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     @property
     def n_features_(self):
         return self.n_features_in_
+
+    def get_metadata_request(self, output="dict"):
+        if output not in {"dict", "MetadataRequest"}:
+            raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
+        self._check_params()
+        init = self.init
+        if self.init is None:
+            init = self.loss_.init_estimator().fit_requests(sample_weight=True)
+
+        router = (
+            MetadataRouter()
+            .add(super(), mask=False)
+            .add(init, mapping={"fit": "fit"}, mask=True, overwrite="on-default")
+        )
+        return router.get_metadata_request(output=output)
 
 
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):

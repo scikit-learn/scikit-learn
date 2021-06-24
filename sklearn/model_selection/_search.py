@@ -47,7 +47,59 @@ from ..metrics._scorer import _MultimetricScorer
 from ..metrics import check_scoring
 from ..utils import deprecated
 
-__all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
+__all__ = [
+    "GridSearchCV",
+    "ParameterGrid",
+    "ParameterSampler",
+    "RandomizedSearchCV",
+    "CVMetadataRequester",
+]
+
+
+class CVMetadataRequester:
+    def get_metadata_request(self, output="dict"):
+        """Get requested data properties.
+
+        Parameters
+        ----------
+        output : {"dict", "MetadataRequest}
+            Whether the output should be a MetadataRequest instance, or a dict
+            representing that instance.
+
+        Returns
+        -------
+        request : MetadataRequest, or dict
+            If dict, it will be a deserialized version of the underlying
+            MetadataRequest object: dict of dict of str->value. The key to the
+            first dict is the name of the method, and the key to the second
+            dict is the name of the argument requested by the method.
+        """
+        if output not in {"dict", "MetadataRequest"}:
+            raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
+        if callable(self.scoring):
+            scorers = [self.scoring]
+        elif self.scoring is None or isinstance(self.scoring, str):
+            scorers = [check_scoring(self.estimator, self.scoring)]
+        else:
+            scorers = _check_multimetric_scoring(self.estimator, self.scoring).values()
+
+        router = (
+            MetadataRouter()
+            .add(*scorers, mapping={"fit": "score", "score": "score"}, mask=True)
+            .add(
+                self.estimator,
+                mapping={m: m for m in METHODS if m != "score"},
+                mask=True,
+                overwrite="on-default",
+            )
+            .add(
+                check_cv(self.cv),
+                mapping={"fit": "split"},
+                mask=True,
+                overwrite="on-default",
+            )
+        )
+        return router.get_metadata_request()
 
 
 class ParameterGrid:
@@ -347,7 +399,9 @@ def _check_param_grid(param_grid):
                 )
 
 
-class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
+class BaseSearchCV(
+    CVMetadataRequester, MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
+):
     """Abstract base class for hyper parameter search with cross-validation."""
 
     @abstractmethod
@@ -655,26 +709,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     evaluate_candidates([{'C': 0.1}])
         """
         raise NotImplementedError("_run_search not implemented.")
-
-    def get_metadata_request(self):
-        if callable(self.scoring):
-            scorers = [self.scoring]
-        elif self.scoring is None or isinstance(self.scoring, str):
-            scorers = [check_scoring(self.estimator, self.scoring)]
-        else:
-            scorers = _check_multimetric_scoring(self.estimator, self.scoring).values()
-
-        router = (
-            MetadataRouter()
-            .add(*scorers, mapping={"fit": "score", "score": "score"}, mask=True)
-            .add(
-                self.estimator,
-                mapping={m: m for m in METHODS if m != "score"},
-                mask=True,
-            )
-            .add(check_cv(self.cv), mapping={"fit": "split"}, mask=True)
-        )
-        return router.get_metadata_request()
 
     def _check_refit_for_multimetric(self, scores):
         """Check `refit` is compatible with `scores` is valid"""

@@ -315,7 +315,7 @@ class Pipeline(_BaseComposition):
                 fit_params_steps[step][param] = pval
             return fit_params_steps
 
-        self.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
+        metadata_request_factory(self).fit.validate_metadata(
             ignore_extras=False, **fit_params
         )
         for _, name, transformer in self._iter(filter_passthrough=True):

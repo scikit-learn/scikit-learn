@@ -9,7 +9,6 @@ import numpy as np
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..utils import check_array, _safe_indexing
-from ..utils import _empty_metadata_request
 from ..preprocessing import FunctionTransformer
 from ..exceptions import NotFittedError
 
@@ -299,6 +298,4 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             used. Under each key, there is a dict of the form
             ``{input_param_name: required_param_name}``.
         """
-        res = _empty_metadata_request()
-        res.fit = self.regressor.get_metadata_request().fit
-        return res
+        return self.regressor.get_metadata_request()

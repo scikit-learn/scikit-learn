@@ -102,7 +102,7 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
-        self.get_metadata_request().score.validate_metadata(
+        metadata_request_factory(self).score.validate_metadata(
             ignore_extras=False, **kwargs
         )
 
@@ -152,9 +152,9 @@ class _MultimetricScorer:
         if output not in {"dict", "MetadataRequest"}:
             raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
         router = MetadataRouter().add(
-            *self.scorers.values(),
+            *self._scorers.values(),
             mapping={"score": "score"},
-            mask=False,
+            mask=True,
             overwrite="on-default",
         )
         return router.get_metadata_request(output=output)
@@ -441,11 +441,13 @@ class _passthrough_scorer:
         """Function that wraps estimator.score"""
         return estimator.score(*args, **kwargs)
 
-    def get_metadata_request(self):
+    def get_metadata_request(self, output="dict"):
+        if output not in {"dict", "MetadataRequest"}:
+            raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
         router = MetadataRouter().add(
             self.estimator, mapping={"score": "score"}, mask=False
         )
-        return router.get_metadata_request()
+        return router.get_metadata_request(output=output)
 
 
 def check_scoring(estimator, scoring=None, *, allow_none=False):

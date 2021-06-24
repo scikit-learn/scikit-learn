@@ -13,7 +13,7 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils import _empty_metadata_request
+from sklearn.utils import MetadataRequest
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -1983,7 +1983,7 @@ def test_searchcv_raise_warning_with_non_finite_score(
             return 1
 
         def get_metadata_request(self):
-            return _empty_metadata_request()
+            return MetadataRequest()
 
     grid = SearchCV(
         DecisionTreeClassifier(),

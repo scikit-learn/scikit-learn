@@ -266,8 +266,9 @@ def cross_validate(
         scorers = score_router = check_scoring(estimator, scoring)
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
-        score_router = _MultimetricScorer(scorers)
+        score_router = _MultimetricScorer(**scorers)
 
+    props = {} if props is None else props
     _fit_params = metadata_request_factory(estimator).fit.get_method_input(
         ignore_extras=True, **props
     )
