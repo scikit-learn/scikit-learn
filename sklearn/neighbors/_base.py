@@ -1164,7 +1164,9 @@ class RadiusNeighborsMixin:
         mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
-            edges are Euclidean distance between points.
+            edges are distances between points, type of distance
+            depends on the selected metric parameter in
+            NearestNeighbors class.
 
         sort_results : bool, default=False
             If True, in each row of the result, the non-zero entries will be
