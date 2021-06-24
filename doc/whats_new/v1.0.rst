@@ -427,6 +427,9 @@ Changelog
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
 
+- |Feature|  :func:`metrics.mean_squared_log_error` now supports
+  `squared='False'`. :pr:`20326` by :user:`Uttam kumar <helper-uttam>`_.
+  
 - |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
@@ -582,12 +585,6 @@ Changelog
 - |Fix| Support for `np.matrix` is deprecated in
   :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
-  
-:mod:`sklearn.metrics`
-.......................
-
-- |Feature|  :func:`~sklearn.metrics.mean_squared_log_error` now supports
-  `squared='False'`. :pr:`20326` by :user:`Uttam kumar <helper-uttam>`_.
 
 Code and Documentation Contributors
 -----------------------------------
