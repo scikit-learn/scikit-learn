@@ -11,9 +11,9 @@ On the one hand, we show that :class:`~sklearn.decomposition.KernelPCA` is able
 to find a projection of the data that makes them linearly separable while it is
 not the case with :class:`~sklearn.decomposition.PCA`.
 
-On the other hand, we show that inverting this projection is an
-approximation with  :class:`~sklearn.decomposition.KernelPCA`,
-while being exact with :class:`~sklearn.decomposition.PCA`.
+Finally, we show that inverting this projection is an approximation with
+:class:`~sklearn.decomposition.KernelPCA`, while inverting is exact with
+:class:`~sklearn.decomposition.PCA`.
 """
 print(__doc__)
 
@@ -26,7 +26,7 @@ print(__doc__)
 # Projecting data: `PCA` vs. `KernelPCA`
 # --------------------------------------
 #
-# In this section, we will show the advantages of using a kernel when
+# In this section, we show the advantages of using a kernel when
 # projecting data using a Principal Component Analysis (PCA). We create a
 # dataset made of two nested circles.
 from sklearn.datasets import make_circles
@@ -37,7 +37,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, random_state=0)
 
 # %%
-# Let's have a quick first look to the dataset generated.
+# Let's have a quick first look at the generated dataset.
 import matplotlib.pyplot as plt
 
 _, axs = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(8, 4))
@@ -52,10 +52,9 @@ axs[1].set_xlabel("Feature #0")
 _ = axs[1].set_title("Testing data")
 
 # %%
-# The samples from each class cannot be linearly separated: we come with a
-# straight line that would split the samples from the inner set to outer
-# one. Perfectly, a potential decision boundary would be a circle separating
-# both sample sets.
+# The samples from each class cannot be linearly separated: there is no
+# straight line that can split the samples from the inner set from the outer
+# set.
 #
 # Now, we will use PCA with and without a kernel to see what is the effect of
 # using such a kernel. The kernel used here is a radial basis function (RBF)
@@ -91,7 +90,7 @@ axs[2].set_title("Projection of testing data\n using KernelPCA")
 fig.subplots_adjust(wspace=0.3)
 
 # %%
-# We recall that PCA will project the data linearly. Intuitively, it means that
+# We recall that PCA projects the data linearly. Intuitively, it means that
 # the coordinate system will be rotated after centering and rescaling on each
 # axis. This rescaling will depend on the variance of the data.
 #
@@ -103,8 +102,9 @@ fig.subplots_adjust(wspace=0.3)
 # classifier to distinguish samples from both classes.
 #
 # Using a kernel allows to make a non-linear projection. Here, by using an RBF
-# kernel, we expect that the projection to unfold the dataset but keeping that
-# point close in the original space should still be close in the new space.
+# kernel, we expect that the projection to unfold the dataset while keeping
+# approximately preserving the relative distances of pairs of data points that
+# are close to one another in the original space.
 #
 # We observe such behaviour in the figure on the right: the samples of a given
 # class are closer to each other than the samples from the opposite class,
@@ -152,11 +152,13 @@ _ = axs[2].set_title("Reconstruction via KernelPCA")
 #
 # Indeed, :meth:`~sklearn.decomposition.KernelPCA.inverse_transform` cannot
 # rely on an analytical back-projection and thus an extact reconstruction.
-# Instead, a :class:`~sklearn.kernel_ridge.KernelRidge` was internally trained
+# Instead, a :class:`~sklearn.kernel_ridge.KernelRidge` is internally trained
 # to learn a mapping from the PCA basis to the original feature space. This
-# method is therefore an approximation leading to small difference.
+# method is therefore an approximation introducing small differences when
+# attempting to reconstruct the original input.
 #
 # To improve the reconstruction using
 # :meth:`~sklearn.decomposition.KernelPCA.inverse_transform`, one can tune
 # `alpha` in :class:`~sklearn.decomposition.KernelPCA`, the regularization term
-# which controls the reliance on the training data during the mapping training.
+# which controls the reliance on the training data during the training of
+# the mapping.
