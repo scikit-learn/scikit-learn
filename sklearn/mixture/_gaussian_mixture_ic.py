@@ -293,9 +293,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             input = list(np.unique(input))
         elif isinstance(input, str):
             if input not in default:
-                raise ValueError(
-                    f"{name} is {input} but must be one of {default}."
-                )
+                raise ValueError(f"{name} is {input} but must be one of {default}.")
             if input != "all":
                 input = [input]
             else:
@@ -317,10 +315,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             target_type=int,
         )
         check_scalar(
-            self.max_components,
-            min_val=1,
-            name="max_components",
-            target_type=int,
+            self.max_components, min_val=1, name="max_components", target_type=int
         )
 
         affinity = self._check_multi_comp_inputs(
@@ -336,9 +331,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             )
 
         linkage = self._check_multi_comp_inputs(
-            self.linkage,
-            "linkage",
-            ["ward", "complete", "average", "single", "all"],
+            self.linkage, "linkage", ["ward", "complete", "average", "single", "all"]
         )
 
         covariance_type = self._check_multi_comp_inputs(
@@ -382,10 +375,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             )
 
         check_scalar(
-            self.max_agglom_size,
-            name="max_agglom_size",
-            target_type=int,
-            min_val=2,
+            self.max_agglom_size, name="max_agglom_size", target_type=int, min_val=2
         )
 
         return affinity, linkage, covariance_type
@@ -403,17 +393,13 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         gm_params["precisions_init"] = precisions_init
         return gm_params
 
-    def _fit_cluster(
-        self, X, X_subset, y, ag_params, gm_params, agg_clustering, seed
-    ):
+    def _fit_cluster(self, X, X_subset, y, ag_params, gm_params, agg_clustering, seed):
         label_init = self.label_init
         n_samples = X.shape[0]
         if label_init is not None:
             gm_params = self._init_gm_params(X, label_init, gm_params)
         elif ag_params["affinity"] != "none":
-            gm_params = self._init_gm_params(
-                X_subset, agg_clustering, gm_params
-            )
+            gm_params = self._init_gm_params(X_subset, agg_clustering, gm_params)
             n_samples = X_subset.shape[0]
         else:
             gm_params["init_params"] = "kmeans"
@@ -435,8 +421,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                     model.fit(X)
                 predictions = model.predict(X)
                 counts = [
-                    sum(predictions == i)
-                    for i in range(gm_params["n_components"])
+                    sum(predictions == i) for i in range(gm_params["n_components"])
                 ]
                 # singleton clusters not allowed
                 assert not any([count <= 1 for count in counts])
@@ -482,9 +467,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         """
 
         affinity, linkage, covariance_type = self._check_parameters()
-        X = check_array(
-            X, dtype=[np.float64, np.float32], ensure_min_samples=1
-        )
+        X = check_array(X, dtype=[np.float64, np.float32], ensure_min_samples=1)
 
         random_state = check_random_state(self.random_state)
 
@@ -505,9 +488,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 )
             elif "cosine" in affinity:
                 affinity.remove("cosine")
-                warnings.warn(
-                    "X contains a zero vector, will not run cosine affinity."
-                )
+                warnings.warn("X contains a zero vector, will not run cosine affinity.")
 
         label_init = self.label_init
         if label_init is not None:
@@ -528,9 +509,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             param_grid, self.n_init, self.label_init
         )
 
-        seeds = random_state.randint(
-            np.iinfo(np.int32).max, size=len(param_grid)
-        )
+        seeds = random_state.randint(np.iinfo(np.int32).max, size=len(param_grid))
 
         n_samples = X.shape[0]
         if self.max_agglom_size is None or n_samples <= self.max_agglom_size:
@@ -558,9 +537,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             n_clusters = gm_params["n_components"]
             if (ag_params["affinity"] != "none") and (self.label_init is None):
                 index = param_grid_ag.index(ag_params)
-                agg_clustering = ag_labels[index][
-                    :, n_clusters - self.min_components
-                ]
+                agg_clustering = ag_labels[index][:, n_clusters - self.min_components]
             else:
                 agg_clustering = []
             return self._fit_cluster(
@@ -572,17 +549,13 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         else:
             parallel_kwargs = {"prefer": "threads"}
 
-        results = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose, **parallel_kwargs
-        )(
+        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, **parallel_kwargs)(
             delayed(_fit_for_data)(ag_params, gm_params, seed)
             for (ag_params, gm_params), seed in zip(param_grid, seeds)
         )
         best_criter = [result.criterion for result in results]
         # select the best model randomly in case there is a tie
-        best_idx = random_state.choice(
-            np.where(best_criter == np.min(best_criter))[0]
-        )
+        best_idx = random_state.choice(np.where(best_criter == np.min(best_criter))[0])
 
         self.best_criterion_ = results[best_idx].criterion
         self.n_components_ = results[best_idx].n_components
@@ -742,11 +715,7 @@ def _process_paramgrid(paramgrid, n_init, label_init):
             if ag_params not in ag_params_processed:
                 ag_params_processed.append(ag_params)
 
-            if (
-                ag_params["affinity"] == "none"
-                and n_init > 1
-                and label_init is None
-            ):
+            if ag_params["affinity"] == "none" and n_init > 1 and label_init is None:
                 more_kmeans_init = gm_params.copy()
                 more_kmeans_init.update({"n_init": 1})
                 paramgrid_processed += [
@@ -767,10 +736,7 @@ def _hierarchical_labels(children, min_components, max_components):
         hierarchical_labels[inds, -1] = n_samples + n
         if n < merge_end:
             hierarchical_labels = np.hstack(
-                (
-                    hierarchical_labels,
-                    hierarchical_labels[:, -1].reshape((-1, 1)),
-                )
+                (hierarchical_labels, hierarchical_labels[:, -1].reshape((-1, 1)))
             )
 
     if n_samples == max_components:

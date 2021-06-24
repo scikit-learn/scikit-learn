@@ -34,9 +34,7 @@ def test_n_components():
     _test_inputs(X, ValueError, max_components=101)
 
     # min_components must be at most n_samples
-    _test_inputs(
-        X, ValueError, **{"min_components": 101, "max_components": 102}
-    )
+    _test_inputs(X, ValueError, **{"min_components": 101, "max_components": 102})
 
 
 def test_input_param():
@@ -95,11 +93,7 @@ def test_labels_init():
     _test_inputs(
         X,
         ValueError,
-        **{
-            "label_init": np.zeros([100, 1]),
-            "min_components": 2,
-            "max_components": 3,
-        },
+        **{"label_init": np.zeros([100, 1]), "min_components": 2, "max_components": 3},
     )
 
 
@@ -210,20 +204,12 @@ def test_two_class_sequential_v_parallel():
     X = np.vstack((X1, X2))
 
     gmIC_parallel = GaussianMixtureIC(
-        max_components=5,
-        criterion="bic",
-        n_jobs=-1,
-        affinity="all",
-        random_state=1,
+        max_components=5, criterion="bic", n_jobs=-1, affinity="all", random_state=1
     )
     preds_parallel = gmIC_parallel.fit_predict(X)
 
     gmIC_sequential = GaussianMixtureIC(
-        max_components=5,
-        criterion="bic",
-        n_jobs=1,
-        affinity="all",
-        random_state=1,
+        max_components=5, criterion="bic", n_jobs=1, affinity="all", random_state=1
     )
     preds_sequential = gmIC_sequential.fit_predict(X)
 
