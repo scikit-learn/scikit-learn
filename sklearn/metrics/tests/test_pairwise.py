@@ -1466,3 +1466,28 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # and fails due to rounding errors
     rtol = 1e-5 if dtype is np.float32 else 1e-7
     assert_allclose(dist, expected_dist, rtol=rtol)
+
+
+@pytest.mark.parametrize("n_features", [2, 5, 10, 50, 100])
+@pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6]])
+@pytest.mark.parametrize("spacing", [10 ** i for i in [2, 3, 4, 5, 6]])
+@pytest.mark.parametrize("spread", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("metric", ["euclidean", "manhattan", "chebyshev"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_translation_invariance(
+    n_features, translation, spacing, spread, metric, dtype
+):
+    # Pairwise distances computations must be translation-invariant.
+    n_samples = 100
+
+    rng = np.random.RandomState(1)
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread + spacing
+
+    reference_dist = pairwise_distances(X, Y, metric)
+    dist = pairwise_distances(X + translation, Y + translation, metric)
+
+    # Using a tolerance well greater than the float epsilon
+    rtol = 1e-03 if dtype is np.float32 else 1e-05
+    np.testing.assert_allclose(reference_dist, dist, rtol=rtol)
