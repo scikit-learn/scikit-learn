@@ -1189,7 +1189,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             )
 
             # determine if these results are the best so far
-            if best_inertia is None or inertia < best_inertia:
+            # allow small tolerance on the inertia to accommodate for
+            # non-deterministic rounding errors due to parallel computation
+            if best_inertia is None or inertia < best_inertia * (1 - 1e-6):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
