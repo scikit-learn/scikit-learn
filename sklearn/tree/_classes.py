@@ -390,7 +390,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if is_classifier(self):
                 if self.n_classes_[0] > 2:
                     raise ValueError(
-                        "Monotonic constraints are not supported with multiclass classification"
+                        "Monotonic constraints are not supported with multiclass "
+                        "classification"
                     )
                 # Imposing the constraint on the probability of the positive class
                 monotonic_cst = -np.asarray(self.monotonic_cst, dtype=np.int32)

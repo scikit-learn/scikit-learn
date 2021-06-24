@@ -6,6 +6,7 @@ from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 
+
 @pytest.mark.parametrize("seed", range(4))
 @pytest.mark.parametrize("depth_first", (True, False))
 def test_montonic_constraints(seed, depth_first):
@@ -27,9 +28,7 @@ def test_montonic_constraints(seed, depth_first):
     monotonic_cst[1] = -1
 
     regressors = REG_TREES.copy()
-    regressors.update({
-        "GradientBoostingRegressor": GradientBoostingRegressor
-    })
+    regressors.update({"GradientBoostingRegressor": GradientBoostingRegressor})
 
     for name, TreeRegressor in regressors.items():
         if depth_first:
@@ -57,9 +56,7 @@ def test_montonic_constraints(seed, depth_first):
         assert np.all(y_decr <= y)
 
     classifiers = CLF_TREES.copy()
-    classifiers.update({
-        "GradientBoostingClassifier": GradientBoostingClassifier
-    })
+    classifiers.update({"GradientBoostingClassifier": GradientBoostingClassifier})
     for name, TreeClassifier in classifiers.items():
         if depth_first:
             est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
