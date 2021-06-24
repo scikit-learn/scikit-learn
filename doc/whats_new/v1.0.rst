@@ -501,6 +501,9 @@ Changelog
   :class:`Pipeline` class now support passing prediction kwargs to
   the final estimator.
   :pr:`19790` by :user:`Christopher Flynn <crflynn>`.
+- |API| The :class:`FeatureUnion` class now has a `named_transformers_`
+  attribute for accessing transformers by name.
+  :pr:`20331` by :user:`Christopher Flynn <crflynn>`.
 
 :mod:`sklearn.preprocessing`
 ............................

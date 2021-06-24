@@ -834,6 +834,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Attributes
     ----------
+    named_transformers_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+        Read-only attribute to access any transformer parameter by user
+        given name. Keys are transformer names and values are
+        transformer parameters.
+
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying first transformer in `transformer_list` exposes such an
