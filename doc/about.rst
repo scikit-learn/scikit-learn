@@ -467,6 +467,31 @@ funded a scikit-learn coding sprint in 2015.
    </div>
    </div>
 
+.....................
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ funded Nicolas
+Hug to work full-time on scikit-learn in 2020.
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/czi_logo.svg
+   :width: 100pt
+   :align: center
+   :target: https://chanzuckerberg.com
+
+.. raw:: html
+
+   </div>
+   </div>
+
 ......................
 
 The following students were sponsored by `Google

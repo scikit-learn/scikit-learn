@@ -13,12 +13,12 @@ from ..utils import _safe_indexing
 from ..base import BaseEstimator
 from ..base import _is_pairwise
 
-__all__ = ['if_delegate_has_method']
+__all__ = ["if_delegate_has_method"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for classifiers composed of named estimators.
-    """
+    """Handles parameter management for classifiers composed of named estimators."""
+
     steps: List[Any]
 
     @abstractmethod
@@ -32,9 +32,9 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
-            if hasattr(estimator, 'get_params'):
+            if hasattr(estimator, "get_params"):
                 for key, value in estimator.get_params(deep=True).items():
-                    out['%s__%s' % (name, key)] = value
+                    out["%s__%s" % (name, key)] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -48,7 +48,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         if items:
             names, _ = zip(*items)
         for name in list(params.keys()):
-            if '__' not in name and name in names:
+            if "__" not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
@@ -65,16 +65,21 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
 
     def _validate_names(self, names):
         if len(set(names)) != len(names):
-            raise ValueError('Names provided are not unique: '
-                             '{0!r}'.format(list(names)))
+            raise ValueError(
+                "Names provided are not unique: " "{0!r}".format(list(names))
+            )
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
-            raise ValueError('Estimator names conflict with constructor '
-                             'arguments: {0!r}'.format(sorted(invalid_names)))
-        invalid_names = [name for name in names if '__' in name]
+            raise ValueError(
+                "Estimator names conflict with constructor "
+                "arguments: {0!r}".format(sorted(invalid_names))
+            )
+        invalid_names = [name for name in names if "__" in name]
         if invalid_names:
-            raise ValueError('Estimator names must not contain __: got '
-                             '{0!r}'.format(invalid_names))
+            raise ValueError(
+                "Estimator names must not contain __: got "
+                "{0!r}".format(invalid_names)
+            )
 
 
 class _IffHasAttrDescriptor:
@@ -92,6 +97,7 @@ class _IffHasAttrDescriptor:
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
+
     def __init__(self, fn, delegate_names, attribute_name):
         self.fn = fn
         self.delegate_names = delegate_names
@@ -142,8 +148,7 @@ def if_delegate_has_method(delegate):
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate,
-                                            attribute_name=fn.__name__)
+    return lambda fn: _IffHasAttrDescriptor(fn, delegate, attribute_name=fn.__name__)
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
@@ -198,8 +203,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     """
     if _is_pairwise(estimator):
         if not hasattr(X, "shape"):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
+            raise ValueError(
+                "Precomputed kernels or affinity matrices have "
+                "to be passed as arrays or sparse matrices."
+            )
         # X is a precomputed square kernel matrix
         if X.shape[0] != X.shape[1]:
             raise ValueError("X should be a square kernel matrix")
