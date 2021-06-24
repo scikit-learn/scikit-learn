@@ -1120,7 +1120,11 @@ def test_ridgecv_sample_weight():
 
         # Check using GridSearchCV directly
         parameters = {"alpha": alphas}
-        gs = GridSearchCV(Ridge().fit_requests(sample_weight=True), parameters, cv=cv)
+        gs = GridSearchCV(
+            Ridge().fit_requests(sample_weight=True).score_requests(sample_weight=True),
+            parameters,
+            cv=cv,
+        )
         gs.fit(X, y, sample_weight=sample_weight)
 
         assert ridgecv.alpha_ == gs.best_estimator_.alpha

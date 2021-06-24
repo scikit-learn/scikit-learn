@@ -240,7 +240,7 @@ class MethodMetadataRequest:
                     allow_aliasing=False,
                     overwrite=False,
                 )
-            else:
+            elif RequestType(alias) == RequestType.REQUESTED:
                 res.add_request(
                     prop=prop,
                     alias=alias,

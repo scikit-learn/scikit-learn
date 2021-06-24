@@ -1830,12 +1830,20 @@ class _BaseRidgeCV(LinearModel):
             parameters = {"alpha": self.alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
-            gs = GridSearchCV(
+            model = (
                 model(
                     fit_intercept=self.fit_intercept,
                     normalize=self.normalize,
                     solver=solver,
-                ).fit_requests(sample_weight=True),
+                )
+                .fit_requests(sample_weight=True)
+                .score_requests(sample_weight=True)
+            )
+            # The old behavior would be sample_weight=False for "score"
+            # Do we want to "fix" the issue, or keep the old behavior?
+
+            gs = GridSearchCV(
+                model,
                 parameters,
                 cv=cv,
                 scoring=self.scoring,

@@ -110,7 +110,7 @@ class _MultimetricScorer:
             params = metadata_request_factory(scorer).score.get_method_input(
                 ignore_extras=True, **kwargs
             )
-            if isinstance(scorer, _BaseScorer):
+            if isinstance(scorer, _BaseScorer) and hasattr(scorer, "_score"):
                 score = scorer._score(cached_call, estimator, *args, **params)
             else:
                 score = scorer(estimator, *args, **params)
@@ -460,9 +460,12 @@ def get_scorer(scoring):
     return scorer
 
 
-class _passthrough_scorer:
+class _passthrough_scorer(_BaseScorer):
     def __init__(self, estimator):
-        self.estimator = estimator
+        self._kwargs = {}
+        self._score_func = estimator.score
+        self._sign = 1
+        self._estimator = estimator
 
     def __call__(self, estimator, *args, **kwargs):
         """Function that wraps estimator.score"""
@@ -472,7 +475,7 @@ class _passthrough_scorer:
         if output not in {"dict", "MetadataRequest"}:
             raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
         router = MetadataRouter().add(
-            self.estimator, mapping={"score": "score"}, mask=False
+            self._estimator, mapping={"score": "score"}, mask=False
         )
         return router.get_metadata_request(output=output)
 
