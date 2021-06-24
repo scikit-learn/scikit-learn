@@ -341,11 +341,7 @@ def test_transform_target_regressor_count_fit(check_inverse):
 
 
 class DummyRegressorWithExtraFitParams(DummyRegressor):
-    def request_check_input(self, *, fit=None):
-        self._request_key_for_method(
-            method="fit", param="check_input", user_provides=fit
-        )
-        return self
+    _metadata_request__check_input = {"fit": "check_input"}
 
     def fit(self, X, y, sample_weight=None, check_input=True):
         # on the test below we force this to false, we make sure this is

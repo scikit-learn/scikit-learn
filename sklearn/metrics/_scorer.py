@@ -149,6 +149,22 @@ class _MultimetricScorer:
         return False
 
     def get_metadata_request(self, output="dict"):
+        """Get requested data properties.
+
+        Parameters
+        ----------
+        output : {"dict", "MetadataRequest}
+            Whether the output should be a MetadataRequest instance, or a dict
+            representing that instance.
+
+        Returns
+        -------
+        request : MetadataRequest, or dict
+            If dict, it will be a deserialized version of the underlying
+            MetadataRequest object: dict of dict of str->value. The key to the
+            first dict is the name of the method, and the key to the second
+            dict is the name of the argument requested by the method.
+        """
         if output not in {"dict", "MetadataRequest"}:
             raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
         router = MetadataRouter().add(
@@ -243,6 +259,17 @@ class _BaseScorer(_MetadataRequester):
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
+
+    def score_requests(self, **kwargs):
+        """Set requested parameters by the scorer.
+
+        kwargs : dict
+            Arguments should be of the form param_name={True, False, None, str}.
+            The value can also be of the form RequestType
+        """
+        res = copy.deepcopy(self)
+        res._metadata_request = MetadataRequest({"score": kwargs})
+        return res
 
 
 class _PredictScorer(_BaseScorer):
@@ -612,7 +639,7 @@ def make_scorer(
     greater_is_better=True,
     needs_proba=False,
     needs_threshold=False,
-    request_props=None,
+    score_params=None,
     **kwargs,
 ):
     """Make a scorer from a performance metric or loss function.
@@ -662,9 +689,9 @@ def make_scorer(
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
-    request_props : list of strings, or dict of {str: str}, default=None
+    score_params : list of strings, or dict of {str: str}, default=None
         A list of required properties, or a mapping of the form
-        ``{required_metadata: provided_metadata}``, or None.
+        ``{"required_metadata": "provided_metadata"}``, or None.
 
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.
@@ -707,12 +734,8 @@ def make_scorer(
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    if isinstance(request_props, str):
-        request_props = {request_props: request_props}
-    elif isinstance(request_props, (set, list)):
-        request_props = {r: r for r in request_props}
     res = cls(score_func, sign, kwargs)
-    res._metadata_request = MetadataRequest({"score": request_props})
+    res._metadata_request = MetadataRequest({"score": score_params})
     return res
 
 
@@ -730,7 +753,6 @@ neg_mean_absolute_error_scorer = make_scorer(
 neg_mean_absolute_percentage_error_scorer = make_scorer(
     mean_absolute_percentage_error,
     greater_is_better=False,
-    request_props=["sample_weight"],
 )
 neg_median_absolute_error_scorer = make_scorer(
     median_absolute_error, greater_is_better=False

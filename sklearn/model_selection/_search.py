@@ -99,7 +99,7 @@ class CVMetadataRequester:
                 overwrite="on-default",
             )
         )
-        return router.get_metadata_request()
+        return router.get_metadata_request(output=output)
 
 
 class ParameterGrid:

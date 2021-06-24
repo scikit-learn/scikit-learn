@@ -286,7 +286,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         return self.regressor_.n_features_in_
 
-    def get_metadata_request(self):
+    def get_metadata_request(self, output="dict"):
         """Get requested data properties.
 
         This method mirrors the given regressor's ``fit`` metadata request.
@@ -298,4 +298,4 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             used. Under each key, there is a dict of the form
             ``{input_param_name: required_param_name}``.
         """
-        return self.regressor.get_metadata_request()
+        return self.regressor.get_metadata_request(output=output)

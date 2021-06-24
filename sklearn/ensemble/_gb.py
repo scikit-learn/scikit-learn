@@ -883,6 +883,22 @@ class BaseGradientBoosting(SampleWeightConsumer, BaseEnsemble, metaclass=ABCMeta
         return self.n_features_in_
 
     def get_metadata_request(self, output="dict"):
+        """Get requested data properties.
+
+        Parameters
+        ----------
+        output : {"dict", "MetadataRequest}
+            Whether the output should be a MetadataRequest instance, or a dict
+            representing that instance.
+
+        Returns
+        -------
+        request : MetadataRequest, or dict
+            If dict, it will be a deserialized version of the underlying
+            MetadataRequest object: dict of dict of str->value. The key to the
+            first dict is the name of the method, and the key to the second
+            dict is the name of the argument requested by the method.
+        """
         if output not in {"dict", "MetadataRequest"}:
             raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
         self._check_params()
