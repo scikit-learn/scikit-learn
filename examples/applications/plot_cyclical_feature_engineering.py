@@ -475,11 +475,6 @@ ax.plot(
 )
 ax.plot(naive_linear_predictions[last_hours], "x-", label="Ordinal time features")
 ax.plot(
-    one_hot_linear_predictions[last_hours],
-    "x-",
-    label="One-hot time features"
-)
-ax.plot(
     cyclic_cossin_linear_predictions[last_hours],
     "x-",
     label="Trigonometric time features"
@@ -488,6 +483,11 @@ ax.plot(
     cyclic_spline_linear_predictions[last_hours],
     "x-",
     label="Spline-based time features"
+)
+ax.plot(
+    one_hot_linear_predictions[last_hours],
+    "x-",
+    label="One-hot time features"
 )
 _ = ax.legend()
 
