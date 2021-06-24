@@ -594,7 +594,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         else:
             estimator.fit(X_train, y_train, **fit_params)
 
-    except Exception as e:
+    except Exception:
         # Note fit time as time until error
         fit_time = time.time() - start_time
         score_time = 0.0

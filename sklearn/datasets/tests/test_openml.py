@@ -197,8 +197,22 @@ def _monkey_patch_webbased_functions(context,
     read_fn = gzip.open
 
     def _file_name(url, suffix):
-        return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
-                + suffix + path_suffix)
+        output = (re.sub(r'\W', '-', url[len("https://openml.org/"):])
+                  + suffix + path_suffix)
+        # Shorten the filenames to have better compability with windows 10
+        # and filenames > 260 characters
+        return (output
+                .replace("-json-data-list", "-jdl")
+                .replace("-json-data-features", "-jdf")
+                .replace("-json-data-qualities", "-jdq")
+                .replace("-json-data", "-jd")
+                .replace("-data_name", "-dn")
+                .replace("-download", "-dl")
+                .replace("-limit", "-l")
+                .replace("-data_version", "-dv")
+                .replace("-status", "-s")
+                .replace("-deactivated", "-dact")
+                .replace("-active", "-act"))
 
     def _mock_urlopen_data_description(url, has_gzip_header):
         assert url.startswith(url_prefix_data_description)
@@ -1265,7 +1279,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     # create a temporary modified arff file
     dataset_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
     original_data_path = os.path.join(dataset_dir,
-                                      'data-v1-download-1666876.arff.gz')
+                                      'data-v1-dl-1666876.arff.gz')
     corrupt_copy = os.path.join(tmpdir, "test_invalid_checksum.arff")
     with gzip.GzipFile(original_data_path, "rb") as orig_gzip, \
             gzip.GzipFile(corrupt_copy, "wb") as modified_gzip:

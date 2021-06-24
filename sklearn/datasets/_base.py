@@ -704,10 +704,11 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         >>> digits = load_digits()
         >>> print(digits.data.shape)
         (1797, 64)
-        >>> import matplotlib.pyplot as plt #doctest: +SKIP
-        >>> plt.gray() #doctest: +SKIP
-        >>> plt.matshow(digits.images[0]) #doctest: +SKIP
-        >>> plt.show() #doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
+        >>> plt.gray()
+        >>> plt.matshow(digits.images[0])
+        <...>
+        >>> plt.show()
     """
     module_path = dirname(__file__)
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
