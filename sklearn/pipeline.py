@@ -840,6 +840,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         given name. Keys are transformer names and values are
         transformer parameters.
 
+        .. versionadded:: 1.0
+
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying first transformer in `transformer_list` exposes such an
