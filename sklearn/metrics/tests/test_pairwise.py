@@ -1481,10 +1481,10 @@ def test_fast_sqeuclidean_correctness(n, d, X_translation, Y_translation, sign):
     X = X_translation + rng.rand(int(n * d)).reshape((-1, d))
     Y = sign * Y_translation + rng.rand(int(n * d)).reshape((-1, d))
 
-    argmins, distances = pairwise_distances_argmin_min(X, Y,
-                                                       metric="euclidean")
-    fsq_argmins, fsq_distances = pairwise_distances_argmin_min(X, Y,
-                                                               metric="fast_sqeuclidean")
+    argmins, distances = pairwise_distances_argmin_min(X, Y, metric="euclidean")
+    fsq_argmins, fsq_distances = pairwise_distances_argmin_min(
+        X, Y, metric="fast_sqeuclidean"
+    )
 
     np.testing.assert_array_equal(argmins, fsq_argmins)
     np.testing.assert_almost_equal(distances, fsq_distances)
