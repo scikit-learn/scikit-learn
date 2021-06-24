@@ -47,11 +47,20 @@ df["count"].max()
 
 # %% [markdown]
 #
-# Let's rescale the target variable (absolute value of the demand) to predict a
-# relative demand so that the mean absolute error is more easily interpreted as
-# a fraction of the maximum demand and avoid numerical issues with least
-# squares regression.
-
+# Let us rescale the target variable (number of hourly bike rentals) to predict
+# a relative demand so that the mean absolute error is more easily interpreted
+# as a fraction of the maximum demand.
+#
+# .. note::
+#
+#     The fit method of the models used in this notebook all minimize the
+#     mean squared error to estimate the conditional mean instead of the mean
+#     absolute error that would fit an estimator of the conditional median.
+#
+#     When reporting performance measure on the test set in the discussion, we
+#     instead choose to focus on the mean absolute error that is more
+#     intuitive than the (root) mean squared error. Note however that the best
+#     models for one metric are also the best for the other in this study.
 # %%
 y = df["count"] / 1000
 _ = y.hist(bins=30)
