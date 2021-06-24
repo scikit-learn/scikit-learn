@@ -371,7 +371,7 @@ from sklearn.preprocessing import SplineTransformer
 def periodic_spline_transformer(period, n_splines=None, degree=3):
     if n_splines is None:
         n_splines = period
-    n_knots = n_splines + degree - 1
+    n_knots = n_splines + 2  # periodic and include_bias is False
     return SplineTransformer(
         degree=degree,
         n_knots=n_knots,
