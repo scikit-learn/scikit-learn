@@ -12,9 +12,9 @@ def plot_heatmap(
     ytick_labels,
     xtick_labels,
     *,
-    xticks_rotation='horizontal',
+    xticks_rotation="horizontal",
     ax=None,
-    cmap='viridis',
+    cmap="viridis",
     include_values=True,
     values_format=None,
     colorbar=True,
@@ -83,7 +83,7 @@ def plot_heatmap(
         fig = ax.figure
 
     n_classes = data.shape[0]
-    im = ax.imshow(data, interpolation='nearest', cmap=cmap)
+    im = ax.imshow(data, interpolation="nearest", cmap=cmap)
     text = None
     cmap_min, cmap_max = im.cmap(0), im.cmap(1.0)
 
@@ -97,26 +97,25 @@ def plot_heatmap(
             color = cmap_max if data[i, j] < thresh else cmap_min
 
             if values_format is None:
-                text_data = format(data[i, j], '.2g')
-                if data.dtype.kind != 'f':
-                    text_d = format(data[i, j], 'd')
+                text_data = format(data[i, j], ".2g")
+                if data.dtype.kind != "f":
+                    text_d = format(data[i, j], "d")
                     if len(text_d) < len(text_data):
                         text_data = text_d
             else:
                 text_data = format(data[i, j], values_format)
-            text[i, j] = ax.text(
-                j, i, text_data,
-                ha="center", va="center",
-                color=color)
+            text[i, j] = ax.text(j, i, text_data, ha="center", va="center", color=color)
 
     if colorbar:
         fig.colorbar(im, ax=ax)
-    ax.set(xticks=np.arange(n_classes),
-           yticks=np.arange(n_classes),
-           xticklabels=xtick_labels,
-           yticklabels=ytick_labels,
-           ylabel=ylabel,
-           xlabel=xlabel)
+    ax.set(
+        xticks=np.arange(n_classes),
+        yticks=np.arange(n_classes),
+        xticklabels=xtick_labels,
+        yticklabels=ytick_labels,
+        ylabel=ylabel,
+        xlabel=xlabel,
+    )
 
     plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
 

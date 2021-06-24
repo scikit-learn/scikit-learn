@@ -38,11 +38,28 @@ def load_ames_housing():
     X = df.data
     y = df.target
 
-    features = ['YrSold', 'HeatingQC', 'Street', 'YearRemodAdd', 'Heating',
-                'MasVnrType', 'BsmtUnfSF', 'Foundation', 'MasVnrArea',
-                'MSSubClass', 'ExterQual', 'Condition2', 'GarageCars',
-                'GarageType', 'OverallQual', 'TotalBsmtSF', 'BsmtFinSF1',
-                'HouseStyle', 'MiscFeature', 'MoSold']
+    features = [
+        "YrSold",
+        "HeatingQC",
+        "Street",
+        "YearRemodAdd",
+        "Heating",
+        "MasVnrType",
+        "BsmtUnfSF",
+        "Foundation",
+        "MasVnrArea",
+        "MSSubClass",
+        "ExterQual",
+        "Condition2",
+        "GarageCars",
+        "GarageType",
+        "OverallQual",
+        "TotalBsmtSF",
+        "BsmtFinSF1",
+        "HouseStyle",
+        "MiscFeature",
+        "MoSold",
+    ]
 
     X = X[features]
     X, y = shuffle(X, y, random_state=0)
@@ -65,29 +82,23 @@ X, y = load_ames_housing()
 # :class:`sklearn.preprocessing.OneHotEncoder
 # <sklearn.preprocessing.OneHotEncoder>`
 
-cat_cols = X.columns[X.dtypes == 'O']
-num_cols = X.columns[X.dtypes == 'float64']
+cat_cols = X.columns[X.dtypes == "O"]
+num_cols = X.columns[X.dtypes == "float64"]
 
 categories = [X[column].unique() for column in X[cat_cols]]
 
 for cat in categories:
-    cat[cat == None] = 'missing'  # noqa
+    cat[cat == None] = "missing"  # noqa
 
 cat_proc_nlin = make_pipeline(
-    SimpleImputer(missing_values=None, strategy='constant',
-                  fill_value='missing'),
-    OneHotEncoder(categories=categories)
+    SimpleImputer(missing_values=None, strategy="constant", fill_value="missing"),
+    OneHotEncoder(categories=categories),
 )
 
-num_proc_nlin = make_pipeline(
-    SimpleImputer(strategy='mean'),
-    StandardScaler()
-)
+num_proc_nlin = make_pipeline(SimpleImputer(strategy="mean"), StandardScaler())
 
 processor_nlin = make_column_transformer(
-    (cat_proc_nlin, cat_cols),
-    (num_proc_nlin, num_cols),
-    remainder='passthrough'
+    (cat_proc_nlin, cat_cols), (num_proc_nlin, num_cols), remainder="passthrough"
 )
 
 # Fit a :class:`~sklearn.ensemble.RandomForestRegressor`.
@@ -103,10 +114,11 @@ rf_pipeline.fit(X, y)
 # Let's compute single-variable partial dependence plots for some of the
 # categorical variables.
 
-features_to_plot = ['ExterQual', 'HeatingQC', 'Street', 'HouseStyle']
-categorical = [X[f].dtype == 'O' for f in features_to_plot]
-plot_partial_dependence(rf_pipeline, X, features=features_to_plot,
-                        is_categorical=categorical, n_cols=2)
+features_to_plot = ["ExterQual", "HeatingQC", "Street", "HouseStyle"]
+categorical = [X[f].dtype == "O" for f in features_to_plot]
+plot_partial_dependence(
+    rf_pipeline, X, features=features_to_plot, is_categorical=categorical, n_cols=2
+)
 fig = plt.gcf()
 plt.subplots_adjust(hspace=0.5)
 plt.show()
@@ -117,6 +129,7 @@ plt.show()
 #
 # Partial dependence of a pair of categorical variable are plotted at a
 # heatmap.
-plot_partial_dependence(rf_pipeline, X, features=[('ExterQual', 'HeatingQC')],
-                        is_categorical=[(True, True)])
+plot_partial_dependence(
+    rf_pipeline, X, features=[("ExterQual", "HeatingQC")], is_categorical=[(True, True)]
+)
 plt.show()
