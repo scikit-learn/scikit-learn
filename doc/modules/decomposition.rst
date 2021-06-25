@@ -286,7 +286,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 .. note::
     :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
     function to map samples from the PCA basis into the original feature
-    spaces [Bakir2004]_. Thus, the reconstruction obtained with
+    space [Bakir2004]_. Thus, the reconstruction obtained with
     :meth:`KernelPCA.inverse_transform` is an approximation. See the example
     linked below to go more into details.
 
