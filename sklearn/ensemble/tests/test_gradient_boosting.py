@@ -23,7 +23,6 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
-from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -1287,14 +1286,8 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     sample_weight = np.random.RandomState(42).rand(100)
 
     # init supports sample weights
-    init_est = init_estimator()
+    init_est = init_estimator().fit_requests(sample_weight=True)
     gb(init=init_est).fit(X, y, sample_weight=sample_weight)
-
-    # init does not support sample weights
-    init_est = NoSampleWeightWrapper(init_estimator())
-    gb(init=init_est).fit(X, y)  # ok no sample weights
-    with pytest.raises(ValueError, match="estimator.*does not support sample weights"):
-        gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
 
 def test_gradient_boosting_with_init_pipeline():
@@ -1304,13 +1297,10 @@ def test_gradient_boosting_with_init_pipeline():
     init = make_pipeline(LinearRegression())
     gb = GradientBoostingRegressor(init=init)
     gb.fit(X, y)  # pipeline without sample_weight works fine
-    gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
     with pytest.raises(
         ValueError,
-        # complete message would be:
-        #    "Requested properties are: [], but ['sample_weight'] provided"
-        match="Requested properties are:",
+        match="sample_weight is passed but is not explicitly set as requested or not",
     ):
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
