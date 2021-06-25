@@ -251,9 +251,6 @@ class _BaseScorer(_MetadataRequester):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        kwargs = metadata_request_factory(self).score.get_method_input(
-            ignore_extras=False, **kwargs
-        )
         return self._score(partial(_cached_call, None), estimator, X, y_true, **kwargs)
 
     def _factory_args(self):
