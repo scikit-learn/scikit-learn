@@ -310,9 +310,14 @@ class MetadataRequest:
         A dictionary where the keys are the names of the methods, and the values are
         a dictionary of the form ``{"required_metadata": "provided_metadata"}``.
         ``"provided_metadata"`` can also be a ``RequestType`` or {True, False, None}.
+
+    default : RequestType, True, False, None, or str, \
+        default=RequestType.ERROR_IF_PASSED
+        The default value to be used if parameters are provided as a string instead of
+        the usual second layer dict.
     """
 
-    def __init__(self, requests=None):
+    def __init__(self, requests=None, default=RequestType.ERROR_IF_PASSED):
         for method in METHODS:
             setattr(self, method, MethodMetadataRequest(name=method))
 
@@ -331,9 +336,9 @@ class MetadataRequest:
             except AttributeError:
                 raise ValueError(f"{method} is not supported as a method.")
             if isinstance(method_requests, str):
-                method_requests = {method_requests: None}
+                method_requests = {method_requests: default}
             elif isinstance(method_requests, (list, set)):
-                method_requests = {m: m for m in method_requests}
+                method_requests = {m: default for m in method_requests}
             for prop, alias in method_requests.items():
                 mmr.add_request(prop=prop, alias=alias)
 
@@ -711,7 +716,6 @@ class _MetadataRequester:
             requests = metadata_request_factory(self._metadata_request)
         else:
             requests = self._get_default_requests()
-            self._metadata_request = requests
 
         if output == "dict":
             return requests.to_dict()

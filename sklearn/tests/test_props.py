@@ -175,7 +175,7 @@ def test_pipeline():
 
     clf = make_pipeline(trs, MyEst())
     pipe_request = clf.get_metadata_request(output="MetadataRequest")
-    assert pipe_request.fit.to_dict() == {
+    assert pipe_request.fit.requests == {
         "my_sw": RequestType.REQUESTED,
         "sample_weight": RequestType.REQUESTED,
         "brand": RequestType.REQUESTED,
@@ -202,7 +202,7 @@ def test_pipeline():
         clf.fit(X, y, brand=brand)
     assert not record.list
 
-    scorer = make_scorer(my_metric, request_props="new_param")
+    scorer = make_scorer(my_metric, score_params="new_param")
 
     param_grid = {"myest__C": [0.1, 1]}
 
@@ -219,7 +219,7 @@ def test_slep_caseA():
     # LogisticRegressionCV. Both of these consumers understand the meaning
     # of the key "sample_weight".
 
-    weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
+    weighted_acc = make_scorer(accuracy_score, score_params=["sample_weight"])
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
@@ -244,7 +244,7 @@ def test_slep_caseB():
     # Since LogisticRegressionCV requires that weights explicitly be requested,
     # removing that request means the fitting is unweighted.
 
-    weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
+    weighted_acc = make_scorer(accuracy_score, score_params=["sample_weight"])
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
@@ -279,7 +279,7 @@ def test_slep_caseC():
     # Like LogisticRegressionCV, SelectKBest needs to request weights
     # explicitly. Here it does not request them.
 
-    weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
+    weighted_acc = make_scorer(accuracy_score, score_params=["sample_weight"])
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
@@ -304,7 +304,7 @@ def test_slep_caseD():
     # consumers.
 
     weighted_acc = make_scorer(
-        accuracy_score, request_props={"sample_weight": "scoring_weight"}
+        accuracy_score, score_params={"sample_weight": "scoring_weight"}
     )
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
@@ -364,7 +364,7 @@ def test_nongroup_splitter_metadata_requests(Klass):
 
 def test_invalid_arg_given():
     # tests that passing an invalid argument would raise an error
-    weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
+    weighted_acc = make_scorer(accuracy_score, score_params=["sample_weight"])
     model = LogisticRegression().fit_requests(sample_weight=True)
     param_grid = {"C": [0.1, 1]}
     gs = GridSearchCV(

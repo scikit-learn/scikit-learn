@@ -738,7 +738,9 @@ def make_scorer(
     else:
         cls = _PredictScorer
     res = cls(score_func, sign, kwargs)
-    res._metadata_request = MetadataRequest({"score": score_params})
+    res._metadata_request = MetadataRequest(
+        {"score": score_params}, default=True
+    ).to_dict()
     return res
 
 
