@@ -159,7 +159,8 @@ def pytest_collection_modifyitems(config, items):
 
         for item in items:
             if isinstance(item, DoctestItem):
-                # internal error with pytest if adding a skip mark to a doctest in a context manager
+                # work-around an internal error with pytest if adding a skip
+                # mark to a doctest in a contextmanager
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
     elif not _pilutil.pillow_installed:
