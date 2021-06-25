@@ -989,7 +989,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
-        # FIXME: 'normalize' to be removed in 0.26
+        # FIXME: 'normalize' to be removed in 1.2
         for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -1101,7 +1101,7 @@ class Lasso(ElasticNet):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.2
+        .. deprecated:: 1.0
             ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
@@ -1511,7 +1511,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
 
-        # FIXME: 'normalize' to be removed in 0.26
+        # FIXME: 'normalize' to be removed in 1.2
         path_params["normalize"] = _normalize
 
         if "l1_ratio" in path_params:

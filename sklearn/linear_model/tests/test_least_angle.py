@@ -655,8 +655,7 @@ def test_lasso_lars_vs_lasso_cd_positive():
         assert err < 1e-3
 
     # normalized data
-    X = diabetes.data
-    X = X - X.sum(axis=0)
+    X = diabetes.data - diabetes.data.sum(axis=0)
     X /= np.linalg.norm(X, axis=0)
     alphas, _, lasso_path = linear_model.lars_path(X, y, method="lasso", positive=True)
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8, positive=True)
