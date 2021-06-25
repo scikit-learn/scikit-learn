@@ -16,6 +16,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
+from sklearn.cross_decomposition import PLSRegression
 from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
@@ -80,6 +81,13 @@ def test_imputation_shape(strategy):
     assert X_imputed.shape == (10, 2)
 
     iterative_imputer = IterativeImputer(initial_strategy=strategy)
+    X_imputed = iterative_imputer.fit_transform(X)
+    assert X_imputed.shape == (10, 2)
+
+    # Test shape with PLSRegression
+    iterative_imputer = IterativeImputer(
+        initial_strategy=strategy, estimator=PLSRegression(n_components=2)
+    )
     X_imputed = iterative_imputer.fit_transform(X)
     assert X_imputed.shape == (10, 2)
 
