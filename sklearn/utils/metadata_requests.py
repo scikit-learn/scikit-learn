@@ -26,7 +26,15 @@ METHODS = [
 
 
 class MethodMetadataRequest:
-    """Contains the metadata request info for a single method."""
+    """Contains the metadata request info for a single method.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    name : str
+        The name of the method to which these requests belong.
+    """
 
     def __init__(self, name):
         self.requests = dict()
@@ -152,7 +160,7 @@ class MethodMetadataRequest:
         ignore_extras : bool, default=False
             If ``True``, no error is raised if extra unknown args are passed.
 
-        kwargs : dict
+        **kwargs : dict
             Provided metadata.
 
         Returns
@@ -195,7 +203,7 @@ class MethodMetadataRequest:
         ignore_extras : bool, default=False
             If ``True``, no error is raised if extra unknown args are passed.
 
-        kwargs : dict
+        **kwargs : dict
             A dictionary of provided metadata.
 
         Returns
@@ -227,9 +235,12 @@ class MethodMetadataRequest:
     def masked(self):
         """Return a masked version of the requests.
 
-        A masked version is one which converts a ``{'prop': 'alias'}`` to
-        ``{'alias': True}``. This is desired in meta-estimators passing
-        requests to their parent estimators.
+        Returns
+        -------
+        masked : MethodMetadataRequest
+            A masked version is one which converts a ``{'prop': 'alias'}`` to
+            ``{'alias': True}``. This is desired in meta-estimators passing
+            requests to their parent estimators.
         """
         res = MethodMetadataRequest(name=self.name)
         for prop, alias in self.requests.items():
@@ -240,7 +251,7 @@ class MethodMetadataRequest:
                     allow_aliasing=False,
                     overwrite=False,
                 )
-            elif RequestType(alias) == RequestType.REQUESTED:
+            else:
                 res.add_request(
                     prop=prop,
                     alias=alias,
@@ -248,10 +259,6 @@ class MethodMetadataRequest:
                     overwrite=False,
                 )
         return res
-
-    def to_dict(self):
-        """Dictionary representation of this object."""
-        return self.requests
 
     @classmethod
     def from_dict(cls, requests, name, allow_aliasing=True):
@@ -261,6 +268,9 @@ class MethodMetadataRequest:
         ----------
         requests : dict
             A dictionary representing the requests.
+
+        name : str
+            The name of the method to which these requests belong.
 
         allow_aliasing : bool, default=True
             If false, only aliases with the same name as the parameter are
@@ -290,29 +300,41 @@ class MethodMetadataRequest:
 
 
 class MetadataRequest:
-    """Contains the metadata request info of an object."""
+    """Contains the metadata request info of an object.
 
-    def __init__(self, obj=None):
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    requests : dict of dict of {str: str}, default=None
+        A dictionary where the keys are the names of the methods, and the values are
+        a dictionary of the form ``{"required_metadata": "provided_metadata"}``.
+        ``"provided_metadata"`` can also be a ``RequestType`` or {True, False, None}.
+    """
+
+    def __init__(self, requests=None):
         for method in METHODS:
             setattr(self, method, MethodMetadataRequest(name=method))
 
-        if obj is None:
+        if requests is None:
             return
-        elif not isinstance(obj, dict):
+        elif not isinstance(requests, dict):
             raise ValueError(
                 "Can only construct an instance from a dict. Please call "
                 "metadata_request_factory for other types of input."
             )
 
-        for method, requests in obj.items():
-            requests = {} if requests is None else requests
+        for method, method_requests in requests.items():
+            method_requests = {} if method_requests is None else method_requests
             try:
                 mmr = getattr(self, method)
             except AttributeError:
                 raise ValueError(f"{method} is not supported as a method.")
-            if isinstance(requests, str):
-                requests = {requests: None}
-            for prop, alias in requests.items():
+            if isinstance(method_requests, str):
+                method_requests = {method_requests: None}
+            elif isinstance(method_requests, (list, set)):
+                method_requests = {m: m for m in method_requests}
+            for prop, alias in method_requests.items():
                 mmr.add_request(prop=prop, alias=alias)
 
     def add_requests(
@@ -376,10 +398,10 @@ class MetadataRequest:
         return res
 
     def to_dict(self):
-        """Dictionary representation of this object."""
+        """Return dictionary representation of this object."""
         output = dict()
         for method in METHODS:
-            output[method] = getattr(self, method).to_dict()
+            output[method] = getattr(self, method).requests
         return output
 
     def __repr__(self):
@@ -392,10 +414,20 @@ class MetadataRequest:
 def metadata_request_factory(obj=None):
     """Get a MetadataRequest instance from the given object.
 
-    If the object is already a MetadataRequest, return that.
-    If the object is an estimator, try to call `get_metadata_request` and get
-    an instance from that method.
-    If the object is a dict, create a MetadataRequest from that.
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    obj : object
+        If the object is already a MetadataRequest, return that.
+        If the object is an estimator, try to call `get_metadata_request` and get
+        an instance from that method.
+        If the object is a dict, create a MetadataRequest from that.
+
+    Returns
+    -------
+    metadata_requests : MetadataRequest
+        A ``MetadataRequest`` taken or created from the given object.
     """
     if obj is None:
         return MetadataRequest()
@@ -417,6 +449,11 @@ def metadata_request_factory(obj=None):
 
 
 class MetadataRouter:
+    """Route the metadata to child objects.
+
+    .. versionadded:: 1.1
+    """
+
     def __init__(self):
         self.requests = MetadataRequest()
 
@@ -485,6 +522,8 @@ class RequestMethod:
     """
     A descriptor to create a function to be set as request methods.
 
+    .. versionadded:: 1.1
+
     Parameters
     ----------
     name : str
@@ -549,11 +588,47 @@ class RequestMethod:
             ],
             return_annotation=type(instance),
         )
-        func.__doc__ = "Something useful"
+        doc = """Request metadata passed to the ``{method}`` method.
+
+            Parameters
+            ----------
+            """.format(
+            method=self.name
+        )
+        for metadata in self.keys:
+            doc += """{metadata} : RequestType, str, True, False, or None, \
+                    default=UNCHANGED
+                Whether {metadata} should be passed to {method} by meta-estimators or
+                not, and if yes, should it have an alias.
+
+                - True or RequestType.REQUESTED: {metadata} is requested, and passed to
+                {method} if provided.
+                - False or RequestType.UNREQUESTED: {metadata} is not requested and the
+                meta-estimator will not pass it to {method}.
+                - None or RequestType.ERROR_IF_PASSED: {metadata} is not requested, and
+                the meta-estimator will raise an error if the user provides {metadata}
+                - str: {metadata} should be passed to the meta-estimator with this given
+                alias instead of the original name.
+
+                """.format(
+                metadata=metadata, method=self.name
+            )
+        doc += """
+            Returns
+            -------
+            self : object
+                Returns the object itself.
+            """
+        func.__doc__ = doc
         return func
 
 
 class _MetadataRequester:
+    """Mixin class for adding metadata request functionality.
+
+    .. versionadded:: 1.1
+    """
+
     def __init_subclass__(cls, **kwargs):
         """Set the ``{method}_requests`` methods.
 
@@ -645,6 +720,11 @@ class _MetadataRequester:
 
 
 class SampleWeightConsumer:
+    """Mixin class to add ``sample_weight`` request to ``fit`` and ``score``.
+
+    .. versionadded:: 1.1
+    """
+
     _metadata_request__sample_weight = {
         "fit": "sample_weight",
         "score": "sample_weight",

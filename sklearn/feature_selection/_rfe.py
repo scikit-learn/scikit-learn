@@ -199,7 +199,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         y : array-like of shape (n_samples,)
             The target values.
 
-        fit_params : dict, default=None
+        **fit_params : dict, default=None
             Parameters to be passed to the underlying estimator's fit.
         """
         return self._fit(X, y, **fit_params)
@@ -609,8 +609,10 @@ class RFECV(CVMetadataRequester, RFE):
 
             .. versionadded:: 0.20
 
-        **kwargs: dict
+        **kwargs : dict
             Extra parameteres passed to the underlying scorer.
+
+            .. versionadded: 1.1
         """
         tags = self._get_tags()
         X, y = self._validate_data(

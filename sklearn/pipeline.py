@@ -280,8 +280,6 @@ class Pipeline(_BaseComposition):
             first dict is the name of the method, and the key to the second
             dict is the name of the argument requested by the method.
         """
-        if output not in {"dict", "MetadataRequest"}:
-            raise ValueError("output can be one of {'dict', 'MetadataRequest'}.")
         _, estimators = zip(*self.steps)
         return (
             MetadataRouter()
