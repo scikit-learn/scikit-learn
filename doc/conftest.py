@@ -101,6 +101,14 @@ def setup_unsupervised_learning():
     )
 
 
+def skip_if_matplotlib_not_installed(fname):
+    try:
+        import matplotlib  # noqa
+    except ImportError:
+        basename = os.path.basename(fname)
+        raise SkipTest(f"Skipping doctests for {basename}, matplotlib not installed")
+
+
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
     is_index = fname.endswith("datasets/index.rst")
@@ -128,6 +136,16 @@ def pytest_runtest_setup(item):
         setup_preprocessing()
     elif fname.endswith("statistical_inference/unsupervised_learning.rst"):
         setup_unsupervised_learning()
+
+    rst_files_requiring_matplotlib = [
+        "modules/partial_dependence.rst",
+        "modules/tree.rst",
+        "tutorial/statistical_inference/settings.rst",
+        "tutorial/statistical_inference/supervised_learning.rst",
+    ]
+    for each in rst_files_requiring_matplotlib:
+        if fname.endswith(each):
+            skip_if_matplotlib_not_installed(fname)
 
 
 def pytest_configure(config):
