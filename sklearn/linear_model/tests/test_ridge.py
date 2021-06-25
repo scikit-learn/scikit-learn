@@ -1519,12 +1519,12 @@ def test_ridge_sag_with_X_fortran():
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    b = np.array([1, -10])
+    coef = np.array([1, -10])
     if fit_intercept:
         intercept = 20
-        y = X.dot(b) + intercept
+        y = X.dot(coef) + intercept
     else:
-        y = X.dot(b)
+        y = X.dot(coef)
 
     model = Ridge(
         alpha=alpha, positive=True, solver=solver, fit_intercept=fit_intercept
@@ -1541,12 +1541,12 @@ def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
     # when the ground truth coefs are all positive
     rng = np.random.RandomState(42)
     X = rng.randn(300, 100)
-    b = rng.uniform(0.1, 1.0, size=X.shape[1])
+    coef = rng.uniform(0.1, 1.0, size=X.shape[1])
     if fit_intercept:
         intercept = 1
-        y = X @ b + intercept
+        y = X @ coef + intercept
     else:
-        y = X @ b
+        y = X @ coef
     y += rng.normal(size=X.shape[0]) * 0.01
 
     results = []
@@ -1564,14 +1564,14 @@ def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
 def test_ridge_positive_error_test(solver):
     alpha = 0.1
     X = np.array([[1, 2], [3, 4]])
-    b = np.array([1, -1])
-    y = X @ b
+    coef = np.array([1, -1])
+    y = X @ coef
 
     model = Ridge(alpha=alpha, positive=True, solver=solver, fit_intercept=False)
     with pytest.raises(ValueError, match="does not support positive"):
         model.fit(X, y)
 
-    with pytest.raises(ValueError, match="only 'lbfgs' solver can fit"):
+    with pytest.raises(ValueError, match="only 'lbfgs' solver can be used"):
         _, _ = ridge_regression(
             X, y, alpha, positive=True, solver=solver, return_intercept=False
         )

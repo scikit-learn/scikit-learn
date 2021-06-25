@@ -400,7 +400,7 @@ def ridge_regression(
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
-        Only 'lbfgs' solver is supported.
+        Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -500,14 +500,15 @@ def _ridge_regression(
 
     if positive and solver != "lbfgs":
         raise ValueError(
-            "When positive=True, only 'lbfgs' solver can fit. "
+            "When positive=True, only 'lbfgs' solver can be used. "
             f"Please change solver {solver} to 'lbfgs' "
             "or set positive=False."
         )
 
     if solver == "lbfgs" and not positive:
         raise ValueError(
-            "'lbfgs' solver can be used when positive=True. " "Please use other solver."
+            "'lbfgs' solver can be used only when positive=True. "
+            "Please use another solver."
         )
 
     if return_intercept and solver != "sag":
@@ -706,8 +707,8 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         )
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
-                "'lbfgs' solver can be used when positive=True. "
-                "Please use other solver."
+                "'lbfgs' solver can be used only when positive=True. "
+                "Please use another solver."
             )
 
         if self.positive:
@@ -903,7 +904,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
-        Only 'lbfgs' solver is supported.
+        Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -1093,7 +1094,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
-        Only 'lbfgs' solver is supported.
+        Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
