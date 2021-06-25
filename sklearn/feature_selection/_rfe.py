@@ -35,10 +35,12 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
     return rfe._fit(
-        X_train, y_train,
+        X_train,
+        y_train,
         lambda estimator, features: _score(
             estimator, X_test[:, features], y_test, scorer
-        )).scores_
+        ),
+    ).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -161,8 +163,16 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, *, n_features_to_select=None, step=1,
-                 verbose=0, importance_getter='auto'):
+
+    def __init__(
+        self,
+        estimator,
+        *,
+        n_features_to_select=None,
+        step=1,
+        verbose=0,
+        importance_getter="auto",
+    ):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -199,16 +209,20 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         tags = self._get_tags()
         X, y = self._validate_data(
-            X, y, accept_sparse="csc",
+            X,
+            y,
+            accept_sparse="csc",
             ensure_min_features=2,
             force_all_finite=not tags.get("allow_nan", True),
-            multi_output=True
+            multi_output=True,
         )
-        error_msg = ("n_features_to_select must be either None, a "
-                     "positive integer representing the absolute "
-                     "number of features or a float in (0.0, 1.0] "
-                     "representing a percentage of features to "
-                     f"select. Got {self.n_features_to_select}")
+        error_msg = (
+            "n_features_to_select must be either None, a "
+            "positive integer representing the absolute "
+            "number of features or a float in (0.0, 1.0] "
+            "representing a percentage of features to "
+            f"select. Got {self.n_features_to_select}"
+        )
 
         # Initialization
         n_features = X.shape[1]
@@ -250,7 +264,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
             # Get importance and rank them
             importances = _get_feature_importances(
-                estimator, self.importance_getter, transform_func="square",
+                estimator,
+                self.importance_getter,
+                transform_func="square",
             )
             ranks = np.argsort(importances)
 
@@ -282,7 +298,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         return self
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate="estimator")
     def predict(self, X):
         """Reduce X to the selected features and then predict using the
            underlying estimator.
@@ -300,7 +316,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict(self.transform(X))
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate="estimator")
     def score(self, X, y):
         """Reduce X to the selected features and then return the score of the
            underlying estimator.
@@ -320,7 +336,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.support_
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate="estimator")
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -342,7 +358,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.decision_function(self.transform(X))
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate="estimator")
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -362,7 +378,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_proba(self.transform(X))
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate="estimator")
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
 
@@ -382,9 +398,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     def _more_tags(self):
         return {
-            'poor_score': True,
-            'allow_nan': _safe_tags(self.estimator, key='allow_nan'),
-            'requires_y': True,
+            "poor_score": True,
+            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
+            "requires_y": True,
         }
 
 
@@ -559,9 +575,19 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, *, step=1, min_features_to_select=1,
-                 cv=None, scoring=None, verbose=0, n_jobs=None,
-                 importance_getter='auto'):
+
+    def __init__(
+        self,
+        estimator,
+        *,
+        step=1,
+        min_features_to_select=1,
+        cv=None,
+        scoring=None,
+        verbose=0,
+        n_jobs=None,
+        importance_getter="auto",
+    ):
         self.estimator = estimator
         self.step = step
         self.importance_getter = importance_getter
@@ -594,9 +620,12 @@ class RFECV(RFE):
         """
         tags = self._get_tags()
         X, y = self._validate_data(
-            X, y, accept_sparse="csr", ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
-            multi_output=True
+            X,
+            y,
+            accept_sparse="csr",
+            ensure_min_features=2,
+            force_all_finite=not tags.get("allow_nan", True),
+            multi_output=True,
         )
 
         # Initialization
@@ -613,10 +642,13 @@ class RFECV(RFE):
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
-        rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=self.min_features_to_select,
-                  importance_getter=self.importance_getter,
-                  step=self.step, verbose=self.verbose)
+        rfe = RFE(
+            estimator=self.estimator,
+            n_features_to_select=self.min_features_to_select,
+            importance_getter=self.importance_getter,
+            step=self.step,
+            verbose=self.verbose,
+        )
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter
@@ -638,21 +670,25 @@ class RFECV(RFE):
 
         scores = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
-            for train, test in cv.split(X, y, groups))
+            for train, test in cv.split(X, y, groups)
+        )
 
         scores = np.array(scores)
         scores_sum = np.sum(scores, axis=0)
         scores_sum_rev = scores_sum[::-1]
         argmax_idx = len(scores_sum) - np.argmax(scores_sum_rev) - 1
         n_features_to_select = max(
-            n_features - (argmax_idx * step),
-            self.min_features_to_select)
+            n_features - (argmax_idx * step), self.min_features_to_select
+        )
 
         # Re-execute an elimination with best_k over the whole set
-        rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select, step=self.step,
-                  importance_getter=self.importance_getter,
-                  verbose=self.verbose)
+        rfe = RFE(
+            estimator=self.estimator,
+            n_features_to_select=n_features_to_select,
+            step=self.step,
+            importance_getter=self.importance_getter,
+            verbose=self.verbose,
+        )
 
         rfe.fit(X, y)
 
@@ -685,5 +721,5 @@ class RFECV(RFE):
         # remove 2 for mean_score, std_score
         grid_size = len(self.cv_results_) - 2
         return np.asarray(
-            [self.cv_results_["split{}_score".format(i)]
-             for i in range(grid_size)]).T
+            [self.cv_results_["split{}_score".format(i)] for i in range(grid_size)]
+        ).T
