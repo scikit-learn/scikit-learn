@@ -448,7 +448,6 @@ cyclic_spline_linear_pipeline = make_pipeline(
 )
 evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 
-
 # %%
 # Spline features make it possible for the linear model to successfully
 # leverage the periodic time-related features and reduce the error from ~14% to
@@ -537,6 +536,26 @@ _ = ax.legend()
 #   an hour. However, we will see in the following that what can be an
 #   advantage for linear models is not necessarily one for more expressive
 #   models.
+#
+# We can also compare the number of features extracted by each feature
+# engineering pipeline:
+# %%
+naive_linear_pipeline[:-1].transform(X).shape
+
+# %%
+one_hot_linear_pipeline[:-1].transform(X).shape
+
+# %%
+cyclic_cossin_linear_pipeline[:-1].transform(X).shape
+
+# %%
+cyclic_spline_linear_pipeline[:-1].transform(X).shape
+
+# %%
+# This confirms that the one-hot encoding and the spline encoding strategies
+# create a lot more features for the time representation than the alternatives,
+# which in turn gives the downstream linear model more flexibility (degrees of
+# freedom) to avoid underfitting.
 #
 # Finally, we observe that none of the linear models can approximate the true
 # bike rentals demand, especially for the peaks that can be very sharp at rush
