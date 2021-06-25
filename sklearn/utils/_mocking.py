@@ -131,7 +131,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self.methods_to_check = methods_to_check
         self.foo_param = foo_param
         self.expected_fit_params = expected_fit_params
-        self._metadata_request = MetadataRequest({"fit": expected_fit_params})
+        self._metadata_request = MetadataRequest(
+            {"fit": expected_fit_params}, default=True
+        )
 
     def _check_X_y(self, X, y=None, should_be_fitted=True):
         """Validate X and y and make extra check.

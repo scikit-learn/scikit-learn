@@ -780,7 +780,7 @@ class BaseSearchCV(
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
-            score_router = _MultimetricScorer(scorers)
+            score_router = _MultimetricScorer(**scorers)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
 

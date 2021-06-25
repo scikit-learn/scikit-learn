@@ -1983,7 +1983,7 @@ def test_searchcv_raise_warning_with_non_finite_score(
             return 1
 
         def get_metadata_request(self):
-            return MetadataRequest()
+            return MetadataRequest().to_dict()
 
     grid = SearchCV(
         DecisionTreeClassifier(),
@@ -2241,7 +2241,7 @@ def test_scalar_fit_param(SearchCV, param_search):
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
     class TestEstimator(ClassifierMixin, BaseEstimator):
-        _metadata_request = {"fit": ["r"]}
+        _metadata_request__r = {"fit": ["r"]}
 
         def __init__(self, a=None):
             self.a = a
@@ -2252,7 +2252,7 @@ def test_scalar_fit_param(SearchCV, param_search):
         def predict(self, X):
             return np.zeros(shape=(len(X)))
 
-    model = SearchCV(TestEstimator(), param_search)
+    model = SearchCV(TestEstimator().fit_requests(r=True), param_search)
     X, y = make_classification(random_state=42)
     model.fit(X, y, r=42)
     assert model.best_estimator_.r_ == 42
@@ -2277,14 +2277,10 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
     )
 
     class _FitParamClassifier(SGDClassifier):
-        _metadata_request = {
-            "fit": [
-                "sample_weight",
-                "tuple_of_arrays",
-                "scalar_param",
-                "callable_param",
-            ]
-        }
+        _metadata_request__sample_weight = {"fit": "sample_weight"}
+        _metadata_request__tuple_of_arrays = {"fit": "tuple_of_arrays"}
+        _metadata_request__scalar_param = {"fit": "scalar_param"}
+        _metadata_request__callable_param = {"fit": "callable_param"}
 
         def fit(
             self,
@@ -2308,7 +2304,12 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
     def _fit_param_callable():
         pass
 
-    model = SearchCV(_FitParamClassifier(), param_search)
+    model = SearchCV(
+        _FitParamClassifier().fit_requests(
+            tuple_of_arrays=True, callable_param=True, scalar_param=True
+        ),
+        param_search,
+    )
 
     # NOTE: `fit_params` should be data dependent (e.g. `sample_weight`) which
     # is not the case for the following parameters. But this abuse is common in
