@@ -53,7 +53,7 @@ _ = axs[1].set_title("Testing data")
 
 # %%
 # The samples from each class cannot be linearly separated: there is no
-# straight line that can split the samples from the inner set from the outer
+# straight line that can split the samples of the inner set from the outer
 # set.
 #
 # Now, we will use PCA with and without a kernel to see what is the effect of
