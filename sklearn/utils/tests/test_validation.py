@@ -43,6 +43,7 @@ from sklearn.utils.validation import (
     _num_samples,
     check_scalar,
     _check_psd_eigenvalues,
+    _check_y,
     _deprecate_positional_args,
     _check_sample_weight,
     _allclose_dense_sparse,
@@ -57,6 +58,9 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
+# TODO: Remove np.matrix usage in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_as_float_array():
@@ -115,6 +119,9 @@ def test_as_float_array_nan(X):
     assert_allclose_dense_sparse(X_converted, X)
 
 
+# TODO: Remove np.matrix usage in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:the matrix subclass:PendingDeprecationWarning")
 def test_np_matrix():
@@ -456,7 +463,7 @@ def test_check_array_pandas_dtype_casting():
     # check that we handle pandas dtypes in a semi-reasonable way
     # this is actually tricky because we can't really know that this
     # should be integer ahead of converting it.
-    cat_df = pd.DataFrame([pd.Categorical([1, 2, 3])])
+    cat_df = pd.DataFrame({"cat_col": pd.Categorical([1, 2, 3])})
     assert (check_array(cat_df).dtype == np.int64)
     assert (check_array(cat_df, dtype=FLOAT_DTYPES).dtype
             == np.float64)
@@ -672,6 +679,12 @@ def test_check_array_complex_data_error():
     X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
     with pytest.raises(ValueError, match="Complex data not supported"):
         check_array(X)
+
+    # target variable does not always go through check_array but should
+    # never accept complex data either.
+    y = np.array([1 + 2j, 3 + 4j, 5 + 7j, 2 + 3j, 4 + 5j, 6 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        _check_y(y)
 
 
 def test_has_fit_parameter():
@@ -1379,3 +1392,16 @@ def test_num_features_errors_scalars(X):
     )
     with pytest.raises(TypeError, match=msg):
         _num_features(X)
+
+
+# TODO: Remove in 1.2
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning")
+def test_check_array_deprecated_matrix():
+    """Test that matrix support is deprecated in 1.0."""
+
+    X = np.matrix(np.arange(5))
+    msg = ("np.matrix usage is deprecated in 1.0 and will raise a TypeError "
+           "in 1.2. Please convert to a numpy array with np.asarray.")
+    with pytest.warns(FutureWarning, match=msg):
+        check_array(X)

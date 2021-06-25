@@ -380,3 +380,17 @@ def test_confusion_matrix_with_unknown_labels(pyplot, constructor_name):
     display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
     expected_labels = [str(i) for i in range(n_classes + 1)]
     assert_array_equal(expected_labels, display_labels)
+
+
+def test_colormap_max(pyplot):
+    """Check that the max color is used for the color of the text."""
+
+    from matplotlib import cm
+    gray = cm.get_cmap('gray', 1024)
+    confusion_matrix = np.array([[1.0, 0.0], [0.0, 1.0]])
+
+    disp = ConfusionMatrixDisplay(confusion_matrix)
+    disp.plot(cmap=gray)
+
+    color = disp.text_[1, 0].get_color()
+    assert_allclose(color, [1.0, 1.0, 1.0, 1.0])

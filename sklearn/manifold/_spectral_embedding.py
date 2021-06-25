@@ -440,6 +440,11 @@ class SpectralEmbedding(BaseEstimator):
     affinity_matrix_ : ndarray of shape (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_neighbors_ : int
         Number of nearest neighbors effectively used.
 
@@ -487,8 +492,9 @@ class SpectralEmbedding(BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         return self.affinity in ["precomputed",

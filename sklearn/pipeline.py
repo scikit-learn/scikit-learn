@@ -83,6 +83,17 @@ class Pipeline(_BaseComposition):
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only exist if the last step of the pipeline is a
+        classifier.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying first estimator in `steps` exposes such an attribute
+        when fit.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     make_pipeline : Convenience function for simplified pipeline construction.
@@ -639,8 +650,9 @@ class Pipeline(_BaseComposition):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
@@ -825,6 +837,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
+
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying first transformer in `transformer_list` exposes such an
+        attribute when fit.
+
+        .. versionadded:: 0.24
 
     See Also
     --------

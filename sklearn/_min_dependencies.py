@@ -7,7 +7,7 @@ import argparse
 if platform.python_implementation() == 'PyPy':
     NUMPY_MIN_VERSION = '1.19.0'
 else:
-    NUMPY_MIN_VERSION = '1.14.5'
+    NUMPY_MIN_VERSION = '1.14.6'
 
 SCIPY_MIN_VERSION = '1.1.0'
 JOBLIB_MIN_VERSION = '0.11'
@@ -27,15 +27,16 @@ dependent_packages = {
     'cython': (CYTHON_MIN_VERSION, 'build'),
     'matplotlib': ('2.2.2', 'benchmark, docs, examples, tests'),
     'scikit-image': ('0.14.5', 'docs, examples, tests'),
-    'pandas': ('0.23.4', 'benchmark, docs, examples, tests'),
+    'pandas': ('0.25.0', 'benchmark, docs, examples, tests'),
     'seaborn': ('0.9.0', 'docs, examples'),
     'memory_profiler': ('0.57.0', 'benchmark, docs'),
     'pytest': (PYTEST_MIN_VERSION, 'tests'),
     'pytest-cov': ('2.9.0', 'tests'),
     'flake8': ('3.8.2', 'tests'),
+    'black': ('21.6b0', 'tests'),
     'mypy': ('0.770', 'tests'),
     'pyamg': ('4.0.0', 'tests'),
-    'sphinx': ('3.2.0', 'docs'),
+    'sphinx': ('4.0.1', 'docs'),
     'sphinx-gallery': ('0.7.0', 'docs'),
     'numpydoc': ('1.0.0', 'docs'),
     'Pillow': ('7.1.2', 'docs'),

@@ -21,6 +21,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 
 
 class DelegatorData:
@@ -169,7 +170,7 @@ def _generate_meta_estimator_instances_with_pipeline():
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
-        if "estimator" in sig or "base_estimator" in sig:
+        if "estimator" in sig or "base_estimator" in sig or "regressor" in sig:
             if is_regressor(Estimator):
                 estimator = make_pipeline(TfidfVectorizer(), Ridge())
                 param_grid = {"ridge__alpha": [0.1, 1.0]}
@@ -184,6 +185,19 @@ def _generate_meta_estimator_instances_with_pipeline():
                 yield Estimator(estimator, param_grid, **extra_params)
             else:
                 yield Estimator(estimator)
+
+        elif "transformer_list" in sig:
+            # FeatureUnion
+            transformer_list = [
+                ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
+                (
+                    "trans2",
+                    make_pipeline(
+                        TfidfVectorizer(), StandardScaler(with_mean=False)
+                    ),
+                ),
+            ]
+            yield Estimator(transformer_list)
 
         elif "estimators" in sig:
             # stacking, voting
@@ -211,22 +225,19 @@ def _generate_meta_estimator_instances_with_pipeline():
 # They should be able to work on any data and delegate data validation to
 # their inner estimator(s).
 DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
-        "AdaBoostClassifier",
-        "AdaBoostRegressor",
-        "BaggingClassifier",
-        "BaggingRegressor",
-        "ClassifierChain",
-        "IterativeImputer",
-        "MultiOutputClassifier",
-        "MultiOutputRegressor",
-        "OneVsOneClassifier",
-        "OutputCodeClassifier",
-        "RANSACRegressor",
-        "RFE",
-        "RFECV",
-        "RegressorChain",
-        "SelfTrainingClassifier",
-        "SequentialFeatureSelector"  # not applicable (2D data mandatory)
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "ClassifierChain",  # data validation is necessary
+    "IterativeImputer",
+    "OneVsOneClassifier",  # input validation can't be avoided
+    "RANSACRegressor",
+    "RFE",
+    "RFECV",
+    "RegressorChain",  # data validation is necessary
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector"  # not applicable (2D data mandatory)
 ]
 
 DATA_VALIDATION_META_ESTIMATORS = [
@@ -256,8 +267,9 @@ def test_meta_estimators_delegate_data_validation(estimator):
     else:
         y = rng.randint(3, size=n_samples)
 
-    X = _enforce_estimator_tags_x(estimator, X)
-    y = _enforce_estimator_tags_y(estimator, y)
+    # We convert to lists to make sure it works on array-like
+    X = _enforce_estimator_tags_x(estimator, X).tolist()
+    y = _enforce_estimator_tags_y(estimator, y).tolist()
 
     # Calling fit should not raise any data validation exception since X is a
     # valid input datastructure for the first step of the pipeline passed as

@@ -39,7 +39,7 @@ def bench_one(name, clf_type, clf_params, n_iter):
     clf = clf_type(**clf_params)
     try:
         clf.set_params(max_iter=n_iter, random_state=42)
-    except:
+    except Exception:
         clf.set_params(n_iter=n_iter, random_state=42)
 
     st = time.time()
@@ -48,12 +48,12 @@ def bench_one(name, clf_type, clf_params, n_iter):
 
     try:
         C = 1.0 / clf.alpha / n_samples
-    except:
+    except Exception:
         C = clf.C
 
     try:
         intercept = clf.intercept_
-    except:
+    except Exception:
         intercept = 0.
 
     train_loss = get_loss(clf.coef_, intercept, X, y, C)

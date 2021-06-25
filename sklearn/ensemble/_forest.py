@@ -86,7 +86,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     max_samples : int or float
         The maximum number of samples to draw from the total available:
             - if float, this indicates a fraction of the total and should be
-              the interval `(0, 1)`;
+              the interval `(0.0, 1.0]`;
             - if int, this indicates the exact number of samples;
             - if None, this indicates the total number of samples.
 
@@ -105,8 +105,8 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples < 1):
-            msg = "`max_samples` must be in range (0, 1) but got value {}"
+        if not (0 < max_samples <= 1):
+            msg = "`max_samples` must be in range (0.0, 1.0] but got value {}"
             raise ValueError(msg.format(max_samples))
         return round(n_samples * max_samples)
 
@@ -322,6 +322,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # reshape is necessary to preserve the data contiguity against vs
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
+
+        if self.criterion == "poisson":
+            if np.any(y < 0):
+                raise ValueError("Some value(s) of y are negative which is "
+                                 "not allowed for Poisson regression.")
+            if np.sum(y) <= 0:
+                raise ValueError("Sum of y is not strictly positive which "
+                                 "is necessary for Poisson regression.")
 
         self.n_outputs_ = y.shape[1]
 
@@ -1081,17 +1089,6 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
-
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -1163,7 +1160,7 @@ class RandomForestClassifier(ForestClassifier):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1190,6 +1187,11 @@ class RandomForestClassifier(ForestClassifier):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1263,7 +1265,6 @@ class RandomForestClassifier(ForestClassifier):
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=None,
@@ -1279,8 +1280,8 @@ class RandomForestClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "min_impurity_decrease", "random_state",
+                              "ccp_alpha"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1298,7 +1299,6 @@ class RandomForestClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
 
 
@@ -1324,15 +1324,21 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
+    criterion : {"squared_error", "mse", "absolute_error", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, and "absolute_error"
-        for the mean absolute error.
+        variance reduction as feature selection criterion, "absolute_error"
+        for the mean absolute error, and "poisson" which uses reduction in
+        Poisson deviance to find splits.
+        Training using "absolute_error" is significantly slower
+        than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 1.0
+           Poisson criterion.
 
         .. deprecated:: 1.0
             Criterion "mse" was deprecated in v1.0 and will be removed in
@@ -1417,17 +1423,6 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
-
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -1473,7 +1468,7 @@ class RandomForestRegressor(ForestRegressor):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1503,6 +1498,11 @@ class RandomForestRegressor(ForestRegressor):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1557,6 +1557,7 @@ class RandomForestRegressor(ForestRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
     """
+
     def __init__(self,
                  n_estimators=100, *,
                  criterion="squared_error",
@@ -1567,7 +1568,6 @@ class RandomForestRegressor(ForestRegressor):
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=None,
@@ -1582,8 +1582,8 @@ class RandomForestRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "min_impurity_decrease", "random_state",
+                              "ccp_alpha"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1600,7 +1600,6 @@ class RandomForestRegressor(ForestRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
 
 
@@ -1703,17 +1702,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
-
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -1789,7 +1777,7 @@ class ExtraTreesClassifier(ForestClassifier):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -1827,6 +1815,11 @@ class ExtraTreesClassifier(ForestClassifier):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1873,6 +1866,7 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     """
+
     def __init__(self,
                  n_estimators=100, *,
                  criterion="gini",
@@ -1883,7 +1877,6 @@ class ExtraTreesClassifier(ForestClassifier):
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=None,
@@ -1899,8 +1892,8 @@ class ExtraTreesClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "min_impurity_decrease", "random_state",
+                              "ccp_alpha"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1918,7 +1911,6 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
 
 
@@ -2035,17 +2027,6 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
-
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -2095,7 +2076,7 @@ class ExtraTreesRegressor(ForestRegressor):
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+          `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
 
@@ -2125,6 +2106,11 @@ class ExtraTreesRegressor(ForestRegressor):
         .. deprecated:: 1.0
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_outputs_ : int
         The number of outputs.
@@ -2168,6 +2154,7 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg.score(X_test, y_test)
     0.2708...
     """
+
     def __init__(self,
                  n_estimators=100, *,
                  criterion="squared_error",
@@ -2178,7 +2165,6 @@ class ExtraTreesRegressor(ForestRegressor):
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=None,
@@ -2193,8 +2179,8 @@ class ExtraTreesRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "min_impurity_decrease", "random_state",
+                              "ccp_alpha"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -2211,7 +2197,6 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
 
 
@@ -2299,17 +2284,6 @@ class RandomTreesEmbedding(BaseForest):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=None
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0 (renaming of 0.25).
-           Use ``min_impurity_decrease`` instead.
-
     sparse_output : bool, default=True
         Whether or not to return a sparse CSR matrix, as default behavior,
         or to return a dense array compatible with dense pipeline operators.
@@ -2353,6 +2327,11 @@ class RandomTreesEmbedding(BaseForest):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -2393,7 +2372,6 @@ class RandomTreesEmbedding(BaseForest):
                  min_weight_fraction_leaf=0.,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
                  sparse_output=True,
                  n_jobs=None,
                  random_state=None,
@@ -2405,8 +2383,7 @@ class RandomTreesEmbedding(BaseForest):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split",
-                              "random_state"),
+                              "min_impurity_decrease", "random_state"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
@@ -2421,7 +2398,6 @@ class RandomTreesEmbedding(BaseForest):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
 
     def _set_oob_score_and_attributes(self, X, y):
