@@ -21,6 +21,7 @@ the lower the better.
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
 #          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
+#          Uttam kumar <bajiraouttamsinha@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -437,7 +438,7 @@ def mean_squared_error(
 
 
 def mean_squared_log_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
 ):
     """Mean squared logarithmic error regression loss.
 
@@ -466,6 +467,9 @@ def mean_squared_log_error(
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+    squared : bool, default=True
+        If True returns MSLE (mean squared log error) value.
+        If False returns RMSLE (root mean squared log error) value.
 
     Returns
     -------
@@ -480,6 +484,8 @@ def mean_squared_log_error(
     >>> y_pred = [2.5, 5, 4, 8]
     >>> mean_squared_log_error(y_true, y_pred)
     0.039...
+    >>> mean_squared_log_error(y_true, y_pred, squared=False)
+    0.199...
     >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
     >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
     >>> mean_squared_log_error(y_true, y_pred)
@@ -505,6 +511,7 @@ def mean_squared_log_error(
         np.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
+        squared=squared,
     )
 
 

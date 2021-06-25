@@ -427,6 +427,10 @@ Changelog
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
 
+- |Feature|  :func:`metrics.mean_squared_log_error` now supports
+  `squared=False`. 
+  :pr:`20326` by :user:`Uttam kumar <helper-uttam>`.
+  
 - |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
