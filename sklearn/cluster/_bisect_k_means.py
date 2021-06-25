@@ -469,6 +469,9 @@ class BisectKMeans(KMeans):
         else:
             # Run proper bisection to gather
             # self.cluster_centers_ and self.labels_
+            # clusters, self.labels_ = self._run_bisect_kmeans(
+            #     X, sample_weight, random_state
+            # )
             clusters, self.labels_ = self._run_bisect_kmeans(
                 X, sample_weight, random_state
             )
@@ -519,67 +522,98 @@ class BisectKMeans(KMeans):
             Labels of each point.
         """
         strategy = self.bisect_strategy
-        x_squared_norms = row_norms(X, squared=True)
 
-        # Dictionary storing calculated centroids
-        centers_dict = {
-            0: None,
+        # Tree Dictionary will be later used at prediction
+        tree_dict = {
+            0: {'children': None,
+                'center': None
+                }
         }
-        # Boolean mask for picking data to bisect
-        picked_samples = np.ones(X.shape[0], dtype=bool)
+
+        # Leaves Dictionary
+        leaves_dict = {
+            0: {'samples': np.ones(X.shape[0], dtype=bool),
+                'error_or_size': None}
+        }
+        # Initialize Labels
+        labels = np.zeros(X.shape[0], dtype=np.intc)
 
         # ID of biggest center stored in centers_dict
         biggest_id = 0
-
         last_center_id = 0
 
         for n_iter in range(self.n_clusters - 1):
+            picked_samples = leaves_dict[biggest_id]['samples']
+
             # Pick data and weights to bisect
             picked_data = X[picked_samples]
             picked_weights = sample_weight[picked_samples]
 
             # Perform Bisection
-            _centers, _ = self._bisect(picked_data, picked_weights, random_state)
+            _centers, _labels = self._bisect(picked_data,
+                                             picked_weights,
+                                             random_state)
 
             if self.verbose:
                 print(f"Centroid Found: {_centers[0]}")
                 print(f"Centroid Found: {_centers[1]}")
 
-            # Save obtained centers
-            centers_dict[last_center_id + 1] = _centers[0]
-            centers_dict[last_center_id + 2] = _centers[1]
-
-            # Delete cluster that was split from dict
-            del centers_dict[biggest_id]
-
-            # Convert centers to numpy array for further calculations
-            centers = np.asarray(list(centers_dict.values()))
-
-            # Recalculate labels for all centers
-            # That is made to be sure that all data is split to proper clusters
-            labels = _check_labels_threadpool_limit(
-                X, sample_weight, x_squared_norms, centers, self._n_threads
-            )
-
-            if strategy == "biggest_sse":
-                # Compute SSE (Sum of Squared Errors) for each cluster
-                errors = self._compute_bisect_errors(X, centers, labels, sample_weight)
-
-                # Pick cluster with biggest SSE
-                biggest_label, _ = max(errors.items(), key=lambda x: x[1])
+            if strategy == 'biggest_sse':
+                # "biggest_sse" uses computed SSE (Sum of Squared Errors)
+                # to pick cluster with biggest SSE Error
+                metrics_values = self._compute_bisect_errors(picked_data, _centers,
+                                                            _labels, picked_weights)
             else:
-                # "largest_cluster"
-                # Count occurrences of each label
-                labels_occurrences = np.bincount(labels)
-                # Pick cluster with largest number of data points assigned
-                biggest_label = np.argmax(labels_occurrences)
+                # strategy == 'largest_cluster'
+                # 'largest_cluster' takes counts occurances of each label
+                # to pick cluster with largest number of data points assigned
+                metrics_values = np.bincount(_labels)
 
-            # Pick indexes of data for further split
-            picked_samples = labels == biggest_label
+            labels[picked_samples] = _labels + last_center_id
 
-            # Pick id of cluster for further split
-            biggest_id = list(centers_dict.keys())[biggest_label]
+            # "Create Hierarchy" - cluster with smaller metrics value (SSE or ammount of points)
+            # will be at 'left side' and cluster with higher at 'right side'
+            lower_id = 0 if metrics_values[0] <= metrics_values[1] else 1
+            centers_id = [lower_id, 1 - lower_id]
+
+            # Assign calculated nested clusters to their root
+            tree_dict[biggest_id]['children'] = [last_center_id + 1, last_center_id + 2]
+
+            for id in range(2):
+                child_id = tree_dict[biggest_id]['children'][id]
+
+                # Save Results on Tree
+                tree_dict[child_id] = {
+                    'children': None,
+                    'center': _centers[centers_id[id]]
+                }
+
+                # Save recently generated leaves
+                leaves_dict[child_id] = {
+                    'samples': (labels == (child_id - 1)),
+                    'error_or_size': metrics_values[id]
+                }
+
+            # Split cluster is no longer leaf
+            del leaves_dict[biggest_id]
 
             last_center_id += 2
+
+            # Pick new 'biggest cluster' to split
+            biggest_id, _ = max(leaves_dict.items(), key=lambda x: x[1]['error_or_size'])
+
+        # Delete Initial cluster
+        del tree_dict[0]
+
+        # Take clusters of leaves as centers
+        centers = np.array([item['center'] for item in tree_dict.values() if
+                            item['children'] is None])
+
+        # Shift labels to fit centers ids
+        for i, key in enumerate(leaves_dict.keys()):
+            labels[labels == (key - 1)] = i
+
+        # Inner Tree will be later used at 'predict' method:
+        self._inner_tree = tree_dict
 
         return centers, labels
