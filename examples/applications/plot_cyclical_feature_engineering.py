@@ -1,8 +1,7 @@
-
 """
-==========================
-Cyclic feature engineering
-==========================
+================================
+Time-related feature engineering
+================================
 
 This notebook introduces different strategies to leverage time-related features
 for a bike sharing demand regression task that is highly dependent on business
@@ -62,18 +61,33 @@ df["count"].max()
 #     intuitive than the (root) mean squared error. Note however that the best
 #     models for one metric are also the best for the other in this study.
 y = df["count"] / 1000
-_ = y.hist(bins=30)
+
+# %%
+fig, ax = plt.subplots(figsize=(12, 4))
+y.hist(bins=30, ax=ax)
+_ = ax.set(
+    xlabel="Fraction of rented fleet demand",
+    ylabel="Number of hours",
+)
 
 # %%
 # The input feature data frame is a time annotated hourly log of variables
 # describing the weather conditions. It includes both numerical and categorical
 # variables. Note that the time information has already been expanded into
-# several complementary columns.
+# seßveral complementary columns.
 #
 X = df.drop("count", axis="columns")
 X
+
 # %%
-# We first introspect the distribution of the categorical variables, starting
+# .. note::
+#
+#    If the time information was only present as a date or datetime column, we
+#    could have expanded it into hour-in-the-day, day-in-the-week,
+#    day-in-the-month, month-in-the-year using pandas:
+#    https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#time-date-components
+#
+# We now introspect the distribution of the categorical variables, starting
 # with `"weather"`:
 #
 X["weather"].value_counts()
@@ -146,7 +160,11 @@ X.iloc[train_4]
 #
 # Here, we do minimal ordinal encoding for the categorical variables and then
 # let the model know that it should treat those as categorical variables by
-# using a dedicated tree splitting rule.
+# using a dedicated tree splitting rule. Since we use an ordinal encoder, we
+# pass the list of categorical values explicitly to use a logical order when
+# encoding the categories as integer instead of the lexicographical order. This
+# also has the added benefit of preventing any issue with unknown categories
+# when using cross-validation.
 #
 # The numerical variable need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
@@ -164,7 +182,7 @@ categorical_columns = [
     "workingday",
 ]
 categories = [
-    ["clear", "misty", "rain", "heavy_rain"],
+    ["clear", "misty", "rain"],
     ["spring", "summer", "fall", "winter"],
     ["False", "True"],
     ["False", "True"],
