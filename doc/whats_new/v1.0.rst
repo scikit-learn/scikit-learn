@@ -307,6 +307,13 @@ Changelog
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.IterativeImputer` now works
+  with :class:`cross_decomposition.PLSRegression` as estimator.
+  :pr:`20355` by :user:`Leopoldo Corona <polocorona>`
+
 :mod:`sklearn.inspection`
 .........................
 
