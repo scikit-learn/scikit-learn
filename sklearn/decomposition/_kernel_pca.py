@@ -468,7 +468,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         References
         ----------
-        Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+        `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
         "Learning to find pre-images."
         Advances in neural information processing systems 16 (2004): 449-456.
         <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
