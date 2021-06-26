@@ -604,6 +604,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
+    See Also
+    --------
+    BaggingRegressor : A Bagging regressor.
+
     References
     ----------
 
