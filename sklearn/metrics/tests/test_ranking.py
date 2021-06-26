@@ -353,7 +353,12 @@ def test_roc_curve_toydata():
     y_true = [0, 0]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    expected_message = (
+        "No positive samples in y_true, true positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        tpr, fpr, _ = roc_curve(y_true, y_score)
+
     with pytest.raises(ValueError):
         roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
@@ -362,7 +367,12 @@ def test_roc_curve_toydata():
     y_true = [1, 1]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no negative sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    expected_message = (
+        "No negative samples in y_true, false positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        tpr, fpr, _ = roc_curve(y_true, y_score)
+
     with pytest.raises(ValueError):
         roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
