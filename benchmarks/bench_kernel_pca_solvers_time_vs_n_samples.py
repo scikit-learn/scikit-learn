@@ -55,22 +55,23 @@ print(__doc__)
 # 1- Design the Experiment
 # ------------------------
 min_n_samples, max_n_samples = 101, 4000  # min and max n_samples to try
-n_samples_grid_size = 4                   # nb of positions in the grid to try
+n_samples_grid_size = 4  # nb of positions in the grid to try
 # generate the grid
-n_samples_range = [min_n_samples + np.floor((x / (n_samples_grid_size - 1))
-                                            * (max_n_samples - min_n_samples))
-                   for x in range(0, n_samples_grid_size)]
+n_samples_range = [
+    min_n_samples
+    + np.floor((x / (n_samples_grid_size - 1)) * (max_n_samples - min_n_samples))
+    for x in range(0, n_samples_grid_size)
+]
 
-n_components = 100      # the number of principal components we want to use
-n_iter = 3              # the number of times each experiment will be repeated
+n_components = 100  # the number of principal components we want to use
+n_iter = 3  # the number of times each experiment will be repeated
 include_arpack = False  # set this to True to include arpack solver (slower)
 
 
 # 2- Generate random data
 # -----------------------
 n_features = 2
-X, y = make_circles(n_samples=max_n_samples, factor=.3, noise=.05,
-                    random_state=0)
+X, y = make_circles(n_samples=max_n_samples, factor=0.3, noise=0.05, random_state=0)
 
 
 # 3- Benchmark
@@ -93,8 +94,9 @@ for j, n_samples in enumerate(n_samples_range):
     print("  - dense")
     for i in range(n_iter):
         start_time = time.perf_counter()
-        ref_pred = KernelPCA(n_components, eigen_solver="dense") \
-            .fit(X_train).transform(X_test)
+        ref_pred = (
+            KernelPCA(n_components, eigen_solver="dense").fit(X_train).transform(X_test)
+        )
         ref_time[j, i] = time.perf_counter() - start_time
 
     # B- arpack
@@ -102,8 +104,11 @@ for j, n_samples in enumerate(n_samples_range):
         print("  - arpack")
         for i in range(n_iter):
             start_time = time.perf_counter()
-            a_pred = KernelPCA(n_components, eigen_solver="arpack") \
-                .fit(X_train).transform(X_test)
+            a_pred = (
+                KernelPCA(n_components, eigen_solver="arpack")
+                .fit(X_train)
+                .transform(X_test)
+            )
             a_time[j, i] = time.perf_counter() - start_time
             # check that the result is still correct despite the approx
             assert_array_almost_equal(np.abs(a_pred), np.abs(ref_pred))
@@ -112,8 +117,11 @@ for j, n_samples in enumerate(n_samples_range):
     print("  - randomized")
     for i in range(n_iter):
         start_time = time.perf_counter()
-        r_pred = KernelPCA(n_components, eigen_solver="randomized") \
-            .fit(X_train).transform(X_test)
+        r_pred = (
+            KernelPCA(n_components, eigen_solver="randomized")
+            .fit(X_train)
+            .transform(X_test)
+        )
         r_time[j, i] = time.perf_counter() - start_time
         # check that the result is still correct despite the approximation
         assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
@@ -132,22 +140,45 @@ std_r_time = r_time.std(axis=1)
 fig, ax = plt.subplots(figsize=(12, 8))
 
 # Display 1 plot with error bars per method
-ax.errorbar(n_samples_range, avg_ref_time, yerr=std_ref_time,
-            marker='x', linestyle='', color='r', label='full')
+ax.errorbar(
+    n_samples_range,
+    avg_ref_time,
+    yerr=std_ref_time,
+    marker="x",
+    linestyle="",
+    color="r",
+    label="full",
+)
 if include_arpack:
-    ax.errorbar(n_samples_range, avg_a_time, yerr=std_a_time, marker='x',
-                linestyle='', color='g', label='arpack')
-ax.errorbar(n_samples_range, avg_r_time, yerr=std_r_time, marker='x',
-            linestyle='', color='b', label='randomized')
-ax.legend(loc='upper left')
+    ax.errorbar(
+        n_samples_range,
+        avg_a_time,
+        yerr=std_a_time,
+        marker="x",
+        linestyle="",
+        color="g",
+        label="arpack",
+    )
+ax.errorbar(
+    n_samples_range,
+    avg_r_time,
+    yerr=std_r_time,
+    marker="x",
+    linestyle="",
+    color="b",
+    label="randomized",
+)
+ax.legend(loc="upper left")
 
 # customize axes
 ax.set_xlim(min(n_samples_range) * 0.9, max(n_samples_range) * 1.1)
 ax.set_ylabel("Execution time (s)")
 ax.set_xlabel("n_samples")
 
-ax.set_title("Execution time comparison of kPCA with %i components on samples "
-             "with %i features, according to the choice of `eigen_solver`"
-             "" % (n_components, n_features))
+ax.set_title(
+    "Execution time comparison of kPCA with %i components on samples "
+    "with %i features, according to the choice of `eigen_solver`"
+    "" % (n_components, n_features)
+)
 
 plt.show()

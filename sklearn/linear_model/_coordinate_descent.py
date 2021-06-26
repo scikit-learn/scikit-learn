@@ -103,10 +103,11 @@ def _alpha_grid(
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
-    y : ndarray of shape (n_samples,)
+    y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Target values
 
-    Xy : array-like of shape (n_features,), default=None
+    Xy : array-like of shape (n_features,) or (n_features, n_outputs),\
+         default=None
         Xy = np.dot(X.T, y) that can be precomputed.
 
     l1_ratio : float, default=1.0
@@ -1676,7 +1677,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # currently we can only mark a whole test as xfail.
         return {
             "_xfail_checks": {
-                "check_sample_weights_invariance": "zero sample_weight is not equivalent to removing samples",
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }
 
@@ -2313,7 +2316,6 @@ class MultiTaskElasticNet(Lasso):
         X, y = self._validate_data(
             X, y, validate_separately=(check_X_params, check_y_params)
         )
-        check_consistent_length(X, y)
         y = y.astype(X.dtype)
 
         if hasattr(self, "l1_ratio"):
