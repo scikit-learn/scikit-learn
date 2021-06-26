@@ -109,7 +109,6 @@ DOCSTRING_IGNORE_LIST = [
     "MaxAbsScaler",
     "MeanShift",
     "MinCovDet",
-    "MinMaxScaler",
     "MiniBatchDictionaryLearning",
     "MiniBatchKMeans",
     "MiniBatchSparsePCA",
