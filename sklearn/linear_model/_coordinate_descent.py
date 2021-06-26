@@ -2316,6 +2316,7 @@ class MultiTaskElasticNet(Lasso):
         X, y = self._validate_data(
             X, y, validate_separately=(check_X_params, check_y_params)
         )
+        check_consistent_length(X, y)
         y = y.astype(X.dtype)
 
         if hasattr(self, "l1_ratio"):
