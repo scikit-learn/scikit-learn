@@ -5,7 +5,7 @@ Testing Recursive feature elimination
 from operator import attrgetter
 import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_raises
 from scipy import sparse
 
 from sklearn.feature_selection import RFE, RFECV
@@ -106,6 +106,43 @@ def test_rfe():
     assert_array_almost_equal(rfe.predict(X), clf.predict(iris.data))
     assert rfe.score(X, y) == clf.score(iris.data, iris.target)
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
+
+
+def test_rfe_sample_weights():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
+    clf = SVC(kernel="linear")
+    rfe = RFE(estimator=clf, n_features_to_select=1)
+
+    sample_weight_test = 2
+    class_test = 2
+
+    # Case 1 - original dataset
+    rfe.fit(X, y)
+    ranking_original = rfe.ranking_.copy()
+
+    # Case 2 - double the weight of one class's samples
+    w = np.ones(y.shape[0])
+    w[y == class_test] = sample_weight_test
+
+    rfe.fit(X, y, sample_weight=w)
+    ranking_weights = rfe.ranking_.copy()
+
+    # Case 3 - duplicate the samples of one class
+    extra_X = np.tile(X[y == class_test], (sample_weight_test - 1, 1))
+    X_duplicate = np.concatenate((X, extra_X), axis=0)
+
+    n_extra = (y == class_test).sum() * (sample_weight_test - 1)
+    extra_Y = np.ones(n_extra, dtype=int) * class_test
+    y_duplicate = np.concatenate((y, extra_Y), axis=0)
+
+    rfe.fit(X_duplicate, y_duplicate)
+    ranking_duplicate = rfe.ranking_.copy()
+
+    assert_raises(AssertionError, assert_array_equal, ranking_original, ranking_weights)
+    assert_array_equal(ranking_weights, ranking_duplicate)
 
 
 @pytest.mark.parametrize("n_features_to_select", [-1, 2.1])

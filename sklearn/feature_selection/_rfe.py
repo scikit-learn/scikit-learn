@@ -186,7 +186,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     def classes_(self):
         return self.estimator_.classes_
 
-    def fit(self, X, y):
+    def fit(self, X, y, **fit_params):
         """Fit the RFE model and then the underlying estimator on the selected features.
 
         Parameters
@@ -196,10 +196,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,)
             The target values.
-        """
-        return self._fit(X, y)
 
-    def _fit(self, X, y, step_score=None):
+        **fit_params : kwargs
+            Additional parameter passed to the fit function of the estimator.
+        """
+        return self._fit(X, y, **fit_params)
+
+    def _fit(self, X, y, step_score=None, **fit_params):
         # Parameter step_score controls the calculation of self.scores_
         # step_score is not exposed to users
         # and is used when implementing RFECV
@@ -258,7 +261,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
-            estimator.fit(X[:, features], y)
+            estimator.fit(X[:, features], y, **fit_params)
 
             # Get importance and rank them
             importances = _get_feature_importances(
