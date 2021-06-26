@@ -182,10 +182,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        self
+        self : BaseMixture instance
+            The fitted mixture.
         """
         self.fit_predict(X, y)
         return self
@@ -208,6 +211,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -350,6 +355,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_dimensions)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -407,11 +414,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         X : array, shape (n_samples, n_features)
-            Randomly generated sample
+            Randomly generated sample.
 
         y : array, shape (nsamples,)
-            Component labels
-
+            Component labels.
         """
         check_is_fitted(self)
 
