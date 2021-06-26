@@ -540,6 +540,10 @@ def two_features_degree3():
         ((2, 3), False, False, slice(3, None)),
         ((2, 3), True, True, [0, 4]),
         ((2, 3), False, True, [4]),
+        ((3, 3), True, False, [0, 6, 7, 8, 9]),
+        ((3, 3), False, False, [6, 7, 8, 9]),
+        ((3, 3), True, True, [0]),
+        ((3, 3), False, True, []),  # would need 3 input features
     ],
 )
 @pytest.mark.parametrize(
