@@ -32,9 +32,9 @@ def test_polynomial_and_spline_array_order(est):
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"degree": -1}, "degree must be a non-negative integer."),
-        ({"degree": 2.5}, "degree must be a non-negative integer."),
-        ({"degree": "string"}, "degree must be a non-negative integer."),
+        ({"degree": -1}, "degree must be a non-negative integer"),
+        ({"degree": 2.5}, "degree must be a non-negative integer"),
+        ({"degree": "string"}, "degree must be a non-negative integer"),
         ({"n_knots": 1}, "n_knots must be a positive integer >= 2."),
         ({"n_knots": 1}, "n_knots must be a positive integer >= 2."),
         ({"n_knots": 2.5}, "n_knots must be a positive integer >= 2."),
@@ -432,42 +432,145 @@ def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
     assert splt.transform(X).shape[1] == splt.n_features_out_
 
 
-def test_polynomial_features():
-    # Test Polynomial Features
-    X1 = np.arange(6)[:, np.newaxis]
-    P1 = np.hstack([np.ones_like(X1), X1, X1 ** 2, X1 ** 3])
-    deg1 = 3
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        ({"degree": -1}, "degree must be a non-negative integer"),
+        ({"degree": 2.5}, "degree must be a non-negative int or tuple"),
+        ({"degree": "12"}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": "string"}, "degree must be a non-negative int or tuple"),
+        ({"degree": (-1, 2)}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": (0, 1.5)}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": (3, 2)}, r"degree=\(min_degree, max_degree\) must"),
+    ],
+)
+def test_polynomial_features_input_validation(params, err_msg):
+    """Test that we raise errors for invalid input in PolynomialFeatures."""
+    X = [[1], [2]]
 
-    X2 = np.arange(6).reshape((3, 2))
-    x1 = X2[:, :1]
-    x2 = X2[:, 1:]
-    P2 = np.hstack(
+    with pytest.raises(ValueError, match=err_msg):
+        PolynomialFeatures(**params).fit(X)
+
+
+@pytest.fixture()
+def single_feature_degree3():
+    X = np.arange(6)[:, np.newaxis]
+    P = np.hstack([np.ones_like(X), X, X ** 2, X ** 3])
+    return X, P
+
+
+@pytest.mark.parametrize(
+    "degree, include_bias, interaction_only, indices",
+    [
+        (3, True, False, slice(None, None)),
+        (3, False, False, slice(1, None)),
+        (3, True, True, [0, 1]),
+        (3, False, True, [1]),
+        ((2, 3), True, False, [0, 2, 3]),
+        ((2, 3), False, False, [2, 3]),
+        ((2, 3), True, True, [0]),
+        ((2, 3), False, True, []),
+    ],
+)
+@pytest.mark.parametrize(
+    "sparse_X",
+    [False, sparse.csr_matrix, sparse.csc_matrix],
+)
+def test_polynomial_features_one_feature(
+    single_feature_degree3,
+    degree,
+    include_bias,
+    interaction_only,
+    indices,
+    sparse_X,
+):
+    """Test PolynomialFeatures on single feature up to degree 3."""
+    X, P = single_feature_degree3
+    if sparse_X:
+        X = sparse_X(X)
+    tf = PolynomialFeatures(
+        degree=degree, include_bias=include_bias, interaction_only=interaction_only
+    ).fit(X)
+    out = tf.transform(X)
+    if sparse_X:
+        out = out.toarray()
+    assert_allclose(out, P[:, indices])
+    if tf.n_output_features_ > 0:
+        assert tf.powers_.shape == (tf.n_output_features_, tf.n_features_in_)
+
+
+@pytest.fixture()
+def two_features_degree3():
+    X = np.arange(6).reshape((3, 2))
+    x1 = X[:, :1]
+    x2 = X[:, 1:]
+    P = np.hstack(
         [
-            x1 ** 0 * x2 ** 0,
-            x1 ** 1 * x2 ** 0,
-            x1 ** 0 * x2 ** 1,
-            x1 ** 2 * x2 ** 0,
-            x1 ** 1 * x2 ** 1,
-            x1 ** 0 * x2 ** 2,
+            x1 ** 0 * x2 ** 0,  # 0
+            x1 ** 1 * x2 ** 0,  # 1
+            x1 ** 0 * x2 ** 1,  # 2
+            x1 ** 2 * x2 ** 0,  # 3
+            x1 ** 1 * x2 ** 1,  # 4
+            x1 ** 0 * x2 ** 2,  # 5
+            x1 ** 3 * x2 ** 0,  # 6
+            x1 ** 2 * x2 ** 1,  # 7
+            x1 ** 1 * x2 ** 2,  # 8
+            x1 ** 0 * x2 ** 3,  # 9
         ]
     )
-    deg2 = 2
+    return X, P
 
-    for (deg, X, P) in [(deg1, X1, P1), (deg2, X2, P2)]:
-        P_test = PolynomialFeatures(deg, include_bias=True).fit_transform(X)
-        assert_array_almost_equal(P_test, P)
 
-        P_test = PolynomialFeatures(deg, include_bias=False).fit_transform(X)
-        assert_array_almost_equal(P_test, P[:, 1:])
-
-    interact = PolynomialFeatures(2, interaction_only=True, include_bias=True)
-    X_poly = interact.fit_transform(X)
-    assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
-
-    assert interact.powers_.shape == (
-        interact.n_output_features_,
-        interact.n_features_in_,
-    )
+@pytest.mark.parametrize(
+    "degree, include_bias, interaction_only, indices",
+    [
+        (2, True, False, slice(0, 6)),
+        (2, False, False, slice(1, 6)),
+        (2, True, True, [0, 1, 2, 4]),
+        (2, False, True, [1, 2, 4]),
+        ((2, 2), True, False, [0, 3, 4, 5]),
+        ((2, 2), False, False, [3, 4, 5]),
+        ((2, 2), True, True, [0, 4]),
+        ((2, 2), False, True, [4]),
+        (3, True, False, slice(None, None)),
+        (3, False, False, slice(1, None)),
+        (3, True, True, [0, 1, 2, 4]),
+        (3, False, True, [1, 2, 4]),
+        ((2, 3), True, False, [0, 3, 4, 5, 6, 7, 8, 9]),
+        ((2, 3), False, False, slice(3, None)),
+        ((2, 3), True, True, [0, 4]),
+        ((2, 3), False, True, [4]),
+        ((3, 3), True, False, [0, 6, 7, 8, 9]),
+        ((3, 3), False, False, [6, 7, 8, 9]),
+        ((3, 3), True, True, [0]),
+        ((3, 3), False, True, []),  # would need 3 input features
+    ],
+)
+@pytest.mark.parametrize(
+    "sparse_X",
+    [False, sparse.csr_matrix, sparse.csc_matrix],
+)
+def test_polynomial_features_two_features(
+    two_features_degree3,
+    degree,
+    include_bias,
+    interaction_only,
+    indices,
+    sparse_X,
+):
+    """Test PolynomialFeatures on 2 features up to degree 3."""
+    X, P = two_features_degree3
+    if sparse_X:
+        X = sparse_X(X)
+    tf = PolynomialFeatures(
+        degree=degree, include_bias=include_bias, interaction_only=interaction_only
+    ).fit(X)
+    out = tf.transform(X)
+    if sparse_X:
+        out = out.toarray()
+    assert_allclose(out, P[:, indices])
+    if tf.n_output_features_ > 0:
+        assert tf.powers_.shape == (tf.n_output_features_, tf.n_features_in_)
 
 
 def test_polynomial_feature_names():
@@ -478,6 +581,7 @@ def test_polynomial_feature_names():
         ["1", "x0", "x1", "x2", "x0^2", "x0 x1", "x0 x2", "x1^2", "x1 x2", "x2^2"],
         feature_names,
     )
+    assert len(feature_names) == poly.transform(X).shape[1]
 
     poly = PolynomialFeatures(degree=3, include_bias=False).fit(X)
     feature_names = poly.get_feature_names(["a", "b", "c"])
@@ -505,6 +609,40 @@ def test_polynomial_feature_names():
         ],
         feature_names,
     )
+    assert len(feature_names) == poly.transform(X).shape[1]
+
+    poly = PolynomialFeatures(degree=(2, 3), include_bias=False).fit(X)
+    feature_names = poly.get_feature_names(["a", "b", "c"])
+    assert_array_equal(
+        [
+            "a^2",
+            "a b",
+            "a c",
+            "b^2",
+            "b c",
+            "c^2",
+            "a^3",
+            "a^2 b",
+            "a^2 c",
+            "a b^2",
+            "a b c",
+            "a c^2",
+            "b^3",
+            "b^2 c",
+            "b c^2",
+            "c^3",
+        ],
+        feature_names,
+    )
+    assert len(feature_names) == poly.transform(X).shape[1]
+
+    poly = PolynomialFeatures(
+        degree=(3, 3), include_bias=True, interaction_only=True
+    ).fit(X)
+    feature_names = poly.get_feature_names(["a", "b", "c"])
+    assert_array_equal(["1", "a b c"], feature_names)
+    assert len(feature_names) == poly.transform(X).shape[1]
+
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
     feature_names = poly.get_feature_names(["\u0001F40D", "\u262E", "\u05D0"])
@@ -568,22 +706,36 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
 
 
 @pytest.mark.parametrize("n_features", [1, 4, 5])
-@pytest.mark.parametrize("degree", range(1, 5))
+@pytest.mark.parametrize(
+    "min_degree, max_degree", [(0, 1), (0, 2), (1, 3), (0, 4), (3, 4)]
+)
 @pytest.mark.parametrize("interaction_only", [True, False])
 @pytest.mark.parametrize("include_bias", [True, False])
-def test_num_combinations(n_features, degree, interaction_only, include_bias):
+def test_num_combinations(
+    n_features,
+    min_degree,
+    max_degree,
+    interaction_only,
+    include_bias,
+):
     """
     Test that n_output_features_ is calculated correctly.
     """
     x = sparse.csr_matrix(([1], ([0], [n_features - 1])))
     est = PolynomialFeatures(
-        degree, interaction_only=interaction_only, include_bias=include_bias
+        degree=max_degree,
+        interaction_only=interaction_only,
+        include_bias=include_bias,
     )
     est.fit(x)
     num_combos = est.n_output_features_
 
     combos = PolynomialFeatures._combinations(
-        n_features, degree, interaction_only, include_bias
+        n_features=n_features,
+        min_degree=0,
+        max_degree=max_degree,
+        interaction_only=interaction_only,
+        include_bias=include_bias,
     )
     assert num_combos == sum([1 for _ in combos])
 

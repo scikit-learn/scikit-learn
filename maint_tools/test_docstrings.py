@@ -10,7 +10,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 # List of modules ignored when checking for numpydoc validation.
 DOCSTRING_IGNORE_LIST = [
     "ARDRegression",
-    "AdaBoostClassifier",
     "AdaBoostRegressor",
     "AdditiveChi2Sampler",
     "AffinityPropagation",
@@ -75,7 +74,6 @@ DOCSTRING_IGNORE_LIST = [
     "IsotonicRegression",
     "IterativeImputer",
     "KBinsDiscretizer",
-    "KMeans",
     "KNNImputer",
     "KNeighborsClassifier",
     "KNeighborsRegressor",
@@ -103,7 +101,6 @@ DOCSTRING_IGNORE_LIST = [
     "LinearSVR",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
-    "LogisticRegression",
     "LogisticRegressionCV",
     "MDS",
     "MLPClassifier",
@@ -200,9 +197,7 @@ DOCSTRING_IGNORE_LIST = [
     "SplineTransformer",
     "StackingClassifier",
     "StackingRegressor",
-    "StandardScaler",
     "TSNE",
-    "TfidfTransformer",
     "TfidfVectorizer",
     "TheilSenRegressor",
     "TransformedTargetRegressor",

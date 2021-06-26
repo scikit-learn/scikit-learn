@@ -328,7 +328,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, default=1.
+    learning_rate : float, default=1.0
         Weight applied to each classifier at each boosting iteration. A higher
         learning rate increases the contribution of each classifier. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.

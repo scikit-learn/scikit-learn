@@ -432,6 +432,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
         If no scoring is specified and the estimator has no score function, we

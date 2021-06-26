@@ -1395,7 +1395,7 @@ def _make_int_array():
 
 
 class TfidfTransformer(TransformerMixin, BaseEstimator):
-    """Transform a count matrix to a normalized tf or tf-idf representation
+    """Transform a count matrix to a normalized tf or tf-idf representation.
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
     document-frequency. This is a common term weighting scheme in information
@@ -1445,7 +1445,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         similarity between two vectors is their dot product when l2 norm has
         been applied.
         * 'l1': Sum of absolute values of vector elements is 1.
-        See :func:`preprocessing.normalize`
+        See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting.
@@ -1471,6 +1471,26 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
+
+    TfidfVectorizer : Convert a collection of raw documents to a matrix of
+        TF-IDF features.
+
+    HashingVectorizer : Convert a collection of text documents to a matrix
+        of token occurrences.
+
+    References
+    ----------
+
+    .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
+                   Information Retrieval. Addison Wesley, pp. 68-74.
+
+    .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
+                   Introduction to Information Retrieval. Cambridge University
+                   Press, pp. 118-120.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -1495,16 +1515,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
            1.        , 1.91629073, 1.91629073])
     >>> pipe.transform(corpus).shape
     (4, 8)
-
-    References
-    ----------
-
-    .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
-                   Information Retrieval. Addison Wesley, pp. 68-74.
-
-    .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
-                   Introduction to Information Retrieval. Cambridge University
-                   Press, pp. 118-120.
     """
 
     def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
@@ -1520,6 +1530,14 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         ----------
         X : sparse matrix of shape n_samples, n_features)
             A matrix of term/token counts.
+
+        y : None
+            This parameter is not needed to compute tf-idf.
+
+        Returns
+        -------
+        self : object
+            Fitted transformer.
         """
         X = self._validate_data(X, accept_sparse=("csr", "csc"))
         if not sp.issparse(X):
@@ -1549,12 +1567,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, copy=True):
-        """Transform a count matrix to a tf or tf-idf representation
+        """Transform a count matrix to a tf or tf-idf representation.
 
         Parameters
         ----------
         X : sparse matrix of (n_samples, n_features)
-            a matrix of term/token counts
+            A matrix of term/token counts.
 
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
@@ -1563,6 +1581,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
+            Tf-idf-weighted document-term matrix.
         """
         X = self._validate_data(
             X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
@@ -1590,6 +1609,14 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
     @property
     def idf_(self):
+        """Return the inverse document frecuency (IDF) vector.
+
+        Returns
+        -------
+        idf_ : ndarray of shape (n_features,)
+            The inverse document frequency (IDF) vector; only defined
+            if  `use_idf` is True.
+        """
         # if _idf_diag is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
         return np.ravel(self._idf_diag.sum(axis=0))
