@@ -506,7 +506,10 @@ def enet_coordinate_descent_gram(floating[::1] w,
     cdef unsigned int n_features = Q.shape[0]
 
     # initial value "Q w" which will be kept of up to date in the iterations
-    cdef floating[:] H = np.dot(Q, w)
+    # cdef floating[:] H = np.dot(Q, w)
+    cdef floating[:] H = np.zeros(n_features, dtype=dtype)
+    _gemv(ColMajor, NoTrans, n_features, n_features, 1.0, &Q[0, 0],
+          n_features, &w[0], 1, 0.0, &H[0], 1)
 
     cdef floating[:] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating tmp
