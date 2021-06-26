@@ -253,6 +253,31 @@ August 2020.
    </div>
    </div>
 
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/microsoft.png
+   :width: 100pt
+   :align: center
+   :target: https://www.microsoft.com/
+
+.. raw:: html
+
+   </div>
+   </div>
+
 Past Sponsors
 .............
 
