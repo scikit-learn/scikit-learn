@@ -1532,7 +1532,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             A matrix of term/token counts.
 
         y : None
-            This parameter is not needed to compute tfidf.
+            This parameter is not needed to compute tf-idf.
 
         Returns
         -------
