@@ -395,6 +395,21 @@ class FastICA(TransformerMixin, BaseEstimator):
         Only set if whiten is 'True'. This is the pre-whitening matrix
         that projects data onto the first `n_components` principal components.
 
+    See Also
+    --------
+    PCA : Principal component analysis (PCA).
+    IncrementalPCA : Incremental principal components analysis (IPCA).
+    KernelPCA : Kernel Principal component analysis (KPCA).
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparsePCA : Sparse Principal Components Analysis (SparsePCA).
+
+    Notes
+    -----
+    Implementation based on
+    *A. Hyvarinen and E. Oja, Independent Component Analysis:
+    Algorithms and Applications, Neural Networks, 13(4-5), 2000,
+    pp. 411-430*
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -405,14 +420,6 @@ class FastICA(TransformerMixin, BaseEstimator):
     >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
     (1797, 7)
-
-    Notes
-    -----
-    Implementation based on
-    *A. Hyvarinen and E. Oja, Independent Component Analysis:
-    Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430*
-
     """
 
     def __init__(
@@ -459,7 +466,8 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-            X_new : ndarray of shape (n_samples, n_components)
+        S : ndarray of shape (n_samples, n_components)
+            Sources matrix.
         """
         XT = self._validate_data(
             X, copy=self.whiten, dtype=FLOAT_DTYPES, ensure_min_samples=2
@@ -588,10 +596,12 @@ class FastICA(TransformerMixin, BaseEstimator):
             and n_features is the number of features.
 
         y : Ignored
+            Legacy parameter, always ignored by the algorithm.
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_components)
+        S : ndarray of shape (n_samples, n_components)
+            Sources matrix.
         """
         return self._fit(X, compute_sources=True)
 
@@ -605,10 +615,12 @@ class FastICA(TransformerMixin, BaseEstimator):
             and n_features is the number of features.
 
         y : Ignored
-
+            Legacy parameter, always ignored by the algorithm.
+            
         Returns
         -------
-        self
+        self :
+            Returns the instance itself.
         """
         self._fit(X, compute_sources=False)
         return self
@@ -628,6 +640,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Transformed data obtained with unmixing matrix.
         """
         check_is_fitted(self)
 
@@ -653,6 +666,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_features)
+            Transformed data obtained with the mixing matrix.
         """
         check_is_fitted(self)
 
