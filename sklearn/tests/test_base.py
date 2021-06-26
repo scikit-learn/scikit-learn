@@ -416,7 +416,8 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         current_version=sklearn.__version__,
     )
     # check we got the warning about using pre-0.18 pickle
-    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_noversion)
+    with pytest.warns(UserWarning, match=message):
+        pickle.loads(tree_pickle_noversion)
 
 
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
