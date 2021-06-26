@@ -1609,7 +1609,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
     @property
     def idf_(self):
-        """Returns the inverse document frecuency (IDF) vector.
+        """Return the inverse document frecuency (IDF) vector.
 
         Returns
         -------
