@@ -1295,7 +1295,8 @@ class RandomForestClassifier(ForestClassifier):
     See Also
     --------
     sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
-    sklearn.ensemble.ExtraTreesClassifier : Ensemble of extremely randomized tree classifiers.
+    sklearn.ensemble.ExtraTreesClassifier : Ensemble of extremely randomized
+        tree classifiers.
 
     Notes
     -----
