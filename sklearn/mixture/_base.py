@@ -182,6 +182,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+
         y : Ignored
             Not used, present for API consistency by convention.
 
@@ -211,6 +212,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+
         y : Ignored
             Not used, present for API consistency by convention.
 
@@ -355,6 +357,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_dimensions)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+
         y : Ignored
             Not used, present for API consistency by convention.
 
