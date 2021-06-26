@@ -285,15 +285,23 @@ def test_roc_curve_one_label():
     y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     # assert there are warnings
-    w = UndefinedMetricWarning
-    fpr, tpr, thresholds = assert_warns(w, roc_curve, y_true, y_pred)
+    expected_message = (
+        "No negative samples in y_true, false positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred)
+
     # all true labels, all fpr should be nan
     assert_array_equal(fpr, np.full(len(thresholds), np.nan))
     assert fpr.shape == tpr.shape
     assert fpr.shape == thresholds.shape
 
     # assert there are warnings
-    fpr, tpr, thresholds = assert_warns(w, roc_curve, [1 - x for x in y_true], y_pred)
+    expected_message = (
+        "No positive samples in y_true, true positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        fpr, tpr, thresholds = roc_curve([1 - x for x in y_true], y_pred)
     # all negative labels, all tpr should be nan
     assert_array_equal(tpr, np.full(len(thresholds), np.nan))
     assert fpr.shape == tpr.shape
