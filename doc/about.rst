@@ -208,58 +208,6 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: themes/scikit-learn/static/img/columbia.png
-   :width: 50pt
-   :align: center
-   :target: https://www.columbia.edu/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-..........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-Andreas Müller received a grant to improve scikit-learn from the
-`Alfred P. Sloan Foundation <https://sloan.org>`_ .
-This grant supports the position of Nicolas Hug and Thomas J. Fan.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/sloan_banner.png
-   :width: 100pt
-   :align: center
-   :target: https://sloan.org/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-...........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
 `The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
 July 2017.
 
@@ -279,7 +227,7 @@ July 2017.
    </div>
    </div>
 
-...........
+..........
 
 .. raw:: html
 
@@ -306,6 +254,59 @@ August 2020.
    </div>
 
 Past Sponsors
+.............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Columbia University <https://columbia.edu/>`_ funded Andreas Müller
+(2016-2020).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/columbia.png
+   :width: 50pt
+   :align: center
+   :target: https://www.columbia.edu/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+Andreas Müller received a grant to improve scikit-learn from the
+`Alfred P. Sloan Foundation <https://sloan.org>`_ .
+This grant supported the position of Nicolas Hug and Thomas J. Fan.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sloan_banner.png
+   :width: 100pt
+   :align: center
+   :target: https://sloan.org/
+
+.. raw:: html
+
+   </div>
+   </div>
+
 .............
 
 .. raw:: html
@@ -461,6 +462,31 @@ funded a scikit-learn coding sprint in 2015.
    :width: 100pt
    :align: center
    :target: https://digicosme.lri.fr
+
+.. raw:: html
+
+   </div>
+   </div>
+
+.....................
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ funded Nicolas
+Hug to work full-time on scikit-learn in 2020.
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/czi_logo.svg
+   :width: 100pt
+   :align: center
+   :target: https://chanzuckerberg.com
 
 .. raw:: html
 

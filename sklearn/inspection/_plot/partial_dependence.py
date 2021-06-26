@@ -66,9 +66,9 @@ def plot_partial_dependence(
           >>> est1 = LinearRegression().fit(X, y)
           >>> est2 = RandomForestRegressor().fit(X, y)
           >>> disp1 = plot_partial_dependence(est1, X,
-          ...                                 [1, 2])  # doctest: +SKIP
+          ...                                 [1, 2])
           >>> disp2 = plot_partial_dependence(est2, X, [1, 2],
-          ...                                 ax=disp1.axes_)  # doctest: +SKIP
+          ...                                 ax=disp1.axes_)
 
     .. warning::
 

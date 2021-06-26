@@ -133,11 +133,17 @@ def pytest_collection_modifyitems(config, items):
     # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
+        import matplotlib  # noqa
+    except ImportError:
+        skip_doctests = True
+        reason = "matplotlib is required to run the doctests"
+
+    try:
         if np_version < parse_version("1.14"):
             reason = "doctests are only run for numpy >= 1.14"
             skip_doctests = True
         elif _IS_32BIT:
-            reason = "doctest are only run when the default numpy int is " "64 bits."
+            reason = "doctest are only run when the default numpy int is 64 bits."
             skip_doctests = True
         elif sys.platform.startswith("win32"):
             reason = (
