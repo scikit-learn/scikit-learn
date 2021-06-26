@@ -15,6 +15,7 @@ from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
+from ..utils.validation import check_random_state
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -61,6 +62,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         supported.
 
         .. versionadded:: 0.24
+
+    subsample : int, optional (default='warn')
+        Maximum number of samples, used to fit the model, for computational
+        efficiency. Used when ``strategy`` is 'quantile'.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        Determines random number generation for subsampling.
+        Please see ``subsample`` for more details.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`
 
     Attributes
     ----------
@@ -129,11 +140,22 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     """
 
-    def __init__(self, n_bins=5, *, encode="onehot", strategy="quantile", dtype=None):
+    def __init__(
+        self,
+        n_bins=5,
+        *,
+        encode="onehot",
+        strategy="quantile",
+        dtype=None,
+        random_state=None,
+        subsample="warn",
+    ):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
         self.dtype = dtype
+        self.random_state = random_state
+        self.subsample = subsample
 
     def fit(self, X, y=None):
         """
@@ -154,6 +176,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """
         X = self._validate_data(X, dtype="numeric")
 
+        # Check if the supplied dtypes are ok
         supported_dtype = (np.float64, np.float32)
         if self.dtype in supported_dtype:
             output_dtype = self.dtype
@@ -166,6 +189,33 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 f" instead."
             )
 
+        # Check if subsample is needed
+        n_samples, n_features = X.shape
+
+        if self.strategy == "quantile" and self.subsample == "warn":
+            warnings.warn(
+                "In the future (vTBD) onwards subsample = 1e5"
+                "will be used by default. Pass subsample=None to"
+                "silence this warning for now.",
+                FutureWarning,
+            )
+
+        if self.subsample is not None and self.subsample != "warn":
+            if self.subsample <= 0:
+                raise ValueError(
+                    "Invalid value for 'subsample': %d. "
+                    "The number of subsamples must be "
+                    "at least one." % self.subsample
+                )
+
+            rng = check_random_state(self.random_state)
+            if n_samples > self.subsample:
+                subsample_idx = rng.choice(
+                    n_samples, size=self.subsample, replace=False
+                )
+                X = X.take(subsample_idx, mode="clip", axis=0)
+
+        # Check if encode & strategy are valids
         valid_encode = ("onehot", "onehot-dense", "ordinal")
         if self.encode not in valid_encode:
             raise ValueError(
@@ -179,6 +229,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
             )
 
+        # Proceed with the actual fitting
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
 
