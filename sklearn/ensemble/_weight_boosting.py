@@ -924,7 +924,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, default=1.
+    learning_rate : float, default=1
         Weight applied to each classifier at each boosting iteration. A higher
         learning rate increases the contribution of each classifier. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
@@ -969,6 +969,23 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdaBoostClassifier : A meta-estimator that begins by fitting a classifier
+        on the original dataset and then fits additional copies of the
+        classifier on the same dataset where the weights of incorrectly
+        classified instances are adjusted such that subsequent classifiers
+        focus more on difficult cases.
+    GradientBoostingRegressor : Gradient Boosting Classification Tree.
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
+
+    References
+    ----------
+    .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
+           on-Line Learning and an Application to Boosting", 1995.
+
+    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+
     Examples
     --------
     >>> from sklearn.ensemble import AdaBoostRegressor
@@ -982,19 +999,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     array([4.7972...])
     >>> regr.score(X, y)
     0.9771...
-
-    See Also
-    --------
-    AdaBoostClassifier, GradientBoostingRegressor,
-    sklearn.tree.DecisionTreeRegressor
-
-    References
-    ----------
-    .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
-           on-Line Learning and an Application to Boosting", 1995.
-
-    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
-
     """
 
     def __init__(
@@ -1035,7 +1039,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         Returns
         -------
-        self : object
+        self
+            Fitted AdaBoostRegressor estimator.
         """
         # Check loss
         if self.loss not in ("linear", "square", "exponential"):

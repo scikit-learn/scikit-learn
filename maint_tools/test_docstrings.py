@@ -11,7 +11,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 DOCSTRING_IGNORE_LIST = [
     "ARDRegression",
     "AdaBoostClassifier",
-    "AdaBoostRegressor",
     "AdditiveChi2Sampler",
     "AffinityPropagation",
     "AgglomerativeClustering",
