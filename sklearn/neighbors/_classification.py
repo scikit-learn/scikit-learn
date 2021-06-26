@@ -143,7 +143,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     >>> print(neigh.predict([[1.1]]))
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
-    [[0.66666667 0.33333333]]
+    [[0.666... 0.333...]]
     """
 
     def __init__(
