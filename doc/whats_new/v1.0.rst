@@ -329,6 +329,10 @@ Changelog
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
+- |Feature| Added `sample_weight` parameter to
+  :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV`.
+  :pr:`16449` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
   has been optimised for dense matrices when using `solver='newton-cg'` and
   `multi_class!='multinomial'`.
@@ -428,9 +432,9 @@ Changelog
   and :user:`Oliver Grisel <ogrisel>`.
 
 - |Feature|  :func:`metrics.mean_squared_log_error` now supports
-  `squared=False`. 
+  `squared=False`.
   :pr:`20326` by :user:`Uttam kumar <helper-uttam>`.
-  
+
 - |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
   are integral.
   :pr:`9843` by :user:`Jon Crall <Erotemic>`.
