@@ -12,10 +12,12 @@ import numpy as np
 from scipy.special import logsumexp
 
 from .. import cluster
+from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
+from ..utils import check_array, check_random_state
+from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted
 
 
@@ -94,10 +96,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 "Estimation requires at least one run" % self.n_init
             )
 
-        if self.max_iter < 1:
+        if self.max_iter < 0:
             raise ValueError(
                 "Invalid value for 'max_iter': %d "
-                "Estimation requires at least one iteration" % self.max_iter
+                "The number of iterations must be non-negative" % self.max_iter
             )
 
         if self.reg_covar < 0.0:
@@ -146,6 +148,19 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         elif self.init_params == "random":
             resp = random_state.rand(n_samples, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
+        elif self.init_params == 'rand_data':
+            resp = np.zeros((n_samples, self.n_components))
+            points = random_state.choice(range(n_samples), self.n_components,
+                                         replace=False)
+            for n, i in enumerate(points):
+                resp[i, n] = 1
+        elif self.init_params == 'k-means++':
+            resp = np.zeros((n_samples, self.n_components))
+            _, indices = kmeans_plusplus(X, self.n_components,
+                                 x_squared_norms=row_norms(X, squared=True),
+                                 random_state=random_state)
+            for n, i in enumerate(indices.astype(int)):
+                resp[i, n] = 1
         else:
             raise ValueError(
                 "Unimplemented initialization method '%s'" % self.init_params
@@ -241,28 +256,35 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
             lower_bound = -np.inf if do_init else self.lower_bound_
 
-            for n_iter in range(1, self.max_iter + 1):
-                prev_lower_bound = lower_bound
-
-                log_prob_norm, log_resp = self._e_step(X)
-                self._m_step(X, log_resp)
-                lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
-
-                change = lower_bound - prev_lower_bound
-                self._print_verbose_msg_iter_end(n_iter, change)
-
-                if abs(change) < self.tol:
-                    self.converged_ = True
-                    break
-
-            self._print_verbose_msg_init_end(lower_bound)
-
-            if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
-                max_lower_bound = lower_bound
+            if self.max_iter == 0:
                 best_params = self._get_parameters()
-                best_n_iter = n_iter
+                best_n_iter = 1
+            else:
+                for n_iter in range(1, self.max_iter + 1):
+                    prev_lower_bound = lower_bound
 
-        if not self.converged_:
+                    log_prob_norm, log_resp = self._e_step(X)
+                    self._m_step(X, log_resp)
+                    lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
+
+                    change = lower_bound - prev_lower_bound
+                    self._print_verbose_msg_iter_end(n_iter, change)
+
+                    if abs(change) < self.tol:
+                        self.converged_ = True
+                        break
+
+                self._print_verbose_msg_init_end(lower_bound)
+
+                if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
+                    max_lower_bound = lower_bound
+                    best_params = self._get_parameters()
+                    best_n_iter = n_iter
+
+        # Should only warn about convergence if max_iter > 0, otherwise
+        # the user is assumed to have used 0-iters initialization
+        # to get the initial means.
+        if not self.converged_ and self.max_iter > 0:
             warnings.warn(
                 "Initialization %d did not converge. "
                 "Try different init parameters, "

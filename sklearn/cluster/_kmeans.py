@@ -85,6 +85,15 @@ def kmeans_plusplus(
         The index location of the chosen centers in the data array X. For a
         given index and center, X[index] = center.
 
+    Returns
+    -------
+    centers : array, shape (n_clusters, n_features)
+        The inital centers for k-means.
+
+    indices : array, shape (n_clusters)
+        The location of the chosen centers in the data array X. For a
+        given index and center, X[index] = center.
+
     Notes
     -----
     Selects initial cluster centers for k-mean clustering in a smart way
@@ -190,7 +199,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
 
     # Pick first center randomly and track index of point
     center_id = random_state.randint(n_samples)
-    indices = np.full(n_clusters, -1, dtype=int)
+    indices = np.empty(n_clusters)
     if sp.issparse(X):
         centers[0] = X[center_id].toarray()
     else:

@@ -73,7 +73,7 @@ Changelog
 - |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
-  
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -81,6 +81,15 @@ Changelog
   problems where only two classes appear in `y_true` and all the classes
   are specified in `labels`.
   :pr:`19721` by :user:`Joris Clement <flyingdutchman23>`.
+
+:mod:`sklearn.mixture`
+............................
+
+- |Feature| :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture` can now be initialized using
+  k-means++ and random data points. :issue:`11101` by
+  :user:`Gordon Walsh <g-walsh>`, conflicts solved by
+  :user:`Alberto Ceballos<alceballosa>` and Andres Rios<ariosramirez>.
 
 :mod:`sklearn.model_selection`
 ..............................
