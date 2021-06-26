@@ -16,7 +16,7 @@ from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_array, check_random_state
+from ..utils import check_random_state
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted
 
@@ -157,8 +157,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         elif self.init_params == 'k-means++':
             resp = np.zeros((n_samples, self.n_components))
             _, indices = kmeans_plusplus(X, self.n_components,
-                                 x_squared_norms=row_norms(X, squared=True),
-                                 random_state=random_state)
+                                         x_squared_norms=row_norms(X, squared=True),
+                                         random_state=random_state)
             for n, i in enumerate(indices.astype(int)):
                 resp[i, n] = 1
         else:
