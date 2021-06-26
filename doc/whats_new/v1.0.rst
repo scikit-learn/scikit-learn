@@ -588,6 +588,9 @@ Changelog
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Propreties that are decorated with :func:`utils.deprecated` correctly
+  wraps the property's docstring. :pr:`20385` by `Thomas Fan`_.
+
 :mod:`sklearn.validation`
 .........................
 
