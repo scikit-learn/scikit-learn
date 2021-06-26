@@ -255,6 +255,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
@@ -290,6 +291,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         random_state = check_random_state(self.random_state)
 
