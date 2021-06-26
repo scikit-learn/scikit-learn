@@ -307,6 +307,10 @@ Changelog
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
 
+- |enhancement| :func:`feature_selection.RFE.fit` accepts addition estimator
+  parameters that are passed directly to the estimator's fit function.
+  :pr:`20380` by :user:`Iván Pulido <ijpulidos>` and :user:`Felipe Bidu <fbidu>`
+
 :mod:`sklearn.inspection`
 .........................
 
