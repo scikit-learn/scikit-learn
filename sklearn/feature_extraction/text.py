@@ -1613,7 +1613,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        idf_ : array of shape (n_features)
+        idf_ : ndarray of shape (n_features,)
             The inverse document frequency (IDF) vector; only defined
             if  ``use_idf`` is True.
         """
