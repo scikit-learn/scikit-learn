@@ -5,11 +5,12 @@
 
 import warnings
 import numpy as np
+from numpy.core.numeric import allclose
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .base import MultiOutputMixin
-from .utils import check_random_state
+from .utils import all_estimators, check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
@@ -304,7 +305,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         P : ndarray of shape (n_samples, n_classes) or list of such arrays
-            Returns the probability of the sample for each class in
+            Return the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
         """
@@ -388,7 +389,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         }
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Return the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -420,8 +421,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
-    DummyRegressor is a regressor that makes predictions using
-    simple rules.
+    Regressor that makes predictions using simple rules.
 
     This regressor is useful as a simple baseline to compare with other
     (real) regressors. Do not use it for real problems.
@@ -465,6 +465,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     n_outputs_ : int
         Number of outputs.
 
+    See Also
+    --------
+    DummyClassifier: Classifer that makes predictions using simple rules.
+
     Examples
     --------
     >>> import numpy as np
@@ -479,6 +483,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> dummy_regr.score(X, y)
     0.0
     """
+
+
 
     def __init__(self, *, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
@@ -501,7 +507,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self : object
+        self : Estimator
+            Fitted estimator.
         """
         allowed_strategies = ("mean", "median", "quantile", "constant")
         if self.strategy not in allowed_strategies:
@@ -619,7 +626,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return {"poor_score": True, "no_validation": True}
 
     def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the residual
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
