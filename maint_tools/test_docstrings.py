@@ -151,7 +151,6 @@ DOCSTRING_IGNORE_LIST = [
     "PatchExtractor",
     "Perceptron",
     "Pipeline",
-    "PoissonRegressor",
     "PolynomialCountSketch",
     "PolynomialFeatures",
     "PowerTransformer",

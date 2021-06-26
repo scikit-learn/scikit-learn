@@ -165,7 +165,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self
+            Fitted model.
         """
         if isinstance(self.family, ExponentialDispersionModel):
             self._family_instance = self.family
@@ -496,6 +497,10 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     2.088...
     >>> clf.predict([[1, 1], [3, 4]])
     array([10.676..., 21.875...])
+
+    See Also
+    ----------
+    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson distribution.
     """
 
     def __init__(
@@ -522,7 +527,15 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
-        # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
+        """PoissonRegressor.family always returns 'poisson'.
+
+        This attribute is read-only to avoid mis-uses e.g. in GridSearch.
+
+        Returns
+        -------
+        str
+            Returns a string 'poisson'
+        """
         return "poisson"
 
     @family.setter
