@@ -75,7 +75,6 @@ DOCSTRING_IGNORE_LIST = [
     "IsotonicRegression",
     "IterativeImputer",
     "KBinsDiscretizer",
-    "KMeans",
     "KNNImputer",
     "KNeighborsClassifier",
     "KNeighborsRegressor",
