@@ -593,7 +593,7 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         Returns
         -------
-        self : instance of self.
+        self :
             Fitted estimator.
         """
         self._normalize = _deprecate_normalize(
