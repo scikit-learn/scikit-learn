@@ -71,11 +71,12 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
         C : ndarray of shape (n_samples,)
-            Predicted target values for X
+            Predicted target values for X.
         """
         check_is_fitted(self)
         X = self._check_X(X)
@@ -89,6 +90,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -111,6 +113,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -203,7 +206,7 @@ class GaussianNB(_BaseNB):
         self.var_smoothing = var_smoothing
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Gaussian Naive Bayes according to X, y
+        """Fit Gaussian Naive Bayes according to X, y.
 
         Parameters
         ----------
@@ -1052,18 +1055,8 @@ class BernoulliNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(1)
-    >>> X = rng.randint(5, size=(6, 100))
-    >>> Y = np.array([1, 2, 3, 4, 4, 5])
-    >>> from sklearn.naive_bayes import BernoulliNB
-    >>> clf = BernoulliNB()
-    >>> clf.fit(X, Y)
-    BernoulliNB()
-    >>> print(clf.predict(X[2:3]))
-    [3]
+    See Also
+    --------   
 
     References
     ----------
@@ -1077,6 +1070,19 @@ class BernoulliNB(_BaseDiscreteNB):
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> Y = np.array([1, 2, 3, 4, 4, 5])
+    >>> from sklearn.naive_bayes import BernoulliNB
+    >>> clf = BernoulliNB()
+    >>> clf.fit(X, Y)
+    BernoulliNB()
+    >>> print(clf.predict(X[2:3]))
+    [3]
     """
 
     def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
@@ -1229,7 +1235,8 @@ class CategoricalNB(_BaseDiscreteNB):
         self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y
+        """
+        Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
@@ -1251,6 +1258,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return super().fit(X, y, sample_weight=sample_weight)
 
@@ -1294,6 +1302,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
+        
         """
         return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
