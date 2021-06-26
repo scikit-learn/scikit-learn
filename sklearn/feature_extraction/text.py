@@ -1615,7 +1615,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         idf_ : ndarray of shape (n_features,)
             The inverse document frequency (IDF) vector; only defined
-            if  ``use_idf`` is True.
+            if  `use_idf` is True.
         """
         # if _idf_diag is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
