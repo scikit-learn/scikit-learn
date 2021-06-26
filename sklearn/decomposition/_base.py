@@ -135,9 +135,8 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        X_original array-like, shape (n_samples, n_features)
-            Original data, , where n_samples is the number of samples
-            and n_features is the number of features.
+        X_original : ndarray of shape (n_samples, n_features)
+            Data projected in the original feature space.
 
         Notes
         -----
