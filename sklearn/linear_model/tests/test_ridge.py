@@ -1518,6 +1518,7 @@ def test_ridge_sag_with_X_fortran():
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
+    """Test that positive Ridge finds true positive coefficients."""
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     coef = np.array([1, -10])
     if fit_intercept:
@@ -1536,9 +1537,11 @@ def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
-    # Test whether Ridge converges to the same solution
-    # with positive=True and positive=False
-    # when the ground truth coefs are all positive
+    """Test that Ridge w/wo positive converges to the same solution.
+
+    Ridge with positive=True and positive=False must give the same
+    when the ground truth coefs are all positive.
+    """
     rng = np.random.RandomState(42)
     X = rng.randn(300, 100)
     coef = rng.uniform(0.1, 1.0, size=X.shape[1])
@@ -1562,6 +1565,7 @@ def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
     "solver", ["svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga"]
 )
 def test_ridge_positive_error_test(solver):
+    """Test input validation for positive argument in Ridge."""
     alpha = 0.1
     X = np.array([[1, 2], [3, 4]])
     coef = np.array([1, -1])
@@ -1579,7 +1583,7 @@ def test_ridge_positive_error_test(solver):
 
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_positive_ridge_loss(alpha):
-    # Check ridge loss consistency when positive argument is enabled
+    """Check ridge loss consistency when positive argument is enabled."""
     X, y = make_regression(n_samples=300, n_features=300, random_state=42)
     alpha = 0.10
     n_checks = 100
@@ -1616,6 +1620,7 @@ def test_positive_ridge_loss(alpha):
 
 
 def test_lbfgs_solver_error():
+    """Test that LBFGS solver raises ConvergenceWarning."""
     X = np.array([[1, -1], [1, 1]])
     y = np.array([-1e10, 1e10])
 

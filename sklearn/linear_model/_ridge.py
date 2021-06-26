@@ -239,9 +239,12 @@ def _solve_svd(X, y, alpha):
 def _solve_lbfgs(
     X, y, alpha, positive=True, max_iter=None, tol=1e-3, X_offset=None, X_scale=None
 ):
-    # this function accepts positive=True
-    assert positive
+    """Solve ridge regression with LBFGS.
 
+    The main purpose is fitting with forcing coefficients to be positive.
+    For unconstrained ridge regression, there are faster dedicated solver methods.
+    Note that LBFGS seems faster than scipy.optimize.lsq_linear.
+    """
     n_samples, n_features = X.shape
 
     options = {}
@@ -251,9 +254,10 @@ def _solve_lbfgs(
         "method": "L-BFGS-B",
         "tol": tol,
         "jac": True,
-        "bounds": [(0, np.inf)] * n_features,
         "options": options,
     }
+    if positive:
+        config["bounds"] = [(0, np.inf)] * n_features
 
     if X_offset is not None and X_scale is not None:
         X_offset_scale = X_offset / X_scale
@@ -714,9 +718,8 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if self.positive:
             if self.solver not in ["auto", "lbfgs"]:
                 raise ValueError(
-                    "solver='{}' does not support positive fitting."
-                    " Please set the solver to 'auto' or 'lbfgs',"
-                    " or set `positive=False`".format(self.solver)
+                    f"solver='{self.solver}' does not support positive fitting. Please"
+                    f" set the solver to 'auto' or 'lbfgs', or set `positive=False`"
                 )
             else:
                 solver = self.solver
