@@ -30,7 +30,6 @@ DOCSTRING_IGNORE_LIST = [
     "ComplementNB",
     "CountVectorizer",
     "DBSCAN",
-    "DecisionTreeClassifier",
     "DecisionTreeRegressor",
     "DictVectorizer",
     "DictionaryLearning",
