@@ -235,8 +235,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """Build a Bagging ensemble of estimators from the training
-           set (X, y).
+        """Build a Bagging ensemble of estimators from the training set (X, y).
 
         Parameters
         ----------
