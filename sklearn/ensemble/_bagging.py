@@ -865,7 +865,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             to the classes in sorted order, as they appear in the attribute
             ``classes_``. Regression and binary classification are special
             cases with ``k == 1``, otherwise ``k==n_classes``.
-
         """
         check_is_fitted(self)
 
