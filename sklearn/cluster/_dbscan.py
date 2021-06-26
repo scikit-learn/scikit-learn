@@ -394,7 +394,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
-        """Perform DBSCAN clustering.
+        """Compute clusters from a data or distance matrix and predict labels.
 
         Parameters
         ----------
