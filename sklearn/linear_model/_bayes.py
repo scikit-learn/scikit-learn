@@ -217,8 +217,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         Returns
         -------
-        self : returns an instance of self.
-            Fitted estimator.
+        self : object
+            Returns the instance itself.
         """
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
