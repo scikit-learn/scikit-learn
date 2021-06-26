@@ -190,7 +190,6 @@ DOCSTRING_IGNORE_LIST = [
     "SimpleImputer",
     "SkewedChi2Sampler",
     "SparseCoder",
-    "SparsePCA",
     "SparseRandomProjection",
     "SpectralBiclustering",
     "SpectralClustering",
