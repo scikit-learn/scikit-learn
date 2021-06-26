@@ -28,7 +28,6 @@ DOCSTRING_IGNORE_LIST = [
     "ClassifierChain",
     "ColumnTransformer",
     "ComplementNB",
-    "CountVectorizer",
     "DBSCAN",
     "DecisionTreeClassifier",
     "DecisionTreeRegressor",
