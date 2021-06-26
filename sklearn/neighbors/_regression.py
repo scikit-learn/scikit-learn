@@ -112,17 +112,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
-    Examples
-    --------
-    >>> X = [[0], [1], [2], [3]]
-    >>> y = [0, 0, 1, 1]
-    >>> from sklearn.neighbors import KNeighborsRegressor
-    >>> neigh = KNeighborsRegressor(n_neighbors=2)
-    >>> neigh.fit(X, y)
-    KNeighborsRegressor(...)
-    >>> print(neigh.predict([[1.5]]))
-    [0.5]
-
     See Also
     --------
     NearestNeighbors
@@ -143,6 +132,17 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
        training data.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+
+    Examples
+    --------
+    >>> X = [[0], [1], [2], [3]]
+    >>> y = [0, 0, 1, 1]
+    >>> from sklearn.neighbors import KNeighborsRegressor
+    >>> neigh = KNeighborsRegressor(n_neighbors=2)
+    >>> neigh.fit(X, y)
+    KNeighborsRegressor(...)
+    >>> print(neigh.predict([[1.5]]))
+    [0.5]
     """
 
     def __init__(

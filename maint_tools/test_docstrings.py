@@ -78,7 +78,6 @@ DOCSTRING_IGNORE_LIST = [
     "KMeans",
     "KNNImputer",
     "KNeighborsClassifier",
-    "KNeighborsRegressor",
     "KNeighborsTransformer",
     "KernelCenterer",
     "KernelDensity",
