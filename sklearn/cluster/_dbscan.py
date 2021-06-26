@@ -183,7 +183,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
 
-    metric : string, or callable, default='euclidean'
+    metric : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -239,18 +239,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> from sklearn.cluster import DBSCAN
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [2, 2], [2, 3],
-    ...               [8, 7], [8, 8], [25, 80]])
-    >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
-    >>> clustering.labels_
-    array([ 0,  0,  0,  1,  1, -1])
-    >>> clustering
-    DBSCAN(eps=3, min_samples=2)
-
     See Also
     --------
     OPTICS : A similar clustering at multiple values of eps. Our implementation
@@ -289,6 +277,18 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
     DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
     ACM Transactions on Database Systems (TODS), 42(3), 19.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import DBSCAN
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [2, 2], [2, 3],
+    ...               [8, 7], [8, 8], [25, 80]])
+    >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
+    >>> clustering.labels_
+    array([ 0,  0,  0,  1,  1, -1])
+    >>> clustering
+    DBSCAN(eps=3, min_samples=2)
     """
 
     def __init__(
