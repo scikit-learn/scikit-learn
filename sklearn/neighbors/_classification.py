@@ -113,7 +113,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
     See Also
     --------
-    RadiusNeighborsClassifier: Classifier among neighbors within a given radius.
+    RadiusNeighborsClassifier: Classifier based on neighbors within a fixed radius.
     KNeighborsRegressor: Regression based on k-nearest neighbors.
     RadiusNeighborsRegressor: Regression based on neighbors within a fixed radius.
     NearestNeighbors: Unsupervised learner for implementing neighbor searches.
