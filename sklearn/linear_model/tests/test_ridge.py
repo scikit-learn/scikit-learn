@@ -423,10 +423,8 @@ def _make_sparse_offset_regression(
     removed_X[mask] = 0.0
     y -= removed_X.dot(c)
     if positive:
-        c_diff = np.abs(c) - c
-        c_diff += np.random.RandomState(random_state).uniform(1, 10, c.shape)
-        y += X.dot(c_diff)
-        c += c_diff
+        y += X.dot(np.abs(c) + 1 - c)
+        c = np.abs(c) + 1
     if n_features == 1:
         c = c[0]
     if coef:
@@ -1559,7 +1557,7 @@ def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
             alpha=alpha, positive=positive, fit_intercept=fit_intercept, tol=1e-10
         )
         results.append(model.fit(X, y).coef_)
-    assert_array_almost_equal(*results)
+    assert_allclose(*results, atol=1e-6, rtol=0)
 
 
 @pytest.mark.parametrize(
