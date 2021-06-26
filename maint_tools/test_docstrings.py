@@ -142,7 +142,6 @@ DOCSTRING_IGNORE_LIST = [
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "OutputCodeClassifier",
-    "PCA",
     "PLSCanonical",
     "PLSRegression",
     "PLSSVD",

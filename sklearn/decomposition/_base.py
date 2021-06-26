@@ -109,6 +109,8 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Projection of X in the first principal components, where n_samples
+            is the number of samples and n_components is the number of the components.
         """
         check_is_fitted(self)
 
@@ -134,6 +136,8 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         X_original array-like, shape (n_samples, n_features)
+            Original data, , where n_samples is the number of samples
+            and n_features is the number of features.
 
         Notes
         -----
