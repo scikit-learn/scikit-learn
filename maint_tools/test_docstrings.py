@@ -200,7 +200,6 @@ DOCSTRING_IGNORE_LIST = [
     "SplineTransformer",
     "StackingClassifier",
     "StackingRegressor",
-    "StandardScaler",
     "TSNE",
     "TfidfTransformer",
     "TfidfVectorizer",
