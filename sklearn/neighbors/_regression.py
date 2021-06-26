@@ -114,10 +114,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
     See Also
     --------
-    NearestNeighbors
-    RadiusNeighborsRegressor
-    KNeighborsClassifier
-    RadiusNeighborsClassifier
+    NearestNeighbors : TEST1.
+    KNeighborsRegressor : TEST2.
+    KNeighborsClassifier : TEST3.
+    RadiusNeighborsClassifier : TEST4.
 
     Notes
     -----
@@ -350,10 +350,11 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
     See Also
     --------
-    NearestNeighbors
-    KNeighborsRegressor
-    KNeighborsClassifier
-    RadiusNeighborsClassifier
+    NearestNeighbors : Regression based on nearest neighbors.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    KNeighborsClassifier : Classifier based on the k-nearest neighbors.
+    RadiusNeighborsClassifier : Classifier based on neighbors within a given
+    radius.
 
     Notes
     -----
