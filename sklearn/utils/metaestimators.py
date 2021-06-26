@@ -13,7 +13,7 @@ from ..utils import _safe_indexing
 from ..base import BaseEstimator
 from ..base import _is_pairwise
 
-__all__ = ["if_delegate_has_method"]
+__all__ = ["available_if", "if_delegate_has_method"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
