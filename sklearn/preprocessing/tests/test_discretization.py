@@ -377,3 +377,47 @@ def test_32_equal_64(input_dtype, encode):
     Xt_64 = kbd_64.transform(X_input)
 
     assert_allclose_dense_sparse(Xt_32, Xt_64)
+
+
+def test_subsample_full_and_none():
+    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
+    kbd_subs_none = KBinsDiscretizer(
+        n_bins=10, encode="ordinal", strategy="quantile", subsample=None
+    )
+    kbd_subs_xlen = KBinsDiscretizer(
+        n_bins=10, encode="ordinal", strategy="quantile", subsample=X.shape[0]
+    )
+    kbd_subs_none.fit(X)
+    kbd_subs_xlen.fit(X)
+
+    assert_array_equal(kbd_subs_none.bin_edges_[0], kbd_subs_xlen.bin_edges_[0])
+    assert kbd_subs_none.bin_edges_.shape == kbd_subs_xlen.bin_edges_.shape
+
+
+def test_subsample_default_and_none():
+    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
+    kbd_subs_none = KBinsDiscretizer(
+        n_bins=10, encode="ordinal", strategy="quantile", subsample=None
+    )
+    kbd_subs_def = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
+    kbd_subs_none.fit(X)
+
+    with pytest.warns(FutureWarning):
+        kbd_subs_def.fit(X)
+
+    assert_array_equal(kbd_subs_none.bin_edges_[0], kbd_subs_def.bin_edges_[0])
+    assert kbd_subs_none.bin_edges_.shape == kbd_subs_def.bin_edges_.shape
+
+
+def test_subsample_less_than_n_samples():
+    X = np.random.rand(100, 5)
+    subsample = 10
+    discretizer = KBinsDiscretizer(
+        n_bins=10, encode="ordinal", strategy="quantile", subsample=subsample
+    )
+    discretizer.fit(X)
+
+    for feature_idx in range(X.shape[1]):
+        # the number of bin_edges is equal to X.shape[0] + 1 if
+        # subsample is None
+        assert len(np.unique(discretizer.bin_edges_[feature_idx])) == subsample + 1
