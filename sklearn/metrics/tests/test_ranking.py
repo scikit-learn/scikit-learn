@@ -1871,8 +1871,12 @@ def test_top_k_accuracy_score_warning(y_true, k):
             [0.3, 0.2, 0.1, 0.4],
         ]
     )
-    w = UndefinedMetricWarning
-    score = assert_warns(w, top_k_accuracy_score, y_true, y_score, k=k)
+    expected_message = (
+        r"'k' \(\d+\) greater than or equal to 'n_classes' \(\d+\) will result in a "
+        "perfect score and is therefore meaningless."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        score = top_k_accuracy_score(y_true, y_score, k=k)
     assert score == 1
 
 
