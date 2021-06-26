@@ -350,6 +350,11 @@ class LabelPropagation(BaseLabelPropagation):
     transduction_ : ndarray of shape (n_samples)
         Label assigned to each item via the transduction.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_iter_ : int
         Number of iterations run.
 
@@ -462,6 +467,11 @@ class LabelSpreading(BaseLabelPropagation):
 
     transduction_ : ndarray of shape (n_samples,)
         Label assigned to each item via the transduction.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         Number of iterations run.

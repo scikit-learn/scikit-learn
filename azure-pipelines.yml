@@ -45,8 +45,12 @@ jobs:
         versionSpec: '3.9'
     - bash: |
         # Include pytest compatibility with mypy
-        pip install pytest flake8 mypy==0.782
+        pip install pytest flake8 mypy==0.782 black==21.6b0
       displayName: Install linters
+    - bash: |
+        # Remove comment when code is formatted by black
+        # black --check .
+      displayName: Run black
     - bash: |
         ./build_tools/circle/linting.sh
       displayName: Run linting

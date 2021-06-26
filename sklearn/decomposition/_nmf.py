@@ -1179,6 +1179,11 @@ class NMF(TransformerMixin, BaseEstimator):
     n_iter_ : int
         Actual number of iterations.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np

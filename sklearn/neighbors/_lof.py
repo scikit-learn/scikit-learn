@@ -157,6 +157,11 @@ class LocalOutlierFactor(KNeighborsMixin,
     effective_metric_params_ : dict
         The effective additional keyword arguments for the metric function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 

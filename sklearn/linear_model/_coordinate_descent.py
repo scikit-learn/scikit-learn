@@ -669,6 +669,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Given param alpha, the dual gaps at the end of the optimization,
         same shape as each observation of y.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNet
@@ -1018,6 +1023,11 @@ class Lasso(ElasticNet):
     n_iter_ : int or list of int
         Number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1559,6 +1569,11 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoCV
@@ -1744,6 +1759,11 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNetCV
@@ -1923,6 +1943,11 @@ class MultiTaskElasticNet(Lasso):
     sparse_coef_ : sparse matrix of shape (n_features,) or \
             (n_targets, n_features)
         Sparse representation of the `coef_`.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -2125,6 +2150,11 @@ class MultiTaskLasso(MultiTaskElasticNet):
             (n_targets, n_features)
         Sparse representation of the `coef_`.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2303,6 +2333,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     dual_gap_ : float
         The dual gap at the end of the optimization for the optimal alpha.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -2502,6 +2537,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     dual_gap_ : float
         The dual gap at the end of the optimization for the optimal alpha.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

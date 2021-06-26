@@ -249,7 +249,8 @@ def plot_partial_dependence(
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
+    >>> plot_partial_dependence(clf, X, [0, (0, 1)])
+    <...>
     """
     check_matplotlib_support('plot_partial_dependence')  # noqa
     import matplotlib.pyplot as plt  # noqa
