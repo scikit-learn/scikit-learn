@@ -1938,6 +1938,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    LogisticRegression : Logistic regression.
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -1950,11 +1954,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     (2, 3)
     >>> clf.score(X, y)
     0.98...
-
-    See Also
-    --------
-    LogisticRegression
-
     """
 
     def __init__(
@@ -2014,7 +2013,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         Returns
         -------
-        self : object
+        self
+            Fitted LogisticRegressionCV estimator.
         """
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
@@ -2346,8 +2346,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         return self
 
     def score(self, X, y, sample_weight=None):
-        """Returns the score using the `scoring` option on the given
-        test data and labels.
+        """Return the score using the `scoring` option on the given test data and labels.
 
         Parameters
         ----------
@@ -2364,7 +2363,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         -------
         score : float
             Score of self.predict(X) wrt. y.
-
         """
         scoring = self.scoring or "accuracy"
         scoring = get_scorer(scoring)
