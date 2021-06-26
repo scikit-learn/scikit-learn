@@ -851,7 +851,8 @@ class KNeighborsMixin:
 
         See Also
         --------
-        NearestNeighbors.radius_neighbors_graph: Computes the (weighted) graph of Neighbors for points in X.
+        NearestNeighbors.radius_neighbors_graph: Computes the (weighted) \
+            graph of Neighbors for points in X.
 
         Examples
         --------
