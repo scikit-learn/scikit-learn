@@ -153,13 +153,15 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         self.delegate_names = delegate_names
 
     def _check(self, obj):
+        delegate = None
         for delegate_name in self.delegate_names:
             try:
                 delegate = attrgetter(delegate_name)(obj)
+                break
             except AttributeError:
                 continue
-            break
-        else:
+
+        if delegate is None:
             return False
         # raise original AttributeError
         return getattr(delegate, self.attribute_name) or True
