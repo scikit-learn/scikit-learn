@@ -163,7 +163,6 @@ DOCSTRING_IGNORE_LIST = [
     "RadiusNeighborsRegressor",
     "RadiusNeighborsTransformer",
     "RandomForestClassifier",
-    "RandomForestRegressor",
     "RandomTreesEmbedding",
     "RandomizedSearchCV",
     "RegressorChain",
