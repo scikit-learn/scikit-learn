@@ -849,6 +849,11 @@ class KNeighborsMixin:
             `A[i, j]` gives the weight of the edge connecting `i` to `j`.
             The matrix is of CSR format.
 
+        See Also
+        --------
+        NearestNeighbors.radius_neighbors_graph : Compute the (weighted) graph
+            of Neighbors for points in X.
+
         Examples
         --------
         >>> X = [[0], [3], [1]]
@@ -861,10 +866,6 @@ class KNeighborsMixin:
         array([[1., 0., 1.],
                [0., 1., 1.],
                [1., 0., 1.]])
-
-        See Also
-        --------
-        NearestNeighbors.radius_neighbors_graph
         """
         check_is_fitted(self)
         if n_neighbors is None:
