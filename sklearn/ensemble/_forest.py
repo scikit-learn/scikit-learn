@@ -276,7 +276,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_nodes_ptr : ndarray of shape (n_estimators + 1,)
             The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
             gives the indicator value for the i-th estimator.
-
         """
         X = self._validate_X_predict(X)
         indicators = Parallel(
@@ -319,6 +318,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         # Validate or convert input data
         if issparse(y):
@@ -615,6 +615,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     )
     @property
     def n_features_(self):
+        """ The number of features when ``fit`` is performed.
+        Returns
+        -------
+        n_features_in_ : int
+            The number of features when ``fit`` is performed.
+        """
         return self.n_features_in_
 
 
@@ -1287,7 +1293,8 @@ class RandomForestClassifier(ForestClassifier):
 
     See Also
     --------
-    DecisionTreeClassifier, ExtraTreesClassifier
+    sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
+    sklearn.ensemble.ExtraTreesClassifier : An extra-trees classifier.
 
     Notes
     -----
