@@ -210,7 +210,7 @@ Changelog
   :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
 
 :mod:`sklearn.cross_decomposition`
-.....................
+..................................
 
 - |Fix| :class:`impute.IterativeImputer` now works
   with :class:`cross_decomposition.PLSRegression` as estimator.
