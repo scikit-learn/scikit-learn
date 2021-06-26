@@ -423,7 +423,8 @@ def _make_sparse_offset_regression(
     removed_X[mask] = 0.0
     y -= removed_X.dot(c)
     if positive:
-        c_diff = c + np.random.RandomState(random_state).uniform(1, 10, c.shape)
+        c_diff = np.abs(c) - c
+        c_diff += np.random.RandomState(random_state).uniform(1, 10, c.shape)
         y += X.dot(c_diff)
         c += c_diff
     if n_features == 1:
