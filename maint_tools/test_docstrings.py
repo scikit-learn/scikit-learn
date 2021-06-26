@@ -146,7 +146,6 @@ DOCSTRING_IGNORE_LIST = [
     "PassiveAggressiveClassifier",
     "PassiveAggressiveRegressor",
     "PatchExtractor",
-    "Perceptron",
     "Pipeline",
     "PoissonRegressor",
     "PolynomialCountSketch",
