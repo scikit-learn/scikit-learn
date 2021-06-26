@@ -96,7 +96,6 @@ DOCSTRING_IGNORE_LIST = [
     "LassoLarsIC",
     "LatentDirichletAllocation",
     "LedoitWolf",
-    "LinearDiscriminantAnalysis",
     "LinearRegression",
     "LinearSVC",
     "LinearSVR",
