@@ -628,7 +628,8 @@ class _BaseDiscreteNB(_BaseNB):
         return self
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y
+        """
+        Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
@@ -645,6 +646,7 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
@@ -1056,7 +1058,7 @@ class BernoulliNB(_BaseDiscreteNB):
         .. versionadded:: 0.24
 
     See Also
-    --------   
+    --------
 
     References
     ----------
@@ -1302,7 +1304,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
-        
+
         """
         return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
