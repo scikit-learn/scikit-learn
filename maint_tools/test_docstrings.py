@@ -77,7 +77,6 @@ DOCSTRING_IGNORE_LIST = [
     "KBinsDiscretizer",
     "KMeans",
     "KNNImputer",
-    "KNeighborsClassifier",
     "KNeighborsRegressor",
     "KNeighborsTransformer",
     "KernelCenterer",
