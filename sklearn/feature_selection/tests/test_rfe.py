@@ -128,8 +128,7 @@ def test_rfe_sample_weights():
 
     # Case 3 - duplicate the samples of one class]
     X_duplicate = np.concatenate((X, X[y == class_targeted]), axis=0)
-
-    n_extra = (y == class_targeted).sum() * (class_weight_factor - 1)
+    n_extra = (y == class_targeted).sum()
     extra_Y = np.ones(n_extra, dtype=int) * class_targeted
     y_duplicate = np.concatenate((y, extra_Y), axis=0)
 
