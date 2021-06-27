@@ -253,6 +253,7 @@ def euclidean_distances(
 
     Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), \
             default=None
+        If `None`, uses `Y=X`.
 
     Y_norm_squared : array-like of shape (n_samples_Y,) or (n_samples_Y, 1) \
             or (1, n_samples_Y), default=None
@@ -797,6 +798,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     X : array-like of shape (n_samples_X, n_features)
 
     Y : array-like of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
@@ -1050,6 +1052,7 @@ def linear_kernel(X, Y=None, dense_output=True):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
@@ -1114,6 +1117,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1150,6 +1154,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1185,6 +1190,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1277,6 +1283,7 @@ def additive_chi2_kernel(X, Y=None):
     X : array-like of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     Returns
     -------
