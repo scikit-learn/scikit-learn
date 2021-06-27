@@ -124,8 +124,7 @@ def test_rfe_sample_weights():
     sample_weight = np.ones(y.shape[0])
     sample_weight[y == class_targeted] = class_weight_factor
 
-    rfe.fit(X, y, sample_weight=sample_weight)
-    ranking_weights = rfe.ranking_.copy()
+    rfe_with_sample_weight = clone(rfe).fit(X, y, sample_weight=sample_weight)
 
     # Case 3 - duplicate the samples of one class
     extra_X = np.tile(X[y == class_targeted], (class_weight_factor - 1, 1))
@@ -135,13 +134,12 @@ def test_rfe_sample_weights():
     extra_Y = np.ones(n_extra, dtype=int) * class_targeted
     y_duplicate = np.concatenate((y, extra_Y), axis=0)
 
-    rfe.fit(X_duplicate, y_duplicate)
-    ranking_duplicate = rfe.ranking_.copy()
+    rfe_duplicate = clone(rfe).fit(X_duplicate, y_duplicate)
 
     with raises(AssertionError):
-        assert_array_equal(rfe_without_sample_weight, ranking_weights)
+        assert_array_equal(rfe_without_sample_weight, rfe_with_sample_weight)
 
-    assert_array_equal(ranking_weights, ranking_duplicate)
+    assert_array_equal(rfe_with_sample_weight.ranking_, rfe_duplicate.ranking_)
 
 
 @pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
