@@ -183,7 +183,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator._estimator_type
 
     @property
-    def classes_(self):
+    def _classes_(self):
         return self.estimator_.classes_
 
     def fit(self, X, y):
