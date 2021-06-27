@@ -31,7 +31,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
     def get_support(self, indices=False):
         """
-        Get a mask, or integer index, of the features selected
+        Get a mask, or integer index, of the features selected.
 
         Parameters
         ----------
