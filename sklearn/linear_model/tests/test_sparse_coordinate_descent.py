@@ -10,6 +10,7 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.linear_model import Lasso, ElasticNet, LassoCV, ElasticNetCV
 
+
 # FIXME: 'normalize' to be removed in 1.2
 filterwarnings_normalize = pytest.mark.filterwarnings(
     "ignore:'normalize' was deprecated in version 1.0"
