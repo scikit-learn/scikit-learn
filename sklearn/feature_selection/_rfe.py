@@ -196,6 +196,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,)
             The target values.
+            
+        Returns
+        -------
+        self : object
+            An instance of self.
         """
         return self._fit(X, y)
 
@@ -600,6 +605,10 @@ class RFECV(RFE):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
             .. versionadded:: 0.20
+
+        Returns
+        -------
+        self : returns an instance of self.
         """
         tags = self._get_tags()
         X, y = self._validate_data(
