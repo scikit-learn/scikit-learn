@@ -131,7 +131,6 @@ DOCSTRING_IGNORE_LIST = [
     "OAS",
     "OPTICS",
     "OneClassSVM",
-    "OneHotEncoder",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
     "OrdinalEncoder",
