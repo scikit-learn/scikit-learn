@@ -1940,7 +1940,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     See Also
     --------
-    LogisticRegression : Logistic regression.
+    LogisticRegression : Logistic regression without tuning the
+        hyperparameter `C`.
 
     Examples
     --------
@@ -2346,7 +2347,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         return self
 
     def score(self, X, y, sample_weight=None):
-        """Return the score using the `scoring` option on the given test data and labels.
+        """Score using the `scoring` option on the given test data and labels.
 
         Parameters
         ----------
