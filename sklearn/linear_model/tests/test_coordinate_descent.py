@@ -62,6 +62,7 @@ from sklearn.linear_model import (
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
 
+
 # FIXME: 'normalize' to be removed in 1.2
 filterwarnings_normalize = pytest.mark.filterwarnings(
     "ignore:'normalize' was deprecated in version 1.0"
