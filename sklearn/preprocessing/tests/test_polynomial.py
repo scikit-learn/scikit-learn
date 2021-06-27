@@ -848,7 +848,7 @@ def test_polynomial_features_deprecated_n_input_features():
     # check that we raise a deprecation warning when accessing
     # `n_input_features_`. FIXME: remove in 1.2
     depr_msg = (
-        "The attribute n_input_features_ was deprecated in version "
+        "The attribute `n_input_features_` was deprecated in version "
         "1.0 and will be removed in 1.2."
     )
     X = np.arange(10).reshape(5, 2)

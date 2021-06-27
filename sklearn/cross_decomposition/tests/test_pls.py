@@ -500,9 +500,9 @@ def test_scores_deprecations(Est):
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     est = Est().fit(X, Y)
-    with pytest.warns(FutureWarning, match="x_scores_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`x_scores_` was deprecated"):
         assert_allclose(est.x_scores_, est.transform(X))
-    with pytest.warns(FutureWarning, match="y_scores_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`y_scores_` was deprecated"):
         assert_allclose(est.y_scores_, est.transform(X, Y)[1])
 
 
@@ -512,7 +512,7 @@ def test_norm_y_weights_deprecation(Est):
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     est = Est().fit(X, Y)
-    with pytest.warns(FutureWarning, match="norm_y_weights was deprecated"):
+    with pytest.warns(FutureWarning, match="`norm_y_weights` was deprecated"):
         est.norm_y_weights
 
 
@@ -524,7 +524,7 @@ def test_mean_and_std_deprecation(Estimator, attribute):
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     estimator = Estimator().fit(X, Y)
-    with pytest.warns(FutureWarning, match=f"{attribute} was deprecated"):
+    with pytest.warns(FutureWarning, match=f"`{attribute}` was deprecated"):
         getattr(estimator, attribute)
 
 

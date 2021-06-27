@@ -1374,7 +1374,7 @@ def test_gbr_deprecated_attr():
     X = np.zeros((10, 10))
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
-    msg = "Attribute n_classes_ was deprecated"
+    msg = "Attribute `n_classes_` was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         gbr.n_classes_
 
@@ -1423,7 +1423,7 @@ def test_n_features_deprecation(Estimator):
     y = np.array([1, 0])
     est = Estimator().fit(X, y)
 
-    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
 
 
