@@ -285,7 +285,7 @@ August 2020.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Quansight Labs <https://microsoft.com/>`_ funds Thomas J. Fan since 2021.
+`Quansight Labs <https://labs.quansight.org>`_ funds Thomas J. Fan since 2021.
 
 .. raw:: html
 
