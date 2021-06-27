@@ -1188,14 +1188,14 @@ class Lasso(ElasticNet):
     LassoCV : Lasso alpha parameter by cross-validation.
     LassoLarsCV : Lasso least angle parameter algorithm by cross-validation.
     sklearn.decomposition.sparse_encode : Sparse coding array estimator.
-    
+
     Notes
     -----
     The algorithm used to fit the model is coordinate descent.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
-    
+
     Examples
     --------
     >>> from sklearn import linear_model
