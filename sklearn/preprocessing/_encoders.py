@@ -450,6 +450,7 @@ class OneHotEncoder(_BaseEncoder):
         Returns
         -------
         self
+            Fitted encoder.
         """
         self._validate_keywords()
         self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
