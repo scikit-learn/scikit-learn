@@ -32,7 +32,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        cov : array, shape=(n_features, n_features)
+        cov : array of shape=(n_features, n_features)
             Estimated covariance of data.
         """
         components_ = self.components_
@@ -84,7 +84,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
@@ -102,13 +102,13 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             New data, where n_samples is the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : array-like of shape (n_samples, n_components)
             Projection of X in the first principal components, where n_samples
             is the number of samples and n_components is the number of the components.
         """
