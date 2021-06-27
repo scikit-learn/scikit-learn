@@ -183,7 +183,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator._estimator_type
 
     @property
-    def _classes_(self):
+    def classes_(self):
+        """Wrapper function to classes labels. Only available when `estimator` is a classifier."""
         return self.estimator_.classes_
 
     def fit(self, X, y):
