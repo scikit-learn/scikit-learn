@@ -1999,7 +1999,7 @@ def test_ridge_sample_weight_invariance(solver):
 
     n_samples = 100
     if data == "tall":
-        n_features = n_samples // 30
+        n_features = n_samples // 2
     else:
         n_features = n_samples * 2
     rng = np.random.RandomState(42)
