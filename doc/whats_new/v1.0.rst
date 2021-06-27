@@ -309,7 +309,8 @@ Changelog
 
 - |Enhancement| :func:`feature_selection.RFE.fit` accepts additional estimator
   parameters that are passed directly to the estimator's `fit` function.
-  :pr:`20380` by :user:`Iván Pulido <ijpulidos>` and :user:`Felipe Bidu <fbidu>`
+  :pr:`20380` by :user:`Iván Pulido <ijpulidos>`, :user:`Felipe Bidu <fbidu>` and
+  :user:`Gil Rutter <g-rutter>`.
 
 :mod:`sklearn.inspection`
 .........................
