@@ -510,7 +510,7 @@ class _PLS(
         if not isinstance(self, PLSRegression):
             pass
             warnings.warn(
-                "Attribute x_scores_ was deprecated in version 0.24 and "
+                "Attribute `x_scores_` was deprecated in version 0.24 and "
                 "will be removed in 1.1 (renaming of 0.26). Use "
                 "est.transform(X) on the training data instead.",
                 FutureWarning,
@@ -522,7 +522,7 @@ class _PLS(
         # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             warnings.warn(
-                "Attribute y_scores_ was deprecated in version 0.24 and "
+                "Attribute `y_scores_` was deprecated in version 0.24 and "
                 "will be removed in 1.1 (renaming of 0.26). Use "
                 "est.transform(X) on the training data instead.",
                 FutureWarning,

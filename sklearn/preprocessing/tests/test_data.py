@@ -2231,7 +2231,7 @@ def test_cv_pipeline_precomputed():
     assert pipeline._get_tags()["pairwise"]
 
     # TODO: Remove in 1.1
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         assert pipeline._pairwise
 

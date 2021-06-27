@@ -64,7 +64,7 @@ def test_gnb_var():
     clf = GaussianNB()
     clf.fit(X, y)
 
-    with pytest.warns(FutureWarning, match="Attribute sigma_ was deprecated"):
+    with pytest.warns(FutureWarning, match="Attribute `sigma_` was deprecated"):
         assert_array_equal(clf.sigma_, clf.var_)
 
 
