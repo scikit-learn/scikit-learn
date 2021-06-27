@@ -971,11 +971,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
     See Also
     --------
-    AdaBoostClassifier : A meta-estimator that begins by fitting a classifier
-        on the original dataset and then fits additional copies of the
-        classifier on the same dataset where the weights of incorrectly
-        classified instances are adjusted such that subsequent classifiers
-        focus more on difficult cases.
+    AdaBoostClassifier : An AdaBoost classifier.
     GradientBoostingRegressor : Gradient Boosting Classification Tree.
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
 
