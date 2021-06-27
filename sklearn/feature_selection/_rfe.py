@@ -143,7 +143,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
-    
+
     Examples
     --------
     The following example shows how to retrieve the 5 most informative
@@ -184,7 +184,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @property
     def classes_(self):
-        """Wrapper function to classes labels. Only available when `estimator` is a classifier."""
+        """Wrapper function to classes labels. Only available when \
+        `estimator` is a classifier."""
         return self.estimator_.classes_
 
     def fit(self, X, y):
@@ -197,7 +198,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,)
             The target values.
-            
+
         Returns
         -------
         self : object
@@ -330,13 +331,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array of shape [n_samples]
             The target values.
-        
+
         Returns
         -------
         score : float
             Score of the choosen estimator of transform(X) and y.
         """
-        
+
         check_is_fitted(self)
         return self.estimator_.score(self.transform(X), y)
 
@@ -539,7 +540,7 @@ class RFECV(RFE):
     where step is the number of features removed at each iteration.
 
     Allows NaN/Inf in the input if the underlying estimator does as well.
-  
+
     References
     ----------
 
