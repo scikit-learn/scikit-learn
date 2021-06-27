@@ -440,7 +440,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "The attribute n_input_features_ was "
+        "The attribute `n_input_features_` was "
         "deprecated in version 1.0 and will be removed in 1.2."
     )
     @property

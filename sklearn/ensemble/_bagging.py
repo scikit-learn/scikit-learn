@@ -468,8 +468,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use 'n_features_in_' instead."
+        "Attribute `n_features_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):
