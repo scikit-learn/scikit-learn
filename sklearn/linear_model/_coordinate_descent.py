@@ -478,10 +478,11 @@ def enet_path(
 
     See Also
     --------
-    MultiTaskElasticNet
-    MultiTaskElasticNetCV
-    ElasticNet
-    ElasticNetCV
+    MultiTaskElasticNet : Multi-task ElasticNet model trained with L1/L2 mixed-norm \
+    as regularizer.
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
+    ElasticNetCV : Elastic Net model with iterative fitting along a regularization path.
 
     Notes
     -----
@@ -865,6 +866,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
@@ -1178,6 +1180,22 @@ class Lasso(ElasticNet):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    lars_path : Regularization path using LARS.
+    lasso_path : Regularization path using Lasso.
+    LassoLars : Lasso Path along the regularization parameter usingLARS algorithm.
+    LassoCV : Lasso alpha parameter by cross-validation.
+    LassoLarsCV : Lasso least angle parameter algorithm by cross-validation.
+    sklearn.decomposition.sparse_encode : Sparse coding array estimator.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1188,22 +1206,6 @@ class Lasso(ElasticNet):
     [0.85 0.  ]
     >>> print(clf.intercept_)
     0.15...
-
-    See Also
-    --------
-    lars_path
-    lasso_path
-    LassoLars
-    LassoCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
     """
 
     path = staticmethod(enet_path)

@@ -558,8 +558,7 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination :math:`R^2` of the
-        prediction.
+        """Return the coefficient of determination :math:`R^2` of the prediction.
 
         The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
         where :math:`u` is the residual sum of squares ``((y_true - y_pred)
