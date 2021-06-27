@@ -12,7 +12,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.estimator_checks import check_sample_weights_invariance
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -1998,10 +1997,15 @@ def test_ridge_sample_weight_invariance(solver):
     # Check that duplicating the training dataset is equivalent to multiplying
     # the weights by 2:
 
+    n_samples = 100
+    if data == "tall":
+        n_features = n_samples // 30
+    else:
+        n_features = n_samples * 2
     rng = np.random.RandomState(42)
     X, y = make_regression(
-        n_samples=100,
-        n_features=300,
+        n_samples=n_samples,
+        n_features=n_features,
         effective_rank=10,
         n_informative=50,
         random_state=rng,
@@ -2038,23 +2042,36 @@ def test_ridge_sample_weight_consistentcy(
     y = rng.rand(n_samples)
     if sparseX:
         X = sp.csr_matrix(X)
-    params = dict(fit_intercept=fit_intercept, alpha=0.05)
+    params = dict(fit_intercept=fit_intercept, alpha=1.0, solver=solver, tol=1e-12)
 
-    reg = Ridge(**params).fit(X, y)
+    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
+    # test with sparse input.
+    reg = Ridge(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
     if fit_intercept:
         intercept = reg.intercept_
-
-    # sample_weight=np.ones(..) should be equivalent to sample_weight=None
-    # same check is done as check_sample_weights_invariance in
-    # sklearn.utils.estimator_checks.py, at least for dense input
     sample_weight = np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
-    # scaling of sample_weight should have no effect
+    # 2) setting elements of sample_weight to 0 is equivalent to removing these samples
+    # same check as check_sample_weights_invariance(name, reg, kind="zeros"), but we
+    # also test with sparse input
+    sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    sample_weight[-5:] = 0
+    reg.fit(X, y, sample_weight=sample_weight)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+    reg.fit(X[:-5, :], y[:-5], sample_weight=sample_weight[:-5])
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # 3) scaling of sample_weight should have no effect
     # Note: For models with penalty, scaling the penalty term might work.
     sample_weight = np.pi * np.ones_like(y)
     params['alpha'] = np.pi * params['alpha']
@@ -2065,32 +2082,22 @@ def test_ridge_sample_weight_consistentcy(
     if fit_intercept:
         assert_allclose(reg2.intercept_, intercept)
 
-    # setting one element of sample_weight to 0 is equivalent to removing
-    # the corresponding sample, see PR #15015
-    sample_weight = np.ones_like(y)
-    sample_weight[-1] = 0
-    reg.fit(X, y, sample_weight=sample_weight)
-    coef1 = reg.coef_.copy()
-    if fit_intercept:
-        intercept1 = reg.intercept_
-    reg.fit(X[:-1], y[:-1])
-    assert_allclose(reg.coef_, coef1, rtol=1e-6)
-    if fit_intercept:
-        assert_allclose(reg.intercept_, intercept1)
-
-    # check that multiplying sample_weight by 2 is equivalent
+    # 4) check that multiplying sample_weight by 2 is equivalent
     # to repeating correspoding samples twice
     if sparseX:
         X = X.toarray()
-    X2 = np.concatenate([X, X[:n_samples//2]], axis=0)
-    y2 = np.concatenate([y, y[:n_samples//2]])
-    sample_weight_1 = np.ones_like(y)
-    sample_weight_1[:n_samples//2] = 2
+    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
+    y2 = np.concatenate([y, y[: n_samples // 2]])
+    sample_weight_1 = sample_weight.copy()
+    sample_weight_1[: n_samples // 2] *= 2
+    sample_weight_2 = np.concatenate(
+        [sample_weight, sample_weight[: n_samples // 2]], axis=0
+    )
     if sparseX:
         X = sp.csr_matrix(X)
         X2 = sp.csr_matrix(X2)
     reg1 = Ridge(**params).fit(X, y, sample_weight=sample_weight_1)
-    reg2 = Ridge(**params).fit(X2, y2, sample_weight=None)
+    reg2 = Ridge(**params).fit(X2, y2, sample_weight=sample_weight_2)
     assert_allclose(reg1.coef_, reg2.coef_)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
