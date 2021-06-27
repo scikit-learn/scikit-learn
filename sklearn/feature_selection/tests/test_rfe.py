@@ -109,9 +109,7 @@ def test_rfe():
 
 
 def test_rfe_sample_weights():
-    iris = load_iris()
-    X = iris.data
-    y = iris.target
+    X, y = load_iris(return_X_y=True)
 
     clf = SVC(kernel="linear")
     rfe = RFE(estimator=clf, n_features_to_select=1)
