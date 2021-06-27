@@ -8,6 +8,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_raises
 from scipy import sparse
 
+from sklearn.base import clone
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
@@ -21,7 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings, raises
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -114,32 +115,32 @@ def test_rfe_sample_weights():
     clf = SVC(kernel="linear")
     rfe = RFE(estimator=clf, n_features_to_select=1)
 
-    sample_weight_test = 2
-    class_test = 2
+    class_targeted, class_weight_factor = 2, 2
 
     # Case 1 - original dataset
-    rfe.fit(X, y)
-    ranking_original = rfe.ranking_.copy()
+    rfe_without_sample_weight = clone(rfe).fit(X, y)
 
     # Case 2 - double the weight of one class's samples
-    w = np.ones(y.shape[0])
-    w[y == class_test] = sample_weight_test
+    sample_weight = np.ones(y.shape[0])
+    sample_weight[y == class_targeted] = class_weight_factor
 
-    rfe.fit(X, y, sample_weight=w)
+    rfe.fit(X, y, sample_weight=sample_weight)
     ranking_weights = rfe.ranking_.copy()
 
     # Case 3 - duplicate the samples of one class
-    extra_X = np.tile(X[y == class_test], (sample_weight_test - 1, 1))
+    extra_X = np.tile(X[y == class_targeted], (class_weight_factor - 1, 1))
     X_duplicate = np.concatenate((X, extra_X), axis=0)
 
-    n_extra = (y == class_test).sum() * (sample_weight_test - 1)
-    extra_Y = np.ones(n_extra, dtype=int) * class_test
+    n_extra = (y == class_targeted).sum() * (class_weight_factor - 1)
+    extra_Y = np.ones(n_extra, dtype=int) * class_targeted
     y_duplicate = np.concatenate((y, extra_Y), axis=0)
 
     rfe.fit(X_duplicate, y_duplicate)
     ranking_duplicate = rfe.ranking_.copy()
 
-    assert_raises(AssertionError, assert_array_equal, ranking_original, ranking_weights)
+    with raises(AssertionError):
+        assert_array_equal(rfe_without_sample_weight, ranking_weights)
+
     assert_array_equal(ranking_weights, ranking_duplicate)
 
 
