@@ -110,7 +110,7 @@ class _MultimetricScorer:
             params = metadata_request_factory(scorer).score.get_method_input(
                 ignore_extras=True, **kwargs
             )
-            if isinstance(scorer, _BaseScorer) and hasattr(scorer, "_score"):
+            if isinstance(scorer, _BaseScorer):
                 score = scorer._score(cached_call, estimator, *args, **params)
             else:
                 score = scorer(estimator, *args, **params)
@@ -457,11 +457,8 @@ def get_scorer(scoring):
     return scorer
 
 
-class _passthrough_scorer(_BaseScorer):
+class _passthrough_scorer:
     def __init__(self, estimator):
-        self._kwargs = {}
-        self._score_func = estimator.score
-        self._sign = 1
         self._estimator = estimator
 
     def __call__(self, estimator, *args, **kwargs):
