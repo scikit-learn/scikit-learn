@@ -472,7 +472,7 @@ class MetadataRouter:
             arguments to this method.
 
         mapping : dict or str, default="one-to-one"
-            The mapping between the ``obj``'s methods and this object's
+            The mapping between the ``obj``'s methods and this routing object's
             methods. If ``"one-to-one"`` all methods' requests from ``obj`` are
             merged into this instance's methods. If a dict, the mapping is of
             the form ``{"destination_method": "source_method"}``.
@@ -481,14 +481,14 @@ class MetadataRouter:
             - True: ``alias`` replaces the existing routing.
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
-            - "on-default": only overwrite the alias is it is
+            - "on-default": only overwrite the alias if it is
               RequestType.ERROR_IF_PASSED
 
         mask : bool, default=False
             If the requested metadata should be masked by the alias. If
             ``True``, then a request of the form
             ``{'sample_weight' : 'my_weight'}`` is converted to
-            ``{'my_weight': my_weight'}``. This is required for meta-estimators
+            ``{'my_weight': 'my_weight'}``. This is required for meta-estimators
             which should expose the requested parameters and not the ones
             expected by the objects' methods.
         """
@@ -525,7 +525,7 @@ class MetadataRouter:
 
 class RequestMethod:
     """
-    A descriptor to create a function to be set as request methods.
+    A descriptor for request methods.
 
     .. versionadded:: 1.1
 
