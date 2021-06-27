@@ -28,6 +28,9 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
+from ..utils.metadata_requests import metadata_request_factory
+from ..utils.metadata_requests import MetadataRouter
+from ..utils.metadata_requests import SampleWeightConsumer
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -1392,7 +1395,7 @@ def _path_residuals(
     return this_mse.mean(axis=0)
 
 
-class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
+class LinearModelCV(MultiOutputMixin, LinearModel, SampleWeightConsumer, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
     @abstractmethod
@@ -1443,7 +1446,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def path(X, y, **kwargs):
         """Compute path with coordinate descent."""
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **kwargs):
         """Fit linear model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -1465,10 +1468,23 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             MSE that is finally used to find the best model is the unweighted
             mean over the (weighted) MSEs of each test fold.
 
+        **kwargs : dict
+            Other arguments to be passed to the underlying score and CV methods.
+
         Returns
         -------
         self : object
         """
+        if sample_weight is not None:
+            kwargs["sample_weight"] = sample_weight
+        router = (
+            MetadataRouter()
+            .add(self._get_estimator())
+            .add(check_cv(self.cv), mapping={"fit": "split"})
+        )
+        router.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
+            ignore_extras=False, **kwargs
+        )
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
@@ -1486,7 +1502,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             # by the model fitting itself
 
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
@@ -1547,8 +1563,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 )
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        model = self._get_estimator()
-
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
 
@@ -1596,9 +1610,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         # init cross-validation generator
         cv = check_cv(self.cv)
-
+        cv_params = metadata_request_factory(cv).split.get_method_input(
+            ignore_extras=True, **kwargs
+        )
         # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv.split(X, y))
+        folds = list(cv.split(X, y, **cv_params))
         best_mse = np.inf
 
         # We do a double for loop folded in one, in order to be able to
@@ -1647,6 +1663,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         else:
             self.alphas_ = np.asarray(alphas[0])
 
+        model = self._get_estimator()
+        model_fit_params = metadata_request_factory(model).fit.get_method_input(
+            ignore_extras=True, **kwargs
+        )
         # Refit the model with the parameters selected
         common_params = {
             name: value
@@ -1660,12 +1680,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         precompute = getattr(self, "precompute", None)
         if isinstance(precompute, str) and precompute == "auto":
             model.precompute = False
-        if sample_weight is None:
-            # MultiTaskElasticNetCV does not (yet) support sample_weight, even
-            # not sample_weight=None.
-            model.fit(X, y)
-        else:
-            model.fit(X, y, sample_weight=sample_weight)
+        model.fit(X, y, **model_fit_params)
         if not hasattr(self, "l1_ratio"):
             del self.l1_ratio_
         self.coef_ = model.coef_
@@ -1684,6 +1699,30 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 ),
             }
         }
+
+    def get_metadata_request(self, output="dict"):
+        """Get requested data properties.
+
+        Parameters
+        ----------
+        output : {"dict", "MetadataRequest}
+            Whether the output should be a MetadataRequest instance, or a dict
+            representing that instance.
+
+        Returns
+        -------
+        request : MetadataRequest, or dict
+            If dict, it will be a deserialized version of the underlying
+            MetadataRequest object: dict of dict of str->value. The key to the
+            first dict is the name of the method, and the key to the second
+            dict is the name of the argument requested by the method.
+        """
+        router = (
+            MetadataRouter()
+            .add(super(), mapping="one-to-one", overwrite=True, mask=False)
+            .add(check_cv(self.cv), mapping={"fit": "split"}, overwrite=True, mask=True)
+        )
+        return router.get_metadata_request(output=output)
 
 
 class LassoCV(RegressorMixin, LinearModelCV):
@@ -1883,7 +1922,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         )
 
     def _get_estimator(self):
-        return Lasso()
+        return Lasso().fit_requests(sample_weight=True)
 
     def _is_multitask(self):
         return False
@@ -2119,7 +2158,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.selection = selection
 
     def _get_estimator(self):
-        return ElasticNet()
+        return ElasticNet().fit_requests(sample_weight=True)
 
     def _is_multitask(self):
         return False
@@ -2726,7 +2765,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.selection = selection
 
     def _get_estimator(self):
-        return MultiTaskElasticNet()
+        return MultiTaskElasticNet().fit_requests(sample_weight=True)
 
     def _is_multitask(self):
         return True
@@ -2945,7 +2984,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         )
 
     def _get_estimator(self):
-        return MultiTaskLasso()
+        return MultiTaskLasso().fit_requests(sample_weight=True)
 
     def _is_multitask(self):
         return True

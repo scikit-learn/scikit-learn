@@ -10,6 +10,7 @@ import joblib
 
 from sklearn.base import is_classifier
 from sklearn.base import clone
+from sklearn.metrics import make_scorer
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.model_selection import (
@@ -1505,10 +1506,12 @@ def test_enet_cv_grid_search(sample_weight):
 
     param = {"alpha": alphas, "l1_ratio": l1_ratios}
     gs = GridSearchCV(
-        estimator=ElasticNet(),
+        estimator=ElasticNet().fit_requests(sample_weight=True),
         param_grid=param,
         cv=cv,
-        scoring="neg_mean_squared_error",
+        scoring=make_scorer("neg_mean_squared_error").score_requests(
+            sample_weight=False
+        ),
     ).fit(X, y, sample_weight=sample_weight)
 
     assert reg.l1_ratio_ == pytest.approx(gs.best_params_["l1_ratio"])

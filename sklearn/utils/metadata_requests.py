@@ -293,10 +293,10 @@ class MethodMetadataRequest:
         return result
 
     def __repr__(self):
-        return self.to_dict()
+        return self.requests
 
     def __str__(self):
-        return str(self.to_dict())
+        return str(self.requests)
 
 
 class MetadataRequest:

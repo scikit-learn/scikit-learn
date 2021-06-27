@@ -76,12 +76,15 @@ class CVMetadataRequester:
         """
         if output not in {"dict", "MetadataRequest"}:
             raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
-        if callable(self.scoring):
-            scorers = [self.scoring]
-        elif self.scoring is None or isinstance(self.scoring, str):
-            scorers = [check_scoring(self.estimator, self.scoring)]
+        # if the *CV estimator doesn't take any scoring function, we take it from the
+        # estimator.
+        scoring = getattr(self, "scoring", None)
+        if callable(scoring):
+            scorers = [scoring]
+        elif scoring is None or isinstance(scoring, str):
+            scorers = [check_scoring(self.estimator, scoring)]
         else:
-            scorers = _check_multimetric_scoring(self.estimator, self.scoring).values()
+            scorers = _check_multimetric_scoring(self.estimator, scoring).values()
 
         router = (
             MetadataRouter()
@@ -784,6 +787,9 @@ class BaseSearchCV(
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
+        metadata_request_factory(self).fit.validate_metadata(
+            ignore_extras=False, **fit_params
+        )
         _fit_params = metadata_request_factory(estimator).fit.get_method_input(
             ignore_extras=True, **fit_params
         )
