@@ -2062,6 +2062,7 @@ def test_ridge_sample_weight_consistentcy(
     # also test with sparse input
     sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
     sample_weight[-5:] = 0
+    y[-5:] *= 1000  # to make excluding those samples important
     reg.fit(X, y, sample_weight=sample_weight)
     coef = reg.coef_.copy()
     if fit_intercept:
