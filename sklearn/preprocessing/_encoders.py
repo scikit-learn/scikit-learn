@@ -449,7 +449,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        self:
+        self
             Fitted encoder.
         """
         self._validate_keywords()
