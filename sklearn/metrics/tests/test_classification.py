@@ -410,10 +410,12 @@ def test_precision_recall_f_unused_pos_label():
         r"Note that pos_label \(set to 2\) is "
         r"ignored when average != 'binary' \(got 'macro'\). You "
         r"may use labels=\[pos_label\] to specify a single "
-        "positive class.")
+        "positive class."
+    )
     with pytest.warns(UserWarning, match=msg):
         precision_recall_fscore_support(
-            [1, 2, 1], [1, 2, 2], pos_label=2, average="macro")
+            [1, 2, 1], [1, 2, 2], pos_label=2, average="macro"
+        )
 
 
 def test_confusion_matrix_binary():
@@ -1280,13 +1282,10 @@ def test_jaccard_score_validation():
         r"Note that pos_label \(set to 3\) is ignored when "
         r"average != 'binary' \(got 'micro'\). You may use "
         r"labels=\[pos_label\] to specify a single positive "
-        "class.")
+        "class."
+    )
     with pytest.warns(UserWarning, match=msg):
-        jaccard_score(
-            y_true,
-            y_pred,
-            average="micro",
-            pos_label=3,)
+        jaccard_score(y_true, y_pred, average="micro", pos_label=3)
 
 
 def test_multilabel_jaccard_score(recwarn):
@@ -1343,10 +1342,10 @@ def test_multilabel_jaccard_score(recwarn):
     )
 
     with pytest.warns(UndefinedMetricWarning, match=msg):
-        assert(jaccard_score(
-            np.array([[0, 1]]),
-            np.array([[0, 1]]),
-            average="macro") == 0.5)
+        assert (
+            jaccard_score(np.array([[0, 1]]), np.array([[0, 1]]), average="macro")
+            == 0.5
+        )
 
     msg = (
         "Jaccard is ill-defined and being set to 0.0 in samples "
@@ -1354,10 +1353,14 @@ def test_multilabel_jaccard_score(recwarn):
     )
 
     with pytest.warns(UndefinedMetricWarning, match=msg):
-        assert(jaccard_score(
-            np.array([[0, 0], [1, 1]]),
-            np.array([[0, 0], [1, 1]]),
-            average="samples") == 0.5)
+        assert (
+            jaccard_score(
+                np.array([[0, 0], [1, 1]]),
+                np.array([[0, 0], [1, 1]]),
+                average="samples",
+            )
+            == 0.5
+        )
 
     assert not list(recwarn)
 
@@ -1408,13 +1411,7 @@ def test_average_binary_jaccard_score(recwarn):
         "no true or predicted samples"
     )
     with pytest.warns(UndefinedMetricWarning, match=msg):
-        assert(
-            jaccard_score(
-                [0, 0],
-                [0, 0],
-                average="binary"
-            ) == 0.0
-        )
+        assert jaccard_score([0, 0], [0, 0], average="binary") == 0.0
 
     # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
     assert jaccard_score([0], [0], pos_label=0, average="binary") == 1.0
@@ -1793,11 +1790,7 @@ def test_prf_warnings():
             " this behavior."
         )
         with pytest.warns(w, match=msg):
-            f(
-                [0, 1, 2],
-                [1, 1, 2],
-                average=average
-            )
+            f([0, 1, 2], [1, 1, 2], average=average)
 
         msg = (
             "Recall and F-score are ill-defined and "
@@ -1806,11 +1799,7 @@ def test_prf_warnings():
             " this behavior."
         )
         with pytest.warns(w, match=msg):
-            f(
-                [1, 1, 2],
-                [0, 1, 2],
-                average=average
-            )
+            f([1, 1, 2], [0, 1, 2], average=average)
 
     # average of per-sample scores
     msg = (
@@ -1820,11 +1809,7 @@ def test_prf_warnings():
         " this behavior."
     )
     with pytest.warns(w, match=msg):
-        f(
-            np.array([[1, 0], [1, 0]]),
-            np.array([[1, 0], [0, 0]]),
-            average="samples",
-        )
+        f(np.array([[1, 0], [1, 0]]), np.array([[1, 0], [0, 0]]), average="samples")
 
     msg = (
         "Recall and F-score are ill-defined and "
@@ -1833,11 +1818,7 @@ def test_prf_warnings():
         " this behavior."
     )
     with pytest.warns(w, match=msg):
-        f(
-            np.array([[1, 0], [0, 0]]),
-            np.array([[1, 0], [1, 0]]),
-            average="samples",
-        )
+        f(np.array([[1, 0], [0, 0]]), np.array([[1, 0], [1, 0]]), average="samples")
 
     # single score: micro-average
     msg = (
@@ -1847,11 +1828,7 @@ def test_prf_warnings():
         " this behavior."
     )
     with pytest.warns(w, match=msg):
-        f(
-            np.array([[1, 1], [1, 1]]),
-            np.array([[0, 0], [0, 0]]),
-            average="micro",
-        )
+        f(np.array([[1, 1], [1, 1]]), np.array([[0, 0], [0, 0]]), average="micro")
 
     msg = (
         "Recall and F-score are ill-defined and "
@@ -1860,11 +1837,7 @@ def test_prf_warnings():
         " this behavior."
     )
     with pytest.warns(w, match=msg):
-        f(
-            np.array([[0, 0], [0, 0]]),
-            np.array([[1, 1], [1, 1]]),
-            average="micro",
-        )
+        f(np.array([[0, 0], [0, 0]]), np.array([[1, 1], [1, 1]]), average="micro")
 
     # single positive label
     msg = (
@@ -1874,11 +1847,7 @@ def test_prf_warnings():
         " this behavior."
     )
     with pytest.warns(w, match=msg):
-        f(
-            [1, 1],
-            [-1, -1],
-            average="binary",
-        )
+        f([1, 1], [-1, -1], average="binary")
 
     msg = (
         "Recall and F-score are ill-defined and "
@@ -1887,11 +1856,7 @@ def test_prf_warnings():
         " this behavior."
     )
     with pytest.warns(w, match=msg):
-        f(
-            [-1, -1],
-            [1, 1],
-            average="binary",
-        )
+        f([-1, -1], [1, 1], average="binary")
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -2208,20 +2173,8 @@ def test__check_targets():
                 _check_targets(y1[:-1], y2)
 
     # Make sure seq of seq is not supported
-    y1 = [
-        (
-            1,
-            2,
-        ),
-        (0, 2, 3),
-    ]
-    y2 = [
-        (2,),
-        (
-            0,
-            2,
-        ),
-    ]
+    y1 = [(1, 2), (0, 2, 3)]
+    y2 = [(2,), (0, 2)]
     msg = (
         "You appear to be using a legacy multi-label data representation. "
         "Sequence of sequences are no longer supported; use a binary array"
@@ -2532,10 +2485,7 @@ def test_brier_score_loss():
 def test_balanced_accuracy_score_unseen():
     msg = "y_pred contains classes not in y_true"
     with pytest.warns(UserWarning, match=msg):
-        balanced_accuracy_score(
-            [0, 0, 0],
-            [0, 0, 1]
-        )
+        balanced_accuracy_score([0, 0, 0], [0, 0, 1])
 
 
 @pytest.mark.parametrize(
