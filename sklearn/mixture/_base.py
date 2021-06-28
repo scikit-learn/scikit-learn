@@ -188,7 +188,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        self : BaseMixture instance
+        self : object
             The fitted mixture.
         """
         self.fit_predict(X, y)
