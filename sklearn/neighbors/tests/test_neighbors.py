@@ -129,7 +129,7 @@ def test_unsupervised_inputs(NearestNeighbors):
 def test_n_neighbors_datatype():
     # Test to check whether n_neighbors is integer
     X = [[1, 1], [1, 1], [1, 1]]
-    expected_msg = "n_neighbors does not take .*float.* " "value, enter integer value"
+    expected_msg = "n_neighbors does not take .*float.* value, enter integer value"
     msg = "Expected n_neighbors > 0. Got -3"
 
     neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.0)

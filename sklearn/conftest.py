@@ -50,7 +50,7 @@ def _fetch_fixture(f):
         except IOError as e:
             if str(e) != "Data not found and `download_if_missing` is False":
                 raise
-            pytest.skip("test is enabled when " "SKLEARN_SKIP_NETWORK_TESTS=0")
+            pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
 
     return pytest.fixture(lambda: wrapped)
 

@@ -97,8 +97,9 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
-            "y_true and y_pred have different number of output "
-            "({0}!={1})".format(y_true.shape[1], y_pred.shape[1])
+            "y_true and y_pred have different number of output ({0}!={1})".format(
+                y_true.shape[1], y_pred.shape[1]
+            )
         )
 
     n_outputs = y_true.shape[1]
@@ -114,10 +115,10 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     elif multioutput is not None:
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
-            raise ValueError("Custom weights are useful only in " "multi-output cases.")
+            raise ValueError("Custom weights are useful only in multi-output cases.")
         elif n_outputs != len(multioutput):
             raise ValueError(
-                ("There must be equally many custom weights " "(%d) as outputs (%d).")
+                "There must be equally many custom weights (%d) as outputs (%d)."
                 % (len(multioutput), n_outputs)
             )
     y_type = "continuous" if n_outputs == 1 else "continuous-multioutput"

@@ -112,7 +112,7 @@ def kmeans_plusplus(
 
     if X.shape[0] < n_clusters:
         raise ValueError(
-            f"n_samples={X.shape[0]} should be >= " f"n_clusters={n_clusters}."
+            f"n_samples={X.shape[0]} should be >= n_clusters={n_clusters}."
         )
 
     # Check parameters
@@ -130,7 +130,7 @@ def kmeans_plusplus(
     if n_local_trials is not None and n_local_trials < 1:
         raise ValueError(
             f"n_local_trials is set to {n_local_trials} but should be an "
-            f"integer value greater than zero."
+            "integer value greater than zero."
         )
 
     random_state = check_random_state(random_state)
@@ -939,7 +939,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(
-                f"n_samples={X.shape[0]} should be >= " f"n_clusters={self.n_clusters}."
+                f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
             )
 
         # tol
@@ -948,7 +948,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # algorithm
         if self.algorithm not in ("auto", "full", "elkan"):
             raise ValueError(
-                f"Algorithm must be 'auto', 'full' or 'elkan', "
+                "Algorithm must be 'auto', 'full' or 'elkan', "
                 f"got {self.algorithm} instead."
             )
 
@@ -970,13 +970,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             or (isinstance(self.init, str) and self.init in ["k-means++", "random"])
         ):
             raise ValueError(
-                f"init should be either 'k-means++', 'random', a ndarray or a "
+                "init should be either 'k-means++', 'random', a ndarray or a "
                 f"callable, got '{self.init}' instead."
             )
 
         if hasattr(self.init, "__array__") and self._n_init != 1:
             warnings.warn(
-                f"Explicit initial center position passed: performing only"
+                "Explicit initial center position passed: performing only"
                 f" one init in {self.__class__.__name__} instead of "
                 f"n_init={self._n_init}.",
                 RuntimeWarning,
@@ -1028,18 +1028,18 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             if has_vcomp and has_mkl:
                 if not hasattr(self, "batch_size"):  # KMeans
                     warnings.warn(
-                        f"KMeans is known to have a memory leak on Windows "
-                        f"with MKL, when there are less chunks than available "
-                        f"threads. You can avoid it by setting the environment"
+                        "KMeans is known to have a memory leak on Windows "
+                        "with MKL, when there are less chunks than available "
+                        "threads. You can avoid it by setting the environment"
                         f" variable OMP_NUM_THREADS={active_threads}."
                     )
                 else:  # MiniBatchKMeans
                     warnings.warn(
-                        f"MiniBatchKMeans is known to have a memory leak on "
-                        f"Windows with MKL, when there are less chunks than "
-                        f"available threads. You can prevent it by setting "
+                        "MiniBatchKMeans is known to have a memory leak on "
+                        "Windows with MKL, when there are less chunks than "
+                        "available threads. You can prevent it by setting "
                         f"batch_size >= {self._n_threads * CHUNK_SIZE} or by "
-                        f"setting the environment variable "
+                        "setting the environment variable "
                         f"OMP_NUM_THREADS={active_threads}"
                     )
 
@@ -1462,9 +1462,7 @@ def _mini_batch_step(
                 X.shape[0], replace=False, size=n_reassigns
             )
             if verbose:
-                print(
-                    f"[MiniBatchKMeans] Reassigning {n_reassigns} " f"cluster centers."
-                )
+                print(f"[MiniBatchKMeans] Reassigning {n_reassigns} cluster centers.")
 
             if sp.issparse(X):
                 assign_rows_csr(
@@ -1726,7 +1724,7 @@ class MiniBatchKMeans(KMeans):
         # max_no_improvement
         if self.max_no_improvement is not None and self.max_no_improvement < 0:
             raise ValueError(
-                f"max_no_improvement should be >= 0, got "
+                "max_no_improvement should be >= 0, got "
                 f"{self.max_no_improvement} instead."
             )
 
@@ -1749,7 +1747,7 @@ class MiniBatchKMeans(KMeans):
             warnings.warn(
                 f"init_size={self._init_size} should be larger than "
                 f"n_clusters={self.n_clusters}. Setting it to "
-                f"min(3*n_clusters, n_samples)",
+                "min(3*n_clusters, n_samples)",
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -1759,7 +1757,7 @@ class MiniBatchKMeans(KMeans):
         # reassignment_ratio
         if self.reassignment_ratio < 0:
             raise ValueError(
-                f"reassignment_ratio should be >= 0, got "
+                "reassignment_ratio should be >= 0, got "
                 f"{self.reassignment_ratio} instead."
             )
 
@@ -1804,7 +1802,7 @@ class MiniBatchKMeans(KMeans):
         # centers position
         if self._tol > 0.0 and centers_squared_diff <= self._tol:
             if self.verbose:
-                print(f"Converged (small centers change) at step " f"{step}/{n_steps}")
+                print(f"Converged (small centers change) at step {step}/{n_steps}")
             return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
@@ -1821,7 +1819,7 @@ class MiniBatchKMeans(KMeans):
         ):
             if self.verbose:
                 print(
-                    f"Converged (lack of improvement in inertia) at step "
+                    "Converged (lack of improvement in inertia) at step "
                     f"{step}/{n_steps}"
                 )
             return True
@@ -1926,7 +1924,7 @@ class MiniBatchKMeans(KMeans):
             )
 
             if self.verbose:
-                print(f"Inertia for init {init_idx + 1}/{self._n_init}: " f"{inertia}")
+                print(f"Inertia for init {init_idx + 1}/{self._n_init}: {inertia}")
             if best_inertia is None or inertia < best_inertia:
                 init_centers = cluster_centers
                 best_inertia = inertia

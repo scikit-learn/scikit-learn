@@ -88,8 +88,8 @@ def _parallel_build_estimators(
     for i in range(n_estimators):
         if verbose > 1:
             print(
-                "Building estimator %d of %d for this parallel run "
-                "(total %d)..." % (i + 1, n_estimators, total_n_estimators)
+                "Building estimator %d of %d for this parallel run (total %d)..."
+                % (i + 1, n_estimators, total_n_estimators)
             )
 
         random_state = seeds[i]
@@ -347,14 +347,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         # Other checks
         if not self.bootstrap and self.oob_score:
-            raise ValueError(
-                "Out of bag estimation only available" " if bootstrap=True"
-            )
+            raise ValueError("Out of bag estimation only available if bootstrap=True")
 
         if self.warm_start and self.oob_score:
-            raise ValueError(
-                "Out of bag estimate only available" " if warm_start=False"
-            )
+            raise ValueError("Out of bag estimate only available if warm_start=False")
 
         if hasattr(self, "oob_score_") and self.warm_start:
             del self.oob_score_

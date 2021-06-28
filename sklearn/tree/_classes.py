@@ -170,7 +170,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError(
-                        "No support for np.int64 index based " "sparse matrices"
+                        "No support for np.int64 index based sparse matrices"
                     )
 
             if self.criterion == "poisson":
@@ -233,15 +233,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if isinstance(self.min_samples_leaf, numbers.Integral):
             if not 1 <= self.min_samples_leaf:
                 raise ValueError(
-                    "min_samples_leaf must be at least 1 "
-                    "or in (0, 0.5], got %s" % self.min_samples_leaf
+                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
+                    % self.min_samples_leaf
                 )
             min_samples_leaf = self.min_samples_leaf
         else:  # float
             if not 0.0 < self.min_samples_leaf <= 0.5:
                 raise ValueError(
-                    "min_samples_leaf must be at least 1 "
-                    "or in (0, 0.5], got %s" % self.min_samples_leaf
+                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
+                    % self.min_samples_leaf
                 )
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
@@ -250,7 +250,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "min_samples_split must be an integer "
                     "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the integer %s" % self.min_samples_split
+                    "got the integer %s"
+                    % self.min_samples_split
                 )
             min_samples_split = self.min_samples_split
         else:  # float
@@ -258,7 +259,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "min_samples_split must be an integer "
                     "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the float %s" % self.min_samples_split
+                    "got the float %s"
+                    % self.min_samples_split
                 )
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
@@ -295,8 +297,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if len(y) != n_samples:
             raise ValueError(
-                "Number of labels=%d does not match "
-                "number of samples=%d" % (len(y), n_samples)
+                "Number of labels=%d does not match number of samples=%d"
+                % (len(y), n_samples)
             )
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
@@ -306,11 +308,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("max_features must be in (0, n_features]")
         if not isinstance(max_leaf_nodes, numbers.Integral):
             raise ValueError(
-                "max_leaf_nodes must be integral number but was " "%r" % max_leaf_nodes
+                "max_leaf_nodes must be integral number but was %r" % max_leaf_nodes
             )
         if -1 < max_leaf_nodes < 2:
             raise ValueError(
-                ("max_leaf_nodes {0} must be either None " "or larger than 1").format(
+                ("max_leaf_nodes {0} must be either None or larger than 1").format(
                     max_leaf_nodes
                 )
             )
@@ -331,9 +333,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
         if self.min_impurity_decrease < 0.0:
-            raise ValueError(
-                "min_impurity_decrease must be greater than " "or equal to 0"
-            )
+            raise ValueError("min_impurity_decrease must be greater than or equal to 0")
 
         # TODO: Remove in 1.1
         if X_idx_sorted != "deprecated":
@@ -434,9 +434,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if issparse(X) and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
-                raise ValueError(
-                    "No support for np.int64 index based " "sparse matrices"
-                )
+                raise ValueError("No support for np.int64 index based sparse matrices")
         else:
             # The number of features is checked regardless of `check_input`
             self._check_n_features(X, reset=False)

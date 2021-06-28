@@ -206,7 +206,7 @@ def test_classification_report_zero_division_warning(zero_division):
         if zero_division == "warn":
             assert len(record) > 1
             for item in record:
-                msg = "Use `zero_division` parameter to control this " "behavior."
+                msg = "Use `zero_division` parameter to control this behavior."
                 assert msg in str(item.message)
         else:
             assert not record
@@ -1162,7 +1162,7 @@ def test_classification_report_labels_target_names_unequal_length():
     y_pred = [0, 2, 2, 0, 0]
     target_names = ["class 0", "class 1", "class 2"]
 
-    msg = "labels size, 2, does not " "match size of target_names, 3"
+    msg = "labels size, 2, does not match size of target_names, 3"
     with pytest.warns(UserWarning, match=msg):
         classification_report(y_true, y_pred, labels=[0, 2], target_names=target_names)
 
@@ -1272,9 +1272,7 @@ def test_jaccard_score_validation():
     )
     with pytest.raises(ValueError, match=msg2):
         jaccard_score(y_true, y_pred, average="binary")
-    msg3 = (
-        "Samplewise metrics are not available outside of multilabel " "classification."
-    )
+    msg3 = "Samplewise metrics are not available outside of multilabel classification."
     with pytest.raises(ValueError, match=msg3):
         jaccard_score(y_true, y_pred, average="samples")
 
@@ -1961,7 +1959,8 @@ def test_recall_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message) == "Recall is ill-defined and "
+                str(record.pop().message)
+                == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -1972,7 +1971,8 @@ def test_recall_warnings(zero_division):
         recall_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message) == "Recall is ill-defined and "
+                str(record.pop().message)
+                == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -1991,7 +1991,8 @@ def test_precision_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message) == "Precision is ill-defined and "
+                str(record.pop().message)
+                == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2002,7 +2003,8 @@ def test_precision_warnings(zero_division):
         precision_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message) == "Precision is ill-defined and "
+                str(record.pop().message)
+                == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2047,7 +2049,8 @@ def test_fscore_warnings(zero_division):
             )
             if zero_division == "warn":
                 assert (
-                    str(record.pop().message) == "F-score is ill-defined and "
+                    str(record.pop().message)
+                    == "F-score is ill-defined and "
                     "being set to 0.0 due to no true nor predicted "
                     "samples. Use `zero_division` parameter to "
                     "control this behavior."
@@ -2240,7 +2243,7 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
         ]
     )
     error_message = (
-        "Please include all labels in y_true " "or pass labels as third argument"
+        "Please include all labels in y_true or pass labels as third argument"
     )
     with pytest.raises(ValueError, match=error_message):
         hinge_loss(y_true, pred_decision)
@@ -2412,7 +2415,7 @@ def test_log_loss():
         log_loss(y_true, y_pred)
 
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
-    error_str = "Found input variables with inconsistent numbers of samples: " "[3, 2]"
+    error_str = "Found input variables with inconsistent numbers of samples: [3, 2]"
     (ValueError, error_str, log_loss, y_true, y_pred)
 
     # works when the labels argument is used
@@ -2467,8 +2470,7 @@ def test_brier_score_loss():
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     error_message = (
-        "Only binary classification is supported. The type of the target is "
-        "multiclass"
+        "Only binary classification is supported. The type of the target is multiclass"
     )
 
     with pytest.raises(ValueError, match=error_message):

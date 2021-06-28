@@ -516,7 +516,7 @@ def _get_prediction_method(clf):
         return method, "predict_proba"
     else:
         raise RuntimeError(
-            "'base_estimator' has no 'decision_function' or " "'predict_proba' method."
+            "'base_estimator' has no 'decision_function' or 'predict_proba' method."
         )
 
 
@@ -601,7 +601,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator = _SigmoidCalibration()
         else:
             raise ValueError(
-                "'method' should be one of: 'sigmoid' or " f"'isotonic'. Got {method}."
+                f"'method' should be one of: 'sigmoid' or 'isotonic'. Got {method}."
             )
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
@@ -902,13 +902,13 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
     elif y_prob.min() < 0 or y_prob.max() > 1:
         raise ValueError(
-            "y_prob has values outside [0, 1] and normalize is " "set to False."
+            "y_prob has values outside [0, 1] and normalize is set to False."
         )
 
     labels = np.unique(y_true)
     if len(labels) > 2:
         raise ValueError(
-            "Only binary classification is supported. " "Provided labels %s." % labels
+            "Only binary classification is supported. Provided labels %s." % labels
         )
     y_true = label_binarize(y_true, classes=labels)[:, 0]
 

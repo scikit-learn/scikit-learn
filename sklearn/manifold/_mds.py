@@ -498,8 +498,8 @@ class MDS(BaseEstimator):
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError(
-                "Proximity must be 'precomputed' or 'euclidean'."
-                " Got %s instead" % str(self.dissimilarity)
+                "Proximity must be 'precomputed' or 'euclidean'. Got %s instead"
+                % str(self.dissimilarity)
             )
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(

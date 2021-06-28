@@ -110,7 +110,7 @@ def _check_estimator(estimator):
         estimator, "predict_proba"
     ):
         raise ValueError(
-            "The base estimator should implement " "decision_function or predict_proba!"
+            "The base estimator should implement decision_function or predict_proba!"
         )
 
 
@@ -363,7 +363,7 @@ class OneVsRestClassifier(
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(
-                    ("Base estimator {0}, doesn't have " "partial_fit method").format(
+                    ("Base estimator {0}, doesn't have partial_fit method").format(
                         self.estimator
                     )
                 )
@@ -699,7 +699,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.classes_ = np.unique(y)
         if len(self.classes_) == 1:
             raise ValueError(
-                "OneVsOneClassifier can not be fit when only one" " class is present."
+                "OneVsOneClassifier can not be fit when only one class is present."
             )
         n_classes = self.classes_.shape[0]
         estimators_indices = list(
@@ -762,8 +762,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         if len(np.setdiff1d(y, self.classes_)):
             raise ValueError(
-                "Mini-batch contains {0} while it "
-                "must be subset of {1}".format(np.unique(y), self.classes_)
+                "Mini-batch contains {0} while it must be subset of {1}".format(
+                    np.unique(y), self.classes_
+                )
             )
 
         X, y = self._validate_data(
@@ -985,7 +986,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         if self.code_size <= 0:
             raise ValueError(
-                "code_size should be greater than 0, got {0}" "".format(self.code_size)
+                "code_size should be greater than 0, got {0}".format(self.code_size)
             )
 
         _check_estimator(self.estimator)
@@ -996,7 +997,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         n_classes = self.classes_.shape[0]
         if n_classes == 0:
             raise ValueError(
-                "OutputCodeClassifier can not be fit when no " "class is present."
+                "OutputCodeClassifier can not be fit when no class is present."
             )
         code_size_ = int(n_classes * self.code_size)
 

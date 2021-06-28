@@ -367,7 +367,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance." % self.metric
+                    "in very poor performance."
+                    % self.metric
                 )
         elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError(
@@ -391,9 +392,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             effective_p = self.p
 
         if self.metric in ["wminkowski", "minkowski"] and effective_p < 1:
-            raise ValueError(
-                "p must be greater or equal to one for " "minkowski metric"
-            )
+            raise ValueError("p must be greater or equal to one for minkowski metric")
 
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
@@ -451,7 +450,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             p = self.effective_metric_params_.pop("p", 2)
             if p < 1:
                 raise ValueError(
-                    "p must be greater or equal to one for " "minkowski metric"
+                    "p must be greater or equal to one for minkowski metric"
                 )
             elif p == 1:
                 self.effective_metric_ = "manhattan"
@@ -499,7 +498,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
-                warnings.warn("cannot use tree with sparse input: " "using brute force")
+                warnings.warn("cannot use tree with sparse input: using brute force")
             if self.effective_metric_ not in VALID_METRICS_SPARSE[
                 "brute"
             ] and not callable(self.effective_metric_):
@@ -567,8 +566,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("Expected n_neighbors > 0. Got %d" % self.n_neighbors)
             elif not isinstance(self.n_neighbors, numbers.Integral):
                 raise TypeError(
-                    "n_neighbors does not take %s value, "
-                    "enter integer value" % type(self.n_neighbors)
+                    "n_neighbors does not take %s value, enter integer value"
+                    % type(self.n_neighbors)
                 )
 
         return self
@@ -703,8 +702,8 @@ class KNeighborsMixin:
             raise ValueError("Expected n_neighbors > 0. Got %d" % n_neighbors)
         elif not isinstance(n_neighbors, numbers.Integral):
             raise TypeError(
-                "n_neighbors does not take %s value, "
-                "enter integer value" % type(n_neighbors)
+                "n_neighbors does not take %s value, enter integer value"
+                % type(n_neighbors)
             )
 
         if X is not None:
@@ -762,7 +761,8 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
+                    "or set algorithm='brute'"
+                    % self._fit_method
                 )
             old_joblib = parse_version(joblib.__version__) < parse_version("0.12")
             if old_joblib:
@@ -1083,7 +1083,7 @@ class RadiusNeighborsMixin:
             if sort_results:
                 if not return_distance:
                     raise ValueError(
-                        "return_distance must be True " "if sort_results is True."
+                        "return_distance must be True if sort_results is True."
                     )
                 for ii in range(len(neigh_dist)):
                     order = np.argsort(neigh_dist[ii], kind="mergesort")
@@ -1095,7 +1095,8 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
+                    "or set algorithm='brute'"
+                    % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)

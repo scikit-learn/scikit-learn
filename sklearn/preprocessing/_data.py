@@ -208,7 +208,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
             )
         if axis != 0:
             raise ValueError(
-                "Can only scale sparse matrix on axis=0, " " got axis=%d" % axis
+                "Can only scale sparse matrix on axis=0,  got axis=%d" % axis
             )
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
@@ -435,8 +435,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError(
-                "Minimum of desired feature range must be smaller"
-                " than maximum. Got %s." % str(feature_range)
+                "Minimum of desired feature range must be smaller than maximum. Got %s."
+                % str(feature_range)
             )
 
         if sparse.issparse(X):
@@ -1968,7 +1968,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     X = check_array(X, accept_sparse=["csr", "csc"], copy=copy)
     if sparse.issparse(X):
         if threshold < 0:
-            raise ValueError("Cannot binarize a sparse matrix with threshold " "< 0")
+            raise ValueError("Cannot binarize a sparse matrix with threshold < 0")
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
@@ -2516,13 +2516,15 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         if self.n_quantiles <= 0:
             raise ValueError(
                 "Invalid value for 'n_quantiles': %d. "
-                "The number of quantiles must be at least one." % self.n_quantiles
+                "The number of quantiles must be at least one."
+                % self.n_quantiles
             )
 
         if self.subsample <= 0:
             raise ValueError(
                 "Invalid value for 'subsample': %d. "
-                "The number of subsamples must be at least one." % self.subsample
+                "The number of subsamples must be at least one."
+                % self.subsample
             )
 
         if self.n_quantiles > self.subsample:
@@ -2638,7 +2640,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 and (sparse.issparse(X) and np.any(X.data < 0))
             ):
                 raise ValueError(
-                    "QuantileTransformer only accepts" " non-negative sparse matrices."
+                    "QuantileTransformer only accepts non-negative sparse matrices."
                 )
 
         # check the output distribution
@@ -2869,7 +2871,7 @@ def quantile_transform(
         return n.fit_transform(X.T).T
     else:
         raise ValueError(
-            "axis should be either equal to 0 or 1. Got" " axis={}".format(axis)
+            "axis should be either equal to 0 or 1. Got axis={}".format(axis)
         )
 
 
@@ -3240,8 +3242,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         valid_methods = ("box-cox", "yeo-johnson")
         if check_method and self.method not in valid_methods:
             raise ValueError(
-                "'method' must be one of {}, "
-                "got {} instead.".format(valid_methods, self.method)
+                "'method' must be one of {}, got {} instead.".format(
+                    valid_methods, self.method
+                )
             )
 
         return X

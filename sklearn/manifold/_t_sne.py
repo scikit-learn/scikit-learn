@@ -798,9 +798,7 @@ class TSNE(BaseEstimator):
             self._learning_rate = np.maximum(self._learning_rate, 50)
         else:
             if not (self._learning_rate > 0):
-                raise ValueError(
-                    "'learning_rate' must be a positive number " "or 'auto'."
-                )
+                raise ValueError("'learning_rate' must be a positive number or 'auto'.")
         if self.metric != "euclidean" and self.square_distances is not True:
             warnings.warn(
                 "'square_distances' has been introduced in 0.24 to help phase "
@@ -826,8 +824,7 @@ class TSNE(BaseEstimator):
         if self.metric == "precomputed":
             if isinstance(self._init, str) and self._init == "pca":
                 raise ValueError(
-                    'The parameter init="pca" cannot be '
-                    'used with metric="precomputed".'
+                    'The parameter init="pca" cannot be used with metric="precomputed".'
                 )
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
@@ -889,8 +886,7 @@ class TSNE(BaseEstimator):
 
             if np.any(distances < 0):
                 raise ValueError(
-                    "All distances should be positive, the "
-                    "metric given is not correct"
+                    "All distances should be positive, the metric given is not correct"
                 )
 
             if self.metric != "euclidean" and self.square_distances is True:
@@ -900,9 +896,9 @@ class TSNE(BaseEstimator):
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
             assert np.all(np.isfinite(P)), "All probabilities should be finite"
             assert np.all(P >= 0), "All probabilities should be non-negative"
-            assert np.all(P <= 1), (
-                "All probabilities should be less " "or then equal to one"
-            )
+            assert np.all(
+                P <= 1
+            ), "All probabilities should be less or then equal to one"
 
         else:
             # Compute the number of nearest neighbors to find.
@@ -936,8 +932,9 @@ class TSNE(BaseEstimator):
             duration = time() - t0
             if self.verbose:
                 print(
-                    "[t-SNE] Computed neighbors for {} samples "
-                    "in {:.3f}s...".format(n_samples, duration)
+                    "[t-SNE] Computed neighbors for {} samples in {:.3f}s...".format(
+                        n_samples, duration
+                    )
                 )
 
             # Free the memory used by the ball_tree
@@ -980,7 +977,7 @@ class TSNE(BaseEstimator):
                 np.float32
             )
         else:
-            raise ValueError("'init' must be 'pca', 'random', or " "a numpy array")
+            raise ValueError("'init' must be 'pca', 'random', or a numpy array")
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # degrees_of_freedom = n_components - 1 comes from
@@ -1043,8 +1040,8 @@ class TSNE(BaseEstimator):
         params, kl_divergence, it = _gradient_descent(obj_func, params, **opt_args)
         if self.verbose:
             print(
-                "[t-SNE] KL divergence after %d iterations with early "
-                "exaggeration: %f" % (it + 1, kl_divergence)
+                "[t-SNE] KL divergence after %d iterations with early exaggeration: %f"
+                % (it + 1, kl_divergence)
             )
 
         # Learning schedule (part 2): disable early exaggeration and finish
