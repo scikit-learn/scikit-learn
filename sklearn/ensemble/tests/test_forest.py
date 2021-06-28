@@ -32,6 +32,7 @@ from sklearn.metrics import mean_poisson_deviance
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
@@ -40,6 +41,7 @@ from sklearn.utils.fixes import parse_version
 from sklearn.exceptions import NotFittedError
 
 from sklearn import datasets
+from sklearn.base import clone, is_classifier
 from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
@@ -475,6 +477,200 @@ def test_unfitted_feature_importances(name):
         getattr(FOREST_ESTIMATORS[name](), "feature_importances_")
 
 
+@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
+def test_forest_estimator_oob_importances(ForestEstimator):
+    # Check that oob permutation importances correctly identify that
+    # there are 3 important features
+    n_samples, n_features, n_informative, n_redundant, n_repeated = (500, 10, 3, 0, 0)
+    estimator = ForestEstimator(
+        n_estimators=10,
+        feature_importances="permutation_oob",
+        bootstrap=True,
+        random_state=0,
+    )
+
+    if is_classifier(estimator):
+        X, y = datasets.make_classification(
+            n_samples=n_samples,
+            n_features=n_features,
+            n_informative=n_informative,
+            n_redundant=n_redundant,
+            n_repeated=n_repeated,
+            shuffle=False,
+            random_state=0,
+        )
+        imp_level = 0.025
+    else:
+        X, y = datasets.make_regression(
+            n_samples=n_samples,
+            n_features=n_features,
+            n_informative=n_informative,
+            shuffle=False,
+            random_state=100,
+        )
+        imp_level = 0.1
+
+    estimator.fit(X, y)
+    importances = estimator.feature_importances_
+
+    n_important = np.sum(importances > imp_level)
+    assert importances.shape == (n_features,)
+    assert n_important == n_informative
+    assert_array_less(importances[n_informative:], imp_level)
+
+
+@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
+def test_forest_estimator_oob_importance_ignores_random(ForestEstimator):
+    # Testing that a random feature with high cardinality registers as
+    # important using impurity-based feature importance but not out-of-bag
+    # permutation importance
+    n_informative = 3
+    X, y = datasets.make_classification(
+        n_samples=500,
+        n_features=10,
+        n_informative=n_informative,
+        n_redundant=0,
+        n_repeated=0,
+        shuffle=False,
+        random_state=0,
+    )
+
+    # Dichotomize all except for the last feature so that one non-informative
+    # feature has high cardinality while all other features are binary
+    X[:, :-1] = (X[:, :-1] > 0).astype(int)
+
+    # Get oob importances
+    estimator_oob = ForestEstimator(
+        n_estimators=10,
+        random_state=0,
+        feature_importances="permutation_oob",
+        bootstrap=True,
+    ).fit(X, y)
+    oob_importances = estimator_oob.feature_importances_
+
+    # Get impurity-based importances
+    estimator_impurity = ForestEstimator(
+        n_estimators=10,
+        random_state=0,
+        feature_importances="impurity",
+        bootstrap=True,
+    ).fit(X, y)
+    impurity_importances = estimator_impurity.feature_importances_
+
+    # Test importance levels
+    imp_level = 0.1
+    oob_imp_level = 0.025 if is_classifier(estimator_oob) else 0.1
+
+    oob_important = np.sum(oob_importances > oob_imp_level)
+    impurity_important = np.sum(impurity_importances > imp_level)
+
+    assert oob_important == n_informative
+    assert_array_less(oob_importances[n_informative:], oob_imp_level)
+    assert impurity_important == (n_informative + 1)
+    assert_array_less(impurity_importances[n_informative:-1], imp_level)
+    assert impurity_importances[-1] > imp_level
+
+
+@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"feature_importances": "permutation_oob", "bootstrap": True},
+        {"feature_importances": "impurity"},
+    ],
+)
+def test_forest_importances_attribute(ForestEstimator, params):
+    # check the fitted attribute `importances_`
+    n_samples, n_features, n_estimators = 500, 5, 10
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        random_state=42,
+    )
+
+    forest = ForestEstimator(n_estimators=n_estimators, **params).fit(X, y)
+    assert forest.importances_.importances_mean.shape == (n_features,)
+    assert forest.importances_.importances_std.shape == (n_features,)
+    assert forest.importances_.importances.shape == (n_features, n_estimators)
+
+    if params["feature_importances"] == "impurity":
+        # impurity-based feature importances are normalized
+        assert_allclose(
+            forest.importances_.importances_mean,
+            (forest.feature_importances_ / forest.importances_.importances_mean.sum()),
+        )
+    else:
+        assert_allclose(
+            forest.importances_.importances_mean, forest.feature_importances_
+        )
+
+
+@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
+def test_default_sample_weights_oob(ForestEstimator):
+    # Check that setting sample_weight to np.ones(...) is same as default
+    n_samples = 500
+    X, y = datasets.make_classification(
+        n_samples=n_samples,
+        n_features=10,
+        n_informative=3,
+        n_redundant=0,
+        n_repeated=0,
+        shuffle=False,
+        random_state=0,
+    )
+
+    # Using default sample_weight
+    clf_oob_default = ForestEstimator(
+        n_estimators=10,
+        oob_score=True,
+        feature_importances="permutation_oob",
+        bootstrap=True,
+        random_state=0,
+    )
+    clf_oob_default.fit(X, y, sample_weight=None)
+
+    # Using np.ones(...)
+    clf_oob_numpy = clone(clf_oob_default)
+    clf_oob_numpy.fit(X, y, sample_weight=np.ones(n_samples))
+
+    assert clf_oob_default.oob_score_ == pytest.approx(clf_oob_numpy.oob_score_)
+    assert_allclose(
+        clf_oob_default.feature_importances_,
+        clf_oob_numpy.feature_importances_,
+    )
+
+
+@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {"feature_importances": "xxx"},
+            "feature_importances should be 'impurity' or 'permutation_oob'",
+        ),
+        (
+            {"feature_importances": "permutation_oob", "bootstrap": False},
+            "Estimating feature importance on out of bag samples only",
+        ),
+    ],
+)
+def test_forest_oob_importances_error(ForestEstimator, params, err_msg):
+    # check that proper error messages are raised for feature_importances
+    # validation
+    estimator = ForestEstimator(**params)
+    with pytest.raises(ValueError, match=err_msg):
+        estimator.fit(X, y)
+
+
+@pytest.mark.parametrize("ForestTransformer", FOREST_TRANSFORMERS.values())
+def test_forest_transformer_no_oob_importance(ForestTransformer):
+    # check that the forest transformer does not expose the feature_importances
+    # parameter
+    err_msg = "unexpected keyword argument 'feature_importances'"
+    with pytest.raises(TypeError, match=err_msg):
+        ForestTransformer(feature_importances="permutation_oob")
+
+
 @pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
 @pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
 @pytest.mark.parametrize(
@@ -636,7 +832,7 @@ def test_random_trees_embedding_raise_error_oob(oob_score):
     with pytest.raises(TypeError, match="got an unexpected keyword argument"):
         RandomTreesEmbedding(oob_score=oob_score)
     with pytest.raises(NotImplementedError, match="OOB score not supported"):
-        RandomTreesEmbedding()._set_oob_score_and_attributes(X, y)
+        RandomTreesEmbedding()._set_oob_score_and_attributes(X, y, None)
 
 
 def check_gridsearch(name):

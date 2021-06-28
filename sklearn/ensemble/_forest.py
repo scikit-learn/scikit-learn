@@ -50,6 +50,7 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
+from .. import config_context
 from ..base import is_classifier
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..metrics import accuracy_score, r2_score
@@ -61,7 +62,8 @@ from ..tree import (
     ExtraTreeRegressor,
 )
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, compute_sample_weight, deprecated
+from ..utils import check_random_state, check_array, compute_sample_weight
+from ..utils import Bunch, deprecated
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
@@ -82,8 +84,7 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _get_n_samples_bootstrap(n_samples, max_samples):
-    """
-    Get the number of samples in a bootstrap sample.
+    """Get the number of samples in a bootstrap sample.
 
     Parameters
     ----------
@@ -121,8 +122,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
 
 
 def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
-    """
-    Private function used to _parallel_build_trees function."""
+    """Private function used to _parallel_build_trees function."""
 
     random_instance = check_random_state(random_state)
     sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
@@ -131,8 +131,13 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
 
 
 def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
+    """Generate the indices of the OOB sample indices for an estimator.
+
+    Instead of storing the OOB sample indices in the forest, it is more memory
+    efficient to rebuild the indices given the random state used to create the
+    bootstrap. This operation can be neglected in terms of computation time
+    compared to other processes when it is used (e.g. scoring).
     """
-    Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(
         random_state, n_samples, n_samples_bootstrap
     )
@@ -188,6 +193,40 @@ def _parallel_build_trees(
     return tree
 
 
+def _permutation_importances_oob(
+    estimator,
+    X,
+    y,
+    sample_weight,
+    n_samples,
+    n_samples_bootstrap,
+    random_state,
+):
+    """Compute the feature permutation importance given a tree."""
+    # avoid circular dependence
+    from ..inspection import permutation_importance
+
+    unsampled_indices = _generate_unsampled_indices(
+        estimator.random_state,
+        n_samples,
+        n_samples_bootstrap,
+    )
+
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples)
+
+    return permutation_importance(
+        estimator,
+        X[unsampled_indices, :],
+        y[unsampled_indices],
+        scoring=None,
+        n_repeats=1,
+        n_jobs=1,
+        random_state=random_state,
+        sample_weight=sample_weight[unsampled_indices],
+    ).importances[:, 0]
+
+
 class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     """
     Base class for forests of trees.
@@ -211,6 +250,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        feature_importances="impurity",
     ):
         super().__init__(
             base_estimator=base_estimator,
@@ -226,6 +266,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self.warm_start = warm_start
         self.class_weight = class_weight
         self.max_samples = max_samples
+        self.feature_importances = feature_importances
 
     def apply(self, X):
         """
@@ -398,9 +439,18 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     FutureWarning,
                 )
 
-        if not self.bootstrap and self.oob_score:
+        if self.feature_importances not in ("impurity", "permutation_oob"):
             raise ValueError(
-                "Out of bag estimation only available" " if bootstrap=True"
+                f"feature_importances should be 'impurity' or "
+                f"'permutation_oob'. Got {self.feature_importances} instead."
+            )
+
+        if not self.bootstrap and self.oob_score:
+            raise ValueError("Out of bag estimation only available if bootstrap=True")
+        if not self.bootstrap and self.feature_importances == "permutation_oob":
+            raise ValueError(
+                "Estimating feature importance on out of bag samples only "
+                "available if bootstrap=True"
             )
 
         random_state = check_random_state(self.random_state)
@@ -463,7 +513,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        if self.oob_score:
+        if self.oob_score or (self.feature_importances == "permutation_oob"):
             y_type = type_of_target(y)
             if y_type in ("multiclass-multioutput", "unknown"):
                 # FIXME: we could consider to support multiclass-multioutput if
@@ -476,7 +526,19 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     f"supported: continuous, continuous-multioutput, binary, "
                     f"multiclass, multilabel-indicator."
                 )
-            self._set_oob_score_and_attributes(X, y)
+            if self.oob_score:
+                self._set_oob_score_and_attributes(X, y, sample_weight)
+
+        if self.feature_importances == "impurity":
+            importances = self._compute_impurity_importances()
+        else:
+            importances = self._compute_oob_importances(X, y, sample_weight)
+
+        self.importances_ = Bunch(
+            importances_mean=importances.mean(axis=1),
+            importances_std=importances.std(axis=1),
+            importances=importances,
+        )
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -485,37 +547,111 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return self
 
+    def _compute_impurity_importances(self):
+        """Compute the impurity-based feature importances.
+
+        Returns
+        -------
+        importances : ndarray of shape (n_features,)
+            The impurity-based feature importances.
+        """
+        parallel_args = {
+            **_joblib_parallel_args(prefer="threads"),
+            "n_jobs": self.n_jobs,
+        }
+        all_importances = Parallel(**parallel_args)(
+            delayed(getattr)(tree, "feature_importances_")
+            for tree in self.estimators_
+            if tree.tree_.node_count > 1
+        )
+        if not all_importances:
+            return np.zeros(shape=(self.n_features_in_, 1), dtype=np.float64)
+        return np.transpose(all_importances)
+
     @abstractmethod
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight):
         """Compute and set the OOB score and attributes.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             The data matrix.
+
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
         """
 
-    def _compute_oob_predictions(self, X, y):
-        """Compute and set the OOB score.
+    def _compute_oob_importances(self, X, y, sample_weight):
+        """Compute importances by permuting features using OOB samples.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             The data matrix.
+
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
+
+        Returns
+        -------
+        oob_importances : ndarray of shape (n_features, n_estimators)
+            The permutation feature importance compuring on OOB.
+        """
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+        random_state = check_random_state(self.random_state)
+
+        n_samples = X.shape[0]
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples,
+            self.max_samples,
+        )
+
+        with config_context(assume_finite=True):
+            # avoid redundant checking performed on X in the permutation
+            # importance function.
+            oob_importances = np.transpose(
+                Parallel(n_jobs=self.n_jobs)(
+                    delayed(_permutation_importances_oob)(
+                        estimator,
+                        X,
+                        y,
+                        sample_weight,
+                        n_samples,
+                        n_samples_bootstrap,
+                        random_state,
+                    )
+                    for estimator in self.estimators_
+                )
+            )
+
+        return oob_importances
+
+    def _compute_oob_predictions(self, X):
+        """Compute and accumulate predictions of OOB samples.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
 
         Returns
         -------
         oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
                 (n_samples, 1, n_outputs)
             The OOB predictions.
-      """
+        """
         X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
 
-        n_samples = y.shape[0]
+        n_samples = X.shape[0]
         n_outputs = self.n_outputs_
         if is_classifier(self) and hasattr(self, "n_classes_"):
             # n_classes_ is a ndarray at this stage
@@ -535,15 +671,16 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_samples,
             self.max_samples,
         )
-        for estimator in self.estimators_:
+        for idx, estimator in enumerate(self.estimators_):
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state,
                 n_samples,
                 n_samples_bootstrap,
             )
+            X_oob = X[unsampled_indices, :]
 
-            y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
-            oob_pred[unsampled_indices, ...] += y_pred
+            y_oob_pred = self._get_oob_predictions(estimator, X_oob)
+            oob_pred[unsampled_indices, ...] += y_oob_pred
             n_oob_pred[unsampled_indices, :] += 1
 
         for k in range(n_outputs):
@@ -573,39 +710,42 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @property
     def feature_importances_(self):
         """
-        The impurity-based feature importances.
+        The feature importances.
 
-        The higher, the more important the feature.
-        The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
-        known as the Gini importance.
+        The higher, the more important the feature. There is two possible
+        strategies:
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        - if `feature_importances="impurity"`, the impurity-based feature
+          importances is reported. The importance of a feature is computed as
+          the (normalized) total reduction of the criterion brought by that
+          feature. It is also known as the Gini importance;
+        - if `feature_importances="permutation_oob"`, the permutation feature
+          importances on out-of-bag samples is reported.
 
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
-            The values of this array sum to 1, unless all trees are single node
-            trees consisting of only the root node, in which case it will be an
-            array of zeros.
+            The values of the feature importances corresponding to either the
+            impurity-based feature importances or the permutation feature
+            importances.
+
+            If the impurity-based feature importances is reported, the values
+            of this array sum to 1, unless all trees are single node trees
+            consisting of only the root node, in which case it will be an array
+            of zeros.
+
+            If the permutation feature importances is reported, the values
+            corresponds to the raw decrease of the score.
         """
         check_is_fitted(self)
-
-        all_importances = Parallel(
-            n_jobs=self.n_jobs, **_joblib_parallel_args(prefer="threads")
-        )(
-            delayed(getattr)(tree, "feature_importances_")
-            for tree in self.estimators_
-            if tree.tree_.node_count > 1
-        )
-
-        if not all_importances:
-            return np.zeros(self.n_features_in_, dtype=np.float64)
-
-        all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
-        return all_importances / np.sum(all_importances)
+        if self.feature_importances == "permutation_oob":
+            return self.importances_.importances_mean
+        # impurity-based feature importances
+        importances = self.importances_.importances_mean
+        if np.allclose(importances, 0.0):
+            # avoid division by zero
+            return importances
+        return importances / importances.sum()
 
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
@@ -657,6 +797,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        feature_importances="impurity",
     ):
         super().__init__(
             base_estimator,
@@ -670,6 +811,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
+            feature_importances=feature_importances,
         )
 
     @staticmethod
@@ -700,22 +842,30 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             y_pred = np.rollaxis(y_pred, axis=0, start=3)
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight):
         """Compute and set the OOB score and attributes.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             The data matrix.
+
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
         """
-        self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
-        if self.oob_decision_function_.shape[-1] == 1:
+        oob_predictions = super()._compute_oob_predictions(X)
+        if oob_predictions.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
-            self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
+            oob_predictions = oob_predictions.squeeze(axis=-1)
+
+        self.oob_decision_function_ = oob_predictions
         self.oob_score_ = accuracy_score(
-            y, np.argmax(self.oob_decision_function_, axis=1)
+            y,
+            np.argmax(self.oob_decision_function_, axis=1),
+            sample_weight=sample_weight,
         )
 
     def _validate_y_class_weight(self, y):
@@ -917,6 +1067,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         verbose=0,
         warm_start=False,
         max_samples=None,
+        feature_importances="impurity",
     ):
         super().__init__(
             base_estimator,
@@ -929,6 +1080,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
+            feature_importances=feature_importances,
         )
 
     def predict(self, X):
@@ -1003,7 +1155,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             y_pred = y_pred[:, np.newaxis, :]
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -1012,12 +1164,15 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : ndarray of shape (n_samples,)
+            Sample weights.
         """
-        self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(axis=1)
-        if self.oob_prediction_.shape[-1] == 1:
+        oob_predictions = super()._compute_oob_predictions(X).squeeze(axis=1)
+        if oob_predictions.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
-            self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
-        self.oob_score_ = r2_score(y, self.oob_prediction_)
+            oob_predictions = oob_predictions.squeeze(axis=-1)
+        self.oob_prediction_ = oob_predictions
+        self.oob_score_ = r2_score(y, self.oob_prediction_, sample_weight=sample_weight)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
@@ -1230,6 +1385,21 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
+    feature_importances : {"impurity", "permutation_oob"}, default="impurity"
+        The type of feature importance to compute:
+
+        - if `"impurity"`, the mean decrease impurity (MDI) is computed.
+          The importance of a feature is computed as the (normalized)
+          total reduction of the criterion brought by that feature.  It is also
+          known as the Gini importance;
+        - if `"permutation_oob"`, the permutation feature importance is
+          computed using the out-of-bag samples. The importance is computed as
+          the average decrease of the accuracy score across all trees when a
+          feature is shuffled.
+
+        .. versionadded:: 1.0
+           The `"permutation_oob"` strategy was added in 1.0.
+
     Attributes
     ----------
     base_estimator_ : DecisionTreeClassifier
@@ -1263,15 +1433,33 @@ class RandomForestClassifier(ForestClassifier):
         The number of outputs when ``fit`` is performed.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The impurity-based feature importances.
-        The higher, the more important the feature.
-        The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
-        known as the Gini importance.
+        The feature importances computed as specified by the strategy defined
+        by `feature_importances` parameter. The higher, the more important the
+        feature.
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        .. warning::
+           Impurity-based feature importances can be misleading for two
+           reasons:
+
+           - it is biased towards high cardinality features (many unique
+             values);
+           - it is computed from the training set and could be misleading
+             when the estimator overfits.
+
+           For these reasons, consider setting
+           `feature_importances="permutation_oob"` to use feature permutation
+           importances computed on the out-of-bag samples or use the function
+           :func:`sklearn.inspection.permutation_importance` as an alternative.
+
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1343,6 +1531,7 @@ class RandomForestClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        feature_importances="impurity",
     ):
         super().__init__(
             base_estimator=DecisionTreeClassifier(),
@@ -1367,6 +1556,7 @@ class RandomForestClassifier(ForestClassifier):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
+            feature_importances=feature_importances,
         )
 
         self.criterion = criterion
@@ -1550,6 +1740,21 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    feature_importances : {"impurity", "permutation_oob"}, default="impurity"
+        The type of feature importance to compute:
+
+        - if `"impurity"`, the mean decrease impurity (MDI) is computed.
+          The importance of a feature is computed as the (normalized)
+          total reduction of the criterion brought by that feature.  It is also
+          known as the Gini importance;
+        - if `"permutation_oob"`, the permutation feature importance is
+          computed using the out-of-bag samples. The importance is computed as
+          the average decrease of the :math:`R^2` score across all trees when a
+          feature is shuffled.
+
+        .. versionadded:: 1.0
+           The `"permutation_oob"` strategy was added in 1.0.
+
     Attributes
     ----------
     base_estimator_ : DecisionTreeRegressor
@@ -1560,15 +1765,33 @@ class RandomForestRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The impurity-based feature importances.
-        The higher, the more important the feature.
-        The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
-        known as the Gini importance.
+        The feature importances computed as specified by the strategy defined
+        by `feature_importances` parameter. The higher, the more important the
+        feature.
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        .. warning::
+           Impurity-based feature importances can be misleading for two
+           reasons:
+
+           - it is biased towards high cardinality features (many unique
+             values);
+           - it is computed from the training set and could be misleading
+             when the estimator overfits.
+
+           For these reasons, consider setting
+           `feature_importances="permutation_oob"` to use feature permutation
+           importances computed on the out-of-bag samples or use the function
+           :func:`sklearn.inspection.permutation_importance` as an alternative.
+
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1656,6 +1879,7 @@ class RandomForestRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        feature_importances="impurity",
     ):
         super().__init__(
             base_estimator=DecisionTreeRegressor(),
@@ -1679,6 +1903,7 @@ class RandomForestRegressor(ForestRegressor):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
+            feature_importances=feature_importances,
         )
 
         self.criterion = criterion
@@ -1870,6 +2095,21 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
+    feature_importances : {"impurity", "permutation_oob"}, default="impurity"
+        The type of feature importance to compute:
+
+        - if `"impurity"`, the mean decrease impurity (MDI) is computed.
+          The importance of a feature is computed as the (normalized)
+          total reduction of the criterion brought by that feature.  It is also
+          known as the Gini importance;
+        - if `"permutation_oob"`, the permutation feature importance is
+          computed using the out-of-bag samples. The importance is computed as
+          the average decrease of the accuracy score across all trees when a
+          feature is shuffled.
+
+        .. versionadded:: 1.0
+           The `"permutation_oob"` strategy was added in 1.0.
+
     Attributes
     ----------
     base_estimator_ : ExtraTreesClassifier
@@ -1888,15 +2128,33 @@ class ExtraTreesClassifier(ForestClassifier):
         number of classes for each output (multi-output problem).
 
     feature_importances_ : ndarray of shape (n_features,)
-        The impurity-based feature importances.
-        The higher, the more important the feature.
-        The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
-        known as the Gini importance.
+        The feature importances computed as specified by the strategy defined
+        by `feature_importances` parameter. The higher, the more important the
+        feature.
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        .. warning::
+           Impurity-based feature importances can be misleading for two
+           reasons:
+
+           - it is biased towards high cardinality features (many unique
+             values);
+           - it is computed from the training set and could be misleading
+             when the estimator overfits.
+
+           For these reasons, consider setting
+           `feature_importances="permutation_oob"` to use feature permutation
+           importances computed on the out-of-bag samples or use the function
+           :func:`sklearn.inspection.permutation_importance` as an alternative.
+
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1977,6 +2235,7 @@ class ExtraTreesClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        feature_importances="impurity",
     ):
         super().__init__(
             base_estimator=ExtraTreeClassifier(),
@@ -2001,6 +2260,7 @@ class ExtraTreesClassifier(ForestClassifier):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
+            feature_importances=feature_importances,
         )
 
         self.criterion = criterion
@@ -2180,6 +2440,21 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    feature_importances : {"impurity", "permutation_oob"}, default="impurity"
+        The type of feature importance to compute:
+
+        - if `"impurity"`, the mean decrease impurity (MDI) is computed.
+          The importance of a feature is computed as the (normalized)
+          total reduction of the criterion brought by that feature.  It is also
+          known as the Gini importance;
+        - if `"permutation_oob"`, the permutation feature importance is
+          computed using the out-of-bag samples. The importance is computed as
+          the average decrease of the :math:`R^2` score across all trees when a
+          feature is shuffled.
+
+        .. versionadded:: 1.0
+           The `"permutation_oob"` strategy was added in 1.0.
+
     Attributes
     ----------
     base_estimator_ : ExtraTreeRegressor
@@ -2190,15 +2465,33 @@ class ExtraTreesRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The impurity-based feature importances.
-        The higher, the more important the feature.
-        The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
-        known as the Gini importance.
+        The feature importances computed as specified by the strategy defined
+        by `feature_importances` parameter. The higher, the more important the
+        feature.
 
-        Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        .. warning::
+           Impurity-based feature importances can be misleading for two
+           reasons:
+
+           - it is biased towards high cardinality features (many unique
+             values);
+           - it is computed from the training set and could be misleading
+             when the estimator overfits.
+
+           For these reasons, consider setting
+           `feature_importances="permutation_oob"` to use feature permutation
+           importances computed on the out-of-bag samples or use the function
+           :func:`sklearn.inspection.permutation_importance` as an alternative.
+
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
 
     n_features_ : int
         The number of features.
@@ -2275,6 +2568,7 @@ class ExtraTreesRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        feature_importances="impurity",
     ):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
@@ -2298,6 +2592,7 @@ class ExtraTreesRegressor(ForestRegressor):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
+            feature_importances=feature_importances,
         )
 
         self.criterion = criterion
@@ -2431,6 +2726,16 @@ class RandomTreesEmbedding(BaseForest):
     feature_importances_ : ndarray of shape (n_features,)
         The feature importances (the higher, the more important the feature).
 
+    importances_ : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        importances_mean : ndarray, shape (n_features,)
+            Mean of feature importance over `n_estimators`.
+        importances_std : ndarray, shape (n_features,)
+            Standard deviation over `n_estimators`.
+        importances : ndarray, shape (n_features, n_estimators)
+            Raw permutation importance scores.
+
     n_features_ : int
         The number of features when ``fit`` is performed.
 
@@ -2522,7 +2827,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.sparse_output = sparse_output
 
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):

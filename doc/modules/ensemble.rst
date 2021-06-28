@@ -262,6 +262,15 @@ amount of time (e.g., on large datasets).
 Feature importance evaluation
 -----------------------------
 
+Both random-forest and extremely randomized trees estimators provides a fitted
+attribute `feature_importances_` giving an estimate of the relative feature
+importance. Two strategies are available to estimate the feature importances.
+It can be set with the parameter `feature_importances`. The following sections
+give information regarding the strategies to estimate the feature importance.
+
+Mean decrease in impurity (MDI)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
@@ -279,18 +288,53 @@ for feature selection. This is known as the mean decrease in impurity, or MDI.
 Refer to [L2014]_ for more information on MDI and feature importance
 evaluation with Random Forests.
 
+This strategy corresponds to setting `feature_importances="impurity"` which is
+the default values.
+
 .. warning::
 
   The impurity-based feature importances computed on tree-based models suffer
-  from two flaws that can lead to misleading conclusions. First they are
-  computed on statistics derived from the training dataset and therefore **do
-  not necessarily inform us on which features are most important to make good
-  predictions on held-out dataset**. Secondly, **they favor high cardinality
-  features**, that is features with many unique values.
-  :ref:`permutation_importance` is an alternative to impurity-based feature
-  importance that does not suffer from these flaws. These two methods of
-  obtaining feature importance are explored in:
-  :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+  from two flaws that can lead to misleading conclusions:
+
+  - Firstly, they are computed on statistics derived from the training
+    dataset and therefore **do not necessarily inform us on which features are
+    most important to make good predictions on held-out dataset**. [Strobl07]_
+  - Secondly, they favor **high cardinality features**, that is features with
+    many unique values. [White94]_
+
+  Features importances estimated through feature permutation is an alternative
+  that does not suffer from these flaws. We give more details regarding this
+  alternative in the next section.
+
+Permutation feature importances on out-of-bag (OOB) samples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An alternative to MDI is the feature importances that uses feature permutation,
+referred to as **permutation feature importances**.
+
+Each tree in the ensemble can be evaluated using the out-of-bag samples
+[B2001]_. To know the importance of a feature, one can compute the difference
+between the tree score with the original OOB sample and an OOB sample for which
+the feature of interest will be permuted. Thus, the permutation feature importance
+corresponds to the average of the decrease of the tree score.
+
+When a feature has significant predictive power, one expects the score to
+decrease. If instead the score remains unchanged, the feature is not important
+for predicting the target.
+
+This strategy can be selected by setting
+`feature_importances="permutation_oob"`.
+
+.. note::
+
+   :ref:`permutation_importance` can also be evaluated on a held-out set by
+   manually splitting the dataset into a train and a test sets. In this case,
+   the permutation procedure is applied on the test set rather than on the OOB
+   samples. The :func:`~sklearn.inspection.permutation_importance` should be
+   used in this case.
+
+Illustration of using feature importances
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
@@ -301,22 +345,29 @@ a :class:`ExtraTreesClassifier` model.
    :align: center
    :scale: 75
 
-In practice those estimates are stored as an attribute named
-``feature_importances_`` on the fitted model. This is an array with shape
-``(n_features,)`` whose values are positive and sum to 1.0. The higher
-the value, the more important is the contribution of the matching feature
-to the prediction function.
+MDI and the permutation feature importances are explored in:
+   :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
+ * :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
 
 .. topic:: References
 
- .. [L2014] G. Louppe,
-         "Understanding Random Forests: From Theory to Practice",
-         PhD Thesis, U. of Liege, 2014.
+  .. [Strobl07] `Strobl, C., Boulesteix, AL., Zeileis, A. et al.
+     Bias in random forest variable importance measures: Illustrations,
+     sources and a solution.
+     BMC Bioinformatics 8, 25 (2007).
+     <https://doi.org/10.1186/1471-2105-8-25>`_
+  .. [White94] `White, A.P., Liu, W.Z. Technical Note:
+     Bias in Information-Based Measures in Decision Tree Induction.
+     Machine Learning 15, 321–329 (1994).
+     <https://doi.org/10.1023/A:1022694010754>`_
+  .. [L2014] G. Louppe,
+     "Understanding Random Forests: From Theory to Practice",
+     PhD Thesis, U. of Liege, 2014.
 
 .. _random_trees_embedding:
 
@@ -624,7 +675,7 @@ chapter on gradient boosting in [F2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
 Mathematical formulation
--------------------------
+------------------------
 
 We first present GBRT for regression, and then detail the classification
 case.
