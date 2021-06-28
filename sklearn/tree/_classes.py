@@ -922,11 +922,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             This parameter is deprecated and has no effect.
             It will be removed in 1.1 (renaming of 0.26).
 
-            .. deprecated :: 0.24
+            .. deprecated:: 0.24
 
         Returns
         -------
-        self : DecisionTreeClassifier
+        self : object
             Fitted estimator.
         """
 
@@ -1021,6 +1021,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     )
     @property
     def n_features_(self):
+        """int: The number of features seen during `fit`."""
         return self.n_features_in_
 
 
@@ -1291,11 +1292,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             This parameter is deprecated and has no effect.
             It will be removed in 1.1 (renaming of 0.26).
 
-            .. deprecated :: 0.24
+            .. deprecated:: 0.24
 
         Returns
         -------
-        self : DecisionTreeRegressor
+        self : object
             Fitted estimator.
         """
 
@@ -1341,6 +1342,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     )
     @property
     def n_features_(self):
+        """int: The number of features seen during `fit`."""
         return self.n_features_in_
 
 
