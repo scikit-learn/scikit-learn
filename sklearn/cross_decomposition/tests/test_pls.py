@@ -118,6 +118,21 @@ def test_sanity_check_pls_regression():
     assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
 
 
+@pytest.mark.parametrize("Estimator", (PLSRegression, PLSCanonical, CCA))
+def test_pls_estimators_single_target_shape(Estimator):
+    # Check shape for single-target predictions on PLS estimators
+    X = np.random.randn(10, 3)
+    Y = np.random.randn(10, 1)
+
+    pls = Estimator(n_components=X.shape[1])
+    pls.fit(X, Y)
+
+    X_test = np.random.randn(10, 3)
+    Y_pred = pls.predict(X_test)
+
+    assert Y_pred.shape == (10,)
+
+
 def test_sanity_check_pls_regression_constant_column_Y():
     # Check behavior when the first column of Y is constant
     # The results are checked against a modified version of plsreg2
