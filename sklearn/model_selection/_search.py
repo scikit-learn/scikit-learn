@@ -808,9 +808,6 @@ class BaseSearchCV(
         _cv_params = {
             name: value for name, value in zip(_cv_param_names, _cv_param_values)
         }
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, **fit_params
-        )
         _fit_params = _check_fit_params(X, _fit_params)
 
         n_splits = cv_orig.get_n_splits(X, y, **_cv_params)
