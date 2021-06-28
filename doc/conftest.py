@@ -111,6 +111,10 @@ def skip_if_matplotlib_not_installed(fname):
 
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
+    # normalise filename to use forward slashes on Windows for easier handling
+    # later
+    fname = fname.replace(os.sep, "/")
+
     is_index = fname.endswith("datasets/index.rst")
     if fname.endswith("datasets/labeled_faces.rst") or is_index:
         setup_labeled_faces()
