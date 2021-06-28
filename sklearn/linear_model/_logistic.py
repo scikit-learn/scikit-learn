@@ -2014,7 +2014,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         Returns
         -------
-        self
+        self : object
             Fitted LogisticRegressionCV estimator.
         """
         solver = _check_solver(self.solver, self.penalty, self.dual)
