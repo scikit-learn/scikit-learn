@@ -98,7 +98,6 @@ DOCSTRING_IGNORE_LIST = [
     "LinearSVR",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
-    "LogisticRegressionCV",
     "MDS",
     "MLPClassifier",
     "MLPRegressor",
