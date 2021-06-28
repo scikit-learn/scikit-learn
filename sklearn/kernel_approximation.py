@@ -436,6 +436,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
+        self._check_feature_names(X, reset=False)
         X = as_float_array(X, copy=True)
         X = self._validate_data(X, copy=False, reset=False)
         if (X <= -self.skewedness).any():

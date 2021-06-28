@@ -497,6 +497,7 @@ class BaseEstimator:
             validated.
         """
         self._check_feature_names(X, reset=reset)
+
         if y is None and self._get_tags()["requires_y"]:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "

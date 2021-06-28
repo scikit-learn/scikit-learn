@@ -19,7 +19,6 @@ from ._testing import assert_array_equal
 from ._testing import assert_array_almost_equal
 from ._testing import assert_allclose
 from ._testing import assert_allclose_dense_sparse
-from ._testing import assert_warns_message
 from ._testing import set_random_state
 from ._testing import SkipTest
 from ._testing import ignore_warnings
@@ -3472,6 +3471,8 @@ def _check_column_name_consistency(name, estimator_orig, construct_X, array_name
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
 
+    estimator.fit(X, y)
+
     if not hasattr(estimator, "feature_names_in_"):
         raise ValueError(
             "Estimator does not have a feature_names_in_ "
@@ -3496,12 +3497,23 @@ def _check_column_name_consistency(name, estimator_orig, construct_X, array_name
     )
     for method in check_funcs:
         # TODO In 1.2, this will be an error.
-        assert_warns_message(FutureWarning, expected_msg, method, X_bad)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
+            with raises(FutureWarning, match=expected_msg):
+                method(X_bad)
 
     # partial_fit checks on second call
     if not hasattr(estimator, "partial_fit"):
         return  # partial_fit is not defined
 
     estimator = clone(estimator_orig)
-    estimator.partial_fit(X, y)
-    assert_warns_message(FutureWarning, expected_msg, estimator.partial_fit, X_bad, y)
+    if is_classifier(estimator):
+        classes = np.unique(y)
+        estimator.partial_fit(X, y, classes=classes)
+    else:
+        estimator.partial_fit(X, y)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
+        with raises(FutureWarning, match=expected_msg):
+            estimator.partial_fit(X_bad, y)

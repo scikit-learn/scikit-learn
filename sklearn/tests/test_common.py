@@ -317,35 +317,14 @@ def test_check_n_features_in_after_fitting(estimator):
 # is actually checking that the inner estimator checks for column name
 # consistency
 COLUMN_NAME_MODULES_TO_IGNORE = {
-    "calibration",
-    "cluster",
     "compose",
-    "covariance",
-    "decomposition",
-    "discriminant_analysis",
     "ensemble",
     "feature_extraction",
-    "feature_selection",
-    "gaussian_process",
-    "isotonic",
-    "impute",
     "kernel_approximation",
-    "kernel_ridge",
-    "linear_model",
-    "manifold",
-    "mixture",
     "model_selection",
     "multiclass",
     "multioutput",
-    "naive_bayes",
-    "neighbors",
-    "neural_network",
-    "pipeline",
-    "preprocessing",
-    "random_projection",
-    "semi_supervised",
-    "svm",
-    "tree",
+    "semi_supervised" "pipeline",
 }
 
 

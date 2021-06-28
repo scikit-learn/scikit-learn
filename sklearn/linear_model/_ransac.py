@@ -539,6 +539,7 @@ class RANSACRegressor(
             Returns predicted values.
         """
         check_is_fitted(self)
+        self._check_feature_names(X, reset=False)
 
         return self.estimator_.predict(X)
 
