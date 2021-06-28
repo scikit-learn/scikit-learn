@@ -278,6 +278,31 @@ August 2020.
    </div>
    </div>
 
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Quansight Labs <https://labs.quansight.org>`_ funds Thomas J. Fan since 2021.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/quansight-labs.png
+   :width: 100pt
+   :align: center
+   :target: https://labs.quansight.org
+
+.. raw:: html
+
+   </div>
+   </div>
+
 Past Sponsors
 .............
 
