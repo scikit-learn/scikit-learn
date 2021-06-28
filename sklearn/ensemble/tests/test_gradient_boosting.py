@@ -1380,7 +1380,7 @@ def test_gbr_deprecated_attr():
 
 
 # TODO: Remove in 1.1 when `n_classes_` is deprecated
-@pytest.mark.filterwarnings("ignore:Attribute n_classes_ was deprecated")
+@pytest.mark.filterwarnings("ignore:Attribute `n_classes_` was deprecated")
 def test_attr_error_raised_if_not_fitted():
     # check that accessing n_classes_ in not fitted GradientBoostingRegressor
     # raises an AttributeError
