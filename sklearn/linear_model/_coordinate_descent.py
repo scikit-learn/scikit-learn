@@ -1499,7 +1499,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, SampleWeightConsumer, ABC):
             .add(self._get_estimator())
             .add(check_cv(self.cv), mapping={"fit": "split"})
         )
-        router.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
+        metadata_request_factory(router).fit.validate_metadata(
             ignore_extras=False, kwargs=kwargs
         )
 
@@ -1728,29 +1728,22 @@ class LinearModelCV(MultiOutputMixin, LinearModel, SampleWeightConsumer, ABC):
             }
         }
 
-    def get_metadata_request(self, output="dict"):
+    def get_metadata_request(self):
         """Get requested data properties.
-
-        Parameters
-        ----------
-        output : {"dict", "MetadataRequest}
-            Whether the output should be a MetadataRequest instance, or a dict
-            representing that instance.
 
         Returns
         -------
-        request : MetadataRequest, or dict
-            If dict, it will be a deserialized version of the underlying
-            MetadataRequest object: dict of dict of str->value. The key to the
-            first dict is the name of the method, and the key to the second
-            dict is the name of the argument requested by the method.
+        request : dict
+            A dict of dict of str->value. The key to the first dict is the name
+            of the method, and the key to the second dict is the name of the
+            argument requested by the method.
         """
         router = (
             MetadataRouter()
             .add(super(), mapping="one-to-one", overwrite=True, mask=False)
             .add(check_cv(self.cv), mapping={"fit": "split"}, overwrite=True, mask=True)
         )
-        return router.get_metadata_request(output=output)
+        return router.get_metadata_request()
 
 
 class LassoCV(RegressorMixin, LinearModelCV):

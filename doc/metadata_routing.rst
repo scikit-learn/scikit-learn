@@ -89,7 +89,7 @@ explicitly. Here it does not request them::
   ...                            score_params=["sample_weight"])
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ... ).fit_requests(sample_weight=True)
+  ... )
   >>> sel = SelectKBest(k=2).fit_requests(sample_weight=False)
   >>> pipe = make_pipeline(sel, lr)
   >>> cv_results = cross_validate(

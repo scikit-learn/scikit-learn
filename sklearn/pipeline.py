@@ -262,29 +262,21 @@ class Pipeline(_BaseComposition):
 
         return "(step %d of %d) Processing %s" % (step_idx + 1, len(self.steps), name)
 
-    def get_metadata_request(self, output="dict"):
+    def get_metadata_request(self):
         """Get requested data properties.
-
-
-        Parameters
-        ----------
-        output : {"dict", "MetadataRequest}
-            Whether the output should be a MetadataRequest instance, or a dict
-            representing that instance.
 
         Returns
         -------
-        request : MetadataRequest, or dict
-            If dict, it will be a deserialized version of the underlying
-            MetadataRequest object: dict of dict of str->value. The key to the
-            first dict is the name of the method, and the key to the second
-            dict is the name of the argument requested by the method.
+        request : dict
+            A dict of dict of str->value. The key to the first dict is the name
+            of the method, and the key to the second dict is the name of the
+            argument requested by the method.
         """
         _, estimators = zip(*self.steps)
         return (
             MetadataRouter()
             .add(*estimators, mapping="one-to-one", overwrite="on-default", mask=True)
-            .get_metadata_request(output=output)
+            .get_metadata_request()
         )
 
     def _check_fit_params(self, **fit_params):

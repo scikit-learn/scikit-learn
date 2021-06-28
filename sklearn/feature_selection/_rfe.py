@@ -410,8 +410,17 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             "requires_y": True,
         }
 
-    def get_metadata_request(self, output="dict"):
-        return self.estimator.get_metadata_request(output=output)
+    def get_metadata_request(self):
+        """Get requested data properties.
+
+        Returns
+        -------
+        request : dict
+            A dict of dict of str->value. The key to the first dict is the name
+            of the method, and the key to the second dict is the name of the
+            argument requested by the method.
+        """
+        return self.estimator.get_metadata_request()
 
 
 class RFECV(CVMetadataRequester, RFE):

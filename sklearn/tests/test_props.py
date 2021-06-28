@@ -16,6 +16,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 from sklearn.utils import MetadataRequest
 from sklearn.utils.metadata_requests import RequestType
+from sklearn.utils.metadata_requests import metadata_request_factory
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GroupKFold
@@ -90,7 +91,7 @@ class MyEst(ClassifierMixin, BaseEstimator):
         self.C = C
 
     def fit(self, X, y, **fit_params):
-        self.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
+        metadata_request_factory(self).fit.validate_metadata(
             ignore_extras=False, kwargs=fit_params
         )
         self.svc_ = SVC(C=self.C).fit(X, y)
@@ -110,7 +111,7 @@ class StuffConsumer:
 
 class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator):
     def fit(self, X, y=None, **fit_params):
-        self.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
+        metadata_request_factory(self).fit.validate_metadata(
             ignore_extras=False, kwargs=fit_params
         )
         self._estimator = SelectKBest().fit(X, y)
@@ -127,7 +128,7 @@ def my_metric(y, y_pred, new_param):
 def test_defaults():
     assert_request_is_empty(LogisticRegression().get_metadata_request())
     # check default requests for dummy estimators
-    trs_request = MyTrs().get_metadata_request(output="MetadataRequest")
+    trs_request = metadata_request_factory(MyTrs())
     assert trs_request.fit.requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
@@ -135,7 +136,7 @@ def test_defaults():
     }
     assert_request_is_empty(trs_request)
 
-    est_request = MyEst().get_metadata_request(output="MetadataRequest")
+    est_request = metadata_request_factory(MyEst())
     assert est_request.fit.requests == {
         "sample_weight": RequestType(True),
         "brand": RequestType(True),
@@ -165,7 +166,7 @@ def test_pipeline():
 
     trs = MyTrs().fit_requests(new_param="my_sw", sample_weight=False)
 
-    trs_request = trs.get_metadata_request(output="MetadataRequest")
+    trs_request = metadata_request_factory(trs)
     assert trs_request.fit.requests == {
         "new_param": "my_sw",
         "brand": RequestType.ERROR_IF_PASSED,
@@ -174,7 +175,7 @@ def test_pipeline():
     assert_request_is_empty(trs_request, exclude={"fit"})
 
     clf = make_pipeline(trs, MyEst())
-    pipe_request = clf.get_metadata_request(output="MetadataRequest")
+    pipe_request = metadata_request_factory(clf)
     assert pipe_request.fit.requests == {
         "my_sw": RequestType.REQUESTED,
         "sample_weight": RequestType.REQUESTED,
@@ -332,7 +333,7 @@ def test_group_splitter_metadata_requests(Klass):
     else:
         cv = Klass()
     # check the default metadata_request
-    assert cv.get_metadata_request(output="MetadataRequest").split.requests == {
+    assert metadata_request_factory(cv).split.requests == {
         "groups": RequestType.REQUESTED
     }
 
@@ -342,9 +343,7 @@ def test_group_splitter_metadata_requests(Klass):
 
     # set a different input name and test
     cv.split_requests(groups="my_groups")
-    assert cv.get_metadata_request(output="MetadataRequest").split.requests == {
-        "groups": "my_groups"
-    }
+    assert metadata_request_factory(cv).split.requests == {"groups": "my_groups"}
 
 
 @pytest.mark.parametrize("Klass", NonGroupCVs)

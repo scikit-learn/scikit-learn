@@ -148,32 +148,23 @@ class _MultimetricScorer:
                 return True
         return False
 
-    def get_metadata_request(self, output="dict"):
+    def get_metadata_request(self):
         """Get requested data properties.
-
-        Parameters
-        ----------
-        output : {"dict", "MetadataRequest}
-            Whether the output should be a MetadataRequest instance, or a dict
-            representing that instance.
 
         Returns
         -------
-        request : MetadataRequest, or dict
-            If dict, it will be a deserialized version of the underlying
-            MetadataRequest object: dict of dict of str->value. The key to the
-            first dict is the name of the method, and the key to the second
-            dict is the name of the argument requested by the method.
+        request : dict
+            A dict of dict of str->value. The key to the first dict is the name
+            of the method, and the key to the second dict is the name of the
+            argument requested by the method.
         """
-        if output not in {"dict", "MetadataRequest"}:
-            raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
         router = MetadataRouter().add(
             *self._scorers.values(),
             mapping={"score": "score"},
             mask=True,
             overwrite="on-default",
         )
-        return router.get_metadata_request(output=output)
+        return router.get_metadata_request()
 
 
 class _BaseScorer(_MetadataRequester):
@@ -465,13 +456,20 @@ class _passthrough_scorer:
         """Function that wraps estimator.score"""
         return estimator.score(*args, **kwargs)
 
-    def get_metadata_request(self, output="dict"):
-        if output not in {"dict", "MetadataRequest"}:
-            raise ValueError("output can only be one of {'dict', 'MetadataRequest'}.")
+    def get_metadata_request(self):
+        """Get requested data properties.
+
+        Returns
+        -------
+        request : dict
+            A dict of dict of str->value. The key to the first dict is the name
+            of the method, and the key to the second dict is the name of the
+            argument requested by the method.
+        """
         router = MetadataRouter().add(
             self._estimator, mapping={"score": "score"}, mask=False
         )
-        return router.get_metadata_request(output=output)
+        return router.get_metadata_request()
 
 
 def check_scoring(estimator, scoring=None, *, allow_none=False):
