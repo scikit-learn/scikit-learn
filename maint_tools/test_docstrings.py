@@ -93,7 +93,6 @@ DOCSTRING_IGNORE_LIST = [
     "LatentDirichletAllocation",
     "LedoitWolf",
     "LinearDiscriminantAnalysis",
-    "LinearRegression",
     "LinearSVC",
     "LinearSVR",
     "LocalOutlierFactor",
