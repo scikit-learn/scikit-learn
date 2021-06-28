@@ -35,19 +35,22 @@ REQUESTER_DOC_PARAM = """        {metadata} : RequestType, str, True, False, or 
             Whether {metadata} should be passed to {method} by meta-estimators or
             not, and if yes, should it have an alias.
 
-            - True or RequestType.REQUESTED: {metadata} is requested, and passed to
-            {method} if provided.
-            - False or RequestType.UNREQUESTED: {metadata} is not requested and the
-            meta-estimator will not pass it to {method}.
-            - None or RequestType.ERROR_IF_PASSED: {metadata} is not requested, and
-            the meta-estimator will raise an error if the user provides {metadata}
-            - str: {metadata} should be passed to the meta-estimator with this given
-            alias instead of the original name.
+            - True or RequestType.REQUESTED: {metadata} is requested, and passed to \
+{method} if provided.
+
+            - False or RequestType.UNREQUESTED: {metadata} is not requested and the \
+meta-estimator will not pass it to {method}.
+
+            - None or RequestType.ERROR_IF_PASSED: {metadata} is not requested, and \
+the meta-estimator will raise an error if the user provides {metadata}
+
+            - str: {metadata} should be passed to the meta-estimator with this given \
+alias instead of the original name.
 
 """
 REQUESTER_DOC_RETURN = """        Returns
         -------
-        self : object
+        self
             Returns the object itself.
 """
 
