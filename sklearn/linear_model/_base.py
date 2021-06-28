@@ -637,7 +637,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         Returns
         -------
-        self : Estimator
+        self : object
             Fitted Estimator.
         """
 
