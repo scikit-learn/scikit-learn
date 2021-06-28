@@ -30,6 +30,7 @@ from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
+from sklearn.utils import check_random_state
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
 from sklearn.linear_model import (
@@ -60,6 +61,49 @@ from sklearn.linear_model import (
 
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
+
+
+# FIXME: 'normalize' to be removed in 1.2
+filterwarnings_normalize = pytest.mark.filterwarnings(
+    "ignore:'normalize' was deprecated in version 1.0"
+)
+
+
+# FIXME: 'normalize' to be removed in 1.2
+@pytest.mark.parametrize(
+    "CoordinateDescentModel",
+    [
+        ElasticNet,
+        Lasso,
+        LassoCV,
+        ElasticNetCV,
+        MultiTaskElasticNet,
+        MultiTaskLasso,
+        MultiTaskElasticNetCV,
+        MultiTaskLassoCV,
+    ],
+)
+@pytest.mark.parametrize(
+    "normalize, n_warnings", [(True, 1), (False, 1), ("deprecated", 0)]
+)
+def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warnings):
+    # check that we issue a FutureWarning when normalize was set
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.0
+    y = rng.rand(n_samples)
+
+    if "MultiTask" in CoordinateDescentModel.__name__:
+        y = np.stack((y, y), axis=1)
+
+    model = CoordinateDescentModel(normalize=normalize)
+    with pytest.warns(None) as record:
+        model.fit(X, y)
+
+    record = [r for r in record if r.category == FutureWarning]
+    assert len(record) == n_warnings
 
 
 @pytest.mark.parametrize("l1_ratio", (-1, 2, None, 10, "something_wrong"))
@@ -1143,6 +1187,8 @@ def test_lasso_non_float_y(model):
     assert_array_equal(clf.coef_, clf_float.coef_)
 
 
+# FIXME: 'normalize' to be removed in 1.2
+@filterwarnings_normalize
 def test_enet_float_precision():
     # Generate dataset
     X, y, X_test, y_test = build_dataset(n_samples=20, n_features=10)
@@ -1662,6 +1708,7 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
         ElasticNet(alpha=1.0, l1_ratio=0.1),
     ],
 )
+@filterwarnings_normalize
 def test_sample_weight_invariance(estimator):
     rng = np.random.RandomState(42)
     X, y = make_regression(

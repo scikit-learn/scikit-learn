@@ -626,7 +626,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
 
 
 class StandardScaler(TransformerMixin, BaseEstimator):
-    """Standardize features by removing the mean and scaling to unit variance
+    """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
 
@@ -712,23 +712,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
-    Examples
-    --------
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
-    >>> scaler = StandardScaler()
-    >>> print(scaler.fit(data))
-    StandardScaler()
-    >>> print(scaler.mean_)
-    [0.5 0.5]
-    >>> print(scaler.transform(data))
-    [[-1. -1.]
-     [-1. -1.]
-     [ 1.  1.]
-     [ 1.  1.]]
-    >>> print(scaler.transform([[2, 2]]))
-    [[3. 3.]]
-
     See Also
     --------
     scale : Equivalent function without the estimator API.
@@ -748,6 +731,23 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
+    >>> scaler = StandardScaler()
+    >>> print(scaler.fit(data))
+    StandardScaler()
+    >>> print(scaler.mean_)
+    [0.5 0.5]
+    >>> print(scaler.transform(data))
+    [[-1. -1.]
+     [-1. -1.]
+     [ 1.  1.]
+     [ 1.  1.]]
+    >>> print(scaler.transform([[2, 2]]))
+    [[3. 3.]]
     """  # noqa
 
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
@@ -946,7 +946,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, copy=None):
-        """Perform standardization by centering and scaling
+        """Perform standardization by centering and scaling.
 
         Parameters
         ----------
@@ -989,7 +989,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X, copy=None):
-        """Scale back the data to the original representation
+        """Scale back the data to the original representation.
 
         Parameters
         ----------
