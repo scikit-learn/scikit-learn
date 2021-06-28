@@ -11,31 +11,35 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 
-@pytest.mark.parametrize('n_features_to_select', (0, 5, 0., -1, 1.1))
+@pytest.mark.parametrize("n_features_to_select", (0, 5, 0.0, -1, 1.1))
 def test_bad_n_features_to_select(n_features_to_select):
     X, y = make_regression(n_features=5)
-    sfs = SequentialFeatureSelector(LinearRegression(),
-                                    n_features_to_select=n_features_to_select)
+    sfs = SequentialFeatureSelector(
+        LinearRegression(), n_features_to_select=n_features_to_select
+    )
     with pytest.raises(ValueError, match="must be either None"):
         sfs.fit(X, y)
 
 
 def test_bad_direction():
     X, y = make_regression(n_features=5)
-    sfs = SequentialFeatureSelector(LinearRegression(), direction='bad')
+    sfs = SequentialFeatureSelector(LinearRegression(), direction="bad")
     with pytest.raises(ValueError, match="must be either 'forward' or"):
         sfs.fit(X, y)
 
 
-@pytest.mark.parametrize('direction', ('forward', 'backward'))
-@pytest.mark.parametrize('n_features_to_select', (1, 5, 9, None))
+@pytest.mark.parametrize("direction", ("forward", "backward"))
+@pytest.mark.parametrize("n_features_to_select", (1, 5, 9, None))
 def test_n_features_to_select(direction, n_features_to_select):
     # Make sure n_features_to_select is respected
 
     X, y = make_regression(n_features=10)
-    sfs = SequentialFeatureSelector(LinearRegression(),
-                                    n_features_to_select=n_features_to_select,
-                                    direction=direction, cv=2)
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select=n_features_to_select,
+        direction=direction,
+        cv=2,
+    )
     sfs.fit(X, y)
     if n_features_to_select is None:
         n_features_to_select = 5  # n_features // 2
@@ -44,31 +48,39 @@ def test_n_features_to_select(direction, n_features_to_select):
     assert sfs.transform(X).shape[1] == n_features_to_select
 
 
-@pytest.mark.parametrize('direction', ('forward', 'backward'))
-@pytest.mark.parametrize('n_features_to_select, expected', (
-    (.1, 1),
-    (1., 10),
-    (.5, 5),
-    (None, 5),  # just to make sure .5 is equivalent to passing None
-))
+@pytest.mark.parametrize("direction", ("forward", "backward"))
+@pytest.mark.parametrize(
+    "n_features_to_select, expected",
+    (
+        (0.1, 1),
+        (1.0, 10),
+        (0.5, 5),
+        (None, 5),  # just to make sure .5 is equivalent to passing None
+    ),
+)
 def test_n_features_to_select_float(direction, n_features_to_select, expected):
     # Test passing a float as n_features_to_select
     X, y = make_regression(n_features=10)
-    sfs = SequentialFeatureSelector(LinearRegression(),
-                                    n_features_to_select=n_features_to_select,
-                                    direction=direction, cv=2)
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select=n_features_to_select,
+        direction=direction,
+        cv=2,
+    )
     sfs.fit(X, y)
     assert sfs.n_features_to_select_ == expected
 
 
-@pytest.mark.parametrize('seed', range(10))
-@pytest.mark.parametrize('direction', ('forward', 'backward'))
-@pytest.mark.parametrize('n_features_to_select, expected_selected_features', [
-    (2, [0, 2]),  # f1 is dropped since it has no predictive power
-    (1, [2]),  # f2 is more predictive than f0 so it's kept
-])
-def test_sanity(seed, direction, n_features_to_select,
-                expected_selected_features):
+@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("direction", ("forward", "backward"))
+@pytest.mark.parametrize(
+    "n_features_to_select, expected_selected_features",
+    [
+        (2, [0, 2]),  # f1 is dropped since it has no predictive power
+        (1, [2]),  # f2 is more predictive than f0 so it's kept
+    ],
+)
+def test_sanity(seed, direction, n_features_to_select, expected_selected_features):
     # Basic sanity check: 3 features, only f0 and f2 are correlated with the
     # target, f2 having a stronger correlation than f0. We expect f1 to be
     # dropped, and f2 to always be selected.
@@ -78,12 +90,14 @@ def test_sanity(seed, direction, n_features_to_select,
     X = rng.randn(n_samples, 3)
     y = 3 * X[:, 0] - 10 * X[:, 2]
 
-    sfs = SequentialFeatureSelector(LinearRegression(),
-                                    n_features_to_select=n_features_to_select,
-                                    direction=direction, cv=2)
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select=n_features_to_select,
+        direction=direction,
+        cv=2,
+    )
     sfs.fit(X, y)
-    assert_array_equal(sfs.get_support(indices=True),
-                       expected_selected_features)
+    assert_array_equal(sfs.get_support(indices=True), expected_selected_features)
 
 
 def test_sparse_support():
@@ -108,7 +122,7 @@ def test_nan_support():
     sfs.fit(X, y)
     sfs.transform(X)
 
-    with pytest.raises(ValueError, match='Input contains NaN'):
+    with pytest.raises(ValueError, match="Input contains NaN"):
         # LinearRegression does not support nans
         SequentialFeatureSelector(LinearRegression(), cv=2).fit(X, y)
 
