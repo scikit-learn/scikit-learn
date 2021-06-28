@@ -89,7 +89,7 @@ explicitly. Here it does not request them::
   ...                            score_params=["sample_weight"])
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ... )
+  ... ).fit_requests(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
   >>> cv_results = cross_validate(
@@ -109,7 +109,7 @@ Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting a key
 consumers::
 
   >>> weighted_acc = make_scorer(
-  ...     accuracy_score, score_params={"scoring_weight": "sample_weight"}
+  ...     accuracy_score, score_params={"sample_weight": "scoring_weight"}
   ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
