@@ -2110,7 +2110,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         cv_params = metadata_request_factory(cv).split.get_method_input(
             ignore_extras=True, **fit_params
         )
-        score_params = metadata_request_factory(scorer).split.get_method_input(
+        score_params = metadata_request_factory(scorer).score.get_method_input(
             ignore_extras=True, **fit_params
         )
         folds = list(cv.split(X, y, **cv_params))
