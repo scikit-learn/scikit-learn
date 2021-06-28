@@ -788,16 +788,16 @@ class BaseSearchCV(
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
         metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, **fit_params
+            ignore_extras=False, kwargs=fit_params
         )
         _fit_params = metadata_request_factory(estimator).fit.get_method_input(
-            ignore_extras=True, **fit_params
+            ignore_extras=True, kwargs=fit_params
         )
         _score_params = metadata_request_factory(score_router).score.get_method_input(
-            ignore_extras=True, **fit_params
+            ignore_extras=True, kwargs=fit_params
         )
         _cv_params = metadata_request_factory(cv_orig).split.get_method_input(
-            ignore_extras=True, **fit_params
+            ignore_extras=True, kwargs=fit_params
         )
 
         _cv_param_values = _cv_params.values()

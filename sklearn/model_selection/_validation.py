@@ -270,13 +270,13 @@ def cross_validate(
 
     props = {} if props is None else props
     _fit_params = metadata_request_factory(estimator).fit.get_method_input(
-        ignore_extras=True, **props
+        ignore_extras=True, kwargs=props
     )
     _score_params = metadata_request_factory(score_router).score.get_method_input(
-        ignore_extras=True, **props
+        ignore_extras=True, kwargs=props
     )
     _cv_params = metadata_request_factory(cv).split.get_method_input(
-        ignore_extras=True, **props
+        ignore_extras=True, kwargs=props
     )
 
     _cv_param_values = _cv_params.values()

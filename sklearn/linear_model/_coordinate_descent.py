@@ -1500,7 +1500,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, SampleWeightConsumer, ABC):
             .add(check_cv(self.cv), mapping={"fit": "split"})
         )
         router.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
-            ignore_extras=False, **kwargs
+            ignore_extras=False, kwargs=kwargs
         )
 
         # Do as _deprecate_normalize but without warning as it's raised
@@ -1639,7 +1639,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, SampleWeightConsumer, ABC):
         # init cross-validation generator
         cv = check_cv(self.cv)
         cv_params = metadata_request_factory(cv).split.get_method_input(
-            ignore_extras=True, **kwargs
+            ignore_extras=True, kwargs=kwargs
         )
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv.split(X, y, **cv_params))
@@ -1693,7 +1693,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, SampleWeightConsumer, ABC):
 
         model = self._get_estimator()
         model_fit_params = metadata_request_factory(model).fit.get_method_input(
-            ignore_extras=True, **kwargs
+            ignore_extras=True, kwargs=kwargs
         )
         # Refit the model with the parameters selected
         common_params = {

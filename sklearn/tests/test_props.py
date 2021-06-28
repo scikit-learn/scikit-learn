@@ -91,7 +91,7 @@ class MyEst(ClassifierMixin, BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         self.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
-            ignore_extras=False, **fit_params
+            ignore_extras=False, kwargs=fit_params
         )
         self.svc_ = SVC(C=self.C).fit(X, y)
         return self
@@ -111,7 +111,7 @@ class StuffConsumer:
 class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator):
     def fit(self, X, y=None, **fit_params):
         self.get_metadata_request(output="MetadataRequest").fit.validate_metadata(
-            ignore_extras=False, **fit_params
+            ignore_extras=False, kwargs=fit_params
         )
         self._estimator = SelectKBest().fit(X, y)
         return self
@@ -224,6 +224,7 @@ def test_slep_caseA():
         cv=GroupKFold(),
         scoring=weighted_acc,
     ).fit_requests(sample_weight=True)
+    lr.fit(X, y, sample_weight=my_weights, groups=my_groups)
     cross_validate(
         lr,
         X,

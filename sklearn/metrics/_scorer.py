@@ -103,12 +103,12 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         metadata_request_factory(self).score.validate_metadata(
-            ignore_extras=False, **kwargs
+            ignore_extras=False, kwargs=kwargs
         )
 
         for name, scorer in self._scorers.items():
             params = metadata_request_factory(scorer).score.get_method_input(
-                ignore_extras=True, **kwargs
+                ignore_extras=True, kwargs=kwargs
             )
             if isinstance(scorer, _BaseScorer):
                 score = scorer._score(cached_call, estimator, *args, **params)

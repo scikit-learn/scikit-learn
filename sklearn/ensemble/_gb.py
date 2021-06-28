@@ -546,7 +546,7 @@ class BaseGradientBoosting(SampleWeightConsumer, BaseEnsemble, metaclass=ABCMeta
             else:
                 init_fit_params = metadata_request_factory(
                     self.init_
-                ).fit.get_method_input(ignore_extras=True, **fit_params)
+                ).fit.get_method_input(ignore_extras=True, kwargs=fit_params)
                 self.init_.fit(X, y, **init_fit_params)
 
                 raw_predictions = self.loss_.get_init_raw_predictions(X, self.init_)

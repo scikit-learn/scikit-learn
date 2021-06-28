@@ -254,7 +254,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             self.scores_ = []
 
         metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, **fit_params
+            ignore_extras=False, kwargs=fit_params
         )
         # Elimination
         while np.sum(support_) > n_features_to_select:
@@ -335,7 +335,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self)
         metadata_request_factory(self.estimator_).score.validate_metadata(
-            ignore_extras=False, **kwargs
+            ignore_extras=False, kwargs=kwargs
         )
         return self.estimator_.score(self.transform(X), y, **kwargs)
 
@@ -624,14 +624,14 @@ class RFECV(CVMetadataRequester, RFE):
             multi_output=True,
         )
         metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, **kwargs
+            ignore_extras=False, kwargs=kwargs
         )
         score_params = metadata_request_factory(self).score.get_method_input(
-            ignore_extras=True, **kwargs
+            ignore_extras=True, kwargs=kwargs
         )
         # Initialization
         cv_params = metadata_request_factory(self.cv).split.get_method_input(
-            ignore_extras=True, **kwargs
+            ignore_extras=True, kwargs=kwargs
         )
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator), **cv_params)
         scorer = check_scoring(self.estimator, scoring=self.scoring)

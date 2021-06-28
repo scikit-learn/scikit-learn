@@ -31,6 +31,7 @@ from ..utils.extmath import log_logistic, safe_sparse_dot, softmax, squared_norm
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _check_fit_params
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.fixes import delayed
@@ -1120,7 +1121,8 @@ def _log_reg_scoring_path(
         else:
             if score_params is None:
                 score_params = {}
-            scores.append(scoring(log_reg, X_test, y_test, **score_params))
+            score_params_test = _check_fit_params(X, score_params, test)
+            scores.append(scoring(log_reg, X_test, y_test, **score_params_test))
 
     return coefs, Cs, np.array(scores), n_iter
 
@@ -2108,10 +2110,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         cv = check_cv(self.cv, y, classifier=True)
         scorer = get_scorer(self.scoring)
         cv_params = metadata_request_factory(cv).split.get_method_input(
-            ignore_extras=True, **fit_params
+            ignore_extras=True, kwargs=fit_params
         )
         score_params = metadata_request_factory(scorer).score.get_method_input(
-            ignore_extras=True, **fit_params
+            ignore_extras=True, kwargs=fit_params
         )
         folds = list(cv.split(X, y, **cv_params))
 

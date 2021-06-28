@@ -152,7 +152,7 @@ class MethodMetadataRequest:
                 expected_metadata=expected_metadata,
             )
 
-    def validate_metadata(self, ignore_extras=False, **kwargs):
+    def validate_metadata(self, ignore_extras=False, kwargs=None):
         """Validate the given arguments against the requested ones.
 
         Parameters
@@ -160,13 +160,14 @@ class MethodMetadataRequest:
         ignore_extras : bool, default=False
             If ``True``, no error is raised if extra unknown args are passed.
 
-        **kwargs : dict
+        kwargs : dict
             Provided metadata.
 
         Returns
         -------
         None
         """
+        kwargs = {} if kwargs is None else kwargs
         args = {arg for arg, value in kwargs.items() if value is not None}
         if not ignore_extras and args - set(self.requests.keys()):
             raise ValueError(
@@ -192,7 +193,7 @@ class MethodMetadataRequest:
                         f"requested or not. In method: {self.name}"
                     )
 
-    def get_method_input(self, ignore_extras=False, **kwargs):
+    def get_method_input(self, ignore_extras=False, kwargs=None):
         """Return the input parameters requested by the method.
 
         The output of this method can be used directly as the input to the
@@ -203,7 +204,7 @@ class MethodMetadataRequest:
         ignore_extras : bool, default=False
             If ``True``, no error is raised if extra unknown args are passed.
 
-        **kwargs : dict
+        kwargs : dict
             A dictionary of provided metadata.
 
         Returns
@@ -212,6 +213,7 @@ class MethodMetadataRequest:
             A dictionary of {prop: value} which can be given to the
             corresponding method.
         """
+        kwargs = {} if kwargs is None else kwargs
         args = {arg: value for arg, value in kwargs.items() if value is not None}
         res = dict()
         for prop, alias in self.requests.items():
@@ -229,7 +231,7 @@ class MethodMetadataRequest:
                 )
             elif alias in args:
                 res[prop] = args[alias]
-        self.validate_metadata(ignore_extras=ignore_extras, **res)
+        self.validate_metadata(ignore_extras=ignore_extras, kwargs=res)
         return res
 
     def masked(self):

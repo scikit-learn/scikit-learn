@@ -314,13 +314,13 @@ class Pipeline(_BaseComposition):
             return fit_params_steps
 
         metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, **fit_params
+            ignore_extras=False, kwargs=fit_params
         )
         for _, name, transformer in self._iter(filter_passthrough=True):
             try:
                 fit_params_steps[name] = metadata_request_factory(
                     transformer
-                ).fit.get_method_input(ignore_extras=True, **fit_params)
+                ).fit.get_method_input(ignore_extras=True, kwargs=fit_params)
             except Exception as e:
                 raise ValueError(
                     f"Error while validating fit parameters for {name}. "
