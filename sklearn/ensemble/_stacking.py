@@ -29,7 +29,7 @@ from ..preprocessing import LabelEncoder
 
 from ..utils import Bunch
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
@@ -80,10 +80,17 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         X_meta = []
         for est_idx, preds in enumerate(predictions):
             # case where the the estimator returned a 1D array
-            if preds.ndim == 1:
+            if isinstance(preds, np.ndarray) and preds.ndim == 1:
                 X_meta.append(preds.reshape(-1, 1))
             else:
                 if (
+                    self.stack_method_[est_idx] == "predict_proba"
+                    and self.type_of_target == "multilabel-indicator"
+                    and isinstance(preds, list)
+                ):
+                    for pred in preds:
+                        X_meta.append(pred)
+                elif (
                     self.stack_method_[est_idx] == "predict_proba"
                     and len(self.classes_) == 2
                 ):
@@ -97,7 +104,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             X_meta.append(X)
             if sparse.issparse(X):
                 return sparse.hstack(X_meta, format=X.format)
-
         return np.hstack(X_meta)
 
     @staticmethod
@@ -483,9 +489,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
-        self._le = LabelEncoder().fit(y)
-        self.classes_ = self._le.classes_
-        return super().fit(X, self._le.transform(y), sample_weight)
+        self.type_of_target = type_of_target(y)
+        self.classes_ = []
+        if self.type_of_target != "multilabel-indicator":
+            self._le = LabelEncoder().fit(y)
+            self.classes_ = self._le.classes_
+            y = self._le.transform(y)
+        return super().fit(X, y, sample_weight)
 
     @if_delegate_has_method(delegate="final_estimator_")
     def predict(self, X, **predict_params):
@@ -509,7 +519,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Predicted targets.
         """
         y_pred = super().predict(X, **predict_params)
-        return self._le.inverse_transform(y_pred)
+        if self.type_of_target != "multilabel-indicator":
+            y_pred = self._le.inverse_transform(y_pred)
+        return y_pred
 
     @if_delegate_has_method(delegate="final_estimator_")
     def predict_proba(self, X):

@@ -19,11 +19,13 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import make_regression
 from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import RidgeClassifierCV
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
@@ -45,6 +47,9 @@ from sklearn.utils._testing import ignore_warnings
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
+X_multilabel_r, y_multilabel_r = make_multilabel_classification(
+    n_classes=3, random_state=42
+)
 
 
 @pytest.mark.parametrize(
@@ -561,3 +566,36 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     msg = "'MyEstimator' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
+
+
+@pytest.mark.parametrize("passthrough", [False, True])
+def test_stacking_classifier_multilabel(passthrough):
+    # prescale the data to avoid convergence warning without using a pipeline
+    # for later assert
+    X_train, X_test, y_train, y_test = train_test_split(
+        scale(X_multilabel_r), y_multilabel_r, stratify=y_multilabel_r, random_state=42
+    )
+    estimators = [
+        ("rfc", RandomForestClassifier(n_estimators=10, random_state=42)),
+        ("dc", DummyClassifier()),
+        ("rc", RidgeClassifierCV()),
+    ]
+    final_estimator = RandomForestClassifier(n_estimators=10, random_state=42)
+    clf = StackingClassifier(
+        estimators=estimators,
+        final_estimator=final_estimator,
+        passthrough=passthrough,
+    )
+    clf.fit(X_train, y_train)
+    clf.predict(X_test)
+    clf.predict_proba(X_test)
+    sc = clf.score(X_test, y_test)
+    assert passthrough or sc == pytest.approx(0.44)
+
+    assert not passthrough or sc == pytest.approx(0.52)
+
+    X_trans = clf.transform(X_test)
+    expected_column_count = 35 if passthrough else 15
+    assert X_trans.shape[1] == expected_column_count
+    if passthrough:
+        assert_allclose(X_test, X_trans[:, -20:])
