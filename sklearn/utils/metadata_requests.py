@@ -580,7 +580,7 @@ class RequestMethod:
             ],
             return_annotation=type(instance),
         )
-        doc = """Request metadata passed to the ``{method}`` method.
+        doc = """            Request metadata passed to the ``{method}`` method.
 
             Parameters
             ----------
@@ -588,7 +588,7 @@ class RequestMethod:
             method=self.name
         )
         for metadata in self.keys:
-            doc += """{metadata} : RequestType, str, True, False, or None, \
+            doc += """            {metadata} : RequestType, str, True, False, or None, \
                     default=UNCHANGED
                 Whether {metadata} should be passed to {method} by meta-estimators or
                 not, and if yes, should it have an alias.
@@ -605,7 +605,7 @@ class RequestMethod:
                 """.format(
                 metadata=metadata, method=self.name
             )
-        doc += """Returns
+        doc += """            Returns
             -------
             self : object
                 Returns the object itself.
