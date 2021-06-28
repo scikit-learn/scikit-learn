@@ -558,16 +558,16 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination :math:`R^2` of the prediction.
+        """Return the coefficient of determination of the prediction.
 
-        The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
-        where :math:`u` is the residual sum of squares ``((y_true - y_pred)
-        ** 2).sum()`` and :math:`v` is the total sum of squares ``((y_true -
-        y_true.mean()) ** 2).sum()``. The best possible score is 1.0 and it
-        can be negative (because the model can be arbitrarily worse). A
-        constant model that always predicts the expected value of `y`,
-        disregarding the input features, would get a :math:`R^2` score of
-        0.0.
+        The coefficient of determination :math:`R^2` is defined as
+        :math:`(1 - \\frac{u}{v})`, where :math:`u` is the residual
+        sum of squares ``((y_true - y_pred)** 2).sum()`` and :math:`v`
+        is the total sum of squares ``((y_true - y_true.mean()) ** 2).sum()``.
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always predicts
+        the expected value of `y`, disregarding the input features, would get
+        a :math:`R^2` score of 0.0.
 
         Parameters
         ----------
