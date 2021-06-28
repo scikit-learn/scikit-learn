@@ -24,7 +24,7 @@ from .utils.validation import check_array
 from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
-from .utils._feature_names import _get_feature_names
+from .utils.validation import _get_feature_names
 
 
 def clone(estimator, *, safe=True):

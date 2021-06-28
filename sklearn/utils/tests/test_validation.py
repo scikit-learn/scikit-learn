@@ -48,6 +48,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _allclose_dense_sparse,
     _num_features,
+    _get_feature_names,
     FLOAT_DTYPES,
 )
 from sklearn.utils.validation import _check_fit_params
@@ -1451,3 +1452,34 @@ def test_check_array_deprecated_matrix():
     )
     with pytest.warns(FutureWarning, match=msg):
         check_array(X)
+
+
+def test_get_feature_names_pandas():
+    """Get feature names with pandas dataframes."""
+    pd = pytest.importorskip("pandas")
+    column_names = [f"col_{i}" for i in range(3)]
+    X = np.array([[1, 2, 3], [4, 5, 6]])
+    X = pd.DataFrame(X, columns=column_names)
+
+    names = _get_feature_names(X)
+    assert_array_equal(names, column_names)
+
+
+def test_get_feature_names_numpy():
+    """Get feature names return None for numpy arrays"""
+    X = np.array([[1, 2, 3], [4, 5, 6]])
+    names = _get_feature_names(X)
+    assert names is None
+
+
+def test_ducktype_no_feature_names():
+    """Ducktyped dataframe has no feature names"""
+
+    class NotADataFrame:
+        def __init__(self):
+            self.columns = ["col1", "col2", "col3"]
+            self.iloc = "my_iloc"
+
+    X = NotADataFrame()
+    names = _get_feature_names(X)
+    assert names is None

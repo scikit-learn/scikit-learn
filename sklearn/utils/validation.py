@@ -1588,3 +1588,31 @@ def _check_fit_params(X, fit_params, indices=None):
             )
 
     return fit_params_validated
+
+
+def _get_feature_names(X):
+    """Get feature names from X.
+
+    Support for other array containers should place its implementation here.
+
+    Parameters
+    ----------
+    X : dataframe of shape (n_samples, n_features)
+        Array container to extract feature names.
+
+        - pandas DataFrame : The columns will be considered to be feature
+          names.
+        - All other array containers will return `None`.
+
+    Returns
+    -------
+    names: Sequence of str or None
+        Column names of `X`. Unrecognized array containers will return `None`.
+    """
+    if hasattr(X, "iloc"):
+        with suppress(ImportError):
+            # check explicitly for pandas
+            import pandas as pd
+
+            if isinstance(X, pd.DataFrame):
+                return X.columns
