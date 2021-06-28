@@ -252,8 +252,7 @@ def test_ledoit_wolf_empty_array():
     lw = LedoitWolf()
     with pytest.raises(
         ValueError,
-        match="Found array with 0 sample\(s\) \(shape=\(0, 2\)\) \
-            while a minimum of 1 is required."
+        match="Found array with 0 sample"
     ):
         lw.fit(X)
 
@@ -264,10 +263,9 @@ def test_ledoit_wolf_shrinkage_empty_array():
     X = np.zeros((0, 2))
     with pytest.raises(
         ValueError,
-        match="Found array with 0 sample\(s\) \(shape=\(0, 2\)\) \
-            while a minimum of 1 is required.",
+        match="Found array with 0 sample"
     ):
-        lw = ledoit_wolf_shrinkage(X)
+        ledoit_wolf_shrinkage(X)
 
 
 def test_oas():
