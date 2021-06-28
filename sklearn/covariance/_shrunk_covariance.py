@@ -197,7 +197,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = np.asarray(X)
     X = check_array(X, accept_sparse=True)
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
