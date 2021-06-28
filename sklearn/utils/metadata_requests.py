@@ -25,6 +25,33 @@ METHODS = [
 ]
 
 
+REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
+
+        Parameters
+        ----------
+"""
+REQUESTER_DOC_PARAM = """        {metadata} : RequestType, str, True, False, or None, \
+                    default=UNCHANGED
+            Whether {metadata} should be passed to {method} by meta-estimators or
+            not, and if yes, should it have an alias.
+
+            - True or RequestType.REQUESTED: {metadata} is requested, and passed to
+            {method} if provided.
+            - False or RequestType.UNREQUESTED: {metadata} is not requested and the
+            meta-estimator will not pass it to {method}.
+            - None or RequestType.ERROR_IF_PASSED: {metadata} is not requested, and
+            the meta-estimator will raise an error if the user provides {metadata}
+            - str: {metadata} should be passed to the meta-estimator with this given
+            alias instead of the original name.
+
+"""
+REQUESTER_DOC_RETURN = """        Returns
+        -------
+        self : object
+            Returns the object itself.
+"""
+
+
 class MethodMetadataRequest:
     """Contains the metadata request info for a single method.
 
@@ -580,36 +607,10 @@ class RequestMethod:
             ],
             return_annotation=type(instance),
         )
-        doc = """            Request metadata passed to the ``{method}`` method.
-
-            Parameters
-            ----------
-            """.format(
-            method=self.name
-        )
+        doc = REQUESTER_DOC.format(method=self.name)
         for metadata in self.keys:
-            doc += """            {metadata} : RequestType, str, True, False, or None, \
-                    default=UNCHANGED
-                Whether {metadata} should be passed to {method} by meta-estimators or
-                not, and if yes, should it have an alias.
-
-                - True or RequestType.REQUESTED: {metadata} is requested, and passed to
-                {method} if provided.
-                - False or RequestType.UNREQUESTED: {metadata} is not requested and the
-                meta-estimator will not pass it to {method}.
-                - None or RequestType.ERROR_IF_PASSED: {metadata} is not requested, and
-                the meta-estimator will raise an error if the user provides {metadata}
-                - str: {metadata} should be passed to the meta-estimator with this given
-                alias instead of the original name.
-
-                """.format(
-                metadata=metadata, method=self.name
-            )
-        doc += """            Returns
-            -------
-            self : object
-                Returns the object itself.
-            """
+            doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        doc += REQUESTER_DOC_RETURN
         func.__doc__ = doc
         return func
 
