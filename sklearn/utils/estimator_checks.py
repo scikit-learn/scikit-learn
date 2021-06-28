@@ -3442,26 +3442,35 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
 
 def _check_column_name_consistency(name, estimator_orig, construct_X, array_name):
-    estimator = clone(estimator_orig)
-    tags = estimator._get_tags()
+    tags = _safe_tags(estimator_orig)
 
-    # should be
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+    if (
+        "2darray" not in tags["X_types"]
+        and "sparse" not in tags["X_types"]
+        or tags["no_validation"]
+    ):
         return
 
-    X_orig, _ = make_regression(random_state=0, n_features=5)
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if "warm_start" in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    X_orig = rng.normal(size=(150, 8))
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)
     X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
-
     n_samples, n_features = X_orig.shape
+
     names = np.array([f"col_{i}" for i in range(n_features)])
     X = construct_X(X_orig, names)
 
-    rng = np.random.RandomState(0)
-    y = rng.randint(low=0, high=2, size=n_samples)
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
-
-    estimator.fit(X, y)
 
     if not hasattr(estimator, "feature_names_in_"):
         raise ValueError(
@@ -3486,7 +3495,7 @@ def _check_column_name_consistency(name, estimator_orig, construct_X, array_name
         "during fit. Starting version 1.2, an error will be raised"
     )
     for method in check_funcs:
-        # TODO In 0.26, this will be an error.
+        # TODO In 1.2, this will be an error.
         assert_warns_message(FutureWarning, expected_msg, method, X_bad)
 
     # partial_fit checks on second call

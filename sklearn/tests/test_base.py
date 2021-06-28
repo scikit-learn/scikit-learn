@@ -621,11 +621,11 @@ def test_feature_names_in():
     """Check that feature_name_in are recorded by `_validate_data`"""
     pd = pytest.importorskip("pandas")
     iris = datasets.load_iris()
-    X_np, y = iris.data, iris.target
+    X_np = iris.data
     df = pd.DataFrame(X_np, columns=iris.feature_names)
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
-        def fit(self, X, y):
+        def fit(self, X, y=None):
             self._validate_data(X)
             return self
 
@@ -633,7 +633,8 @@ def test_feature_names_in():
             self._validate_data(X, reset=False)
             return X
 
-    trans = NoOpTransformer().fit(df, y)
+    # fit on dataframe saves the feature names
+    trans = NoOpTransformer().fit(df)
     assert_array_equal(trans.feature_names_in_, df.columns)
 
     msg = "The column names should match those that were passed"
@@ -647,6 +648,6 @@ def test_feature_names_in():
     assert not record
 
     # fitted on numpy array and transformed on pandas array does not warn
-    trans = NoOpTransformer().fit(X_np, y)
+    trans = NoOpTransformer().fit(X_np)
     with pytest.warns(None) as record:
         trans.transform(df)
