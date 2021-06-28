@@ -1697,7 +1697,7 @@ class MiniBatchKMeans(KMeans):
         self.reassignment_ratio = reassignment_ratio
 
     @deprecated(  # type: ignore
-        "The attribute 'counts_' is deprecated in 0.24"
+        "The attribute `counts_` is deprecated in 0.24"
         " and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1705,7 +1705,7 @@ class MiniBatchKMeans(KMeans):
         return self._counts
 
     @deprecated(  # type: ignore
-        "The attribute 'init_size_' is deprecated in "
+        "The attribute `init_size_` is deprecated in "
         "0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1713,7 +1713,7 @@ class MiniBatchKMeans(KMeans):
         return self._init_size
 
     @deprecated(  # type: ignore
-        "The attribute 'random_state_' is deprecated "
+        "The attribute `random_state_` is deprecated "
         "in 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property

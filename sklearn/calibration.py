@@ -652,8 +652,8 @@ class _CalibratedClassifier:
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "calibrators_ is deprecated in 0.24 and will be removed in 1.1"
-        "(renaming of 0.26). Use calibrators instead."
+        "`calibrators_` is deprecated in 0.24 and will be removed in 1.1"
+        "(renaming of 0.26). Use `calibrators` instead."
     )
     @property
     def calibrators_(self):
