@@ -433,9 +433,7 @@ class BaseEstimator:
         ):
             warnings.warn(
                 "The column names should match those that were "
-                f"passed during fit. Got ({new_feature_names_in}) "
-                f"expected ({fitted_feature_names}). Starting "
-                "version 0.26, an error will be raised",
+                "passed during fit. Starting version 1.2, an error will be raised",
                 FutureWarning,
             )
 

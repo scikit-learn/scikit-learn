@@ -48,7 +48,6 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
-    check_dataarray_column_names_consistency,
     check_n_features_in_after_fitting,
 )
 
@@ -314,6 +313,9 @@ def test_check_n_features_in_after_fitting(estimator):
 # TODO: When more modules get added, we can remove it from this list to make
 # sure it gets tested. After we finish each module we can move the checks
 # into check_estimator.
+# NOTE: Metaestimators that delegates validation to the inner estimator is
+# is actually checking that the inner estimator checks for column name
+# consistency
 COLUMN_NAME_MODULES_TO_IGNORE = {
     "calibration",
     "cluster",
@@ -359,12 +361,4 @@ column_name_estimators = [
 )
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
-    check_dataframe_column_names_consistency(type(estimator).__name__, estimator)
-
-
-@pytest.mark.parametrize(
-    "estimator", column_name_estimators, ids=_get_check_estimator_ids
-)
-def test_xarray_column_name_consistency(estimator):
-    _set_checking_parameters(estimator)
-    check_dataarray_column_names_consistency(type(estimator).__name__, estimator)
+    check_dataframe_column_names_consistency(estimator.__class__.__name__, estimator)

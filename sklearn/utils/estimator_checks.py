@@ -3441,21 +3441,6 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     )
 
 
-def check_dataarray_column_names_consistency(name, estimator_orig):
-    try:
-        import xarray as xr
-    except ImportError:
-        raise SkipTest(
-            "xarray is not installed: not checking "
-            "column name consistency for xarray"
-        )
-
-    def _construct_xarray(X, columns):
-        return xr.DataArray(X, dims=("index", "columns"), coords={"columns": columns})
-
-    _check_column_name_consistency(name, estimator_orig, _construct_xarray, "xarray")
-
-
 def _check_column_name_consistency(name, estimator_orig, construct_X, array_name):
     estimator = clone(estimator_orig)
     tags = estimator._get_tags()
@@ -3498,8 +3483,7 @@ def _check_column_name_consistency(name, estimator_orig, construct_X, array_name
 
     expected_msg = (
         "The column names should match those that were passed "
-        f"during fit. Got ({bad_names}) expected ({names}). "
-        "Starting version 0.26, an error will be raised"
+        "during fit. Starting version 1.2, an error will be raised"
     )
     for method in check_funcs:
         # TODO In 0.26, this will be an error.

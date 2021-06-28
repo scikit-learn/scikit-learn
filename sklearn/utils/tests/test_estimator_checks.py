@@ -31,7 +31,6 @@ from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
 from sklearn.utils.estimator_checks import check_estimator_get_tags_default_keys
 from sklearn.utils.estimator_checks import check_dataframe_column_names_consistency
-from sklearn.utils.estimator_checks import check_dataarray_column_names_consistency
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import np_version, parse_version
@@ -701,25 +700,10 @@ def test_check_estimator_get_tags_default_keys():
 
 
 def test_check_dataframe_column_names_consistency():
-    assert_raises_regex(
-        ValueError,
-        "Estimator does not have a feature_names_in_",
-        check_dataframe_column_names_consistency,
-        "estimator_name",
-        BaseBadClassifier(),
-    )
+    err_msg = "Estimator does not have a feature_names_in_"
+    with raises(ValueError, match=err_msg):
+        check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
     check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
-
-
-def test_check_dataarray_column_name_consistency():
-    assert_raises_regex(
-        ValueError,
-        "Estimator does not have a feature_names_in_",
-        check_dataarray_column_names_consistency,
-        "estimator_name",
-        BaseBadClassifier(),
-    )
-    check_dataarray_column_names_consistency("estimator_name", PartialFitChecksName())
 
 
 def run_tests_without_pytest():
