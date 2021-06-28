@@ -514,7 +514,7 @@ class LinearDiscriminantAnalysis(
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
     def fit(self, X, y):
-        """Fit model according to the given training data and parameters.
+        """Fit the Linear Discriminant Analysis model.
 
            .. versionchanged:: 0.19
               *store_covariance* has been moved to main constructor.
