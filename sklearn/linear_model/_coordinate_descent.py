@@ -16,7 +16,7 @@ from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
-from ._base import _preprocess_data
+from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
@@ -133,6 +133,10 @@ def _alpha_grid(
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -478,10 +482,11 @@ def enet_path(
 
     See Also
     --------
-    MultiTaskElasticNet
-    MultiTaskElasticNetCV
-    ElasticNet
-    ElasticNetCV
+    MultiTaskElasticNet : Multi-task ElasticNet model trained with L1/L2 mixed-norm \
+    as regularizer.
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
+    ElasticNetCV : Elastic Net model with iterative fitting along a regularization path.
 
     Notes
     -----
@@ -715,6 +720,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
+
     precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
@@ -817,7 +826,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         *,
         l1_ratio=0.5,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         precompute=False,
         max_iter=1000,
         copy_X=True,
@@ -865,6 +874,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
@@ -875,6 +885,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        _normalize = _deprecate_normalize(
+            self.normalize, default=False, estimator_name=self.__class__.__name__
+        )
 
         if self.alpha == 0:
             warnings.warn(
@@ -974,7 +987,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             y,
             None,
             self.precompute,
-            self.normalize,
+            _normalize,
             self.fit_intercept,
             copy=should_copy,
             check_input=check_input,
@@ -1004,6 +1017,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
+        # FIXME: 'normalize' to be removed in 1.2
         for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -1115,6 +1129,11 @@ class Lasso(ElasticNet):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
+
+    precompute : 'auto', bool or array-like of shape (n_features, n_features),\
     precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
@@ -1178,6 +1197,22 @@ class Lasso(ElasticNet):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    lars_path : Regularization path using LARS.
+    lasso_path : Regularization path using Lasso.
+    LassoLars : Lasso Path along the regularization parameter usingLARS algorithm.
+    LassoCV : Lasso alpha parameter by cross-validation.
+    LassoLarsCV : Lasso least angle parameter algorithm by cross-validation.
+    sklearn.decomposition.sparse_encode : Sparse coding array estimator.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1188,22 +1223,6 @@ class Lasso(ElasticNet):
     [0.85 0.  ]
     >>> print(clf.intercept_)
     0.15...
-
-    See Also
-    --------
-    lars_path
-    lasso_path
-    LassoLars
-    LassoCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
     """
 
     path = staticmethod(enet_path)
@@ -1213,7 +1232,7 @@ class Lasso(ElasticNet):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         precompute=False,
         copy_X=True,
         max_iter=1000,
@@ -1400,7 +1419,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         precompute="auto",
         max_iter=1000,
         tol=1e-4,
@@ -1467,6 +1486,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         -------
         self : object
         """
+
+        # Do as _deprecate_normalize but without warning as it's raised
+        # below during the refitting on the best alpha.
+        _normalize = self.normalize
+        if _normalize == "deprecated":
+            _normalize = False
+
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
@@ -1552,6 +1578,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
+
+        # FIXME: 'normalize' to be removed in 1.2
+        path_params["normalize"] = _normalize
+
         if "l1_ratio" in path_params:
             l1_ratios = np.atleast_1d(path_params["l1_ratio"])
             # For the first path, we need to set l1_ratio
@@ -1574,7 +1604,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     fit_intercept=self.fit_intercept,
                     eps=self.eps,
                     n_alphas=self.n_alphas,
-                    normalize=self.normalize,
+                    normalize=_normalize,
                     copy_X=self.copy_X,
                 )
                 for l1_ratio in l1_ratios
@@ -1658,6 +1688,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         precompute = getattr(self, "precompute", None)
         if isinstance(precompute, str) and precompute == "auto":
             model.precompute = False
+
         if sample_weight is None:
             # MultiTaskElasticNetCV does not (yet) support sample_weight, even
             # not sample_weight=None.
@@ -1722,6 +1753,10 @@ class LassoCV(RegressorMixin, LinearModelCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     precompute : 'auto', bool or array-like of shape \
             (n_features, n_features), default='auto'
@@ -1850,7 +1885,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         precompute="auto",
         max_iter=1000,
         tol=1e-4,
@@ -1934,6 +1969,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     precompute : 'auto', bool or array-like of shape \
             (n_features, n_features), default='auto'
@@ -2087,7 +2126,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         precompute="auto",
         max_iter=1000,
         tol=1e-4,
@@ -2171,6 +2210,10 @@ class MultiTaskElasticNet(Lasso):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2263,7 +2306,7 @@ class MultiTaskElasticNet(Lasso):
         *,
         l1_ratio=0.5,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         copy_X=True,
         max_iter=1000,
         tol=1e-4,
@@ -2305,6 +2348,10 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        _normalize = _deprecate_normalize(
+            self.normalize, default=False, estimator_name=self.__class__.__name__
+        )
+
         # Need to validate separately here.
         # We can't pass multi_ouput=True because that would allow y to be csr.
         check_X_params = dict(
@@ -2330,7 +2377,7 @@ class MultiTaskElasticNet(Lasso):
         n_targets = y.shape[1]
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, self.fit_intercept, self.normalize, copy=False
+            X, y, self.fit_intercept, _normalize, copy=False
         )
 
         if not self.warm_start or not hasattr(self, "coef_"):
@@ -2408,6 +2455,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2497,7 +2548,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         copy_X=True,
         max_iter=1000,
         tol=1e-4,
@@ -2575,6 +2626,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -2698,7 +2753,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         max_iter=1000,
         tol=1e-4,
         cv=None,
@@ -2797,6 +2852,10 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 1.0
+            ``normalize`` was deprecated in version 1.0 and will be removed in
+            1.2.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -2916,7 +2975,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize=False,
+        normalize="deprecated",
         max_iter=1000,
         tol=1e-4,
         copy_X=True,

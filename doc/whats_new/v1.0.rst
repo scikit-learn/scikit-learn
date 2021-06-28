@@ -368,6 +368,13 @@ Changelog
   :user:`Alexandre Gramfort <agramfort>`.
   Same for BayesianRidge, ARDRegression in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
+  Same for :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.MultiTaskLasso`, :class:`linear_model.MultiTaskLassoCV`,
+  :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV`, in:
+  :pr:`17785` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
   The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
   :class:`linear_model.OrthogonalMatchingPursuitCV` will default to
   False in 1.2 and will be removed in 1.4.
