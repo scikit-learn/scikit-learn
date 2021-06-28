@@ -368,7 +368,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         first_clf = self.calibrated_classifiers_[0].base_estimator
         if hasattr(first_clf, "n_features_in_"):
             self.n_features_in_ = first_clf.n_features_in_
-        if hasattr(first_clf, "n_features_in_"):
+        if hasattr(first_clf, "feature_names_in_"):
             self.feature_names_in_ = first_clf.feature_names_in_
         return self
 
