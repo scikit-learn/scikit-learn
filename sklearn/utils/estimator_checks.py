@@ -3428,31 +3428,35 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     try:
         import pandas as pd
     except ImportError:
-        raise SkipTest("pandas is not installed: not checking "
-                       "column name consistency for pandas")
+        raise SkipTest(
+            "pandas is not installed: not checking "
+            "column name consistency for pandas"
+        )
 
     def _construct_dataframe(X, columns):
         return pd.DataFrame(X, columns=columns)
-    _check_column_name_consistency(name, estimator_orig, _construct_dataframe,
-                                   "dataframe")
+
+    _check_column_name_consistency(
+        name, estimator_orig, _construct_dataframe, "dataframe"
+    )
 
 
 def check_dataarray_column_names_consistency(name, estimator_orig):
     try:
         import xarray as xr
     except ImportError:
-        raise SkipTest("xarray is not installed: not checking "
-                       "column name consistency for xarray")
+        raise SkipTest(
+            "xarray is not installed: not checking "
+            "column name consistency for xarray"
+        )
 
     def _construct_xarray(X, columns):
-        return xr.DataArray(X, dims=('index', 'columns'),
-                            coords={'columns': columns})
-    _check_column_name_consistency(name, estimator_orig, _construct_xarray,
-                                   "xarray")
+        return xr.DataArray(X, dims=("index", "columns"), coords={"columns": columns})
+
+    _check_column_name_consistency(name, estimator_orig, _construct_xarray, "xarray")
 
 
-def _check_column_name_consistency(name, estimator_orig, construct_X,
-                                   array_name):
+def _check_column_name_consistency(name, estimator_orig, construct_X, array_name):
     estimator = clone(estimator_orig)
     tags = estimator._get_tags()
 
@@ -3475,13 +3479,16 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
     estimator.fit(X, y)
 
     if not hasattr(estimator, "feature_names_in_"):
-        raise ValueError("Estimator does not have a feature_names_in_ "
-                         f"attribute after fitting with a {array_name}")
+        raise ValueError(
+            "Estimator does not have a feature_names_in_ "
+            f"attribute after fitting with a {array_name}"
+        )
 
     check_funcs = [
-        getattr(estimator, func) for func in
-        ("predict", "transform", "decision_function", "predict_proba")
-        if hasattr(estimator, func)]
+        getattr(estimator, func)
+        for func in ("predict", "transform", "decision_function", "predict_proba")
+        if hasattr(estimator, func)
+    ]
     for func in check_funcs:
         func(X)  # works
 
@@ -3489,9 +3496,11 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
     bad_names = names[::-1]
     X_bad = construct_X(X, bad_names)
 
-    expected_msg = ("The column names should match those that were passed "
-                    f"during fit. Got ({bad_names}) expected ({names}). "
-                    "Starting version 0.26, an error will be raised")
+    expected_msg = (
+        "The column names should match those that were passed "
+        f"during fit. Got ({bad_names}) expected ({names}). "
+        "Starting version 0.26, an error will be raised"
+    )
     for method in check_funcs:
         # TODO In 0.26, this will be an error.
         assert_warns_message(FutureWarning, expected_msg, method, X_bad)
@@ -3502,6 +3511,4 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
 
     estimator = clone(estimator_orig)
     estimator.partial_fit(X, y)
-    assert_warns_message(FutureWarning, expected_msg, estimator.partial_fit,
-                         X_bad, y)
-
+    assert_warns_message(FutureWarning, expected_msg, estimator.partial_fit, X_bad, y)

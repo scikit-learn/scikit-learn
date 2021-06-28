@@ -315,54 +315,56 @@ def test_check_n_features_in_after_fitting(estimator):
 # sure it gets tested. After we finish each module we can move the checks
 # into check_estimator.
 COLUMN_NAME_MODULES_TO_IGNORE = {
-    'calibration',
-    'cluster',
-    'compose',
-    'covariance',
-    'decomposition',
-    'discriminant_analysis',
-    'ensemble',
-    'feature_extraction',
-    'feature_selection',
-    'gaussian_process',
-    'isotonic',
-    'impute',
-    'kernel_approximation',
-    'kernel_ridge',
-    'linear_model',
-    'manifold',
-    'mixture',
-    'model_selection',
-    'multiclass',
-    'multioutput',
-    'naive_bayes',
-    'neighbors',
-    'neural_network',
-    'pipeline',
-    'preprocessing',
-    'random_projection',
-    'semi_supervised',
-    'svm',
-    'tree',
+    "calibration",
+    "cluster",
+    "compose",
+    "covariance",
+    "decomposition",
+    "discriminant_analysis",
+    "ensemble",
+    "feature_extraction",
+    "feature_selection",
+    "gaussian_process",
+    "isotonic",
+    "impute",
+    "kernel_approximation",
+    "kernel_ridge",
+    "linear_model",
+    "manifold",
+    "mixture",
+    "model_selection",
+    "multiclass",
+    "multioutput",
+    "naive_bayes",
+    "neighbors",
+    "neural_network",
+    "pipeline",
+    "preprocessing",
+    "random_projection",
+    "semi_supervised",
+    "svm",
+    "tree",
 }
 
 
 column_name_estimators = [
-    est for est in _tested_estimators()
-    if est.__module__.split('.')[1] not in COLUMN_NAME_MODULES_TO_IGNORE]
+    est
+    for est in _tested_estimators()
+    if est.__module__.split(".")[1] not in COLUMN_NAME_MODULES_TO_IGNORE
+]
 
 
-@pytest.mark.parametrize('estimator', column_name_estimators,
-                         ids=_get_check_estimator_ids)
+@pytest.mark.parametrize(
+    "estimator", column_name_estimators, ids=_get_check_estimator_ids
+)
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
-    check_dataframe_column_names_consistency(type(estimator).__name__,
-                                             estimator)
+    check_dataframe_column_names_consistency(type(estimator).__name__, estimator)
 
 
-@pytest.mark.parametrize('estimator', column_name_estimators,
-                         ids=_get_check_estimator_ids)
+@pytest.mark.parametrize(
+    "estimator", column_name_estimators, ids=_get_check_estimator_ids
+)
 def test_xarray_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
-    check_dataarray_column_names_consistency(type(estimator).__name__,
-                                             estimator)
+    check_dataarray_column_names_consistency(type(estimator).__name__, estimator)
