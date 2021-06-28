@@ -618,7 +618,7 @@ def test_n_features_in_no_validation():
 
 
 def test_feature_names_in():
-    # Simple checks for feature_names_in
+    """Check that feature_name_in are recorded by `_validate_data`"""
     pd = pytest.importorskip("pandas")
     iris = datasets.load_iris()
     X_np, y = iris.data, iris.target

@@ -413,7 +413,9 @@ class BaseEstimator:
         """
 
         if reset:
-            self.feature_names_in_ = _get_feature_names(X)
+            feature_names_in = _get_feature_names(X)
+            if feature_names_in is not None:
+                self.feature_names_in_ = feature_names_in
             return
 
         fitted_feature_names = getattr(self, "feature_names_in_", None)
