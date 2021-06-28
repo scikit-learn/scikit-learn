@@ -15,6 +15,7 @@ from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import ignore_warnings
 
 
 def assert_matrix_orthogonal(M):
@@ -355,9 +356,13 @@ def test_attibutes_shapes(Est):
     pls = Est(n_components=n_components)
     pls.fit(X, Y)
     assert all(
-        attr.shape[1] == n_components
-        for attr in (pls.x_scores_, pls.y_scores_, pls.x_weights_, pls.y_weights_)
+        attr.shape[1] == n_components for attr in (pls.x_weights_, pls.y_weights_)
     )
+    # TODO: remove in 1.1
+    with ignore_warnings(category=FutureWarning):
+        assert all(
+            attr.shape[1] == n_components for attr in (pls.x_scores_, pls.y_scores_)
+        )
 
 
 @pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
