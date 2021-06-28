@@ -245,7 +245,7 @@ def test_ledoit_wolf_large():
     assert_almost_equal(lw.covariance_, cov)
 
 def test_ledoit_wolf_empty_array():
-    # Compare our blocked implementation to the naive implementation
+    # test that ledoit wolf raises a ValueError when feeding an empty array
     X = np.zeros((0,2))
     lw = LedoitWolf()
     with pytest.raises(
@@ -255,7 +255,7 @@ def test_ledoit_wolf_empty_array():
         lw.fit(X)
 
 def test_ledoit_wolf_shrinkage_empty_array():
-    # Compare our blocked implementation to the naive implementation
+    # test that ledoit wolf shrinkage raises a ValueError when feeding an empty array
     X = np.zeros((0,2))
     with pytest.raises(
         ValueError,
