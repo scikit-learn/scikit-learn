@@ -8,7 +8,6 @@ import pytest
 import sklearn
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier, _is_pairwise
@@ -395,7 +394,8 @@ def test_pickle_version_warning_is_issued_upon_different_version():
         old_version="something",
         current_version=sklearn.__version__,
     )
-    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_other)
+    with pytest.warns(UserWarning, match=message):
+        pickle.loads(tree_pickle_other)
 
 
 class TreeNoVersion(DecisionTreeClassifier):
@@ -416,7 +416,8 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         current_version=sklearn.__version__,
     )
     # check we got the warning about using pre-0.18 pickle
-    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_noversion)
+    with pytest.warns(UserWarning, match=message):
+        pickle.loads(tree_pickle_noversion)
 
 
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
