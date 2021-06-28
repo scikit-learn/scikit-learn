@@ -457,11 +457,11 @@ class ARDRegression(RegressorMixin, LinearModel):
         If True, compute the objective function at each step of the model.
 
     threshold_lambda : float, default=10 000
-        threshold for removing (pruning) weights with high precision from
+        Threshold for removing (pruning) weights with high precision from
         the computation.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -517,14 +517,9 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> from sklearn import linear_model
-    >>> clf = linear_model.ARDRegression()
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    ARDRegression()
-    >>> clf.predict([[1, 1]])
-    array([1.])
+    BayesianRidge : Bayesian ridge regression.
 
     Notes
     -----
@@ -543,6 +538,15 @@ class ARDRegression(RegressorMixin, LinearModel):
     ARD is a little different than the slide: only dimensions/features for
     which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.ARDRegression()
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
+    ARDRegression()
+    >>> clf.predict([[1, 1]])
+    array([1.])
     """
 
     def __init__(
@@ -575,8 +579,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.verbose = verbose
 
     def fit(self, X, y):
-        """Fit the ARDRegression model according to the given training data
-        and parameters.
+        """Fit the model according to the given training data and parameters.
 
         Iterative procedure to maximize the evidence
 
@@ -586,11 +589,12 @@ class ARDRegression(RegressorMixin, LinearModel):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
         y : array-like of shape (n_samples,)
-            Target values (integers). Will be cast to X's dtype if necessary
+            Target values (integers). Will be cast to X's dtype if necessary.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted estimator.
         """
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
