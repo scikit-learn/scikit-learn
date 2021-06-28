@@ -324,7 +324,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array of shape [n_samples]
             The target values.
+
+        Returns
+        -------
+        score : float
+            Score of the choosen estimator of transform(X) and y.
         """
+
         check_is_fitted(self)
         return self.estimator_.score(self.transform(X), y)
 
