@@ -572,3 +572,15 @@ def test_adaboost_negative_weight_error(model, X, y):
     err_msg = "sample_weight cannot contain negative weight"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)
+
+
+def test_adaboost_nan_feature_importance_with_small_sample_weight():
+    X = np.random.random((1000, 10))
+    y = np.random.choice([0, 1], size=1000)
+    sample_weight = np.ones_like(y) * 1e-263
+    tree = DecisionTreeClassifier(max_depth=10, random_state=12)
+    ada_model = AdaBoostClassifier(
+        base_estimator=tree, n_estimators=20, random_state=12
+    )
+    ada_model.fit(X, y, sample_weight=sample_weight)
+    assert np.isnan(ada_model.feature_importances_).sum() == 0

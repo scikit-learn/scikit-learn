@@ -137,8 +137,13 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Initializion of the random number instance that will be used to
         # generate a seed at each iteration
         random_state = check_random_state(self.random_state)
+        epsilon = np.finfo(X.dtype).eps
 
         for iboost in range(self.n_estimators):
+            # avoid extremely small sample weight
+            # detail see issue #20320
+            sample_weight = np.clip(sample_weight, a_min=epsilon, a_max=1.0)
+
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost, X, y, sample_weight, random_state
