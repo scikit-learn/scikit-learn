@@ -15,7 +15,6 @@ DOCSTRING_IGNORE_LIST = [
     "AgglomerativeClustering",
     "BaggingClassifier",
     "BaggingRegressor",
-    "BayesianGaussianMixture",
     "BayesianRidge",
     "BernoulliNB",
     "BernoulliRBM",
