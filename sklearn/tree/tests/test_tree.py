@@ -2528,7 +2528,7 @@ def test_n_features_deprecated(Tree):
     # FIXME: remove in 1.2
     depr_msg = (
         "The attribute `n_features_` is deprecated in 1.0 and will be "
-        "removed in 1.2. Use 'n_features_in_' instead."
+        "removed in 1.2. Use `n_features_in_` instead."
     )
 
     with pytest.warns(FutureWarning, match=depr_msg):
