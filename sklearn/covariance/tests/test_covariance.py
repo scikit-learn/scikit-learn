@@ -250,10 +250,7 @@ def test_ledoit_wolf_empty_array():
     # a ValueError when providing an empty array
     X = np.zeros((0, 2))
     lw = LedoitWolf()
-    with pytest.raises(
-        ValueError,
-        match="Found array with 0 sample"
-    ):
+    with pytest.raises(ValueError, match="Found array with 0 sample"):
         lw.fit(X)
 
 
@@ -261,10 +258,7 @@ def test_ledoit_wolf_shrinkage_empty_array():
     # test that ledoit wolf shrinkage raises
     # a ValueError when providing an empty array
     X = np.zeros((0, 2))
-    with pytest.raises(
-        ValueError,
-        match="Found array with 0 sample"
-    ):
+    with pytest.raises(ValueError, match="Found array with 0 sample"):
         ledoit_wolf_shrinkage(X)
 
 
