@@ -212,8 +212,10 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
-- |Fix| :class:`impute.IterativeImputer` now works
-  with :class:`cross_decomposition.PLSRegression` as estimator.
+- |Fix| :class:`cross_decomposition._PLS` estimators now properly return a
+  1-dimensional prediction array for single-target prediction,
+  instead of a 2d array. This allows compatibility with meta-estimators
+  such as :class:`impute.IterativeImputer`.
   :pr:`20355` by :user:`Leopoldo Corona <polocorona>`
 
 :mod:`sklearn.datasets`

@@ -85,6 +85,7 @@ def test_imputation_shape(strategy):
     assert X_imputed.shape == (10, 2)
 
     # Test shape with PLSRegression
+    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/19352
     iterative_imputer = IterativeImputer(
         initial_strategy=strategy, estimator=PLSRegression(n_components=1)
     )
