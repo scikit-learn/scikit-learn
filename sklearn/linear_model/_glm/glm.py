@@ -165,7 +165,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
             Fitted model.
         """
         if isinstance(self.family, ExponentialDispersionModel):
