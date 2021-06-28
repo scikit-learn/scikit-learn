@@ -157,7 +157,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
     Journal of Machine Learning Research, Vol. 1, 2001.
-    
+
     Examples
     --------
     >>> from sklearn import linear_model
