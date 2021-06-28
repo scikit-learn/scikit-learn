@@ -167,7 +167,7 @@ def _sparse_encode(
         clf = Lasso(
             alpha=alpha,
             fit_intercept=False,
-            normalize=False,
+            normalize="deprecated",  # as it was False by default
             precompute=gram,
             max_iter=max_iter,
             warm_start=True,
@@ -1262,9 +1262,9 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return self
 
     @deprecated(  # type: ignore
-        "The attribute 'components_' is deprecated "
+        "The attribute `components_` is deprecated "
         "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
-        "'dictionary' instead."
+        "`dictionary` instead."
     )
     @property
     def components_(self):

@@ -519,7 +519,7 @@ def test_ovr_deprecated_coef_intercept():
     ovr = ovr.fit(iris.data, iris.target)
 
     msg = (
-        r"Attribute {0} was deprecated in version 0.24 "
+        r"Attribute `{0}` was deprecated in version 0.24 "
         r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
         r"this warning while using RFE or SelectFromModel, "
         r"use the importance_getter parameter instead."
@@ -857,7 +857,7 @@ def test_pairwise_tag(MultiClassClassifier):
 def test_pairwise_deprecated(MultiClassClassifier):
     clf_precomputed = svm.SVC(kernel="precomputed")
     ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         ov_clf._pairwise
 

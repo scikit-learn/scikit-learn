@@ -931,8 +931,9 @@ class GraphicalLassoCV(GraphicalLasso):
     # TODO: Remove in 1.1 when grid_scores_ is deprecated
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "The grid_scores_ attribute is deprecated in version 0.24 in favor "
-        "of cv_results_ and will be removed in version 1.1 (renaming of 0.26)."
+        "The `grid_scores_` attribute is deprecated in version 0.24 in favor "
+        "of `cv_results_` and will be removed in version 1.1 "
+        "(renaming of 0.26)."
     )
     @property
     def grid_scores_(self):
@@ -945,8 +946,8 @@ class GraphicalLassoCV(GraphicalLasso):
     # TODO: Remove in 1.1 when cv_alphas_ is deprecated
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "The cv_alphas_ attribute is deprecated in version 0.24 in favor "
-        "of cv_results_['alpha'] and will be removed in version 1.1 "
+        "The `cv_alphas_` attribute is deprecated in version 0.24 in favor "
+        "of `cv_results_['alpha']` and will be removed in version 1.1 "
         "(renaming of 0.26)."
     )
     @property
