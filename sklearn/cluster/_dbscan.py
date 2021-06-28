@@ -334,7 +334,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self :
+        self : object
             Returns a fitted instance of self.
         """
         X = self._validate_data(X, accept_sparse="csr")
