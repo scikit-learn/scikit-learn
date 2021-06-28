@@ -605,8 +605,7 @@ class RequestMethod:
                 """.format(
                 metadata=metadata, method=self.name
             )
-        doc += """
-            Returns
+        doc += """Returns
             -------
             self : object
                 Returns the object itself.
