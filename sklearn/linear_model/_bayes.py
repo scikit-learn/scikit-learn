@@ -95,7 +95,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
     verbose : bool, default=False
         Verbose mode when fitting the model.
 
-
     Attributes
     ----------
     coef_ : array-like of shape (n_features,)
@@ -137,14 +136,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> from sklearn import linear_model
-    >>> clf = linear_model.BayesianRidge()
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    BayesianRidge()
-    >>> clf.predict([[1, 1]])
-    array([1.])
+    ARDRegression : Bayesian ARD regression.
 
     Notes
     -----
@@ -163,6 +157,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
     Journal of Machine Learning Research, Vol. 1, 2001.
+    
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.BayesianRidge()
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
+    BayesianRidge()
+    >>> clf.predict([[1, 1]])
+    array([1.])
     """
 
     def __init__(
@@ -197,24 +200,25 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """Fit the model
+        """Fit the model.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Training data
+            Training data.
         y : ndarray of shape (n_samples,)
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary.
 
         sample_weight : ndarray of shape (n_samples,), default=None
-            Individual weights for each sample
+            Individual weights for each sample.
 
             .. versionadded:: 0.20
                parameter *sample_weight* support to BayesianRidge.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns the instance itself.
         """
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
