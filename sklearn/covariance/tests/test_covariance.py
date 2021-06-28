@@ -244,6 +244,24 @@ def test_ledoit_wolf_large():
     lw = LedoitWolf(block_size=25).fit(X)
     assert_almost_equal(lw.covariance_, cov)
 
+def test_ledoit_wolf_empty_array():
+    # Compare our blocked implementation to the naive implementation
+    X = np.zeros((0,2))
+    lw = LedoitWolf()
+    with pytest.raises(
+        ValueError,
+        match="Found array with 0 sample\(s\) \(shape=\(0, 2\)\) while a minimum of 1 is required.",
+    ):
+        lw.fit(X)
+
+def test_ledoit_wolf_shrinkage_empty_array():
+    # Compare our blocked implementation to the naive implementation
+    X = np.zeros((0,2))
+    with pytest.raises(
+        ValueError,
+        match="Found array with 0 sample\(s\) \(shape=\(0, 2\)\) while a minimum of 1 is required.",
+    ):
+        lw = ledoit_wolf_shrinkage(X)
 
 def test_oas():
     # Tests OAS module on a simple dataset.
