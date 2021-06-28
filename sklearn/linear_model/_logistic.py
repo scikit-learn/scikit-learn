@@ -1947,6 +1947,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    LogisticRegression : Logistic regression without tuning the
+        hyperparameter `C`.
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -1959,11 +1964,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     (2, 3)
     >>> clf.score(X, y)
     0.98...
-
-    See Also
-    --------
-    LogisticRegression
-
     """
 
     def __init__(
@@ -2027,6 +2027,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Returns
         -------
         self : object
+            Fitted LogisticRegressionCV estimator.
         """
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
@@ -2368,8 +2369,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         return self
 
     def score(self, X, y, sample_weight=None):
-        """Returns the score using the `scoring` option on the given
-        test data and labels.
+        """Score using the `scoring` option on the given test data and labels.
 
         Parameters
         ----------
@@ -2386,7 +2386,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         -------
         score : float
             Score of self.predict(X) wrt. y.
-
         """
         scoring = self.scoring or "accuracy"
         scoring = get_scorer(scoring)

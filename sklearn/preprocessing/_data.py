@@ -337,6 +337,19 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         It will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
+    See Also
+    --------
+    minmax_scale : Equivalent function without the estimator API.
+
+    Notes
+    -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
@@ -353,19 +366,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
      [1.   1.  ]]
     >>> print(scaler.transform([[2, 2]]))
     [[1.5 0. ]]
-
-    See Also
-    --------
-    minmax_scale : Equivalent function without the estimator API.
-
-    Notes
-    -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):

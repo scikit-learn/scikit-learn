@@ -643,7 +643,7 @@ class KNeighborsMixin:
         return result
 
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
-        """Finds the K-neighbors of a point.
+        """Find the K-neighbors of a point.
 
         Returns indices of and distances to the neighbors of each point.
 
@@ -667,7 +667,7 @@ class KNeighborsMixin:
         -------
         neigh_dist : ndarray of shape (n_queries, n_neighbors)
             Array representing the lengths to points, only present if
-            return_distance=True
+            return_distance=True.
 
         neigh_ind : ndarray of shape (n_queries, n_neighbors)
             Indices of the nearest points in the population matrix.
@@ -817,7 +817,7 @@ class KNeighborsMixin:
             return neigh_ind
 
     def kneighbors_graph(self, X=None, n_neighbors=None, mode="connectivity"):
-        """Computes the (weighted) graph of k-Neighbors for points in X
+        """Compute the (weighted) graph of k-Neighbors for points in X.
 
         Parameters
         ----------
@@ -849,6 +849,10 @@ class KNeighborsMixin:
             `A[i, j]` gives the weight of the edge connecting `i` to `j`.
             The matrix is of CSR format.
 
+        See Also
+        --------
+        NearestNeighbors.radius_neighbors_graph: Computes a graph of neighbors.
+
         Examples
         --------
         >>> X = [[0], [3], [1]]
@@ -861,10 +865,6 @@ class KNeighborsMixin:
         array([[1., 0., 1.],
                [0., 1., 1.],
                [1., 0., 1.]])
-
-        See Also
-        --------
-        NearestNeighbors.radius_neighbors_graph
         """
         check_is_fitted(self)
         if n_neighbors is None:
