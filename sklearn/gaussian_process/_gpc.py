@@ -608,7 +608,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     See Also
     --------
-    GaussianProcessRegressor : Regressor module for Gaussian Proccess.
+    GaussianProcessRegressor : Gaussian process regression (GPR).
 
     Examples
     --------
