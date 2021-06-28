@@ -20,7 +20,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import MockDataFrame
 
@@ -406,18 +405,17 @@ def test_precision_recall_fscore_support_errors():
 def test_precision_recall_f_unused_pos_label():
     # Check warning that pos_label unused when set to non-default value
     # but average != 'binary'; even if data is binary.
-    assert_warns_message(
-        UserWarning,
-        "Note that pos_label (set to 2) is "
-        "ignored when average != 'binary' (got 'macro'). You "
-        "may use labels=[pos_label] to specify a single "
-        "positive class.",
-        precision_recall_fscore_support,
-        [1, 2, 1],
-        [1, 2, 2],
-        pos_label=2,
-        average="macro",
+
+    msg = (
+        r"Note that pos_label \(set to 2\) is "
+        r"ignored when average != 'binary' \(got 'macro'\). You "
+        r"may use labels=\[pos_label\] to specify a single "
+        "positive class."
     )
+    with pytest.warns(UserWarning, match=msg):
+        precision_recall_fscore_support(
+            [1, 2, 1], [1, 2, 2], pos_label=2, average="macro"
+        )
 
 
 def test_confusion_matrix_binary():
@@ -1164,15 +1162,9 @@ def test_classification_report_labels_target_names_unequal_length():
     y_pred = [0, 2, 2, 0, 0]
     target_names = ["class 0", "class 1", "class 2"]
 
-    assert_warns_message(
-        UserWarning,
-        "labels size, 2, does not " "match size of target_names, 3",
-        classification_report,
-        y_true,
-        y_pred,
-        labels=[0, 2],
-        target_names=target_names,
-    )
+    msg = "labels size, 2, does not " "match size of target_names, 3"
+    with pytest.warns(UserWarning, match=msg):
+        classification_report(y_true, y_pred, labels=[0, 2], target_names=target_names)
 
 
 def test_classification_report_no_labels_target_names_unequal_length():
@@ -1286,18 +1278,14 @@ def test_jaccard_score_validation():
     with pytest.raises(ValueError, match=msg3):
         jaccard_score(y_true, y_pred, average="samples")
 
-    assert_warns_message(
-        UserWarning,
-        "Note that pos_label (set to 3) is ignored when "
-        "average != 'binary' (got 'micro'). You may use "
-        "labels=[pos_label] to specify a single positive "
-        "class.",
-        jaccard_score,
-        y_true,
-        y_pred,
-        average="micro",
-        pos_label=3,
+    msg = (
+        r"Note that pos_label \(set to 3\) is ignored when "
+        r"average != 'binary' \(got 'micro'\). You may use "
+        r"labels=\[pos_label\] to specify a single positive "
+        "class."
     )
+    with pytest.warns(UserWarning, match=msg):
+        jaccard_score(y_true, y_pred, average="micro", pos_label=3)
 
 
 def test_multilabel_jaccard_score(recwarn):
@@ -1352,33 +1340,27 @@ def test_multilabel_jaccard_score(recwarn):
         "Jaccard is ill-defined and being set to 0.0 in labels "
         "with no true or predicted samples."
     )
-    assert (
-        assert_warns_message(
-            UndefinedMetricWarning,
-            msg,
-            jaccard_score,
-            np.array([[0, 1]]),
-            np.array([[0, 1]]),
-            average="macro",
+
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        assert (
+            jaccard_score(np.array([[0, 1]]), np.array([[0, 1]]), average="macro")
+            == 0.5
         )
-        == 0.5
-    )
 
     msg = (
         "Jaccard is ill-defined and being set to 0.0 in samples "
         "with no true or predicted labels."
     )
-    assert (
-        assert_warns_message(
-            UndefinedMetricWarning,
-            msg,
-            jaccard_score,
-            np.array([[0, 0], [1, 1]]),
-            np.array([[0, 0], [1, 1]]),
-            average="samples",
+
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        assert (
+            jaccard_score(
+                np.array([[0, 0], [1, 1]]),
+                np.array([[0, 0], [1, 1]]),
+                average="samples",
+            )
+            == 0.5
         )
-        == 0.5
-    )
 
     assert not list(recwarn)
 
@@ -1428,12 +1410,9 @@ def test_average_binary_jaccard_score(recwarn):
         "Jaccard is ill-defined and being set to 0.0 due to "
         "no true or predicted samples"
     )
-    assert (
-        assert_warns_message(
-            UndefinedMetricWarning, msg, jaccard_score, [0, 0], [0, 0], average="binary"
-        )
-        == 0.0
-    )
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        assert jaccard_score([0, 0], [0, 0], average="binary") == 0.0
+
     # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
     assert jaccard_score([0], [0], pos_label=0, average="binary") == 1.0
     y_true = np.array([1, 0, 1, 1, 0])
@@ -1810,7 +1789,8 @@ def test_prf_warnings():
             " Use `zero_division` parameter to control"
             " this behavior."
         )
-        assert_warns_message(w, msg, f, [0, 1, 2], [1, 1, 2], average=average)
+        with pytest.warns(w, match=msg):
+            f([0, 1, 2], [1, 1, 2], average=average)
 
         msg = (
             "Recall and F-score are ill-defined and "
@@ -1818,7 +1798,8 @@ def test_prf_warnings():
             " Use `zero_division` parameter to control"
             " this behavior."
         )
-        assert_warns_message(w, msg, f, [1, 1, 2], [0, 1, 2], average=average)
+        with pytest.warns(w, match=msg):
+            f([1, 1, 2], [0, 1, 2], average=average)
 
     # average of per-sample scores
     msg = (
@@ -1827,14 +1808,8 @@ def test_prf_warnings():
         " Use `zero_division` parameter to control"
         " this behavior."
     )
-    assert_warns_message(
-        w,
-        msg,
-        f,
-        np.array([[1, 0], [1, 0]]),
-        np.array([[1, 0], [0, 0]]),
-        average="samples",
-    )
+    with pytest.warns(w, match=msg):
+        f(np.array([[1, 0], [1, 0]]), np.array([[1, 0], [0, 0]]), average="samples")
 
     msg = (
         "Recall and F-score are ill-defined and "
@@ -1842,14 +1817,8 @@ def test_prf_warnings():
         " Use `zero_division` parameter to control"
         " this behavior."
     )
-    assert_warns_message(
-        w,
-        msg,
-        f,
-        np.array([[1, 0], [0, 0]]),
-        np.array([[1, 0], [1, 0]]),
-        average="samples",
-    )
+    with pytest.warns(w, match=msg):
+        f(np.array([[1, 0], [0, 0]]), np.array([[1, 0], [1, 0]]), average="samples")
 
     # single score: micro-average
     msg = (
@@ -1858,14 +1827,8 @@ def test_prf_warnings():
         " Use `zero_division` parameter to control"
         " this behavior."
     )
-    assert_warns_message(
-        w,
-        msg,
-        f,
-        np.array([[1, 1], [1, 1]]),
-        np.array([[0, 0], [0, 0]]),
-        average="micro",
-    )
+    with pytest.warns(w, match=msg):
+        f(np.array([[1, 1], [1, 1]]), np.array([[0, 0], [0, 0]]), average="micro")
 
     msg = (
         "Recall and F-score are ill-defined and "
@@ -1873,14 +1836,8 @@ def test_prf_warnings():
         " Use `zero_division` parameter to control"
         " this behavior."
     )
-    assert_warns_message(
-        w,
-        msg,
-        f,
-        np.array([[0, 0], [0, 0]]),
-        np.array([[1, 1], [1, 1]]),
-        average="micro",
-    )
+    with pytest.warns(w, match=msg):
+        f(np.array([[0, 0], [0, 0]]), np.array([[1, 1], [1, 1]]), average="micro")
 
     # single positive label
     msg = (
@@ -1889,7 +1846,8 @@ def test_prf_warnings():
         " Use `zero_division` parameter to control"
         " this behavior."
     )
-    assert_warns_message(w, msg, f, [1, 1], [-1, -1], average="binary")
+    with pytest.warns(w, match=msg):
+        f([1, 1], [-1, -1], average="binary")
 
     msg = (
         "Recall and F-score are ill-defined and "
@@ -1897,7 +1855,8 @@ def test_prf_warnings():
         " Use `zero_division` parameter to control"
         " this behavior."
     )
-    assert_warns_message(w, msg, f, [-1, -1], [1, 1], average="binary")
+    with pytest.warns(w, match=msg):
+        f([-1, -1], [1, 1], average="binary")
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -2214,20 +2173,8 @@ def test__check_targets():
                 _check_targets(y1[:-1], y2)
 
     # Make sure seq of seq is not supported
-    y1 = [
-        (
-            1,
-            2,
-        ),
-        (0, 2, 3),
-    ]
-    y2 = [
-        (2,),
-        (
-            0,
-            2,
-        ),
-    ]
+    y1 = [(1, 2), (0, 2, 3)]
+    y2 = [(2,), (0, 2)]
     msg = (
         "You appear to be using a legacy multi-label data representation. "
         "Sequence of sequences are no longer supported; use a binary array"
@@ -2536,13 +2483,9 @@ def test_brier_score_loss():
 
 
 def test_balanced_accuracy_score_unseen():
-    assert_warns_message(
-        UserWarning,
-        "y_pred contains classes not in y_true",
-        balanced_accuracy_score,
-        [0, 0, 0],
-        [0, 0, 1],
-    )
+    msg = "y_pred contains classes not in y_true"
+    with pytest.warns(UserWarning, match=msg):
+        balanced_accuracy_score([0, 0, 0], [0, 0, 1])
 
 
 @pytest.mark.parametrize(

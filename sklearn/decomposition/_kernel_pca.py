@@ -239,7 +239,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property

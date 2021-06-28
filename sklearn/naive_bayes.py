@@ -478,8 +478,8 @@ class GaussianNB(_BaseNB):
         return joint_log_likelihood
 
     @deprecated(  # type: ignore
-        "Attribute sigma_ was deprecated in 1.0 and will be removed in"
-        "1.2. Use var_ instead."
+        "Attribute `sigma_` was deprecated in 1.0 and will be removed in"
+        "1.2. Use `var_` instead."
     )
     @property
     def sigma_(self):
@@ -682,7 +682,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute coef_ was deprecated in "
+        "Attribute `coef_` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -695,7 +695,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute intercept_ was deprecated in "
+        "Attribute `intercept_` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -712,8 +712,8 @@ class _BaseDiscreteNB(_BaseNB):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use 'n_features_in_' instead."
+        "Attribute `n_features_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):

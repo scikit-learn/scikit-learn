@@ -852,7 +852,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Returns
         -------
-        self :
+        self : object
             Returns an instance of self.
         """
         self._validate_params(for_partial_fit=True)
@@ -907,7 +907,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Returns
         -------
-        self :
+        self : object
             Returns an instance of self.
         """
         return self._fit(

@@ -365,6 +365,7 @@ class PCA(_BasePCA):
             and n_features is the number of features.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------
@@ -384,6 +385,7 @@ class PCA(_BasePCA):
             and n_features is the number of features.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------
@@ -634,6 +636,7 @@ class PCA(_BasePCA):
             The data.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------

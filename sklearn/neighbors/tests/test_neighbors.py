@@ -1785,6 +1785,6 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
 )
 def test_pairwise_deprecated(NearestNeighbors):
     nn = NearestNeighbors(metric="precomputed")
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         nn._pairwise
