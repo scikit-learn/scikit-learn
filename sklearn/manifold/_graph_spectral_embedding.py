@@ -8,6 +8,7 @@ import warnings
 
 import numpy as np
 from scipy import sparse
+from scipy.linalg import svd
 from scipy.sparse import diags, isspmatrix_csr
 from scipy.stats import norm
 
@@ -15,6 +16,8 @@ from scipy.sparse.csgraph import connected_components
 from ..base import BaseEstimator
 from ..utils import check_symmetric
 from ..utils.extmath import randomized_svd
+from ..utils.validation import check_is_fitted
+
 
 def _augment_diagonal(graph, weight=1):
     r"""
@@ -135,7 +138,7 @@ def _selectSVD(X, n_components=None, n_elbows=2, svd_solver="randomized"):
         msg = "n_components must be <= min(X.shape)."
         raise ValueError(msg)
     elif svd_solver == "full":
-        U, D, V = scipy.linalg.svd(X)
+        U, D, V = svd(X)
         U = U[:, :n_components]
         D = D[:n_components]
         V = V[:n_components, :]
@@ -346,7 +349,8 @@ def _to_laplacian(A, regularizer=None):
             Computes :math:`L = D_o A D_i`
         - 'R-DAD'
             Computes :math:`L = D_o^r A D_i^r`
-            where :math:`D_o^r = D_o + regularizer \times I` and likewise for :math:`D_i`
+            where :math:`D_o^r = D_o + regularizer \times I` and likewise for
+            :math:`D_i`
 
     regularizer: int, float or None, optional (default=None)
         Constant to add to the degree vector(s). If None, average node degree is added.
@@ -447,9 +451,9 @@ class GraphSpectralEmbedding(BaseEstimator):
     ----------
     n_components : int or None, default = None
         Desired dimensionality of output data. If "full",
-        ``n_components`` must be ``<= min(X.shape)``. Otherwise, ``n_components`` must be
-        ``< min(X.shape)``. If None, then optimal dimensions will be chosen by Zhu and
-        Ghodsi method using ``n_elbows`` argument.
+        ``n_components`` must be ``<= min(X.shape)``. Otherwise, ``n_components`` must
+        be ``< min(X.shape)``. If None, then optimal dimensions will be chosen by Zhu
+        and Ghodsi method using ``n_elbows`` argument.
 
     n_elbows : int, optional, default: 2
         If ``n_components`` is None, then compute the optimal embedding dimension using
@@ -479,16 +483,17 @@ class GraphSpectralEmbedding(BaseEstimator):
         faster computation.
 
     regularizer: int, float or bool, optional (default = True)
-        When `algorithm`='ASE', whether to replace the main diagonal of the adjacency matrix with a vector
-        corresponding to the degree (or sum of edge weights for a weighted network)
-        before embedding. Empirically, this produces latent position estimates closer
-        to the ground truth.
+        When `algorithm`='ASE', whether to replace the main diagonal of the adjacency
+        matrix with a vector corresponding to the degree (or sum of edge weights for a
+        weighted network) before embedding. Empirically, this produces latent position
+        estimates closer to the ground truth.
 
-        When `algorithm`='LSE', constant to be added to the diagonal of degree matrix. If `True`, average
-        node degree is added. If int or float, must be >= 0.
+        When `algorithm`='LSE', constant to be added to the diagonal of degree matrix.
+        If `True`, average node degree is added. If int or float, must be >= 0.
 
     concat : bool, optional (default False)
-        If graph is directed, whether to concatenate left and right (out and in) latent positions along axis 1.
+        If graph is directed, whether to concatenate left and right (out and in) latent
+        positions along axis 1.
 
     Attributes
     ----------
@@ -532,21 +537,20 @@ class GraphSpectralEmbedding(BaseEstimator):
         self,
         n_components=None,
         n_elbows=2,
-        algorithm='ASE',
+        algorithm="ASE",
         svd_solver="randomized",
         check_lcc=True,
         regularizer=True,
         concat=False,
     ):
 
-        self.n_components=n_components
-        self.n_elbows=n_elbows
-        self.algorithm=algorithm
-        self.svd_solver=svd_solver
-        self.check_lcc=check_lcc
-        self.regularizer=regularizer
-        self.concat=concat
-
+        self.n_components = n_components
+        self.n_elbows = n_elbows
+        self.algorithm = algorithm
+        self.svd_solver = svd_solver
+        self.check_lcc = check_lcc
+        self.regularizer = regularizer
+        self.concat = concat
         self.is_fitted_ = False
 
     def fit(self, X, y=None):
@@ -565,13 +569,15 @@ class GraphSpectralEmbedding(BaseEstimator):
         self : object
             Returns an instance of self.
         """
-        A = self._validate_data(X, accept_sparse='csr', ensure_min_samples=2,
-                                estimator=self)
+        A = self._validate_data(
+            X, accept_sparse="csr", ensure_min_samples=2, estimator=self
+        )
 
         if self.check_lcc:
             directed = not _is_symmetric(A)
             n_components = connected_components(
-                            A, directed, connection="weak", return_labels=False)
+                A, directed, connection="weak", return_labels=False
+            )
             if n_components != 1:
                 msg = (
                     "Input graph is not fully connected. Results may not"
@@ -584,15 +590,17 @@ class GraphSpectralEmbedding(BaseEstimator):
 
         if isinstance(self.algorithm, str):
             if self.algorithm.lower() not in {"ase", "lse"}:
-                raise ValueError(("%s is not a valid embedding method. Expected "
-                                  "'ASE' or 'LSE'") % self.algorithm)
+                raise ValueError(
+                    ("%s is not a valid embedding method. Expected " "'ASE' or 'LSE'")
+                    % self.algorithm
+                )
         else:
             raise TypeError('"algorithm" must be of type string')
 
-        # reduces the dimensionality of an adjacency matrix using the desired embedding method.
-        if self.algorithm.lower() == 'ase' and self.regularizer:
+        # reduces the dimension of adjacency matrix using the desired embedding method.
+        if self.algorithm.lower() == "ase" and self.regularizer:
             A = _augment_diagonal(A)
-        elif self.algorithm.lower() == 'lse':
+        elif self.algorithm.lower() == "lse":
             A = _to_laplacian(A, regularizer=self.regularizer)
 
         U, D, V = _selectSVD(
@@ -600,7 +608,7 @@ class GraphSpectralEmbedding(BaseEstimator):
             n_components=self.n_components,
             n_elbows=self.n_elbows,
             svd_solver=self.svd_solver,
-            )
+        )
 
         self.n_components_ = D.size
         self.singular_values_ = D
@@ -618,7 +626,6 @@ class GraphSpectralEmbedding(BaseEstimator):
 
         self.is_fitted_ = True
         return self
-
 
     def fit_transform(self, X, y=None):
         """
@@ -664,7 +671,8 @@ class GraphSpectralEmbedding(BaseEstimator):
 
         Returns
         -------
-        array_like or tuple, shape (n_oos_vertices, n_components) or (n_vertices, n_components).
+        array_like or tuple, shape (n_oos_vertices, n_components)
+        or (n_vertices, n_components).
             Array of latent positions. Transforms the fitted matrix if it was passed
             in.
 
@@ -679,8 +687,8 @@ class GraphSpectralEmbedding(BaseEstimator):
 
         Notes
         -----
-        If the matrix was diagonally augmented (e.g., ``self.regularizer`` was True), ``fit``
-        followed by ``transform`` will produce a slightly different matrix than
+        If the matrix was diagonally augmented (e.g., ``self.regularizer`` was True),
+        ``fit`` followed by ``transform`` will produce a slightly different matrix than
         ``fit_transform``.
 
         To get the original embedding, using ``fit_transform`` is recommended. In the
@@ -691,8 +699,6 @@ class GraphSpectralEmbedding(BaseEstimator):
 
         # checks
         check_is_fitted(self, "is_fitted_")
-        if isinstance(X, nx.classes.graph.Graph):
-            X = import_graph(X)
         directed = self.latent_right_ is not None
 
         # correct types?
@@ -704,7 +710,8 @@ class GraphSpectralEmbedding(BaseEstimator):
                 graphs require a tuple (X_out, X_in)."""
                 raise TypeError(msg)
             else:
-                msg = "Directed graphs require a tuple (X_out, X_in) for out-of-sample transforms."
+                msg = """Directed graphs require a tuple (X_out, X_in) for
+                out-of-sample transforms."""
                 raise TypeError(msg)
         if not directed and not isinstance(X, np.ndarray):
             raise TypeError("Undirected graphs require array input")

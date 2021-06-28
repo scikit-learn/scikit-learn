@@ -1875,8 +1875,9 @@ def make_checkerboard(
 
     return result, rows, cols
 
+
 def make_erdos_reyni_graph(n, m, directed=False):
-    '''Generates an Erdos-Reyni (ER) graph.
+    """Generates an Erdos-Reyni (ER) graph.
 
     Erdos Renyi (n, m) graph is a simple graph with n vertices and exactly m
     number of total edges.
@@ -1899,7 +1900,7 @@ def make_erdos_reyni_graph(n, m, directed=False):
     Notes
     -----
     Code annotated from microsoft/graspologic, simulations.er_nm
-    '''
+    """
     A = np.zeros((n, n))
     if directed:
         idx = np.where(~np.eye(n, dtype=bool))
@@ -1918,8 +1919,9 @@ def make_erdos_reyni_graph(n, m, directed=False):
         A = A + A.T - np.diag(np.diag(A))
     return A
 
+
 def make_sbm_graph(n, p, directed=False):
-    '''Generates Stochastic Block Model (SBM) graph
+    """Generates Stochastic Block Model (SBM) graph
 
     SBM produces a graph with specified communities, in which each community can
     have different sizes and edge probabilities.
@@ -1929,9 +1931,9 @@ def make_sbm_graph(n, p, directed=False):
     n: list of int, shape (n_communities)
         Number of vertices in each community. Communities are assigned n[0], n[1], ...
     p: array-like, shape (n_communities, n_communities)
-        Probability of an edge between each of the communities, where ``p[i, j]`` indicates
-        the probability of a connection between edges in communities ``[i, j]``.
-        ``0 < p[i, j] < 1`` for all ``i, j``.
+        Probability of an edge between each of the communities, where ``p[i, j]``
+        indicates the probability of a connection between edges in communities
+        ``[i, j]``. ``0 < p[i, j] < 1`` for all ``i, j``.
     directed: boolean, optional (default=False)
         If False, output adjacency matrix will be symmetric. Otherwise, output adjacency
         matrix will be asymmetric.
@@ -1943,7 +1945,7 @@ def make_sbm_graph(n, p, directed=False):
      Notes
     -----
     Code annotated from microsoft/graspologic, simulations.sbm
-    '''
+    """
     A = np.zeros((sum(n), sum(n)))
     K = len(n)
     counter = 0
@@ -1952,6 +1954,7 @@ def make_sbm_graph(n, p, directed=False):
     for i in range(0, K):
         cmties.append(range(counter, counter + n[i]))
         counter += n[i]
+
     def cartesian_product(*arrays):
         """
         Compute the cartesian product of multiple arrays
@@ -1960,6 +1963,7 @@ def make_sbm_graph(n, p, directed=False):
         return np.transpose(
             np.meshgrid(*arrays, indexing="ij"), np.roll(np.arange(N + 1), -1)
         ).reshape(-1, N)
+
     for i in range(0, K):
         if directed:
             jrange = range(0, K)

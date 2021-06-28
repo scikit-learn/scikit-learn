@@ -10,7 +10,7 @@ from ._spectral_embedding import SpectralEmbedding, spectral_embedding
 from ._t_sne import TSNE, trustworthiness
 
 __all__ = [
-    "GraphSpectralEmbedding"
+    "GraphSpectralEmbedding",
     "locally_linear_embedding",
     "LocallyLinearEmbedding",
     "Isomap",

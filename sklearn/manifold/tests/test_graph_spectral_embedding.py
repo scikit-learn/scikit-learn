@@ -8,23 +8,27 @@ from sklearn.manifold import GraphSpectralEmbedding
 from sklearn.metrics import adjusted_rand_score
 from sklearn.datasets import make_erdos_reyni_graph, make_sbm_graph
 
+
 def _kmeans_comparison(data, labels, n_clusters):
     """
-    Function for comparing the ARIs of kmeans clustering for arbitrary number of data/labels
+    Function for comparing the ARIs of kmeans clustering for arbitrary number of
+    data/labels
+
     Parameters
     ----------
         data: list-like
             each element in the list is a dataset to perform k-means on
         labels: list-like
-            each element in the list is a set of lables with the same number of points as
-            the corresponding data
+            each element in the list is a set of lables with the same number of points
+            as the corresponding data
         n_clusters: int
             the number of clusters to use for k-means
+
     Returns
     -------
         aris: list, length the same as data/labels
-            the i-th element in the list is an ARI (Adjusted Rand Index) corresponding to the result
-            of k-means clustering on the i-th data/labels
+            the i-th element in the list is an ARI (Adjusted Rand Index) corresponding
+            to the result of k-means clustering on the i-th data/labels
     """
 
     if len(data) != len(labels):
@@ -37,6 +41,7 @@ def _kmeans_comparison(data, labels, n_clusters):
 
     return aris
 
+
 def _test_inputs(X, error_type, **kws):
     with pytest.raises(error_type):
         gse = GraphSpectralEmbedding(**kws)
@@ -46,7 +51,9 @@ def _test_inputs(X, error_type, **kws):
 @pytest.mark.parametrize("method", ["LSE", "ASE"])
 def test_output_dim_directed(method):
     n_components = 4
-    embed = GraphSpectralEmbedding(n_components=n_components, concat=True, algorithm=method)
+    embed = GraphSpectralEmbedding(
+        n_components=n_components, concat=True, algorithm=method
+    )
     n = 10
     M = 20
     A = make_erdos_reyni_graph(n, M, directed=True) + 5
@@ -58,7 +65,7 @@ def test_output_dim_directed(method):
 @pytest.mark.parametrize("method", ["LSE", "ASE"])
 def test_output_dim(method, sparse=False, *args, **kwargs):
     n_components = 4
-    embed = GraphSpectralEmbedding(n_components=n_components,algorithm=method)
+    embed = GraphSpectralEmbedding(n_components=n_components, algorithm=method)
     n = 10
     M = 20
     A = make_erdos_reyni_graph(n, M) + 5
@@ -89,10 +96,12 @@ def test_sbm_er_binary(method, P, directed, sparse=True, *args, **kwargs):
         if sparse:
             sbm_sample = csr_matrix(sbm_sample)
             er = csr_matrix(er)
-        embed_sbm = GraphSpectralEmbedding(n_components=2, algorithm=method,
-                                            concat=directed)
-        embed_er = GraphSpectralEmbedding(n_components=2, algorithm=method,
-                                            concat=directed)
+        embed_sbm = GraphSpectralEmbedding(
+            n_components=2, algorithm=method, concat=directed
+        )
+        embed_er = GraphSpectralEmbedding(
+            n_components=2, algorithm=method, concat=directed
+        )
 
         labels_sbm = np.zeros((verts), dtype=np.int8)
         labels_er = np.zeros((verts), dtype=np.int8)
@@ -103,13 +112,9 @@ def test_sbm_er_binary(method, P, directed, sparse=True, *args, **kwargs):
         X_er = embed_er.fit_transform(er)
 
         if directed:
-            # self.assertEqual(X_sbm.shape, (verts, 2 * communities))
-            # self.assertEqual(X_er.shape, (verts, 2 * communities))
             assert X_sbm.shape == (verts, 2 * communities)
             assert X_er.shape == (verts, 2 * communities)
         else:
-            # self.assertEqual(X_sbm.shape, (verts, communities))
-            # self.assertEqual(X_er.shape, (verts, communities))
             assert X_sbm.shape == (verts, communities)
             assert X_er.shape == (verts, communities)
 
@@ -124,36 +129,36 @@ def test_input_params():
     X = make_erdos_reyni_graph(10, 20)
 
     # value error, check n_components type int
-    _test_inputs(X, ValueError, n_components='not_int')
+    _test_inputs(X, ValueError, n_components="not_int")
 
     # n_components must be <= min(X.shape)
     _test_inputs(X, ValueError, n_components=15)
 
     # value error, check n_elbow type int
-    _test_inputs(X, ValueError, n_elbows='not_int')
+    _test_inputs(X, ValueError, n_elbows="not_int")
 
     # value error, check n_elbow > 1
     _test_inputs(X, ValueError, n_elbows=0)
 
     # check algorithm string
-    _test_inputs(X, ValueError, algorithm='wrong')
+    _test_inputs(X, ValueError, algorithm="wrong")
     _test_inputs(X, TypeError, algorithm=1)
 
     # svd_solver string
-    _test_inputs(X, ValueError, svd_solver='wrong')
+    _test_inputs(X, ValueError, svd_solver="wrong")
 
     # regularizer not int, float, or bool
-    _test_inputs(X, TypeError, algorithm='lse', regularizer='wrong')
+    _test_inputs(X, TypeError, algorithm="lse", regularizer="wrong")
     # regularizer not greater than 0
-    _test_inputs(X, ValueError, algorithm='lse', regularizer=-1)
+    _test_inputs(X, ValueError, algorithm="lse", regularizer=-1)
 
 
 def test_unconnected_warning():
     A = make_erdos_reyni_graph(100, 10)
     with pytest.warns(UserWarning):
-        ase = GraphSpectralEmbedding(algorithm='ASE')
+        ase = GraphSpectralEmbedding(algorithm="ASE")
         ase.fit(A)
     A = make_erdos_reyni_graph(100, 10, directed=True)
     with pytest.warns(UserWarning):
-        ase = GraphSpectralEmbedding(algorithm='ASE')
+        ase = GraphSpectralEmbedding(algorithm="ASE")
         ase.fit(A)
