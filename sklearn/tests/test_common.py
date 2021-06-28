@@ -324,7 +324,8 @@ COLUMN_NAME_MODULES_TO_IGNORE = {
     "model_selection",
     "multiclass",
     "multioutput",
-    "semi_supervised" "pipeline",
+    "pipeline",
+    "semi_supervised",
 }
 
 
