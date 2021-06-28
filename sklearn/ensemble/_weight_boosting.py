@@ -1035,7 +1035,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         Returns
         -------
-        self
+        self : object
             Fitted AdaBoostRegressor estimator.
         """
         # Check loss
