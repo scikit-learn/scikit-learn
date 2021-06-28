@@ -521,14 +521,16 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         _scale_alpha_inplace(linear_regressor, sample_weight.sum())
     reg_with_scaler = Pipeline(
         [
-            ("scaler", StandardScaler(with_mean=with_mean)),
-            ("linear_regressor", linear_regressor),
+            (
+                "scaler",
+                StandardScaler(with_mean=with_mean).fit_requests(sample_weight=True),
+            ),
+            ("linear_regressor", linear_regressor.fit_requests(sample_weight=True)),
         ]
     )
 
     fit_params = {
-        "scaler__sample_weight": sample_weight,
-        "linear_regressor__sample_weight": sample_weight,
+        "sample_weight": sample_weight,
     }
 
     reg_with_scaler.fit(X_train, y_train, **fit_params)
