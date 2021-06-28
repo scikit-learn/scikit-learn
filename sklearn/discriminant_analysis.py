@@ -532,7 +532,7 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        self :
+        self : object
             Fitted estimator.
         """
         X, y = self._validate_data(
