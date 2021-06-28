@@ -1,4 +1,3 @@
-import unittest
 import pytest
 import numpy as np
 
@@ -44,18 +43,20 @@ def _test_inputs(X, error_type, **kws):
         gse.fit(X)
 
 
-def _test_output_dim_directed(self, method):
+@pytest.mark.parametrize("method", ["LSE", "ASE"])
+def test_output_dim_directed(method):
     n_components = 4
     embed = GraphSpectralEmbedding(n_components=n_components, concat=True, algorithm=method)
     n = 10
     M = 20
     A = make_erdos_reyni_graph(n, M, directed=True) + 5
-    self.assertEqual(embed.fit_transform(A).shape, (n, 8))
-    self.assertEqual(embed.latent_left_.shape, (n, 4))
-    self.assertEqual(embed.latent_right_.shape, (n, 4))
+    assert embed.fit_transform(A).shape == (n, 8)
+    assert embed.latent_left_.shape == (n, 4)
+    assert embed.latent_right_.shape == (n, 4)
 
 
-def _test_output_dim(self, method, sparse=False, *args, **kwargs):
+@pytest.mark.parametrize("method", ["LSE", "ASE"])
+def test_output_dim(method, sparse=False, *args, **kwargs):
     n_components = 4
     embed = GraphSpectralEmbedding(n_components=n_components,algorithm=method)
     n = 10
@@ -64,11 +65,14 @@ def _test_output_dim(self, method, sparse=False, *args, **kwargs):
     if sparse:
         A = csr_matrix(A)
     embed.fit(A)
-    self.assertEqual(embed.latent_left_.shape, (n, 4))
-    self.assertTrue(embed.latent_right_ is None)
+    assert embed.latent_left_.shape == (n, 4)
+    assert embed.latent_right_ is None
 
 
-def _test_sbm_er_binary(self, method, P, directed=False, sparse=True, *args, **kwargs):
+@pytest.mark.parametrize("method", ["LSE", "ASE"])
+@pytest.mark.parametrize("P", [np.array([[0.8, 0.2], [0.2, 0.8]])])
+@pytest.mark.parametrize("directed", [True, False])
+def test_sbm_er_binary(method, P, directed, sparse=True, *args, **kwargs):
     np.random.seed(8888)
 
     num_sims = 50
@@ -99,17 +103,21 @@ def _test_sbm_er_binary(self, method, P, directed=False, sparse=True, *args, **k
         X_er = embed_er.fit_transform(er)
 
         if directed:
-            self.assertEqual(X_sbm.shape, (verts, 2 * communities))
-            self.assertEqual(X_er.shape, (verts, 2 * communities))
+            # self.assertEqual(X_sbm.shape, (verts, 2 * communities))
+            # self.assertEqual(X_er.shape, (verts, 2 * communities))
+            assert X_sbm.shape == (verts, 2 * communities)
+            assert X_er.shape == (verts, 2 * communities)
         else:
-            self.assertEqual(X_sbm.shape, (verts, communities))
-            self.assertEqual(X_er.shape, (verts, communities))
+            # self.assertEqual(X_sbm.shape, (verts, communities))
+            # self.assertEqual(X_er.shape, (verts, communities))
+            assert X_sbm.shape == (verts, communities)
+            assert X_er.shape == (verts, communities)
 
         aris = _kmeans_comparison((X_sbm, X_er), (labels_sbm, labels_er), communities)
         sbm_wins = sbm_wins + (aris[0] > aris[1])
         er_wins = er_wins + (aris[0] < aris[1])
 
-    self.assertTrue(sbm_wins > er_wins)
+    assert sbm_wins > er_wins
 
 
 def test_input_params():
@@ -139,44 +147,13 @@ def test_input_params():
     # regularizer not greater than 0
     _test_inputs(X, ValueError, algorithm='lse', regularizer=-1)
 
-class TestAdjacencySpectralEmbed(unittest.TestCase):
 
-    def test_output_dim(self):
-        _test_output_dim(self, 'ASE')
-
-    def test_output_dim_directed(self):
-        _test_output_dim_directed(self, 'ASE')
-
-    def test_unconnected_warning(self):
-        A = make_erdos_reyni_graph(100, 10)
-        with self.assertWarns(UserWarning):
-            ase = GraphSpectralEmbedding(algorithm='ASE')
-            ase.fit(A)
-        A = make_erdos_reyni_graph(100, 10, directed=True)
-        with self.assertWarns(UserWarning):
-            ase = GraphSpectralEmbedding(algorithm='ASE')
-            ase.fit(A)
-
-    def test_sbm_er_binary_undirected(self):
-        P = np.array([[0.8, 0.2], [0.2, 0.8]])
-        _test_sbm_er_binary(self, 'ASE', P, directed=False)
-
-    def test_sbm_er_binary_directed(self):
-        P = np.array([[0.8, 0.2], [0.2, 0.8]])
-        _test_sbm_er_binary(self, 'ASE', P, directed=True)
-
-
-class TestLaplacianSpectralEmbed(unittest.TestCase):
-    def test_output_dim(self):
-        _test_output_dim(self, 'LSE')
-
-    def test_output_dim_directed(self):
-        _test_output_dim_directed(self, 'LSE')
-
-    def test_sbm_er_binary_undirected(self):
-        P = np.array([[0.8, 0.2], [0.2, 0.8]])
-        _test_sbm_er_binary(self, 'LSE', P, directed=False)
-
-    def test_sbm_er_binary_directed(self):
-        P = np.array([[0.8, 0.2], [0.2, 0.8]])
-        _test_sbm_er_binary(self, 'LSE', P, directed=True)
+def test_unconnected_warning():
+    A = make_erdos_reyni_graph(100, 10)
+    with pytest.warns(UserWarning):
+        ase = GraphSpectralEmbedding(algorithm='ASE')
+        ase.fit(A)
+    A = make_erdos_reyni_graph(100, 10, directed=True)
+    with pytest.warns(UserWarning):
+        ase = GraphSpectralEmbedding(algorithm='ASE')
+        ase.fit(A)
