@@ -248,18 +248,27 @@ def test_ledoit_wolf_large():
 def test_ledoit_wolf_empty_array():
     # test that ledoit wolf raises
     # a ValueError when providing an empty array
-    X = np.zeros((0, 2))
+    X_empty = np.zeros((0, 2))
     lw = LedoitWolf()
     with pytest.raises(ValueError, match="Found array with 0 sample"):
-        lw.fit(X)
+        lw.fit(X_empty)
 
 
 def test_ledoit_wolf_shrinkage_empty_array():
     # test that ledoit wolf shrinkage raises
     # a ValueError when providing an empty array
-    X = np.zeros((0, 2))
+    X_empty = np.zeros((0, 2))
     with pytest.raises(ValueError, match="Found array with 0 sample"):
-        ledoit_wolf_shrinkage(X)
+        ledoit_wolf_shrinkage(X_empty)
+
+
+def test_ledoit_wolf_object_empty_array():
+    # test that LedoitWolf method `fit` raises
+    # a ValueError when providing an empty array
+    X_empty = np.zeros((0, 2))
+    lw = LedoitWolf()
+    with pytest.raises(ValueError, match="Found array with 0 sample"):
+        lw.fit(X_empty)
 
 
 def test_oas():

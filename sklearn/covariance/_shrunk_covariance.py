@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
+from .._config import config_context
 from ..utils import check_array
 
 
@@ -428,7 +429,8 @@ class LedoitWolf(EmpiricalCovariance):
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        X = self._validate_data(X)
+        with config_context(assume_finite=True):
+            X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
