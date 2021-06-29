@@ -140,9 +140,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         epsilon = np.finfo(np.float64).eps
 
         for iboost in range(self.n_estimators):
-            # avoid extremely small sample weight
-            # detail see issue #20320
+            zero_loc = sample_weight == 0.0
+            # avoid extremely small sample weight, detail see issue #20320
             sample_weight = np.clip(sample_weight, a_min=epsilon, a_max=None)
+            # do not clip sample weight when it's exactly 0
+            sample_weight[zero_loc] = 0.0
 
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
