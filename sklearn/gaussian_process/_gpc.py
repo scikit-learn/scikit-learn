@@ -165,7 +165,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y):
-        """Fit Gaussian process classification model
+        """Fit Gaussian process classification model.
 
         Parameters
         ----------
@@ -173,7 +173,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             Feature vectors or other representations of training data.
 
         y : array-like of shape (n_samples,)
-            Target values, must be binary
+            Target values, must be binary.
 
         Returns
         -------
@@ -606,6 +606,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    GaussianProcessRegressor : Gaussian process regression (GPR).
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -648,7 +652,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self.n_jobs = n_jobs
 
     def fit(self, X, y):
-        """Fit Gaussian process classification model
+        """Fit Gaussian process classification model.
 
         Parameters
         ----------
@@ -656,11 +660,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             Feature vectors or other representations of training data.
 
         y : array-like of shape (n_samples,)
-            Target values, must be binary
+            Target values, must be binary.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns an instance of self.
         """
         if self.kernel is None or self.kernel.requires_vector_input:
             X, y = self._validate_data(
@@ -728,7 +733,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         Returns
         -------
         C : ndarray of shape (n_samples,)
-            Predicted target values for X, values are from ``classes_``
+            Predicted target values for X, values are from ``classes_``.
         """
         check_is_fitted(self)
 
@@ -771,6 +776,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     @property
     def kernel_(self):
+        """Return the kernel of the base estimator."""
         if self.n_classes_ == 2:
             return self.base_estimator_.kernel_
         else:
@@ -781,7 +787,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     def log_marginal_likelihood(
         self, theta=None, eval_gradient=False, clone_kernel=True
     ):
-        """Returns log-marginal likelihood of theta for training data.
+        """Return log-marginal likelihood of theta for training data.
 
         In the case of multi-class classification, the mean log-marginal
         likelihood of the one-versus-rest classifiers are returned.

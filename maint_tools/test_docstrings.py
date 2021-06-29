@@ -48,7 +48,6 @@ DOCSTRING_IGNORE_LIST = [
     "GammaRegressor",
     "GaussianMixture",
     "GaussianNB",
-    "GaussianProcessClassifier",
     "GaussianProcessRegressor",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
