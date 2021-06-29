@@ -3,7 +3,7 @@
 Image denoising using kernel PCA
 ================================
 
-This example shows how to use :class:`~sklearn.decomposition.kernelPCA` to
+This example shows how to use :class:`~sklearn.decomposition.KernelPCA` to
 denoise images. In short, we take advantage of the approximation function
 learned during `fit` to reconstruct the original image.
 
