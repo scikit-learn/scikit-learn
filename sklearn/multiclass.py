@@ -517,7 +517,7 @@ class OneVsRestClassifier(
     # TODO: Remove coef_ attribute in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute coef_ was deprecated in "
+        "Attribute `coef_` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
         "If you observe this warning while using RFE "
         "or SelectFromModel, use the importance_getter "
@@ -536,7 +536,7 @@ class OneVsRestClassifier(
     # TODO: Remove intercept_ attribute in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute intercept_ was deprecated in "
+        "Attribute `intercept_` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
         "If you observe this warning while using RFE "
         "or SelectFromModel, use the importance_getter "
@@ -552,7 +552,7 @@ class OneVsRestClassifier(
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -858,7 +858,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property

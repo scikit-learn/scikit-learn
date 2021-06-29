@@ -30,7 +30,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     weights : {'uniform', 'distance'} or callable, default='uniform'
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
@@ -65,7 +65,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -111,25 +111,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
 
-    Examples
-    --------
-    >>> X = [[0], [1], [2], [3]]
-    >>> y = [0, 0, 1, 1]
-    >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> neigh = KNeighborsClassifier(n_neighbors=3)
-    >>> neigh.fit(X, y)
-    KNeighborsClassifier(...)
-    >>> print(neigh.predict([[1.1]]))
-    [0]
-    >>> print(neigh.predict_proba([[0.9]]))
-    [[0.66666667 0.33333333]]
-
     See Also
     --------
-    RadiusNeighborsClassifier
-    KNeighborsRegressor
-    RadiusNeighborsRegressor
-    NearestNeighbors
+    RadiusNeighborsClassifier: Classifier based on neighbors within a fixed radius.
+    KNeighborsRegressor: Regression based on k-nearest neighbors.
+    RadiusNeighborsRegressor: Regression based on neighbors within a fixed radius.
+    NearestNeighbors: Unsupervised learner for implementing neighbor searches.
 
     Notes
     -----
@@ -144,6 +131,19 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
        training data.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+
+    Examples
+    --------
+    >>> X = [[0], [1], [2], [3]]
+    >>> y = [0, 0, 1, 1]
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> neigh = KNeighborsClassifier(n_neighbors=3)
+    >>> neigh.fit(X, y)
+    KNeighborsClassifier(...)
+    >>> print(neigh.predict([[1.1]]))
+    [0]
+    >>> print(neigh.predict_proba([[0.9]]))
+    [[0.666... 0.333...]]
     """
 
     def __init__(
@@ -244,8 +244,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         Returns
         -------
-        p : ndarray of shape (n_queries, n_classes), or a list of n_outputs
-            of such arrays if n_outputs > 1.
+        p : ndarray of shape (n_queries, n_classes), or a list of n_outputs \
+                of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """

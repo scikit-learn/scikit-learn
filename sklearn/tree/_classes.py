@@ -1016,8 +1016,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             return proba
 
     @deprecated(  # type: ignore
-        "The attribute 'n_features_' is deprecated in 1.0 and will be removed "
-        "in 1.2. Use 'n_features_in_' instead."
+        "The attribute `n_features_` is deprecated in 1.0 and will be removed "
+        "in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):
@@ -1336,8 +1336,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         return averaged_predictions
 
     @deprecated(  # type: ignore
-        "The attribute 'n_features_' is deprecated in 1.0 and will be removed "
-        "in 1.2. Use 'n_features_in_' instead."
+        "The attribute `n_features_` is deprecated in 1.0 and will be removed "
+        "in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):

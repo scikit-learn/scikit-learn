@@ -530,6 +530,6 @@ def test_kernel_pcc_pairwise_is_deprecated():
     Tests that a `FutureWarning` is issued when `_pairwise` is accessed.
     """
     kp = KernelPCA(kernel="precomputed")
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         kp._pairwise
