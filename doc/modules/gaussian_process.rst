@@ -220,7 +220,7 @@ overall noise level is very small, indicating that the data can be very well
 explained by the model. The figure shows also that the model makes very
 confident predictions until around 2015
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_co2_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_co2_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_co2.html
    :align: center
 
