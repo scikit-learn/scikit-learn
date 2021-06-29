@@ -5,7 +5,7 @@ from ._stochastic_gradient import BaseSGDClassifier
 
 
 class Perceptron(BaseSGDClassifier):
-    """Perceptron classifier.
+    """Linear perceptron classifier.
 
     Read more in the :ref:`User Guide <perceptron>`.
 
