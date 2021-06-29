@@ -316,7 +316,7 @@ def plot_partial_dependence(
             )
         if kind != "average" and np.size(fxs) > 1:
             raise ValueError(
-                f"It is not possible to display individual effects for more "
+                "It is not possible to display individual effects for more "
                 f"than one feature at a time. Got: features={features}."
             )
         tmp_features.append(fxs)
@@ -347,7 +347,7 @@ def plot_partial_dependence(
         if subsample <= 0 or subsample >= 1:
             raise ValueError(
                 f"When a floating-point, subsample={subsample} should be in "
-                f"the (0, 1) range."
+                "the (0, 1) range."
             )
 
     # compute predictions and/or averaged predictions

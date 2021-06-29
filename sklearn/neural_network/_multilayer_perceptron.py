@@ -459,18 +459,18 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             raise ValueError("momentum must be >= 0 and <= 1, got %s" % self.momentum)
         if not isinstance(self.nesterovs_momentum, bool):
             raise ValueError(
-                "nesterovs_momentum must be either True or False,"
-                " got %s." % self.nesterovs_momentum
+                "nesterovs_momentum must be either True or False, got %s."
+                % self.nesterovs_momentum
             )
         if not isinstance(self.early_stopping, bool):
             raise ValueError(
-                "early_stopping must be either True or False,"
-                " got %s." % self.early_stopping
+                "early_stopping must be either True or False, got %s."
+                % self.early_stopping
             )
         if self.validation_fraction < 0 or self.validation_fraction >= 1:
             raise ValueError(
-                "validation_fraction must be >= 0 and < 1, "
-                "got %s" % self.validation_fraction
+                "validation_fraction must be >= 0 and < 1, got %s"
+                % self.validation_fraction
             )
         if self.beta_1 < 0 or self.beta_1 >= 1:
             raise ValueError("beta_1 must be >= 0 and < 1, got %s" % self.beta_1)
@@ -486,16 +486,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # raise ValueError if not registered
         if self.activation not in ACTIVATIONS:
             raise ValueError(
-                "The activation '%s' is not supported. Supported "
-                "activations are %s." % (self.activation, list(sorted(ACTIVATIONS)))
+                "The activation '%s' is not supported. Supported activations are %s."
+                % (self.activation, list(sorted(ACTIVATIONS)))
             )
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " % self.learning_rate)
         supported_solvers = _STOCHASTIC_SOLVERS + ["lbfgs"]
         if self.solver not in supported_solvers:
             raise ValueError(
-                "The solver %s is not supported. "
-                " Expected one of: %s" % (self.solver, ", ".join(supported_solvers))
+                "The solver %s is not supported.  Expected one of: %s"
+                % (self.solver, ", ".join(supported_solvers))
             )
 
     def _fit_lbfgs(
@@ -765,7 +765,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic." % self.solver
+                " optimizers. %s is not stochastic."
+                % self.solver
             )
         return self._partial_fit
 
@@ -1117,13 +1118,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             if self.warm_start:
                 if set(classes) != set(self.classes_):
                     raise ValueError(
-                        f"warm_start can only be used where `y` has the same "
-                        f"classes as in the previous call to fit. Previously "
+                        "warm_start can only be used where `y` has the same "
+                        "classes as in the previous call to fit. Previously "
                         f"got {self.classes_}, `y` has {classes}"
                     )
             elif len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
                 raise ValueError(
-                    f"`y` has classes not in `self.classes_`. "
+                    "`y` has classes not in `self.classes_`. "
                     f"`self.classes_` has {self.classes_}. 'y' has {classes}."
                 )
 
@@ -1180,7 +1181,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizer. %s is not stochastic" % self.solver
+                " optimizer. %s is not stochastic"
+                % self.solver
             )
         return self._partial_fit
 
