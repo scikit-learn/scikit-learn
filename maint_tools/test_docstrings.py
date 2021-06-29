@@ -20,7 +20,6 @@ DOCSTRING_IGNORE_LIST = [
     "BayesianGaussianMixture",
     "BayesianRidge",
     "BernoulliRBM",
-    "Binarizer",
     "Birch",
     "CCA",
     "CalibratedClassifierCV",
