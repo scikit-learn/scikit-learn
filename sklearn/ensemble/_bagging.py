@@ -235,8 +235,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """Build a Bagging ensemble of estimators from the training
-           set (X, y).
+        """Build a Bagging ensemble of estimators from the training set (X, y).
 
         Parameters
         ----------
@@ -256,6 +255,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
@@ -291,6 +291,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         random_state = check_random_state(self.random_state)
 
@@ -601,18 +602,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.svm import SVC
-    >>> from sklearn.ensemble import BaggingClassifier
-    >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_samples=100, n_features=4,
-    ...                            n_informative=2, n_redundant=0,
-    ...                            random_state=0, shuffle=False)
-    >>> clf = BaggingClassifier(base_estimator=SVC(),
-    ...                         n_estimators=10, random_state=0).fit(X, y)
-    >>> clf.predict([[0, 0, 0, 0]])
-    array([1])
+    BaggingRegressor : A Bagging regressor.
 
     References
     ----------
@@ -629,6 +621,19 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=100, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = BaggingClassifier(base_estimator=SVC(),
+    ...                         n_estimators=10, random_state=0).fit(X, y)
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
     """
 
     def __init__(
@@ -862,7 +867,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             to the classes in sorted order, as they appear in the attribute
             ``classes_``. Regression and binary classification are special
             cases with ``k == 1``, otherwise ``k==n_classes``.
-
         """
         check_is_fitted(self)
 
