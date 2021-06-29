@@ -106,7 +106,7 @@ from sklearn.gaussian_process.kernels import RBF
 kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
 gpr = GaussianProcessRegressor(kernel=kernel)
 
-fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(6, 8))
+fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
 
 # plot prior
 plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[0])
@@ -137,7 +137,7 @@ from sklearn.gaussian_process.kernels import RationalQuadratic
 kernel = 1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1, alpha_bounds=(1e-5, 1e10))
 gpr = GaussianProcessRegressor(kernel=kernel)
 
-fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(6, 8))
+fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
 
 # plot prior
 plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[0])
@@ -173,7 +173,7 @@ kernel = 1.0 * ExpSineSquared(
 )
 gpr = GaussianProcessRegressor(kernel=kernel)
 
-fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(6, 8))
+fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
 
 # plot prior
 plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[0])
@@ -206,7 +206,7 @@ kernel = ConstantKernel(0.1, (0.01, 10.0)) * (
 )
 gpr = GaussianProcessRegressor(kernel=kernel)
 
-fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(6, 8))
+fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
 
 # plot prior
 plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[0])
@@ -237,7 +237,7 @@ from sklearn.gaussian_process.kernels import Matern
 kernel = 1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0), nu=1.5)
 gpr = GaussianProcessRegressor(kernel=kernel)
 
-fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(6, 8))
+fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
 
 # plot prior
 plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[0])
