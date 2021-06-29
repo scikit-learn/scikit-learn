@@ -11,7 +11,6 @@ at which the fixe is no longer needed.
 # License: BSD 3 clause
 
 from functools import update_wrapper
-from distutils.version import LooseVersion
 import functools
 
 import numpy as np
@@ -19,23 +18,15 @@ import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 1.0
 from .._config import config_context, get_config
-
-from .deprecation import deprecated
-
-try:
-    from pkg_resources import parse_version  # type: ignore
-except ImportError:
-    # setuptools not installed
-    parse_version = LooseVersion  # type: ignore
+from ..externals._packaging.version import parse as parse_version
 
 
 np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
 
 
-if sp_version >= parse_version('1.4'):
+if sp_version >= parse_version("1.4"):
     from scipy.sparse.linalg import lobpcg
 else:
     # Backport of lobpcg functionality from scipy 1.4.0, can be removed
@@ -54,8 +45,8 @@ def _astype_copy_false(X):
     {ndarray, csr_matrix, csc_matrix}.astype when possible,
     otherwise don't specify
     """
-    if sp_version >= parse_version('1.1') or not sp.issparse(X):
-        return {'copy': False}
+    if sp_version >= parse_version("1.1") or not sp.issparse(X):
+        return {"copy": False}
     else:
         return {}
 
@@ -83,28 +74,32 @@ def _joblib_parallel_args(**kwargs):
     """
     import joblib
 
-    if parse_version(joblib.__version__) >= parse_version('0.12'):
+    if parse_version(joblib.__version__) >= parse_version("0.12"):
         return kwargs
 
-    extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
+    extra_args = set(kwargs.keys()).difference({"prefer", "require"})
     if extra_args:
-        raise NotImplementedError('unhandled arguments %s with joblib %s'
-                                  % (list(extra_args), joblib.__version__))
+        raise NotImplementedError(
+            "unhandled arguments %s with joblib %s"
+            % (list(extra_args), joblib.__version__)
+        )
     args = {}
-    if 'prefer' in kwargs:
-        prefer = kwargs['prefer']
-        if prefer not in ['threads', 'processes', None]:
-            raise ValueError('prefer=%s is not supported' % prefer)
-        args['backend'] = {'threads': 'threading',
-                           'processes': 'multiprocessing',
-                           None: None}[prefer]
+    if "prefer" in kwargs:
+        prefer = kwargs["prefer"]
+        if prefer not in ["threads", "processes", None]:
+            raise ValueError("prefer=%s is not supported" % prefer)
+        args["backend"] = {
+            "threads": "threading",
+            "processes": "multiprocessing",
+            None: None,
+        }[prefer]
 
-    if 'require' in kwargs:
-        require = kwargs['require']
-        if require not in [None, 'sharedmem']:
-            raise ValueError('require=%s is not supported' % require)
-        if require == 'sharedmem':
-            args['backend'] = 'threading'
+    if "require" in kwargs:
+        require = kwargs["require"]
+        if require not in [None, "sharedmem"]:
+            raise ValueError("require=%s is not supported" % require)
+        if require == "sharedmem":
+            args["backend"] = "threading"
     return args
 
 
@@ -157,35 +152,24 @@ class loguniform(scipy.stats.reciprocal):
     """
 
 
-@deprecated(
-    'MaskedArray is deprecated in version 0.23 and will be removed in version '
-    '1.0 (renaming of 0.25). Use numpy.ma.MaskedArray instead.'
-)
-class MaskedArray(_MaskedArray):
-    pass  # TODO: remove in 1.0
-
-
 def _take_along_axis(arr, indices, axis):
     """Implements a simplified version of np.take_along_axis if numpy
     version < 1.15"""
-    if np_version >= parse_version('1.15'):
+    if np_version >= parse_version("1.15"):
         return np.take_along_axis(arr=arr, indices=indices, axis=axis)
     else:
         if axis is None:
             arr = arr.flatten()
 
         if not np.issubdtype(indices.dtype, np.intp):
-            raise IndexError('`indices` must be an integer array')
+            raise IndexError("`indices` must be an integer array")
         if arr.ndim != indices.ndim:
             raise ValueError(
-                "`indices` and `arr` must have the same number of dimensions")
+                "`indices` and `arr` must have the same number of dimensions"
+            )
 
         shape_ones = (1,) * indices.ndim
-        dest_dims = (
-            list(range(axis)) +
-            [None] +
-            list(range(axis+1, indices.ndim))
-        )
+        dest_dims = list(range(axis)) + [None] + list(range(axis + 1, indices.ndim))
 
         # build a fancy index, consisting of orthogonal aranges, with the
         # requested index inserted at the right location
@@ -194,7 +178,7 @@ def _take_along_axis(arr, indices, axis):
             if dim is None:
                 fancy_index.append(indices)
             else:
-                ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim+1:]
+                ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim + 1 :]
                 fancy_index.append(np.arange(n).reshape(ind_shape))
 
         fancy_index = tuple(fancy_index)
@@ -204,14 +188,17 @@ def _take_along_axis(arr, indices, axis):
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
 def delayed(function):
     """Decorator used to capture the arguments of a function."""
+
     @functools.wraps(function)
     def delayed_function(*args, **kwargs):
         return _FuncWrapper(function), args, kwargs
+
     return delayed_function
 
 
 class _FuncWrapper:
-    """"Load the global configuration before calling the function."""
+    """ "Load the global configuration before calling the function."""
+
     def __init__(self, function):
         self.function = function
         self.config = get_config()
@@ -222,8 +209,7 @@ class _FuncWrapper:
             return self.function(*args, **kwargs)
 
 
-def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
-             axis=0):
+def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
     """Implements a simplified linspace function as of numpy verion >= 1.16.
 
     As of numpy 1.16, the arguments start and stop can be array-like and
@@ -237,7 +223,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     out : ndarray of shape (num, n_start) or (num,)
         The output array with `n_start=start.shape[0]` columns.
     """
-    if np_version < parse_version('1.16'):
+    if np_version < parse_version("1.16"):
         start = np.asanyarray(start) * 1.0
         stop = np.asanyarray(stop) * 1.0
         dt = np.result_type(start, stop, float(num))
@@ -245,19 +231,29 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             dtype = dt
 
         if start.ndim == 0 == stop.ndim:
-            return np.linspace(start=start, stop=stop, num=num,
-                               endpoint=endpoint, retstep=retstep, dtype=dtype)
+            return np.linspace(
+                start=start,
+                stop=stop,
+                num=num,
+                endpoint=endpoint,
+                retstep=retstep,
+                dtype=dtype,
+            )
 
         if start.ndim != 1 or stop.ndim != 1 or start.shape != stop.shape:
-            raise ValueError("start and stop must be 1d array-like of same"
-                             " shape.")
+            raise ValueError("start and stop must be 1d array-like of same shape.")
         n_start = start.shape[0]
         out = np.empty((num, n_start), dtype=dtype)
         step = np.empty(n_start, dtype=np.float)
         for i in range(n_start):
-            out[:, i], step[i] = np.linspace(start=start[i], stop=stop[i],
-                                             num=num, endpoint=endpoint,
-                                             retstep=True, dtype=dtype)
+            out[:, i], step[i] = np.linspace(
+                start=start[i],
+                stop=stop[i],
+                num=num,
+                endpoint=endpoint,
+                retstep=True,
+                dtype=dtype,
+            )
         if axis != 0:
             out = np.moveaxis(out, 0, axis)
 
@@ -266,5 +262,12 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         else:
             return out
     else:
-        return np.linspace(start=start, stop=stop, num=num, endpoint=endpoint,
-                           retstep=retstep, dtype=dtype, axis=axis)
+        return np.linspace(
+            start=start,
+            stop=stop,
+            num=num,
+            endpoint=endpoint,
+            retstep=retstep,
+            dtype=dtype,
+            axis=axis,
+        )

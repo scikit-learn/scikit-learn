@@ -9,15 +9,21 @@ from sklearn.utils.deprecation import deprecated
 from sklearn.utils._testing import assert_warns_message
 
 
-@deprecated('qwerty')
+@deprecated("qwerty")
 class MockClass1:
     pass
 
 
 class MockClass2:
-    @deprecated('mockclass2_method')
+    @deprecated("mockclass2_method")
     def method(self):
         pass
+
+    @deprecated("n_features_ is deprecated")  # type: ignore
+    @property
+    def n_features_(self):
+        """Number of input features."""
+        return 10
 
 
 class MockClass3:
@@ -36,12 +42,10 @@ def mock_function():
 
 
 def test_deprecated():
-    assert_warns_message(FutureWarning, 'qwerty', MockClass1)
-    assert_warns_message(FutureWarning, 'mockclass2_method',
-                         MockClass2().method)
-    assert_warns_message(FutureWarning, 'deprecated', MockClass3)
-    val = assert_warns_message(FutureWarning, 'deprecated',
-                               mock_function)
+    assert_warns_message(FutureWarning, "qwerty", MockClass1)
+    assert_warns_message(FutureWarning, "mockclass2_method", MockClass2().method)
+    assert_warns_message(FutureWarning, "deprecated", MockClass3)
+    val = assert_warns_message(FutureWarning, "deprecated", mock_function)
     assert val == 10
 
 
@@ -57,3 +61,12 @@ def test_is_deprecated():
 
 def test_pickle():
     pickle.loads(pickle.dumps(mock_function))
+
+
+def test_deprecated_property_docstring_exists():
+    """Deprecated property contains the original docstring."""
+    mock_class_property = getattr(MockClass2, "n_features_")
+    assert (
+        "DEPRECATED: n_features_ is deprecated\n\n    Number of input features."
+        == mock_class_property.__doc__
+    )

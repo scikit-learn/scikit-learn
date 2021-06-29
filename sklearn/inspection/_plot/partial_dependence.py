@@ -18,7 +18,6 @@ from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
 
 
-@_deprecate_positional_args
 def plot_partial_dependence(
     estimator,
     X,
@@ -68,9 +67,9 @@ def plot_partial_dependence(
           >>> est1 = LinearRegression().fit(X, y)
           >>> est2 = RandomForestRegressor().fit(X, y)
           >>> disp1 = plot_partial_dependence(est1, X,
-          ...                                 [1, 2])  # doctest: +SKIP
+          ...                                 [1, 2])
           >>> disp2 = plot_partial_dependence(est2, X, [1, 2],
-          ...                                 ax=disp1.axes_)  # doctest: +SKIP
+          ...                                 ax=disp1.axes_)
 
     .. warning::
 
@@ -175,6 +174,9 @@ def plot_partial_dependence(
 
     n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences.
+        Computation is parallelized over features specified by the `features`
+        parameter.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -263,28 +265,30 @@ def plot_partial_dependence(
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
+    >>> plot_partial_dependence(clf, X, [0, (0, 1)])
+    <...>
     """
-    check_matplotlib_support('plot_partial_dependence')  # noqa
+    check_matplotlib_support("plot_partial_dependence")  # noqa
     import matplotlib.pyplot as plt  # noqa
 
     # set target_idx for multi-class estimators
-    if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
+    if hasattr(estimator, "classes_") and np.size(estimator.classes_) > 2:
         if target is None:
-            raise ValueError('target must be specified for multi-class')
+            raise ValueError("target must be specified for multi-class")
         target_idx = np.searchsorted(estimator.classes_, target)
-        if (not (0 <= target_idx < len(estimator.classes_)) or
-                estimator.classes_[target_idx] != target):
-            raise ValueError('target not in est.classes_, got {}'.format(
-                target))
+        if (
+            not (0 <= target_idx < len(estimator.classes_))
+            or estimator.classes_[target_idx] != target
+        ):
+            raise ValueError("target not in est.classes_, got {}".format(target))
     else:
         # regression and binary classification
         target_idx = 0
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
-    if not(hasattr(X, '__array__') or sparse.issparse(X)):
-        X = check_array(X, force_all_finite='allow-nan', dtype=object)
+    if not (hasattr(X, "__array__") or sparse.issparse(X)):
+        X = check_array(X, force_all_finite="allow-nan", dtype=object)
     n_features = X.shape[1]
 
     # convert feature_names to list
@@ -299,13 +303,13 @@ def plot_partial_dependence(
         # convert numpy array or pandas index to a list
         feature_names = feature_names.tolist()
     if len(set(feature_names)) != len(feature_names):
-        raise ValueError('feature_names should not contain duplicates.')
+        raise ValueError("feature_names should not contain duplicates.")
 
     # expand kind to always be a list of str
     kind_ = [kind] * len(features) if isinstance(kind, str) else kind
     if len(kind_) != len(features):
         raise ValueError(
-            f"When `kind` is provided as a list of strings, it should contain "
+            "When `kind` is provided as a list of strings, it should contain "
             f"as many elements as `features`. `kind` contains {len(kind_)} "
             f"element(s) and `features` contains {len(features)} element(s)."
         )
@@ -315,7 +319,7 @@ def plot_partial_dependence(
             try:
                 fx = feature_names.index(fx)
             except ValueError as e:
-                raise ValueError('Feature %s not in feature_names' % fx) from e
+                raise ValueError("Feature %s not in feature_names" % fx) from e
         return int(fx)
 
     # convert features into a seq of int tuples
@@ -327,15 +331,17 @@ def plot_partial_dependence(
             fxs = tuple(convert_feature(fx) for fx in fxs)
         except TypeError as e:
             raise ValueError(
-                'Each entry in features must be either an int, '
-                'a string, or an iterable of size at most 2.'
+                "Each entry in features must be either an int, "
+                "a string, or an iterable of size at most 2."
             ) from e
         if not 1 <= np.size(fxs) <= 2:
-            raise ValueError('Each entry in features must be either an int, '
-                             'a string, or an iterable of size at most 2.')
+            raise ValueError(
+                "Each entry in features must be either an int, "
+                "a string, or an iterable of size at most 2."
+            )
         # store the information if 2-way PD was requested with ICE to later
         # raise a warning
-        ice_for_two_way_pd.append(kind_plot != 'average' and np.size(fxs) > 1)
+        ice_for_two_way_pd.append(kind_plot != "average" and np.size(fxs) > 1)
 
         tmp_features.append(fxs)
 
@@ -346,7 +352,8 @@ def plot_partial_dependence(
             "This is impossible to render. We will instead make a regular PD "
             "plot ('average'). If you want finer control on how to specify "
             "the kind of plot to render (ICE vs PD), you may pass a list of "
-            "strings to the kind parameter.", UserWarning
+            "strings to the kind parameter.",
+            UserWarning,
         )
         kind_ = [
             "average" if forcing_average else kind_plot
@@ -358,14 +365,16 @@ def plot_partial_dependence(
     if ax is not None and not isinstance(ax, plt.Axes):
         axes = np.asarray(ax, dtype=object)
         if axes.size != len(features):
-            raise ValueError("Expected ax to have {} axes, got {}".format(
-                             len(features), axes.size))
+            raise ValueError(
+                "Expected ax to have {} axes, got {}".format(len(features), axes.size)
+            )
 
     for i in chain.from_iterable(features):
         if i >= len(feature_names):
-            raise ValueError('All entries of features must be less than '
-                             'len(feature_names) = {0}, got {1}.'
-                             .format(len(feature_names), i))
+            raise ValueError(
+                "All entries of features must be less than "
+                "len(feature_names) = {0}, got {1}.".format(len(feature_names), i)
+            )
 
     if isinstance(subsample, numbers.Integral):
         if subsample <= 0:
@@ -376,18 +385,23 @@ def plot_partial_dependence(
         if subsample <= 0 or subsample >= 1:
             raise ValueError(
                 f"When a floating-point, subsample={subsample} should be in "
-                f"the (0, 1) range."
+                "the (0, 1) range."
             )
 
     # compute predictions and/or averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(partial_dependence)(estimator, X, fxs,
-                                    response_method=response_method,
-                                    method=method,
-                                    grid_resolution=grid_resolution,
-                                    percentiles=percentiles,
-                                    kind=kind_plot)
-        for kind_plot, fxs in zip(kind_, features))
+        delayed(partial_dependence)(
+            estimator,
+            X,
+            fxs,
+            response_method=response_method,
+            method=method,
+            grid_resolution=grid_resolution,
+            percentiles=percentiles,
+            kind=kind_plot,
+        )
+        for kind_plot, fxs in zip(kind_, features)
+    )
 
     # For multioutput regression, we can only check the validity of target
     # now that we have the predictions.
@@ -395,22 +409,23 @@ def plot_partial_dependence(
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
     pd_result = pd_results[0]  # checking the first result is enough
-    n_tasks = (pd_result.average.shape[0] if kind_[0] == 'average'
-               else pd_result.individual.shape[0])
+    n_tasks = (
+        pd_result.average.shape[0]
+        if kind_[0] == "average"
+        else pd_result.individual.shape[0]
+    )
     if is_regressor(estimator) and n_tasks > 1:
         if target is None:
-            raise ValueError(
-                'target must be specified for multi-output regressors')
+            raise ValueError("target must be specified for multi-output regressors")
         if not 0 <= target <= n_tasks:
-            raise ValueError(
-                'target must be in [0, n_tasks], got {}.'.format(target))
+            raise ValueError("target must be in [0, n_tasks], got {}.".format(target))
         target_idx = target
 
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
     for idx, pdp in enumerate(pd_results):
         values = pdp["values"]
-        preds = (pdp.average if kind_[idx] == 'average' else pdp.individual)
+        preds = pdp.average if kind_[idx] == "average" else pdp.individual
         min_pd = preds[target_idx].min()
         max_pd = preds[target_idx].max()
         n_fx = len(values)
@@ -436,9 +451,7 @@ def plot_partial_dependence(
         subsample=subsample,
         random_state=random_state,
     )
-    return display.plot(
-        ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw
-    )
+    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw)
 
 
 class PartialDependenceDisplay:
@@ -589,7 +602,7 @@ class PartialDependenceDisplay:
     partial_dependence : Compute Partial Dependence values.
     plot_partial_dependence : Plot Partial Dependence.
     """
-    @_deprecate_positional_args
+
     def __init__(
         self,
         pd_results,
@@ -624,8 +637,14 @@ class PartialDependenceDisplay:
         return n_samples
 
     def _plot_ice_lines(
-        self, preds, feature_values, n_ice_to_plot,
-        ax, pd_plot_idx, n_total_lines_by_plot, individual_line_kw
+        self,
+        preds,
+        feature_values,
+        n_ice_to_plot,
+        ax,
+        pd_plot_idx,
+        n_total_lines_by_plot,
+        individual_line_kw,
     ):
         """Plot the ICE lines.
 
@@ -652,14 +671,15 @@ class PartialDependenceDisplay:
         rng = check_random_state(self.random_state)
         # subsample ice
         ice_lines_idx = rng.choice(
-            preds.shape[0], n_ice_to_plot, replace=False,
+            preds.shape[0],
+            n_ice_to_plot,
+            replace=False,
         )
         ice_lines_subsampled = preds[ice_lines_idx, :]
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
             line_idx = np.unravel_index(
-                pd_plot_idx * n_total_lines_by_plot + ice_idx,
-                self.lines_.shape
+                pd_plot_idx * n_total_lines_by_plot + ice_idx, self.lines_.shape
             )
             self.lines_[line_idx] = ax.plot(
                 feature_values, ice.ravel(), **individual_line_kw
@@ -772,9 +792,7 @@ class PartialDependenceDisplay:
                 line_kw,
             )
 
-        trans = transforms.blended_transform_factory(
-            ax.transData, ax.transAxes
-        )
+        trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
         # create the decile line for the vertical axis
         vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
         self.deciles_vlines_[vlines_idx] = ax.vlines(
@@ -793,11 +811,11 @@ class PartialDependenceDisplay:
 
         if n_cols is None or pd_plot_idx % n_cols == 0:
             if not ax.get_ylabel():
-                ax.set_ylabel('Partial dependence')
+                ax.set_ylabel("Partial dependence")
         else:
             ax.set_yticklabels([])
 
-        if line_kw.get("label", None) and kind != 'individual':
+        if line_kw.get("label", None) and kind != "individual":
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -850,19 +868,25 @@ class PartialDependenceDisplay:
         )
         ax.clabel(CS, fmt="%2.2f", colors="k", fontsize=10, inline=True)
 
-        trans = transforms.blended_transform_factory(
-            ax.transData, ax.transAxes
-        )
+        trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
         # create the decile line for the vertical axis
         xlim, ylim = ax.get_xlim(), ax.get_ylim()
         vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
         self.deciles_vlines_[vlines_idx] = ax.vlines(
-            self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k",
+            self.deciles[feature_idx[0]],
+            0,
+            0.05,
+            transform=trans,
+            color="k",
         )
         # create the decile line for the horizontal axis
         hlines_idx = np.unravel_index(pd_plot_idx, self.deciles_hlines_.shape)
         self.deciles_hlines_[hlines_idx] = ax.hlines(
-            self.deciles[feature_idx[1]], 0, 0.05, transform=trans, color="k",
+            self.deciles[feature_idx[1]],
+            0,
+            0.05,
+            transform=trans,
+            color="k",
         )
         # reset xlim and ylim since they are overwritten by hlines and vlines
         ax.set_xlim(xlim)
@@ -917,8 +941,8 @@ class PartialDependenceDisplay:
 
         if len(kind) != len(self.features):
             raise ValueError(
-                f"When `kind` is provided as a list of strings, it should "
-                f"contain as many elements as `features`. `kind` contains "
+                "When `kind` is provided as a list of strings, it should "
+                "contain as many elements as `features`. `kind` contains "
                 f"{len(kind)} element(s) and `features` contains "
                 f"{len(self.features)} element(s)."
             )
@@ -952,9 +976,11 @@ class PartialDependenceDisplay:
             # If ax was set off, it has most likely been set to off
             # by a previous call to plot.
             if not ax.axison:
-                raise ValueError("The ax was already used in another plot "
-                                 "function, please set ax=display.axes_ "
-                                 "instead")
+                raise ValueError(
+                    "The ax was already used in another plot "
+                    "function, please set ax=display.axes_ "
+                    "instead"
+                )
 
             ax.set_axis_off()
             self.bounding_ax_ = ax
@@ -972,16 +998,18 @@ class PartialDependenceDisplay:
 
             axes_ravel = self.axes_.ravel()
 
-            gs = GridSpecFromSubplotSpec(n_rows, n_cols,
-                                         subplot_spec=ax.get_subplotspec())
+            gs = GridSpecFromSubplotSpec(
+                n_rows, n_cols, subplot_spec=ax.get_subplotspec()
+            )
             for i, spec in zip(range(n_features), gs):
                 axes_ravel[i] = self.figure_.add_subplot(spec)
 
         else:  # array-like
             ax = np.asarray(ax, dtype=object)
             if ax.size != n_features:
-                raise ValueError("Expected ax to have {} axes, got {}"
-                                 .format(n_features, ax.size))
+                raise ValueError(
+                    "Expected ax to have {} axes, got {}".format(n_features, ax.size)
+                )
 
             if ax.ndim == 2:
                 n_cols = ax.shape[1]
