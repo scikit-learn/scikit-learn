@@ -920,7 +920,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             This parameter is deprecated and has no effect.
             It will be removed in 1.1 (renaming of 0.26).
 
-            .. deprecated :: 0.24
+            .. deprecated:: 0.24
 
         Returns
         -------

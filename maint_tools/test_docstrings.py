@@ -24,7 +24,6 @@ DOCSTRING_IGNORE_LIST = [
     "ColumnTransformer",
     "ComplementNB",
     "CountVectorizer",
-    "DecisionTreeClassifier",
     "DecisionTreeRegressor",
     "DictVectorizer",
     "DictionaryLearning",
