@@ -3,9 +3,13 @@
 Illustration of prior and posterior Gaussian process for different kernels
 ==========================================================================
 
-This example illustrates the prior and posterior of a GPR with different
-kernels. Mean, standard deviation, and 10 samples are shown for both prior
-and posterior.
+This example illustrates the prior and posterior of a
+:class:`~sklearn.gaussian_process.GaussianProcessRegressor` with different
+kernels. Mean, standard deviation, and 5 samples are shown for both prior
+and posterior distributions.
+
+Here, we only give some illustration. To know more about kernels' formulation,
+refer to the :ref:`User Guide <gp_kernels>`.
 """
 print(__doc__)
 
@@ -90,6 +94,9 @@ n_samples = 5
 # %%
 # Kernel cookbook
 # ---------------
+#
+# In thi section, we illustrate some sample drawn from the prior and posterior
+# distribution of the Gaussian process with different kernels.
 #
 # Radial Basis Function kernel
 # ............................
