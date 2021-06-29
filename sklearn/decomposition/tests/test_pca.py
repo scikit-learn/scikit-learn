@@ -629,7 +629,7 @@ def test_fit_mle_too_few_samples():
     pca = PCA(n_components="mle", svd_solver="full")
     with pytest.raises(
         ValueError,
-        match="n_components='mle' is only " "supported if " "n_samples >= n_features",
+        match="n_components='mle' is only supported if n_samples >= n_features",
     ):
         pca.fit(X)
 

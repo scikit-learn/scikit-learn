@@ -224,10 +224,10 @@ class _PLS(
                 # TODO: raise an error in 1.1
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
-                    f"be in [1, n_features]."
+                    "be in [1, n_features]."
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 1.1 (renaming of 0.26), an error will be "
-                    f"raised.",
+                    "In version 1.1 (renaming of 0.26), an error will be "
+                    "raised.",
                     FutureWarning,
                 )
                 n_components = rank_upper_bound
@@ -239,18 +239,18 @@ class _PLS(
                 # TODO: raise an error in 1.1
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
-                    f"be in [1, min(n_features, n_samples, n_targets)] = "
+                    "be in [1, min(n_features, n_samples, n_targets)] = "
                     f"[1, {rank_upper_bound}]. "
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 1.1 (renaming of 0.26), an error will be "
-                    f"raised.",
+                    "In version 1.1 (renaming of 0.26), an error will be "
+                    "raised.",
                     FutureWarning,
                 )
                 n_components = rank_upper_bound
 
         if self.algorithm not in ("svd", "nipals"):
             raise ValueError(
-                "algorithm should be 'svd' or 'nipals', got " f"{self.algorithm}."
+                f"algorithm should be 'svd' or 'nipals', got {self.algorithm}."
             )
 
         self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
@@ -465,7 +465,7 @@ class _PLS(
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute norm_y_weights was deprecated in version 0.24 and "
+        "Attribute `norm_y_weights` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -473,7 +473,7 @@ class _PLS(
         return self._norm_y_weights
 
     @deprecated(  # type: ignore
-        "Attribute x_mean_ was deprecated in version 0.24 and "
+        "Attribute `x_mean_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -481,7 +481,7 @@ class _PLS(
         return self._x_mean
 
     @deprecated(  # type: ignore
-        "Attribute y_mean_ was deprecated in version 0.24 and "
+        "Attribute `y_mean_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -489,7 +489,7 @@ class _PLS(
         return self._y_mean
 
     @deprecated(  # type: ignore
-        "Attribute x_std_ was deprecated in version 0.24 and "
+        "Attribute `x_std_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -497,7 +497,7 @@ class _PLS(
         return self._x_std
 
     @deprecated(  # type: ignore
-        "Attribute y_std_ was deprecated in version 0.24 and "
+        "Attribute `y_std_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -510,7 +510,7 @@ class _PLS(
         if not isinstance(self, PLSRegression):
             pass
             warnings.warn(
-                "Attribute x_scores_ was deprecated in version 0.24 and "
+                "Attribute `x_scores_` was deprecated in version 0.24 and "
                 "will be removed in 1.1 (renaming of 0.26). Use "
                 "est.transform(X) on the training data instead.",
                 FutureWarning,
@@ -522,7 +522,7 @@ class _PLS(
         # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             warnings.warn(
-                "Attribute y_scores_ was deprecated in version 0.24 and "
+                "Attribute `y_scores_` was deprecated in version 0.24 and "
                 "will be removed in 1.1 (renaming of 0.26). Use "
                 "est.transform(X) on the training data instead.",
                 FutureWarning,
@@ -985,10 +985,10 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             # TODO: raise an error in 1.1
             warnings.warn(
                 f"As of version 0.24, n_components({n_components}) should be "
-                f"in [1, min(n_features, n_samples, n_targets)] = "
+                "in [1, min(n_features, n_samples, n_targets)] = "
                 f"[1, {rank_upper_bound}]. "
                 f"n_components={rank_upper_bound} will be used instead. "
-                f"In version 1.1 (renaming of 0.26), an error will be raised.",
+                "In version 1.1 (renaming of 0.26), an error will be raised.",
                 FutureWarning,
             )
             n_components = rank_upper_bound
@@ -1013,7 +1013,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute x_scores_ was deprecated in version 0.24 and "
+        "Attribute `x_scores_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26). Use est.transform(X) on "
         "the training data instead."
     )
@@ -1023,7 +1023,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute y_scores_ was deprecated in version 0.24 and "
+        "Attribute `y_scores_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26). Use est.transform(X, Y) "
         "on the training data instead."
     )
@@ -1032,7 +1032,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return self._y_scores
 
     @deprecated(  # type: ignore
-        "Attribute x_mean_ was deprecated in version 0.24 and "
+        "Attribute `x_mean_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1040,7 +1040,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return self._x_mean
 
     @deprecated(  # type: ignore
-        "Attribute y_mean_ was deprecated in version 0.24 and "
+        "Attribute `y_mean_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1048,7 +1048,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return self._y_mean
 
     @deprecated(  # type: ignore
-        "Attribute x_std_ was deprecated in version 0.24 and "
+        "Attribute `x_std_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1056,7 +1056,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return self._x_std
 
     @deprecated(  # type: ignore
-        "Attribute y_std_ was deprecated in version 0.24 and "
+        "Attribute `y_std_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property

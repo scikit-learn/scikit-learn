@@ -245,13 +245,11 @@ def test_check_array():
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert X_array.ndim == 1
     # ensure_2d=True with 1d array
-    with pytest.raises(ValueError, match="Expected 2D array," " got 1D array instead"):
+    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
         check_array([0, 1, 2], ensure_2d=True)
 
     # ensure_2d=True with scalar array
-    with pytest.raises(
-        ValueError, match="Expected 2D array," " got scalar array instead"
-    ):
+    with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         check_array(10, ensure_2d=True)
 
     # don't allow ndim > 3
@@ -1020,7 +1018,7 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
 
 
 @pytest.mark.parametrize(
-    "x, target_name, target_type, min_val, max_val, " "err_msg",
+    "x, target_name, target_type, min_val, max_val, err_msg",
     [
         (
             1,
@@ -1055,27 +1053,26 @@ _psd_cases_valid = {
         (5, 5e-5j),
         np.array([5, 0]),
         PositiveSpectrumWarning,
-        "There are imaginary parts in eigenvalues "
-        "\\(1e\\-05 of the maximum real part",
+        "There are imaginary parts in eigenvalues \\(1e\\-05 of the maximum real part",
     ),
     "insignificant neg": ((5, -5e-5), np.array([5, 0]), PositiveSpectrumWarning, ""),
     "insignificant neg float32": (
         np.array([1, -1e-6], dtype=np.float32),
         np.array([1, 0], dtype=np.float32),
         PositiveSpectrumWarning,
-        "There are negative eigenvalues \\(1e\\-06 " "of the maximum positive",
+        "There are negative eigenvalues \\(1e\\-06 of the maximum positive",
     ),
     "insignificant neg float64": (
         np.array([1, -1e-10], dtype=np.float64),
         np.array([1, 0], dtype=np.float64),
         PositiveSpectrumWarning,
-        "There are negative eigenvalues \\(1e\\-10 " "of the maximum positive",
+        "There are negative eigenvalues \\(1e\\-10 of the maximum positive",
     ),
     "insignificant pos": (
         (5, 4e-12),
         np.array([5, 0]),
         PositiveSpectrumWarning,
-        "the largest eigenvalue is more than 1e\\+12 " "times the smallest",
+        "the largest eigenvalue is more than 1e\\+12 times the smallest",
     ),
 }
 
@@ -1202,7 +1199,7 @@ def test_allclose_dense_sparse_raise(toarray):
     x = np.arange(9).reshape(3, 3)
     y = toarray(x + 1)
 
-    msg = "Can only compare two sparse matrices, not a sparse matrix " "and an array"
+    msg = "Can only compare two sparse matrices, not a sparse matrix and an array"
     with pytest.raises(ValueError, match=msg):
         _allclose_dense_sparse(x, y)
 
@@ -1417,7 +1414,7 @@ def test_num_features_errors_1d_containers(X, constructor_name):
     else:
         expected_type_name = constructor_name
     message = (
-        "Unable to find the number of features from X of type " f"{expected_type_name}"
+        f"Unable to find the number of features from X of type {expected_type_name}"
     )
     if hasattr(X, "shape"):
         message += " with shape (3,)"
@@ -1431,10 +1428,7 @@ def test_num_features_errors_1d_containers(X, constructor_name):
 
 @pytest.mark.parametrize("X", [1, "b", False, 3.0], ids=["int", "str", "bool", "float"])
 def test_num_features_errors_scalars(X):
-    msg = (
-        "Unable to find the number of features from X of type "
-        f"{type(X).__qualname__}"
-    )
+    msg = f"Unable to find the number of features from X of type {type(X).__qualname__}"
     with pytest.raises(TypeError, match=msg):
         _num_features(X)
 

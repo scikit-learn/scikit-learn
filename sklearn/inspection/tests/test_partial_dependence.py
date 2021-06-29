@@ -790,7 +790,7 @@ def test_warning_for_kind_legacy():
     (X, y), n_targets = binary_classification_data
     est.fit(X, y)
 
-    err_msg = "A Bunch will be returned in place of 'predictions' from " "version 1.1"
+    err_msg = "A Bunch will be returned in place of 'predictions' from version 1.1"
     with pytest.warns(FutureWarning, match=err_msg):
         partial_dependence(est, X=X, features=[1, 2])
 
