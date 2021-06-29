@@ -19,6 +19,7 @@ DOCSTRING_IGNORE_LIST = [
     "BaggingRegressor",
     "BayesianGaussianMixture",
     "BayesianRidge",
+    "BernoulliNB"
     "BernoulliRBM",
     "Birch",
     "CCA",
