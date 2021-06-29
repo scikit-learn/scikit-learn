@@ -1332,3 +1332,37 @@ def test_ordinal_encoder_handle_unknown_string_dtypes(X_train, X_test):
 
     X_trans = enc.transform(X_test)
     assert_allclose(X_trans, [[-9, 0]])
+
+
+def test_ordinal_encorder_feature_names():
+    enc = OrdinalEncoder()
+    X = [
+        ["Male", 1, "girl", 2, 3],
+        ["Female", 41, "girl", 1, 10],
+        ["Male", 51, "boy", 12, 3],
+        ["Male", 91, "girl", 21, 30],
+    ]
+
+    enc.fit(X)
+    feature_names = enc.get_feature_names()
+    assert isinstance(feature_names, np.ndarray)
+
+    assert_array_equal(
+        ["x0", "x1", "x2", "x3", "x4"],
+        feature_names,
+    )
+
+    feature_names2 = enc.get_feature_names(["one", "two", "three", "four", "five"])
+
+    assert_array_equal(["one", "two", "three", "four", "five"], feature_names2)
+
+    with pytest.raises(ValueError, match="input_features should have length"):
+        enc.get_feature_names(["one", "two"])
+
+
+def test_ordinal_encoder_feature_names_unicode():
+    enc = OrdinalEncoder()
+    X = np.array([["c❤t1", "dat2"]], dtype=object).T
+    enc.fit(X)
+    feature_names = enc.get_feature_names(input_features=["n👍me"])
+    assert_array_equal(["n👍me"], feature_names)
