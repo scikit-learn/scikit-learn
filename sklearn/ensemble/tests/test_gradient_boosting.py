@@ -1303,7 +1303,7 @@ def test_gradient_boosting_with_init_pipeline():
 
     with pytest.raises(
         ValueError,
-        match="The initial estimator Pipeline does not support sample " "weights",
+        match="The initial estimator Pipeline does not support sample weights",
     ):
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
@@ -1330,8 +1330,8 @@ def test_gradient_boosting_init_wrong_methods(estimator, missing_method):
     # methods (fit, predict, predict_proba)
 
     message = (
-        "The init parameter must be a valid estimator and support "
-        "both fit and " + missing_method
+        "The init parameter must be a valid estimator and support both fit and "
+        + missing_method
     )
     with pytest.raises(ValueError, match=message):
         estimator.fit(X, y)
@@ -1386,9 +1386,7 @@ def test_attr_error_raised_if_not_fitted():
     # raises an AttributeError
     gbr = GradientBoostingRegressor()
     # test raise AttributeError if not fitted
-    msg = (
-        f"{GradientBoostingRegressor.__name__} object has no n_classes_ " f"attribute."
-    )
+    msg = f"{GradientBoostingRegressor.__name__} object has no n_classes_ attribute."
     with pytest.raises(AttributeError, match=msg):
         gbr.n_classes_
 

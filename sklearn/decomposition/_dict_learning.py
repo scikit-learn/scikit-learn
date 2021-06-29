@@ -26,8 +26,7 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 def _check_positive_coding(method, positive):
     if positive and method in ["omp", "lars"]:
         raise ValueError(
-            "Positive constraint not supported for '{}' "
-            "coding method.".format(method)
+            "Positive constraint not supported for '{}' coding method.".format(method)
         )
 
 
@@ -666,8 +665,7 @@ def dict_learning(
             sys.stdout.flush()
         elif verbose:
             print(
-                "Iteration % 3i "
-                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                "Iteration % 3i (elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
                 % (ii, dt, dt / 60, current_cost)
             )
 

@@ -399,9 +399,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
 
         if not self.bootstrap and self.oob_score:
-            raise ValueError(
-                "Out of bag estimation only available" " if bootstrap=True"
-            )
+            raise ValueError("Out of bag estimation only available if bootstrap=True")
 
         random_state = check_random_state(self.random_state)
 
@@ -471,10 +469,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 # oob_score) allowing our user to pass a callable defining the
                 # scoring strategy on OOB sample.
                 raise ValueError(
-                    f"The type of target cannot be used to compute OOB "
+                    "The type of target cannot be used to compute OOB "
                     f"estimates. Got {y_type} while only the following are "
-                    f"supported: continuous, continuous-multioutput, binary, "
-                    f"multiclass, multilabel-indicator."
+                    "supported: continuous, continuous-multioutput, binary, "
+                    "multiclass, multilabel-indicator."
                 )
             self._set_oob_score_and_attributes(X, y)
 
@@ -746,7 +744,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                     raise ValueError(
                         "Valid presets for class_weight include "
                         '"balanced" and "balanced_subsample".'
-                        'Given "%s".' % self.class_weight
+                        'Given "%s".'
+                        % self.class_weight
                     )
                 if self.warm_start:
                     warn(

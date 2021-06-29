@@ -601,8 +601,9 @@ def test_ovo_partial_fit_predict():
     ovo = OneVsOneClassifier(MultinomialNB())
     error_y = [0, 1, 2, 3, 4, 5, 2]
     message_re = escape(
-        "Mini-batch contains {0} while "
-        "it must be subset of {1}".format(np.unique(error_y), np.unique(y))
+        "Mini-batch contains {0} while it must be subset of {1}".format(
+            np.unique(error_y), np.unique(y)
+        )
     )
     with pytest.raises(ValueError, match=message_re):
         ovo.partial_fit(X[:7], error_y, np.unique(y))

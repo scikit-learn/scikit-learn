@@ -141,15 +141,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             self.func is not None or self.inverse_func is not None
         ):
             raise ValueError(
-                "'transformer' and functions 'func'/"
-                "'inverse_func' cannot both be set."
+                "'transformer' and functions 'func'/'inverse_func' cannot both be set."
             )
         elif self.transformer is not None:
             self.transformer_ = clone(self.transformer)
         else:
             if self.func is not None and self.inverse_func is None:
                 raise ValueError(
-                    "When 'func' is provided, 'inverse_func' must" " also be provided"
+                    "When 'func' is provided, 'inverse_func' must also be provided"
                 )
             self.transformer_ = FunctionTransformer(
                 func=self.func,

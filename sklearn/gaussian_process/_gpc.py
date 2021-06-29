@@ -197,8 +197,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         self.classes_ = label_encoder.classes_
         if self.classes_.size > 2:
             raise ValueError(
-                "%s supports only binary classification. "
-                "y contains classes %s" % (self.__class__.__name__, self.classes_)
+                "%s supports only binary classification. y contains classes %s"
+                % (self.__class__.__name__, self.classes_)
             )
         elif self.classes_.size == 1:
             raise ValueError(

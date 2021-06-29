@@ -627,8 +627,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             and X.shape[1] != self.subcluster_centers_.shape[1]
         ):
             raise ValueError(
-                "Training data and predicted data do "
-                "not have same number of features."
+                "Training data and predicted data do not have same number of features."
             )
 
     def predict(self, X):
@@ -696,7 +695,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 not_enough_centroids = True
         elif clusterer is not None and not hasattr(clusterer, "fit_predict"):
             raise ValueError(
-                "n_clusters should be an instance of " "ClusterMixin or an int"
+                "n_clusters should be an instance of ClusterMixin or an int"
             )
 
         # To use in predict to avoid recalculation.

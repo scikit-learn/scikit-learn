@@ -294,12 +294,10 @@ class RANSACRegressor(
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
             if self.min_samples % 1 != 0:
-                raise ValueError(
-                    "Absolute number of samples must be an " "integer value."
-                )
+                raise ValueError("Absolute number of samples must be an integer value.")
             min_samples = self.min_samples
         else:
-            raise ValueError("Value for `min_samples` must be scalar and " "positive.")
+            raise ValueError("Value for `min_samples` must be scalar and positive.")
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
@@ -352,7 +350,8 @@ class RANSACRegressor(
         else:
             raise ValueError(
                 "loss should be 'absolute_error', 'squared_error' or a "
-                "callable. Got %s. " % self.loss
+                "callable. Got %s. "
+                % self.loss
             )
 
         random_state = check_random_state(self.random_state)

@@ -60,8 +60,7 @@ def _set_order(X, y, order="C"):
     """
     if order not in [None, "C", "F"]:
         raise ValueError(
-            "Unknown value for order. Got {} instead of "
-            "None, 'C' or 'F'.".format(order)
+            "Unknown value for order. Got {} instead of None, 'C' or 'F'.".format(order)
         )
     sparse_X = sparse.issparse(X)
     sparse_y = sparse.issparse(y)
@@ -526,9 +525,7 @@ def enet_path(
         n_targets = y.shape[1]
 
     if multi_output and positive:
-        raise ValueError(
-            "positive=True is not allowed for multi-output" " (y.ndim != 1)"
-        )
+        raise ValueError("positive=True is not allowed for multi-output (y.ndim != 1)")
 
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
@@ -640,8 +637,8 @@ def enet_path(
             )
         else:
             raise ValueError(
-                "Precompute should be one of True, False, "
-                "'auto' or array-like. Got %r" % precompute
+                "Precompute should be one of True, False, 'auto' or array-like. Got %r"
+                % precompute
             )
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
@@ -899,8 +896,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if isinstance(self.precompute, str):
             raise ValueError(
-                "precompute should be one of True, False or"
-                " array-like. Got %r" % self.precompute
+                "precompute should be one of True, False or array-like. Got %r"
+                % self.precompute
             )
 
         if (
@@ -909,7 +906,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             or self.l1_ratio > 1
         ):
             raise ValueError(
-                "l1_ratio must be between 0 and 1; " f"got l1_ratio={self.l1_ratio}"
+                f"l1_ratio must be between 0 and 1; got l1_ratio={self.l1_ratio}"
             )
 
         # Remember if X is copied
@@ -941,7 +938,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             if check_input:
                 if sparse.issparse(X):
                     raise ValueError(
-                        "Sample weights do not (yet) support " "sparse matrices."
+                        "Sample weights do not (yet) support sparse matrices."
                     )
                 sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # TLDR: Rescale sw to sum up to n_samples.
@@ -1550,25 +1547,22 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if not self._is_multitask():
             if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError(
-                    "For multi-task outputs, use "
-                    "MultiTask%s" % self.__class__.__name__
+                    "For multi-task outputs, use MultiTask%s" % self.__class__.__name__
                 )
             y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
-                raise TypeError("X should be dense but a sparse matrix was" "passed")
+                raise TypeError("X should be dense but a sparse matrix waspassed")
             elif y.ndim == 1:
                 raise ValueError(
-                    "For mono-task outputs, use " "%sCV" % self.__class__.__name__[9:]
+                    "For mono-task outputs, use %sCV" % self.__class__.__name__[9:]
                 )
 
         if isinstance(sample_weight, numbers.Number):
             sample_weight = None
         if sample_weight is not None:
             if sparse.issparse(X):
-                raise ValueError(
-                    "Sample weights do not (yet) support " "sparse matrices."
-                )
+                raise ValueError("Sample weights do not (yet) support sparse matrices.")
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         model = self._get_estimator()

@@ -238,7 +238,7 @@ def spectral_embedding(
     except ImportError as e:
         if eigen_solver == "amg":
             raise ValueError(
-                "The eigen_solver was set to 'amg', but pyamg is " "not available."
+                "The eigen_solver was set to 'amg', but pyamg is not available."
             ) from e
 
     if eigen_solver is None:
@@ -258,8 +258,7 @@ def spectral_embedding(
 
     if not _graph_is_connected(adjacency):
         warnings.warn(
-            "Graph is not fully connected, spectral embedding"
-            " may not work as expected."
+            "Graph is not fully connected, spectral embedding may not work as expected."
         )
 
     laplacian, dd = csgraph_laplacian(
@@ -622,19 +621,14 @@ class SpectralEmbedding(BaseEstimator):
                 "precomputed_nearest_neighbors",
             }:
                 raise ValueError(
-                    (
-                        "%s is not a valid affinity. Expected "
-                        "'precomputed', 'rbf', 'nearest_neighbors' "
-                        "or a callable."
-                    )
+                    "%s is not a valid affinity. Expected "
+                    "'precomputed', 'rbf', 'nearest_neighbors' "
+                    "or a callable."
                     % self.affinity
                 )
         elif not callable(self.affinity):
             raise ValueError(
-                (
-                    "'affinity' is expected to be an affinity "
-                    "name or a callable. Got: %s"
-                )
+                "'affinity' is expected to be an affinity name or a callable. Got: %s"
                 % self.affinity
             )
 

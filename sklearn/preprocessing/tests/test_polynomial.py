@@ -74,11 +74,11 @@ def test_polynomial_and_spline_array_order(est):
         ({"include_bias": "string"}, "include_bias must be bool."),
         (
             {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
-            "Periodic splines require degree < n_knots. Got n_knots=" "3 and degree=3.",
+            "Periodic splines require degree < n_knots. Got n_knots=3 and degree=3.",
         ),
         (
             {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
-            "Periodic splines require degree < n_knots. Got n_knots=2 and " "degree=2.",
+            "Periodic splines require degree < n_knots. Got n_knots=2 and degree=2.",
         ),
     ],
 )

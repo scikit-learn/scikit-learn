@@ -399,8 +399,8 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
 
         if not callable(self.score_func):
             raise TypeError(
-                "The score function should be a callable, %s (%s) "
-                "was passed." % (self.score_func, type(self.score_func))
+                "The score function should be a callable, %s (%s) was passed."
+                % (self.score_func, type(self.score_func))
             )
 
         self._check_params(X, y)
@@ -914,8 +914,7 @@ class GenericUnivariateSelect(_BaseFilter):
     def _check_params(self, X, y):
         if self.mode not in self._selection_modes:
             raise ValueError(
-                "The mode passed should be one of %s, %r,"
-                " (type %s) was passed."
+                "The mode passed should be one of %s, %r, (type %s) was passed."
                 % (self._selection_modes.keys(), self.mode, type(self.mode))
             )
 

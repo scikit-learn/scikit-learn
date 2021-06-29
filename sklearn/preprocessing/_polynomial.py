@@ -240,7 +240,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         if isinstance(self.degree, numbers.Integral):
             if self.degree < 0:
                 raise ValueError(
-                    f"degree must be a non-negative integer, " f"got {self.degree}."
+                    f"degree must be a non-negative integer, got {self.degree}."
                 )
             self._min_degree = 0
             self._max_degree = self.degree
@@ -255,15 +255,15 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 and self._min_degree <= self._max_degree
             ):
                 raise ValueError(
-                    f"degree=(min_degree, max_degree) must "
-                    f"be non-negative integers that fulfil "
-                    f"min_degree <= max_degree, got "
+                    "degree=(min_degree, max_degree) must "
+                    "be non-negative integers that fulfil "
+                    "min_degree <= max_degree, got "
                     f"{self.degree}."
                 )
         else:
             raise ValueError(
-                f"degree must be a non-negative int or tuple "
-                f"(min_degree, max_degree), got "
+                "degree must be a non-negative int or tuple "
+                "(min_degree, max_degree), got "
                 f"{self.degree}."
             )
 
@@ -659,7 +659,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         if not (isinstance(self.degree, numbers.Integral) and self.degree >= 0):
             raise ValueError(
-                f"degree must be a non-negative integer, got " f"{self.degree}."
+                f"degree must be a non-negative integer, got {self.degree}."
             )
 
         if isinstance(self.knots, str) and self.knots in [
@@ -668,7 +668,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ]:
             if not (isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2):
                 raise ValueError(
-                    "n_knots must be a positive integer >= 2, " f"got: {self.n_knots}"
+                    f"n_knots must be a positive integer >= 2, got: {self.n_knots}"
                 )
 
             base_knots = self._get_base_knot_positions(
@@ -677,7 +677,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
             if base_knots.shape[0] < 2:
-                raise ValueError("Number of knots, knots.shape[0], must be >= " "2.")
+                raise ValueError("Number of knots, knots.shape[0], must be >= 2.")
             elif base_knots.shape[1] != n_features:
                 raise ValueError("knots.shape[1] == n_features is violated.")
             elif not np.all(np.diff(base_knots, axis=0) > 0):

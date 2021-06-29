@@ -258,7 +258,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError(
-                "Estimator not fitted, " "call `fit` before `feature_importances_`."
+                "Estimator not fitted, call `fit` before `feature_importances_`."
             )
 
         try:
