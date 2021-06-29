@@ -354,7 +354,7 @@ def test_cross_validate_invalid_scoring_param():
         cross_validate(estimator, X, y, scoring=[[make_scorer(precision_score)]])
 
     error_message_regexp = (
-        ".*scoring is invalid.*Refer to the scoring " "glossary for details:.*"
+        ".*scoring is invalid.*Refer to the scoring glossary for details:.*"
     )
 
     # Empty dict should raise invalid scoring error
@@ -372,7 +372,8 @@ def test_cross_validate_invalid_scoring_param():
     warning_message = (
         "Scoring failed. The score on this train-test "
         "partition for these parameters will be set to %f. "
-        "Details: \n" % np.nan
+        "Details: \n"
+        % np.nan
     )
 
     with pytest.warns(UserWarning, match=warning_message):
@@ -2182,7 +2183,7 @@ def test_cross_val_score_failing_scorer(error_score):
             )
     else:
         warning_msg = (
-            f"Scoring failed. The score on this train-test partition for "
+            "Scoring failed. The score on this train-test partition for "
             f"these parameters will be set to {error_score}"
         )
         with pytest.warns(UserWarning, match=warning_msg):
@@ -2224,7 +2225,7 @@ def test_cross_validate_failing_scorer(
             )
     else:
         warning_msg = (
-            f"Scoring failed. The score on this train-test partition for "
+            "Scoring failed. The score on this train-test partition for "
             f"these parameters will be set to {error_score}"
         )
         with pytest.warns(UserWarning, match=warning_msg):

@@ -168,9 +168,7 @@ def test_estimator_html_repr_pipeline():
     # top level estimators show estimator with changes
     assert str(pipe) in html_output
     for _, est in pipe.steps:
-        assert (
-            f'<div class="sk-toggleable__content">' f"<pre>{str(est)}"
-        ) in html_output
+        assert f'<div class="sk-toggleable__content"><pre>{str(est)}' in html_output
 
     # low level estimators do not show changes
     with config_context(print_changed_only=True):

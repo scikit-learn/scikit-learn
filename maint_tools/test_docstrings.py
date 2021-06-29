@@ -9,14 +9,11 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 # List of modules ignored when checking for numpydoc validation.
 DOCSTRING_IGNORE_LIST = [
-    "AdaBoostRegressor",
     "AdditiveChi2Sampler",
     "AffinityPropagation",
     "AgglomerativeClustering",
     "BaggingClassifier",
     "BaggingRegressor",
-    "BayesianGaussianMixture",
-    "BayesianRidge",
     "BernoulliNB",
     "BernoulliRBM",
     "Binarizer",
@@ -51,7 +48,6 @@ DOCSTRING_IGNORE_LIST = [
     "GammaRegressor",
     "GaussianMixture",
     "GaussianNB",
-    "GaussianProcessClassifier",
     "GaussianProcessRegressor",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
@@ -102,7 +98,6 @@ DOCSTRING_IGNORE_LIST = [
     "MaxAbsScaler",
     "MeanShift",
     "MinCovDet",
-    "MinMaxScaler",
     "MiniBatchDictionaryLearning",
     "MiniBatchKMeans",
     "MiniBatchSparsePCA",
@@ -132,7 +127,6 @@ DOCSTRING_IGNORE_LIST = [
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "OutputCodeClassifier",
-    "PCA",
     "PLSCanonical",
     "PLSRegression",
     "PLSSVD",

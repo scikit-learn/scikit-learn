@@ -216,8 +216,8 @@ def check_paired_arrays(X, Y):
     X, Y = check_pairwise_arrays(X, Y)
     if X.shape != Y.shape:
         raise ValueError(
-            "X and Y should be of same shape. They were "
-            "respectively %r and %r long." % (X.shape, Y.shape)
+            "X and Y should be of same shape. They were respectively %r and %r long."
+            % (X.shape, Y.shape)
         )
     return X, Y
 
@@ -846,8 +846,8 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     if issparse(X) or issparse(Y):
         if not sum_over_features:
             raise TypeError(
-                "sum_over_features=%r not supported"
-                " for sparse matrices" % sum_over_features
+                "sum_over_features=%r not supported for sparse matrices"
+                % sum_over_features
             )
 
         X = csr_matrix(X, copy=False)
@@ -1513,8 +1513,7 @@ def _check_chunk_size(reduced, chunk_size):
         reduced = (reduced,)
     if any(isinstance(r, tuple) or not hasattr(r, "__iter__") for r in reduced):
         raise TypeError(
-            "reduce_func returned %r. "
-            "Expected sequence(s) of length %d."
+            "reduce_func returned %r. Expected sequence(s) of length %d."
             % (reduced if is_tuple else reduced[0], chunk_size)
         )
     if any(_num_samples(r) != chunk_size for r in reduced):
@@ -1839,9 +1838,8 @@ def pairwise_distances(
         and metric != "precomputed"
     ):
         raise ValueError(
-            "Unknown metric %s. "
-            "Valid metrics are %s, or 'precomputed', or a "
-            "callable" % (metric, _VALID_METRICS)
+            "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
+            % (metric, _VALID_METRICS)
         )
 
     if metric == "precomputed":
@@ -1863,7 +1861,7 @@ def pairwise_distances(
         )
     else:
         if issparse(X) or issparse(Y):
-            raise TypeError("scipy distance metrics do not" " support sparse matrices.")
+            raise TypeError("scipy distance metrics do not support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 

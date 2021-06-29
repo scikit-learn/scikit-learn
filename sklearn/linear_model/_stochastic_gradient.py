@@ -204,7 +204,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             return LEARNING_RATE_TYPES[learning_rate]
         except KeyError as e:
             raise ValueError(
-                "learning rate %s " "is not supported. " % learning_rate
+                "learning rate %s is not supported. " % learning_rate
             ) from e
 
     def _get_penalty_type(self, penalty):
@@ -223,7 +223,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             if coef_init is not None:
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided ``coef_`` does not match " "dataset. ")
+                    raise ValueError("Provided ``coef_`` does not match dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros(
@@ -234,9 +234,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             if intercept_init is not None:
                 intercept_init = np.asarray(intercept_init, order="C")
                 if intercept_init.shape != (n_classes,):
-                    raise ValueError(
-                        "Provided intercept_init " "does not match dataset."
-                    )
+                    raise ValueError("Provided intercept_init does not match dataset.")
                 self.intercept_ = intercept_init
             else:
                 self.intercept_ = np.zeros(n_classes, dtype=np.float64, order="C")
@@ -246,7 +244,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 coef_init = np.asarray(coef_init, dtype=np.float64, order="C")
                 coef_init = coef_init.ravel()
                 if coef_init.shape != (n_features,):
-                    raise ValueError("Provided coef_init does not " "match dataset.")
+                    raise ValueError("Provided coef_init does not match dataset.")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
@@ -255,9 +253,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             if intercept_init is not None:
                 intercept_init = np.asarray(intercept_init, dtype=np.float64)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
-                    raise ValueError(
-                        "Provided intercept_init " "does not match dataset."
-                    )
+                    raise ValueError("Provided intercept_init does not match dataset.")
                 if one_class:
                     self.offset_ = intercept_init.reshape(
                         1,
@@ -620,8 +616,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             )
         elif n_features != self.coef_.shape[-1]:
             raise ValueError(
-                "Number of features %d does not match previous "
-                "data %d." % (n_features, self.coef_.shape[-1])
+                "Number of features %d does not match previous data %d."
+                % (n_features, self.coef_.shape[-1])
             )
 
         self.loss_function_ = self._get_loss_function(loss)
@@ -651,8 +647,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             )
         else:
             raise ValueError(
-                "The number of classes has to be greater than one;"
-                " got %d class" % n_classes
+                "The number of classes has to be greater than one; got %d class"
+                % n_classes
             )
 
         return self
@@ -1221,7 +1217,7 @@ class SGDClassifier(BaseSGDClassifier):
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError(
-                "probability estimates are not available for" " loss=%r" % self.loss
+                "probability estimates are not available for loss=%r" % self.loss
             )
 
     @property
@@ -1306,7 +1302,8 @@ class SGDClassifier(BaseSGDClassifier):
             raise NotImplementedError(
                 "predict_(log_)proba only supported when"
                 " loss='log' or loss='modified_huber' "
-                "(%r given)" % self.loss
+                "(%r given)"
+                % self.loss
             )
 
     @property
@@ -2274,8 +2271,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             self._allocate_parameter_mem(1, n_features, coef_init, offset_init, 1)
         elif n_features != self.coef_.shape[-1]:
             raise ValueError(
-                "Number of features %d does not match previous "
-                "data %d." % (n_features, self.coef_.shape[-1])
+                "Number of features %d does not match previous data %d."
+                % (n_features, self.coef_.shape[-1])
             )
 
         if self.average and getattr(self, "_average_coef", None) is None:

@@ -452,7 +452,7 @@ class BaseEstimator:
         if y is None and self._get_tags()["requires_y"]:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
-                f"requires y to be passed, but the target y is None."
+                "requires y to be passed, but the target y is None."
             )
 
         no_val_X = isinstance(X, str) and X == "no_validation"
