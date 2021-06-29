@@ -16,7 +16,7 @@ as well as its probabilistic nature in the form of a pointwise 95% confidence
 interval.
 
 Note that `alpha` is a parameter to control the strength of the Tikhonov
-regularization on the assumed covariance between the training points.
+regularization on the assumed training points' covariance matrix.
 """
 print(__doc__)
 
@@ -94,16 +94,16 @@ plt.ylabel("$f(x)$")
 _ = plt.title("Gaussian process regression on noise-free dataset")
 
 # %%
-# We see that for a prediction close to a training sample, the 95% confidence
-# interval is small. Whenever a sample falls far from training data, our
-# model's prediction is less accurate and the model prediction is less precise
-# (higher uncertainty).
+# We see that for a prediction made on a data point close to the one from the
+# training set, the 95% confidence has a small amplitude. Whenever a sample
+# falls far from training data, our model's prediction is less accurate and the
+# model prediction is less precise (higher uncertainty).
 #
 # Example with noisy targets
 # --------------------------
 #
-# We can repeat a similar experiment adding an additional noise to the target this time.
-# It will allow seeing the effect of the noise on the fitted model.
+# We can repeat a similar experiment adding an additional noise to the target
+# this time. It will allow seeing the effect of the noise on the fitted model.
 #
 # We add some random Gaussian noise to the target with an arbitrary
 # standard deviation.
