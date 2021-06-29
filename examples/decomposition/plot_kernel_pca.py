@@ -102,7 +102,7 @@ fig.subplots_adjust(wspace=0.3)
 # classifier to distinguish samples from both classes.
 #
 # Using a kernel allows to make a non-linear projection. Here, by using an RBF
-# kernel, we expect that the projection to unfold the dataset while keeping
+# kernel, we expect that the projection will unfold the dataset while keeping
 # approximately preserving the relative distances of pairs of data points that
 # are close to one another in the original space.
 #
