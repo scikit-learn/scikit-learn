@@ -119,7 +119,8 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-_ = fig.suptitle("Radial Basis Function kernel", fontsize=18)
+fig.suptitle("Radial Basis Function kernel", fontsize=18)
+plt.tight_layout()
 
 # %%
 print(f"Kernel parameters before fit:\n{kernel})")
@@ -149,7 +150,8 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-_ = fig.suptitle("Rational Quadratic kernel", fontsize=18)
+fig.suptitle("Rational Quadratic kernel", fontsize=18)
+plt.tight_layout()
 
 # %%
 print(f"Kernel parameters before fit:\n{kernel})")
@@ -184,7 +186,8 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-_ = fig.suptitle("Periodic kernel", fontsize=18)
+fig.suptitle("Periodic kernel", fontsize=18)
+plt.tight_layout()
 
 # %%
 print(f"Kernel parameters before fit:\n{kernel})")
@@ -216,7 +219,8 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-_ = fig.suptitle("Dot product kernel", fontsize=18)
+fig.suptitle("Dot product kernel", fontsize=18)
+plt.tight_layout()
 
 # %%
 print(f"Kernel parameters before fit:\n{kernel})")
@@ -246,7 +250,8 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-_ = fig.suptitle("Mattern kernel", fontsize=18)
+fig.suptitle("Mattern kernel", fontsize=18)
+plt.tight_layout()
 
 # %%
 print(f"Kernel parameters before fit:\n{kernel})")
