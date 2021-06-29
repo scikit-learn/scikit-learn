@@ -4,10 +4,7 @@
 
 import numpy as np
 
-from .validation import _deprecate_positional_args
 
-
-@_deprecate_positional_args
 def compute_class_weight(class_weight, *, classes, y):
     """Estimate class weights for unbalanced datasets.
 
@@ -41,27 +38,26 @@ def compute_class_weight(class_weight, *, classes, y):
     from ..preprocessing import LabelEncoder
 
     if set(y) - set(classes):
-        raise ValueError("classes should include all valid labels that can "
-                         "be in y")
+        raise ValueError("classes should include all valid labels that can be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
-        weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-    elif class_weight == 'balanced':
+        weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
+    elif class_weight == "balanced":
         # Find the weight of each class as present in y.
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
         if not all(np.in1d(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
-        recip_freq = len(y) / (len(le.classes_) *
-                               np.bincount(y_ind).astype(np.float64))
+        recip_freq = len(y) / (len(le.classes_) * np.bincount(y_ind).astype(np.float64))
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
-        weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+        weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
         if not isinstance(class_weight, dict):
-            raise ValueError("class_weight must be dict, 'balanced', or None,"
-                             " got: %r" % class_weight)
+            raise ValueError(
+                "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
+            )
         for c in class_weight:
             i = np.searchsorted(classes, c)
             if i >= len(classes) or classes[i] != c:
@@ -72,7 +68,6 @@ def compute_class_weight(class_weight, *, classes, y):
     return weight
 
 
-@_deprecate_positional_args
 def compute_sample_weight(class_weight, y, *, indices=None):
     """Estimate sample weights by class for unbalanced datasets.
 
@@ -118,21 +113,27 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     n_outputs = y.shape[1]
 
     if isinstance(class_weight, str):
-        if class_weight not in ['balanced']:
-            raise ValueError('The only valid preset for class_weight is '
-                             '"balanced". Given "%s".' % class_weight)
-    elif (indices is not None and
-          not isinstance(class_weight, str)):
-        raise ValueError('The only valid class_weight for subsampling is '
-                         '"balanced". Given "%s".' % class_weight)
+        if class_weight not in ["balanced"]:
+            raise ValueError(
+                'The only valid preset for class_weight is "balanced". Given "%s".'
+                % class_weight
+            )
+    elif indices is not None and not isinstance(class_weight, str):
+        raise ValueError(
+            'The only valid class_weight for subsampling is "balanced". Given "%s".'
+            % class_weight
+        )
     elif n_outputs > 1:
-        if (not hasattr(class_weight, "__iter__") or
-                isinstance(class_weight, dict)):
-            raise ValueError("For multi-output, class_weight should be a "
-                             "list of dicts, or a valid string.")
+        if not hasattr(class_weight, "__iter__") or isinstance(class_weight, dict):
+            raise ValueError(
+                "For multi-output, class_weight should be a "
+                "list of dicts, or a valid string."
+            )
         if len(class_weight) != n_outputs:
-            raise ValueError("For multi-output, number of elements in "
-                             "class_weight should match number of outputs.")
+            raise ValueError(
+                "For multi-output, number of elements in "
+                "class_weight should match number of outputs."
+            )
 
     expanded_class_weight = []
     for k in range(n_outputs):
@@ -141,7 +142,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
         classes_full = np.unique(y_full)
         classes_missing = None
 
-        if class_weight == 'balanced' or n_outputs == 1:
+        if class_weight == "balanced" or n_outputs == 1:
             class_weight_k = class_weight
         else:
             class_weight_k = class_weight[k]
@@ -153,29 +154,28 @@ def compute_sample_weight(class_weight, y, *, indices=None):
             y_subsample = y[indices, k]
             classes_subsample = np.unique(y_subsample)
 
-            weight_k = np.take(compute_class_weight(class_weight_k,
-                                                    classes=classes_subsample,
-                                                    y=y_subsample),
-                               np.searchsorted(classes_subsample,
-                                               classes_full),
-                               mode='clip')
+            weight_k = np.take(
+                compute_class_weight(
+                    class_weight_k, classes=classes_subsample, y=y_subsample
+                ),
+                np.searchsorted(classes_subsample, classes_full),
+                mode="clip",
+            )
 
             classes_missing = set(classes_full) - set(classes_subsample)
         else:
-            weight_k = compute_class_weight(class_weight_k,
-                                            classes=classes_full,
-                                            y=y_full)
+            weight_k = compute_class_weight(
+                class_weight_k, classes=classes_full, y=y_full
+            )
 
         weight_k = weight_k[np.searchsorted(classes_full, y_full)]
 
         if classes_missing:
             # Make missing classes' weight zero
-            weight_k[np.in1d(y_full, list(classes_missing))] = 0.
+            weight_k[np.in1d(y_full, list(classes_missing))] = 0.0
 
         expanded_class_weight.append(weight_k)
 
-    expanded_class_weight = np.prod(expanded_class_weight,
-                                    axis=0,
-                                    dtype=np.float64)
+    expanded_class_weight = np.prod(expanded_class_weight, axis=0, dtype=np.float64)
 
     return expanded_class_weight

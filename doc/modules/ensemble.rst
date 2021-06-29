@@ -761,12 +761,12 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The negative binomial
-      log-likelihood loss function for binary classification (provides
+    * Binomial deviance (``'deviance'``): The binomial
+      negative log-likelihood loss function for binary classification (provides
       probability estimates).  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The negative multinomial
-      log-likelihood loss function for multi-class classification with
+    * Multinomial deviance (``'deviance'``): The multinomial
+      negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
       prior probability of each class. At each iteration ``n_classes``
@@ -944,7 +944,7 @@ controls the number of iterations of the boosting process::
   0.8965
 
 Available losses for regression are 'squared_error',
-'least_absolute_deviation', which is less sensitive to outliers, and
+'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
 'categorical_crossentropy' is used for multiclass classification. By default
