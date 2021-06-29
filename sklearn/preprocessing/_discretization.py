@@ -161,16 +161,17 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             output_dtype = X.dtype
         else:
             raise ValueError(
-                f"Valid options for 'dtype' are "
+                "Valid options for 'dtype' are "
                 f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
-                f" instead."
+                " instead."
             )
 
         valid_encode = ("onehot", "onehot-dense", "ordinal")
         if self.encode not in valid_encode:
             raise ValueError(
-                "Valid options for 'encode' are {}. "
-                "Got encode={!r} instead.".format(valid_encode, self.encode)
+                "Valid options for 'encode' are {}. Got encode={!r} instead.".format(
+                    valid_encode, self.encode
+                )
             )
         valid_strategy = ("uniform", "quantile", "kmeans")
         if self.strategy not in valid_strategy:
@@ -189,7 +190,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             if col_min == col_max:
                 warnings.warn(
-                    "Feature %d is constant and will be " "replaced with 0." % jj
+                    "Feature %d is constant and will be replaced with 0." % jj
                 )
                 n_bins[jj] = 1
                 bin_edges[jj] = np.array([-np.inf, np.inf])
@@ -269,9 +270,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = check_array(orig_bins, dtype=int, copy=True, ensure_2d=False)
 
         if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
-            raise ValueError(
-                "n_bins must be a scalar or array " "of shape (n_features,)."
-            )
+            raise ValueError("n_bins must be a scalar or array of shape (n_features,).")
 
         bad_nbins_value = (n_bins < 2) | (n_bins != orig_bins)
 
@@ -360,8 +359,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError(
-                "Incorrect number of features. Expecting {}, "
-                "received {}.".format(n_features, Xinv.shape[1])
+                "Incorrect number of features. Expecting {}, received {}.".format(
+                    n_features, Xinv.shape[1]
+                )
             )
 
         for jj in range(n_features):

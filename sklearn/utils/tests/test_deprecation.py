@@ -19,6 +19,12 @@ class MockClass2:
     def method(self):
         pass
 
+    @deprecated("n_features_ is deprecated")  # type: ignore
+    @property
+    def n_features_(self):
+        """Number of input features."""
+        return 10
+
 
 class MockClass3:
     @deprecated()
@@ -55,3 +61,12 @@ def test_is_deprecated():
 
 def test_pickle():
     pickle.loads(pickle.dumps(mock_function))
+
+
+def test_deprecated_property_docstring_exists():
+    """Deprecated property contains the original docstring."""
+    mock_class_property = getattr(MockClass2, "n_features_")
+    assert (
+        "DEPRECATED: n_features_ is deprecated\n\n    Number of input features."
+        == mock_class_property.__doc__
+    )
