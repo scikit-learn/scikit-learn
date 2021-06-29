@@ -314,6 +314,11 @@ Changelog
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
+- |Enhancement| Add kwargs to format ICE and PD lines separately in partial
+  dependence plots :func:`~sklearn.inspection.plot_partial_dependence` and
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.plot`.
+  :pr:`19428` by :user:`Mehdi Hamoumi <mhham>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -456,7 +461,7 @@ Changelog
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
 :mod:`sklearn.mixture`
-..............................
+......................
 
 - |Fix| Ensure that the best parameters are set appropriately
   in the case of divergency for :class:`mixture.GaussianMixture` and
@@ -492,7 +497,7 @@ Changelog
 
 
 :mod:`sklearn.neighbors`
-..........................
+........................
 
 - |Enhancement| The creation of :class:`neighbors.KDTree` and
   :class:`neighbors.BallTree` has been improved for their worst-cases time
@@ -571,9 +576,6 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
-:mod:`sklearn.inspection`
-.........................
-
 - |Fix| Fixed a bug in :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor` where a node could be split whereas it
   should not have been due to incorrect handling of rounding errors.
@@ -584,11 +586,6 @@ Changelog
   :class:`tree.ExtraTreeRegressor` is deprecated in favor of `n_features_in_`
   and will be removed in 1.2. :pr:`20272` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Enhancement| Add kwargs to format ICE and PD lines separately in partial
-  dependence plots :func:`~sklearn.inspection.plot_partial_dependence` and
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.plot`.
-  :pr:`19428` by :user:`Mehdi Hamoumi <mhham>`.
 
 :mod:`sklearn.utils`
 ....................
