@@ -1005,7 +1005,7 @@ class NuSVC(BaseSVC):
                 "check_methods_subset_invariance": (
                     "fails for the decision_function method"
                 ),
-                "check_class_weight_classifiers": ("class_weight is ignored."),
+                "check_class_weight_classifiers": "class_weight is ignored.",
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
