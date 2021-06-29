@@ -132,7 +132,7 @@ class Perceptron(BaseSGDClassifier):
 
     See Also
     --------
-    sklearn.linear_model.SGDClassifier : Linear classifiers 
+    sklearn.linear_model.SGDClassifier : Linear classifiers
         (SVM, logistic regression, etc.) with SGD training.
 
     Notes
