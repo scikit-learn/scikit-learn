@@ -218,7 +218,7 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
 
         if isinstance(sample_weight, Series):
             raise ValueError(
-                "Estimator does not accept 'sample_weight'" "of type pandas.Series"
+                "Estimator does not accept 'sample_weight'of type pandas.Series"
             )
         return self
 
@@ -419,7 +419,7 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # a deprecated fit method
 
     class TestEstimatorWithDeprecatedFitMethod(BaseEstimator):
-        @deprecated("Deprecated for the purpose of testing " "check_fit_score_takes_y")
+        @deprecated("Deprecated for the purpose of testing check_fit_score_takes_y")
         def fit(self, X, y):
             return self
 
@@ -508,7 +508,7 @@ def test_check_estimator():
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = "predict"
-    msg = ("{method} of {name} is not invariant when applied " "to a subset.").format(
+    msg = ("{method} of {name} is not invariant when applied to a subset.").format(
         method=method, name=name
     )
     with raises(AssertionError, match=msg):
@@ -703,7 +703,7 @@ def run_tests_without_pytest():
 
 def test_check_class_weight_balanced_linear_classifier():
     # check that ill-computed balanced weights raises an exception
-    msg = "Classifier estimator_name is not computing class_weight=balanced " "properly"
+    msg = "Classifier estimator_name is not computing class_weight=balanced properly"
     with raises(AssertionError, match=msg):
         check_class_weight_balanced_linear_classifier(
             "estimator_name", BadBalancedWeightsClassifier

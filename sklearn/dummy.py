@@ -176,8 +176,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
                 if constant.shape[0] != self.n_outputs_:
                     raise ValueError(
-                        "Constant target value should have "
-                        "shape (%d, 1)." % self.n_outputs_
+                        "Constant target value should have shape (%d, 1)."
+                        % self.n_outputs_
                     )
 
         (self.classes_, self.n_classes_, self.class_prior_) = class_distribution(
@@ -539,8 +539,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         elif self.strategy == "quantile":
             if self.quantile is None or not np.isscalar(self.quantile):
                 raise ValueError(
-                    "Quantile must be a scalar in the range "
-                    "[0.0, 1.0], but got %s." % self.quantile
+                    "Quantile must be a scalar in the range [0.0, 1.0], but got %s."
+                    % self.quantile
                 )
 
             percentile = self.quantile * 100.0
@@ -568,7 +568,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
             if self.n_outputs_ != 1 and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
-                    "Constant target value should have " "shape (%d, 1)." % y.shape[1]
+                    "Constant target value should have shape (%d, 1)." % y.shape[1]
                 )
 
             self.constant_ = self.constant

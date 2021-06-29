@@ -299,7 +299,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
-                "Multilabel and multi-output" " classification is not supported."
+                "Multilabel and multi-output classification is not supported."
             )
 
         if self.voting not in ("soft", "hard"):
@@ -370,7 +370,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """
         if self.voting == "hard":
             raise AttributeError(
-                "predict_proba is not available when" " voting=%r" % self.voting
+                "predict_proba is not available when voting=%r" % self.voting
             )
         return self._predict_proba
 

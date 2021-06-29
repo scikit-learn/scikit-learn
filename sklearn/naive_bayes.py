@@ -407,9 +407,7 @@ class GaussianNB(_BaseNB):
                 priors = np.asarray(self.priors)
                 # Check that the provide prior match the number of classes
                 if len(priors) != n_classes:
-                    raise ValueError(
-                        "Number of priors must match number of" " classes."
-                    )
+                    raise ValueError("Number of priors must match number of classes.")
                 # Check that the sum is 1
                 if not np.isclose(priors.sum(), 1.0):
                     raise ValueError("The sum of the priors should be 1.")
@@ -434,8 +432,8 @@ class GaussianNB(_BaseNB):
 
         if not np.all(unique_y_in_classes):
             raise ValueError(
-                "The target label(s) %s in y do not exist in the "
-                "initial classes %s" % (unique_y[~unique_y_in_classes], classes)
+                "The target label(s) %s in y do not exist in the initial classes %s"
+                % (unique_y[~unique_y_in_classes], classes)
             )
 
         for y_i in unique_y:
@@ -478,8 +476,8 @@ class GaussianNB(_BaseNB):
         return joint_log_likelihood
 
     @deprecated(  # type: ignore
-        "Attribute sigma_ was deprecated in 1.0 and will be removed in"
-        "1.2. Use var_ instead."
+        "Attribute `sigma_` was deprecated in 1.0 and will be removed in"
+        "1.2. Use `var_` instead."
     )
     @property
     def sigma_(self):
@@ -510,7 +508,7 @@ class _BaseDiscreteNB(_BaseNB):
         n_classes = len(self.classes_)
         if class_prior is not None:
             if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of" " classes.")
+                raise ValueError("Number of priors must match number of classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             with warnings.catch_warnings():
@@ -527,19 +525,18 @@ class _BaseDiscreteNB(_BaseNB):
     def _check_alpha(self):
         if np.min(self.alpha) < 0:
             raise ValueError(
-                "Smoothing parameter alpha = %.1e. "
-                "alpha should be > 0." % np.min(self.alpha)
+                "Smoothing parameter alpha = %.1e. alpha should be > 0."
+                % np.min(self.alpha)
             )
         if isinstance(self.alpha, np.ndarray):
             if not self.alpha.shape[0] == self.n_features_in_:
                 raise ValueError(
-                    "alpha should be a scalar or a numpy array "
-                    "with shape [n_features]"
+                    "alpha should be a scalar or a numpy array with shape [n_features]"
                 )
         if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn(
-                "alpha too small will result in numeric errors, "
-                "setting alpha = %.1e" % _ALPHA_MIN
+                "alpha too small will result in numeric errors, setting alpha = %.1e"
+                % _ALPHA_MIN
             )
             return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
@@ -682,7 +679,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute coef_ was deprecated in "
+        "Attribute `coef_` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -695,7 +692,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute intercept_ was deprecated in "
+        "Attribute `intercept_` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -712,8 +709,8 @@ class _BaseDiscreteNB(_BaseNB):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use 'n_features_in_' instead."
+        "Attribute `n_features_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):
@@ -1327,14 +1324,14 @@ class CategoricalNB(_BaseDiscreteNB):
         if min_categories is not None:
             if not np.issubdtype(min_categories_.dtype, np.signedinteger):
                 raise ValueError(
-                    f"'min_categories' should have integral type. Got "
+                    "'min_categories' should have integral type. Got "
                     f"{min_categories_.dtype} instead."
                 )
             n_categories_ = np.maximum(n_categories_X, min_categories_, dtype=np.int64)
             if n_categories_.shape != n_categories_X.shape:
                 raise ValueError(
                     f"'min_categories' should have shape ({X.shape[1]},"
-                    f") when an array-like is provided. Got"
+                    ") when an array-like is provided. Got"
                     f" {min_categories_.shape} instead."
                 )
             return n_categories_

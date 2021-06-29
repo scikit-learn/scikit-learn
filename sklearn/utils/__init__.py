@@ -268,7 +268,7 @@ def _determine_key_type(key, accept_slice=True):
     if isinstance(key, slice):
         if not accept_slice:
             raise TypeError(
-                "Only array-like or scalar are supported. " "A Python slice was given."
+                "Only array-like or scalar are supported. A Python slice was given."
             )
         if key.start is None and key.stop is None:
             return None
@@ -425,7 +425,7 @@ def _get_column_indices(X, key):
                 col_idx = all_columns.get_loc(col)
                 if not isinstance(col_idx, numbers.Integral):
                     raise ValueError(
-                        f"Selected columns, {columns}, are not " "unique in dataframe"
+                        f"Selected columns, {columns}, are not unique in dataframe"
                     )
                 column_indices.append(col_idx)
 
@@ -538,8 +538,8 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         max_n_samples = n_samples
     elif (max_n_samples > n_samples) and (not replace):
         raise ValueError(
-            "Cannot sample %d out of arrays with dim %d "
-            "when replace is False" % (max_n_samples, n_samples)
+            "Cannot sample %d out of arrays with dim %d when replace is False"
+            % (max_n_samples, n_samples)
         )
 
     check_consistent_length(*arrays)
@@ -737,12 +737,10 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     """
     if not isinstance(batch_size, numbers.Integral):
         raise TypeError(
-            "gen_batches got batch_size=%s, must be an" " integer" % batch_size
+            "gen_batches got batch_size=%s, must be an integer" % batch_size
         )
     if batch_size <= 0:
-        raise ValueError(
-            "gen_batches got batch_size=%s, must be" " positive" % batch_size
-        )
+        raise ValueError("gen_batches got batch_size=%s, must be positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
@@ -1222,7 +1220,8 @@ def all_estimators(type_filter=None):
                 "Parameter type_filter must be 'classifier', "
                 "'regressor', 'transformer', 'cluster' or "
                 "None, got"
-                " %s." % repr(type_filter)
+                " %s."
+                % repr(type_filter)
             )
 
     # drop duplicates, sort for reproducibility

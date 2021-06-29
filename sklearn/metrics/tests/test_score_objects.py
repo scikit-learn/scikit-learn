@@ -639,9 +639,11 @@ def test_classification_scorer_sample_weight():
             assert_almost_equal(
                 weighted,
                 ignored,
-                err_msg=f"scorer {name} behaves differently "
-                f"when ignoring samples and setting "
-                f"sample_weight to 0: {weighted} vs {ignored}",
+                err_msg=(
+                    f"scorer {name} behaves differently "
+                    "when ignoring samples and setting "
+                    f"sample_weight to 0: {weighted} vs {ignored}"
+                ),
             )
 
         except TypeError as e:
@@ -683,9 +685,11 @@ def test_regression_scorer_sample_weight():
             assert_almost_equal(
                 weighted,
                 ignored,
-                err_msg=f"scorer {name} behaves differently "
-                f"when ignoring samples and setting "
-                f"sample_weight to 0: {weighted} vs {ignored}",
+                err_msg=(
+                    f"scorer {name} behaves differently "
+                    "when ignoring samples and setting "
+                    f"sample_weight to 0: {weighted} vs {ignored}"
+                ),
             )
 
         except TypeError as e:
@@ -731,10 +735,8 @@ def test_scoring_is_not_metric():
 
 
 @pytest.mark.parametrize(
-    (
-        "scorers,expected_predict_count,"
-        "expected_predict_proba_count,expected_decision_func_count"
-    ),
+    "scorers,expected_predict_count,"
+    "expected_predict_proba_count,expected_decision_func_count",
     [
         (
             {

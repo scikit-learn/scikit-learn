@@ -651,7 +651,7 @@ class Pipeline(_BaseComposition):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -957,8 +957,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for name, trans, weight in self._iter():
             if not hasattr(trans, "get_feature_names"):
                 raise AttributeError(
-                    "Transformer %s (type %s) does not "
-                    "provide get_feature_names." % (str(name), type(trans).__name__)
+                    "Transformer %s (type %s) does not provide get_feature_names."
+                    % (str(name), type(trans).__name__)
                 )
             feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
         return feature_names
