@@ -65,7 +65,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     """
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
-        raise ValueError("average has to be one of {0}" "".format(average_options))
+        raise ValueError("average has to be one of {0}".format(average_options))
 
     y_type = type_of_target(y_true)
     if y_type not in ("binary", "multilabel-indicator"):
@@ -242,8 +242,8 @@ def _check_pos_label_consistency(pos_label, y_true):
         classes_repr = ", ".join(repr(c) for c in classes)
         raise ValueError(
             f"y_true takes value in {{{classes_repr}}} and pos_label is not "
-            f"specified: either make y_true take value in {{0, 1}} or "
-            f"{{-1, 1}} or pass pos_label explicitly."
+            "specified: either make y_true take value in {0, 1} or "
+            "{-1, 1} or pass pos_label explicitly."
         )
     elif pos_label is None:
         pos_label = 1.0

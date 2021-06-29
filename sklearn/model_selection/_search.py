@@ -143,7 +143,7 @@ class ParameterGrid:
     def __init__(self, param_grid):
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter grid is not a dict or " "a list ({!r})".format(param_grid)
+                "Parameter grid is not a dict or a list ({!r})".format(param_grid)
             )
 
         if isinstance(param_grid, Mapping):
@@ -154,7 +154,7 @@ class ParameterGrid:
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError("Parameter grid is not a " "dict ({!r})".format(grid))
+                raise TypeError("Parameter grid is not a dict ({!r})".format(grid))
             for key in grid:
                 if not isinstance(grid[key], Iterable):
                     raise TypeError(
@@ -293,8 +293,9 @@ class ParameterSampler:
     def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter distribution is not a dict or "
-                "a list ({!r})".format(param_distributions)
+                "Parameter distribution is not a dict or a list ({!r})".format(
+                    param_distributions
+                )
             )
 
         if isinstance(param_distributions, Mapping):
@@ -305,7 +306,7 @@ class ParameterSampler:
         for dist in param_distributions:
             if not isinstance(dist, dict):
                 raise TypeError(
-                    "Parameter distribution is not a " "dict ({!r})".format(dist)
+                    "Parameter distribution is not a dict ({!r})".format(dist)
                 )
             for key in dist:
                 if not isinstance(dist[key], Iterable) and not hasattr(
@@ -439,7 +440,7 @@ class BaseSearchCV(
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -472,7 +473,8 @@ class BaseSearchCV(
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
-                "and the estimator doesn't provide one %s" % self.best_estimator_
+                "and the estimator doesn't provide one %s"
+                % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
             if self.multimetric_:

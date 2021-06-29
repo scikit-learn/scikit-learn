@@ -369,7 +369,7 @@ def test_score_samples_on_pipeline_without_score_samples():
     pipe.fit(X, y)
     with pytest.raises(
         AttributeError,
-        match="'LogisticRegression' object has no attribute " "'score_samples'",
+        match="'LogisticRegression' object has no attribute 'score_samples'",
     ):
         pipe.score_samples(X)
 
@@ -640,7 +640,7 @@ def test_set_pipeline_steps():
     # With invalid data
     pipeline.set_params(steps=[("junk", ())])
     msg = re.escape(
-        "Last step of Pipeline should implement fit or be the " "string 'passthrough'."
+        "Last step of Pipeline should implement fit or be the string 'passthrough'."
     )
     with pytest.raises(TypeError, match=msg):
         pipeline.fit([[1]], [1])

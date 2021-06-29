@@ -113,7 +113,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if sample_weight is not None and not has_fit_parameter(
             self.estimator, "sample_weight"
         ):
-            raise ValueError("Underlying estimator does not support" " sample weights.")
+            raise ValueError("Underlying estimator does not support sample weights.")
 
         first_time = not hasattr(self, "estimators_")
 
@@ -163,7 +163,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         """
 
         if not hasattr(self.estimator, "fit"):
-            raise ValueError("The base estimator should implement" " a fit method")
+            raise ValueError("The base estimator should implement a fit method")
 
         y = self._validate_data(X="no_validation", y=y, multi_output=True)
 
@@ -179,7 +179,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if sample_weight is not None and not has_fit_parameter(
             self.estimator, "sample_weight"
         ):
-            raise ValueError("Underlying estimator does not support" " sample weights.")
+            raise ValueError("Underlying estimator does not support sample weights.")
 
         fit_params_validated = _check_fit_params(X, fit_params)
 
@@ -212,7 +212,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         """
         check_is_fitted(self)
         if not hasattr(self.estimators_[0], "predict"):
-            raise ValueError("The base estimator should implement" " a predict method")
+            raise ValueError("The base estimator should implement a predict method")
 
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X) for e in self.estimators_
@@ -420,7 +420,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             [hasattr(estimator, "predict_proba") for estimator in self.estimators_]
         ):
             raise AttributeError(
-                "The base estimator should " "implement predict_proba method"
+                "The base estimator should implement predict_proba method"
             )
         return self._predict_proba
 
