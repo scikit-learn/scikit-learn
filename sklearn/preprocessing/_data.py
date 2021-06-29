@@ -2019,6 +2019,9 @@ class Binarizer(TransformerMixin, BaseEstimator):
     See Also
     --------
     binarize : Equivalent function without the estimator API.
+    KBinsDiscretizer : Bin continuous data into intervals.
+    OneHotEncoder : Encode categorical features as a one-hot numeric array.
+
 
     Notes
     -----
