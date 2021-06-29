@@ -298,6 +298,10 @@ Changelog
 :mod:`sklearn.covariance`
 .........................
 
+- |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
+  :func:`covariance.ledoit_wolf_shrinkage`
+  :pr:`20416` by `Hugo Defois`_.
+
 - |API| Deprecates `cv_alphas_` in favor of `cv_results_['alphas']` and
   `grid_scores_` in favor of split scores in `cv_results_` in
   :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
