@@ -79,11 +79,7 @@ def silhouette_score(
         on a random subset of the data.
         If ``sample_size is None``, no sampling is used.
 
-<<<<<<< HEAD
-    random_state : int or RandomState instance, default=None
-=======
     random_state : int, RandomState instance or None, default=None
->>>>>>> 038c5cd04558e572b6a4dea7383a515ff10090e5
         Determines random number generation for selecting a subset of samples.
         Used when ``sample_size is not None``.
         Pass an int for reproducible results across multiple function calls.
