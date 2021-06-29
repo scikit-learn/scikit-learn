@@ -2022,7 +2022,6 @@ class Binarizer(TransformerMixin, BaseEstimator):
     KBinsDiscretizer : Bin continuous data into intervals.
     OneHotEncoder : Encode categorical features as a one-hot numeric array.
 
-
     Notes
     -----
     If the input is a sparse matrix, only the non-zero values are subject
