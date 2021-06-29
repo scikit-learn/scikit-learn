@@ -945,3 +945,34 @@ class OrdinalEncoder(_BaseEncoder):
                 X_tr[mask, idx] = None
 
         return X_tr
+
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features.
+
+        Parameters
+        ----------
+        input_features : list of str of shape (n_features,)
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn" is used.
+
+        Returns
+        -------
+        output_feature_names : ndarray of shape (n_output_features,)
+            Array of feature names.
+
+        .. versionadded:: 1.0.dev0
+        """
+        check_is_fitted(self)
+        cats = self.categories_
+        if input_features is None:
+            input_features = ["x%d" % i for i in range(len(cats))]
+        elif len(input_features) != len(self.categories_):
+            raise ValueError(
+                "input_features should have length equal to number of "
+                "features ({}), got {}".format(
+                    len(self.categories_), len(input_features)
+                )
+            )
+
+        return np.array(input_features, dtype=object)
