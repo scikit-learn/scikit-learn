@@ -596,7 +596,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             and n_features is the number of features.
 
         y : Ignored
-            Legacy parameter, always ignored by the algorithm.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
