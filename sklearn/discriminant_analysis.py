@@ -540,7 +540,7 @@ class LinearDiscriminantAnalysis(
 
         if n_samples == n_classes:
             raise ValueError(
-                "The number of samples must be more " "than the number of classes."
+                "The number of samples must be more than the number of classes."
             )
 
         if self.priors is None:  # estimate priors from sample
@@ -564,8 +564,7 @@ class LinearDiscriminantAnalysis(
         else:
             if self.n_components > max_components:
                 raise ValueError(
-                    "n_components cannot be larger than min(n_features, "
-                    "n_classes - 1)."
+                    "n_components cannot be larger than min(n_features, n_classes - 1)."
                 )
             self._max_components = self.n_components
 
@@ -622,7 +621,7 @@ class LinearDiscriminantAnalysis(
         """
         if self.solver == "lsqr":
             raise NotImplementedError(
-                "transform not implemented for 'lsqr' " "solver (use 'svd' or 'eigen')."
+                "transform not implemented for 'lsqr' solver (use 'svd' or 'eigen')."
             )
         check_is_fitted(self)
 
@@ -826,8 +825,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than"
-                " one; got %d class" % (n_classes)
+                "The number of classes has to be greater than one; got %d class"
+                % (n_classes)
             )
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
@@ -847,8 +846,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             means.append(meang)
             if len(Xg) == 1:
                 raise ValueError(
-                    "y has only 1 sample in class %s, covariance "
-                    "is ill defined." % str(self.classes_[ind])
+                    "y has only 1 sample in class %s, covariance is ill defined."
+                    % str(self.classes_[ind])
                 )
             Xgc = Xg - meang
             # Xgc = U * S * V.T

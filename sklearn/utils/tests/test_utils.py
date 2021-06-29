@@ -538,9 +538,7 @@ def test_gen_even_slices():
 
     # check that passing negative n_chunks raises an error
     slices = gen_even_slices(10, -1)
-    with pytest.raises(
-        ValueError, match="gen_even_slices got n_packs=-1," " must be >=1"
-    ):
+    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1, must be >=1"):
         next(slices)
 
 
@@ -559,8 +557,7 @@ def test_gen_even_slices():
             None,
             1,
             1,
-            "Could not adhere to working_memory config. "
-            "Currently 1MiB, 2MiB required.",
+            "Could not adhere to working_memory config. Currently 1MiB, 2MiB required.",
         ),
     ],
 )

@@ -407,7 +407,7 @@ def test_verbose(init_name, capsys):
     assert lines[0] == "[NeighborhoodComponentsAnalysis]"
     header = "{:>10} {:>20} {:>10}".format("Iteration", "Objective Value", "Time(s)")
     assert lines[1] == "[NeighborhoodComponentsAnalysis] {}".format(header)
-    assert lines[2] == ("[NeighborhoodComponentsAnalysis] {}".format("-" * len(header)))
+    assert lines[2] == "[NeighborhoodComponentsAnalysis] {}".format("-" * len(header))
     for line in lines[3:-2]:
         # The following regex will match for instance:
         # '[NeighborhoodComponentsAnalysis]  0    6.988936e+01   0.01'

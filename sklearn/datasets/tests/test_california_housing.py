@@ -30,6 +30,6 @@ def test_fetch_asframe(fetch_california_housing_fxt):
 def test_pandas_dependency_message(fetch_california_housing_fxt, hide_available_pandas):
     # Check that pandas is imported lazily and that an informative error
     # message is raised when pandas is missing:
-    expected_msg = "fetch_california_housing with as_frame=True" " requires pandas"
+    expected_msg = "fetch_california_housing with as_frame=True requires pandas"
     with pytest.raises(ImportError, match=expected_msg):
         fetch_california_housing_fxt(as_frame=True)
