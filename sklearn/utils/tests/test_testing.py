@@ -420,7 +420,7 @@ class MockMetaEstimator:
         """
         self.delegate = delegate
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @if_delegate_has_method(delegate="delegate")
     def predict(self, X):
         """This is available only if delegate has predict.
 
@@ -431,7 +431,7 @@ class MockMetaEstimator:
         """
         return self.delegate.predict(X)
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @if_delegate_has_method(delegate="delegate")
     @deprecated("Testing a deprecated delegated method")
     def score(self, X):
         """This is available only if delegate has score.
@@ -442,7 +442,7 @@ class MockMetaEstimator:
             Parameter y
         """
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @if_delegate_has_method(delegate="delegate")
     def predict_proba(self, X):
         """This is available only if delegate has predict_proba.
 

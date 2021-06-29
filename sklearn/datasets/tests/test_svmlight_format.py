@@ -189,8 +189,7 @@ def test_load_with_qid():
 
 
 @pytest.mark.skip(
-    "testing the overflow of 32 bit sparse indexing requires a"
-    " large amount of memory"
+    "testing the overflow of 32 bit sparse indexing requires a large amount of memory"
 )
 def test_load_large_qid():
     """
