@@ -284,7 +284,7 @@ def _solve_lbfgs(
         result = optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
-                f"The lbfgs solver did not converge. Try increasing max_iter "
+                "The lbfgs solver did not converge. Try increasing max_iter "
                 f"or tol. Currently: max_iter={max_iter} and tol={tol}",
                 ConvergenceWarning,
             )
@@ -719,7 +719,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             if self.solver not in ["auto", "lbfgs"]:
                 raise ValueError(
                     f"solver='{self.solver}' does not support positive fitting. Please"
-                    f" set the solver to 'auto' or 'lbfgs', or set `positive=False`"
+                    " set the solver to 'auto' or 'lbfgs', or set `positive=False`"
                 )
             else:
                 solver = self.solver
