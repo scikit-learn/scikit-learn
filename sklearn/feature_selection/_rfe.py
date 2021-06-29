@@ -328,7 +328,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Score of the choosen estimator of transform(X) and y.
+            Score of the underlying base estimator computed with the selected
+            features returned by `rfe.transform(X)` and `y`.
         """
 
         check_is_fitted(self)
