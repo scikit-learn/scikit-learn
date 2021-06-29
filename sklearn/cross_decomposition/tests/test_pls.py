@@ -124,7 +124,7 @@ def test_pls_estimators_single_target_shape(Estimator):
     X = np.random.randn(10, 3)
     Y = np.random.randn(10, 1)
 
-    pls = Estimator(n_components=X.shape[1])
+    pls = Estimator(n_components=Y.shape[1])
     pls.fit(X, Y)
 
     X_test = np.random.randn(10, 3)
