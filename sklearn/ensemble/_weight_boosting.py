@@ -142,7 +142,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         for iboost in range(self.n_estimators):
             # avoid extremely small sample weight
             # detail see issue #20320
-            sample_weight = np.clip(sample_weight, a_min=epsilon, a_max=1.0)
+            sample_weight = np.clip(sample_weight, a_min=epsilon, a_max=None)
 
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
