@@ -391,14 +391,14 @@ def test_no_refit():
         ):
             error_msg = (
                 f"refit=False. {fn_name} is available only after "
-                f"refitting on the best parameters"
+                "refitting on the best parameters"
             )
             with pytest.raises(NotFittedError, match=error_msg):
                 getattr(grid_search, fn_name)(X)
 
     # Test that an invalid refit param raises appropriate error messages
     error_msg = (
-        "For multi-metric scoring, the parameter refit must be set to" " a scorer key"
+        "For multi-metric scoring, the parameter refit must be set to a scorer key"
     )
     for refit in ["", 5, True, "recall", "accuracy"]:
         with pytest.raises(ValueError, match=error_msg):
@@ -1258,7 +1258,7 @@ def test_search_cv_score_samples_error(search_cv):
 
     # Make sure to error out when underlying estimator does not implement
     # the method `score_samples`
-    err_msg = "'DecisionTreeClassifier' object has no attribute " "'score_samples'"
+    err_msg = "'DecisionTreeClassifier' object has no attribute 'score_samples'"
 
     with pytest.raises(AttributeError, match=err_msg):
         search_cv.score_samples(X)
@@ -1914,9 +1914,11 @@ def test_empty_cv_iterator_error():
     # assert that this raises an error
     with pytest.raises(
         ValueError,
-        match="No fits were performed. "
-        "Was the CV iterator empty\\? "
-        "Were there no candidates\\?",
+        match=(
+            "No fits were performed. "
+            "Was the CV iterator empty\\? "
+            "Were there no candidates\\?"
+        ),
     ):
         ridge.fit(X[:train_size], y[:train_size])
 
@@ -1937,9 +1939,11 @@ def test_random_search_bad_cv():
     # assert that this raises an error
     with pytest.raises(
         ValueError,
-        match="cv.split and cv.get_n_splits returned "
-        "inconsistent results. Expected \\d+ "
-        "splits, got \\d+",
+        match=(
+            "cv.split and cv.get_n_splits returned "
+            "inconsistent results. Expected \\d+ "
+            "splits, got \\d+"
+        ),
     ):
         ridge.fit(X[:train_size], y[:train_size])
 

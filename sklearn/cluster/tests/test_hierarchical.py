@@ -368,7 +368,7 @@ def test_sparse_scikit_vs_scipy():
             assert_array_equal(
                 children,
                 children_,
-                "linkage tree differs" " from scipy impl for" " linkage: " + linkage,
+                "linkage tree differs from scipy impl for linkage: " + linkage,
             )
 
             cut = _hc_cut(k, children, n_leaves)
@@ -400,7 +400,7 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     assert_array_equal(
         children,
         children_scipy,
-        "linkage tree differs" " from scipy impl for" " single linkage.",
+        "linkage tree differs from scipy impl for single linkage.",
     )
 
     cut = _hc_cut(n_clusters, children, n_leaves)
@@ -716,9 +716,8 @@ def test_agg_n_clusters():
     X = rng.rand(20, 10)
     for n_clus in [-1, 0]:
         agc = AgglomerativeClustering(n_clusters=n_clus)
-        msg = (
-            "n_clusters should be an integer greater than 0."
-            " %s was provided." % str(agc.n_clusters)
+        msg = "n_clusters should be an integer greater than 0. %s was provided." % str(
+            agc.n_clusters
         )
         with pytest.raises(ValueError, match=msg):
             agc.fit(X)

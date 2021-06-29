@@ -439,7 +439,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         X = as_float_array(X, copy=True)
         X = self._validate_data(X, copy=False, reset=False)
         if (X <= -self.skewedness).any():
-            raise ValueError("X may not contain entries smaller than" " -skewedness.")
+            raise ValueError("X may not contain entries smaller than -skewedness.")
 
         X += self.skewedness
         np.log(X, X)

@@ -613,7 +613,7 @@ def _fit_and_score(
         if split_progress is not None:
             progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
         if candidate_progress and verbose > 9:
-            progress_msg += f"; {candidate_progress[0]+1}/" f"{candidate_progress[1]}"
+            progress_msg += f"; {candidate_progress[0]+1}/{candidate_progress[1]}"
 
     if verbose > 1:
         if parameters is None:
@@ -697,9 +697,7 @@ def _fit_and_score(
             else:
                 result_msg += ", score="
                 if return_train_score:
-                    result_msg += (
-                        f"(train={train_scores:.3f}, " f"test={test_scores:.3f})"
-                    )
+                    result_msg += f"(train={train_scores:.3f}, test={test_scores:.3f})"
                 else:
                     result_msg += f"{test_scores:.3f}"
         result_msg += f" total time={logger.short_format_time(total_time)}"
@@ -748,7 +746,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             else:
                 scores = error_score
             warnings.warn(
-                f"Scoring failed. The score on this train-test partition for "
+                "Scoring failed. The score on this train-test partition for "
                 f"these parameters will be set to {error_score}. Details: \n"
                 f"{format_exc()}",
                 UserWarning,

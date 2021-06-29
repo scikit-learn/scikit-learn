@@ -304,8 +304,8 @@ def select_candidates(
         n_trials = estimates_list[0].shape[0]
     else:
         raise TypeError(
-            "Invalid 'n_trials' parameter, expected tuple or "
-            " integer, got %s (%s)" % (n_trials, type(n_trials))
+            "Invalid 'n_trials' parameter, expected tuple or  integer, got %s (%s)"
+            % (n_trials, type(n_trials))
         )
 
     # compute `n_trials` location and shape estimates candidates in the subset
@@ -716,7 +716,7 @@ class MinCovDet(EmpiricalCovariance):
         # check that the empirical covariance is full rank
         if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
             warnings.warn(
-                "The covariance matrix associated to your dataset " "is not full rank"
+                "The covariance matrix associated to your dataset is not full rank"
             )
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(

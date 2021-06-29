@@ -25,7 +25,7 @@ def _check_classifier_response_method(estimator, response_method):
 
     if response_method not in ("predict_proba", "decision_function", "auto"):
         raise ValueError(
-            "response_method must be 'predict_proba', " "'decision_function' or 'auto'"
+            "response_method must be 'predict_proba', 'decision_function' or 'auto'"
         )
 
     error_msg = "response method {} is not defined in {}"
@@ -95,7 +95,7 @@ def _get_response(X, estimator, response_method, pos_label=None):
 
     if pos_label is not None and pos_label not in estimator.classes_:
         raise ValueError(
-            f"The class provided by 'pos_label' is unknown. Got "
+            "The class provided by 'pos_label' is unknown. Got "
             f"{pos_label} instead of one of {estimator.classes_}"
         )
 
