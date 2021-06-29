@@ -277,7 +277,6 @@ def fastica(
     *A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
     pp. 411-430*
-
     """
 
     est = FastICA(
@@ -596,7 +595,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             and n_features is the number of features.
 
         y : Ignored
-            Legacy parameter, always ignored by the algorithm.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -615,11 +614,11 @@ class FastICA(TransformerMixin, BaseEstimator):
             and n_features is the number of features.
 
         y : Ignored
-            Legacy parameter, always ignored by the algorithm.
-            
+            Not used, present for API consistency by convention.
+
         Returns
         -------
-        self :
+        self : object
             Returns the instance itself.
         """
         self._fit(X, compute_sources=False)
