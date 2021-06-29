@@ -400,7 +400,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -440,8 +440,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError(
-                "Affinity must be 'precomputed' or "
-                "'euclidean'. Got %s instead" % str(self.affinity)
+                "Affinity must be 'precomputed' or 'euclidean'. Got %s instead"
+                % str(self.affinity)
             )
 
         (
@@ -483,7 +483,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         X = self._validate_data(X, reset=False, accept_sparse="csr")
         if not hasattr(self, "cluster_centers_"):
             raise ValueError(
-                "Predict method is not supported when " "affinity='precomputed'."
+                "Predict method is not supported when affinity='precomputed'."
             )
 
         if self.cluster_centers_.shape[0] > 0:

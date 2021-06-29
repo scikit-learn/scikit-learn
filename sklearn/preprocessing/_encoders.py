@@ -92,8 +92,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
-                        "Unsorted categories are not "
-                        "supported for numerical categories"
+                        "Unsorted categories are not supported for numerical categories"
                     )
                     # if there are nans, nan should be the last element
                     stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
@@ -358,8 +357,9 @@ class OneHotEncoder(_BaseEncoder):
     def _validate_keywords(self):
         if self.handle_unknown not in ("error", "ignore"):
             msg = (
-                "handle_unknown should be either 'error' or 'ignore', "
-                "got {0}.".format(self.handle_unknown)
+                "handle_unknown should be either 'error' or 'ignore', got {0}.".format(
+                    self.handle_unknown
+                )
             )
             raise ValueError(msg)
 
@@ -588,8 +588,7 @@ class OneHotEncoder(_BaseEncoder):
 
         # validate shape of passed X
         msg = (
-            "Shape of the passed X data is not correct. Expected {0} "
-            "columns, got {1}."
+            "Shape of the passed X data is not correct. Expected {0} columns, got {1}."
         )
         if X.shape[1] != n_transformed_features:
             raise ValueError(msg.format(n_transformed_features, X.shape[1]))
@@ -806,7 +805,7 @@ class OrdinalEncoder(_BaseEncoder):
         handle_unknown_strategies = ("error", "use_encoded_value")
         if self.handle_unknown not in handle_unknown_strategies:
             raise ValueError(
-                f"handle_unknown should be either 'error' or "
+                "handle_unknown should be either 'error' or "
                 f"'use_encoded_value', got {self.handle_unknown}."
             )
 
@@ -814,21 +813,21 @@ class OrdinalEncoder(_BaseEncoder):
             if is_scalar_nan(self.unknown_value):
                 if np.dtype(self.dtype).kind != "f":
                     raise ValueError(
-                        f"When unknown_value is np.nan, the dtype "
-                        f"parameter should be "
+                        "When unknown_value is np.nan, the dtype "
+                        "parameter should be "
                         f"a float dtype. Got {self.dtype}."
                     )
             elif not isinstance(self.unknown_value, numbers.Integral):
                 raise TypeError(
-                    f"unknown_value should be an integer or "
-                    f"np.nan when "
-                    f"handle_unknown is 'use_encoded_value', "
+                    "unknown_value should be an integer or "
+                    "np.nan when "
+                    "handle_unknown is 'use_encoded_value', "
                     f"got {self.unknown_value}."
                 )
         elif self.unknown_value is not None:
             raise TypeError(
-                f"unknown_value should only be set when "
-                f"handle_unknown is 'use_encoded_value', "
+                "unknown_value should only be set when "
+                "handle_unknown is 'use_encoded_value', "
                 f"got {self.unknown_value}."
             )
 
@@ -838,10 +837,10 @@ class OrdinalEncoder(_BaseEncoder):
             for feature_cats in self.categories_:
                 if 0 <= self.unknown_value < len(feature_cats):
                     raise ValueError(
-                        f"The used value for unknown_value "
+                        "The used value for unknown_value "
                         f"{self.unknown_value} is one of the "
-                        f"values already used for encoding the "
-                        f"seen categories."
+                        "values already used for encoding the "
+                        "seen categories."
                     )
 
         # stores the missing indices per category
@@ -912,8 +911,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         # validate shape of passed X
         msg = (
-            "Shape of the passed X data is not correct. Expected {0} "
-            "columns, got {1}."
+            "Shape of the passed X data is not correct. Expected {0} columns, got {1}."
         )
         if X.shape[1] != n_features:
             raise ValueError(msg.format(n_features, X.shape[1]))

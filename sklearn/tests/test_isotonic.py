@@ -379,7 +379,7 @@ def test_isotonic_regression_oob_bad():
     ir = IsotonicRegression(increasing="auto", out_of_bounds="xyz")
 
     # Make sure that we throw an error for bad out_of_bounds value
-    msg = "The argument ``out_of_bounds`` must be in 'nan', " "'clip', 'raise'; got xyz"
+    msg = "The argument ``out_of_bounds`` must be in 'nan', 'clip', 'raise'; got xyz"
     with pytest.raises(ValueError, match=msg):
         ir.fit(x, y)
 
@@ -395,7 +395,7 @@ def test_isotonic_regression_oob_bad_after():
     # Make sure that we throw an error for bad out_of_bounds value in transform
     ir.fit(x, y)
     ir.out_of_bounds = "xyz"
-    msg = "The argument ``out_of_bounds`` must be in 'nan', " "'clip', 'raise'; got xyz"
+    msg = "The argument ``out_of_bounds`` must be in 'nan', 'clip', 'raise'; got xyz"
     with pytest.raises(ValueError, match=msg):
         ir.transform(x)
 

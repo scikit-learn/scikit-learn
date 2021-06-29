@@ -460,8 +460,8 @@ def _ridge_regression(
 
     if n_samples != n_samples_:
         raise ValueError(
-            "Number of samples in X and y does not correspond:"
-            " %d != %d" % (n_samples, n_samples_)
+            "Number of samples in X and y does not correspond: %d != %d"
+            % (n_samples, n_samples_)
         )
 
     if has_sw:
@@ -476,8 +476,8 @@ def _ridge_regression(
     alpha = np.asarray(alpha, dtype=X.dtype).ravel()
     if alpha.size not in [1, n_targets]:
         raise ValueError(
-            "Number of targets and number of penalties "
-            "do not correspond: %d != %d" % (alpha.size, n_targets)
+            "Number of targets and number of penalties do not correspond: %d != %d"
+            % (alpha.size, n_targets)
         )
 
     if alpha.size == 1 and n_targets > 1:
@@ -556,7 +556,7 @@ def _ridge_regression(
 
     if solver == "svd":
         if sparse.issparse(X):
-            raise TypeError("SVD solver does not support sparse" " inputs currently")
+            raise TypeError("SVD solver does not support sparse inputs currently")
         coef = _solve_svd(X, y, alpha)
 
     if ravel:
@@ -1095,8 +1095,9 @@ def _check_gcv_mode(X, gcv_mode):
     possible_gcv_modes = [None, "auto", "svd", "eigen"]
     if gcv_mode not in possible_gcv_modes:
         raise ValueError(
-            "Unknown value for 'gcv_mode'. "
-            "Got {} instead of one of {}".format(gcv_mode, possible_gcv_modes)
+            "Unknown value for 'gcv_mode'. Got {} instead of one of {}".format(
+                gcv_mode, possible_gcv_modes
+            )
         )
     if gcv_mode in ["eigen", "svd"]:
         return gcv_mode
@@ -1820,13 +1821,9 @@ class _BaseRidgeCV(LinearModel):
                 self.cv_values_ = estimator.cv_values_
         else:
             if self.store_cv_values:
-                raise ValueError(
-                    "cv!=None and store_cv_values=True" " are incompatible"
-                )
+                raise ValueError("cv!=None and store_cv_values=True are incompatible")
             if self.alpha_per_target:
-                raise ValueError(
-                    "cv!=None and alpha_per_target=True" " are incompatible"
-                )
+                raise ValueError("cv!=None and alpha_per_target=True are incompatible")
             parameters = {"alpha": self.alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge

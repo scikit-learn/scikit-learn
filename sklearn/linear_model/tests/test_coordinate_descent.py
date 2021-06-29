@@ -1473,7 +1473,7 @@ def test_enet_sample_weight_sparse(estimator):
     y = np.array([-1, 0, 1])
     sw = np.array([1, 2, 3])
     with pytest.raises(
-        ValueError, match="Sample weights do not.*support " "sparse matrices"
+        ValueError, match="Sample weights do not.*support sparse matrices"
     ):
         reg.fit(X, y, sample_weight=sw, check_input=True)
 
@@ -1617,7 +1617,7 @@ def test_enet_cv_sample_weight_sparse(estimator):
     y = np.array([-1, 0, 1])
     sw = np.array([1, 2, 3])
     with pytest.raises(
-        ValueError, match="Sample weights do not.*support " "sparse matrices"
+        ValueError, match="Sample weights do not.*support sparse matrices"
     ):
         reg.fit(X, y, sample_weight=sw)
 
