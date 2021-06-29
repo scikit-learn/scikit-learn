@@ -121,6 +121,7 @@ def test_sanity_check_pls_regression():
 @pytest.mark.parametrize("Estimator", (PLSRegression, PLSCanonical, CCA))
 def test_pls_estimators_single_target_shape(Estimator):
     # Check shape for single-target predictions on PLS estimators
+    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/19352
     X = np.random.randn(10, 3)
     Y = np.random.randn(10, 1)
 
