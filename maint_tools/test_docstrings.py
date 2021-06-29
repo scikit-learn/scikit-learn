@@ -12,7 +12,6 @@ DOCSTRING_IGNORE_LIST = [
     "AdditiveChi2Sampler",
     "AffinityPropagation",
     "AgglomerativeClustering",
-    "BaggingClassifier",
     "BaggingRegressor",
     "BernoulliNB",
     "BernoulliRBM",
