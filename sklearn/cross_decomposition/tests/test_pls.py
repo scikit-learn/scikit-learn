@@ -133,6 +133,12 @@ def test_pls_estimators_single_target_shape(Estimator):
 
     assert Y_pred.shape == (10,)
 
+    # Test behavior when X is a single observation
+    X_test = np.random.randn(1, 3)
+    Y_pred = pls.predict(X_test)
+
+    assert Y_pred.shape == (1,)
+
 
 def test_sanity_check_pls_regression_constant_column_Y():
     # Check behavior when the first column of Y is constant
