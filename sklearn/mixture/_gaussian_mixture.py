@@ -46,8 +46,8 @@ def _check_weights(weights, n_components):
     # check normalization
     if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0):
         raise ValueError(
-            "The parameter 'weights' should be normalized, "
-            "but got sum(weights) = %.5f" % np.sum(weights)
+            "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
+            % np.sum(weights)
         )
     return weights
 
@@ -78,7 +78,7 @@ def _check_means(means, n_components, n_features):
 def _check_precision_positivity(precision, covariance_type):
     """Check a precision vector is positive-definite."""
     if np.any(np.less_equal(precision, 0.0)):
-        raise ValueError("'%s precision' should be " "positive" % covariance_type)
+        raise ValueError("'%s precision' should be positive" % covariance_type)
 
 
 def _check_precision_matrix(precision, covariance_type):
@@ -87,7 +87,7 @@ def _check_precision_matrix(precision, covariance_type):
         np.allclose(precision, precision.T) and np.all(linalg.eigvalsh(precision) > 0.0)
     ):
         raise ValueError(
-            "'%s precision' should be symmetric, " "positive-definite" % covariance_type
+            "'%s precision' should be symmetric, positive-definite" % covariance_type
         )
 
 
@@ -665,7 +665,8 @@ class GaussianMixture(BaseMixture):
             raise ValueError(
                 "Invalid value for 'covariance_type': %s "
                 "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']" % self.covariance_type
+                "['spherical', 'tied', 'diag', 'full']"
+                % self.covariance_type
             )
 
         if self.weights_init is not None:

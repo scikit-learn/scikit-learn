@@ -31,7 +31,7 @@ from ..utils import shuffle as shuffle_method
 ARCHIVE = RemoteFileMetadata(
     filename="kddcup99_data",
     url="https://ndownloader.figshare.com/files/5976045",
-    checksum=("3b6c942aa0356c0ca35b7b595a26c89d" "343652c9db428893e7494f837b274292"),
+    checksum="3b6c942aa0356c0ca35b7b595a26c89d343652c9db428893e7494f837b274292",
 )
 
 # The original data can be found at:
@@ -39,7 +39,7 @@ ARCHIVE = RemoteFileMetadata(
 ARCHIVE_10_PERCENT = RemoteFileMetadata(
     filename="kddcup99_10_data",
     url="https://ndownloader.figshare.com/files/5976042",
-    checksum=("8045aca0d84e70e622d1148d7df78249" "6f6333bf6eb979a1b0837c42a9fd9561"),
+    checksum="8045aca0d84e70e622d1148d7df782496f6333bf6eb979a1b0837c42a9fd9561",
 )
 
 logger = logging.getLogger(__name__)

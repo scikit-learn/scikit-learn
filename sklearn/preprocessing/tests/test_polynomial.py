@@ -74,11 +74,11 @@ def test_polynomial_and_spline_array_order(est):
         ({"include_bias": "string"}, "include_bias must be bool."),
         (
             {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
-            "Periodic splines require degree < n_knots. Got n_knots=" "3 and degree=3.",
+            "Periodic splines require degree < n_knots. Got n_knots=3 and degree=3.",
         ),
         (
             {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
-            "Periodic splines require degree < n_knots. Got n_knots=2 and " "degree=2.",
+            "Periodic splines require degree < n_knots. Got n_knots=2 and degree=2.",
         ),
     ],
 )
@@ -848,7 +848,7 @@ def test_polynomial_features_deprecated_n_input_features():
     # check that we raise a deprecation warning when accessing
     # `n_input_features_`. FIXME: remove in 1.2
     depr_msg = (
-        "The attribute n_input_features_ was deprecated in version "
+        "The attribute `n_input_features_` was deprecated in version "
         "1.0 and will be removed in 1.2."
     )
     X = np.arange(10).reshape(5, 2)

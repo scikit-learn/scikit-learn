@@ -39,7 +39,7 @@ def _check_statistics(X, X_true, strategy, statistics, missing_values):
         - the statistics (mean, median, mode) are correct
         - the missing values are imputed correctly"""
 
-    err_msg = "Parameters: strategy = %s, missing_values = %s, " "sparse = {0}" % (
+    err_msg = "Parameters: strategy = %s, missing_values = %s, sparse = {0}" % (
         strategy,
         missing_values,
     )
@@ -336,7 +336,7 @@ def test_imputation_most_frequent_pandas(dtype):
     # Test imputation using the most frequent strategy on pandas df
     pd = pytest.importorskip("pandas")
 
-    f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n" ",i,x,\n" "a,,y,\n" "a,j,,\n" "b,j,x,")
+    f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n,i,x,\na,,y,\na,j,,\nb,j,x,")
 
     df = pd.read_csv(f, dtype=dtype)
 
@@ -438,7 +438,7 @@ def test_imputation_constant_pandas(dtype):
     # Test imputation using the constant strategy on pandas df
     pd = pytest.importorskip("pandas")
 
-    f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n" ",i,x,\n" "a,,y,\n" "a,j,,\n" "b,j,x,")
+    f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n,i,x,\na,,y,\na,j,,\nb,j,x,")
 
     df = pd.read_csv(f, dtype=dtype)
 
@@ -1482,7 +1482,7 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
             "extra_value",
             1,
         ),
-        ("a", ["min_value", "min_value" "value"], object, "a", 2),
+        ("a", ["min_value", "min_valuevalue"], object, "a", 2),
         ("min_value", ["min_value", "min_value", "value"], object, "z", 2),
         # array of numeric dtype
         (10, [1, 2, 3], int, 10, 2),

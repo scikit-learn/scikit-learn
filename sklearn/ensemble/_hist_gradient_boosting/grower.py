@@ -240,7 +240,7 @@ class TreeGrower:
                 )
             if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
                 raise ValueError(
-                    "monotonic_cst must be None or an array-like of " "-1, 0 or 1."
+                    "monotonic_cst must be None or an array-like of -1, 0 or 1."
                 )
 
         if is_categorical is None:
@@ -253,9 +253,7 @@ class TreeGrower:
                 is_categorical == 1, monotonic_cst != MonotonicConstraint.NO_CST
             )
         ):
-            raise ValueError(
-                "Categorical features cannot have monotonic " "constraints."
-            )
+            raise ValueError("Categorical features cannot have monotonic constraints.")
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
@@ -320,30 +318,29 @@ class TreeGrower:
             )
         if max_leaf_nodes is not None and max_leaf_nodes <= 1:
             raise ValueError(
-                "max_leaf_nodes={} should not be"
-                " smaller than 2".format(max_leaf_nodes)
+                "max_leaf_nodes={} should not be smaller than 2".format(max_leaf_nodes)
             )
         if max_depth is not None and max_depth < 1:
             raise ValueError(
-                "max_depth={} should not be" " smaller than 1".format(max_depth)
+                "max_depth={} should not be smaller than 1".format(max_depth)
             )
         if min_samples_leaf < 1:
             raise ValueError(
-                "min_samples_leaf={} should "
-                "not be smaller than 1".format(min_samples_leaf)
+                "min_samples_leaf={} should not be smaller than 1".format(
+                    min_samples_leaf
+                )
             )
         if min_gain_to_split < 0:
             raise ValueError(
-                "min_gain_to_split={} " "must be positive.".format(min_gain_to_split)
+                "min_gain_to_split={} must be positive.".format(min_gain_to_split)
             )
         if l2_regularization < 0:
             raise ValueError(
-                "l2_regularization={} must be " "positive.".format(l2_regularization)
+                "l2_regularization={} must be positive.".format(l2_regularization)
             )
         if min_hessian_to_split < 0:
             raise ValueError(
-                "min_hessian_to_split={} "
-                "must be positive.".format(min_hessian_to_split)
+                "min_hessian_to_split={} must be positive.".format(min_hessian_to_split)
             )
 
     def grow(self):

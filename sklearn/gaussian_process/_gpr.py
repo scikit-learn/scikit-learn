@@ -235,7 +235,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 self.alpha = self.alpha[0]
             else:
                 raise ValueError(
-                    f"alpha must be a scalar or an array with same number of "
+                    "alpha must be a scalar or an array with same number of "
                     f"entries as y. ({self.alpha.shape[0]} != {y.shape[0]})"
                 )
 
@@ -299,8 +299,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         except np.linalg.LinAlgError as exc:
             exc.args = (
                 f"The kernel, {self.kernel_}, is not returning a positive "
-                f"definite matrix. Try gradually increasing the 'alpha' "
-                f"parameter of your GaussianProcessRegressor estimator.",
+                "definite matrix. Try gradually increasing the 'alpha' "
+                "parameter of your GaussianProcessRegressor estimator.",
             ) + exc.args
             raise
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)

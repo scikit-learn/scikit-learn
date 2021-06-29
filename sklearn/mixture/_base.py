@@ -33,8 +33,8 @@ def _check_shape(param, param_shape, name):
     param = np.array(param)
     if param.shape != param_shape:
         raise ValueError(
-            "The parameter '%s' should have the shape of %s, "
-            "but got %s" % (name, param_shape, param.shape)
+            "The parameter '%s' should have the shape of %s, but got %s"
+            % (name, param_shape, param.shape)
         )
 
 
@@ -79,32 +79,36 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         if self.n_components < 1:
             raise ValueError(
                 "Invalid value for 'n_components': %d "
-                "Estimation requires at least one component" % self.n_components
+                "Estimation requires at least one component"
+                % self.n_components
             )
 
         if self.tol < 0.0:
             raise ValueError(
                 "Invalid value for 'tol': %.5f "
-                "Tolerance used by the EM must be non-negative" % self.tol
+                "Tolerance used by the EM must be non-negative"
+                % self.tol
             )
 
         if self.n_init < 1:
             raise ValueError(
-                "Invalid value for 'n_init': %d "
-                "Estimation requires at least one run" % self.n_init
+                "Invalid value for 'n_init': %d Estimation requires at least one run"
+                % self.n_init
             )
 
         if self.max_iter < 1:
             raise ValueError(
                 "Invalid value for 'max_iter': %d "
-                "Estimation requires at least one iteration" % self.max_iter
+                "Estimation requires at least one iteration"
+                % self.max_iter
             )
 
         if self.reg_covar < 0.0:
             raise ValueError(
                 "Invalid value for 'reg_covar': %.5f "
                 "regularization on covariance must be "
-                "non-negative" % self.reg_covar
+                "non-negative"
+                % self.reg_covar
             )
 
         # Check all the parameters values of the derived class
@@ -183,9 +187,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
-        self
+        self : object
+            The fitted mixture.
         """
         self.fit_predict(X, y)
         return self
@@ -208,6 +216,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -351,6 +362,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
         log_likelihood : float
@@ -407,11 +421,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         X : array, shape (n_samples, n_features)
-            Randomly generated sample
+            Randomly generated sample.
 
         y : array, shape (nsamples,)
-            Component labels
-
+            Component labels.
         """
         check_is_fitted(self)
 

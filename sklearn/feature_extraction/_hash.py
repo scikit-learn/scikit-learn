@@ -120,7 +120,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         if input_type not in ("dict", "pair", "string"):
             raise ValueError(
-                "input_type must be 'dict', 'pair' or 'string'," " got %r." % input_type
+                "input_type must be 'dict', 'pair' or 'string', got %r." % input_type
             )
 
     def fit(self, X=None, y=None):
