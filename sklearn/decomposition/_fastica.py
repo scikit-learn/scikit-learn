@@ -619,7 +619,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             
         Returns
         -------
-        self :
+        self : object
             Returns the instance itself.
         """
         self._fit(X, compute_sources=False)
