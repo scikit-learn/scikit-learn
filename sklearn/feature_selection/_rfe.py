@@ -331,7 +331,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             Score of the underlying base estimator computed with the selected
             features returned by `rfe.transform(X)` and `y`.
         """
-
         check_is_fitted(self)
         return self.estimator_.score(self.transform(X), y)
 
