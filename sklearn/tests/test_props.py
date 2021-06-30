@@ -153,7 +153,7 @@ def test_pipeline():
     # MyEst is requesting "brand" but MyTrs has it as ERROR_IF_PASSED
     with pytest.raises(
         ValueError,
-        match=("brand is passed but is not explicitly set as requested or not."),
+        match="brand is passed but is not explicitly set as requested or not.",
     ):
         clf = make_pipeline(MyTrs(), MyEst())
         clf.fit(X, y, sample_weight=sw, brand=brand)
