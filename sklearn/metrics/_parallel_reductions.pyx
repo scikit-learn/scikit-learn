@@ -18,6 +18,7 @@ from libc.stdlib cimport free, malloc
 from cython.parallel cimport parallel, prange
 
 from ._dist_metrics cimport DistanceMetric
+from ._dist_metrics import METRIC_MAPPING
 
 DEF CHUNK_SIZE = 256  # number of vectors
 
@@ -63,32 +64,6 @@ cdef inline DTYPE_t _euclidean_dist(
         dist += (X[i, k] - Y[j, k]) * (X[i, k] - Y[j, k])
 
     return sqrt(dist)
-
-cdef int _exact_euclidean_dist(
-    DTYPE_t[:, ::1] X,                  # IN
-    DTYPE_t[:, ::1] Y,                  # IN
-    ITYPE_t[:, ::1] Y_indices,          # IN
-    ITYPE_t n_threads,                  # IN
-    DTYPE_t[:, ::1] distances,          # OUT
-) nogil:
-    """
-    Compute exact pairwise euclidean distances in parallel.
-
-    The pairwise distances considered are X vectors
-    and a subset of Y given for each row if X given in
-    Y_indices.
-
-    Notes: the body of this function could have been inlined,
-    but we use a function to have a cdef nogil context.
-    """
-    cdef:
-        ITYPE_t i, k
-
-    for i in prange(X.shape[0], schedule='static',
-                    nogil=True, num_threads=n_threads):
-        for k in range(Y_indices.shape[1]):
-            distances[i, k] = _euclidean_dist(X, Y, i,
-                                              Y_indices[i, k])
 
 
 cdef class ParallelReduction:
@@ -219,17 +194,22 @@ cdef class ArgKmin(ParallelReduction):
         ITYPE_t ** heaps_indices_chunks
 
     @classmethod
+    def valid_metrics(cls):
+        return {"fast_sqeuclidean", *METRIC_MAPPING.keys()}
+
+    @classmethod
     def get_for(cls,
                 DTYPE_t[:, ::1] X,
                 DTYPE_t[:, ::1] Y,
                 ITYPE_t k,
                 str metric="fast_sqeuclidean",
                 ITYPE_t chunk_size=CHUNK_SIZE,
-    ):
+                dict metric_kwargs=dict(),
+        ):
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
         return ArgKmin(X=X, Y=Y,
-                       distance_metric=DistanceMetric.get_metric(metric),
+                       distance_metric=DistanceMetric.get_metric(metric, **metric_kwargs),
                        k=k,
                        chunk_size=chunk_size)
 
@@ -301,7 +281,7 @@ cdef class ArgKmin(ParallelReduction):
         DTYPE_t[:, ::1] argkmin_red_distances,
     ) nogil:
         """Computes the argkmin of each vector (row) of X on Y
-        by parallelising computation on chunks of X.
+        by parallelizing computation on chunks of X.
         """
         cdef:
             ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx, idx, jdx
@@ -370,9 +350,9 @@ cdef class ArgKmin(ParallelReduction):
         DTYPE_t[:, ::1] argkmin_red_distances,   # OUT
     ) nogil:
         """Computes the argkmin of each vector (row) of X on Y
-        by parallelising computation on chunks of Y.
+        by parallelizing computation on chunks of Y.
 
-        This parallelisation strategy is more costly (as we need
+        This parallelization strategy is more costly (as we need
         extra heaps and synchronisation), yet it is useful in
         most contexts.
         """
@@ -457,6 +437,20 @@ cdef class ArgKmin(ParallelReduction):
         # end: for X_chunk_idx
         return self.Y_n_chunks
 
+    cdef void _exact_distances(self,
+        ITYPE_t[:, ::1] Y_indices,          # IN
+        DTYPE_t[:, ::1] distances,          # IN/OUT
+    ) nogil:
+        """Convert reduced distances to pairwise distances in parallel."""
+        cdef:
+            ITYPE_t i, j
+
+        for i in prange(self.n_X, schedule='static', nogil=True,
+                        num_threads=self.effective_omp_n_thread):
+            for j in range(self.k):
+                distances[i, j] = self.distance_metric.dist(&self.X[i, 0],
+                                                 &self.Y[Y_indices[i, j], 0],
+                                                 self.d)
 
     # Python interface
     def compute(self,
@@ -467,7 +461,7 @@ cdef class ArgKmin(ParallelReduction):
 
         strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}
             The chunking strategy defining which dataset
-            parallelisation are made on.
+            parallelization are made on.
 
              - 'parallel_on_X' is embarassingly parallel but
             is less used in practice.
@@ -518,14 +512,9 @@ cdef class ArgKmin(ParallelReduction):
 
         if return_distance:
             # We need to recompute distances because we relied on
-            # reduced distances using _gemm, which are missing a
-            # term for squared norms and which are not the most
-            # precise (catastrophic cancellation might have happened).
-            _exact_euclidean_dist(self.X, self.Y, argkmin_indices,
-                                  self.effective_omp_n_thread,
-                                  argkmin_distances)
-            return (np.asarray(argkmin_distances),
-                    np.asarray(argkmin_indices))
+            # reduced distances.
+            self._exact_distances(argkmin_indices, argkmin_distances)
+            return np.asarray(argkmin_distances), np.asarray(argkmin_indices)
 
         return np.asarray(argkmin_indices)
 

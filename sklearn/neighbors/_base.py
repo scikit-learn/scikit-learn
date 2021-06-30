@@ -737,9 +737,9 @@ class KNeighborsMixin:
             )
 
         elif (
-            self._fit_method == "brute" and self.effective_metric_ == "fast_sqeuclidean"
+            self._fit_method == "brute"
+            and self.effective_metric_ in ArgKmin.valid_metrics()
         ):
-            # TODO: generalise this simple plug here
             results = ArgKmin.get_for(
                 X=X, Y=self._fit_X, k=n_neighbors, metric=self.effective_metric_
             ).compute(
