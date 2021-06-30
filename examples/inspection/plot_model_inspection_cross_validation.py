@@ -13,6 +13,9 @@ Evaluating a predictive linear model involves :ref:`cross-validation
 
 print(__doc__)
 
+# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+# License: BSD 3 clause
+
 # %%
 # Dataset
 # -------
@@ -27,8 +30,7 @@ from sklearn.model_selection import train_test_split
 
 X, y = fetch_california_housing(as_frame=True, return_X_y=True)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.1, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
 
 # %%
 # Predictive model
@@ -36,18 +38,17 @@ X_train, X_test, y_train, y_test = train_test_split(
 #
 # In this example, we will use a linear model which should be a good baseline:
 # a :ref:`ridge model <ridge_regression>`. A ridge model enforces a L2 penalty
-# on the coefficients. The penalty parameter `alpha` thus has to be tuned. More
-# importantly, this parameter needs to be tuned for our specific problem:
+# on the coefficients. Thus, the penalty parameter `alpha` has to be tuned.
+# More importantly, this parameter needs to be tuned for our specific problem:
 # tuning on another dataset does not ensure an optimal parameter value for the
 # current dataset.
 #
 # Here, we use the class :class:`~sklearn.linear_model.RidgeCV` that can tune
-# `alpha` by cross-validation.
+# `alpha` by cross-validation when calling `fit`.
 #
 # We also add a preprocessing stage to :ref:`standardize
 # <preprocessing_scaler>` the data such that the regularization strength is
 # applied homogeneously on each coefficient.
-
 import numpy as np
 from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import make_pipeline
@@ -73,13 +74,13 @@ model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
 # metric will indicate that we cannot trust the reported performance nor try to
 # interpret findings built on internal model's parameters. One possible cause
 # of large variations are small sample sizes.
-
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import RepeatedKFold
 
 cv = RepeatedKFold(n_splits=10, n_repeats=10, random_state=0)
 cv_results = cross_validate(
-    model, X_train, y_train, cv=cv, return_estimator=True, n_jobs=2)
+    model, X_train, y_train, cv=cv, return_estimator=True, n_jobs=2
+)
 
 # %%
 # Here, we used a repeated K-fold cross-validation. At each round of
@@ -93,7 +94,6 @@ cv_results = cross_validate(
 #
 # As previously mentioned, one should look at the variance of the model
 # performance within the cross-validation framework.
-
 import matplotlib.pyplot as plt
 
 cv_score = cv_results["test_score"]
@@ -101,8 +101,9 @@ plt.hist(cv_score, bins=200, density=True)
 plt.xlim([0, 1])
 plt.ylabel("Density")
 plt.xlabel("R2 score")
-_ = plt.title("Distribution of the scores on the test sets\n "
-              "during the cross-validation")
+_ = plt.title(
+    "Distribution of the scores on the test sets\n during the cross-validation"
+)
 
 # %%
 # We start by plotting the empirical distribution of the test score computed
@@ -127,7 +128,6 @@ _ = plt.title("Distribution of the scores on the test sets\n "
 #
 # It allows us to get the different predictive models trained and tested within
 # cross-validation.
-
 cv_estimators = cv_results["estimator"]
 
 # %%
@@ -145,7 +145,6 @@ cv_estimators = cv_results["estimator"]
 # able to fix this hyperparameter.
 #
 # Let's check the `alpha` parameter variance.
-
 alpha = [est[-1].alpha_ for est in cv_estimators]
 plt.hist(alpha, bins=30, density=True)
 plt.xlabel("Alpha")
@@ -164,11 +163,9 @@ _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
 # variance of these parameters as well.
 #
 # For the sake of simplicity, we are going to solely look at the `coef_`.
-
 import pandas as pd
 
-coefficients = pd.DataFrame([est[-1].coef_ for est in cv_estimators],
-                            columns=X.columns)
+coefficients = pd.DataFrame([est[-1].coef_ for est in cv_estimators], columns=X.columns)
 coefficients
 
 # %%
@@ -189,22 +186,21 @@ _ = plt.subplots_adjust(left=0.3)
 # Putting a predictive model in production
 # ----------------------------------------
 #
-# In the above analysis, we saw that the values of lambda did not vary much. We
-# can safely create a model with a fixed `alpha` hyperparameter. Subsequently,
-# we can train the model on the full training set.
-
-from sklearn.linear_model import Ridge
-
-production_model = make_pipeline(StandardScaler(), Ridge(alpha=40))
+# In the above analysis, we saw that the values of lambda did not vary much.
+# Indeed, we can retrain this model and optimized the value of `alpha` on the
+# full training set.
+alphas = np.logspace(-1, 2.5, num=50)
+production_model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
 production_model.fit(X_train, y_train)
 
 # %%
 # At the beginning of the process, when we split our data, we had a set of left
 # out data. Now, we can use it to further check if the model performs as we
 # would expect from the analysis done within the cross-validation framework.
-
-print(f"The performance of our production model: "
-      f"R2={production_model.score(X_test, y_test):.2f}")
+print(
+    f"The performance of our production model: "
+    f"R2={production_model.score(X_test, y_test):.2f}"
+)
 
 # %%
 # We see that the statistical performance is comparable to the cross-validation
