@@ -105,6 +105,17 @@ cdef class ArgKmin:
 
         DTYPE_t[::1] Y_sq_norms
 
+        # ArgKmin
+        DTYPE_t * dist_middle_terms_chunks
+        DTYPE_t * heaps_red_distances_chunks
+
+        # Used for parallel_on_Y:
+
+        # As chunks of X are shared across threads, so must their
+        # heaps. To solve this, each thread has its own locals
+        # heaps which are then synchronised back in the main ones.
+        ITYPE_t * heaps_indices_chunks
+
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults
         # in rare cases where __init__ is not called
@@ -210,24 +221,23 @@ cdef class ArgKmin:
         """
         cdef:
             ITYPE_t num_threads = min(self.Y_n_chunks, effective_n_threads)
-
             ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx, idx, jdx
 
-            DTYPE_t *dist_middle_terms_chunks
-            DTYPE_t *heaps_red_distances_chunks
-
+            # in bytes
+            ITYPE_t size_dist_middle_terms = self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf
+            ITYPE_t heap_size = self.X_n_samples_chunk * self.k * self.sf
 
         with nogil, parallel(num_threads=num_threads):
             # Thread local buffers
 
             # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-            dist_middle_terms_chunks = <DTYPE_t*> malloc(self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf)
-            heaps_red_distances_chunks = <DTYPE_t*> malloc(self.X_n_samples_chunk * self.k * self.sf)
+            self.dist_middle_terms_chunks = <DTYPE_t*> malloc(size_dist_middle_terms)
+            self.heaps_red_distances_chunks = <DTYPE_t*> malloc(heap_size)
 
             for X_chunk_idx in prange(self.X_n_chunks, schedule='static'):
                 # We reset the heap between X chunks (memset isn't suitable here)
                 for idx in range(self.X_n_samples_chunk * self.k):
-                    heaps_red_distances_chunks[idx] = FLOAT_INF
+                    self.heaps_red_distances_chunks[idx] = FLOAT_INF
 
                 X_start = X_chunk_idx * self.X_n_samples_chunk
                 if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_rem > 0:
@@ -246,8 +256,8 @@ cdef class ArgKmin:
                         self.X[X_start:X_end, :],
                         self.Y[Y_start:Y_end, :],
                         self.Y_sq_norms[Y_start:Y_end],
-                        dist_middle_terms_chunks,
-                        heaps_red_distances_chunks,
+                        self.dist_middle_terms_chunks,
+                        self.heaps_red_distances_chunks,
                         &argkmin_indices[X_start, 0],
                         self.k,
                         Y_start
@@ -256,14 +266,14 @@ cdef class ArgKmin:
                 # Sorting indices so that the closests' come first.
                 for idx in range(X_end - X_start):
                     _simultaneous_sort(
-                        heaps_red_distances_chunks + idx * self.k,
+                        self.heaps_red_distances_chunks + idx * self.k,
                         &argkmin_indices[X_start + idx, 0],
                         self.k
                     )
 
             # end: for X_chunk_idx
-            free(dist_middle_terms_chunks)
-            free(heaps_red_distances_chunks)
+            free(self.dist_middle_terms_chunks)
+            free(self.heaps_red_distances_chunks)
 
         # end: with nogil, parallel
         return self.X_n_chunks
@@ -286,13 +296,10 @@ cdef class ArgKmin:
 
             ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx, idx, jdx
 
-            DTYPE_t *dist_middle_terms_chunks
-            DTYPE_t *heaps_red_distances_chunks
-
-            # As chunks of X are shared across threads, so must their
-            # heaps. To solve this, each thread has its own locals
-            # heaps which are then synchronised back in the main ones.
-            ITYPE_t *heaps_indices_chunks
+            # in bytes
+            ITYPE_t size_dist_middle_terms = self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf
+            ITYPE_t int_heap_size = self.X_n_samples_chunk * self.k * self.si
+            ITYPE_t float_heap_size = self.X_n_samples_chunk * self.k * self.sf
 
         for X_chunk_idx in range(self.X_n_chunks):
             X_start = X_chunk_idx * self.X_n_samples_chunk
@@ -305,17 +312,14 @@ cdef class ArgKmin:
                 # Thread local buffers
 
                 # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-                dist_middle_terms_chunks = <DTYPE_t*> malloc(
-                    self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf)
-                heaps_red_distances_chunks = <DTYPE_t*> malloc(
-                    self.X_n_samples_chunk * self.k * self.sf)
-                heaps_indices_chunks = <ITYPE_t*> malloc(
-                    self.X_n_samples_chunk * self.k * self.sf)
+                self.dist_middle_terms_chunks = <DTYPE_t*> malloc(size_dist_middle_terms)
+                self.heaps_red_distances_chunks = <DTYPE_t*> malloc(float_heap_size)
+                self.heaps_indices_chunks = <ITYPE_t*> malloc(int_heap_size)
 
                 # Initialising heaps (memset can't be used here)
                 for idx in range(self.X_n_samples_chunk * self.k):
-                    heaps_red_distances_chunks[idx] = FLOAT_INF
-                    heaps_indices_chunks[idx] = -1
+                    self.heaps_red_distances_chunks[idx] = FLOAT_INF
+                    self.heaps_indices_chunks[idx] = -1
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -329,9 +333,9 @@ cdef class ArgKmin:
                         self.X[X_start:X_end, :],
                         self.Y[Y_start:Y_end, :],
                         self.Y_sq_norms[Y_start:Y_end],
-                        dist_middle_terms_chunks,
-                        heaps_red_distances_chunks,
-                        heaps_indices_chunks,
+                        self.dist_middle_terms_chunks,
+                        self.heaps_red_distances_chunks,
+                        self.heaps_indices_chunks,
                         self.k,
                         Y_start,
                     )
@@ -346,13 +350,13 @@ cdef class ArgKmin:
                                 &argkmin_red_distances[X_start + idx, 0],
                                 &argkmin_indices[X_start + idx, 0],
                                 self.k,
-                                heaps_red_distances_chunks[idx * self.k + jdx],
-                                heaps_indices_chunks[idx * self.k + jdx],
+                                self.heaps_red_distances_chunks[idx * self.k + jdx],
+                                self.heaps_indices_chunks[idx * self.k + jdx],
                             )
 
-                free(dist_middle_terms_chunks)
-                free(heaps_red_distances_chunks)
-                free(heaps_indices_chunks)
+                free(self.dist_middle_terms_chunks)
+                free(self.heaps_red_distances_chunks)
+                free(self.heaps_indices_chunks)
 
             # end: with nogil, parallel
             # Sorting indices of the argkmin for each query vector of X
