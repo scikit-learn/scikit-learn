@@ -626,8 +626,7 @@ class _BaseDiscreteNB(_BaseNB):
         return self
 
     def fit(self, X, y, sample_weight=None):
-        """
-        Fit Naive Bayes classifier according to X, y.
+        """Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
