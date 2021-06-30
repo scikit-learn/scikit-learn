@@ -40,7 +40,7 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_feature_selection(get_names):
     # make two feature dicts with two useful features and a bunch of useless
@@ -58,7 +58,7 @@ def test_feature_selection(get_names):
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_one_of_k(get_names):
     D_in = [
@@ -79,7 +79,7 @@ def test_one_of_k(get_names):
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_iterable_value(get_names):
     D_names = ["ham", "spam", "version=1", "version=2", "version=3"]

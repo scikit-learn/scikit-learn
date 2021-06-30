@@ -881,7 +881,7 @@ def test_feature_union_parallel():
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_feature_union_feature_names(get_names):
     word_vect = CountVectorizer(analyzer="word")
@@ -897,7 +897,7 @@ def test_feature_union_feature_names(get_names):
 
     msg = re.escape(f"Transformer tr1 (type Transf) does not provide {get_names}")
     with pytest.raises(AttributeError, match=msg):
-        getattr(ft, get_names)
+        getattr(ft, get_names)()
 
 
 def test_classes_property():
@@ -917,7 +917,7 @@ def test_classes_property():
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_set_feature_union_steps(get_names):
     mult2 = Mult(2)
@@ -954,7 +954,7 @@ def test_set_feature_union_steps(get_names):
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_set_feature_union_step_drop(get_names):
     mult2 = Mult(2)

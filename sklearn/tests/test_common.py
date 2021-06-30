@@ -88,8 +88,8 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-def _tested_estimators():
-    for name, Estimator in all_estimators():
+def _tested_estimators(type_filter=None):
+    for name, Estimator in all_estimators(type_filter=type_filter):
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:

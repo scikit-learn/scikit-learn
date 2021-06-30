@@ -574,7 +574,7 @@ def test_polynomial_features_two_features(
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_polynomial_feature_names(get_names):
     X = np.arange(30).reshape(10, 3)

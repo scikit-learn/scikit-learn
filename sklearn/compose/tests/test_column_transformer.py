@@ -770,7 +770,7 @@ def test_column_transformer_cloning():
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_column_transformer_get_feature_names(get_names):
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
@@ -780,9 +780,9 @@ def test_column_transformer_get_feature_names(get_names):
         getattr(ct, get_names)()
     # raise correct error when no feature names are available
     ct.fit(X_array)
-    msg = f"Transformer trans \\(type Trans\\) does not provide {get_names}"
+    msg = re.escape(f"Transformer trans (type Trans) does not provide {get_names}")
     with pytest.raises(AttributeError, match=msg):
-        ct.get_feature_names()
+        getattr(ct, get_names)()
 
 
 @pytest.mark.parametrize(
@@ -802,7 +802,7 @@ def test_column_transformer_get_feature_names(get_names):
     ],
 )
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_column_transformer_get_feature_names_pipeline(X, keys, get_names):
     ct = ColumnTransformer([("col" + str(i), DictVectorizer(), i) for i in range(2)])
@@ -849,7 +849,7 @@ def test_column_transformer_get_feature_names_pipeline(X, keys, get_names):
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_column_transformer_get_feature_names_dataframe(get_names):
     # passthough transformer with a dataframe
@@ -1443,7 +1443,7 @@ def test_make_column_selector_pickle():
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "empty_col",
     [[], np.array([], dtype=int), lambda x: []],

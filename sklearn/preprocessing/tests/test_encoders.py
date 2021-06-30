@@ -142,7 +142,7 @@ def test_one_hot_encoder_dtype_pandas(output_dtype):
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_one_hot_encoder_feature_names(get_names):
     enc = OneHotEncoder()
@@ -209,7 +209,7 @@ def test_one_hot_encoder_feature_names(get_names):
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_one_hot_encoder_feature_names_unicode(get_names):
     enc = OneHotEncoder()
@@ -368,7 +368,7 @@ def test_one_hot_encoder_inverse_if_binary():
 
 # check that resetting drop option without refitting does not throw an error
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 @pytest.mark.parametrize("drop", ["if_binary", "first", None])
 @pytest.mark.parametrize("reset_drop", ["if_binary", "first", None])
@@ -578,7 +578,7 @@ def test_one_hot_encoder_pandas():
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 @pytest.mark.parametrize(
     "drop, expected_names",
