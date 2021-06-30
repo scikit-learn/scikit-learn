@@ -113,11 +113,14 @@ def test_spline_transformer_integer_knots(extrapolation):
     ).fit_transform(X)
 
 
-def test_spline_transformer_feature_names():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_spline_transformer_feature_names(get_names):
     """Test that SplineTransformer generates correct features name."""
     X = np.arange(20).reshape(10, 2)
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
-    feature_names = splt.get_feature_names()
+    feature_names = getattr(splt, get_names)()
     assert_array_equal(
         feature_names,
         [
@@ -135,7 +138,7 @@ def test_spline_transformer_feature_names():
     )
 
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=False).fit(X)
-    feature_names = splt.get_feature_names(["a", "b"])
+    feature_names = getattr(splt, get_names)(["a", "b"])
     assert_array_equal(
         feature_names,
         [

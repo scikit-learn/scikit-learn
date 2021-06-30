@@ -998,12 +998,15 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
     assert_array_equal(X_trans, expected)
 
 
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 @pytest.mark.parametrize("missing_value", [np.nan, None])
-def test_ohe_missing_values_get_feature_names(missing_value):
+def test_ohe_missing_values_get_feature_names(get_names, missing_value):
     # encoder with missing values with object dtypes
     X = np.array([["a", "b", missing_value, "a", missing_value]], dtype=object).T
     ohe = OneHotEncoder(sparse=False, handle_unknown="ignore").fit(X)
-    names = ohe.get_feature_names()
+    names = getattr(ohe, get_names)()
     assert_array_equal(names, ["x0_a", "x0_b", f"x0_{missing_value}"])
 
 

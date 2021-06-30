@@ -394,7 +394,10 @@ def test_fit_countvectorizer_twice():
     assert X1.shape[1] != X2.shape[1]
 
 
-def test_countvectorizer_custom_token_pattern():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_countvectorizer_custom_token_pattern(get_names):
     """Check `get_feature_names()` when a custom token pattern is passed.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/12971
@@ -409,7 +412,7 @@ def test_countvectorizer_custom_token_pattern():
     vectorizer = CountVectorizer(token_pattern=token_pattern)
     vectorizer.fit_transform(corpus)
     expected = ["document", "one", "sample"]
-    assert vectorizer.get_feature_names() == expected
+    assert getattr(vectorizer, get_names)() == expected
 
 
 def test_countvectorizer_custom_token_pattern_with_several_group():

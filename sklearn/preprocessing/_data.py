@@ -627,7 +627,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
 
 
 class StandardScaler(OneToOneMixin, TransformerMixin, BaseEstimator):
-    """Standardize features by removing the mean and scaling to unit variance
+    """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
 

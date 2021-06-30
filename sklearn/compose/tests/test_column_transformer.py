@@ -1649,11 +1649,14 @@ def test_feature_name_validation_missing_columns_drop_passthough():
     assert_allclose(df_dropped_trans, df_fit_trans)
 
 
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 @pytest.mark.parametrize("selector", [[], [False, False]])
-def test_get_feature_names_empty_selection(selector):
+def test_get_feature_names_empty_selection(selector, get_names):
     """Test that get_feature_names is only called for transformers that
     were selected. Non-regression test for #19550.
     """
     ct = ColumnTransformer([("ohe", OneHotEncoder(drop="first"), selector)])
     ct.fit([[1, 2], [3, 4]])
-    assert ct.get_feature_names() == []
+    assert getattr(ct, get_names)() == []
