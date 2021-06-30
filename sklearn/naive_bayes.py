@@ -579,7 +579,7 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
-            Returns instance of itself.
+            Returns the instance itself.
         """
         first_call = not hasattr(self, "classes_")
         X, y = self._check_X_y(X, y, reset=first_call)
