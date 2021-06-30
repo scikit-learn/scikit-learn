@@ -80,32 +80,31 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if self.loss not in self._VALID_LOSSES and not isinstance(self.loss, BaseLoss):
             raise ValueError(
-                "Loss {} is not supported for {}. Accepted losses: "
-                "{}.".format(
+                "Loss {} is not supported for {}. Accepted losses: {}.".format(
                     self.loss, self.__class__.__name__, ", ".join(self._VALID_LOSSES)
                 )
             )
 
         if self.learning_rate <= 0:
             raise ValueError(
-                "learning_rate={} must "
-                "be strictly positive".format(self.learning_rate)
+                "learning_rate={} must be strictly positive".format(self.learning_rate)
             )
         if self.max_iter < 1:
             raise ValueError(
-                "max_iter={} must not be smaller " "than 1.".format(self.max_iter)
+                "max_iter={} must not be smaller than 1.".format(self.max_iter)
             )
         if self.n_iter_no_change < 0:
             raise ValueError(
-                "n_iter_no_change={} must be " "positive.".format(self.n_iter_no_change)
+                "n_iter_no_change={} must be positive.".format(self.n_iter_no_change)
             )
         if self.validation_fraction is not None and self.validation_fraction <= 0:
             raise ValueError(
-                "validation_fraction={} must be strictly "
-                "positive, or None.".format(self.validation_fraction)
+                "validation_fraction={} must be strictly positive, or None.".format(
+                    self.validation_fraction
+                )
             )
         if self.tol < 0:
-            raise ValueError("tol={} " "must not be smaller than 0.".format(self.tol))
+            raise ValueError("tol={} must not be smaller than 0.".format(self.tol))
 
         if not (2 <= self.max_bins <= 255):
             raise ValueError(
@@ -115,8 +114,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if self.monotonic_cst is not None and self.n_trees_per_iteration_ != 1:
             raise ValueError(
-                "monotonic constraints are not supported for "
-                "multiclass classification."
+                "monotonic constraints are not supported for multiclass classification."
             )
 
     def _check_categories(self, X):
@@ -188,14 +186,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if categories.size > self.max_bins:
                     raise ValueError(
                         f"Categorical feature at index {f_idx} is "
-                        f"expected to have a "
+                        "expected to have a "
                         f"cardinality <= {self.max_bins}"
                     )
 
                 if (categories >= self.max_bins).any():
                     raise ValueError(
                         f"Categorical feature at index {f_idx} is "
-                        f"expected to be encoded with "
+                        "expected to be encoded with "
                         f"values < {self.max_bins}"
                     )
             else:
@@ -1239,7 +1237,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             # Ensure y >= 0 and sum(y) > 0
             if not (np.all(y >= 0) and np.sum(y) > 0):
                 raise ValueError(
-                    "loss='poisson' requires non-negative y and " "sum(y) > 0."
+                    "loss='poisson' requires non-negative y and sum(y) > 0."
                 )
         return y
 

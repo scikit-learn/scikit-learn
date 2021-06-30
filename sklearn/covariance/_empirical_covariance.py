@@ -85,7 +85,7 @@ def empirical_covariance(X, *, assume_centered=False):
 
     if X.shape[0] == 1:
         warnings.warn(
-            "Only one sample available. " "You may want to reshape your data array"
+            "Only one sample available. You may want to reshape your data array"
         )
 
     if assume_centered:

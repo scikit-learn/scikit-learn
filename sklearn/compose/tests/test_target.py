@@ -35,8 +35,7 @@ def test_transform_target_regressor_error():
     )
     with pytest.raises(
         ValueError,
-        match="'transformer' and functions"
-        " 'func'/'inverse_func' cannot both be set.",
+        match="'transformer' and functions 'func'/'inverse_func' cannot both be set.",
     ):
         regr.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
@@ -53,7 +52,7 @@ def test_transform_target_regressor_error():
     regr = TransformedTargetRegressor(func=np.exp)
     with pytest.raises(
         ValueError,
-        match="When 'func' is provided, " "'inverse_func' must also be provided",
+        match="When 'func' is provided, 'inverse_func' must also be provided",
     ):
         regr.fit(X, y)
 
@@ -68,8 +67,10 @@ def test_transform_target_regressor_invertible():
     )
     with pytest.warns(
         UserWarning,
-        match="The provided functions or"
-        " transformer are not strictly inverse of each other.",
+        match=(
+            "The provided functions or"
+            " transformer are not strictly inverse of each other."
+        ),
     ):
         regr.fit(X, y)
     regr = TransformedTargetRegressor(

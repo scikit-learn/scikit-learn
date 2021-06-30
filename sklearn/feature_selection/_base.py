@@ -176,11 +176,11 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
                 getter = attrgetter("feature_importances_")
             else:
                 raise ValueError(
-                    f"when `importance_getter=='auto'`, the underlying "
+                    "when `importance_getter=='auto'`, the underlying "
                     f"estimator {estimator.__class__.__name__} should have "
-                    f"`coef_` or `feature_importances_` attribute. Either "
-                    f"pass a fitted estimator to feature selector or call fit "
-                    f"before calling transform."
+                    "`coef_` or `feature_importances_` attribute. Either "
+                    "pass a fitted estimator to feature selector or call fit "
+                    "before calling transform."
                 )
         else:
             getter = attrgetter(getter)

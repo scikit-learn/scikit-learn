@@ -99,7 +99,7 @@ def test_additive_chi2_sampler():
     # test error on invalid sample_steps
     transform = AdditiveChi2Sampler(sample_steps=4)
     msg = re.escape(
-        "If sample_steps is not in [1, 2, 3]," " you need to provide sample_interval"
+        "If sample_steps is not in [1, 2, 3], you need to provide sample_interval"
     )
     with pytest.raises(ValueError, match=msg):
         transform.fit(X)

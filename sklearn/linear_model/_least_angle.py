@@ -462,9 +462,7 @@ def _lars_path_solver(
 
     """
     if method == "lar" and positive:
-        raise ValueError(
-            "Positive constraint not supported for 'lar' " "coding method."
-        )
+        raise ValueError("Positive constraint not supported for 'lar' coding method.")
 
     n_samples = n_samples if n_samples is not None else y.size
 
@@ -490,7 +488,7 @@ def _lars_path_solver(
     else:
         n_features = Cov.shape[0]
         if Gram.shape != (n_features, n_features):
-            raise ValueError("The shapes of the inputs Gram and Xy" " do not match.")
+            raise ValueError("The shapes of the inputs Gram and Xy do not match.")
 
     if copy_X and X is not None and Gram is None:
         # force copy. setting the array to be fortran-ordered
@@ -1646,7 +1644,8 @@ class LarsCV(Lars):
         if hasattr(Gram, "__array__"):
             warnings.warn(
                 'Parameter "precompute" cannot be an array in '
-                '%s. Automatically switch to "auto" instead.' % self.__class__.__name__
+                '%s. Automatically switch to "auto" instead.'
+                % self.__class__.__name__
             )
             Gram = "auto"
 
