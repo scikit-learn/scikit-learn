@@ -1801,15 +1801,11 @@ def test_pairwise_deprecated(NearestNeighbors):
 @pytest.mark.parametrize("d", [5, 10, 100])
 @pytest.mark.parametrize("ratio_train_test", [10, 2, 1, 0.5])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
-@pytest.mark.parametrize("chunk_size", [2 ** i for i in range(8, 11)])
-@pytest.mark.parametrize("strategy", ["chunk_on_train", "chunk_on_test"])
 def test_fast_sqeuclidean_correctness(
     n,
     d,
     ratio_train_test,
     n_neighbors,
-    chunk_size,
-    strategy,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy must return results
