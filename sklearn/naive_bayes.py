@@ -622,7 +622,7 @@ class _BaseDiscreteNB(_BaseNB):
         return self
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y.
+        """Fit Naive Bayes classifier according to X, y
 
         Parameters
         ----------
@@ -1073,7 +1073,7 @@ class BernoulliNB(_BaseDiscreteNB):
     Text Categorization, pp. 41-48.
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
-    naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS). 
+    naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
     def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
