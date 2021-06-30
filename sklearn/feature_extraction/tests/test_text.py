@@ -645,7 +645,7 @@ def test_hashing_vectorizer():
         assert_almost_equal(np.linalg.norm(X[0].data, 1), 1.0)
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_feature_names(get_names):
@@ -736,7 +736,7 @@ def test_vectorizer_max_features(Vectorizer):
     assert vectorizer.stop_words_ == expected_stop_words
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_count_vectorizer_max_features(get_names):
@@ -1096,7 +1096,7 @@ def test_countvectorizer_vocab_sets_when_pickling(get_names):
         assert getattr(cv, get_names)() == getattr(unpickled_cv, get_names)()
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_countvectorizer_vocab_dicts_when_pickling(get_names):

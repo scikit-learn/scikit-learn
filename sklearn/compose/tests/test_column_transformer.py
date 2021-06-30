@@ -1442,7 +1442,7 @@ def test_make_column_selector_pickle():
     assert_array_equal(selector(X_df), selector_picked(X_df))
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "empty_col",

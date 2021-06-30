@@ -39,7 +39,7 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
         assert v.feature_names_ == sorted(v.feature_names_)
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_feature_selection(get_names):

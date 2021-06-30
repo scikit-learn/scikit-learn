@@ -573,7 +573,7 @@ def test_polynomial_features_two_features(
         assert tf.powers_.shape == (tf.n_output_features_, tf.n_features_in_)
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_polynomial_feature_names(get_names):

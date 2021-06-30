@@ -953,7 +953,7 @@ def test_set_feature_union_steps(get_names):
     assert ["mock__x5"] == getattr(ft, get_names)()
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_set_feature_union_step_drop(get_names):
