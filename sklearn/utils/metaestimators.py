@@ -106,7 +106,7 @@ class _AvailableIfDescriptor:
             if not self.check(obj):
                 raise AttributeError(
                     f"This {repr(owner.__name__)}"
-                    f" has no attribute"
+                    " has no attribute"
                     f" {repr(self.attribute_name)}"
                 )
 

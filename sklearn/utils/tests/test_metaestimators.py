@@ -78,8 +78,7 @@ def test_if_delegate_has_method():
 
 
 class AvailableParameterEstimator:
-    """This estimator's `available` parameter toggles the presence of a method
-    """
+    """This estimator's `available` parameter toggles the presence of a method"""
 
     def __init__(self, available=True):
         self.available = available
