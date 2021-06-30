@@ -325,7 +325,7 @@ class MethodMetadataRequest:
         return result
 
     def __repr__(self):
-        return self.requests
+        return str(self.requests)
 
     def __str__(self):
         return str(self.requests)
@@ -442,7 +442,7 @@ class MetadataRequest:
         return output
 
     def __repr__(self):
-        return self.to_dict()
+        return str(self.to_dict())
 
     def __str__(self):
         return str(self.to_dict())
@@ -598,7 +598,14 @@ class RequestMethod:
         # Now we set the relevant attributes of the function so that it seems
         # like a normal method to the end user, with known expected arguments.
         func.__name__ = f"{self.name}_requests"
-        func.__signature__ = inspect.Signature(
+        params = [
+            inspect.Parameter(
+                name="self",
+                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                annotation=type(instance),
+            )
+        ]
+        params.extend(
             [
                 inspect.Parameter(
                     k,
@@ -607,7 +614,10 @@ class RequestMethod:
                     annotation=Optional[Union[RequestType, str]],
                 )
                 for k in self.keys
-            ],
+            ]
+        )
+        func.__signature__ = inspect.Signature(
+            params,
             return_annotation=type(instance),
         )
         doc = REQUESTER_DOC.format(method=self.name)
@@ -677,9 +687,34 @@ class _MetadataRequester:
             }
             defaults.update(klass_defaults)
         defaults = dict(sorted(defaults.items()))
+
+        # First take all arguments from the method signatures and have them ass
+        # ERROR_IF_PASSED, except X, y, *args, and **kwargs.
+        for method in METHODS:
+            # Here we use `isfunction` instead of `ismethod` because calling `getattr`
+            # on a class instead of an instance returns an unbound function.
+            if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
+                continue
+            for pname, param in inspect.signature(
+                getattr(cls, method)
+            ).parameters.items():
+                if pname in {"X", "y", "self", "cls"}:
+                    continue
+                if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
+                    continue
+                getattr(requests, method).add_request(
+                    prop=pname,
+                    alias=RequestType.ERROR_IF_PASSED,
+                    allow_aliasing=False,
+                    overwrite=False,
+                )
+
+        # Then overwrite those defaults with the ones provided in
+        # _metadata_request__* attributes, which are provided in `requests` here.
+
         for attr, value in defaults.items():
             requests.add_requests(
-                value, expected_metadata="__".join(attr.split("__")[1:])
+                value, overwrite=True, expected_metadata="__".join(attr.split("__")[1:])
             )
         return requests
 

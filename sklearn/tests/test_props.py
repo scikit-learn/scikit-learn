@@ -17,7 +17,6 @@ from sklearn.svm import SVC
 from sklearn.utils import MetadataRequest
 from sklearn.utils.metadata_requests import RequestType
 from sklearn.utils.metadata_requests import metadata_request_factory
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import StratifiedKFold
@@ -493,16 +492,38 @@ def test_get_metadata_request():
     assert est.get_metadata_request() == expected
 
 
-def test_GB():
-    # check that make_pipeline(est) gives same score as est
-    X, y = make_classification(
-        n_samples=30,
-        random_state=0,
-        n_features=10,
+def test__get_default_requests():
+    class ExplicitRequest(BaseEstimator):
+        _metadata_request__prop = {"fit": "prop"}
+
+        def fit(self, X, y):
+            return self
+
+    assert metadata_request_factory(ExplicitRequest()).fit.requests == {
+        "prop": RequestType.ERROR_IF_PASSED
+    }
+    assert_request_is_empty(ExplicitRequest().get_metadata_request(), exclude="fit")
+
+    class ExplicitRequestOverwrite(BaseEstimator):
+        _metadata_request__prop = {"fit": {"prop": RequestType.REQUESTED}}
+
+        def fit(self, X, y, prop=None, **kwargs):
+            return self
+
+    assert metadata_request_factory(ExplicitRequestOverwrite()).fit.requests == {
+        "prop": RequestType.REQUESTED
+    }
+    assert_request_is_empty(
+        ExplicitRequestOverwrite().get_metadata_request(), exclude="fit"
     )
-    X -= X.min()
-    estimator = GradientBoostingClassifier(random_state=0)
-    pipeline = make_pipeline(estimator)
-    estimator.fit(X, y)
-    estimator.get_metadata_request()
-    pipeline.fit(X, y)
+
+    class ExplicitRequestImplicit(BaseEstimator):
+        def fit(self, X, y, prop=None, **kwargs):
+            return self
+
+    assert metadata_request_factory(ExplicitRequestImplicit()).fit.requests == {
+        "prop": RequestType.ERROR_IF_PASSED
+    }
+    assert_request_is_empty(
+        ExplicitRequestImplicit().get_metadata_request(), exclude="fit"
+    )
