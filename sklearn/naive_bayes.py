@@ -1239,8 +1239,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
-        """
-        Fit Naive Bayes classifier according to X, y.
+        """Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
