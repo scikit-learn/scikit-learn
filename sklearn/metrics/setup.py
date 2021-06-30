@@ -20,7 +20,9 @@ def configuration(parent_package="", top_path=None):
     )
 
     config.add_extension(
-        "_argkmin_fast", sources=["_argkmin_fast.pyx"], libraries=libraries
+        "_parallel_reductions",
+        sources=["_parallel_reductions.pyx"],
+        libraries=libraries,
     )
 
     config.add_extension(
