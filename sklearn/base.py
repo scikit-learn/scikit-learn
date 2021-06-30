@@ -210,9 +210,7 @@ class BaseEstimator:
     def set_params(self, **params):
         """
         Set the parameters of this estimator.
-
-        The method works on simple estimators as well as on nested objects
-        (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
+BaseEstimatorpipeline.Pipeline`). The latter have
         parameters of the form ``<component>__<parameter>`` so that it's
         possible to update each component of a nested object.
 
@@ -322,8 +320,10 @@ class BaseEstimator:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
                     "using version {2}. This might lead to breaking code or "
-                    "invalid results. Use at your own risk. For more info please refer to:\n\n"
-                    "https://scikit-learn.org/stable/modules/model_persistence.html#security-maintainability-limitations \n".format(
+                    "invalid results. Use at your own risk. "
+                    "For more info please refer to:\n\n"
+                    "https://scikit-learn.org/stable/modules/model_persistence"
+                    ".html#security-maintainability-limitations \n".format(
                         self.__class__.__name__, pickle_version, __version__
                     ),
                     UserWarning,
