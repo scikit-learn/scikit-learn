@@ -648,8 +648,8 @@ def pairwise_distances_argmin_min(
 
     if metric == "fast_sqeuclidean":
         # TODO: generalise this simple plug here
-        values, indices = ArgKmin()._argkmin(
-            X, Y, k=1, strategy="auto", return_distance=True
+        values, indices = ArgKmin(X, Y, k=1).compute(
+            k=1, strategy="auto", return_distance=True
         )
         values = np.ndarray.flatten(values)
         indices = np.ndarray.flatten(indices)

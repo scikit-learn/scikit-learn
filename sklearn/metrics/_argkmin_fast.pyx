@@ -4,16 +4,16 @@
 # cython: wraparound=False
 # cython: profile=False
 # cython: linetrace=False
+# cython: initializedcheck=False
 # cython: binding=False
 # distutils: define_macros=CYTHON_TRACE_NOGIL=0
 
 import numpy as np
 cimport numpy as np
 
-from libc.math cimport floor, sqrt
+from libc.math cimport sqrt
 from libc.stdlib cimport free, malloc
 
-from cython cimport floating
 from cython.parallel cimport parallel, prange
 
 DEF CHUNK_SIZE = 256  # number of vectors
@@ -34,18 +34,18 @@ from ..utils._cython_blas cimport (
 
 from ..utils._heap cimport _simultaneous_sort, _push
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._typedefs cimport ITYPE_t
-from ..utils._typedefs import ITYPE
+from ..utils._typedefs cimport ITYPE_t, DTYPE_t
+from ..utils._typedefs import ITYPE, DTYPE
 
 
-cdef inline floating _euclidean_dist(
-    floating[:, ::1] X,
-    floating[:, ::1] Y,
+cdef inline DTYPE_t _euclidean_dist(
+    DTYPE_t[:, ::1] X,
+    DTYPE_t[:, ::1] Y,
     ITYPE_t i,
     ITYPE_t j,
 ) nogil:
     cdef:
-        floating dist = 0
+        DTYPE_t dist = 0
         ITYPE_t k
         ITYPE_t upper_unrolled_idx = (X.shape[1] // 4) * 4
 
@@ -62,11 +62,11 @@ cdef inline floating _euclidean_dist(
     return sqrt(dist)
 
 cdef int _exact_euclidean_dist(
-    floating[:, ::1] X,                  # IN
-    floating[:, ::1] Y,                  # IN
+    DTYPE_t[:, ::1] X,                  # IN
+    DTYPE_t[:, ::1] Y,                  # IN
     ITYPE_t[:, ::1] Y_indices,           # IN
     ITYPE_t effective_n_threads,         # IN
-    floating[:, ::1] distances,          # OUT
+    DTYPE_t[:, ::1] distances,          # OUT
 ) nogil:
     """
     Compute exact pairwise euclidean distances in parallel.
@@ -90,12 +90,33 @@ cdef int _exact_euclidean_dist(
 
 cdef class ArgKmin:
 
-    cdef void _argkmin_on_chunk(self,
-        floating[:, ::1] X_c,                  # IN
-        floating[:, ::1] Y_c,                  # IN
-        floating[::1] Y_sq_norms,              # IN
-        floating *dist_middle_terms,           # IN
-        floating *heaps_red_distances,         # IN/OUT
+    cdef:
+        ITYPE_t k
+        ITYPE_t chunk_size
+
+        DTYPE_t[:, ::1] X
+        DTYPE_t[:, ::1] Y
+
+        DTYPE_t[::1] Y_sq_norms
+
+    def __init__(self,
+                  DTYPE_t[:, ::1] X,
+                  DTYPE_t[:, ::1] Y,
+                  ITYPE_t k,
+                  ITYPE_t chunk_size = CHUNK_SIZE,
+    ):
+        self.X = X
+        self.Y = Y
+        self.k = k
+        self.chunk_size = chunk_size
+        self.Y_sq_norms = np.einsum('ij,ij->i', Y, Y)
+
+    cdef void _reduce_on_chunks(self,
+        DTYPE_t[:, ::1] X_c,                  # IN
+        DTYPE_t[:, ::1] Y_c,                  # IN
+        DTYPE_t[::1] Y_sq_norms,              # IN
+        DTYPE_t *dist_middle_terms,           # IN
+        DTYPE_t *heaps_red_distances,         # IN/OUT
         ITYPE_t *heaps_indices,                # IN/OUT
         ITYPE_t k,                             # IN
         # ID of the first element of Y_c
@@ -139,32 +160,28 @@ cdef class ArgKmin:
                       j + Y_idx_offset)
 
 
-
-    cdef int _argkmin_on_X(self,
-        floating[:, ::1] X,                       # IN
-        floating[:, ::1] Y,                       # IN
-        floating[::1] Y_sq_norms,                 # IN
+    cdef int _parallel_on_X(self,
         ITYPE_t chunk_size,                       # IN
         ITYPE_t effective_n_threads,              # IN
         ITYPE_t[:, ::1] argkmin_indices,          # OUT
-        floating[:, ::1] argkmin_red_distances,   # OUT
+        DTYPE_t[:, ::1] argkmin_red_distances,   # OUT
     ) nogil:
         """Computes the argkmin of each vector (row) of X on Y
         by parallelising computation on chunks of X.
         """
         cdef:
             ITYPE_t k = argkmin_indices.shape[1]
-            ITYPE_t d = X.shape[1]
-            ITYPE_t sf = sizeof(floating)
+            ITYPE_t d = self.X.shape[1]
+            ITYPE_t sf = sizeof(DTYPE_t)
             ITYPE_t si = sizeof(ITYPE_t)
             ITYPE_t n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
-            ITYPE_t n_train = Y.shape[0]
+            ITYPE_t n_train = self.Y.shape[0]
             ITYPE_t Y_n_samples_chunk = min(n_train, n_samples_chunk)
             ITYPE_t Y_n_full_chunks = n_train / Y_n_samples_chunk
             ITYPE_t Y_n_samples_rem = n_train % Y_n_samples_chunk
 
-            ITYPE_t n_test = X.shape[0]
+            ITYPE_t n_test = self.X.shape[0]
             ITYPE_t X_n_samples_chunk = min(n_test, n_samples_chunk)
             ITYPE_t X_n_full_chunks = n_test // X_n_samples_chunk
             ITYPE_t X_n_samples_rem = n_test % X_n_samples_chunk
@@ -183,16 +200,16 @@ cdef class ArgKmin:
             ITYPE_t Y_start, Y_end, X_start, X_end
             ITYPE_t X_chunk_idx, Y_chunk_idx, idx, jdx
 
-            floating *dist_middle_terms_chunks
-            floating *heaps_red_distances_chunks
+            DTYPE_t *dist_middle_terms_chunks
+            DTYPE_t *heaps_red_distances_chunks
 
 
         with nogil, parallel(num_threads=num_threads):
             # Thread local buffers
 
             # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-            dist_middle_terms_chunks = <floating*> malloc(Y_n_samples_chunk * X_n_samples_chunk * sf)
-            heaps_red_distances_chunks = <floating*> malloc(X_n_samples_chunk * k * sf)
+            dist_middle_terms_chunks = <DTYPE_t*> malloc(Y_n_samples_chunk * X_n_samples_chunk * sf)
+            heaps_red_distances_chunks = <DTYPE_t*> malloc(X_n_samples_chunk * k * sf)
 
             for X_chunk_idx in prange(X_n_chunks, schedule='static'):
                 # We reset the heap between X chunks (memset isn't suitable here)
@@ -212,10 +229,10 @@ cdef class ArgKmin:
                     else:
                         Y_end = Y_start + Y_n_samples_chunk
 
-                    self._argkmin_on_chunk(
-                        X[X_start:X_end, :],
-                        Y[Y_start:Y_end, :],
-                        Y_sq_norms[Y_start:Y_end],
+                    self._reduce_on_chunks(
+                        self.X[X_start:X_end, :],
+                        self.Y[Y_start:Y_end, :],
+                        self.Y_sq_norms[Y_start:Y_end],
                         dist_middle_terms_chunks,
                         heaps_red_distances_chunks,
                         &argkmin_indices[X_start, 0],
@@ -239,14 +256,11 @@ cdef class ArgKmin:
         return X_n_chunks
 
 
-    cdef int _argkmin_on_Y(self,
-        floating[:, ::1] X,                       # IN
-        floating[:, ::1] Y,                       # IN
-        floating[::1] Y_sq_norms,                 # IN
+    cdef int _parallel_on_Y(self,
         ITYPE_t chunk_size,                       # IN
         ITYPE_t effective_n_threads,              # IN
         ITYPE_t[:, ::1] argkmin_indices,          # OUT
-        floating[:, ::1] argkmin_red_distances,   # OUT
+        DTYPE_t[:, ::1] argkmin_red_distances,   # OUT
     ) nogil:
         """Computes the argkmin of each vector (row) of X on Y
         by parallelising computation on chunks of Y.
@@ -257,17 +271,17 @@ cdef class ArgKmin:
         """
         cdef:
             ITYPE_t k = argkmin_indices.shape[1]
-            ITYPE_t d = X.shape[1]
-            ITYPE_t sf = sizeof(floating)
+            ITYPE_t d = self.X.shape[1]
+            ITYPE_t sf = sizeof(DTYPE_t)
             ITYPE_t si = sizeof(ITYPE_t)
             ITYPE_t n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
-            ITYPE_t n_train = Y.shape[0]
+            ITYPE_t n_train = self.Y.shape[0]
             ITYPE_t Y_n_samples_chunk = min(n_train, n_samples_chunk)
             ITYPE_t Y_n_full_chunks = n_train / Y_n_samples_chunk
             ITYPE_t Y_n_samples_rem = n_train % Y_n_samples_chunk
 
-            ITYPE_t n_test = X.shape[0]
+            ITYPE_t n_test = self.X.shape[0]
             ITYPE_t X_n_samples_chunk = min(n_test, n_samples_chunk)
             ITYPE_t X_n_full_chunks = n_test // X_n_samples_chunk
             ITYPE_t X_n_samples_rem = n_test % X_n_samples_chunk
@@ -286,8 +300,8 @@ cdef class ArgKmin:
             ITYPE_t Y_start, Y_end, X_start, X_end
             ITYPE_t X_chunk_idx, Y_chunk_idx, idx, jdx
 
-            floating *dist_middle_terms_chunks
-            floating *heaps_red_distances_chunks
+            DTYPE_t *dist_middle_terms_chunks
+            DTYPE_t *heaps_red_distances_chunks
 
             # As chunks of X are shared across threads, so must their
             # heaps. To solve this, each thread has its own locals
@@ -305,9 +319,9 @@ cdef class ArgKmin:
                 # Thread local buffers
 
                 # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-                dist_middle_terms_chunks = <floating*> malloc(
+                dist_middle_terms_chunks = <DTYPE_t*> malloc(
                     Y_n_samples_chunk * X_n_samples_chunk * sf)
-                heaps_red_distances_chunks = <floating*> malloc(
+                heaps_red_distances_chunks = <DTYPE_t*> malloc(
                     X_n_samples_chunk * k * sf)
                 heaps_indices_chunks = <ITYPE_t*> malloc(
                     X_n_samples_chunk * k * sf)
@@ -325,10 +339,10 @@ cdef class ArgKmin:
                     else:
                         Y_end = Y_start + Y_n_samples_chunk
 
-                    self._argkmin_on_chunk(
-                        X[X_start:X_end, :],
-                        Y[Y_start:Y_end, :],
-                        Y_sq_norms[Y_start:Y_end],
+                    self._reduce_on_chunks(
+                        self.X[X_start:X_end, :],
+                        self.Y[Y_start:Y_end, :],
+                        self.Y_sq_norms[Y_start:Y_end],
                         dist_middle_terms_chunks,
                         heaps_red_distances_chunks,
                         heaps_indices_chunks,
@@ -369,46 +383,27 @@ cdef class ArgKmin:
         return Y_n_chunks
 
     # Python interface
+    def compute(self,
+           str strategy = "auto",
+           bint return_distance = False
+           ):
+        """Computes the argkmin of vectors (rows) of X on Y.
 
-    def _argkmin(self,
-        floating[:, ::1] X,
-        floating[:, ::1] Y,
-        ITYPE_t k,
-        ITYPE_t chunk_size = CHUNK_SIZE,
-        str strategy = "auto",
-        bint return_distance = False,
-    ):
-        """Computes the argkmin of vectors (rows) of X on Y for
-        the euclidean distance.
-
-        The implementation is parallelised on chunks whose size can
-        be set using ``chunk_size``.
-
-        Parameters
-        ----------
-        X: ndarray of shape (n, d)
-            Rows represent vectors
-
-        Y: ndarray of shape (m, d)
-            Rows represent vectors
-
-        chunk_size: int
-            The number of vectors per chunk.
-
-        strategy: str, {'auto', 'chunk_on_X', 'chunk_on_Y'}
+        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}
             The chunking strategy defining which dataset
             parallelisation are made on.
 
-             - 'chunk_on_X' is embarassingly parallel but
+             - 'parallel_on_X' is embarassingly parallel but
             is less used in practice.
-             - 'chunk_on_Y' comes with synchronisation but
+             - 'parallel_on_Y' comes with synchronisation but
             is more useful in practice.
              -'auto' relies on a simple heuristic to choose
-            between 'chunk_on_X' and 'chunk_on_Y'.
+            between 'parallel_on_X' and 'parallel_on_Y'.
 
         return_distance: boolean
             Return distances between each X vectory and its
             argkmin if set to True.
+
 
         Returns
         -------
@@ -419,35 +414,31 @@ cdef class ArgKmin:
         indices: ndarray of shape (n, k)
             Indices of each X vector argkmin in Y.
         """
-        int_dtype = np.intp
-        float_dtype = np.float32 if floating is float else np.float64
         cdef:
-            ITYPE_t[:, ::1] argkmin_indices = np.full((X.shape[0], k), 0,
+            ITYPE_t n_X = self.X.shape[0]
+            ITYPE_t[:, ::1] argkmin_indices = np.full((n_X, self.k), 0,
                                                    dtype=ITYPE)
-            floating[:, ::1] argkmin_distances = np.full((X.shape[0], k),
+            DTYPE_t[:, ::1] argkmin_distances = np.full((n_X, self.k),
                                                       FLOAT_INF,
-                                                      dtype=float_dtype)
-            floating[::1] Y_sq_norms = np.einsum('ij,ij->i', Y, Y)
+                                                      dtype=DTYPE)
             ITYPE_t effective_n_threads = _openmp_effective_n_threads()
 
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
             # comparison has been chosen based on experiments.
-            if 4 * chunk_size * effective_n_threads < X.shape[0]:
-                strategy = 'chunk_on_X'
+            if 4 * self.chunk_size * effective_n_threads < n_X:
+                strategy = 'parallel_on_X'
             else:
-                strategy = 'chunk_on_Y'
+                strategy = 'parallel_on_Y'
 
-        if strategy == 'chunk_on_Y':
-            self._argkmin_on_Y(
-                X, Y, Y_sq_norms,
-                chunk_size, effective_n_threads,
+        if strategy == 'parallel_on_Y':
+            self._parallel_on_Y(
+                self.chunk_size, effective_n_threads,
                 argkmin_indices, argkmin_distances
             )
-        elif strategy == 'chunk_on_X':
-            self._argkmin_on_X(
-                X, Y, Y_sq_norms,
-                chunk_size, effective_n_threads,
+        elif strategy == 'parallel_on_X':
+            self._parallel_on_X(
+                self.chunk_size, effective_n_threads,
                 argkmin_indices, argkmin_distances
             )
         else:
@@ -456,9 +447,9 @@ cdef class ArgKmin:
         if return_distance:
             # We need to recompute distances because we relied on
             # reduced distances using _gemm, which are missing a
-            # term for squarred norms and which are not the most
+            # term for squared norms and which are not the most
             # precise (catastrophic cancellation might have happened).
-            _exact_euclidean_dist(X, Y, argkmin_indices,
+            _exact_euclidean_dist(self.X, self.Y, argkmin_indices,
                                   effective_n_threads,
                                   argkmin_distances)
             return (np.asarray(argkmin_distances),

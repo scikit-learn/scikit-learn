@@ -740,10 +740,7 @@ class KNeighborsMixin:
             self._fit_method == "brute" and self.effective_metric_ == "fast_sqeuclidean"
         ):
             # TODO: generalise this simple plug here
-            results = ArgKmin()._argkmin(
-                X,
-                Y=self._fit_X,
-                k=n_neighbors,
+            results = ArgKmin(X=X, Y=self._fit_X, k=n_neighbors).compute(
                 strategy="auto",
                 return_distance=return_distance,
             )
