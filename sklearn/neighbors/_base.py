@@ -23,7 +23,7 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..metrics._argkmin_fast import _argkmin
+from ..metrics._argkmin_fast import ArgKmin
 from ..utils import (
     check_array,
     gen_even_slices,
@@ -740,7 +740,7 @@ class KNeighborsMixin:
             self._fit_method == "brute" and self.effective_metric_ == "fast_sqeuclidean"
         ):
             # TODO: generalise this simple plug here
-            results = _argkmin(
+            results = ArgKmin()._argkmin(
                 X,
                 Y=self._fit_X,
                 k=n_neighbors,
