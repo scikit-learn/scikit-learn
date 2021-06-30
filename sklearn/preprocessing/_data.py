@@ -2006,7 +2006,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : bool, default=True
-        set to False to perform inplace binarization and avoid a copy (if
+        Set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
 
     Attributes
@@ -2015,6 +2015,20 @@ class Binarizer(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    See Also
+    --------
+    binarize : Equivalent function without the estimator API.
+    KBinsDiscretizer : Bin continuous data into intervals.
+    OneHotEncoder : Encode categorical features as a one-hot numeric array.
+
+    Notes
+    -----
+    If the input is a sparse matrix, only the non-zero values are subject
+    to update by the Binarizer class.
+
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
 
     Examples
     --------
@@ -2029,18 +2043,6 @@ class Binarizer(TransformerMixin, BaseEstimator):
     array([[1., 0., 1.],
            [1., 0., 0.],
            [0., 1., 0.]])
-
-    Notes
-    -----
-    If the input is a sparse matrix, only the non-zero values are subject
-    to update by the Binarizer class.
-
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
-
-    See Also
-    --------
-    binarize : Equivalent function without the estimator API.
     """
 
     def __init__(self, *, threshold=0.0, copy=True):
