@@ -156,7 +156,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         if self.contamination != "auto":
             if not (0.0 < self.contamination <= 0.5):
                 raise ValueError(
-                    "contamination must be in (0, 0.5], " "got: %f" % self.contamination
+                    "contamination must be in (0, 0.5], got: %f" % self.contamination
                 )
 
         super().fit(X)

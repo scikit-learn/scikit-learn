@@ -178,8 +178,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         if not (3 <= self.n_bins <= 256):
             # min is 3: at least 2 distinct bins and a missing values bin
             raise ValueError(
-                "n_bins={} should be no smaller than 3 "
-                "and no larger than 256.".format(self.n_bins)
+                "n_bins={} should be no smaller than 3 and no larger than 256.".format(
+                    self.n_bins
+                )
             )
 
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
@@ -211,7 +212,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             if not is_categorical and known_cats is not None:
                 raise ValueError(
                     f"Feature {f_idx} isn't marked as a categorical feature, "
-                    f"but categories were passed."
+                    "but categories were passed."
                 )
 
         self.missing_values_bin_idx_ = self.n_bins - 1
