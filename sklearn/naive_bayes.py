@@ -643,7 +643,7 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
-            Returns the instance itself.
+            Fitted estimator.
         """
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
