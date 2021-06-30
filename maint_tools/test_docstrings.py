@@ -15,7 +15,6 @@ DOCSTRING_IGNORE_LIST = [
     "BaggingRegressor",
     "BernoulliNB",
     "BernoulliRBM",
-    "Binarizer",
     "Birch",
     "CCA",
     "CalibratedClassifierCV",
