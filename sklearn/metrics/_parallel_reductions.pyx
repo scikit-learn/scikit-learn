@@ -17,7 +17,7 @@ from libc.stdlib cimport free, malloc
 
 from cython.parallel cimport parallel, prange
 
-# from ..neighbors._dist_metrics cimport DistanceMetric
+from ._dist_metrics cimport DistanceMetric
 
 DEF CHUNK_SIZE = 256  # number of vectors
 
@@ -93,9 +93,9 @@ cdef int _exact_euclidean_dist(
 
 cdef class ParallelReduction:
     """Abstract class to computes a reduction of a set of
-    vectors (rows) of X on another set of vectors (rows) of Y
+    vectors (rows) of X on another set of vectors (rows) of Y.
 
-    The implementation of the reduction is done parallelised
+    The implementation of the reduction is done parallelized
     on chunks whose size can be set using ``chunk_size``.
     Parameters
     ----------
@@ -103,8 +103,10 @@ cdef class ParallelReduction:
         Rows represent vectors
     Y: ndarray of shape (m, d)
         Rows represent vectors
+    distance_metric: DistanceMetric
+        The distance to use
     chunk_size: int
-        The number of vectors per chunk.
+        The number of vectors per chunk
     """
 
     cdef:
@@ -122,10 +124,7 @@ cdef class ParallelReduction:
         DTYPE_t[:, ::1] X
         DTYPE_t[:, ::1] Y
 
-        # TODO: needs to move DistanceMetric
-        # from neighbors to be able to use them
-        # some adaptation
-        # DistanceMetric distance_metric
+        DistanceMetric distance_metric
 
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults
@@ -134,10 +133,10 @@ cdef class ParallelReduction:
         self.Y = np.empty((1, 1), dtype=DTYPE, order='c')
 
     def __init__(self,
-                  DTYPE_t[:, ::1] X,
-                  DTYPE_t[:, ::1] Y,
-                  ITYPE_t k,
-                  ITYPE_t chunk_size = CHUNK_SIZE,
+                 DTYPE_t[:, ::1] X,
+                 DTYPE_t[:, ::1] Y,
+                 DistanceMetric distance_metric,
+                 ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         cdef:
             ITYPE_t X_n_full_chunks, Y_n_full_chunks
@@ -151,12 +150,13 @@ cdef class ParallelReduction:
             f"{X.shape[1]}-dimensional and {Y.shape[1]}-dimensional."
         )
 
-        self.k = k
         self.d = X.shape[1]
         self.sf = sizeof(DTYPE_t)
         self.si = sizeof(ITYPE_t)
         self.chunk_size = chunk_size
         self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
+
+        self.distance_metric = distance_metric
 
         self.n_Y = Y.shape[0]
         self.Y_n_samples_chunk = min(self.n_Y, self.n_samples_chunk)
@@ -194,20 +194,55 @@ cdef class ParallelReduction:
         return -1
 
 cdef class ArgKmin(ParallelReduction):
+    """Computes the argkmin of vectors (rows) of a set of
+    vectors (rows) of X on another set of vectors (rows) of Y.
+
+    The implementation is parallelized on chunks whose size can
+    be set using ``chunk_size``.
+    Parameters
+    ----------
+    X: ndarray of shape (n, d)
+        Rows represent vectors
+    Y: ndarray of shape (m, d)
+        Rows represent vectors
+    distance_metric: DistanceMetric
+        The distance to use
+    k: int
+        The k for the argkmin reduction
+    chunk_size: int
+        The number of vectors per chunk
+    """
 
     cdef:
         DTYPE_t ** dist_middle_terms_chunks
         DTYPE_t ** heaps_red_distances_chunks
         ITYPE_t ** heaps_indices_chunks
 
-    def __init__(self,
-                  DTYPE_t[:, ::1] X,
-                  DTYPE_t[:, ::1] Y,
-                  ITYPE_t k,
-                  ITYPE_t chunk_size = CHUNK_SIZE,
+    @classmethod
+    def get_for(cls,
+                DTYPE_t[:, ::1] X,
+                DTYPE_t[:, ::1] Y,
+                ITYPE_t k,
+                str metric="fast_sqeuclidean",
+                ITYPE_t chunk_size=CHUNK_SIZE,
     ):
-        ParallelReduction.__init__(self, X, Y, k)
+        if metric == "fast_sqeuclidean":
+            return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
+        return ArgKmin(X=X, Y=Y,
+                       distance_metric=DistanceMetric.get_metric(metric),
+                       k=k,
+                       chunk_size=chunk_size)
 
+    def __init__(self,
+                 DTYPE_t[:, ::1] X,
+                 DTYPE_t[:, ::1] Y,
+                 DistanceMetric distance_metric,
+                 ITYPE_t k,
+                 ITYPE_t chunk_size = CHUNK_SIZE,
+    ):
+        ParallelReduction.__init__(self, X, Y, distance_metric, chunk_size)
+
+        self.k = k
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_red_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
@@ -254,13 +289,9 @@ cdef class ArgKmin(ParallelReduction):
                 _push(heaps_red_distances + i * self.k,
                       heaps_indices + i * self.k,
                       k,
-                      0,
-                      # TODO: needs to move DistanceMetric
-                      # from neighbors to be able to use them
-                      # some adaptation
-                      # self.distance_metric.rdist(&X_c[i, 0],
-                      #                           &Y_c[j, 0],
-                      #                           self.d),
+                      self.distance_metric.rdist(&X_c[i, 0],
+                                                 &Y_c[j, 0],
+                                                 self.d),
                       Y_start + j)
 
         return 0
@@ -509,7 +540,10 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
                   ITYPE_t k,
                   ITYPE_t chunk_size = CHUNK_SIZE,
     ):
-        ArgKmin.__init__(self, X, Y, k)
+        ArgKmin.__init__(self, X, Y,
+                         distance_metric=DistanceMetric.get_metric("euclidean"),
+                         k=k,
+                         chunk_size=chunk_size)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
 
 
