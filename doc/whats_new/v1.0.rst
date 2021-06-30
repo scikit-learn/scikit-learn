@@ -130,6 +130,9 @@ Changelog
 - |API| `np.matrix` usage is deprecated in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
+- |API| :term:`get_feature_names_out` has been added to the transformer API
+  to get the names of the output features. :pr:`18444` by `Thomas Fan`_.
+
 :mod:`sklearn.base`
 ...................
 
