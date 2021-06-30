@@ -1,6 +1,7 @@
 #!python
 #cython: boundscheck=False
 #cython: wraparound=False
+#cython: initializedcheck=False
 #cython: cdivision=True
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
