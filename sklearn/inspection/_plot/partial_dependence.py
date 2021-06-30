@@ -38,7 +38,7 @@ def plot_partial_dependence(
     kind="average",
     subsample=1000,
     random_state=None,
-    is_categorical=None,
+    categorical_features=None,
 ):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
@@ -243,6 +243,17 @@ def plot_partial_dependence(
 
         .. versionadded:: 1.0
 
+    categorical_features : array-like of shape (n_features,) or shape \
+            (n_categorical_features,), dtype={bool, int, str}, default=None
+        Indicates the categorical features.
+
+        - `None`: no feature will be considered categorical;
+        - boolean array-like: boolean mask indicating categorical features;
+        - integer or string array-like: integer indices or strings indicating
+          categorical features.
+
+        .. versionadded:: 1.0
+
     Returns
     -------
     display : :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -359,49 +370,48 @@ def plot_partial_dependence(
                 "the (0, 1) range."
             )
 
-    if is_categorical is None:
-        is_categorical = []
-        for fxs in features:
-            cats = (False,) if len(fxs) == 1 else (False, False)
-            is_categorical.append(cats)
+    if categorical_features is None:
+        is_categorical = [
+            (False,) if len(fxs) == 1 else (False, False) for fxs in features
+        ]
     else:
-        if len(features) != len(is_categorical):
-            raise ValueError(
-                "Parameter is_categorical should be the same size as features."
-            )
-
-        tmp_categorical = []
-        has_categorical = False
-        for cats in is_categorical:
-            if isinstance(cats, bool):
-                cats = (cats,)
-            try:
-                cats = tuple(c for c in cats)
-            except TypeError as e:
+        categorical_features = np.asarray(categorical_features)
+        if categorical_features.dtype.kind == "b":
+            if categorical_features.size != n_features:
                 raise ValueError(
-                    "Each entry in is_categorical must be either a boolean "
-                    "or an iterable of size at most 2."
-                ) from e
-            if not 1 <= np.size(cats) <= 2:
-                raise ValueError(
-                    "Each entry in is_categorical must be either "
-                    "a boolean or an iterable of size at most 2."
+                    "When `categorical_features` is a boolearn array-like, "
+                    "the array should be of shape (n_features,). Got "
+                    f"{categorical_features.size} elements while `X` contains "
+                    f"{n_features} features."
                 )
+            is_categorical = [tuple([categorical_features[idx] for idx in fxs])]
+        elif categorical_features.dtype.kind in ("i", "O", "U"):
+            categorical_features_idx = [
+                convert_feature(cat) for cat in categorical_features
+            ]
+            is_categorical = [
+                tuple([idx in categorical_features_idx for idx in fxs])
+                for fxs in features
+            ]
+        else:
+            raise ValueError(
+                "Expected `categorical_features` to be an array-like of "
+                "boolean, interger, or string. Got "
+                f"{categorical_features.dtype} instead."
+            )
+        has_categorical = any(any(cat) for cat in is_categorical)
+
+        for cats in is_categorical:
             if np.size(cats) == 2 and (cats[0] != cats[1]):
                 raise ValueError(
-                    "Two-way partial dependence plots are not "
-                    "supported for pairs of continuous and "
-                    "categorical features."
+                    "Two-way partial dependence plots are not supported for pairs of "
+                    "continuous and categorical features."
                 )
-            if cats[0] is True:
-                has_categorical = True
-            tmp_categorical.append(cats)
-        is_categorical = tmp_categorical
 
         if has_categorical and kind != "average":
             raise ValueError(
-                "It is not possible to display individual effects"
-                " for categorical features."
+                "It is not possible to display individual effects for categorical"
+                " features."
             )
 
     # compute predictions and/or averaged predictions

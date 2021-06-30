@@ -19,6 +19,8 @@ dependence of each category.
     :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 """
 print(__doc__)
+
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -84,6 +86,7 @@ X, y = load_ames_housing()
 
 cat_cols = X.columns[X.dtypes == "O"]
 num_cols = X.columns[X.dtypes == "float64"]
+print(cat_cols)
 
 categories = [X[column].unique() for column in X[cat_cols]]
 
@@ -117,7 +120,7 @@ rf_pipeline.fit(X, y)
 features_to_plot = ["ExterQual", "HeatingQC", "Street", "HouseStyle"]
 categorical = [X[f].dtype == "O" for f in features_to_plot]
 plot_partial_dependence(
-    rf_pipeline, X, features=features_to_plot, is_categorical=categorical, n_cols=2
+    rf_pipeline, X, features=features_to_plot, categorical_features=cat_cols, n_cols=2
 )
 fig = plt.gcf()
 plt.subplots_adjust(hspace=0.5)
@@ -130,6 +133,6 @@ plt.show()
 # Partial dependence of a pair of categorical variable are plotted at a
 # heatmap.
 plot_partial_dependence(
-    rf_pipeline, X, features=[("ExterQual", "HeatingQC")], is_categorical=[(True, True)]
+    rf_pipeline, X, features=[("ExterQual", "HeatingQC")], categorical_features=cat_cols
 )
 plt.show()

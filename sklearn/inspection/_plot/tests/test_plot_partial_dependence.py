@@ -11,7 +11,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import make_pipeline
 
@@ -580,32 +580,17 @@ dummy_classification_data = make_classification(random_state=0)
         ),
         (
             dummy_classification_data,
-            {"features": [1, 2], "is_categorical": [True]},
-            "Parameter is_categorical should be the same",
+            {"features": [1, 2], "categorical_features": [1.0, 2.0]},
+            "Expected `categorical_features` to be an array-like of boolean,",
         ),
         (
             dummy_classification_data,
-            {"features": [(1, 2)], "is_categorical": [True]},
-            "Parameter is_categorical should be the same",
+            {"features": [(1, 2)], "categorical_features": [2]},
+            "Two-way partial dependence plots are not supported for pairs",
         ),
         (
             dummy_classification_data,
-            {"features": [1], "is_categorical": [1]},
-            "Each entry in is_categorical must be either a boolean",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [1], "is_categorical": [(True, True, True)]},
-            "Each entry in is_categorical must be either a boolean",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [(1, 2)], "is_categorical": [(True, False)]},
-            "Two-way partial dependence plots are not",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [1], "is_categorical": [True], "kind": "individual"},
+            {"features": [1], "categorical_features": [1], "kind": "individual"},
             "It is not possible to display individual effects",
         ),
     ],
@@ -652,17 +637,33 @@ def test_plot_partial_dependence_does_not_override_ylabel(
     assert axes[1].get_ylabel() == "Partial dependence"
 
 
-def test_plot_partial_dependence_with_categorical(pyplot):
-    pd = pytest.importorskip("pandas")
-    X = pd.DataFrame(["A", "B", "C", "A", "B"], columns=["col"])
-    y = np.array([1.2, 0.5, 0.1, 1.3, 0.45]).T
+@pytest.mark.parametrize(
+    "categorical_features, array_type",
+    [
+        (["col_A", "col_C"], "dataframe"),
+        ([0, 2], "array"),
+        ([True, False, True], "array"),
+    ],
+)
+def test_plot_partial_dependence_with_categorical(
+    pyplot, categorical_features, array_type
+):
+    X = [["A", 1, "A"], ["B", 0, "C"], ["C", 2, "B"]]
+    column_name = ["col_A", "col_B", "col_C"]
+    X = _convert_container(X, array_type, columns_name=column_name)
+    y = np.array([1.2, 0.5, 0.45]).T
 
-    ct = ColumnTransformer([("e", OneHotEncoder(), ["col"])])
-    lr = LinearRegression()
-    pipe = make_pipeline(ct, lr)
-    pipe.fit(X, y)
+    preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
+    model = make_pipeline(preprocessor, LinearRegression())
+    model.fit(X, y)
 
-    disp = plot_partial_dependence(pipe, X, features=["col"], is_categorical=[True])
+    disp = plot_partial_dependence(
+        model,
+        X,
+        features=["col_C"],
+        feature_names=column_name,
+        categorical_features=categorical_features,
+    )
 
     assert disp.figure_ is pyplot.gcf()
     assert disp.bars_.shape == (1, 1)
