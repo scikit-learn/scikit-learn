@@ -185,7 +185,7 @@ def test_feature_union_get_feature_names_deprecated():
     D_in = [{"version": "1", "ham": 2}, {"version": "2", "spam": 0.3}]
     v = DictVectorizer().fit(D_in)
 
-    msg = "get_feature_names is deprecated in 0.24"
+    msg = "get_feature_names is deprecated in 1.0"
     with pytest.warns(FutureWarning, match=msg):
         v.get_feature_names()
 

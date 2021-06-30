@@ -12,6 +12,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
+from ..utils.deprecation import deprecated
 
 
 def _tosequence(X):
@@ -371,8 +372,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         return self._transform(X, fitting=False)
 
     @deprecated(
-        "get_feature_names is deprecated in 0.24 and will be removed "
-        "in 0.26. You can use get_feature_names_out instead"
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. You can use get_feature_names_out instead"
     )
     def get_feature_names(self):
         """Returns a list of feature names, ordered by their indices.

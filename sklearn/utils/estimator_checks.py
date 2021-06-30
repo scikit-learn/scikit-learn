@@ -3437,14 +3437,18 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
     )
 
 
-def check_transformer_get_feature_names_out(name, transformer_orig,
-                                            strict_mode=True):
+def check_transformer_get_feature_names_out(name, transformer_orig, strict_mode=True):
     tags = transformer_orig._get_tags()
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 
-    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
-                      random_state=0, n_features=2, cluster_std=0.1)
+    X, y = make_blobs(
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        n_features=2,
+        cluster_std=0.1,
+    )
     X = StandardScaler().fit_transform(X)
     X -= X.min()
     X = _pairwise_estimator_convert_X(X, transformer_orig)
@@ -3461,14 +3465,14 @@ def check_transformer_get_feature_names_out(name, transformer_orig,
 
     X_pred = transformer.fit_transform(X, y=y_)
 
-    input_features = ['feature%d' % i for i in range(n_features)]
+    input_features = ["feature%d" % i for i in range(n_features)]
     feature_names = transformer.get_feature_names_out(input_features)
     assert feature_names is not None
     if isinstance(X_pred, tuple):
-        assert len(feature_names) == X_pred[0].shape[1], (
-            f"Expected {X_pred[0].shape[1]} feature names, got "
-            f"{len(feature_names)}")
+        assert (
+            len(feature_names) == X_pred[0].shape[1]
+        ), f"Expected {X_pred[0].shape[1]} feature names, got {len(feature_names)}"
     else:
-        assert len(feature_names) == X_pred.shape[1], (
-            f"Expected {X_pred.shape[1]} feature names, got "
-            f"{len(feature_names)}")
+        assert (
+            len(feature_names) == X_pred.shape[1]
+        ), f"Expected {X_pred.shape[1]} feature names, got {len(feature_names)}"

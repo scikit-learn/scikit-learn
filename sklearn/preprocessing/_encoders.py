@@ -655,8 +655,10 @@ class OneHotEncoder(_BaseEncoder):
 
         return X_tr
 
-    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_feature_names_out instead")
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. You can use get_feature_names_out instead"
+    )
     def get_feature_names(self, input_features=None):
         """
         Return feature names for output features.

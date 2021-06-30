@@ -961,7 +961,7 @@ def test_one_hot_encoder_get_feature_names_deprecated():
     X = np.array([["cat", "dot"]], dtype=object).T
     enc = OneHotEncoder().fit(X)
 
-    msg = "get_feature_names is deprecated in 0.24"
+    msg = "get_feature_names is deprecated in 1.0"
     with pytest.warns(FutureWarning, match=msg):
         enc.get_feature_names()
 

@@ -647,8 +647,7 @@ def test_hashing_vectorizer():
 
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_feature_names(get_names):
     cv = CountVectorizer(max_df=0.5)
 
@@ -739,8 +738,7 @@ def test_vectorizer_max_features(Vectorizer):
 
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_count_vectorizer_max_features(get_names):
     # Regression test: max_features didn't work correctly in 0.14.
 
@@ -815,14 +813,13 @@ def test_vectorizer_min_df():
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_count_binary_occurrences(get_names):
     # by default multiple occurrences are counted as longs
     test_data = ["aaabc", "abbde"]
     vect = CountVectorizer(analyzer="char", max_df=1.0)
     X = vect.fit_transform(test_data).toarray()
-    assert_array_equal(['a', 'b', 'c', 'd', 'e'], getattr(vect, get_names)())
+    assert_array_equal(["a", "b", "c", "d", "e"], getattr(vect, get_names)())
     assert_array_equal([[3, 1, 1, 0, 0], [1, 2, 0, 1, 1]], X)
 
     # using boolean features, we can fetch the binary occurrence info
@@ -1072,8 +1069,7 @@ def test_pickling_built_processors(factory):
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_countvectorizer_vocab_sets_when_pickling(get_names):
     # ensure that vocabulary of type set is coerced to a list to
     # preserve iteration ordering after deserialization
@@ -1102,8 +1098,7 @@ def test_countvectorizer_vocab_sets_when_pickling(get_names):
 
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_countvectorizer_vocab_dicts_when_pickling(get_names):
     rng = np.random.RandomState(0)
     vocab_words = np.array(
@@ -1606,7 +1601,7 @@ def test_tie_breaking_sample_order_invariance():
 # TODO: Remove in 1.2 when get_feature_names is removed
 def test_get_feature_names_deprecated():
     cv = CountVectorizer(max_df=0.5).fit(ALL_FOOD_DOCS)
-    msg = "get_feature_names is deprecated in 0.24"
+    msg = "get_feature_names is deprecated in 1.0"
     with pytest.warns(FutureWarning, match=msg):
         cv.get_feature_names()
 

@@ -682,9 +682,11 @@ class Pipeline(_BaseComposition):
                 raise TypeError(
                     "Estimator {} does provide get_feature_names_out. "
                     "Did you mean to call Pipeline[:-1].get_feature_names_out"
-                    "()?".format(name))
+                    "()?".format(name)
+                )
             feature_names = transform.get_feature_names_out(
-                input_features=feature_names)
+                input_features=feature_names
+            )
         return feature_names
 
     @property
@@ -973,8 +975,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             if trans != "drop"
         )
 
-    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_feature_names_out instead")
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. You can use get_feature_names_out instead"
+    )
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -1008,13 +1012,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         """
         feature_names = []
         for name, trans, _ in self._iter():
-            if not hasattr(trans, 'get_feature_names_out'):
-                raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names_out."
-                                     % (str(name), type(trans).__name__))
+            if not hasattr(trans, "get_feature_names_out"):
+                raise AttributeError(
+                    "Transformer %s (type %s) does not provide get_feature_names_out."
+                    % (str(name), type(trans).__name__)
+                )
             feature_names.extend(
-                [name + "__" + f for f in
-                 trans.get_feature_names_out(input_features)])
+                [name + "__" + f for f in trans.get_feature_names_out(input_features)]
+            )
         return feature_names
 
     def fit(self, X, y=None, **fit_params):

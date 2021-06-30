@@ -1,4 +1,4 @@
-def _make_feature_names(n_features, prefix='x', input_features=None):
+def _make_feature_names(n_features, prefix="x", input_features=None):
     """Make feature name strings from n_features.
 
     Either returns input_feature names if it is not None, or creates

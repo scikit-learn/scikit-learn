@@ -38,7 +38,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.impute import SimpleImputer
 
 iris = load_iris()
 
@@ -883,8 +882,7 @@ def test_feature_union_parallel():
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_feature_union_feature_names(get_names):
     word_vect = CountVectorizer(analyzer="word")
     char_vect = CountVectorizer(analyzer="char_wb", ngram_range=(3, 3))
@@ -920,69 +918,67 @@ def test_classes_property():
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_set_feature_union_steps(get_names):
     mult2 = Mult(2)
     mult3 = Mult(3)
     mult5 = Mult(5)
 
     if get_names == "get_feature_names":
-        mult3.get_feature_names = lambda: ['x3']
-        mult2.get_feature_names = lambda: ['x2']
-        mult5.get_feature_names = lambda: ['x5']
+        mult3.get_feature_names = lambda: ["x3"]
+        mult2.get_feature_names = lambda: ["x2"]
+        mult5.get_feature_names = lambda: ["x5"]
     else:  # get_feature_names_out
-        mult3.get_feature_names_out = lambda input_features: ['x3']
-        mult2.get_feature_names_out = lambda input_features: ['x2']
-        mult5.get_feature_names_out = lambda input_features: ['x5']
+        mult3.get_feature_names_out = lambda input_features: ["x3"]
+        mult2.get_feature_names_out = lambda input_features: ["x2"]
+        mult5.get_feature_names_out = lambda input_features: ["x5"]
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
-    assert ['m2__x2', 'm3__x3'] == getattr(ft, get_names)()
+    assert ["m2__x2", "m3__x3"] == getattr(ft, get_names)()
 
     # Directly setting attr
     ft.transformer_list = [("m5", mult5)]
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert ['m5__x5'] == getattr(ft, get_names)()
+    assert ["m5__x5"] == getattr(ft, get_names)()
 
     # Using set_params
     ft.set_params(transformer_list=[("mock", mult3)])
     assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
-    assert ['mock__x3'] == getattr(ft, get_names)()
+    assert ["mock__x3"] == getattr(ft, get_names)()
 
     # Using set_params to replace single step
     ft.set_params(mock=mult5)
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert ['mock__x5'] == getattr(ft, get_names)()
+    assert ["mock__x5"] == getattr(ft, get_names)()
 
 
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_set_feature_union_step_drop(get_names):
     mult2 = Mult(2)
     mult3 = Mult(3)
 
     if get_names == "get_feature_names":
-        mult2.get_feature_names = lambda: ['x2']
-        mult3.get_feature_names = lambda: ['x3']
+        mult2.get_feature_names = lambda: ["x2"]
+        mult3.get_feature_names = lambda: ["x3"]
     else:  # get_feature_names_out
-        mult2.get_feature_names_out = lambda input_features: ['x2']
-        mult3.get_feature_names_out = lambda input_features: ['x3']
+        mult2.get_feature_names_out = lambda input_features: ["x2"]
+        mult3.get_feature_names_out = lambda input_features: ["x3"]
 
     X = np.asarray([[1]])
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.fit(X).transform(X))
     assert_array_equal([[2, 3]], ft.fit_transform(X))
-    assert ['m2__x2', 'm3__x3'] == getattr(ft, get_names)()
+    assert ["m2__x2", "m3__x3"] == getattr(ft, get_names)()
 
     with pytest.warns(None) as record:
         ft.set_params(m2="drop")
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
-    assert ['m3__x3'] == getattr(ft, get_names)()
+    assert ["m3__x3"] == getattr(ft, get_names)()
     assert not record
 
     with pytest.warns(None) as record:
@@ -1003,7 +999,7 @@ def test_set_feature_union_step_drop(get_names):
         ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
-    assert ['m3__x3'] == getattr(ft, get_names)()
+    assert ["m3__x3"] == getattr(ft, get_names)()
     assert not record
 
 
@@ -1175,29 +1171,35 @@ def test_make_pipeline_memory():
 
 
 def test_features_names_passthrough():
-    pipe = Pipeline(steps=[
-        ('imputer', 'passthrough'),
-        ('scaler', StandardScaler()),
-        ('select', 'passthrough'),
-        ('clf', LogisticRegression())])
+    pipe = Pipeline(
+        steps=[
+            ("imputer", "passthrough"),
+            ("scaler", StandardScaler()),
+            ("select", "passthrough"),
+            ("clf", LogisticRegression()),
+        ]
+    )
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
-    xs = ['x0', 'x1', 'x2', 'x3']
+    xs = ["x0", "x1", "x2", "x3"]
     assert_array_equal(pipe[:-1].get_feature_names_out(), xs)
-    assert_array_equal(pipe[:-1].get_feature_names_out(iris.feature_names),
-                       iris.feature_names)
+    assert_array_equal(
+        pipe[:-1].get_feature_names_out(iris.feature_names), iris.feature_names
+    )
 
 
 def test_feature_names_count_vectorizer():
-    pipe = Pipeline(steps=[
-        ('vect', CountVectorizer()),
-        ('clf', LogisticRegression())])
+    pipe = Pipeline(steps=[("vect", CountVectorizer()), ("clf", LogisticRegression())])
     y = ["pizza" in x for x in JUNK_FOOD_DOCS]
     pipe.fit(JUNK_FOOD_DOCS, y)
-    assert_array_equal(pipe[:-1].get_feature_names_out(),
-                       ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
-    assert_array_equal(pipe[:-1].get_feature_names_out("nonsense_is_ignored"),
-                       ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
+    assert_array_equal(
+        pipe[:-1].get_feature_names_out(),
+        ["beer", "burger", "coke", "copyright", "pizza", "the"],
+    )
+    assert_array_equal(
+        pipe[:-1].get_feature_names_out("nonsense_is_ignored"),
+        ["beer", "burger", "coke", "copyright", "pizza", "the"],
+    )
 
 
 def test_pipeline_param_error():
@@ -1383,11 +1385,11 @@ def test_feature_union_warns_unknown_transformer_weight():
 
 # TODO: Remove in 1.2 when get_feature_names is removed
 def test_feature_union_get_feature_names_deprecated():
-    msg = "get_feature_names is deprecated in 0.24"
+    msg = "get_feature_names is deprecated in 1.0"
     mult2 = Mult(2)
-    mult2.get_feature_names = lambda: ['x2']
+    mult2.get_feature_names = lambda: ["x2"]
 
-    ft = FeatureUnion([('m2', mult2)])
+    ft = FeatureUnion([("m2", mult2)])
     with pytest.warns(FutureWarning, match=msg):
         ft.get_feature_names()
 

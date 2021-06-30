@@ -15,6 +15,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.fixes import linspace
+from ..utils._feature_names import _make_feature_names
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
@@ -185,6 +186,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             [np.bincount(c, minlength=self.n_features_in_) for c in combinations]
         )
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. You can use get_feature_names_out instead"
+    )
     def get_feature_names(self, input_features=None):
         """
         Return feature names for output features
@@ -199,9 +204,26 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         -------
         output_feature_names : list of str of shape (n_output_features,)
         """
+        return self.get_feature_names_out(input_features)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features. If None, they are generated as
+            x0, x1, ..., xn_features.
+
+        Returns
+        -------
+        feature_names : array-like of str
+            Transformed feature names.
+        """
         powers = self.powers_
-        if input_features is None:
-            input_features = ["x%d" % i for i in range(powers.shape[1])]
+        input_features = _make_feature_names(
+            n_features=powers.shape[1], input_features=input_features
+        )
         feature_names = []
         for row in powers:
             inds = np.where(row)[0]
@@ -610,8 +632,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         return knots
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. You can use get_feature_names_out instead"
+    )
     def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
+        """
+        Return feature names for output features
 
         Parameters
         ----------
@@ -622,6 +649,22 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         output_feature_names : list of str of shape (n_output_features,)
+        """
+        return self.get_feature_names_out(input_features)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features. If None, they are generated as
+            x0, x1, ..., xn_features.
+
+        Returns
+        -------
+        feature_names : array-like of str
+            Transformed feature names.
         """
         n_splines = self.bsplines_[0].c.shape[0]
         if input_features is None:

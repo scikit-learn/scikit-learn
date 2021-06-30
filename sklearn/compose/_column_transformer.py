@@ -20,6 +20,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
+from ..utils.deprecation import deprecated
 from ..utils._feature_names import _make_feature_names
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
@@ -395,8 +396,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             feature_names.extend(get_names(name, trans, column))
         return feature_names
 
-    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_feature_names_out instead")
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. You can use get_feature_names_out instead"
+    )
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -408,11 +411,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         check_is_fitted(self)
 
         def get_names(name, trans, column):
-            if not hasattr(trans, 'get_feature_names'):
+            if not hasattr(trans, "get_feature_names"):
                 raise AttributeError(
                     f"Transformer {name} (type {type(trans).__name__}) does "
-                    "not provide get_feature_names.")
+                    "not provide get_feature_names."
+                )
             return [f"{name}__{f}" for f in trans.get_feature_names()]
+
         return self._get_feature_names_out(get_names)
 
     def get_feature_names_out(self, input_features=None):
@@ -429,22 +434,26 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Transformed feature names.
         """
         check_is_fitted(self)
-        if hasattr(self, '_df_columns'):
+        if hasattr(self, "_df_columns"):
             input_names = self._df_columns
         else:
             input_names = _make_feature_names(self.n_features_in_)
 
         def get_names(name, trans, column):
-            if not hasattr(trans, 'get_feature_names_out'):
+            if not hasattr(trans, "get_feature_names_out"):
                 raise AttributeError(
                     f"Transformer {name} (type {type(trans).__name__}) does "
-                    "not provide get_feature_names_out.")
-            if (isinstance(column, Iterable) and
-                    not all(isinstance(col, str) for col in column)):
+                    "not provide get_feature_names_out."
+                )
+            if isinstance(column, Iterable) and not all(
+                isinstance(col, str) for col in column
+            ):
                 column = _safe_indexing(input_names, column)
-            return [f"{name}__{f}"
-                    for f in
-                    trans.get_feature_names_out(input_features=column)]
+            return [
+                f"{name}__{f}"
+                for f in trans.get_feature_names_out(input_features=column)
+            ]
+
         return self._get_feature_names_out(get_names)
 
     def _update_fitted_transformers(self, transformers):
