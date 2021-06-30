@@ -44,7 +44,7 @@ consumers understand the meaning of the key ``"sample_weight"``::
   ...                            score_params=["sample_weight"])
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ...     ).fit_requests(sample_weight=True)
+  ... ).fit_requests(sample_weight=True)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
