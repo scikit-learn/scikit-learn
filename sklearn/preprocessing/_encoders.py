@@ -961,7 +961,7 @@ class OrdinalEncoder(_BaseEncoder):
         output_feature_names : ndarray of shape (n_output_features,)
             Array of feature names.
 
-        .. versionadded:: 1.0.dev0
+        .. versionadded:: 1.0
         """
         check_is_fitted(self)
         cats = self.categories_
